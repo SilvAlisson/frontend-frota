@@ -29,14 +29,14 @@ export function RegistrarAbastecimento({
   fornecedores 
 }: RegistrarAbastecimentoProps) {
 
-  // Estados dos campos (sem alteração)
+  // Estados dos campos
   const [veiculoId, setVeiculoId] = useState('');
   const [operadorId, setOperadorId] = useState('');
   const [fornecedorId, setFornecedorId] = useState('');
   const [kmOdometro, setKmOdometro] = useState('');
   const [dataHora, setDataHora] = useState(new Date().toISOString().slice(0, 16));
   const [placaCartaoUsado, setPlacaCartaoUsado] = useState('');
-  const [observacoes, setObservacoes] = useState('');
+  // const [observacoes, setObservacoes] = useState(''); // <-- REMOVIDO
   const [justificativa, setJustificativa] = useState('');
   const [itens, setItens] = useState<ItemAbastecimento[]>([
     { produtoId: '', quantidade: '', valorPorUnidade: '' } 
@@ -47,11 +47,11 @@ export function RegistrarAbastecimento({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // <-- MUDANÇA: Novos estados para controlar o fluxo do modal
+  // Estados do modal
   const [modalAberto, setModalAberto] = useState(false);
-  const [formDataParaModal, setFormDataParaModal] = useState<any>(null); // Guarda os dados para o modal
+  const [formDataParaModal, setFormDataParaModal] = useState<any>(null); 
 
-  // Funções de manipulação de itens (sem alteração)
+  // Funções de manipulação de itens
   const handleItemChange = (index: number, field: keyof ItemAbastecimento, value: string) => {
     const novosItens = [...itens];
     novosItens[index][field] = value;
@@ -67,15 +67,14 @@ export function RegistrarAbastecimento({
     }
   };
 
-  // <-- MUDANÇA: Lógica de envio (handleSubmit) foi alterada
-  // Agora ela apenas VALIDA e ABRE O MODAL
+  // Lógica de envio (handleSubmit)
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
     setError('');
     setSuccess('');
 
-    // Validação ATUALIZADA (placaCartaoUsado agora é obrigatório)
+    // Validação
     if (!veiculoId || !operadorId || !fornecedorId || !kmOdometro || !dataHora || !placaCartaoUsado ||
         itens.some(item => !item.produtoId || !item.quantidade || !item.valorPorUnidade)) {
       setError('Preencha todos os campos obrigatórios, incluindo os detalhes de cada item e os 6 dígitos do cartão.');
@@ -91,7 +90,7 @@ export function RegistrarAbastecimento({
     }
 
     try {
-      // Formata os dados que serão enviados ao modal (e depois à API)
+      // Formata os dados
       const itensFormatados = itens.map(item => ({
         produtoId: item.produtoId,
         quantidade: parseFloat(item.quantidade),
@@ -105,7 +104,7 @@ export function RegistrarAbastecimento({
         kmOdometro: parseFloat(kmOdometro),
         dataHora: new Date(dataHora).toISOString(),
         placaCartaoUsado: DOMPurify.sanitize(placaCartaoUsado),
-        observacoes: DOMPurify.sanitize(observacoes) || null,
+        // observacoes: DOMPurify.sanitize(observacoes) || null, // <-- REMOVIDO
         justificativa: DOMPurify.sanitize(justificativa) || null,
         itens: itensFormatados 
       };
@@ -122,8 +121,7 @@ export function RegistrarAbastecimento({
     }
   };
 
-  // <-- MUDANÇA: Nova função de callback para o modal
-  // Isso limpa o formulário APÓS o modal confirmar o envio
+  // Callback de sucesso do modal
   const handleModalSuccess = () => {
     setSuccess('Abastecimento registrado com sucesso!');
     setModalAberto(false);
@@ -135,15 +133,14 @@ export function RegistrarAbastecimento({
     setFornecedorId('');
     setKmOdometro('');
     setPlacaCartaoUsado('');
-    setObservacoes('');
+    // setObservacoes(''); // <-- REMOVIDO
     setJustificativa('');
     setItens([{ produtoId: '', quantidade: '', valorPorUnidade: '' }]); 
   };
 
 
-  // --- JSX Refatorado para Tailwind ---
+  // --- JSX ---
   return (
-    // O <form> agora engloba o modal
     <> 
       <form 
         className="bg-transparent space-y-4"
@@ -181,15 +178,14 @@ export function RegistrarAbastecimento({
             <input className={inputStyle} type="datetime-local" value={dataHora} onChange={(e) => setDataHora(e.target.value)} />
           </div>
           <div>
-            {/* <-- MUDANÇA: Label e placeholder atualizados */}
             <label className={labelStyle}>Últimos 6 Dígitos do Cartão</label>
             <input 
               className={inputStyle} 
-              type="number" // Mudei para 'number' para facilitar
+              type="number" 
               value={placaCartaoUsado} 
               onChange={(e) => setPlacaCartaoUsado(e.target.value)} 
               placeholder="Ex: 123456"
-              maxLength={6} // Embora number não use maxLength, é uma boa prática
+              maxLength={6} 
             />
           </div>
         </div>
@@ -199,13 +195,11 @@ export function RegistrarAbastecimento({
         
         <div className="space-y-3">
           {itens.map((item, index) => {
-            // <-- MUDANÇA: Cálculo de total do item
             const quantidade = parseFloat(item.quantidade);
             const valorPorUnidade = parseFloat(item.valorPorUnidade);
             const valorTotalItem = (quantidade > 0 && valorPorUnidade > 0) ? (quantidade * valorPorUnidade) : 0;
 
             return (
-              // <-- MUDANÇA: Grid atualizado para incluir o Total (5 colunas)
               <div key={index} className="grid grid-cols-4 md:grid-cols-[2fr_1fr_1fr_1fr_auto] gap-2 items-center">
                 {/* Col 1: Produto */}
                 <select 
@@ -219,7 +213,7 @@ export function RegistrarAbastecimento({
                 {/* Col 2: Litros */}
                 <input 
                   type="number" 
-                  placeholder="Litros" // <-- MUDANÇA
+                  placeholder="Litros"
                   className={inputStyle + " py-2 text-right"}
                   value={item.quantidade}
                   onChange={(e) => handleItemChange(index, 'quantidade', e.target.value)}
@@ -228,13 +222,13 @@ export function RegistrarAbastecimento({
                 <input 
                   type="number" 
                   step="0.01"
-                  placeholder="Valor/Litro (R$)" // <-- MUDANÇA
+                  placeholder="Valor/Litro (R$)"
                   className={inputStyle + " py-2 text-right"}
                   value={item.valorPorUnidade}
                   onChange={(e) => handleItemChange(index, 'valorPorUnidade', e.target.value)}
                 />
 
-                {/* <-- MUDANÇA: Col 4: Total (R$) - Novo campo calculado --> */}
+                {/* Col 4: Total (R$) */}
                 <div className="text-center px-2 py-2 rounded bg-gray-100 border">
                   <span className="text-gray-800 font-semibold text-sm md:text-base">
                     {valorTotalItem > 0 ? `R$ ${valorTotalItem.toFixed(2)}` : 'R$ 0,00'}
@@ -265,24 +259,18 @@ export function RegistrarAbastecimento({
           + Adicionar Item
         </button>
 
-        {/* --- Bloco de Observação e Justificativa (Sem alteração) --- */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t">
+        {/* --- Bloco de Justificativa (Atualizado) --- */}
+        <div className="grid grid-cols-1 gap-4 pt-4 border-t">
+          {/* Bloco de Observações foi REMOVIDO */}
+          
           <div>
-              <label className={labelStyle}>Observações</label>
-              <textarea
-                  className={inputStyle + " h-24"}
-                  value={observacoes}
-                  onChange={(e) => setObservacoes(e.target.value)}
-                  placeholder="Observações gerais (opcional)"
-              ></textarea>
-          </div>
-          <div>
-              <label className={labelStyle}>Justificativa (Ocorrência)</label>
+              {/* Label ATUALIZADA */}
+              <label className={labelStyle}>Justificativas</label>
               <textarea
                   className={inputStyle + " h-24"}
                   value={justificativa}
                   onChange={(e) => setJustificativa(e.target.value)}
-                  placeholder="Justificar se houve uso de cartão de outro veículo (opcional)"
+                  placeholder="Justificar se houve uso de cartão de outro veículo ou outra ocorrência (opcional)"
               ></textarea>
           </div>
         </div>
@@ -296,26 +284,21 @@ export function RegistrarAbastecimento({
         </button>
       </form>
 
-      {/* // <-- MUDANÇA: Renderização do Modal
-        // Ele só aparece quando 'modalAberto' é true e os dados estão prontos.
-      */}
+      {/* Renderização do Modal */}
       {modalAberto && formDataParaModal && (
         <ModalConfirmacaoFoto
           token={token}
           titulo="Envie a foto da nota fiscal"
           
-          // Dados que o modal precisa para enviar o POST
           dadosJornada={formDataParaModal} 
-          apiEndpoint="/abastecimento" // <-- MUDANÇA: API de destino
-          apiMethod="POST" // <-- MUDANÇA: Método
+          apiEndpoint="/abastecimento" 
+          apiMethod="POST"
           
-          // Campos que não usamos aqui (passamos null)
           kmParaConfirmar={null} 
           jornadaId={null}
 
-          // Callbacks
           onClose={() => setModalAberto(false)}
-          onSuccess={handleModalSuccess} // <-- MUDANÇA: Limpa o form no sucesso
+          onSuccess={handleModalSuccess} 
         />
       )}
     </>
