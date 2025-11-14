@@ -1,8 +1,6 @@
-// frontend/src/components/JornadaGestaoItem.tsx
-// Este é o sub-componente que o Encarregado usa para finalizar a jornada de um operador
-
 import { useState } from 'react';
 import axios from 'axios';
+import { RENDER_API_BASE_URL } from '../config';
 
 // Classes reutilizáveis do Tailwind
 const inputStyle = "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul focus:border-transparent disabled:bg-gray-200";
@@ -48,7 +46,7 @@ export function JornadaGestaoItem({ token, jornada, onFinalizada }: JornadaItemP
     }
 
     const api = axios.create({
-      baseURL: 'https://api-frota-klin.onrender.com',
+      baseURL: RENDER_API_BASE_URL,
       headers: { 'Authorization': `Bearer ${token}` }
     });
 

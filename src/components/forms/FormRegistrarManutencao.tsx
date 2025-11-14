@@ -1,6 +1,3 @@
-// frontend/src/components/forms/FormRegistrarManutencao.tsx
-// (Este é um ficheiro NOVO)
-
 import { useState } from 'react';
 import DOMPurify from 'dompurify';
 import { ModalConfirmacaoFoto } from '../ModalConfirmacaoFoto'; 

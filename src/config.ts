@@ -1,0 +1,1 @@
+export const RENDER_API_BASE_URL = 'https://api-frota-klin.onrender.com/api';

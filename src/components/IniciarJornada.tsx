@@ -1,10 +1,4 @@
-// frontend/src/components/IniciarJornada.tsx
-// ATUALIZADO: Agora usa o Modal de Foto, igual ao fluxo de Finalizar/Abastecer.
-
 import { useState } from 'react';
-// import axios from 'axios'; // <-- 1. REMOVIDO (não é mais usado aqui)
-
-// <-- 2. IMPORTAR O MODAL
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto'; 
 
 // Interfaces (tipagem)
@@ -83,8 +77,6 @@ export function IniciarJornada({
         setLoading(false);
         return;
     }
-
-    // A lógica de 'axios' e 'formData' foi REMOVIDA daqui
 
     try {
       // Prepara os dados para o modal

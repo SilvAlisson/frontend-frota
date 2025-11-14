@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-const RENDER_API_BASE_URL = 'https://api-frota-klin.onrender.com/api';
+import { RENDER_API_BASE_URL } from '../config';
 
 // Tipos
 interface PainelAlertasProps {
@@ -47,8 +47,8 @@ export function PainelAlertas({ token }: PainelAlertasProps) {
       setError('');
       try {
         const api = axios.create({
-          baseURL: RENDER_API_BASE_URL, 
-      headers: { 'Authorization': `Bearer ${token}` }
+          baseURL: RENDER_API_BASE_URL,
+          headers: { 'Authorization': `Bearer ${token}` }
         });
         
         // 1. Chamar a rota que criámos no backend

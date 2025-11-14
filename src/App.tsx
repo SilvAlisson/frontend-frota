@@ -9,7 +9,7 @@ import { FormRegistrarManutencao } from './components/forms/FormRegistrarManuten
 import { DashboardRelatorios } from './components/DashboardRelatorios';
 import { PainelAlertas } from './components/PainelAlertas';
 import { RankingOperadores } from './components/RankingOperadores';
-const RENDER_API_BASE_URL = 'https://api-frota-klin.onrender.com/api';
+import { RENDER_API_BASE_URL } from './config';
 
 
 // ===================================================================

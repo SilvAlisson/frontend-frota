@@ -1,6 +1,3 @@
-// frontend/src/components/FinalizarJornada.tsx
-// CORRIGIDO: Removido o 'setLoading' não utilizado.
-
 import { useState } from 'react';
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto'; 
 

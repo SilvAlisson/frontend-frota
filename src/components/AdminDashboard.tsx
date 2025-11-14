@@ -7,7 +7,6 @@ import { FormRegistrarManutencao } from './forms/FormRegistrarManutencao';
 import { DashboardRelatorios } from './DashboardRelatorios';
 import { FormPlanoManutencao } from './forms/FormPlanoManutencao';
 import { PainelAlertas } from './PainelAlertas';
-// ================== Importar o novo componente ==================
 import { RankingOperadores } from './RankingOperadores';
 
 

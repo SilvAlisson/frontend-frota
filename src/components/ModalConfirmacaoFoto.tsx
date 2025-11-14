@@ -1,8 +1,6 @@
-// frontend/src/components/ModalConfirmacaoFoto.tsx
-// ATUALIZADO: Para aceitar 'kmParaConfirmar' como nulo e tratar os dois fluxos
-
 import { useState } from 'react';
 import axios from 'axios';
+import { RENDER_API_BASE_URL } from '../config';
 
 // Classes reutilizáveis do Tailwind
 const inputStyle = "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul focus:border-transparent disabled:bg-gray-200";
@@ -50,7 +48,7 @@ export function ModalConfirmacaoFoto({
     }
 
     const api = axios.create({
-      baseURL: 'https://api-frota-klin.onrender.com',
+      baseURL: RENDER_API_BASE_URL,
       headers: { 'Authorization': `Bearer ${token}` }
     });
 

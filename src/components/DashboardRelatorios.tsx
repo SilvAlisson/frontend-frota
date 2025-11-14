@@ -1,8 +1,6 @@
-// frontend/src/components/DashboardRelatorios.tsx
-// ATUALIZADO: Com filtro de Veículo
-
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import { RENDER_API_BASE_URL } from '../config';
 
 // Tipos
 interface KpiProps {
@@ -11,12 +9,12 @@ interface KpiProps {
   descricao: string;
 }
 
-// ================== MUDANÇA 1: Adicionar 'veiculos' às props ==================
+// ================== Adicionar 'veiculos' às props ==================
 interface DashboardRelatoriosProps {
   token: string;
-  veiculos: any[]; // <-- ADICIONADO: Para popular o dropdown
+  veiculos: any[];
 }
-// ================== FIM DA MUDANÇA ==================
+
 
 interface KpiData {
   custoTotalGeral: number;
@@ -41,15 +39,14 @@ function KpiCard({ titulo, valor, descricao }: KpiProps) {
 }
 
 // Componente Principal: Dashboard de Relatórios
-// ================== MUDANÇA 1 (Cont.): Receber 'veiculos' ==================
+// ================== Receber 'veiculos' ==================
 export function DashboardRelatorios({ token, veiculos }: DashboardRelatoriosProps) {
   
   // 1. Estados para os filtros
   const [ano, setAno] = useState(new Date().getFullYear());
   const [mes, setMes] = useState(new Date().getMonth() + 1); // JS Mês é 0-11
-  // ================== MUDANÇA 2: Estado para o filtro de veículo ==================
+  // ================== Estado para o filtro de veículo ==================
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState(''); // '' significa "Frota Inteira"
-  // ================== FIM DA MUDANÇA ==================
   
   // 2. Estados para os dados
   const [kpis, setKpis] = useState<KpiData | null>(null);
@@ -63,11 +60,11 @@ export function DashboardRelatorios({ token, veiculos }: DashboardRelatoriosProp
       setError('');
       try {
         const api = axios.create({
-          baseURL: 'https://api-frota-klin.onrender.com',
+          baseURL: RENDER_API_BASE_URL,
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        // ================== MUDANÇA 3: Preparar os parâmetros da API ==================
+        // ================== Preparar os parâmetros da API ==================
         const params: any = {
           ano,
           mes
@@ -79,7 +76,6 @@ export function DashboardRelatorios({ token, veiculos }: DashboardRelatoriosProp
         
         // Chama a nova rota de sumário com os filtros
         const response = await api.get('/relatorio/sumario', { params });
-        // ================== FIM DA MUDANÇA ==================
         
         setKpis(response.data.kpis);
 
@@ -92,7 +88,7 @@ export function DashboardRelatorios({ token, veiculos }: DashboardRelatoriosProp
     };
 
     carregarSumario();
-  }, [token, ano, mes, veiculoIdFiltro]); // <-- MUDANÇA 3 (Cont.): Adicionar o novo filtro às dependências
+  }, [token, ano, mes, veiculoIdFiltro]);
 
   // 4. Funções de Formatação (Sem alteração)
   const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')}`;
