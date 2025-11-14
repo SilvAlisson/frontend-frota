@@ -77,14 +77,14 @@ export function RegistrarAbastecimento({
     // Validação
     if (!veiculoId || !operadorId || !fornecedorId || !kmOdometro || !dataHora || !placaCartaoUsado ||
         itens.some(item => !item.produtoId || !item.quantidade || !item.valorPorUnidade)) {
-      setError('Preencha todos os campos obrigatórios, incluindo os detalhes de cada item e os 6 dígitos do cartão.');
+      setError('Preencha todos os campos obrigatórios, incluindo os detalhes de cada item e os últimos 4 dígitos do cartão.');
       setLoading(false);
       return;
     }
 
-    // Validação de 6 dígitos
-    if (placaCartaoUsado.length !== 6) {
-        setError('O campo "Últimos 6 Dígitos do Cartão" deve conter exatamente 6 dígitos.');
+    // Validação de 4 dígitos
+    if (placaCartaoUsado.length !== 4) {
+        setError('O campo "Últimos 4 Dígitos do Cartão" deve conter exatamente 4 dígitos.');
         setLoading(false);
         return;
     }
@@ -178,14 +178,14 @@ export function RegistrarAbastecimento({
             <input className={inputStyle} type="datetime-local" value={dataHora} onChange={(e) => setDataHora(e.target.value)} />
           </div>
           <div>
-            <label className={labelStyle}>Últimos 6 Dígitos do Cartão</label>
+            <label className={labelStyle}>Últimos 4 Dígitos do Cartão</label>
             <input 
               className={inputStyle} 
               type="number" 
               value={placaCartaoUsado} 
               onChange={(e) => setPlacaCartaoUsado(e.target.value)} 
-              placeholder="Ex: 123456"
-              maxLength={6} 
+              placeholder="Ex: 1234"
+              maxLength={4} 
             />
           </div>
         </div>
