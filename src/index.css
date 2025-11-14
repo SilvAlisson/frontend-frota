@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+@theme {
+  --color-klin-azul: #007EAD;
+  --color-klin-azul-hover: #0C4C6C;
+  --color-klin-gelo: #F0F4F8;
+  --color-klin-branco: #FFFFFF;
+}
