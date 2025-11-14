@@ -9,6 +9,7 @@ import { FormRegistrarManutencao } from './components/forms/FormRegistrarManuten
 import { DashboardRelatorios } from './components/DashboardRelatorios';
 import { PainelAlertas } from './components/PainelAlertas';
 import { RankingOperadores } from './components/RankingOperadores';
+const RENDER_API_BASE_URL = 'https://api-frota-klin.onrender.com/api';
 
 
 // ===================================================================
@@ -52,7 +53,7 @@ function Dashboard({ session, onLogout }: DashboardProps) {
   // Efeito para carregar TODOS os dados mestre
   useEffect(() => {
     const api = axios.create({
-      baseURL: 'https://api-frota-klin.onrender.com',
+      baseURL: RENDER_API_BASE_URL, 
       headers: { 'Authorization': `Bearer ${token}` }
     });
     let isMounted = true;
@@ -350,7 +351,7 @@ function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (loginData: { token: 
     setLoading(true); 
 
     try {
-      const response = await axios.post('http://localhost:3001/api/auth/login', {
+      const response = await axios.post(`${RENDER_API_BASE_URL}/auth/login`, {
         email: email,
         password: password
       });

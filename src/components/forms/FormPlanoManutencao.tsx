@@ -1,9 +1,7 @@
-// frontend/src/components/forms/FormPlanoManutencao.tsx
-// (Este é um ficheiro NOVO)
-
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import DOMPurify from 'dompurify';
+const RENDER_API_BASE_URL = 'https://api-frota-klin.onrender.com/api';
 
 // Tipos
 interface FormPlanoProps {
@@ -44,8 +42,8 @@ export function FormPlanoManutencao({ token, veiculos }: FormPlanoProps) {
 
   // API (centralizada para este componente)
   const api = axios.create({
-    baseURL: 'http://localhost:3001/api',
-    headers: { 'Authorization': `Bearer ${token}` }
+    baseURL: RENDER_API_BASE_URL, 
+      headers: { 'Authorization': `Bearer ${token}` }
   });
 
   // --- Funções de API ---

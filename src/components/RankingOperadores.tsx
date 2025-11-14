@@ -1,8 +1,6 @@
-// frontend/src/components/RankingOperadores.tsx
-// (Este é um ficheiro NOVO)
-
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+const RENDER_API_BASE_URL = 'https://api-frota-klin.onrender.com/api';
 
 // Tipos
 interface RankingProps {
@@ -43,8 +41,8 @@ export function RankingOperadores({ token }: RankingProps) {
       setError('');
       try {
         const api = axios.create({
-          baseURL: 'http://localhost:3001/api',
-          headers: { 'Authorization': `Bearer ${token}` }
+          baseURL: RENDER_API_BASE_URL, 
+      headers: { 'Authorization': `Bearer ${token}` }
         });
         
         // Chama a nova rota de ranking com os filtros
