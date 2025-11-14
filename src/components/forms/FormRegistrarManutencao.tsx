@@ -257,7 +257,7 @@ export function FormRegistrarManutencao({
           titulo="Envie a foto do Comprovativo / Nota Fiscal"
           
           dadosJornada={formDataParaModal} 
-          apiEndpoint="/api/ordem-servico" // Rota de destino
+          apiEndpoint="/ordem-servico" // Rota de destino
           apiMethod="POST"
           
           kmParaConfirmar={null} // Não precisamos confirmar KM aqui
