@@ -194,7 +194,6 @@ function Dashboard({ session, onLogout }: DashboardProps) {
                 />
              );
            case 'hist_abastecimento':
-             // <-- MUDANÇA: Passar a role do usuário -->
              return <HistoricoAbastecimentos token={token} userRole={user.role} />;
              
            case 'manutencao':
@@ -207,7 +206,6 @@ function Dashboard({ session, onLogout }: DashboardProps) {
                 />
               );
            case 'hist_manutencao':
-             // <-- MUDANÇA: Passar a role do usuário -->
              return <HistoricoManutencoes token={token} userRole={user.role} />;
 
            default:
@@ -322,6 +320,7 @@ function Dashboard({ session, onLogout }: DashboardProps) {
             veiculos={veiculos}
             produtos={produtos}
             fornecedores={fornecedores}
+            adminUserId={user.id} // <-- MUDANÇA: Passar o ID do Admin
         />
       );
     }

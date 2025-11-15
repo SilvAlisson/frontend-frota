@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { FormCadastrarVeiculo } from './forms/FormCadastrarVeiculo';
-import { FormCadastrarUsuario } from './forms/FormCadastrarUsuario';
 import { FormCadastrarProduto } from './forms/FormCadastrarProduto';
 import { FormCadastrarFornecedor } from './forms/FormCadastrarFornecedor';
 import { FormRegistrarManutencao } from './forms/FormRegistrarManutencao'; 
@@ -9,8 +8,8 @@ import { FormPlanoManutencao } from './forms/FormPlanoManutencao';
 import { PainelAlertas } from './PainelAlertas';
 import { RankingOperadores } from './RankingOperadores';
 import { HistoricoAbastecimentos } from './HistoricoAbastecimentos';
-// <-- MUDANÇA: Importar o novo componente
 import { HistoricoManutencoes } from './HistoricoManutencoes';
+import { GestaoUsuarios } from './GestaoUsuarios';
 
 
 // Tipos
@@ -19,6 +18,7 @@ interface AdminDashboardProps {
   veiculos: any[];
   produtos: any[];
   fornecedores: any[];
+  adminUserId: string;
 }
 
 // ================== Adicionar 'hist_manutencao' às abas ==================
@@ -33,7 +33,8 @@ export function AdminDashboard({
   token, 
   veiculos, 
   produtos, 
-  fornecedores 
+  fornecedores,
+  adminUserId
 }: AdminDashboardProps) {
 
   // Estado da aba 
@@ -51,17 +52,18 @@ export function AdminDashboard({
         return <RankingOperadores token={token} />;
       
       case 'hist_abastecimento':
-        // <-- MUDANÇA: Passar a role (sabemos que é ADMIN) -->
         return <HistoricoAbastecimentos token={token} userRole="ADMIN" />;
       
       case 'hist_manutencao':
-        // <-- MUDANÇA: Passar a role (sabemos que é ADMIN) -->
         return <HistoricoManutencoes token={token} userRole="ADMIN" />;
         
       case 'veiculo':
         return <FormCadastrarVeiculo token={token} />;
+      
+      // <-- Atualizar o case 'usuario' -->
       case 'usuario':
-        return <FormCadastrarUsuario token={token} />;
+        return <GestaoUsuarios token={token} adminUserId={adminUserId} />;
+
       case 'produto':
         return <FormCadastrarProduto token={token} />;
       case 'fornecedor':
@@ -133,7 +135,6 @@ export function AdminDashboard({
             </button>
           </li>
           
-          {/* <-- MUDANÇA: Adicionar o botão da aba Histórico --> */}
           <li className="mr-2">
             <button 
               type="button"

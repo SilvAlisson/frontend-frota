@@ -7,8 +7,18 @@ import { RENDER_API_BASE_URL } from '../../config';
 const inputStyle = "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul focus:border-transparent disabled:bg-gray-200";
 const buttonStyle = "bg-klin-azul hover:bg-klin-azul-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center";
 const labelStyle = "block text-gray-700 text-sm font-bold mb-2";
+// <-- MUDANÇA: Estilo para botão secundário
+const secondaryButton = "bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full";
 
-export function FormCadastrarUsuario({ token }: { token: string }) {
+
+// <-- MUDANÇA: Adicionar novas props
+interface FormCadastrarUsuarioProps {
+  token: string;
+  onUsuarioAdicionado: () => void;
+  onCancelar: () => void;
+}
+
+export function FormCadastrarUsuario({ token, onUsuarioAdicionado, onCancelar }: FormCadastrarUsuarioProps) {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,13 +55,18 @@ export function FormCadastrarUsuario({ token }: { token: string }) {
         matricula: DOMPurify.sanitize(matricula) || null,
         role: role, 
       });
-      setSuccess(`Usuário ${nome} (${role}) cadastrado com sucesso!`);
+      // setSuccess(`Usuário ${nome} (${role}) cadastrado com sucesso!`); // (O componente pai vai mostrar o sucesso)
+      
       // Limpa o formulário
       setNome('');
       setEmail('');
       setPassword('');
       setMatricula('');
       setRole('ENCARREGADO');
+      
+      // <-- MUDANÇA: Chama o callback de sucesso
+      onUsuarioAdicionado();
+
     } catch (err) {
       console.error("Erro ao cadastrar usuário:", err);
       if (axios.isAxiosError(err) && err.response?.data?.error) {
@@ -66,6 +81,9 @@ export function FormCadastrarUsuario({ token }: { token: string }) {
 
   return (
     <form className="space-y-4" onSubmit={handleSubmit}>
+      <h4 className="text-lg font-semibold text-klin-azul text-center">
+        Adicionar Novo Utilizador
+      </h4>
       <div>
         <label className={labelStyle}>Nome Completo</label>
         <input type="text" className={inputStyle} value={nome} onChange={(e) => setNome(e.target.value)} />
@@ -95,9 +113,15 @@ export function FormCadastrarUsuario({ token }: { token: string }) {
       {error && <p className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-center text-sm">{error}</p>}
       {success && <p className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded text-center text-sm">{success}</p>}
 
-      <button type="submit" className={buttonStyle} disabled={loading}>
-        {loading ? 'Cadastrando...' : 'Cadastrar Usuário'}
-      </button>
+      {/* Botões de ação */}
+      <div className="flex gap-4 pt-4">
+        <button type="button" className={secondaryButton} disabled={loading} onClick={onCancelar}>
+          Cancelar
+        </button>
+        <button type="submit" className={buttonStyle} disabled={loading}>
+          {loading ? 'Cadastrando...' : 'Cadastrar Usuário'}
+        </button>
+      </div>
     </form>
   );
 }
