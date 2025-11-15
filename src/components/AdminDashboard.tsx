@@ -51,11 +51,12 @@ export function AdminDashboard({
         return <RankingOperadores token={token} />;
       
       case 'hist_abastecimento':
-        return <HistoricoAbastecimentos token={token} />;
+        // <-- MUDANÇA: Passar a role (sabemos que é ADMIN) -->
+        return <HistoricoAbastecimentos token={token} userRole="ADMIN" />;
       
-      // <-- MUDANÇA: Adicionar o case do histórico
       case 'hist_manutencao':
-        return <HistoricoManutencoes token={token} />;
+        // <-- MUDANÇA: Passar a role (sabemos que é ADMIN) -->
+        return <HistoricoManutencoes token={token} userRole="ADMIN" />;
         
       case 'veiculo':
         return <FormCadastrarVeiculo token={token} />;
