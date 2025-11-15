@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { RENDER_API_BASE_URL } from '../config';
+import { supabase } from '../supabaseClient';
 
 // Classes reutilizáveis do Tailwind
 const inputStyle = "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul focus:border-transparent disabled:bg-gray-200";
@@ -10,9 +11,7 @@ const labelStyle = "block text-gray-700 text-sm font-bold mb-2";
 interface ModalProps {
   token: string;
   titulo: string; 
-  // ================== MUDANÇA 1 AQUI ==================
-  kmParaConfirmar: number | null; // <-- Alterado de 'number' para 'number | null'
-  // ================== FIM DA MUDANÇA ==================
+  kmParaConfirmar: number | null;
   jornadaId: string | null; 
   dadosJornada: any; 
   apiEndpoint: string; 
@@ -42,7 +41,7 @@ export function ModalConfirmacaoFoto({
     setError('');
 
     if (!foto) {
-      setError('A foto é obrigatória.'); // Texto genérico
+      setError('A foto é obrigatória.');
       setLoading(false);
       return;
     }
@@ -53,23 +52,50 @@ export function ModalConfirmacaoFoto({
     });
 
     try {
-      // 1. Fazer o Upload da Foto (Rota genérica /upload)
-      const formData = new FormData();
-      formData.append('fotoOdometro', foto); // O backend espera 'fotoOdometro'
-
-      const uploadResponse = await api.post('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      // ==========================================================
+      // PASSO 1: FAZER O UPLOAD DA FOTO PARA O SUPABASE STORAGE
+      // ==========================================================
       
-      const fotoUrl = uploadResponse.data.url;
-      if (!fotoUrl) throw new Error('Ocorreu um erro no upload da foto.');
+      // Define um nome de ficheiro único (ex: public/abastecimento-1723456789.png)
+      const fileType = apiEndpoint.replace('/', '');
+      const fileExt = foto.name.split('.').pop();
+      const filePath = `public/${fileType}-${Date.now()}.${fileExt}`;
 
-      // 2. Preparar os dados com o URL da foto
+      const { data: uploadData, error: uploadError } = await supabase
+        .storage
+        .from('fotos-frota')
+        .upload(filePath, foto);
+
+      if (uploadError) {
+        throw new Error(`Erro no Supabase: ${uploadError.message}`);
+      }
+      if (!uploadData) {
+        throw new Error('Ocorreu um erro no upload da foto para o Supabase.');
+      }
+
+      // ==========================================================
+      // PASSO 2: OBTER A URL PÚBLICA DA FOTO
+      // ==========================================================
+      const { data: publicUrlData } = supabase
+        .storage
+        .from('fotos-frota')
+        .getPublicUrl(uploadData.path);
+
+      const fotoUrl = publicUrlData.publicUrl;
+      if (!fotoUrl) {
+        throw new Error('Não foi possível obter a URL pública da foto.');
+      }
+
+      // ==========================================================
+      // PASSO 3: PREPARAR OS DADOS PARA O NOSSO BACKEND
+      // ==========================================================
       let dadosCompletos = { ...dadosJornada };
       
-      // ================== MUDANÇA 2 AQUI (Lógica de API) ==================
-      if (apiEndpoint === '/abastecimento') { // Se for Abastecimento
-        dadosCompletos.fotoNotaFiscalUrl = fotoUrl; // Salva a foto da nota
+      if (apiEndpoint === '/abastecimento') {
+        dadosCompletos.fotoNotaFiscalUrl = fotoUrl; 
+      }
+      else if (apiEndpoint === '/ordem-servico') { // Rota de Manutenção
+        dadosCompletos.fotoComprovanteUrl = fotoUrl;
       }
       else if (apiMethod === 'POST') { // 'iniciar' Jornada
         dadosCompletos.fotoInicioUrl = fotoUrl;
@@ -77,14 +103,14 @@ export function ModalConfirmacaoFoto({
       else { // 'finalizar' Jornada
         dadosCompletos.fotoFimUrl = fotoUrl;
       }
-      // ================== FIM DA MUDANÇA ==================
-      
-      // 3. Submeter a Jornada ou Abastecimento (POST ou PUT)
+
+      // ==========================================================
+      // PASSO 4: ENVIAR OS DADOS (JÁ COM A URL) PARA O NOSSO BACKEND
+      // ==========================================================
       let response;
       if (apiMethod === 'POST') {
         response = await api.post(apiEndpoint, dadosCompletos);
       } else {
-        // Substitui o :jornadaId se existir no endpoint
         const endpoint = apiEndpoint.replace(':jornadaId', jornadaId || '');
         response = await api.put(endpoint, dadosCompletos);
       }
@@ -93,9 +119,11 @@ export function ModalConfirmacaoFoto({
       onClose(); 
 
     } catch (err) {
-      console.error("Erro ao submeter com foto:", err);
+      console.error("Erro ao submeter com foto (Supabase):", err);
       if (axios.isAxiosError(err) && err.response?.data?.error) {
         setError(err.response.data.error); 
+      } else if (err instanceof Error) {
+        setError(err.message);
       } else {
         setError('Falha ao submeter. Tente novamente.');
       }
@@ -104,6 +132,7 @@ export function ModalConfirmacaoFoto({
     }
   };
 
+  // O JSX (visual)
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
@@ -115,28 +144,24 @@ export function ModalConfirmacaoFoto({
       >
         <h3 className="text-xl font-semibold text-klin-azul text-center">{titulo}</h3>
         
-        {/* ================== MUDANÇA 3 AQUI (Renderização Condicional) ================== */}
-        {/* Este bloco só aparece se 'kmParaConfirmar' NÃO for nulo */}
         {kmParaConfirmar !== null && (
           <div className="bg-gray-100 p-4 rounded-md text-center">
             <p className="text-sm text-gray-600">Por favor, confirme o KM digitado:</p>
             <p className="text-2xl font-bold text-gray-900">{kmParaConfirmar} KM</p>
           </div>
         )}
-        {/* ================== FIM DA MUDANÇA ================== */}
 
-        {/* 2. Upload da Foto */}
         <div>
-          {/* ================== MUDANÇA 4 AQUI (Label Dinâmico) ================== */}
           <label className={labelStyle}>
-            {/* Título do campo de foto adaptável */}
-            {titulo.includes('nota fiscal') ? 'Foto da Nota Fiscal (Obrigatória)' : 'Foto do Odómetro (Obrigatória)'}
+            {titulo.includes('nota fiscal') || titulo.includes('Comprovativo') 
+              ? 'Foto da Nota Fiscal / Comprovativo (Obrigatória)' 
+              : 'Foto do Odómetro (Obrigatória)'
+            }
           </label>
-          {/* ================== FIM DA MUDANÇA ================== */}
           <input 
             type="file" 
             accept="image/*"
-            capture="environment" // Força o uso da câmera em mobile
+            capture="environment"
             className={inputStyle + " file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-klin-azul file:text-white hover:file:bg-klin-azul-hover"}
             onChange={(e) => setFoto(e.target.files ? e.target.files[0] : null)}
             disabled={loading}
