@@ -3,7 +3,7 @@ import axios from 'axios';
 import { RENDER_API_BASE_URL } from '../config';
 import { supabase } from '../supabaseClient';
 
-// Classes reutilizáveis do Tailwind
+// Classes reutilizáveis do Tailwind (sem alteração)
 const inputStyle = "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul focus:border-transparent disabled:bg-gray-200";
 const buttonStyle = "bg-klin-azul hover:bg-klin-azul-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center";
 const labelStyle = "block text-gray-700 text-sm font-bold mb-2";
@@ -57,13 +57,15 @@ export function ModalConfirmacaoFoto({
       // ==========================================================
       
       // Define um nome de ficheiro único (ex: public/abastecimento-1723456789.png)
-      const fileType = apiEndpoint.replace('/', '');
+      // Usamos split('/') para pegar a primeira parte da rota
+      // (Ex: '/jornada/iniciar' vira 'jornada')
+      const fileType = apiEndpoint.split('/')[1]; 
       const fileExt = foto.name.split('.').pop();
       const filePath = `public/${fileType}-${Date.now()}.${fileExt}`;
 
       const { data: uploadData, error: uploadError } = await supabase
         .storage
-        .from('fotos-frota')
+        .from('fotos-frota') // O nome do "Bucket" que criámos
         .upload(filePath, foto);
 
       if (uploadError) {
@@ -111,6 +113,7 @@ export function ModalConfirmacaoFoto({
       if (apiMethod === 'POST') {
         response = await api.post(apiEndpoint, dadosCompletos);
       } else {
+        // Substitui o :jornadaId se existir no endpoint
         const endpoint = apiEndpoint.replace(':jornadaId', jornadaId || '');
         response = await api.put(endpoint, dadosCompletos);
       }

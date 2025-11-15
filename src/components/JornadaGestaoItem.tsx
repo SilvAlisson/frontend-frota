@@ -13,7 +13,8 @@ interface Jornada {
   dataInicio: string;
   kmInicio: number;
   veiculo: { placa: string; modelo: string };
-  operador: { nome: string }; // O 'jornadas/abertas' já inclui isto
+  operador: { nome: string };
+  fotoInicioUrl: string | null; // <-- MUDANÇA: Adicionado o campo da foto
 }
 interface JornadaItemProps {
   token: string;
@@ -54,7 +55,8 @@ export function JornadaGestaoItem({ token, jornada, onFinalizada }: JornadaItemP
       // O back-end permite que ENCARREGADO/ADMIN finalize a jornada de outro user
       await api.put(`/jornada/finalizar/${jornada.id}`, {
         kmFim: kmFimFloat,
-        observacoes: `[Finalizado manualmente pelo Encarregado]`
+        // (Nota: A foto de fim não é pedida aqui, pois é um fecho manual)
+        observacoes: `[Finalizado manualmente pelo Gestor/Admin]`
       });
 
       setLoading(false);
@@ -77,7 +79,7 @@ export function JornadaGestaoItem({ token, jornada, onFinalizada }: JornadaItemP
     <div className="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
       
       {/* Informações da Jornada */}
-      <div className="mb-4">
+      <div className="mb-4 space-y-1">
         <p className="text-sm text-gray-600">
           <strong>Operador:</strong> {jornada.operador.nome}
         </p>
@@ -90,7 +92,27 @@ export function JornadaGestaoItem({ token, jornada, onFinalizada }: JornadaItemP
         <p className="text-sm text-gray-600">
           <strong>KM Inicial:</strong> {jornada.kmInicio}
         </p>
-        {/* Futuramente, o link da foto do odómetro apareceria aqui */}
+        
+        {/* <-- Adicionar o link da foto --> */}
+        {jornada.fotoInicioUrl ? (
+          <a
+            href={jornada.fotoInicioUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-klin-azul hover:text-klin-azul-hover font-medium underline inline-flex items-center gap-1"
+          >
+            Ver Foto do Odómetro (Início)
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+            </svg>
+          </a>
+        ) : (
+          <p className="text-sm text-gray-500 italic">
+            (Sem foto de início registada)
+          </p>
+        )}
+        {}
+
       </div>
 
       {/* Formulário de Finalização Manual */}

@@ -8,6 +8,9 @@ import { DashboardRelatorios } from './DashboardRelatorios';
 import { FormPlanoManutencao } from './forms/FormPlanoManutencao';
 import { PainelAlertas } from './PainelAlertas';
 import { RankingOperadores } from './RankingOperadores';
+import { HistoricoAbastecimentos } from './HistoricoAbastecimentos';
+// <-- MUDANÇA: Importar o novo componente
+import { HistoricoManutencoes } from './HistoricoManutencoes';
 
 
 // Tipos
@@ -18,8 +21,8 @@ interface AdminDashboardProps {
   fornecedores: any[];
 }
 
-// ================== Adicionar 'ranking' às abas ==================
-type AbaAdmin = 'alertas' | 'dashboard' | 'ranking' | 'veiculo' | 'usuario' | 'produto' | 'fornecedor' | 'manutencao' | 'planos';
+// ================== Adicionar 'hist_manutencao' às abas ==================
+type AbaAdmin = 'alertas' | 'dashboard' | 'ranking' | 'hist_abastecimento' | 'hist_manutencao' | 'veiculo' | 'usuario' | 'produto' | 'fornecedor' | 'manutencao' | 'planos';
 
 // Estilos das abas 
 const abaAtivaStyle = "inline-block p-4 text-klin-azul border-b-2 border-klin-azul rounded-t-lg active";
@@ -44,9 +47,15 @@ export function AdminDashboard({
       case 'dashboard':
         return <DashboardRelatorios token={token} veiculos={veiculos} />;
       
-      // ================== Adicionar o 'case' do ranking ==================
       case 'ranking':
         return <RankingOperadores token={token} />;
+      
+      case 'hist_abastecimento':
+        return <HistoricoAbastecimentos token={token} />;
+      
+      // <-- MUDANÇA: Adicionar o case do histórico
+      case 'hist_manutencao':
+        return <HistoricoManutencoes token={token} />;
         
       case 'veiculo':
         return <FormCadastrarVeiculo token={token} />;
@@ -103,7 +112,6 @@ export function AdminDashboard({
             </button>
           </li>
           
-          {/* ================== Adicionar o botão da aba ================== */}
           <li className="mr-2">
             <button 
               type="button"
@@ -111,6 +119,27 @@ export function AdminDashboard({
               onClick={() => setAbaAtiva('ranking')}
             >
               Ranking (KM/L)
+            </button>
+          </li>
+          
+          <li className="mr-2">
+            <button 
+              type="button"
+              className={abaAtiva === 'hist_abastecimento' ? abaAtivaStyle : abaInativaStyle}
+              onClick={() => setAbaAtiva('hist_abastecimento')}
+            >
+              Histórico (Abast.)
+            </button>
+          </li>
+          
+          {/* <-- MUDANÇA: Adicionar o botão da aba Histórico --> */}
+          <li className="mr-2">
+            <button 
+              type="button"
+              className={abaAtiva === 'hist_manutencao' ? abaAtivaStyle : abaInativaStyle}
+              onClick={() => setAbaAtiva('hist_manutencao')}
+            >
+              Histórico (Manut.)
             </button>
           </li>
           {}

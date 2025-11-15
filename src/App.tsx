@@ -9,6 +9,9 @@ import { FormRegistrarManutencao } from './components/forms/FormRegistrarManuten
 import { DashboardRelatorios } from './components/DashboardRelatorios';
 import { PainelAlertas } from './components/PainelAlertas';
 import { RankingOperadores } from './components/RankingOperadores';
+import { HistoricoAbastecimentos } from './components/HistoricoAbastecimentos';
+// <-- MUDANÇA: Importar o novo componente
+import { HistoricoManutencoes } from './components/HistoricoManutencoes';
 import { RENDER_API_BASE_URL } from './config';
 
 
@@ -24,8 +27,8 @@ interface DashboardProps {
 const abaAtivaStyle = "inline-block p-4 text-klin-azul border-b-2 border-klin-azul rounded-t-lg active";
 const abaInativaStyle = "inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300";
 
-// ================== Adicionar 'ranking' às abas ==================
-type AbaEncarregado = 'alertas' | 'dashboard' | 'ranking' | 'jornadas' | 'abastecimento' | 'manutencao';
+// ================== Adicionar 'hist_manutencao' às abas ==================
+type AbaEncarregado = 'alertas' | 'dashboard' | 'ranking' | 'jornadas' | 'abastecimento' | 'hist_abastecimento' | 'manutencao' | 'hist_manutencao';
 
 
 // ===================================================================
@@ -171,7 +174,6 @@ function Dashboard({ session, onLogout }: DashboardProps) {
            case 'dashboard':
              return <DashboardRelatorios token={token} veiculos={veiculos} />;
            
-           // ================== Adicionar o 'case' do ranking ==================
            case 'ranking':
              return <RankingOperadores token={token} />;
              
@@ -193,6 +195,9 @@ function Dashboard({ session, onLogout }: DashboardProps) {
                   fornecedores={fornecedores}
                 />
              );
+           case 'hist_abastecimento':
+             return <HistoricoAbastecimentos token={token} />;
+             
            case 'manutencao':
               return (
                 <FormRegistrarManutencao
@@ -202,6 +207,10 @@ function Dashboard({ session, onLogout }: DashboardProps) {
                   fornecedores={fornecedores}
                 />
               );
+            // <-- MUDANÇA: Adicionar o case do histórico
+           case 'hist_manutencao':
+             return <HistoricoManutencoes token={token} />;
+
            default:
              return null;
          }
@@ -234,7 +243,6 @@ function Dashboard({ session, onLogout }: DashboardProps) {
                   </button>
                 </li>
                 
-                {/* ================== Adicionar o botão da aba ================== */}
                 <li className="mr-2">
                   <button 
                     type="button"
@@ -264,6 +272,18 @@ function Dashboard({ session, onLogout }: DashboardProps) {
                     Registar Abastecimento
                   </button>
                 </li>
+                
+                <li className="mr-2">
+                  <button 
+                    type="button"
+                    className={abaEncarregado === 'hist_abastecimento' ? abaAtivaStyle : abaInativaStyle}
+                    onClick={() => setAbaEncarregado('hist_abastecimento')}
+                  >
+                    Histórico (Abast.)
+                  </button>
+                </li>
+                {}
+
                 <li className="mr-2">
                   <button 
                     type="button"
@@ -273,6 +293,18 @@ function Dashboard({ session, onLogout }: DashboardProps) {
                     Registar Manutenção/Lavagem
                   </button>
                 </li>
+
+                {/* <-- MUDANÇA: Adicionar o botão da aba Histórico --> */}
+                <li className="mr-2">
+                  <button 
+                    type="button"
+                    className={abaEncarregado === 'hist_manutencao' ? abaAtivaStyle : abaInativaStyle}
+                    onClick={() => setAbaEncarregado('hist_manutencao')}
+                  >
+                    Histórico (Manut.)
+                  </button>
+                </li>
+                {}
               </ul>
             </div>
 
