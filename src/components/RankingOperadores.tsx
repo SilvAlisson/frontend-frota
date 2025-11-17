@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { RENDER_API_BASE_URL } from '../config';
+import { exportarParaExcel } from '../utils';
 
 // Tipos
 interface RankingProps {
@@ -23,6 +23,8 @@ const medalColors = [
   'text-yellow-700'  // 3º Bronze
 ];
 
+const exportButton = "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50";
+
 export function RankingOperadores({ token }: RankingProps) {
   
   // 1. Estados para os filtros (igual ao DashboardRelatorios)
@@ -41,7 +43,7 @@ export function RankingOperadores({ token }: RankingProps) {
       setError('');
       try {
         const api = axios.create({
-          baseURL: RENDER_API_BASE_URL, 
+          baseURL: 'https://api-frota-klin.onrender.com',
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
@@ -81,41 +83,84 @@ export function RankingOperadores({ token }: RankingProps) {
     new Date().getFullYear() - 2,
   ];
 
+  const handleExportar = () => {
+    if (ranking.length === 0) {
+      alert("Nenhum dado de ranking para exportar.");
+      return;
+    }
+    
+    // Nomes dos meses para o nome do ficheiro
+    const nomeMes = mesesOptions.find(m => m.v === mes)?.n || 'Mes';
+
+    try {
+      // Formatar os dados
+      const dadosFormatados = ranking.map((op, index) => ({
+        'Posição': `${index + 1}º`,
+        'Motorista': op.nome,
+        'Média (KM/L)': formatKML(op.kml),
+        'KM Rodado': formatKm(op.totalKM),
+        'Litros (Comb.)': formatLitros(op.totalLitros),
+      }));
+      
+      exportarParaExcel(dadosFormatados, `Ranking_Motoristas_${nomeMes}_${ano}.xlsx`);
+
+    } catch (err) {
+      alert('Ocorreu um erro ao preparar os dados para exportação.');
+      console.error(err);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h3 className="text-xl font-semibold text-klin-azul text-center">
         Ranking de Eficiência (KM/L) - Motoristas
       </h3>
 
-      {/* 6. Filtros de Data (Igual ao DashboardRelatorios) */}
-      <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border">
-        <div>
-          <label className="block text-sm font-bold text-gray-700 mb-1">Mês</label>
-          <select 
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul"
-            value={mes}
-            onChange={(e) => setMes(Number(e.target.value))}
-          >
-            {mesesOptions.map(m => (
-              <option key={m.v} value={m.v}>{m.n}</option>
-            ))}
-          </select>
+      {/* 6. Filtros de Data */}
+      {/* <-- MUDANÇA 4: Adicionar 'items-end' e 'justify-between' --> */}
+      <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border items-end justify-between">
+        <div className="flex flex-wrap gap-4">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Mês</label>
+            <select 
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul"
+              value={mes}
+              onChange={(e) => setMes(Number(e.target.value))}
+            >
+              {mesesOptions.map(m => (
+                <option key={m.v} value={m.v}>{m.n}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-1">Ano</label>
+            <select 
+              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul"
+              value={ano}
+              onChange={(e) => setAno(Number(e.target.value))}
+            >
+              {anosOptions.map(a => (
+                <option key={a} value={a}>{a}</option>
+              ))}
+            </select>
+          </div>
         </div>
-         <div>
-          <label className="block text-sm font-bold text-gray-700 mb-1">Ano</label>
-          <select 
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul"
-            value={ano}
-            onChange={(e) => setAno(Number(e.target.value))}
-          >
-             {anosOptions.map(a => (
-              <option key={a} value={a}>{a}</option>
-            ))}
-          </select>
+
+        {/* <-- MUDANÇA 5: Adicionar o botão de exportar --> */}
+        <div className="flex-shrink-0">
+           <button
+              type="button"
+              className={exportButton + " text-sm py-2"}
+              onClick={handleExportar}
+              disabled={ranking.length === 0 || loading}
+            >
+              Exportar Ranking (Excel)
+            </button>
         </div>
       </div>
 
       {/* 7. Conteúdo (Loading, Erro ou Tabela) */}
+      {/* ... (restante do JSX sem alterações) ... */}
       {loading && <p className="text-center text-klin-azul">A calcular ranking...</p>}
       {error && <p className="text-center text-red-600">{error}</p>}
 
