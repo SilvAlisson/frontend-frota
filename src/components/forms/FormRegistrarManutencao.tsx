@@ -22,6 +22,18 @@ const inputStyle = "shadow appearance-none border rounded w-full py-3 px-4 text-
 const buttonStyle = "bg-klin-azul hover:bg-klin-azul-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center";
 const labelStyle = "block text-gray-700 text-sm font-bold mb-2";
 
+// Adicionar a função parseDecimal
+/**
+ * Converte uma string de moeda ou decimal (ex: "5,99") para um número (ex: 5.99)
+ */
+const parseDecimal = (value: string): number => {
+  if (!value) return 0;
+  // Substitui vírgula por ponto para o parseFloat
+  const parsableValue = value.replace(",", ".");
+  const parsed = parseFloat(parsableValue);
+  return isNaN(parsed) ? 0 : parsed;
+};
+
 export function FormRegistrarManutencao({ 
   token, 
   veiculos, 
@@ -78,16 +90,17 @@ export function FormRegistrarManutencao({
     }
 
     try {
+      // Usar parseDecimal na conversão
       const itensFormatados = itens.map(item => ({
         produtoId: item.produtoId,
-        quantidade: parseFloat(item.quantidade),
-        valorPorUnidade: parseFloat(item.valorPorUnidade)
+        quantidade: parseDecimal(item.quantidade),
+        valorPorUnidade: parseDecimal(item.valorPorUnidade)
       }));
 
       const dadosCompletosDoFormulario = {
         veiculoId,
         fornecedorId,
-        kmAtual: parseFloat(kmAtual),
+        kmAtual: parseDecimal(kmAtual), // Usar parseDecimal
         data: new Date(data).toISOString(),
         tipo,
         observacoes: DOMPurify.sanitize(observacoes) || null,
@@ -106,6 +119,7 @@ export function FormRegistrarManutencao({
     }
   };
 
+  // Limpar todos os campos do formulário
   const handleModalSuccess = () => {
     setSuccess('Manutenção/Lavagem registada com sucesso!');
     setModalAberto(false);
@@ -115,6 +129,7 @@ export function FormRegistrarManutencao({
     setVeiculoId('');
     setFornecedorId('');
     setKmAtual('');
+    setData(new Date().toISOString().slice(0, 10)); // Resetar data
     setTipo('CORRETIVA');
     setObservacoes('');
     setItens([{ produtoId: '', quantidade: '1', valorPorUnidade: '' }]); 
@@ -151,7 +166,14 @@ export function FormRegistrarManutencao({
           </div>
            <div>
             <label className={labelStyle}>KM Atual (Odômetro)</label>
-            <input className={inputStyle} type="number" value={kmAtual} onChange={(e) => setKmAtual(e.target.value)} />
+            {/* type="text" e inputMode="decimal" */}
+            <input 
+              className={inputStyle} 
+              type="text" 
+              inputMode="decimal"
+              value={kmAtual} 
+              onChange={(e) => setKmAtual(e.target.value)} 
+            />
           </div>
            <div>
             <label className={labelStyle}>Data do Serviço</label>
@@ -170,8 +192,9 @@ export function FormRegistrarManutencao({
         
         <div className="space-y-3">
           {itens.map((item, index) => {
-            const quantidade = parseFloat(item.quantidade);
-            const valorPorUnidade = parseFloat(item.valorPorUnidade);
+            // Usar parseDecimal para calcular o total
+            const quantidade = parseDecimal(item.quantidade);
+            const valorPorUnidade = parseDecimal(item.valorPorUnidade);
             const valorTotalItem = (quantidade > 0 && valorPorUnidade > 0) ? (quantidade * valorPorUnidade) : 0;
 
             return (
@@ -186,16 +209,20 @@ export function FormRegistrarManutencao({
                   {produtosFiltrados.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                 </select>
                 {/* Col 2: Qtd */}
+                {/* type="text" e inputMode="decimal" */}
                 <input 
-                  type="number" 
+                  type="text" 
+                  inputMode="decimal"
                   placeholder="Qtd"
                   className={inputStyle + " py-2 text-right"}
                   value={item.quantidade}
                   onChange={(e) => handleItemChange(index, 'quantidade', e.target.value)}
                 />
                 {/* Col 3: Valor Unitário (R$) */}
+                {/* type="text" e inputMode="decimal" */}
                 <input 
-                  type="number" 
+                  type="text" 
+                  inputMode="decimal"
                   step="0.01"
                   placeholder="Valor/Un (R$)"
                   className={inputStyle + " py-2 text-right"}

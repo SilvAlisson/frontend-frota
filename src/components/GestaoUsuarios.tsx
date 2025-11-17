@@ -2,9 +2,12 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { RENDER_API_BASE_URL } from '../config';
 import { FormCadastrarUsuario } from './forms/FormCadastrarUsuario';
+// <-- MUDANÇA 1: Importar o novo formulário de edição -->
+import { FormEditarUsuario } from './forms/FormEditarUsuario';
 
 // Tipos
 interface User {
+// ... (interface User sem alterações)
   id: string;
   nome: string;
   email: string;
@@ -12,18 +15,22 @@ interface User {
   role: 'ADMIN' | 'ENCARREGADO' | 'OPERADOR';
 }
 interface GestaoUsuariosProps {
+// ... (interface GestaoUsuariosProps sem alterações)
   token: string;
-  adminUserId: string; // ID do admin logado, para evitar auto-deleção
+  adminUserId: string;
 }
 
 // Estilos
+// ... (estilos thStyle, tdStyle, etc. sem alterações)
 const thStyle = "px-4 py-2 text-left text-sm font-semibold text-gray-700 bg-gray-100 border-b";
 const tdStyle = "px-4 py-2 text-sm text-gray-800 border-b";
 const buttonStyle = "bg-klin-azul hover:bg-klin-azul-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed";
 const dangerButton = "bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline disabled:opacity-50";
 const secondaryButton = "bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline";
 
+
 // Ícone de Lixo
+// ... (função IconeLixo sem alterações)
 function IconeLixo() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
@@ -38,16 +45,23 @@ export function GestaoUsuarios({ token, adminUserId }: GestaoUsuariosProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [modo, setModo] = useState<'listando' | 'adicionando'>('listando');
+  
+  // <-- MUDANÇA 2: Atualizar o tipo do 'modo' -->
+  const [modo, setModo] = useState<'listando' | 'adicionando' | 'editando'>('listando');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // <-- MUDANÇA 3: Novo estado para saber qual usuário editar -->
+  const [usuarioIdSelecionado, setUsuarioIdSelecionado] = useState<string | null>(null);
+
   const api = axios.create({
+  // ... (api instance sem alterações)
     baseURL: RENDER_API_BASE_URL,
     headers: { 'Authorization': `Bearer ${token}` }
   });
 
   // Função para buscar os utilizadores
   const fetchUsuarios = async () => {
+  // ... (função fetchUsuarios sem alterações)
     setLoading(true);
     setError('');
     try {
@@ -62,11 +76,13 @@ export function GestaoUsuarios({ token, adminUserId }: GestaoUsuariosProps) {
 
   // Buscar ao carregar o componente
   useEffect(() => {
+  // ... (useEffect sem alterações)
     fetchUsuarios();
   }, []);
 
   // Função para lidar com a deleção
   const handleDelete = async (userId: string) => {
+  // ... (função handleDelete sem alterações)
     if (userId === adminUserId) {
       setError('Não pode remover o seu próprio utilizador.');
       return;
@@ -93,13 +109,39 @@ export function GestaoUsuarios({ token, adminUserId }: GestaoUsuariosProps) {
       setDeletingId(null);
     }
   };
+
+  // <-- MUDANÇA 4: Handler para o botão de 'Editar' -->
+  const handleAbrirEdicao = (userId: string) => {
+    setUsuarioIdSelecionado(userId);
+    setModo('editando');
+    setError('');
+    setSuccess('');
+  };
+
+  // <-- MUDANÇA 5: Handler genérico para 'Cancelar' -->
+  const handleCancelarForm = () => {
+    setModo('listando');
+    setUsuarioIdSelecionado(null);
+    setError('');
+    setSuccess('');
+  };
   
   // Callback para quando um novo utilizador é adicionado
   const handleUsuarioAdicionado = () => {
+  // ... (função handleUsuarioAdicionado sem alterações)
     setSuccess('Utilizador adicionado com sucesso!');
     setModo('listando');
     fetchUsuarios(); // Re-busca a lista
   };
+
+  // <-- MUDANÇA 6: Handler para quando um utilizador é editado -->
+  const handleUsuarioEditado = () => {
+    setSuccess('Utilizador atualizado com sucesso!');
+    setModo('listando');
+    setUsuarioIdSelecionado(null);
+    fetchUsuarios(); // Re-busca a lista
+  };
+
 
   // Renderização principal
   return (
@@ -117,10 +159,23 @@ export function GestaoUsuarios({ token, adminUserId }: GestaoUsuariosProps) {
           <FormCadastrarUsuario 
             token={token} 
             onUsuarioAdicionado={handleUsuarioAdicionado}
-            onCancelar={() => setModo('listando')}
+            onCancelar={handleCancelarForm} // <-- Usa o handler genérico
           />
         </div>
       )}
+
+      {/* <-- MUDANÇA 7: Adicionar o bloco de renderização do formulário de edição --> */}
+      {modo === 'editando' && usuarioIdSelecionado && (
+        <div className="bg-gray-50 p-4 rounded-lg border">
+          <FormEditarUsuario
+            token={token}
+            userId={usuarioIdSelecionado}
+            onUsuarioEditado={handleUsuarioEditado}
+            onCancelar={handleCancelarForm}
+          />
+        </div>
+      )}
+
 
       {/* Modo de Listagem (Tabela) */}
       {modo === 'listando' && (
@@ -136,11 +191,13 @@ export function GestaoUsuarios({ token, adminUserId }: GestaoUsuariosProps) {
           </div>
 
           {loading ? (
+  // ... (bloco 'loading' sem alterações)
             <p className="text-center text-klin-azul">A carregar utilizadores...</p>
           ) : (
             <div className="overflow-x-auto shadow rounded-lg border">
               <table className="min-w-full">
                 <thead>
+  {/* ... (cabeçalho da tabela sem alterações) */}
                   <tr>
                     <th className={thStyle}>Nome</th>
                     <th className={thStyle}>Email</th>
@@ -153,6 +210,7 @@ export function GestaoUsuarios({ token, adminUserId }: GestaoUsuariosProps) {
                   {usuarios.map((user) => (
                     <tr key={user.id}>
                       <td className={tdStyle}>{user.nome}</td>
+  {/* ... (células de nome, email, matricula, role sem alterações) ... */}
                       <td className={tdStyle}>{user.email}</td>
                       <td className={tdStyle}>{user.matricula || '---'}</td>
                       <td className={tdStyle}>
@@ -166,10 +224,11 @@ export function GestaoUsuarios({ token, adminUserId }: GestaoUsuariosProps) {
                       </td>
                       <td className={tdStyle}>
                         <div className="flex gap-2">
+                          {/* <-- MUDANÇA 8: Ligar o botão 'Editar' --> */}
                           <button 
                             type="button"
                             className={secondaryButton + " text-xs py-1 px-2"}
-                            onClick={() => alert("Funcionalidade 'Editar' será implementada no próximo passo.")}
+                            onClick={() => handleAbrirEdicao(user.id)}
                           >
                             Editar
                           </button>

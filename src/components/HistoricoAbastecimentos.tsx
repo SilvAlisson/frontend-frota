@@ -29,9 +29,11 @@ interface Abastecimento {
   itens: ItemAbastecimento[];
 }
 
+// 1. ADICIONAR 'veiculos' ÀS PROPS
 interface HistoricoAbastecimentosProps {
   token: string;
-  userRole: string; // <-- CORREÇÃO: Adicionada a propriedade
+  userRole: string;
+  veiculos: any[];
 }
 
 // Sub-componente para o ícone da foto (para usar no link)
@@ -51,12 +53,18 @@ function IconeLixo() {
   );
 }
 
-export function HistoricoAbastecimentos({ token, userRole }: HistoricoAbastecimentosProps) {
+// 2. ATUALIZAR AS PROPS RECEBIDAS
+export function HistoricoAbastecimentos({ token, userRole, veiculos }: HistoricoAbastecimentosProps) {
 
   const [historico, setHistorico] = useState<Abastecimento[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // 3. ADICIONAR ESTADOS PARA OS FILTROS
+  const [veiculoIdFiltro, setVeiculoIdFiltro] = useState('');
+  const [dataInicioFiltro, setDataInicioFiltro] = useState('');
+  const [dataFimFiltro, setDataFimFiltro] = useState('');
 
   const api = axios.create({
     baseURL: RENDER_API_BASE_URL,
@@ -69,7 +77,17 @@ export function HistoricoAbastecimentos({ token, userRole }: HistoricoAbastecime
       setLoading(true);
       setError('');
       try {
-        const response = await api.get('/abastecimentos/recentes');
+        // 4. PREPARAR PARÂMETROS DE FILTRO
+        const params: any = {};
+        if (veiculoIdFiltro) {
+          params.veiculoId = veiculoIdFiltro;
+        }
+        if (dataInicioFiltro && dataFimFiltro) {
+          params.dataInicio = dataInicioFiltro;
+          params.dataFim = dataFimFiltro;
+        }
+
+        const response = await api.get('/abastecimentos/recentes', { params });
         setHistorico(response.data);
       } catch (err) {
         console.error("Erro ao buscar histórico de abastecimentos:", err);
@@ -79,7 +97,8 @@ export function HistoricoAbastecimentos({ token, userRole }: HistoricoAbastecime
       }
     };
     fetchHistorico();
-  }, [token]); // Recarrega se o token mudar
+    // 5. ATUALIZAR DEPENDÊNCIAS DO USEEFFECT
+  }, [token, veiculoIdFiltro, dataInicioFiltro, dataFimFiltro]); // Recarrega se os filtros mudarem
 
   const handleDelete = async (id: string) => {
     if (!window.confirm(`Tem a certeza que quer REMOVER permanentemente este registo de abastecimento? (ID: ${id})\n\nEsta ação não pode ser desfeita e pode afetar os relatórios.`)) {
@@ -110,14 +129,42 @@ export function HistoricoAbastecimentos({ token, userRole }: HistoricoAbastecime
     new Date(dateStr).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
   // Renderização
+  // Adicionar o 'if (loading)' que faltava
   if (loading) {
-    return <p className="text-center text-klin-azul">A carregar histórico...</p>;
+    return (
+      <div className="space-y-4">
+         {/* Renderiza os filtros mesmo se estiver a carregar */}
+         <FiltrosHistorico
+          veiculos={veiculos}
+          veiculoId={veiculoIdFiltro}
+          setVeiculoId={setVeiculoIdFiltro}
+          dataInicio={dataInicioFiltro}
+          setDataInicio={setDataInicioFiltro}
+          dataFim={dataFimFiltro}
+          setDataFim={setDataFimFiltro}
+        />
+        <p className="text-center text-klin-azul">A carregar histórico...</p>
+      </div>
+    );
   }
   
+  // 6. ATUALIZAR MENSAGEM DE "NÃO ENCONTRADO"
   if (historico.length === 0 && !error) {
     return (
-      <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
-        <p>Nenhum registo de abastecimento encontrado.</p>
+      <div className="space-y-4">
+        {/* Renderiza os filtros mesmo se não houver resultados */}
+        <FiltrosHistorico
+          veiculos={veiculos}
+          veiculoId={veiculoIdFiltro}
+          setVeiculoId={setVeiculoIdFiltro}
+          dataInicio={dataInicioFiltro}
+          setDataInicio={setDataInicioFiltro}
+          dataFim={dataFimFiltro}
+          setDataFim={setDataFimFiltro}
+        />
+        <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
+          <p>Nenhum registo de abastecimento encontrado para os filtros selecionados.</p>
+        </div>
       </div>
     );
   }
@@ -125,8 +172,19 @@ export function HistoricoAbastecimentos({ token, userRole }: HistoricoAbastecime
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-semibold text-klin-azul text-center mb-4">
-        Histórico de Abastecimentos (Últimos 50)
+        Histórico de Abastecimentos (Últimos 50 por filtro)
       </h3>
+
+      {/* 7. ADICIONAR O COMPONENTE DE FILTROS */}
+      <FiltrosHistorico
+        veiculos={veiculos}
+        veiculoId={veiculoIdFiltro}
+        setVeiculoId={setVeiculoIdFiltro}
+        dataInicio={dataInicioFiltro}
+        setDataInicio={setDataInicioFiltro}
+        dataFim={dataFimFiltro}
+        setDataFim={setDataFimFiltro}
+      />
       
       {/* Feedback de erro de deleção */}
       {error && <p className="text-center text-red-600 bg-red-100 p-3 rounded border border-red-400">{error}</p>}
@@ -210,6 +268,67 @@ export function HistoricoAbastecimentos({ token, userRole }: HistoricoAbastecime
 
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// 8. Adicionar a definição do componente 'FiltrosHistorico'
+const inputStyle = "shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul";
+const labelStyle = "block text-sm font-bold text-gray-700 mb-1";
+
+interface FiltrosProps {
+  veiculos: any[];
+  veiculoId: string;
+  setVeiculoId: (val: string) => void;
+  dataInicio: string;
+  setDataInicio: (val: string) => void;
+  dataFim: string;
+  setDataFim: (val: string) => void;
+}
+
+function FiltrosHistorico({
+  veiculos,
+  veiculoId,
+  setVeiculoId,
+  dataInicio,
+  setDataInicio,
+  dataFim,
+  setDataFim
+}: FiltrosProps) {
+  return (
+    <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border">
+      <div>
+        <label className={labelStyle}>Data Início</label>
+        <input 
+          type="date"
+          className={inputStyle}
+          value={dataInicio}
+          onChange={(e) => setDataInicio(e.target.value)}
+        />
+      </div>
+      <div>
+        <label className={labelStyle}>Data Fim</label>
+        <input 
+          type="date"
+          className={inputStyle}
+          value={dataFim}
+          onChange={(e) => setDataFim(e.target.value)}
+          disabled={!dataInicio} // Só habilita data fim se a início estiver preenchida
+        />
+      </div>
+      <div className="flex-grow">
+        <label className={labelStyle}>Veículo</label>
+        <select 
+          className={inputStyle}
+          value={veiculoId}
+          onChange={(e) => setVeiculoId(e.target.value)}
+        >
+          <option value="">-- Todos os Veículos --</option>
+          {veiculos.map(v => (
+            <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>
+          ))}
+        </select>
       </div>
     </div>
   );

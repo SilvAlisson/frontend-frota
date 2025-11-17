@@ -1,7 +1,4 @@
 import { useState } from 'react';
-import { FormCadastrarVeiculo } from './forms/FormCadastrarVeiculo';
-import { FormCadastrarProduto } from './forms/FormCadastrarProduto';
-import { FormCadastrarFornecedor } from './forms/FormCadastrarFornecedor';
 import { FormRegistrarManutencao } from './forms/FormRegistrarManutencao'; 
 import { DashboardRelatorios } from './DashboardRelatorios';
 import { FormPlanoManutencao } from './forms/FormPlanoManutencao';
@@ -10,7 +7,9 @@ import { RankingOperadores } from './RankingOperadores';
 import { HistoricoAbastecimentos } from './HistoricoAbastecimentos';
 import { HistoricoManutencoes } from './HistoricoManutencoes';
 import { GestaoUsuarios } from './GestaoUsuarios';
-
+import { GestaoVeiculos } from './GestaoVeiculos';
+import { GestaoProdutos } from './GestaoProdutos';
+import { GestaoFornecedores } from './GestaoFornecedores';
 
 // Tipos
 interface AdminDashboardProps {
@@ -27,7 +26,6 @@ type AbaAdmin = 'alertas' | 'dashboard' | 'ranking' | 'hist_abastecimento' | 'hi
 // Estilos das abas 
 const abaAtivaStyle = "inline-block p-4 text-klin-azul border-b-2 border-klin-azul rounded-t-lg active";
 const abaInativaStyle = "inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300";
-
 
 export function AdminDashboard({ 
   token, 
@@ -52,22 +50,21 @@ export function AdminDashboard({
         return <RankingOperadores token={token} />;
       
       case 'hist_abastecimento':
-        return <HistoricoAbastecimentos token={token} userRole="ADMIN" />;
+        return <HistoricoAbastecimentos token={token} userRole="ADMIN" veiculos={veiculos} />;
       
       case 'hist_manutencao':
-        return <HistoricoManutencoes token={token} userRole="ADMIN" />;
+        return <HistoricoManutencoes token={token} userRole="ADMIN" veiculos={veiculos} />;
         
       case 'veiculo':
-        return <FormCadastrarVeiculo token={token} />;
+        return <GestaoVeiculos token={token} />;
       
-      // <-- Atualizar o case 'usuario' -->
       case 'usuario':
         return <GestaoUsuarios token={token} adminUserId={adminUserId} />;
 
       case 'produto':
-        return <FormCadastrarProduto token={token} />;
+        return <GestaoProdutos token={token} />;
       case 'fornecedor':
-        return <FormCadastrarFornecedor token={token} />;
+        return <GestaoFornecedores token={token} />;
       case 'manutencao':
         return (
           <FormRegistrarManutencao
