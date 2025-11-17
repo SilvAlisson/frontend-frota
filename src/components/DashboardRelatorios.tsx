@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { RENDER_API_BASE_URL } from '../config';
+import { exportarParaExcel } from '../utils';
 
 // Tipos
 interface KpiProps {
@@ -37,6 +38,8 @@ function KpiCard({ titulo, valor, descricao }: KpiProps) {
     </div>
   );
 }
+
+const exportButton = "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50";
 
 // Componente Principal: Dashboard de Relatórios
 // ================== Receber 'veiculos' ==================
@@ -109,10 +112,41 @@ export function DashboardRelatorios({ token, veiculos }: DashboardRelatoriosProp
     new Date().getFullYear() - 2,
   ];
 
+  const handleExportar = () => {
+    if (!kpis) {
+      alert("Nenhum dado de KPI para exportar.");
+      return;
+    }
+    
+    // Nomes dos meses para o nome do ficheiro
+    const nomeMes = mesesOptions.find(m => m.v === mes)?.n || 'Mes';
+
+    try {
+      // Transformar o objeto KPI num array de {KPI, Valor}
+      const dadosFormatados = [
+        { KPI: 'Custo Total (Geral)', Valor: formatCurrency(kpis.custoTotalGeral) },
+        { KPI: 'KM Total Rodado', Valor: formatKm(kpis.kmTotalRodado) },
+        { KPI: 'Custo Médio por KM', Valor: formatRperKM(kpis.custoMedioPorKM) },
+        { KPI: 'Consumo Médio (KM/L)', Valor: formatKML(kpis.consumoMedioKML) },
+        { KPI: 'Custo (Combustível)', Valor: formatCurrency(kpis.custoTotalCombustivel) },
+        { KPI: 'Custo (Aditivos)', Valor: formatCurrency(kpis.custoTotalAditivo) },
+        { KPI: 'Custo (Manutenção)', Valor: formatCurrency(kpis.custoTotalManutencao) },
+      ];
+      
+      exportarParaExcel(dadosFormatados, `KPIs_Frota_${nomeMes}_${ano}.xlsx`);
+
+    } catch (err) {
+      alert('Ocorreu um erro ao preparar os dados para exportação.');
+      console.error(err);
+    }
+  };
+
+
   return (
     <div className="space-y-6">
       {/* 6. Filtros de Data */}
-      <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border">
+      {/* <-- MUDANÇA 4: Adicionar 'items-end' --> */}
+      <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border items-end">
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-1">Mês</label>
           <select 
@@ -138,7 +172,6 @@ export function DashboardRelatorios({ token, veiculos }: DashboardRelatoriosProp
           </select>
         </div>
         
-        {/* ================== MUDANÇA 4: Adicionar o dropdown de Veículo ================== */}
         <div className="flex-grow">
           <label className="block text-sm font-bold text-gray-700 mb-1">Veículo</label>
           <select 
@@ -152,11 +185,22 @@ export function DashboardRelatorios({ token, veiculos }: DashboardRelatoriosProp
             ))}
           </select>
         </div>
-        {/* ================== FIM DA MUDANÇA ================== */}
 
+        {/* <-- MUDANÇA 5: Adicionar o botão de exportar --> */}
+        <div className="flex-shrink-0">
+           <button
+              type="button"
+              className={exportButton + " text-sm py-2"}
+              onClick={handleExportar}
+              disabled={!kpis || loading}
+            >
+              Exportar KPIs (Excel)
+            </button>
+        </div>
       </div>
 
-      {/* 7. Conteúdo (Loading, Erro ou KPIs) - (Sem alteração) */}
+      {/* 7. Conteúdo (Loading, Erro ou KPIs) */}
+      {/* ... (restante do JSX sem alterações) ... */}
       {loading && <p className="text-center text-klin-azul">A carregar KPIs...</p>}
       {error && <p className="text-center text-red-600">{error}</p>}
 
