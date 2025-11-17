@@ -59,7 +59,7 @@ const tipoCores: { [key: string]: string } = {
   LAVAGEM: 'bg-green-100 text-green-800',
 };
 
-// <-- Adicionar estilo de botão de exportar -->
+// Adicionar estilo de botão de exportar
 const exportButton = "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50";
 
 export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoManutencoesProps) {
@@ -138,7 +138,7 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
   const formatDate = (dateStr: string) => 
     new Date(dateStr).toLocaleDateString('pt-BR', { dateStyle: 'short', timeZone: 'UTC' });
 
-  // <-- Adicionar handler de exportação -->
+  // Adicionar handler de exportação
   const handleExportar = () => {
     setError('');
     if (historico.length === 0) {
@@ -179,10 +179,10 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-semibold text-klin-azul text-center mb-4">
-        Histórico de Manutenções (Últimos 50 por filtro)
+        Histórico de Manutenções ({historico.length > 0 ? `${historico.length} resultados` : 'Últimos 50 por filtro'})
       </h3>
       
-      {/* 7. ADICIONAR O COMPONENTE DE FILTROS */}
+      {/* ADICIONAR O COMPONENTE DE FILTROS */}
       <FiltrosHistorico
         veiculos={veiculos}
         veiculoId={veiculoIdFiltro}
@@ -237,7 +237,7 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
                   <span className="text-sm text-gray-500 italic flex-shrink-0">(Sem foto)</span>
                 )}
 
-                {/* <-- Botão de Remover (Apenas Admin) --> */}
+                {/* Botão de Remover (Apenas Admin) */}
                 {userRole === 'ADMIN' && (
                   <button
                     type="button"
@@ -296,7 +296,7 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
   );
 }
 
-// 8. ADICIONAR O SUB-COMPONENTE DE FILTROS (copiado do HistoricoAbastecimentos)
+// ADICIONAR O SUB-COMPONENTE DE FILTROS
 const inputStyle = "shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul";
 const labelStyle = "block text-sm font-bold text-gray-700 mb-1";
 
@@ -308,7 +308,6 @@ interface FiltrosProps {
   setDataInicio: (val: string) => void;
   dataFim: string;
   setDataFim: (val: string) => void;
-  // <-- Adicionar props para o botão de exportar -->
   onExportar: () => void;
   loading: boolean;
   historicoLength: number;
@@ -322,13 +321,11 @@ function FiltrosHistorico({
   setDataInicio,
   dataFim,
   setDataFim,
-  // <-- Receber as novas props -->
   onExportar,
   loading,
   historicoLength
 }: FiltrosProps) {
   return (
-    // <-- Adicionar 'items-end' para alinhar o botão -->
     <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border items-end">
       <div>
         <label className={labelStyle}>Data Início</label>
@@ -362,7 +359,6 @@ function FiltrosHistorico({
         </select>
       </div>
 
-      {/* <-- Adicionar o botão de exportar --> */}
       <div className="flex-shrink-0">
          <button
             type="button"

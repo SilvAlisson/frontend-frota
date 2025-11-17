@@ -30,7 +30,6 @@ interface Abastecimento {
   itens: ItemAbastecimento[];
 }
 
-// 1. ADICIONAR 'veiculos' ÀS PROPS
 interface HistoricoAbastecimentosProps {
   token: string;
   userRole: string; 
@@ -54,7 +53,6 @@ function IconeLixo() {
   );
 }
 
-// 2. ATUALIZAR AS PROPS RECEBIDAS
 const exportButton = "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50";
 
 
@@ -65,7 +63,6 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // <-- MUDANÇA 4: Estados para os filtros -->
   const [dataInicioFiltro, setDataInicioFiltro] = useState('');
   const [dataFimFiltro, setDataFimFiltro] = useState('');
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState('');
@@ -81,7 +78,6 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
       setLoading(true);
       setError('');
       try {
-        // <-- MUDANÇA 5: Passar os filtros como 'params' -->
         const params: any = {};
         if (dataInicioFiltro) params.dataInicio = dataInicioFiltro;
         if (dataFimFiltro) params.dataFim = dataFimFiltro;
@@ -100,6 +96,7 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
   }, [token, dataInicioFiltro, dataFimFiltro, veiculoIdFiltro]); // Recarrega se os filtros mudarem
 
   const handleDelete = async (id: string) => {
+    // Removida a confirmação duplicada
     if (!window.confirm(`Tem a certeza que quer REMOVER permanentemente este registo de abastecimento? (ID: ${id})\n\nEsta ação não pode ser desfeita e pode afetar os relatórios.`)) {
       return;
     }
@@ -126,7 +123,7 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
   const formatDateTime = (dateStr: string) => 
     new Date(dateStr).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'UTC' });
 
-  // <-- MUDANÇA 6: Handler de exportação -->
+  // Handler de exportação
   const handleExportar = () => {
     setError('');
     if (historico.length === 0) {
@@ -166,11 +163,9 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-semibold text-klin-azul text-center mb-4">
-        {/* <-- MUDANÇA 7: Título dinâmico --> */}
         Histórico de Abastecimentos ({historico.length > 0 ? `${historico.length} resultados` : 'Últimos 50 por filtro'})
       </h3>
       
-      {/* <-- MUDANÇA 8: Bloco de Filtros --> */}
       <FiltrosHistorico
         veiculos={veiculos}
         veiculoId={veiculoIdFiltro}
@@ -184,7 +179,6 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
         historicoLength={historico.length}
       />
       
-      {/* Feedback de erro (deleção ou exportação) */}
       {error && <p className="text-center text-red-600 bg-red-100 p-3 rounded border border-red-400">{error}</p>}
 
       {loading && (
@@ -202,8 +196,6 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
         {!loading && historico.map((ab) => (
           <div key={ab.id} className={`bg-white shadow border border-gray-200 rounded-lg p-4 transition-opacity ${deletingId === ab.id ? 'opacity-50' : 'opacity-100'}`}>
             
-            {/* Linha 1: Data, Veículo e Foto */}
-            {/* ... (renderização do card sem alterações) ... */}
             <div className="flex justify-between items-start mb-2">
               <div>
                 <span className="font-bold text-lg text-klin-azul">{formatDateTime(ab.dataHora)}</span>
@@ -239,7 +231,6 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
               </div>
             </div>
 
-            {/* Linha 2: Detalhes (KM, Operador, Posto) */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm border-t border-b py-2 my-2">
               <div>
                 <span className="font-semibold text-gray-500 block">KM Odómetro</span>
@@ -255,7 +246,6 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
               </div>
             </div>
 
-            {/* Linha 3: Itens e Custo Total */}
             <div className="flex justify-between items-end">
               <div className="text-sm">
                 <span className="font-semibold text-gray-500 block">Itens Registados:</span>
@@ -280,7 +270,7 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
   );
 }
 
-// <-- MUDANÇA 9: Adicionar o Sub-componente de Filtros (Reutilizado) -->
+// Sub-componente de Filtros (Reutilizado)
 const inputStyle = "shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul";
 const labelStyle = "block text-sm font-bold text-gray-700 mb-1";
 
