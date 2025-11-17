@@ -3,6 +3,7 @@ import axios from 'axios';
 import { RENDER_API_BASE_URL } from '../config';
 import { FormCadastrarProduto } from './forms/FormCadastrarProduto';
 import { FormEditarProduto } from './forms/FormEditarProduto';
+import { exportarParaExcel } from '../utils';
 
 // Tipos
 interface Produto {
@@ -21,6 +22,7 @@ const tdStyle = "px-4 py-2 text-sm text-gray-800 border-b";
 const buttonStyle = "bg-klin-azul hover:bg-klin-azul-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed";
 const dangerButton = "bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline disabled:opacity-50";
 const secondaryButton = "bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline";
+const exportButton = "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50";
 
 // Ícone
 function IconeLixo() {
@@ -116,6 +118,28 @@ export function GestaoProdutos({ token }: GestaoProdutosProps) {
     fetchProdutos(); // Re-busca a lista
   };
 
+  // 4. Handler para o botão de exportar
+  const handleExportar = () => {
+    setError('');
+    setSuccess('');
+    try {
+      // Formatar os dados (removendo o ID)
+      const dadosFormatados = produtos.map(p => ({
+        'Nome': p.nome,
+        'Tipo': p.tipo,
+        'Unidade de Medida': p.unidadeMedida,
+      }));
+      
+      exportarParaExcel(dadosFormatados, "Lista_Produtos_Servicos.xlsx");
+      setSuccess('Lista de produtos e serviços exportada com sucesso!');
+
+    } catch (err) {
+      setError('Ocorreu um erro ao preparar os dados para exportação.');
+      console.error(err);
+    }
+  };
+
+
   // Renderização
   return (
     <div className="space-y-4">
@@ -152,13 +176,22 @@ export function GestaoProdutos({ token }: GestaoProdutosProps) {
       {/* Modo de Listagem (Tabela) */}
       {modo === 'listando' && (
         <div>
-          <div className="mb-4">
+          <div className="mb-4 flex justify-between items-center">
             <button
               type="button"
               className={buttonStyle}
               onClick={() => { setModo('adicionando'); setSuccess(''); setError(''); }}
             >
               + Adicionar Novo Produto/Serviço
+            </button>
+            
+            <button
+              type="button"
+              className={exportButton + " text-sm py-2"}
+              onClick={handleExportar}
+              disabled={produtos.length === 0}
+            >
+              Exportar Lista (Excel)
             </button>
           </div>
 

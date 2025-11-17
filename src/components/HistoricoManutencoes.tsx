@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { RENDER_API_BASE_URL } from '../config';
+import { exportarParaExcel } from '../utils';
 
 // Tipos (baseados nos 'includes' da nova rota do backend)
 interface ItemManutencao {
@@ -28,11 +29,10 @@ interface OrdemServico {
   itens: ItemManutencao[];
 }
 
-// 1. ADICIONAR 'veiculos' ÀS PROPS
 interface HistoricoManutencoesProps {
   token: string;
   userRole: string;
-  veiculos: any[];
+  veiculos: any[]; // Para o filtro
 }
 
 // Sub-componente para o ícone da foto (para usar no link)
@@ -59,7 +59,9 @@ const tipoCores: { [key: string]: string } = {
   LAVAGEM: 'bg-green-100 text-green-800',
 };
 
-// 2. ATUALIZAR AS PROPS RECEBIDAS
+// <-- Adicionar estilo de botão de exportar -->
+const exportButton = "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50";
+
 export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoManutencoesProps) {
 
   const [historico, setHistorico] = useState<OrdemServico[]>([]);
@@ -67,7 +69,6 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // 3. ADICIONAR ESTADOS PARA OS FILTROS
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState('');
   const [dataInicioFiltro, setDataInicioFiltro] = useState('');
   const [dataFimFiltro, setDataFimFiltro] = useState('');
@@ -83,17 +84,18 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
       setLoading(true);
       setError('');
       try {
-        // 4. PREPARAR PARÂMETROS DE FILTRO
         const params: any = {};
+        
         if (veiculoIdFiltro) {
           params.veiculoId = veiculoIdFiltro;
         }
-        if (dataInicioFiltro && dataFimFiltro) {
+        if (dataInicioFiltro) {
           params.dataInicio = dataInicioFiltro;
+        }
+        if (dataFimFiltro) {
           params.dataFim = dataFimFiltro;
         }
 
-        // Chama a nova rota do backend
         const response = await api.get('/ordens-servico/recentes', { params });
         setHistorico(response.data);
 
@@ -106,7 +108,6 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
     };
 
     fetchHistorico();
-    // 5. ATUALIZAR DEPENDÊNCIAS DO USEEFFECT
   }, [token, veiculoIdFiltro, dataInicioFiltro, dataFimFiltro]); // Recarrega se os filtros mudarem
 
   const handleDelete = async (id: string) => {
@@ -118,7 +119,6 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
     setError('');
     try {
       await api.delete(`/ordem-servico/${id}`);
-      // Remove o item da lista local para atualizar a UI
       setHistorico(prev => prev.filter(os => os.id !== id));
     } catch (err) {
       console.error("Erro ao deletar ordem de serviço:", err);
@@ -136,48 +136,46 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
   // Funções de formatação
   const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')}`;
   const formatDate = (dateStr: string) => 
-    new Date(dateStr).toLocaleDateString('pt-BR', { dateStyle: 'short', timeZone: 'UTC' }); // Adicionado timeZone UTC
+    new Date(dateStr).toLocaleDateString('pt-BR', { dateStyle: 'short', timeZone: 'UTC' });
+
+  // <-- Adicionar handler de exportação -->
+  const handleExportar = () => {
+    setError('');
+    if (historico.length === 0) {
+      setError("Nenhum dado para exportar (baseado nos filtros atuais).");
+      return;
+    }
+    
+    try {
+      // Formatar os dados para o Excel
+      const dadosFormatados = historico.map(os => {
+        const dataFormatada = formatDate(os.data);
+        const itensFormatados = os.itens.map(item => item.produto.nome).join(', ');
+
+        return {
+          'Data': dataFormatada,
+          'Placa': os.veiculo.placa,
+          'Modelo': os.veiculo.modelo,
+          'KM Atual': os.kmAtual,
+          'Tipo': os.tipo,
+          'Itens/Serviços': itensFormatados,
+          'Oficina/Fornecedor': os.fornecedor.nome,
+          'Custo Total (R$)': os.custoTotal.toFixed(2).replace('.', ','),
+          'Registado Por': os.encarregado.nome,
+          'Link Comprovativo': os.fotoComprovanteUrl || 'N/A',
+        };
+      });
+      
+      exportarParaExcel(dadosFormatados, "Historico_Manutencoes.xlsx");
+
+    } catch (err) {
+      setError('Ocorreu um erro ao preparar os dados para exportação.');
+      console.error(err);
+    }
+  };
+
 
   // Renderização
-  if (loading) {
-     return (
-      <div className="space-y-4">
-         {/* Renderiza os filtros mesmo se estiver a carregar */}
-         <FiltrosHistorico
-          veiculos={veiculos}
-          veiculoId={veiculoIdFiltro}
-          setVeiculoId={setVeiculoIdFiltro}
-          dataInicio={dataInicioFiltro}
-          setDataInicio={setDataInicioFiltro}
-          dataFim={dataFimFiltro}
-          setDataFim={setDataFimFiltro}
-        />
-        <p className="text-center text-klin-azul">A carregar histórico...</p>
-      </div>
-    );
-  }
-  
-  // 6. ATUALIZAR MENSAGEM DE "NÃO ENCONTRADO"
-  if (historico.length === 0 && !error) {
-    return (
-      <div className="space-y-4">
-        {/* Renderiza os filtros mesmo se não houver resultados */}
-        <FiltrosHistorico
-          veiculos={veiculos}
-          veiculoId={veiculoIdFiltro}
-          setVeiculoId={setVeiculoIdFiltro}
-          dataInicio={dataInicioFiltro}
-          setDataInicio={setDataInicioFiltro}
-          dataFim={dataFimFiltro}
-          setDataFim={setDataFimFiltro}
-        />
-        <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
-          <p>Nenhum registo de manutenção ou lavagem encontrado para os filtros selecionados.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-semibold text-klin-azul text-center mb-4">
@@ -193,14 +191,27 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
         setDataInicio={setDataInicioFiltro}
         dataFim={dataFimFiltro}
         setDataFim={setDataFimFiltro}
+        onExportar={handleExportar}
+        loading={loading}
+        historicoLength={historico.length}
       />
 
       {/* Feedback de erro de deleção */}
       {error && <p className="text-center text-red-600 bg-red-100 p-3 rounded border border-red-400">{error}</p>}
 
-      {/* Container para os cards com scroll */}
+      {/* Mensagem de Loading */}
+      {loading && <p className="text-center text-klin-azul">A carregar histórico...</p>}
+      
+      {/* Mensagem de "Nenhum resultado" (só aparece se NÃO estiver loading) */}
+      {!loading && historico.length === 0 && !error && (
+        <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
+          <p>Nenhum registo de manutenção ou lavagem encontrado para os filtros selecionados.</p>
+        </div>
+      )}
+
+      {/* Container para os cards com scroll (só aparece se NÃO estiver loading) */}
       <div className="max-h-[600px] overflow-y-auto space-y-3 pr-2">
-        {historico.map((os) => (
+        {!loading && historico.map((os) => (
           <div key={os.id} className={`bg-white shadow border border-gray-200 rounded-lg p-4 transition-opacity ${deletingId === os.id ? 'opacity-50' : 'opacity-100'}`}>
             
             {/* Linha 1: Data, Veículo e Foto */}
@@ -297,6 +308,10 @@ interface FiltrosProps {
   setDataInicio: (val: string) => void;
   dataFim: string;
   setDataFim: (val: string) => void;
+  // <-- Adicionar props para o botão de exportar -->
+  onExportar: () => void;
+  loading: boolean;
+  historicoLength: number;
 }
 
 function FiltrosHistorico({
@@ -306,10 +321,15 @@ function FiltrosHistorico({
   dataInicio,
   setDataInicio,
   dataFim,
-  setDataFim
+  setDataFim,
+  // <-- Receber as novas props -->
+  onExportar,
+  loading,
+  historicoLength
 }: FiltrosProps) {
   return (
-    <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border">
+    // <-- Adicionar 'items-end' para alinhar o botão -->
+    <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border items-end">
       <div>
         <label className={labelStyle}>Data Início</label>
         <input 
@@ -326,7 +346,6 @@ function FiltrosHistorico({
           className={inputStyle}
           value={dataFim}
           onChange={(e) => setDataFim(e.target.value)}
-          disabled={!dataInicio} // Só habilita data fim se a início estiver preenchida
         />
       </div>
       <div className="flex-grow">
@@ -341,6 +360,18 @@ function FiltrosHistorico({
             <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>
           ))}
         </select>
+      </div>
+
+      {/* <-- Adicionar o botão de exportar --> */}
+      <div className="flex-shrink-0">
+         <button
+            type="button"
+            className={exportButton + " text-sm py-2"}
+            onClick={onExportar}
+            disabled={historicoLength === 0 || loading}
+          >
+            Exportar (Excel)
+          </button>
       </div>
     </div>
   );

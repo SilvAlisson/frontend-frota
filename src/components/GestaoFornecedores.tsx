@@ -3,6 +3,8 @@ import axios from 'axios';
 import { RENDER_API_BASE_URL } from '../config';
 import { FormCadastrarFornecedor } from './forms/FormCadastrarFornecedor';
 import { FormEditarFornecedor } from './forms/FormEditarFornecedor';
+// <-- MUDANÇA 1: Importar o helper de exportação -->
+import { exportarParaExcel } from '../utils';
 
 // Tipos
 interface Fornecedor {
@@ -20,6 +22,8 @@ const tdStyle = "px-4 py-2 text-sm text-gray-800 border-b";
 const buttonStyle = "bg-klin-azul hover:bg-klin-azul-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed";
 const dangerButton = "bg-red-600 hover:bg-red-700 text-white text-xs font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline disabled:opacity-50";
 const secondaryButton = "bg-gray-200 hover:bg-gray-300 text-gray-700 text-xs font-bold py-1 px-2 rounded focus:outline-none focus:shadow-outline";
+// <-- MUDANÇA 2: Adicionar estilo de botão de exportar -->
+const exportButton = "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50";
 
 // Ícone
 function IconeLixo() {
@@ -115,6 +119,26 @@ export function GestaoFornecedores({ token }: GestaoFornecedoresProps) {
     fetchFornecedores();
   };
 
+  // <-- MUDANÇA 3: Criar handler para o botão de exportar -->
+  const handleExportar = () => {
+    setError('');
+    setSuccess('');
+    try {
+      // Formatar os dados (removendo o ID)
+      const dadosFormatados = fornecedores.map(f => ({
+        'Nome': f.nome,
+        'CNPJ': f.cnpj || '---',
+      }));
+      
+      exportarParaExcel(dadosFormatados, "Lista_Fornecedores.xlsx");
+      setSuccess('Lista de fornecedores exportada com sucesso!');
+
+    } catch (err) {
+      setError('Ocorreu um erro ao preparar os dados para exportação.');
+      console.error(err);
+    }
+  };
+
   // Renderização
   return (
     <div className="space-y-4">
@@ -151,13 +175,24 @@ export function GestaoFornecedores({ token }: GestaoFornecedoresProps) {
       {/* Modo de Listagem (Tabela) */}
       {modo === 'listando' && (
         <div>
-          <div className="mb-4">
+          {/* <-- MUDANÇA 4: Envolver botões num flex container --> */}
+          <div className="mb-4 flex justify-between items-center">
             <button
               type="button"
               className={buttonStyle}
               onClick={() => { setModo('adicionando'); setSuccess(''); setError(''); }}
             >
               + Adicionar Novo Fornecedor
+            </button>
+
+            {/* <-- MUDANÇA 5: Adicionar o botão de exportar --> */}
+            <button
+              type="button"
+              className={exportButton + " text-sm py-2"}
+              onClick={handleExportar}
+              disabled={fornecedores.length === 0}
+            >
+              Exportar Lista (Excel)
             </button>
           </div>
 

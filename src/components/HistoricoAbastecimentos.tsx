@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { RENDER_API_BASE_URL } from '../config';
+import { exportarParaExcel } from '../utils';
 
 // Tipos (baseados nos 'includes' da nova rota do backend)
 interface ItemAbastecimento {
@@ -32,7 +33,7 @@ interface Abastecimento {
 // 1. ADICIONAR 'veiculos' ÀS PROPS
 interface HistoricoAbastecimentosProps {
   token: string;
-  userRole: string;
+  userRole: string; 
   veiculos: any[];
 }
 
@@ -54,6 +55,9 @@ function IconeLixo() {
 }
 
 // 2. ATUALIZAR AS PROPS RECEBIDAS
+const exportButton = "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50";
+
+
 export function HistoricoAbastecimentos({ token, userRole, veiculos }: HistoricoAbastecimentosProps) {
 
   const [historico, setHistorico] = useState<Abastecimento[]>([]);
@@ -61,10 +65,10 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // 3. ADICIONAR ESTADOS PARA OS FILTROS
-  const [veiculoIdFiltro, setVeiculoIdFiltro] = useState('');
+  // <-- MUDANÇA 4: Estados para os filtros -->
   const [dataInicioFiltro, setDataInicioFiltro] = useState('');
   const [dataFimFiltro, setDataFimFiltro] = useState('');
+  const [veiculoIdFiltro, setVeiculoIdFiltro] = useState('');
 
   const api = axios.create({
     baseURL: RENDER_API_BASE_URL,
@@ -77,16 +81,12 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
       setLoading(true);
       setError('');
       try {
-        // 4. PREPARAR PARÂMETROS DE FILTRO
+        // <-- MUDANÇA 5: Passar os filtros como 'params' -->
         const params: any = {};
-        if (veiculoIdFiltro) {
-          params.veiculoId = veiculoIdFiltro;
-        }
-        if (dataInicioFiltro && dataFimFiltro) {
-          params.dataInicio = dataInicioFiltro;
-          params.dataFim = dataFimFiltro;
-        }
-
+        if (dataInicioFiltro) params.dataInicio = dataInicioFiltro;
+        if (dataFimFiltro) params.dataFim = dataFimFiltro;
+        if (veiculoIdFiltro) params.veiculoId = veiculoIdFiltro;
+        
         const response = await api.get('/abastecimentos/recentes', { params });
         setHistorico(response.data);
       } catch (err) {
@@ -97,8 +97,7 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
       }
     };
     fetchHistorico();
-    // 5. ATUALIZAR DEPENDÊNCIAS DO USEEFFECT
-  }, [token, veiculoIdFiltro, dataInicioFiltro, dataFimFiltro]); // Recarrega se os filtros mudarem
+  }, [token, dataInicioFiltro, dataFimFiltro, veiculoIdFiltro]); // Recarrega se os filtros mudarem
 
   const handleDelete = async (id: string) => {
     if (!window.confirm(`Tem a certeza que quer REMOVER permanentemente este registo de abastecimento? (ID: ${id})\n\nEsta ação não pode ser desfeita e pode afetar os relatórios.`)) {
@@ -109,7 +108,6 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
     setError('');
     try {
       await api.delete(`/abastecimento/${id}`);
-      // Remove o item da lista local para atualizar a UI
       setHistorico(prev => prev.filter(ab => ab.id !== id));
     } catch (err) {
       console.error("Erro ao deletar abastecimento:", err);
@@ -126,56 +124,53 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
   // Funções de formatação
   const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')}`;
   const formatDateTime = (dateStr: string) => 
-    new Date(dateStr).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    new Date(dateStr).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'UTC' });
+
+  // <-- MUDANÇA 6: Handler de exportação -->
+  const handleExportar = () => {
+    setError('');
+    if (historico.length === 0) {
+      setError("Nenhum dado para exportar (baseado nos filtros atuais).");
+      return;
+    }
+    
+    try {
+      // Formatar os dados para o Excel
+      const dadosFormatados = historico.flatMap(ab => {
+        const dataFormatada = formatDateTime(ab.dataHora);
+        const itensFormatados = ab.itens.map(item => `${item.produto.nome} (${item.quantidade} ${item.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'Un'})`).join(', ');
+
+        return {
+          'Data/Hora': dataFormatada,
+          'Placa': ab.veiculo.placa,
+          'Modelo': ab.veiculo.modelo,
+          'KM Odómetro': ab.kmOdometro,
+          'Itens': itensFormatados,
+          'Fornecedor (Posto)': ab.fornecedor.nome,
+          'Operador': ab.operador.nome,
+          'Custo Total (R$)': ab.custoTotal.toFixed(2).replace('.', ','),
+          'Link Nota Fiscal': ab.fotoNotaFiscalUrl || 'N/A',
+        };
+      });
+      
+      exportarParaExcel(dadosFormatados, "Historico_Abastecimentos.xlsx");
+
+    } catch (err) {
+      setError('Ocorreu um erro ao preparar os dados para exportação.');
+      console.error(err);
+    }
+  };
+
 
   // Renderização
-  // Adicionar o 'if (loading)' que faltava
-  if (loading) {
-    return (
-      <div className="space-y-4">
-         {/* Renderiza os filtros mesmo se estiver a carregar */}
-         <FiltrosHistorico
-          veiculos={veiculos}
-          veiculoId={veiculoIdFiltro}
-          setVeiculoId={setVeiculoIdFiltro}
-          dataInicio={dataInicioFiltro}
-          setDataInicio={setDataInicioFiltro}
-          dataFim={dataFimFiltro}
-          setDataFim={setDataFimFiltro}
-        />
-        <p className="text-center text-klin-azul">A carregar histórico...</p>
-      </div>
-    );
-  }
-  
-  // 6. ATUALIZAR MENSAGEM DE "NÃO ENCONTRADO"
-  if (historico.length === 0 && !error) {
-    return (
-      <div className="space-y-4">
-        {/* Renderiza os filtros mesmo se não houver resultados */}
-        <FiltrosHistorico
-          veiculos={veiculos}
-          veiculoId={veiculoIdFiltro}
-          setVeiculoId={setVeiculoIdFiltro}
-          dataInicio={dataInicioFiltro}
-          setDataInicio={setDataInicioFiltro}
-          dataFim={dataFimFiltro}
-          setDataFim={setDataFimFiltro}
-        />
-        <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
-          <p>Nenhum registo de abastecimento encontrado para os filtros selecionados.</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-semibold text-klin-azul text-center mb-4">
-        Histórico de Abastecimentos (Últimos 50 por filtro)
+        {/* <-- MUDANÇA 7: Título dinâmico --> */}
+        Histórico de Abastecimentos ({historico.length > 0 ? `${historico.length} resultados` : 'Últimos 50 por filtro'})
       </h3>
-
-      {/* 7. ADICIONAR O COMPONENTE DE FILTROS */}
+      
+      {/* <-- MUDANÇA 8: Bloco de Filtros --> */}
       <FiltrosHistorico
         veiculos={veiculos}
         veiculoId={veiculoIdFiltro}
@@ -184,17 +179,31 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
         setDataInicio={setDataInicioFiltro}
         dataFim={dataFimFiltro}
         setDataFim={setDataFimFiltro}
+        onExportar={handleExportar}
+        loading={loading}
+        historicoLength={historico.length}
       />
       
-      {/* Feedback de erro de deleção */}
+      {/* Feedback de erro (deleção ou exportação) */}
       {error && <p className="text-center text-red-600 bg-red-100 p-3 rounded border border-red-400">{error}</p>}
+
+      {loading && (
+         <p className="text-center text-klin-azul">A carregar histórico...</p>
+      )}
+      
+      {!loading && historico.length === 0 && !error && (
+        <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
+          <p>Nenhum registo de abastecimento encontrado (para os filtros selecionados).</p>
+        </div>
+      )}
 
       {/* Container para os cards com scroll */}
       <div className="max-h-[600px] overflow-y-auto space-y-3 pr-2">
-        {historico.map((ab) => (
+        {!loading && historico.map((ab) => (
           <div key={ab.id} className={`bg-white shadow border border-gray-200 rounded-lg p-4 transition-opacity ${deletingId === ab.id ? 'opacity-50' : 'opacity-100'}`}>
             
             {/* Linha 1: Data, Veículo e Foto */}
+            {/* ... (renderização do card sem alterações) ... */}
             <div className="flex justify-between items-start mb-2">
               <div>
                 <span className="font-bold text-lg text-klin-azul">{formatDateTime(ab.dataHora)}</span>
@@ -202,7 +211,6 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
               </div>
               
               <div className="flex items-center gap-4">
-                {/* Link da Foto da Nota Fiscal */}
                 {ab.fotoNotaFiscalUrl ? (
                   <a
                     href={ab.fotoNotaFiscalUrl}
@@ -217,7 +225,6 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
                   <span className="text-sm text-gray-500 italic flex-shrink-0">(Sem foto)</span>
                 )}
 
-                {/* Botão de Remover (Apenas Admin) */}
                 {userRole === 'ADMIN' && (
                   <button
                     type="button"
@@ -273,7 +280,7 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
   );
 }
 
-// 8. Adicionar a definição do componente 'FiltrosHistorico'
+// <-- MUDANÇA 9: Adicionar o Sub-componente de Filtros (Reutilizado) -->
 const inputStyle = "shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul";
 const labelStyle = "block text-sm font-bold text-gray-700 mb-1";
 
@@ -285,6 +292,9 @@ interface FiltrosProps {
   setDataInicio: (val: string) => void;
   dataFim: string;
   setDataFim: (val: string) => void;
+  onExportar: () => void;
+  loading: boolean;
+  historicoLength: number;
 }
 
 function FiltrosHistorico({
@@ -294,10 +304,13 @@ function FiltrosHistorico({
   dataInicio,
   setDataInicio,
   dataFim,
-  setDataFim
+  setDataFim,
+  onExportar,
+  loading,
+  historicoLength
 }: FiltrosProps) {
   return (
-    <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border">
+    <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border items-end">
       <div>
         <label className={labelStyle}>Data Início</label>
         <input 
@@ -314,7 +327,6 @@ function FiltrosHistorico({
           className={inputStyle}
           value={dataFim}
           onChange={(e) => setDataFim(e.target.value)}
-          disabled={!dataInicio} // Só habilita data fim se a início estiver preenchida
         />
       </div>
       <div className="flex-grow">
@@ -329,6 +341,17 @@ function FiltrosHistorico({
             <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>
           ))}
         </select>
+      </div>
+
+      <div className="flex-shrink-0">
+         <button
+            type="button"
+            className={exportButton + " text-sm py-2"}
+            onClick={onExportar}
+            disabled={historicoLength === 0 || loading}
+          >
+            Exportar (Excel)
+          </button>
       </div>
     </div>
   );
