@@ -194,7 +194,7 @@ function Dashboard({ session, onLogout }: DashboardProps) {
                 />
              );
            case 'hist_abastecimento':
-             return <HistoricoAbastecimentos token={token} userRole={user.role} />;
+             return <HistoricoAbastecimentos token={token} userRole={user.role} veiculos={veiculos} />;
              
            case 'manutencao':
               return (
@@ -205,8 +205,9 @@ function Dashboard({ session, onLogout }: DashboardProps) {
                   fornecedores={fornecedores}
                 />
               );
+
            case 'hist_manutencao':
-             return <HistoricoManutencoes token={token} userRole={user.role} />;
+             return <HistoricoManutencoes token={token} userRole={user.role} veiculos={veiculos} />; //
 
            default:
              return null;
