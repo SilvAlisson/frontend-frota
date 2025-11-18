@@ -14,7 +14,6 @@ import { HistoricoManutencoes } from './components/HistoricoManutencoes';
 import { RENDER_API_BASE_URL } from './config';
 import { Button } from './components/ui/Button';
 
-
 // ===================================================================
 // INTERFACES E CONSTANTES DE ESTILO
 // ===================================================================
@@ -23,8 +22,7 @@ interface DashboardProps {
   onLogout: () => void;
 }
 
-// Estilos das abas
-const abaAtivaStyle = "inline-block p-4 text-klin-azul border-b-2 border-klin-azul rounded-t-lg active";
+const abaAtivaStyle = "inline-block p-4 text-primary border-b-2 border-primary rounded-t-lg active";
 const abaInativaStyle = "inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300";
 
 type AbaEncarregado = 'alertas' | 'dashboard' | 'ranking' | 'jornadas' | 'abastecimento' | 'hist_abastecimento' | 'manutencao' | 'hist_manutencao';
@@ -126,14 +124,15 @@ function Dashboard({ session, onLogout }: DashboardProps) {
   // --- FUNÇÃO DE RENDERIZAÇÃO DE CONTEÚDO ---
   const renderDashboardContent = () => {
     if (loadingDados) {
-      return <p className="text-center text-klin-azul font-semibold text-lg py-10">Carregando dados...</p>;
+      return <p className="text-center text-primary font-semibold text-lg py-10">Carregando dados...</p>;
     }
     
     // --- 1. FLUXO DO OPERADOR ---
     if (user.role === 'OPERADOR') {
       return (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-white shadow rounded-lg p-6">
+          {}
+          <div className="bg-surface shadow rounded-lg p-6">
             <IniciarJornada
                 token={token}
                 usuarios={usuarios} 
@@ -145,7 +144,7 @@ function Dashboard({ session, onLogout }: DashboardProps) {
           </div>
           <div className="space-y-6">
             {jornadasOperador.length === 0 && (
-                <div className="bg-white shadow rounded-lg p-6 text-center text-gray-500">
+                <div className="bg-surface shadow rounded-lg p-6 text-center text-gray-500">
                     Você não possui jornadas em aberto.
                 </div>
             )}
@@ -194,6 +193,7 @@ function Dashboard({ session, onLogout }: DashboardProps) {
                   fornecedores={fornecedores}
                 />
              );
+           
            case 'hist_abastecimento':
              return <HistoricoAbastecimentos token={token} userRole={user.role} veiculos={veiculos} />;
              
@@ -208,7 +208,7 @@ function Dashboard({ session, onLogout }: DashboardProps) {
               );
 
            case 'hist_manutencao':
-             return <HistoricoManutencoes token={token} userRole={user.role} veiculos={veiculos} />; //
+             return <HistoricoManutencoes token={token} userRole={user.role} veiculos={veiculos} />;
 
            default:
              return null;
@@ -216,8 +216,7 @@ function Dashboard({ session, onLogout }: DashboardProps) {
       };
 
       return (
-        // O 'card' principal que engloba tudo
-         <div className="bg-white shadow rounded-lg p-6">
+         <div className="bg-surface shadow rounded-lg p-6">
             
             {/* Os botões das Abas */}
             <div className="text-sm font-medium text-center text-gray-500 border-b border-gray-200 mb-6">
@@ -251,8 +250,7 @@ function Dashboard({ session, onLogout }: DashboardProps) {
                     Ranking (KM/L)
                   </button>
                 </li>
-                {}
-
+                
                 <li className="mr-2">
                   <button 
                     type="button"
@@ -281,15 +279,14 @@ function Dashboard({ session, onLogout }: DashboardProps) {
                     Histórico (Abast.)
                   </button>
                 </li>
-                {}
-
+                
                 <li className="mr-2">
                   <button 
                     type="button"
                     className={abaEncarregado === 'manutencao' ? abaAtivaStyle : abaInativaStyle}
                     onClick={() => setAbaEncarregado('manutencao')}
                   >
-                    Registar Manutenção/Lavagem
+                    Registar Manutenção
                   </button>
                 </li>
 
@@ -302,7 +299,7 @@ function Dashboard({ session, onLogout }: DashboardProps) {
                     Histórico (Manut.)
                   </button>
                 </li>
-                {}
+                
               </ul>
             </div>
 
@@ -322,7 +319,7 @@ function Dashboard({ session, onLogout }: DashboardProps) {
             veiculos={veiculos}
             produtos={produtos}
             fornecedores={fornecedores}
-            adminUserId={user.id} // <-- MUDANÇA: Passar o ID do Admin
+            adminUserId={user.id}
         />
       );
     }
@@ -335,30 +332,34 @@ function Dashboard({ session, onLogout }: DashboardProps) {
   // --- Restante do App.tsx (Navbar, LoginScreen, App) ---
 
   return (
-    <div className="min-h-screen bg-klin-gelo">
-      {/* Navbar ... */}
-      <nav className="bg-white shadow-md sticky top-0 z-10">
+    <div className="min-h-screen bg-background">
+      {/* Navbar */}
+      {}
+      <nav className="bg-surface shadow-md sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16 items-center">
                 <div className="flex-shrink-0 flex items-center">
                     <img src="/logo.png" alt="Logo KLIN" className="h-10 w-auto" />
                 </div>
                 <div className="flex items-center">
+                    {}
                     <span className="text-gray-600 mr-4 text-sm sm:text-base hidden sm:inline">
-                      Olá, {user.nome} (<span className="font-bold text-klin-azul uppercase">{user.role}</span>)
+                      Olá, {user.nome} (<span className="font-bold text-primary uppercase">{user.role}</span>)
                     </span>
-                    <button
+                    
+                    {}
+                    <Button 
+                      variant="primary" 
                       onClick={onLogout}
-                      className="bg-klin-azul hover:bg-klin-azul-hover text-white font-bold py-2 px-4 rounded text-sm transition duration-150 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-klin-azul"
                     >
                       Sair
-                    </button>
+                    </Button>
                 </div>
             </div>
         </div>
       </nav>
 
-      {/* Conteúdo Principal ... */}
+      {/* Conteúdo Principal */}
       <main className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
         {error && <p className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-center mb-4">{error}</p>}
         {renderDashboardContent()}
@@ -402,20 +403,23 @@ function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (loginData: { token: 
 
   // JSX da Tela de Login
   return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-klin-gelo p-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
         <img src="/logo.png" alt="Logo KLIN" className="w-40 mb-6" />
-        <h2 className="text-2xl font-semibold text-klin-azul mb-6">
+        {}
+        <h2 className="text-2xl font-semibold text-primary mb-6">
           Gestão de Frota
         </h2>
+        {}
         <form
-          className="bg-white shadow-md rounded-lg px-8 pt-6 pb-8 mb-4 w-full max-w-sm"
+          className="bg-surface shadow-md rounded-lg px-8 pt-6 pb-8 mb-4 w-full max-w-sm"
           onSubmit={handleSubmit}
         >
           <div className="mb-4">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">Email</label>
+            {}
             <input
               id="email"
-              className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul focus:border-transparent disabled:bg-gray-200"
+              className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-200"
               type="email"
               placeholder="seu.email@empresa.com"
               value={email}
@@ -425,9 +429,10 @@ function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (loginData: { token: 
           </div>
           <div className="mb-6">
             <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">Senha</label>
+            {}
             <input
               id="password"
-              className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul focus:border-transparent disabled:bg-gray-200"
+              className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-200"
               type="password"
               placeholder="********"
               value={password}
@@ -441,14 +446,15 @@ function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (loginData: { token: 
             </p>
           )}
           <div className="flex items-center justify-center">
+            {/* Componente Button */}
             <Button 
-    type="submit" 
-    variant="primary" 
-    isLoading={loading} 
-    className="w-full"
-  >
-    {loading ? 'Entrando...' : 'Entrar'}
-  </Button>
+              type="submit" 
+              variant="primary" 
+              isLoading={loading}
+              className="w-full"
+            >
+              {loading ? 'Entrando...' : 'Entrar'}
+            </Button>
           </div>
         </form>
          <p className="text-center text-gray-500 text-xs mt-4">
@@ -494,8 +500,8 @@ function App() {
 
   if (loadingSession) {
       return (
-          <div className="min-h-screen flex items-center justify-center bg-klin-gelo">
-              <span className="text-klin-azul font-semibold text-lg">Carregando...</span>
+          <div className="min-h-screen flex items-center justify-center bg-background">
+              <span className="text-primary font-semibold text-lg">Carregando...</span>
           </div>
       );
   }
