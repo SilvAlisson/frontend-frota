@@ -41,9 +41,11 @@ export function ModalQrCode({ token, nomeUsuario, onClose }: ModalQrCodeProps) {
           />
         </div>
 
-        <p className="text-sm text-center text-warning">
-          Este código expira em **5 minutos** e só pode ser usado **uma vez**.
-        </p>
+        <p className="text-sm text-center text-gray-600 bg-blue-50 p-2 rounded border border-blue-100">
+  Este QR Code é <strong>único e permanente</strong> para este motorista.
+  <br/>
+  Frei Chico, pode imprimi-lo e plastificá-lo para uso diário.
+</p>
         
         <button 
           type="button" 

@@ -13,6 +13,7 @@ import { HistoricoAbastecimentos } from './components/HistoricoAbastecimentos';
 import { HistoricoManutencoes } from './components/HistoricoManutencoes';
 import { RENDER_API_BASE_URL } from './config';
 import { Button } from './components/ui/Button';
+import { Input } from './components/ui/Input';
 
 // ===================================================================
 // INTERFACES E CONSTANTES DE ESTILO
@@ -405,59 +406,54 @@ function LoginScreen({ onLoginSuccess }: { onLoginSuccess: (loginData: { token: 
   return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
         <img src="/logo.png" alt="Logo KLIN" className="w-40 mb-6" />
-        {}
+        
         <h2 className="text-2xl font-semibold text-primary mb-6">
           Gestão de Frota
         </h2>
-        {}
+        
         <form
-          className="bg-surface shadow-md rounded-lg px-8 pt-6 pb-8 mb-4 w-full max-w-sm"
-          onSubmit={handleSubmit}
-        >
-          <div className="mb-4">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">Email</label>
-            {}
-            <input
-              id="email"
-              className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-200"
-              type="email"
-              placeholder="seu.email@empresa.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-          <div className="mb-6">
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="password">Senha</label>
-            {}
-            <input
-              id="password"
-              className="shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-200"
-              type="password"
-              placeholder="********"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-            />
-          </div>
-          {error && (
-            <p className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 text-center text-sm" role="alert">
-              {error}
-            </p>
-          )}
-          <div className="flex items-center justify-center">
-            {/* Componente Button */}
-            <Button 
-              type="submit" 
-              variant="primary" 
-              isLoading={loading}
-              className="w-full"
-            >
-              {loading ? 'Entrando...' : 'Entrar'}
-            </Button>
-          </div>
-        </form>
-         <p className="text-center text-gray-500 text-xs mt-4">
+  className="bg-surface shadow-md rounded-lg px-8 pt-8 pb-8 mb-4 w-full max-w-sm space-y-5"
+  onSubmit={handleSubmit}
+>
+  <Input
+    label="Email"
+    type="email"
+    placeholder="seu.email@empresa.com"
+    value={email}
+    onChange={(e) => setEmail(e.target.value)}
+    disabled={loading}
+  />
+
+  <Input
+    label="Senha"
+    type="password"
+    placeholder="********"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
+    disabled={loading}
+  />
+
+  {error && (
+    <div className="p-3 rounded-md bg-red-50 border border-red-200">
+      <p className="text-sm text-error text-center font-medium">
+        {error}
+      </p>
+    </div>
+  )}
+
+  <div className="pt-2 flex items-center justify-center">
+    <Button 
+      type="submit" 
+      variant="primary" 
+      isLoading={loading}
+      className="w-full"
+    >
+      {loading ? 'Entrando...' : 'Entrar'}
+    </Button>
+  </div>
+</form>
+        
+         <p className="text-center text-text-secondary text-xs mt-4">
             &copy;{new Date().getFullYear()} KLIN. Todos os direitos reservados.
          </p>
       </div>
