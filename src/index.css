@@ -1,8 +1,31 @@
 @import "tailwindcss";
 
 @theme {
-  --color-klin-azul: #007EAD;
-  --color-klin-azul-hover: #0C4C6C;
-  --color-klin-gelo: #F0F4F8;
-  --color-klin-branco: #FFFFFF;
+  /* Paleta 60/30/10 (P3.1) */
+  --color-primary: #007EAD;        /* O seu 'klin-azul' como cor de Ação (10%) */
+  --color-primary-hover: #0C4C6C;  /* O seu 'klin-azul-hover' */
+  --color-primary-soft: #E6F2F7;   /* Tom claro para fundos de "ghost button" */
+  
+  --color-background: #F0F4F8;     /* O seu 'klin-gelo' como Fundo (60%) */
+  --color-surface: #FFFFFF;        /* O seu 'klin-branco' para Cards (30%) */
+
+  /* Cores Semânticas (P4.2) */
+  --color-success: #16A34A; /* green-600 */
+  --color-warning: #F59E0B; /* amber-500 */
+  --color-error: #DC2626;   /* red-600 */
+
+  /* Tipografia (P3.2) */
+  --color-text: #1F2937;           /* gray-800 para texto principal */
+  --color-text-secondary: #6B7280; /* gray-500 para texto secundário */
+  
+  /* Fontes (P3.2) - Adicionando Inter */
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  /* Tokens de Espaçamento e Borda (P3.3 / P8.2) */
+  --border-radius-card: 1rem;      /* 16px */
+  --border-radius-input: 0.5rem;   /* 8px */
+  --border-radius-button: 0.75rem; /* 12px */
+
+  --box-shadow-card: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+  --box-shadow-card-hover: 0 8px 16px 0 rgba(0, 0, 0, 0.08);
 }
