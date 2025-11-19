@@ -2,19 +2,13 @@ import { useState } from 'react';
 import axios from 'axios';
 import DOMPurify from 'dompurify';
 import { RENDER_API_BASE_URL } from '../../config';
+// MUDANÇA: Importar componentes UI
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
-// Classes reutilizáveis
-const inputStyle = "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul focus:border-transparent disabled:bg-gray-200";
-const buttonStyle = "bg-klin-azul hover:bg-klin-azul-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center";
-const labelStyle = "block text-gray-700 text-sm font-bold mb-2";
-// <-- MUDANÇA 1: Adicionar estilo de botão secundário -->
-const secondaryButton = "bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full";
-
-
-// Tipos de Produto baseados no seu 'schema.prisma'
+// Tipos de Produto
 const tiposDeProduto = ["COMBUSTIVEL", "ADITIVO", "SERVICO", "OUTRO"];
 
-// <-- MUDANÇA 2: Atualizar Props -->
 interface FormCadastrarProdutoProps {
   token: string;
   onProdutoAdicionado: () => void;
@@ -23,19 +17,16 @@ interface FormCadastrarProdutoProps {
 
 export function FormCadastrarProduto({ token, onProdutoAdicionado, onCancelar }: FormCadastrarProdutoProps) {
   const [nome, setNome] = useState('');
-  const [tipo, setTipo] = useState('COMBUSTIVEL'); // Padrão
-  // <-- MUDANÇA 3: Adicionar estado para Unidade de Medida -->
-  const [unidadeMedida, setUnidadeMedida] = useState('Litro'); // Padrão
+  const [tipo, setTipo] = useState('COMBUSTIVEL');
+  const [unidadeMedida, setUnidadeMedida] = useState('Litro');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  // const [success, setSuccess] = useState(''); // <-- Removido (será tratado pelo componente pai)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    // setSuccess(''); // <-- Removido
 
     if (!nome || !tipo) {
       setError('Nome e Tipo são obrigatórios.');
@@ -49,21 +40,15 @@ export function FormCadastrarProduto({ token, onProdutoAdicionado, onCancelar }:
     });
 
     try {
-      // Chama a rota POST /api/produto do seu backend
       await api.post('/produto', {
         nome: DOMPurify.sanitize(nome),
         tipo: tipo,
-        // <-- MUDANÇA 4: Enviar unidade de medida -->
         unidadeMedida: DOMPurify.sanitize(unidadeMedida) || 'Litro',
       });
-      // setSuccess(`Produto ${nome} cadastrado com sucesso!`); // <-- Removido
       
-      // Limpa o formulário (opcional, pois o componente vai fechar)
       setNome('');
       setTipo('COMBUSTIVEL');
       setUnidadeMedida('Litro');
-
-      // <-- MUDANÇA 5: Chamar o callback de sucesso -->
       onProdutoAdicionado();
 
     } catch (err) {
@@ -79,43 +64,69 @@ export function FormCadastrarProduto({ token, onProdutoAdicionado, onCancelar }:
   };
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      {/* <-- MUDANÇA 6: Adicionar título --> */}
-      <h4 className="text-lg font-semibold text-klin-azul text-center">
+    <form className="space-y-5" onSubmit={handleSubmit}>
+      <h4 className="text-lg font-bold text-primary text-center">
         Adicionar Novo Produto
       </h4>
       
-      <div>
-        <label className={labelStyle}>Nome do Produto</label>
-        <input type="text" className={inputStyle} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: DIESEL S10" />
-      </div>
+      <Input
+        label="Nome do Produto"
+        type="text"
+        value={nome}
+        onChange={(e) => setNome(e.target.value)}
+        placeholder="Ex: DIESEL S10"
+        disabled={loading}
+      />
       
       <div>
-        <label className={labelStyle}>Tipo de Produto</label>
-        <select className={inputStyle} value={tipo} onChange={(e) => setTipo(e.target.value)}>
+        <label className="block mb-1.5 text-sm font-medium text-gray-600">Tipo de Produto</label>
+        <select 
+          className="w-full px-4 py-2 text-gray-800 bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100"
+          value={tipo} 
+          onChange={(e) => setTipo(e.target.value)}
+          disabled={loading}
+        >
           {tiposDeProduto.map(t => (
             <option key={t} value={t}>{t}</option>
           ))}
         </select>
       </div>
 
-      {/* <-- MUDANÇA 7: Adicionar campo Unidade de Medida --> */}
-      <div>
-        <label className={labelStyle}>Unidade de Medida</label>
-        <input type="text" className={inputStyle} value={unidadeMedida} onChange={(e) => setUnidadeMedida(e.target.value)} placeholder="Ex: Litro, Unidade, Peça" />
-      </div>
+      <Input
+        label="Unidade de Medida"
+        type="text"
+        value={unidadeMedida}
+        onChange={(e) => setUnidadeMedida(e.target.value)}
+        placeholder="Ex: Litro, Unidade, Peça"
+        disabled={loading}
+      />
 
-      {error && <p className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-center text-sm">{error}</p>}
-      {/* {success && <p>...</p>} // <-- Removido */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-error px-4 py-3 rounded-md text-center text-sm">
+          {error}
+        </div>
+      )}
 
-      {/* <-- MUDANÇA 8: Adicionar botões de Ação / Cancelar --> */}
-      <div className="flex gap-4 pt-4">
-        <button type="button" className={secondaryButton} disabled={loading} onClick={onCancelar}>
+      <div className="flex gap-4 pt-2">
+        <Button 
+          type="button" 
+          variant="secondary" 
+          className="w-full" 
+          disabled={loading} 
+          onClick={onCancelar}
+        >
           Cancelar
-        </button>
-        <button type="submit" className={buttonStyle} disabled={loading}>
+        </Button>
+        
+        <Button 
+          type="submit" 
+          variant="primary" 
+          className="w-full" 
+          disabled={loading}
+          isLoading={loading}
+        >
           {loading ? 'Cadastrando...' : 'Cadastrar Produto'}
-        </button>
+        </Button>
       </div>
     </form>
   );

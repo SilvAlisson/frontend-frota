@@ -2,16 +2,10 @@ import { useState } from 'react';
 import axios from 'axios';
 import DOMPurify from 'dompurify';
 import { RENDER_API_BASE_URL } from '../../config';
+// MUDANÇA: Componentes UI
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
-// Classes reutilizáveis
-const inputStyle = "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul focus:border-transparent disabled:bg-gray-200";
-const buttonStyle = "bg-klin-azul hover:bg-klin-azul-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center";
-const labelStyle = "block text-gray-700 text-sm font-bold mb-2";
-// <-- MUDANÇA: Estilo para botão secundário
-const secondaryButton = "bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full";
-
-
-// <-- MUDANÇA: Adicionar novas props
 interface FormCadastrarUsuarioProps {
   token: string;
   onUsuarioAdicionado: () => void;
@@ -23,17 +17,15 @@ export function FormCadastrarUsuario({ token, onUsuarioAdicionado, onCancelar }:
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [matricula, setMatricula] = useState('');
-  const [role, setRole] = useState('ENCARREGADO'); // Padrão para "Encarregado"
+  const [role, setRole] = useState('ENCARREGADO');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    setSuccess('');
 
     if (!nome || !email || !password || !role) {
       setError('Nome, Email, Senha e Função são obrigatórios.');
@@ -47,24 +39,18 @@ export function FormCadastrarUsuario({ token, onUsuarioAdicionado, onCancelar }:
     });
 
     try {
-      // Chama a rota de registo do back-end
       await api.post('/user/register', {
         nome: DOMPurify.sanitize(nome),
         email: DOMPurify.sanitize(email),
-        password: password, // O back-end fará o hash
+        password: password,
         matricula: DOMPurify.sanitize(matricula) || null,
         role: role, 
       });
-      // setSuccess(`Usuário ${nome} (${role}) cadastrado com sucesso!`); // (O componente pai vai mostrar o sucesso)
       
-      // Limpa o formulário
       setNome('');
       setEmail('');
       setPassword('');
       setMatricula('');
-      setRole('ENCARREGADO');
-      
-      // <-- MUDANÇA: Chama o callback de sucesso
       onUsuarioAdicionado();
 
     } catch (err) {
@@ -80,47 +66,37 @@ export function FormCadastrarUsuario({ token, onUsuarioAdicionado, onCancelar }:
   };
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      <h4 className="text-lg font-semibold text-klin-azul text-center">
+    <form className="space-y-5" onSubmit={handleSubmit}>
+      <h4 className="text-lg font-bold text-primary text-center">
         Adicionar Novo Utilizador
       </h4>
+
+      <Input label="Nome Completo" value={nome} onChange={(e) => setNome(e.target.value)} />
+      <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+      <Input label="Senha Provisória" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+      <Input label="Matrícula (Opcional)" value={matricula} onChange={(e) => setMatricula(e.target.value)} />
+
       <div>
-        <label className={labelStyle}>Nome Completo</label>
-        <input type="text" className={inputStyle} value={nome} onChange={(e) => setNome(e.target.value)} />
-      </div>
-      <div>
-        <label className={labelStyle}>Email</label>
-        <input type="email" className={inputStyle} value={email} onChange={(e) => setEmail(e.target.value)} />
-      </div>
-      <div>
-        <label className={labelStyle}>Senha Provisória</label>
-        <input type="password" className={inputStyle} value={password} onChange={(e) => setPassword(e.target.value)} />
-      </div>
-      <div>
-        <label className={labelStyle}>Matrícula (Opcional)</label>
-        <input type="text" className={inputStyle} value={matricula} onChange={(e) => setMatricula(e.target.value)} />
-      </div>
-      <div>
-        <label className={labelStyle}>Função (Role)</label>
-        <select className={inputStyle} value={role} onChange={(e) => setRole(e.target.value)}>
-            {/* Como Admin, você pode criar Encarregados ou Operadores */}
+        <label className="block mb-1.5 text-sm font-medium text-gray-600">Função (Role)</label>
+        <select 
+          className="w-full px-4 py-2 text-gray-800 bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          value={role} 
+          onChange={(e) => setRole(e.target.value)}
+        >
             <option value="ENCARREGADO">Encarregado</option>
             <option value="OPERADOR">Operador</option>
-            {/* O Admin não deve poder criar outro Admin por este formulário (segurança) */}
         </select>
       </div>
 
-      {error && <p className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-center text-sm">{error}</p>}
-      {success && <p className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded text-center text-sm">{success}</p>}
+      {error && <p className="text-center text-sm text-error bg-red-50 p-2 rounded">{error}</p>}
 
-      {/* Botões de ação */}
-      <div className="flex gap-4 pt-4">
-        <button type="button" className={secondaryButton} disabled={loading} onClick={onCancelar}>
+      <div className="flex gap-4 pt-2">
+        <Button type="button" variant="secondary" className="w-full" disabled={loading} onClick={onCancelar}>
           Cancelar
-        </button>
-        <button type="submit" className={buttonStyle} disabled={loading}>
-          {loading ? 'Cadastrando...' : 'Cadastrar Usuário'}
-        </button>
+        </Button>
+        <Button type="submit" variant="primary" className="w-full" isLoading={loading}>
+          Cadastrar
+        </Button>
       </div>
     </form>
   );

@@ -2,11 +2,9 @@ import { useState } from 'react';
 import axios from 'axios';
 import DOMPurify from 'dompurify';
 import { RENDER_API_BASE_URL } from '../../config';
-
-// Classes reutilizáveis do Tailwind
-const inputStyle = "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul focus:border-transparent disabled:bg-gray-200";
-const buttonStyle = "bg-klin-azul hover:bg-klin-azul-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center";
-const labelStyle = "block text-gray-700 text-sm font-bold mb-2";
+// MUDANÇA: Importar componentes UI
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
 export function FormCadastrarVeiculo({ token }: { token: string }) {
   const [placa, setPlaca] = useState('');
@@ -14,7 +12,6 @@ export function FormCadastrarVeiculo({ token }: { token: string }) {
   const [ano, setAno] = useState('');
   const [tipoVeiculo, setTipoVeiculo] = useState('');
 
-  // Adicionar estados para os novos campos de data
   const [vencimentoCiv, setVencimentoCiv] = useState('');
   const [vencimentoCipp, setVencimentoCipp] = useState('');
 
@@ -28,7 +25,6 @@ export function FormCadastrarVeiculo({ token }: { token: string }) {
     setError('');
     setSuccess('');
 
-    // A validação de CIV/CIPP não é obrigatória aqui, pois são opcionais (?)
     if (!placa || !modelo || !ano || !tipoVeiculo) {
       setError('Campos principais (Placa, Modelo, Tipo, Ano) são obrigatórios.');
       setLoading(false);
@@ -41,26 +37,21 @@ export function FormCadastrarVeiculo({ token }: { token: string }) {
     });
 
     try {
-      // Chama a rota do back-end (que já atualizamos)
       await api.post('/veiculo', {
         placa: DOMPurify.sanitize(placa.toUpperCase()),
         modelo: DOMPurify.sanitize(modelo),
         ano: parseInt(ano),
         tipoVeiculo: DOMPurify.sanitize(tipoVeiculo),
-        
-        // Envia os novos campos (se vazios, o backend salvará null)
         vencimentoCiv: vencimentoCiv || null,
         vencimentoCipp: vencimentoCipp || null,
       });
 
       setSuccess(`Veículo ${placa.toUpperCase()} cadastrado com sucesso!`);
-      // Limpa o formulário
+      
       setPlaca('');
       setModelo('');
       setAno('');
       setTipoVeiculo('');
-      
-      // Limpar os novos campos
       setVencimentoCiv('');
       setVencimentoCipp('');
 
@@ -77,60 +68,89 @@ export function FormCadastrarVeiculo({ token }: { token: string }) {
   };
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      {}
+    <form className="space-y-5" onSubmit={handleSubmit}>
+      
+      {/* Grid Responsivo para os campos principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <label className={labelStyle}>Placa</label>
-          <input type="text" className={inputStyle} value={placa} onChange={(e) => setPlaca(e.target.value)} placeholder="ABC1D23" />
-        </div>
-        <div>
-          <label className={labelStyle}>Modelo</label>
-          <input type="text" className={inputStyle} value={modelo} onChange={(e) => setModelo(e.target.value)} placeholder="Ex: VW Constellation" />
-        </div>
-        <div>
-          <label className={labelStyle}>Tipo de Caminhão</label>
-          <input type="text" className={inputStyle} value={tipoVeiculo} onChange={(e) => setTipoVeiculo(e.target.value)} placeholder="Poliguindaste, Munck..." />
-        </div>
-        <div>
-          <label className={labelStyle}>Ano</label>
-          <input type="number" className={inputStyle} value={ano} onChange={(e) => setAno(e.target.value)} placeholder="2020" />
-        </div>
+        <Input
+          label="Placa"
+          value={placa}
+          onChange={(e) => setPlaca(e.target.value)}
+          placeholder="ABC1D23"
+          disabled={loading}
+        />
+        <Input
+          label="Modelo"
+          value={modelo}
+          onChange={(e) => setModelo(e.target.value)}
+          placeholder="Ex: VW Constellation"
+          disabled={loading}
+        />
+        <Input
+          label="Tipo de Caminhão"
+          value={tipoVeiculo}
+          onChange={(e) => setTipoVeiculo(e.target.value)}
+          placeholder="Poliguindaste, Munck..."
+          disabled={loading}
+        />
+        <Input
+          label="Ano"
+          type="number"
+          value={ano}
+          onChange={(e) => setAno(e.target.value)}
+          placeholder="2020"
+          disabled={loading}
+        />
       </div>
 
-      {}
-      {}
-      <div className="pt-4 border-t">
-        <h4 className="text-md font-semibold text-gray-700 mb-2 text-center">Controle de Documentação (Opcional)</h4>
+      {/* Secção de Documentação */}
+      <div className="pt-4 border-t border-gray-100">
+        <h4 className="text-sm font-bold text-text-secondary mb-3 uppercase tracking-wide text-center md:text-left">
+            Controle de Documentação (Opcional)
+        </h4>
+        
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-                <label className={labelStyle}>Vencimento CIV</label>
-                <input 
-                    type="date" 
-                    className={inputStyle} 
-                    value={vencimentoCiv} 
-                    onChange={(e) => setVencimentoCiv(e.target.value)} 
-                />
-            </div>
-            <div>
-                <label className={labelStyle}>Vencimento CIPP</label>
-                <input 
-                    type="date" 
-                    className={inputStyle} 
-                    value={vencimentoCipp} 
-                    onChange={(e) => setVencimentoCipp(e.target.value)} 
-                />
-            </div>
+            <Input
+              label="Vencimento CIV"
+              type="date"
+              value={vencimentoCiv}
+              onChange={(e) => setVencimentoCiv(e.target.value)}
+              disabled={loading}
+            />
+            <Input
+              label="Vencimento CIPP"
+              type="date"
+              value={vencimentoCipp}
+              onChange={(e) => setVencimentoCipp(e.target.value)}
+              disabled={loading}
+            />
         </div>
       </div>
-      {}
 
-      {error && <p className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-center text-sm">{error}</p>}
-      {success && <p className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded text-center text-sm">{success}</p>}
+      {/* Mensagens de Feedback */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-error px-4 py-3 rounded-md text-center text-sm">
+          {error}
+        </div>
+      )}
+      {success && (
+        <div className="bg-green-50 border border-green-200 text-success px-4 py-3 rounded-md text-center text-sm font-medium">
+          {success}
+        </div>
+      )}
 
-      <button type="submit" className={buttonStyle + " mt-4"} disabled={loading}>
-        {loading ? 'Cadastrando...' : 'Cadastrar Veículo'}
-      </button>
+      {/* Botão de Ação */}
+      <div className="pt-2">
+          <Button 
+            type="submit" 
+            variant="primary" 
+            className="w-full" 
+            disabled={loading}
+            isLoading={loading}
+          >
+            {loading ? 'Cadastrando...' : 'Cadastrar Veículo'}
+          </Button>
+      </div>
     </form>
   );
 }

@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { exportarParaExcel } from '../utils';
-// IMPORTANTE: Importar a constante de configuração que contém a URL base correta (com /api)
+// 1. Importar a constante de URL correta (fix para o erro 404)
 import { RENDER_API_BASE_URL } from '../config';
+// 2. Importar o novo componente de Botão (fix para o design)
+import { Button } from './ui/Button';
 
 // Tipos
 interface RankingProps {
@@ -16,43 +18,40 @@ interface OperadorRanking {
   kml: number;
 }
 
-// Estilos (para a tabela)
-const thStyle = "px-4 py-2 text-left text-sm font-semibold text-gray-700 bg-gray-100 border-b";
-const tdStyle = "px-4 py-2 text-sm text-gray-800 border-b";
+// Estilos da tabela
+const thStyle = "px-4 py-3 text-left text-xs font-bold text-text-secondary uppercase tracking-wider bg-gray-50 border-b border-gray-100";
+const tdStyle = "px-4 py-3 text-sm text-text border-b border-gray-50";
+
+// Cores das medalhas
 const medalColors = [
   'text-yellow-500', // 1º Ouro
-  'text-gray-500',   // 2º Prata
-  'text-yellow-700'  // 3º Bronze
+  'text-gray-400',   // 2º Prata
+  'text-amber-700'   // 3º Bronze
 ];
-
-const exportButton = "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50";
 
 export function RankingOperadores({ token }: RankingProps) {
   
-  // 1. Estados para os filtros
+  // Filtros
   const [ano, setAno] = useState(new Date().getFullYear());
-  const [mes, setMes] = useState(new Date().getMonth() + 1); // JS Mês é 0-11
+  const [mes, setMes] = useState(new Date().getMonth() + 1);
   
-  // 2. Estados para os dados
+  // Dados
   const [ranking, setRanking] = useState<OperadorRanking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // 3. Efeito que busca os dados na API
+  // Buscar Dados
   useEffect(() => {
     const carregarRanking = async () => {
       setLoading(true);
       setError('');
       try {
-        // CORREÇÃO: Usar RENDER_API_BASE_URL em vez da string hardcoded
-        // Isso garante que o '/api' seja incluído na URL
+        // CORREÇÃO 404: Usar a baseURL correta que tem o /api
         const api = axios.create({
           baseURL: RENDER_API_BASE_URL,
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        // Chama a rota de ranking
-        // A URL final será: ...onrender.com/api/relatorio/ranking-operadores
         const response = await api.get('/relatorio/ranking-operadores', {
           params: { ano, mes }
         });
@@ -68,14 +67,14 @@ export function RankingOperadores({ token }: RankingProps) {
     };
 
     carregarRanking();
-  }, [token, ano, mes]); // Recarrega se o token, ano ou mês mudarem
+  }, [token, ano, mes]);
 
-  // 4. Funções de Formatação
+  // Formatação
   const formatKm = (value: number) => value.toFixed(0);
   const formatLitros = (value: number) => value.toFixed(1);
   const formatKML = (value: number) => value.toFixed(2).replace('.', ',');
 
-  // 5. Opções dos Filtros
+  // Opções
   const mesesOptions = [
     { v: 1, n: 'Janeiro' }, { v: 2, n: 'Fevereiro' }, { v: 3, n: 'Março' },
     { v: 4, n: 'Abril' }, { v: 5, n: 'Maio' }, { v: 6, n: 'Junho' },
@@ -88,17 +87,13 @@ export function RankingOperadores({ token }: RankingProps) {
     new Date().getFullYear() - 2,
   ];
 
+  // Exportação
   const handleExportar = () => {
-    if (ranking.length === 0) {
-      alert("Nenhum dado de ranking para exportar.");
-      return;
-    }
+    if (ranking.length === 0) return;
     
-    // Nomes dos meses para o nome do ficheiro
     const nomeMes = mesesOptions.find(m => m.v === mes)?.n || 'Mes';
 
     try {
-      // Formatar os dados
       const dadosFormatados = ranking.map((op, index) => ({
         'Posição': `${index + 1}º`,
         'Motorista': op.nome,
@@ -108,7 +103,6 @@ export function RankingOperadores({ token }: RankingProps) {
       }));
       
       exportarParaExcel(dadosFormatados, `Ranking_Motoristas_${nomeMes}_${ano}.xlsx`);
-
     } catch (err) {
       alert('Ocorreu um erro ao preparar os dados para exportação.');
       console.error(err);
@@ -117,66 +111,83 @@ export function RankingOperadores({ token }: RankingProps) {
 
   return (
     <div className="space-y-6">
-      <h3 className="text-xl font-semibold text-klin-azul text-center">
+      <h3 className="text-xl font-semibold text-primary text-center">
         Ranking de Eficiência (KM/L) - Motoristas
       </h3>
 
-      {/* 6. Filtros de Data */}
-      <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border items-end justify-between">
+      {/* Filtros e Ações */}
+      <div className="flex flex-wrap gap-4 p-4 bg-white shadow-sm rounded-card border border-gray-100 items-end justify-between">
         <div className="flex flex-wrap gap-4">
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Mês</label>
-            <select 
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul"
-              value={mes}
-              onChange={(e) => setMes(Number(e.target.value))}
-            >
-              {mesesOptions.map(m => (
-                <option key={m.v} value={m.v}>{m.n}</option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Mês</label>
+            <div className="relative">
+              <select 
+                className="appearance-none shadow-sm border border-gray-300 rounded-input w-full py-2 px-3 text-text leading-tight focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-8 bg-white"
+                value={mes}
+                onChange={(e) => setMes(Number(e.target.value))}
+              >
+                {mesesOptions.map(m => (
+                  <option key={m.v} value={m.v}>{m.n}</option>
+                ))}
+              </select>
+              {/* Seta personalizada para o select */}
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              </div>
+            </div>
           </div>
+          
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-1">Ano</label>
-            <select 
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul"
-              value={ano}
-              onChange={(e) => setAno(Number(e.target.value))}
-            >
-              {anosOptions.map(a => (
-                <option key={a} value={a}>{a}</option>
-              ))}
-            </select>
+            <label className="block text-sm font-medium text-text-secondary mb-1">Ano</label>
+            <div className="relative">
+              <select 
+                className="appearance-none shadow-sm border border-gray-300 rounded-input w-full py-2 px-3 text-text leading-tight focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent pr-8 bg-white"
+                value={ano}
+                onChange={(e) => setAno(Number(e.target.value))}
+              >
+                {anosOptions.map(a => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Botão de exportar */}
+        {/* Botão de Exportar (Agora usando o componente UI Button) */}
         <div className="flex-shrink-0">
-           <button
-              type="button"
-              className={exportButton + " text-sm py-2"}
+           <Button
+              variant="success" // Verde para excel
               onClick={handleExportar}
               disabled={ranking.length === 0 || loading}
+              isLoading={loading}
+              icon={
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+              }
             >
-              Exportar Ranking (Excel)
-            </button>
+              Exportar Excel
+            </Button>
         </div>
       </div>
 
-      {/* 7. Conteúdo (Loading, Erro ou Tabela) */}
-      {loading && <p className="text-center text-klin-azul">A calcular ranking...</p>}
-      {error && <p className="text-center text-red-600">{error}</p>}
+      {/* Tabela de Resultados */}
+      {loading && <p className="text-center text-primary font-medium py-8">A calcular ranking...</p>}
+      {error && <p className="text-center text-error bg-red-50 p-4 rounded-md border border-red-100">{error}</p>}
 
       {!loading && !error && ranking.length === 0 && (
-         <p className="text-center text-gray-500 py-4">
-            Nenhum dado de motorista encontrado para este período.
-         </p>
+         <div className="text-center py-10 bg-white rounded-card border border-dashed border-gray-300">
+            <p className="text-text-secondary">Nenhum dado de motorista encontrado para este período.</p>
+         </div>
       )}
 
       {!loading && !error && ranking.length > 0 && (
-        <div className="overflow-x-auto shadow rounded-lg border">
-          <table className="min-w-full">
-            <thead>
+        <div className="overflow-hidden shadow-card rounded-card border border-gray-100">
+          <table className="min-w-full bg-white">
+            <thead className="bg-gray-50">
               <tr>
                 <th className={thStyle}>Pos.</th>
                 <th className={thStyle}>Motorista</th>
@@ -185,18 +196,18 @@ export function RankingOperadores({ token }: RankingProps) {
                 <th className={thStyle + " text-right"}>Litros (Comb.)</th>
               </tr>
             </thead>
-            <tbody className="bg-white">
+            <tbody className="divide-y divide-gray-100">
               {ranking.map((op, index) => (
-                <tr key={op.id}>
+                <tr key={op.id} className="hover:bg-gray-50 transition-colors">
                   <td className={tdStyle + " text-center font-bold"}>
-                    <span className={medalColors[index] || 'text-gray-900'}>
-                      {index + 1}º
+                    <span className={`${medalColors[index] || 'text-text-secondary'} text-lg`}>
+                      {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}º`}
                     </span>
                   </td>
-                  <td className={tdStyle}>{op.nome}</td>
-                  <td className={tdStyle + " text-right font-bold text-lg text-klin-azul"}>{formatKML(op.kml)}</td>
-                  <td className={tdStyle + " text-right"}>{formatKm(op.totalKM)} KM</td>
-                  <td className={tdStyle + " text-right"}>{formatLitros(op.totalLitros)} L</td>
+                  <td className={tdStyle + " font-medium"}>{op.nome}</td>
+                  <td className={tdStyle + " text-right font-bold text-lg text-primary"}>{formatKML(op.kml)}</td>
+                  <td className={tdStyle + " text-right text-text-secondary"}>{formatKm(op.totalKM)}</td>
+                  <td className={tdStyle + " text-right text-text-secondary"}>{formatLitros(op.totalLitros)}</td>
                 </tr>
               ))}
             </tbody>

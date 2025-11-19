@@ -2,15 +2,10 @@ import { useState } from 'react';
 import axios from 'axios';
 import DOMPurify from 'dompurify';
 import { RENDER_API_BASE_URL } from '../../config';
+// MUDANÇA: Importar os novos componentes de UI
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
-// Classes reutilizáveis
-const inputStyle = "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul focus:border-transparent disabled:bg-gray-200";
-const buttonStyle = "bg-klin-azul hover:bg-klin-azul-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center";
-const labelStyle = "block text-gray-700 text-sm font-bold mb-2";
-// <-- MUDANÇA 1: Adicionar estilo -->
-const secondaryButton = "bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full";
-
-// <-- MUDANÇA 2: Atualizar Props -->
 interface FormCadastrarFornecedorProps {
   token: string;
   onFornecedorAdicionado: () => void;
@@ -23,13 +18,11 @@ export function FormCadastrarFornecedor({ token, onFornecedorAdicionado, onCance
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  // const [success, setSuccess] = useState(''); // <-- Removido
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    // setSuccess(''); // <-- Removido
 
     if (!nome) {
       setError('O Nome é obrigatório.');
@@ -43,18 +36,13 @@ export function FormCadastrarFornecedor({ token, onFornecedorAdicionado, onCance
     });
 
     try {
-      // Chama a rota POST /api/fornecedor do seu backend
       await api.post('/fornecedor', {
         nome: DOMPurify.sanitize(nome),
         cnpj: DOMPurify.sanitize(cnpj) || null,
       });
-      // setSuccess(`Fornecedor ${nome} cadastrado com sucesso!`); // <-- Removido
       
-      // Limpa o formulário
       setNome('');
       setCnpj('');
-
-      // <-- MUDANÇA 3: Chamar callback -->
       onFornecedorAdicionado();
 
     } catch (err) {
@@ -70,33 +58,58 @@ export function FormCadastrarFornecedor({ token, onFornecedorAdicionado, onCance
   };
 
   return (
-    <form className="space-y-4" onSubmit={handleSubmit}>
-      {/* <-- MUDANÇA 4: Adicionar título --> */}
-      <h4 className="text-lg font-semibold text-klin-azul text-center">
+    <form className="space-y-5" onSubmit={handleSubmit}>
+      {/* MUDANÇA: Título com cor do novo tema */}
+      <h4 className="text-lg font-bold text-primary text-center">
         Adicionar Novo Fornecedor
       </h4>
 
-      <div>
-        <label className={labelStyle}>Nome do Fornecedor (Posto/Oficina)</label>
-        <input type="text" className={inputStyle} value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: POSTO QUARTO DE MILHA LTDA" />
-      </div>
+      {/* MUDANÇA: Usar o componente Input padronizado */}
+      <Input
+        label="Nome do Fornecedor (Posto/Oficina)"
+        type="text"
+        value={nome}
+        onChange={(e) => setNome(e.target.value)}
+        placeholder="Ex: POSTO QUARTO DE MILHA LTDA"
+        disabled={loading}
+      />
       
-      <div>
-        <label className={labelStyle}>CNPJ (Opcional)</label>
-        <input type="text" className={inputStyle} value={cnpj} onChange={(e) => setCnpj(e.target.value)} placeholder="00.000.000/0000-00" />
-      </div>
+      <Input
+        label="CNPJ (Opcional)"
+        type="text"
+        value={cnpj}
+        onChange={(e) => setCnpj(e.target.value)}
+        placeholder="00.000.000/0000-00"
+        disabled={loading}
+      />
 
-      {error && <p className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-center text-sm">{error}</p>}
-      {/* {success && <p>...</p>} // <-- Removido */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-error px-4 py-3 rounded-md text-center text-sm">
+          {error}
+        </div>
+      )}
 
-      {/* <-- MUDANÇA 5: Adicionar botões --> */}
-      <div className="flex gap-4 pt-4">
-        <button type="button" className={secondaryButton} disabled={loading} onClick={onCancelar}>
+      {/* MUDANÇA: Usar o componente Button padronizado */}
+      <div className="flex gap-4 pt-2">
+        <Button 
+          type="button" 
+          variant="secondary" 
+          className="w-full" 
+          disabled={loading} 
+          onClick={onCancelar}
+        >
           Cancelar
-        </button>
-        <button type="submit" className={buttonStyle} disabled={loading}>
+        </Button>
+        
+        <Button 
+          type="submit" 
+          variant="primary" 
+          className="w-full" 
+          disabled={loading}
+          isLoading={loading}
+        >
           {loading ? 'Cadastrando...' : 'Cadastrar Fornecedor'}
-        </button>
+        </Button>
       </div>
     </form>
   );
