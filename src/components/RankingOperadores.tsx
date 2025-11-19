@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { exportarParaExcel } from '../utils';
+// IMPORTANTE: Importar a constante de configuração que contém a URL base correta (com /api)
+import { RENDER_API_BASE_URL } from '../config';
 
 // Tipos
 interface RankingProps {
@@ -27,7 +29,7 @@ const exportButton = "bg-green-600 hover:bg-green-700 text-white font-bold py-2 
 
 export function RankingOperadores({ token }: RankingProps) {
   
-  // 1. Estados para os filtros (igual ao DashboardRelatorios)
+  // 1. Estados para os filtros
   const [ano, setAno] = useState(new Date().getFullYear());
   const [mes, setMes] = useState(new Date().getMonth() + 1); // JS Mês é 0-11
   
@@ -42,12 +44,15 @@ export function RankingOperadores({ token }: RankingProps) {
       setLoading(true);
       setError('');
       try {
+        // CORREÇÃO: Usar RENDER_API_BASE_URL em vez da string hardcoded
+        // Isso garante que o '/api' seja incluído na URL
         const api = axios.create({
-          baseURL: 'https://api-frota-klin.onrender.com',
+          baseURL: RENDER_API_BASE_URL,
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
-        // Chama a nova rota de ranking com os filtros
+        // Chama a rota de ranking
+        // A URL final será: ...onrender.com/api/relatorio/ranking-operadores
         const response = await api.get('/relatorio/ranking-operadores', {
           params: { ano, mes }
         });
@@ -117,7 +122,6 @@ export function RankingOperadores({ token }: RankingProps) {
       </h3>
 
       {/* 6. Filtros de Data */}
-      {/* <-- MUDANÇA 4: Adicionar 'items-end' e 'justify-between' --> */}
       <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border items-end justify-between">
         <div className="flex flex-wrap gap-4">
           <div>
@@ -146,7 +150,7 @@ export function RankingOperadores({ token }: RankingProps) {
           </div>
         </div>
 
-        {/* <-- MUDANÇA 5: Adicionar o botão de exportar --> */}
+        {/* Botão de exportar */}
         <div className="flex-shrink-0">
            <button
               type="button"
@@ -160,7 +164,6 @@ export function RankingOperadores({ token }: RankingProps) {
       </div>
 
       {/* 7. Conteúdo (Loading, Erro ou Tabela) */}
-      {/* ... (restante do JSX sem alterações) ... */}
       {loading && <p className="text-center text-klin-azul">A calcular ranking...</p>}
       {error && <p className="text-center text-red-600">{error}</p>}
 
