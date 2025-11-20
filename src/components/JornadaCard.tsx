@@ -16,78 +16,88 @@ interface JornadaCardProps {
   onJornadaFinalizada: () => void;
 }
 
-// O Card
 export function JornadaCard({ token, jornada, onJornadaFinalizada }: JornadaCardProps) {
   
-  // --- Lógica do Timer (Movida do App.tsx para cá) ---
-  const [tempoDecorrido, setTempoDecorrido] = useState<string | null>(null);
+  // Estado para o cronômetro
+  const [tempoDecorrido, setTempoDecorrido] = useState<string>("--:--:--");
 
   useEffect(() => {
-    let intervalId: number | undefined;
     const inicio = new Date(jornada.dataInicio).getTime();
 
     const calcularTempo = () => {
-      try {
-          const agora = Date.now();
-          const diffMs = agora - inicio;
-          if (diffMs < 0) { setTempoDecorrido("00:00:00"); return; }
-          const horas = Math.floor(diffMs / (1000 * 60 * 60));
-          const minutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-          const segundos = Math.floor((diffMs % (1000 * 60)) / 1000);
-          setTempoDecorrido(
-            `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`
-          );
-      } catch (e) { setTempoDecorrido("--:--:--"); }
+      const agora = Date.now();
+      const diffMs = agora - inicio;
+      
+      if (diffMs < 0) { 
+        setTempoDecorrido("00:00:00"); 
+        return; 
+      }
+
+      const horas = Math.floor(diffMs / (1000 * 60 * 60));
+      const minutos = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+      const segundos = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+      setTempoDecorrido(
+        `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:${String(segundos).padStart(2, '0')}`
+      );
     };
     
+    // Atualiza imediatamente e depois a cada segundo
     calcularTempo();
-    intervalId = setInterval(calcularTempo, 1000);
-    return () => { if (intervalId) clearInterval(intervalId); };
-  }, [jornada.dataInicio]); // Depende apenas da data de início desta jornada
+    const intervalId = setInterval(calcularTempo, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [jornada.dataInicio]);
 
   return (
     <div className="space-y-6">
-      {/* 1. Card de Informações (Estilo Tailwind) */}
+      {/* Card de Informações */}
       <div className="bg-white shadow rounded-lg p-6 border-l-4 border-klin-azul">
-         <h2 className="text-xl font-semibold text-gray-800 mb-3">Jornada em Andamento</h2>
-         <div className="space-y-1">
-           <p className="text-gray-600"><strong>Veículo:</strong> {jornada.veiculo?.placa ?? 'N/A'}</p>
-           <p className="text-gray-600"><strong>Início:</strong> {new Date(jornada.dataInicio).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</p>
-           <p className="text-gray-600"><strong>KM Inicial:</strong> {jornada.kmInicio}</p>
-           
-           {/* <-- Adicionar o link da foto --> */}
-           {jornada.fotoInicioUrl ? (
-             <a
-               href={jornada.fotoInicioUrl}
-               target="_blank"
-               rel="noopener noreferrer"
-               className="text-sm text-klin-azul hover:text-klin-azul-hover font-medium underline inline-flex items-center gap-1 pt-1"
-             >
-               Ver Foto de Início
-               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-               </svg>
-             </a>
-           ) : (
-             <p className="text-sm text-gray-500 italic pt-1">
-               (Sem foto de início)
-             </p>
-           )}
-           {}
+         <div className="flex justify-between items-start">
+            <div>
+                <h2 className="text-xl font-semibold text-gray-800 mb-1">Jornada em Andamento</h2>
+                <p className="text-sm text-gray-500 mb-4">Iniciada em: {new Date(jornada.dataInicio).toLocaleString('pt-BR')}</p>
+            </div>
+            <div className="bg-green-100 text-green-800 px-3 py-1 rounded font-mono font-bold text-lg">
+                {tempoDecorrido}
+            </div>
          </div>
 
-         {tempoDecorrido &&
-            <p className="mt-4 text-lg font-medium bg-green-100 text-green-800 inline-block px-3 py-1 rounded">
-                <strong>Tempo Decorrido:</strong> {tempoDecorrido}
-            </p>
-         }
+         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-2">
+            <div>
+                <p className="text-xs text-gray-500 uppercase font-bold">Veículo</p>
+                <p className="text-gray-800 font-medium">{jornada.veiculo?.placa} - {jornada.veiculo?.modelo}</p>
+            </div>
+            <div>
+                <p className="text-xs text-gray-500 uppercase font-bold">KM Inicial</p>
+                <p className="text-gray-800 font-medium">{jornada.kmInicio} KM</p>
+            </div>
+         </div>
+
+         {/* Link da Foto */}
+         {jornada.fotoInicioUrl && (
+            <div className="mt-2">
+                <a
+                    href={jornada.fotoInicioUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-klin-azul hover:text-klin-azul-hover font-medium underline inline-flex items-center gap-1"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                    </svg>
+                    Ver Foto do Painel
+                </a>
+            </div>
+         )}
       </div>
-       {/* 2. Formulário para finalizar (agora dentro de um card) */}
+
+       {/* Formulário para finalizar (Componente separado) */}
        <div className="bg-white shadow rounded-lg p-6">
          <FinalizarJornada
            token={token}
-           jornadaParaFinalizar={jornada} // Passa o objeto desta jornada
-           onJornadaFinalizada={onJornadaFinalizada} // Passa o callback
+           jornadaParaFinalizar={jornada} 
+           onJornadaFinalizada={onJornadaFinalizada} 
          />
        </div>
     </div>

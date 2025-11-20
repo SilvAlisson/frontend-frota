@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { exportarParaExcel } from '../utils';
-// 1. Importar a constante de URL correta (fix para o erro 404)
 import { RENDER_API_BASE_URL } from '../config';
-// 2. Importar o novo componente de Botão (fix para o design)
 import { Button } from './ui/Button';
 
 // Tipos

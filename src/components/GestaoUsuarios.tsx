@@ -5,8 +5,7 @@ import { FormCadastrarUsuario } from './forms/FormCadastrarUsuario';
 import { FormEditarUsuario } from './forms/FormEditarUsuario';
 import { exportarParaExcel } from '../utils';
 import { ModalQrCode } from './ModalQrCode';
-// MUDANÇA: Importar o novo Botão
-import { Button } from './ui/Button';
+import { Button } from './ui/Button'; // Componente de UI padronizado
 
 // Tipos
 interface User {
@@ -21,7 +20,7 @@ interface GestaoUsuariosProps {
   adminUserId: string;
 }
 
-// Estilos da Tabela (Novo Design)
+// Estilos da Tabela (Padronizado)
 const thStyle = "px-4 py-3 text-left text-xs font-bold text-text-secondary uppercase tracking-wider bg-gray-50 border-b border-gray-100";
 const tdStyle = "px-4 py-3 text-sm text-text border-b border-gray-50 align-middle";
 
@@ -50,7 +49,6 @@ function IconeEditar() {
     </svg>
   );
 }
-
 
 export function GestaoUsuarios({ token, adminUserId }: GestaoUsuariosProps) {
   
@@ -189,7 +187,6 @@ export function GestaoUsuarios({ token, adminUserId }: GestaoUsuariosProps) {
     }
   };
 
-
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-semibold text-primary text-center">
@@ -239,6 +236,11 @@ export function GestaoUsuarios({ token, adminUserId }: GestaoUsuariosProps) {
               className="text-sm"
               onClick={handleExportar}
               disabled={usuarios.length === 0}
+              icon={
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+              }
             >
               Exportar Excel
             </Button>
@@ -248,72 +250,78 @@ export function GestaoUsuarios({ token, adminUserId }: GestaoUsuariosProps) {
             <p className="text-center text-primary py-8">A carregar utilizadores...</p>
           ) : (
             <div className="overflow-hidden shadow-card rounded-card border border-gray-100 bg-white">
-              <table className="min-w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className={thStyle}>Nome</th>
-                    <th className={thStyle}>Email</th>
-                    <th className={thStyle}>Matrícula</th>
-                    <th className={thStyle}>Função</th>
-                    <th className={thStyle}>Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {usuarios.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                      <td className={tdStyle + " font-medium"}>{user.nome}</td>
-                      <td className={tdStyle + " text-text-secondary"}>{user.email}</td>
-                      <td className={tdStyle}>{user.matricula || '---'}</td>
-                      <td className={tdStyle}>
-                         <span className={`text-xs font-bold px-2 py-1 rounded-full inline-flex items-center
-                           ${user.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
-                             user.role === 'ENCARREGADO' ? 'bg-blue-100 text-blue-800' :
-                             'bg-green-100 text-green-800'}
-                         `}>
-                           {user.role}
-                         </span>
-                      </td>
-                      <td className={tdStyle}>
-                        <div className="flex items-center gap-2">
-                          
-                          {/* Botão QR Code (Apenas Operadores) */}
-                          {user.role === 'OPERADOR' && (
-                            <Button
-                              variant="secondary"
-                              className="!p-2 h-8 w-8" // Estilo compacto
-                              onClick={() => handleGerarQrCode(user.id, user.nome)}
-                              disabled={loadingQr === user.id}
-                              title="Gerar Token (QR Code)"
-                              isLoading={loadingQr === user.id}
-                              icon={<IconeQrCode />}
-                            />
-                          )}
-                          
-                          {/* Botão Editar */}
-                          <Button 
-                            variant="secondary"
-                            className="!p-2 h-8 w-8"
-                            onClick={() => handleAbrirEdicao(user.id)}
-                            title="Editar"
-                            icon={<IconeEditar />}
-                          />
-                          
-                          {/* Botão Apagar */}
-                          <Button
-                            variant="danger"
-                            className="!p-2 h-8 w-8"
-                            onClick={() => handleDelete(user.id)}
-                            disabled={deletingId === user.id || user.id === adminUserId}
-                            title="Remover"
-                            isLoading={deletingId === user.id}
-                            icon={<IconeLixo />}
-                          />
-                        </div>
-                      </td>
+              {usuarios.length === 0 ? (
+                 <div className="text-center py-10">
+                    <p className="text-text-secondary">Nenhum utilizador cadastrado.</p>
+                 </div>
+              ) : (
+                <table className="min-w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className={thStyle}>Nome</th>
+                      <th className={thStyle}>Email</th>
+                      <th className={thStyle}>Matrícula</th>
+                      <th className={thStyle}>Função</th>
+                      <th className={thStyle}>Ações</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {usuarios.map((user) => (
+                      <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                        <td className={tdStyle + " font-medium"}>{user.nome}</td>
+                        <td className={tdStyle + " text-text-secondary"}>{user.email}</td>
+                        <td className={tdStyle}>{user.matricula || '---'}</td>
+                        <td className={tdStyle}>
+                          <span className={`text-xs font-bold px-2 py-1 rounded-full inline-flex items-center
+                            ${user.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
+                              user.role === 'ENCARREGADO' ? 'bg-blue-100 text-blue-800' :
+                              'bg-green-100 text-green-800'}
+                          `}>
+                            {user.role}
+                          </span>
+                        </td>
+                        <td className={tdStyle}>
+                          <div className="flex items-center gap-2">
+                            
+                            {/* Botão QR Code (Apenas Operadores) */}
+                            {user.role === 'OPERADOR' && (
+                              <Button
+                                variant="secondary"
+                                className="!p-2 h-8 w-8"
+                                onClick={() => handleGerarQrCode(user.id, user.nome)}
+                                disabled={loadingQr === user.id}
+                                title="Gerar Token (QR Code)"
+                                isLoading={loadingQr === user.id}
+                                icon={<IconeQrCode />}
+                              />
+                            )}
+                            
+                            {/* Botão Editar */}
+                            <Button 
+                              variant="secondary"
+                              className="!p-2 h-8 w-8"
+                              onClick={() => handleAbrirEdicao(user.id)}
+                              title="Editar"
+                              icon={<IconeEditar />}
+                            />
+                            
+                            {/* Botão Apagar */}
+                            <Button
+                              variant="danger"
+                              className="!p-2 h-8 w-8"
+                              onClick={() => handleDelete(user.id)}
+                              disabled={deletingId === user.id || user.id === adminUserId}
+                              title="Remover"
+                              isLoading={deletingId === user.id}
+                              icon={<IconeLixo />}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
         </div>

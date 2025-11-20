@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { RENDER_API_BASE_URL } from '../config';
 import { exportarParaExcel } from '../utils';
+import { Button } from './ui/Button'; // NOVO
+import { Input } from './ui/Input'; // NOVO
 
-// Tipos (baseados nos 'includes' da nova rota do backend)
+// Tipos
 interface ItemAbastecimento {
   quantidade: number;
   produto: {
@@ -36,7 +38,7 @@ interface HistoricoAbastecimentosProps {
   veiculos: any[];
 }
 
-// Sub-componente para o ícone da foto (para usar no link)
+// Ícones
 function IconeFoto() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
@@ -44,7 +46,6 @@ function IconeFoto() {
     </svg>
   );
 }
-// Ícone de Lixo
 function IconeLixo() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
@@ -52,9 +53,6 @@ function IconeLixo() {
     </svg>
   );
 }
-
-const exportButton = "bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50";
-
 
 export function HistoricoAbastecimentos({ token, userRole, veiculos }: HistoricoAbastecimentosProps) {
 
@@ -72,7 +70,6 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
     headers: { 'Authorization': `Bearer ${token}` }
   });
 
-  // Efeito para buscar os dados na nova rota da API
   useEffect(() => {
     const fetchHistorico = async () => {
       setLoading(true);
@@ -86,28 +83,23 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
         const response = await api.get('/abastecimentos/recentes', { params });
         setHistorico(response.data);
       } catch (err) {
-        console.error("Erro ao buscar histórico de abastecimentos:", err);
+        console.error("Erro ao buscar histórico:", err);
         setError('Falha ao carregar histórico.');
       } finally {
         setLoading(false);
       }
     };
     fetchHistorico();
-  }, [token, dataInicioFiltro, dataFimFiltro, veiculoIdFiltro]); // Recarrega se os filtros mudarem
+  }, [token, dataInicioFiltro, dataFimFiltro, veiculoIdFiltro]);
 
   const handleDelete = async (id: string) => {
-    // Removida a confirmação duplicada
-    if (!window.confirm(`Tem a certeza que quer REMOVER permanentemente este registo de abastecimento? (ID: ${id})\n\nEsta ação não pode ser desfeita e pode afetar os relatórios.`)) {
-      return;
-    }
-
+    if (!window.confirm(`Tem a certeza que quer REMOVER este registo?`)) return;
     setDeletingId(id);
     setError('');
     try {
       await api.delete(`/abastecimento/${id}`);
       setHistorico(prev => prev.filter(ab => ab.id !== id));
     } catch (err) {
-      console.error("Erro ao deletar abastecimento:", err);
       if (axios.isAxiosError(err) && err.response?.data?.error) {
         setError(err.response.data.error);
       } else {
@@ -118,52 +110,40 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
     }
   };
 
-  // Funções de formatação
   const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')}`;
-  const formatDateTime = (dateStr: string) => 
-    new Date(dateStr).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'UTC' });
+  const formatDateTime = (dateStr: string) => new Date(dateStr).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short', timeZone: 'UTC' });
 
-  // Handler de exportação
   const handleExportar = () => {
     setError('');
     if (historico.length === 0) {
-      setError("Nenhum dado para exportar (baseado nos filtros atuais).");
+      setError("Nenhum dado para exportar.");
       return;
     }
-    
     try {
-      // Formatar os dados para o Excel
       const dadosFormatados = historico.flatMap(ab => {
-        const dataFormatada = formatDateTime(ab.dataHora);
         const itensFormatados = ab.itens.map(item => `${item.produto.nome} (${item.quantidade} ${item.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'Un'})`).join(', ');
-
         return {
-          'Data/Hora': dataFormatada,
+          'Data/Hora': formatDateTime(ab.dataHora),
           'Placa': ab.veiculo.placa,
           'Modelo': ab.veiculo.modelo,
-          'KM Odómetro': ab.kmOdometro,
+          'KM': ab.kmOdometro,
           'Itens': itensFormatados,
-          'Fornecedor (Posto)': ab.fornecedor.nome,
+          'Fornecedor': ab.fornecedor.nome,
           'Operador': ab.operador.nome,
-          'Custo Total (R$)': ab.custoTotal.toFixed(2).replace('.', ','),
-          'Link Nota Fiscal': ab.fotoNotaFiscalUrl || 'N/A',
+          'Total (R$)': ab.custoTotal.toFixed(2).replace('.', ','),
+          'Nota Fiscal': ab.fotoNotaFiscalUrl || 'N/A',
         };
       });
-      
       exportarParaExcel(dadosFormatados, "Historico_Abastecimentos.xlsx");
-
     } catch (err) {
-      setError('Ocorreu um erro ao preparar os dados para exportação.');
-      console.error(err);
+      setError('Erro ao exportar.');
     }
   };
 
-
-  // Renderização
   return (
     <div className="space-y-4">
-      <h3 className="text-xl font-semibold text-klin-azul text-center mb-4">
-        Histórico de Abastecimentos ({historico.length > 0 ? `${historico.length} resultados` : 'Últimos 50 por filtro'})
+      <h3 className="text-xl font-semibold text-primary text-center mb-4">
+        Histórico de Abastecimentos ({historico.length > 0 ? `${historico.length}` : 'Recentes'})
       </h3>
       
       <FiltrosHistorico
@@ -179,90 +159,65 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
         historicoLength={historico.length}
       />
       
-      {error && <p className="text-center text-red-600 bg-red-100 p-3 rounded border border-red-400">{error}</p>}
-
-      {loading && (
-         <p className="text-center text-klin-azul">A carregar histórico...</p>
-      )}
+      {error && <p className="text-center text-error bg-red-50 p-3 rounded border border-red-200">{error}</p>}
+      {loading && <p className="text-center text-primary">A carregar histórico...</p>}
       
       {!loading && historico.length === 0 && !error && (
-        <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4" role="alert">
-          <p>Nenhum registo de abastecimento encontrado (para os filtros selecionados).</p>
+        <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4">
+          <p>Nenhum registo encontrado.</p>
         </div>
       )}
 
-      {/* Container para os cards com scroll */}
-      <div className="max-h-[600px] overflow-y-auto space-y-3 pr-2">
+      <div className="max-h-[600px] overflow-y-auto space-y-3 pr-2 custom-scrollbar">
         {!loading && historico.map((ab) => (
-          <div key={ab.id} className={`bg-white shadow border border-gray-200 rounded-lg p-4 transition-opacity ${deletingId === ab.id ? 'opacity-50' : 'opacity-100'}`}>
+          <div key={ab.id} className={`bg-white shadow-sm border border-gray-200 rounded-card p-4 transition-opacity ${deletingId === ab.id ? 'opacity-50' : 'opacity-100'}`}>
             
             <div className="flex justify-between items-start mb-2">
               <div>
-                <span className="font-bold text-lg text-klin-azul">{formatDateTime(ab.dataHora)}</span>
+                <span className="font-bold text-lg text-primary">{formatDateTime(ab.dataHora)}</span>
                 <p className="text-sm text-gray-700 font-semibold">{ab.veiculo.placa} ({ab.veiculo.modelo})</p>
               </div>
               
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 {ab.fotoNotaFiscalUrl ? (
-                  <a
-                    href={ab.fotoNotaFiscalUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-klin-azul hover:text-klin-azul-hover font-medium underline inline-flex items-center gap-1 flex-shrink-0"
-                  >
-                    Ver Nota Fiscal
-                    <IconeFoto />
+                  <a href={ab.fotoNotaFiscalUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:text-primary-hover font-medium underline inline-flex items-center gap-1">
+                    Nota Fiscal <IconeFoto />
                   </a>
-                ) : (
-                  <span className="text-sm text-gray-500 italic flex-shrink-0">(Sem foto)</span>
-                )}
+                ) : <span className="text-sm text-gray-400 italic">(Sem foto)</span>}
 
                 {userRole === 'ADMIN' && (
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(ab.id)}
+                  <Button 
+                    variant="danger" 
+                    className="!p-1.5 h-8 w-8" 
+                    onClick={() => handleDelete(ab.id)} 
                     disabled={deletingId === ab.id}
-                    className="text-red-600 hover:text-red-800 disabled:opacity-50"
-                    title="Remover Registo (Apenas Admin)"
-                  >
-                    {deletingId === ab.id ? 'Aguarde...' : <IconeLixo />}
-                  </button>
+                    title="Remover"
+                    icon={<IconeLixo />}
+                  />
                 )}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm border-t border-b py-2 my-2">
-              <div>
-                <span className="font-semibold text-gray-500 block">KM Odómetro</span>
-                <span className="text-gray-800">{ab.kmOdometro} KM</span>
-              </div>
-              <div>
-                <span className="font-semibold text-gray-500 block">Operador</span>
-                <span className="text-gray-800">{ab.operador.nome}</span>
-              </div>
-               <div>
-                <span className="font-semibold text-gray-500 block">Fornecedor</span>
-                <span className="text-gray-800">{ab.fornecedor.nome}</span>
-              </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm border-t border-b border-gray-100 py-2 my-2">
+              <div><span className="font-semibold text-gray-500 block">KM</span><span className="text-gray-800">{ab.kmOdometro}</span></div>
+              <div><span className="font-semibold text-gray-500 block">Operador</span><span className="text-gray-800">{ab.operador.nome}</span></div>
+              <div><span className="font-semibold text-gray-500 block">Fornecedor</span><span className="text-gray-800">{ab.fornecedor.nome}</span></div>
             </div>
 
             <div className="flex justify-between items-end">
-              <div className="text-sm">
-                <span className="font-semibold text-gray-500 block">Itens Registados:</span>
+              <div className="text-sm text-gray-600">
+                <span className="font-semibold block text-gray-500">Itens:</span>
                 <ul className="list-disc list-inside">
                   {ab.itens.map(item => (
-                    <li key={item.produto.nome} className="text-gray-700">
-                      {item.produto.nome} ({item.quantidade} L/Un)
-                    </li>
+                    <li key={item.produto.nome}>{item.produto.nome} ({item.quantidade} {item.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'Un'})</li>
                   ))}
                 </ul>
               </div>
               <div className="text-right">
-                <span className="font-semibold text-gray-500 block">Custo Total</span>
+                <span className="font-semibold text-gray-500 block">Total</span>
                 <span className="text-xl font-bold text-red-600">{formatCurrency(ab.custoTotal)}</span>
               </div>
             </div>
-
           </div>
         ))}
       </div>
@@ -270,10 +225,7 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
   );
 }
 
-// Sub-componente de Filtros (Reutilizado)
-const inputStyle = "shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul";
-const labelStyle = "block text-sm font-bold text-gray-700 mb-1";
-
+// Sub-componente de Filtros
 interface FiltrosProps {
   veiculos: any[];
   veiculoId: string;
@@ -287,61 +239,25 @@ interface FiltrosProps {
   historicoLength: number;
 }
 
-function FiltrosHistorico({
-  veiculos,
-  veiculoId,
-  setVeiculoId,
-  dataInicio,
-  setDataInicio,
-  dataFim,
-  setDataFim,
-  onExportar,
-  loading,
-  historicoLength
-}: FiltrosProps) {
+function FiltrosHistorico({ veiculos, veiculoId, setVeiculoId, dataInicio, setDataInicio, dataFim, setDataFim, onExportar, loading, historicoLength }: FiltrosProps) {
   return (
-    <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border items-end">
-      <div>
-        <label className={labelStyle}>Data Início</label>
-        <input 
-          type="date"
-          className={inputStyle}
-          value={dataInicio}
-          onChange={(e) => setDataInicio(e.target.value)}
-        />
-      </div>
-      <div>
-        <label className={labelStyle}>Data Fim</label>
-        <input 
-          type="date"
-          className={inputStyle}
-          value={dataFim}
-          onChange={(e) => setDataFim(e.target.value)}
-        />
-      </div>
-      <div className="flex-grow">
-        <label className={labelStyle}>Veículo</label>
-        <select 
-          className={inputStyle}
-          value={veiculoId}
-          onChange={(e) => setVeiculoId(e.target.value)}
-        >
-          <option value="">-- Todos os Veículos --</option>
-          {veiculos.map(v => (
-            <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>
-          ))}
-        </select>
+    <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100 items-end">
+      <div className="w-full sm:w-auto"><Input label="Início" type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} /></div>
+      <div className="w-full sm:w-auto"><Input label="Fim" type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} /></div>
+      
+      <div className="flex-grow min-w-[200px]">
+        <label className="block mb-1.5 text-sm font-medium text-text-secondary">Veículo</label>
+        <div className="relative">
+            <select className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none" value={veiculoId} onChange={(e) => setVeiculoId(e.target.value)}>
+              <option value="">-- Todos --</option>
+              {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>)}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
+        </div>
       </div>
 
-      <div className="flex-shrink-0">
-         <button
-            type="button"
-            className={exportButton + " text-sm py-2"}
-            onClick={onExportar}
-            disabled={historicoLength === 0 || loading}
-          >
-            Exportar (Excel)
-          </button>
+      <div className="w-full sm:w-auto">
+         <Button variant="success" onClick={onExportar} disabled={historicoLength === 0 || loading} className="w-full sm:w-auto">Exportar</Button>
       </div>
     </div>
   );
