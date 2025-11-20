@@ -1,11 +1,8 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { RENDER_API_BASE_URL } from '../config';
-
-// Classes reutilizáveis do Tailwind
-const inputStyle = "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul focus:border-transparent disabled:bg-gray-200";
-const buttonStyle = "bg-klin-azul hover:bg-klin-azul-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center";
-const labelStyle = "block text-gray-700 text-sm font-bold mb-2";
+import { Button } from './ui/Button'; // Componente Visual
+import { Input } from './ui/Input';   // Componente Visual
 
 // Tipos
 interface Jornada {
@@ -14,7 +11,7 @@ interface Jornada {
   kmInicio: number;
   veiculo: { placa: string; modelo: string };
   operador: { nome: string };
-  fotoInicioUrl: string | null; // <-- MUDANÇA: Adicionado o campo da foto
+  fotoInicioUrl: string | null;
 }
 interface JornadaItemProps {
   token: string;
@@ -34,14 +31,14 @@ export function JornadaGestaoItem({ token, jornada, onFinalizada }: JornadaItemP
     setError('');
 
     if (!kmFim) {
-      setError('KM Final é obrigatório para fechar a jornada.');
+      setError('KM Final é obrigatório.');
       setLoading(false);
       return;
     }
     
     const kmFimFloat = parseFloat(kmFim);
     if (isNaN(kmFimFloat) || kmFimFloat < jornada.kmInicio) {
-      setError(`KM Final deve ser um número maior que o KM Inicial (${jornada.kmInicio}).`);
+      setError(`KM Final deve ser maior que o Início (${jornada.kmInicio}).`);
       setLoading(false);
       return;
     }
@@ -55,12 +52,12 @@ export function JornadaGestaoItem({ token, jornada, onFinalizada }: JornadaItemP
       // O back-end permite que ENCARREGADO/ADMIN finalize a jornada de outro user
       await api.put(`/jornada/finalizar/${jornada.id}`, {
         kmFim: kmFimFloat,
-        // (Nota: A foto de fim não é pedida aqui, pois é um fecho manual)
+        // (Nota: A foto de fim não é pedida aqui, pois é um fecho manual administrativo)
         observacoes: `[Finalizado manualmente pelo Gestor/Admin]`
       });
 
       setLoading(false);
-      // Avisa o App.tsx para remover este item da lista
+      // Avisa o componente pai para remover este item da lista
       onFinalizada(jornada.id); 
 
     } catch (err) {
@@ -74,74 +71,98 @@ export function JornadaGestaoItem({ token, jornada, onFinalizada }: JornadaItemP
     }
   };
 
-
   return (
-    <div className="bg-gray-50 p-4 rounded-lg shadow-sm border border-gray-200">
+    <div className="bg-white p-5 rounded-card shadow-sm border border-gray-200 hover:border-primary/30 transition-colors">
       
-      {/* Informações da Jornada */}
-      <div className="mb-4 space-y-1">
-        <p className="text-sm text-gray-600">
-          <strong>Operador:</strong> {jornada.operador.nome}
-        </p>
-        <p className="text-sm text-gray-600">
-          <strong>Veículo:</strong> {jornada.veiculo.placa} ({jornada.veiculo.modelo})
-        </p>
-        <p className="text-sm text-gray-600">
-          <strong>Início:</strong> {new Date(jornada.dataInicio).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
-        </p>
-        <p className="text-sm text-gray-600">
-          <strong>KM Inicial:</strong> {jornada.kmInicio}
-        </p>
+      {/* Cabeçalho do Item: Informações Principais */}
+      <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-4">
         
-        {/* <-- Adicionar o link da foto --> */}
-        {jornada.fotoInicioUrl ? (
-          <a
-            href={jornada.fotoInicioUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-klin-azul hover:text-klin-azul-hover font-medium underline inline-flex items-center gap-1"
-          >
-            Ver Foto do Odómetro (Início)
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-            </svg>
-          </a>
-        ) : (
-          <p className="text-sm text-gray-500 italic">
-            (Sem foto de início registada)
-          </p>
-        )}
-        {}
-
-      </div>
-
-      {/* Formulário de Finalização Manual */}
-      <form className="space-y-3" onSubmit={handleSubmit}>
+        {/* Lado Esquerdo: Operador e Veículo */}
         <div>
-          <label className={labelStyle} htmlFor={`kmFim-gestao-${jornada.id}`}>
-            KM Final (Manual)
-          </label>
-          <input
-            id={`kmFim-gestao-${jornada.id}`}
-            type="number"
-            placeholder="Insira o KM Final correto"
-            className={inputStyle + " py-2"} // py-2 mais pequeno
-            value={kmFim}
-            onChange={(e) => setKmFim(e.target.value)}
-            disabled={loading}
-          />
+            <h5 className="text-lg font-bold text-primary flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
+                </svg>
+                {jornada.operador.nome}
+            </h5>
+            <p className="text-sm text-gray-600 mt-1 flex items-center gap-1">
+               <span className="font-semibold bg-gray-100 px-2 py-0.5 rounded text-gray-800">
+                 {jornada.veiculo.placa}
+               </span>
+               <span className="text-text-secondary">
+                 ({jornada.veiculo.modelo})
+               </span>
+            </p>
         </div>
 
-        {error && <p className="text-red-600 text-sm text-center">{error}</p>}
+        {/* Lado Direito: Detalhes de Tempo e KM */}
+        <div className="text-left md:text-right bg-gray-50 p-3 rounded-lg border border-gray-100 min-w-[150px]">
+            <p className="text-xs text-gray-500 font-bold uppercase tracking-wide mb-1">Início da Jornada</p>
+            <p className="text-sm font-medium text-gray-900">
+              {new Date(jornada.dataInicio).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+            </p>
+            <div className="mt-1 pt-1 border-t border-gray-200 flex justify-between md:justify-end gap-2">
+               <span className="text-xs text-gray-500">KM Inicial:</span>
+               <span className="text-xs font-bold text-gray-800">{jornada.kmInicio}</span>
+            </div>
+             {/* Link da Foto */}
+            {jornada.fotoInicioUrl && (
+              <div className="mt-2 text-right">
+                <a
+                    href={jornada.fotoInicioUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-primary hover:text-primary-hover font-medium underline inline-flex items-center gap-1"
+                >
+                    Ver Foto
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-3 h-3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
+                    </svg>
+                </a>
+              </div>
+            )}
+        </div>
+      </div>
 
-        <button 
-          type="submit" 
-          className={buttonStyle + " bg-red-600 hover:bg-red-700"} // Botão vermelho para ação de admin
-          disabled={loading || !kmFim}
-        >
-          {loading ? 'Finalizando...' : 'Finalizar Jornada do Operador'}
-        </button>
-      </form>
+      {/* Área de Ação: Formulário de Finalização Manual */}
+      <div className="mt-4 pt-4 border-t border-gray-100">
+        <form onSubmit={handleSubmit}>
+            <label className="block text-xs font-bold text-text-secondary mb-2 uppercase" htmlFor={`kmFim-gestao-${jornada.id}`}>
+                Ação de Encarregado: Finalizar Jornada
+            </label>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                <div className="w-full sm:max-w-xs">
+                    <Input
+                        id={`kmFim-gestao-${jornada.id}`}
+                        type="number"
+                        placeholder={`KM Final (> ${jornada.kmInicio})`}
+                        value={kmFim}
+                        onChange={(e) => setKmFim(e.target.value)}
+                        disabled={loading}
+                        // Sem label aqui pois já colocamos acima
+                    />
+                </div>
+                <Button 
+                    type="submit" 
+                    variant="danger" // Vermelho para indicar ação de fechamento/administrativa
+                    disabled={loading || !kmFim}
+                    isLoading={loading}
+                    className="w-full sm:w-auto whitespace-nowrap"
+                >
+                    Encerrar Turno
+                </Button>
+            </div>
+
+            {error && (
+                <p className="text-error text-xs mt-2 flex items-center gap-1 animate-pulse">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                    </svg>
+                    {error}
+                </p>
+            )}
+        </form>
+      </div>
     </div>
   );
 }

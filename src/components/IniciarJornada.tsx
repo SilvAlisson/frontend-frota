@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto'; 
+import { Button } from './ui/Button'; // Componente Visual
+import { Input } from './ui/Input';   // Componente Visual
 
-// Interfaces (tipagem)
+// Interfaces
 interface IniciarJornadaProps {
   token: string;
   usuarios: any[]; 
@@ -10,11 +12,6 @@ interface IniciarJornadaProps {
   onJornadaIniciada: (novaJornada: any) => void;
   jornadasAtivas: any[]; 
 }
-
-// Classes reutilizáveis do Tailwind
-const inputStyle = "shadow appearance-none border rounded w-full py-3 px-4 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-klin-azul focus:border-transparent disabled:bg-gray-200";
-const buttonStyle = "bg-klin-azul hover:bg-klin-azul-hover text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline w-full disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center";
-const labelStyle = "block text-gray-700 text-sm font-bold mb-2";
 
 export function IniciarJornada({ 
   token, 
@@ -25,40 +22,43 @@ export function IniciarJornada({
   jornadasAtivas
 }: IniciarJornadaProps) {
 
+  // Estados do formulário
   const [veiculoId, setVeiculoId] = useState('');
   const [encarregadoId, setEncarregadoId] = useState('');
   const [kmInicio, setKmInicio] = useState('');
-  // const [fotoInicio, setFotoInicio] = useState<File | null>(null); // <-- 3. REMOVIDO
+  
+  // Estados de controle
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [avisoVeiculo, setAvisoVeiculo] = useState('');
 
-  // <-- 4. ADICIONADOS ESTADOS DO MODAL
+  // Estados do modal
   const [modalAberto, setModalAberto] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
   
   const isEsteVeiculoJaAberto = jornadasAtivas.some(j => j.veiculoId === veiculoId);
 
-  // handleVeiculoChange (sem alteração, continua como estava)
+  // Handler de mudança de veículo (verifica duplicidade)
   const handleVeiculoChange = (veiculoIdSelecionado: string) => {
     setVeiculoId(veiculoIdSelecionado);
     setAvisoVeiculo(''); 
     if (!veiculoIdSelecionado) return;
+    
     const jornadaNossaEsteVeiculo = jornadasAtivas.find(j => j.veiculoId === veiculoIdSelecionado);
     if (jornadaNossaEsteVeiculo) {
         setAvisoVeiculo(`Você já está com esta jornada aberta (Início: ${jornadaNossaEsteVeiculo.kmInicio} KM).`);
-        return; 
     }
   };
 
-  // <-- 5. handleSubmit ATUALIZADO (agora só valida e abre o modal)
+  // Handler de Submissão (Valida e abre Modal)
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true); 
     setError('');
     setSuccess('');
 
+    // Validações
     if (isEsteVeiculoJaAberto) {
        setError(`Você já iniciou uma jornada com este veículo. Finalize-a na coluna ao lado.`);
        setLoading(false);
@@ -69,7 +69,6 @@ export function IniciarJornada({
       setLoading(false);
       return;
     }
-    // if (!fotoInicio) { ... } // <-- Validação de foto REMOVIDA
     
     const kmInicioFloat = parseFloat(kmInicio);
     if (isNaN(kmInicioFloat) || kmInicioFloat <= 0) {
@@ -79,17 +78,17 @@ export function IniciarJornada({
     }
 
     try {
-      // Prepara os dados para o modal
+      // Prepara os dados para o modal (não envia ainda)
       const dadosCompletosDoFormulario = {
         veiculoId: veiculoId,
         operadorId: operadorLogadoId,
         encarregadoId: encarregadoId, 
         kmInicio: kmInicioFloat,
-        // fotoInicioUrl será adicionado pelo modal
+        // fotoInicioUrl será adicionado pelo modal após upload
       };
       
       setFormDataParaModal(dadosCompletosDoFormulario);
-      setModalAberto(true); // Abre o modal
+      setModalAberto(true); // Abre o modal para foto
       
     } catch (err) {
       console.error("Erro ao preparar dados:", err);
@@ -99,145 +98,152 @@ export function IniciarJornada({
     }
   };
 
-  // <-- 6. ADICIONADO Callback de sucesso do modal
+  // Callback de sucesso vindo do Modal
   const handleModalSuccess = (novaJornada: any) => {
     setSuccess('Jornada iniciada com sucesso!');
     onJornadaIniciada(novaJornada);
     
-    // Limpa o modal
+    // Limpa tudo
     setModalAberto(false);
     setFormDataParaModal(null);
-      
-    // Limpa o formulário
     setVeiculoId('');
     setEncarregadoId('');
     setKmInicio('');
     setAvisoVeiculo('');
   };
 
-
   return (
-    // <-- 7. ADICIONADO Fragment (<>) para englobar o modal
     <>
-      <form 
-        className="bg-transparent space-y-4 relative"
-        onSubmit={handleSubmit}
-      >
-        {loading && (
-          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
-            <svg className="animate-spin h-8 w-8 text-klin-azul" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          </div>
+      <form className="space-y-5 relative" onSubmit={handleSubmit}>
+        
+        {/* Loading Overlay (se necessário) */}
+        {loading && !modalAberto && (
+           <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10 rounded-lg">
+             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+           </div>
         )}
 
-        <h3 className="text-xl font-semibold text-klin-azul text-center">
-          Iniciar Nova Jornada
-        </h3>
-
-        {/* Campo Veículo (sem alteração) */}
-        <div>
-          <label className={labelStyle}>Veículo (Placa)</label>
-          <select 
-              className={inputStyle} 
-              value={veiculoId} 
-              onChange={(e) => handleVeiculoChange(e.target.value)}
-              disabled={loading}
-          >
-            <option value="">Selecione um veículo...</option>
-            {veiculos.map(v => (
-              <option key={v.id} value={v.id}>
-                {v.placa} ({v.modelo})
-              </option>
-            ))}
-          </select>
+        <div className="text-center pb-2">
+           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 mb-3">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-primary">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
+              </svg>
+           </div>
+           <h3 className="text-xl font-bold text-primary">
+             Iniciar Nova Jornada
+           </h3>
+           <p className="text-sm text-text-secondary mt-1">
+             Selecione o veículo e o encarregado responsável.
+           </p>
         </div>
 
-        {/* Campo Encarregado (sem alteração) */}
+        {/* Campo Veículo */}
         <div>
-          <label className={labelStyle}>Encarregado</label>
-          <select className={inputStyle} value={encarregadoId} onChange={(e) => setEncarregadoId(e.target.value)} disabled={loading}>
-            <option value="">Selecione um encarregado...</option>
-            {usuarios
-              .filter(u => u.role === 'ENCARREGADO') 
-              .map(u => (
-                <option key={u.id} value={u.id}>
-                  {u.nome}
+          <label className="block mb-1.5 text-sm font-medium text-text-secondary">Veículo</label>
+          <div className="relative">
+            <select 
+                className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none transition-all"
+                value={veiculoId} 
+                onChange={(e) => handleVeiculoChange(e.target.value)}
+                disabled={loading}
+            >
+              <option value="">Selecione um veículo...</option>
+              {veiculos.map(v => (
+                <option key={v.id} value={v.id}>
+                  {v.placa} ({v.modelo})
                 </option>
               ))}
-          </select>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+             </div>
+          </div>
         </div>
 
-        {/* Campo KM Inicial (sem alteração) */}
+        {/* Campo Encarregado */}
         <div>
-          <label className={labelStyle}>KM Inicial</label>
-          <input 
+          <label className="block mb-1.5 text-sm font-medium text-text-secondary">Encarregado</label>
+          <div className="relative">
+            <select 
+              className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none transition-all"
+              value={encarregadoId} 
+              onChange={(e) => setEncarregadoId(e.target.value)} 
+              disabled={loading}
+            >
+              <option value="">Selecione um encarregado...</option>
+              {usuarios
+                .filter(u => u.role === 'ENCARREGADO') 
+                .map(u => (
+                  <option key={u.id} value={u.id}>
+                    {u.nome}
+                  </option>
+                ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+             </div>
+          </div>
+        </div>
+
+        {/* Campo KM Inicial */}
+        <Input 
+            label="KM Inicial (Odómetro)"
             type="number" 
             placeholder="Ex: 19000"
-            className={inputStyle}
             value={kmInicio}
             onChange={(e) => setKmInicio(e.target.value)}
             disabled={loading}
-          />
-        </div>
+        />
         
-        {/* <-- 8. REMOVIDO Bloco da Foto
-        <div>
-          <label className={labelStyle}>Foto do Odómetro (Início)</label>
-          <input type="file" ... />
-        </div>
-        */}
-        
+        {/* Mensagens de Feedback */}
         {avisoVeiculo && (
-          <p className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded text-center text-sm">
+          <div className="flex items-center gap-2 p-3 rounded-md bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0"><path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" /></svg>
             {avisoVeiculo}
-          </p>
+          </div>
         )}
         {error && (
-          <p className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-center text-sm">
+          <div className="flex items-center gap-2 p-3 rounded-md bg-red-50 border border-red-200 text-error text-sm animate-pulse">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0"><path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" /></svg>
             {error}
-          </p>
+          </div>
         )}
         {success && (
-          <p className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded text-center text-sm">
+          <div className="flex items-center gap-2 p-3 rounded-md bg-green-50 border border-green-200 text-success text-sm">
+             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0"><path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" /></svg>
             {success}
-          </p>
+          </div>
         )}
 
-        <button 
+        <Button 
           type="submit" 
-          className={buttonStyle}
-          // <-- 9. ATUALIZADO: Remoção do '!fotoInicio' da validação
+          className="w-full py-3"
+          isLoading={loading}
           disabled={loading || !veiculoId || !encarregadoId || !kmInicio || isEsteVeiculoJaAberto} 
         >
           {loading ? 'Validando...' : 'Iniciar Jornada'}
-        </button>
+        </Button>
 
         {isEsteVeiculoJaAberto && (
-            <p className="text-center text-sm text-red-700 font-medium">
-                Você já está com este veículo. Finalize a jornada ao lado.
+            <p className="text-center text-xs text-error font-medium mt-2">
+                * Veículo indisponível.
             </p>
         )}
       </form>
 
-      {/* <-- 10. ADICIONADO: Renderização do Modal --> */}
+      {/* Renderização do Modal */}
       {modalAberto && formDataParaModal && (
         <ModalConfirmacaoFoto
           token={token}
           titulo="Confirmar Início de Jornada"
           
-          // O modal de foto precisa do KM para exibir na confirmação
+          // Dados para confirmação visual e envio
           kmParaConfirmar={parseFloat(kmInicio)} 
-          
-          // Dados que o modal precisa para enviar o POST
           dadosJornada={formDataParaModal} 
-          apiEndpoint="/jornada/iniciar" // API de destino
+          apiEndpoint="/jornada/iniciar" 
           apiMethod="POST"
-          
-          jornadaId={null} // Não aplicável ao iniciar
+          jornadaId={null}
 
-          // Callbacks
           onClose={() => setModalAberto(false)}
           onSuccess={handleModalSuccess} 
         />
