@@ -23,7 +23,7 @@ export function LoginScreen() {
     if (magicToken) {
       const realizarLoginPorToken = async () => {
         setLoading(true);
-        setError(''); // Limpa erros anteriores
+        setError('');
 
         try {
           // Chama a rota especial do backend para trocar o token curto pelo JWT
@@ -38,8 +38,7 @@ export function LoginScreen() {
         } catch (err: any) {
           console.error("Falha no login por QR Code:", err);
           setError('QR Code inválido ou expirado. Tente entrar manualmente.');
-        } finally {
-          setLoading(false);
+          setLoading(false); // Para de carregar se der erro
         }
       };
 
@@ -48,7 +47,7 @@ export function LoginScreen() {
   }, [magicToken, login, navigate]);
 
 
-  // Login Manual (Email/Senha) - Mantém igual
+  // Login Manual (Email/Senha)
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
@@ -84,11 +83,12 @@ export function LoginScreen() {
         className="bg-surface shadow-md rounded-lg px-8 pt-8 pb-8 mb-4 w-full max-w-sm space-y-5"
         onSubmit={handleSubmit}
       >
-        {/* MUDANÇA VISUAL: Se estiver logando por Token, esconde os campos ou avisa */}
+        {/* Se estiver logando via Token, esconde os campos e mostra mensagem */}
         {magicToken && loading ? (
           <div className="text-center py-8">
-            <p className="text-primary font-bold text-lg animate-pulse">Autenticando via QR Code...</p>
-            <p className="text-sm text-gray-500 mt-2">Aguarde um momento...</p>
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-primary font-bold text-lg animate-pulse">A autenticar...</p>
+            <p className="text-sm text-gray-500 mt-2">Aguarde um momento.</p>
           </div>
         ) : (
           <>
@@ -138,7 +138,7 @@ export function LoginScreen() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => navigate('/login')} // Remove o token da URL ao clicar
+            onClick={() => navigate('/login')}
             className="w-full"
           >
             Tentar Login Manual

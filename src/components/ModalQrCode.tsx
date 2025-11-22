@@ -1,15 +1,14 @@
 import { QRCodeSVG } from 'qrcode.react';
 
 interface ModalQrCodeProps {
-  token: string; // Este é o loginToken curto vindo do backend
+  token: string;
   nomeUsuario: string;
   onClose: () => void;
 }
 
 export function ModalQrCode({ token, nomeUsuario, onClose }: ModalQrCodeProps) {
 
-  // Gera a URL completa para login automático
-  // Ex: https://klinfrota.vercel.app/login?magicToken=abc12345
+  // Gera a URL correta dinamicamente
   const loginUrl = `${window.location.origin}/login?magicToken=${token}`;
 
   return (
@@ -31,10 +30,10 @@ export function ModalQrCode({ token, nomeUsuario, onClose }: ModalQrCodeProps) {
             Peça ao operador <span className="font-bold text-text">{nomeUsuario}</span> para apontar a câmera.
           </p>
 
-          {/* Área do QR Code */}
+          {/* Área do QR Code - SEM O LINK EMBAIXO */}
           <div className="flex justify-center p-4 bg-white rounded-lg border border-gray-100 shadow-inner">
             <QRCodeSVG
-              value={loginUrl} // O valor é a URL clicável
+              value={loginUrl}
               size={220}
               bgColor={"#ffffff"}
               fgColor={"#000000"}
@@ -43,14 +42,7 @@ export function ModalQrCode({ token, nomeUsuario, onClose }: ModalQrCodeProps) {
             />
           </div>
 
-          {/* Opcional: Mostrar o link apenas se quiser depurar, senão remova este bloco div */}
-          {/* <div className="text-center">
-               <p className="text-xs text-gray-400 mb-1">Link gerado (debug):</p>
-               <p className="text-[10px] font-mono text-gray-500 break-all bg-gray-50 p-2 rounded border">
-                 {loginUrl}
-               </p>
-            </div> */}
-
+          {/* Mensagem Explicativa */}
           <p className="text-xs text-center text-blue-600 bg-blue-50 p-3 rounded-lg border border-blue-100">
             Este código conecta o operador <strong>automaticamente</strong> sem precisar de senha.
           </p>
