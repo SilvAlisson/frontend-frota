@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom'; // Importar useSearchParams
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
@@ -14,7 +14,7 @@ export function LoginScreen() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // MUDANÇA CRÍTICA: Ler o token da URL
+  // Hook para ler parâmetros da URL (ex: ?magicToken=xyz)
   const [searchParams] = useSearchParams();
   const magicToken = searchParams.get('magicToken');
 
@@ -26,19 +26,19 @@ export function LoginScreen() {
         setError('');
 
         try {
-          // Chama a rota de troca de token do backend
+          // Chama a rota especial do backend para trocar o token curto pelo JWT
           const response = await api.post('/auth/login-token', {
             loginToken: magicToken
           });
 
-          // Sucesso! Salva a sessão e entra
+          // Se sucesso, guarda a sessão e entra
           login(response.data);
           navigate('/');
 
         } catch (err: any) {
           console.error("Falha no login por QR Code:", err);
-          setError('QR Code inválido ou expirado. Tente entrar manualmente.');
-          setLoading(false); // Libera a tela se falhar
+          setError('QR Code inválido ou expirado.');
+          setLoading(false); // Libera a tela se falhar para tentar manual
         }
       };
 
@@ -46,8 +46,7 @@ export function LoginScreen() {
     }
   }, [magicToken, login, navigate]);
 
-
-  // Login Manual (Mantido igual)
+  // Login Manual (Email/Senha)
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
@@ -72,83 +71,121 @@ export function LoginScreen() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-      <img src="/logo.png" alt="Logo KLIN" className="w-40 mb-6" />
+    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
 
-      <h2 className="text-2xl font-semibold text-primary mb-6">
-        Gestão de Frota
-      </h2>
+      {/* Fundo Decorativo Moderno */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+        <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-primary/10 rounded-full blur-3xl opacity-60"></div>
+        <div className="absolute bottom-[-10%] left-[-5%] w-72 h-72 bg-blue-400/10 rounded-full blur-3xl opacity-60"></div>
+      </div>
 
-      <form
-        className="bg-surface shadow-md rounded-lg px-8 pt-8 pb-8 mb-4 w-full max-w-sm space-y-5"
-        onSubmit={handleSubmit}
-      >
-        {/* Se estiver a logar com Token, mostra apenas carregando */}
-        {magicToken && loading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-primary font-bold text-lg animate-pulse">A autenticar...</p>
-            <p className="text-sm text-gray-500 mt-2">Aguarde um momento.</p>
+      <div className="w-full max-w-md px-6">
+
+        {/* Cabeçalho da Tela */}
+        <div className="text-center mb-8">
+          <div className="inline-flex p-4 bg-white rounded-2xl shadow-lg shadow-gray-200/50 mb-6">
+            <img src="/logo.png" alt="Logo KLIN" className="h-12 w-auto object-contain" />
           </div>
-        ) : (
-          <>
-            <Input
-              label="Email"
-              type="email"
-              placeholder="seu.email@empresa.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              disabled={loading}
-            />
+          <h2 className="text-3xl font-bold text-text tracking-tight">
+            Bem-vindo
+          </h2>
+          <p className="text-text-secondary mt-2 font-medium">
+            Acesse o painel de gestão de frota
+          </p>
+        </div>
 
-            <Input
-              label="Senha"
-              type="password"
-              placeholder="********"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-            />
-          </>
-        )}
+        {/* Card de Login */}
+        <div className="bg-white rounded-card shadow-card p-8 border border-gray-50 relative overflow-hidden">
 
-        {error && (
-          <div className="p-3 rounded-md bg-red-50 border border-red-200">
-            <p className="text-sm text-error text-center font-medium">
-              {error}
-            </p>
-          </div>
-        )}
+          {/* Barra de progresso superior (visual) se estiver carregando */}
+          {loading && (
+            <div className="absolute top-0 left-0 w-full h-1 bg-gray-100 overflow-hidden">
+              <div className="h-full bg-primary animate-[loading_1s_ease-in-out_infinite]"></div>
+            </div>
+          )}
 
-        {!magicToken && (
-          <div className="pt-2 flex items-center justify-center">
-            <Button
-              type="submit"
-              variant="primary"
-              isLoading={loading}
-              className="w-full"
-            >
-              {loading ? 'Entrando...' : 'Entrar'}
-            </Button>
-          </div>
-        )}
+          <form className="space-y-5" onSubmit={handleSubmit}>
 
-        {/* Botão de voltar se o QR code falhar */}
-        {magicToken && !loading && error && (
-          <Button
-            type="button"
-            variant="secondary"
-            onClick={() => navigate('/login')} // Limpa a URL para tentar manual
-            className="w-full"
-          >
-            Tentar Login Manual
-          </Button>
-        )}
-      </form>
+            {/* Estado de Carregamento do Token Mágico */}
+            {magicToken && loading ? (
+              <div className="text-center py-10 space-y-4">
+                <div className="inline-block animate-spin rounded-full h-10 w-10 border-[3px] border-gray-200 border-t-primary"></div>
+                <div>
+                  <p className="text-primary font-bold text-lg animate-pulse">A autenticar acesso...</p>
+                  <p className="text-xs text-gray-400 mt-1">A validar as suas credenciais de segurança</p>
+                </div>
+              </div>
+            ) : (
+              /* Formulário Manual */
+              <>
+                <Input
+                  label="Email Corporativo"
+                  type="email"
+                  placeholder="seu.nome@klin.com.br"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  disabled={loading}
+                  className="py-3" // Input um pouco maior para facilitar o toque
+                />
 
-      <p className="text-center text-text-secondary text-xs mt-4">
-        &copy;{new Date().getFullYear()} KLIN. Todos os direitos reservados.
-      </p>
+                <div className="space-y-1">
+                  <Input
+                    label="Senha"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={loading}
+                    className="py-3"
+                  />
+                  {/* Link de esqueceu a senha (decorativo por enquanto) */}
+                  {/* <div className="text-right">
+                        <a href="#" className="text-xs text-primary hover:underline font-medium">Esqueceu a senha?</a>
+                      </div> */}
+                </div>
+              </>
+            )}
+
+            {/* Mensagem de Erro */}
+            {error && (
+              <div className="p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+                </svg>
+                <p className="text-red-700 text-sm font-medium">{error}</p>
+              </div>
+            )}
+
+            {/* Botão de Login Manual */}
+            {!magicToken && (
+              <Button
+                type="submit"
+                variant="primary"
+                isLoading={loading}
+                className="w-full py-3.5 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+              >
+                {loading ? 'A entrar...' : 'Aceder ao Painel'}
+              </Button>
+            )}
+
+            {/* Botão para cancelar login automático se falhar */}
+            {magicToken && !loading && error && (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => navigate('/login')}
+                className="w-full py-3 border-gray-200 text-gray-600"
+              >
+                Voltar ao Login Manual
+              </Button>
+            )}
+          </form>
+        </div>
+
+        <p className="text-center text-xs text-gray-400 mt-8 font-medium">
+          &copy; {new Date().getFullYear()} KLIN. Todos os direitos reservados.
+        </p>
+      </div>
     </div>
   );
 }
