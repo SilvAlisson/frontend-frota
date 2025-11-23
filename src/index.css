@@ -1,31 +1,66 @@
 @import "tailwindcss";
 
 @theme {
-  /* Paleta 60/30/10 (P3.1) */
-  --color-primary: #007EAD;        /* O seu 'klin-azul' como cor de Ação (10%) */
-  --color-primary-hover: #0C4C6C;  /* O seu 'klin-azul-hover' */
-  --color-primary-soft: #E6F2F7;   /* Tom claro para fundos de "ghost button" */
-  
-  --color-background: #F0F4F8;     /* O seu 'klin-gelo' como Fundo (60%) */
-  --color-surface: #FFFFFF;        /* O seu 'klin-branco' para Cards (30%) */
+  /* Paleta Refinada */
+  --color-primary: #007EAD;
+  --color-primary-hover: #00638a;
+  --color-primary-soft: #E0F2F8;
+  /* Fundo suave para ícones/botões */
 
-  /* Cores Semânticas (P4.2) */
-  --color-success: #16A34A; /* green-600 */
-  --color-warning: #F59E0B; /* amber-500 */
-  --color-error: #DC2626;   /* red-600 */
+  --color-background: #F8FAFC;
+  /* Cinza muito claro, melhor que branco puro para fundo */
+  --color-surface: #FFFFFF;
 
-  /* Tipografia (P3.2) */
-  --color-text: #1F2937;           /* gray-800 para texto principal */
-  --color-text-secondary: #6B7280; /* gray-500 para texto secundário */
-  
-  /* Fontes (P3.2) - Adicionando Inter */
-  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  /* Cores Semânticas */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
 
-  /* Tokens de Espaçamento e Borda (P3.3 / P8.2) */
-  --border-radius-card: 1rem;      /* 16px */
-  --border-radius-input: 0.5rem;   /* 8px */
-  --border-radius-button: 0.75rem; /* 12px */
+  /* Tipografia Moderna */
+  --color-text: #1E293B;
+  /* Slate-800 (Mais suave que preto puro) */
+  --color-text-secondary: #64748B;
+  /* Slate-500 */
 
-  --box-shadow-card: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
-  --box-shadow-card-hover: 0 8px 16px 0 rgba(0, 0, 0, 0.08);
+  /* Forçar a fonte Inter */
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  /* Tokens de Espaçamento e Borda Modernos */
+  --border-radius-card: 1rem;
+  /* 16px - Cantos mais arredondados */
+  --border-radius-input: 0.75rem;
+  /* 12px */
+  --border-radius-button: 0.75rem;
+  /* 12px */
+
+  /* Sombras Suaves (Diffuse Shadows) */
+  --box-shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  --box-shadow-card-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilos Globais */
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  /* Deixa a fonte mais nítida */
+}
+
+/* Scrollbar bonita */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
 }
