@@ -14,11 +14,11 @@ export function LoginScreen() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Hook para ler parâmetros da URL (?magicToken=xyz)
+  // MUDANÇA CRÍTICA: Ler o token da URL
   const [searchParams] = useSearchParams();
   const magicToken = searchParams.get('magicToken');
 
-  // Efeito para Login Automático via QR Code
+  // Efeito: Se tiver token na URL, tenta logar sozinho
   useEffect(() => {
     if (magicToken) {
       const realizarLoginPorToken = async () => {
@@ -26,19 +26,19 @@ export function LoginScreen() {
         setError('');
 
         try {
-          // Chama a rota especial do backend para trocar o token curto pelo JWT
+          // Chama a rota de troca de token do backend
           const response = await api.post('/auth/login-token', {
             loginToken: magicToken
           });
 
-          // Se sucesso, o backend devolve { token: "JWT...", user: {...} }
+          // Sucesso! Salva a sessão e entra
           login(response.data);
-          navigate('/'); // Redireciona para o Dashboard
+          navigate('/');
 
         } catch (err: any) {
           console.error("Falha no login por QR Code:", err);
           setError('QR Code inválido ou expirado. Tente entrar manualmente.');
-          setLoading(false); // Para de carregar se der erro
+          setLoading(false); // Libera a tela se falhar
         }
       };
 
@@ -47,7 +47,7 @@ export function LoginScreen() {
   }, [magicToken, login, navigate]);
 
 
-  // Login Manual (Email/Senha)
+  // Login Manual (Mantido igual)
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
@@ -83,7 +83,7 @@ export function LoginScreen() {
         className="bg-surface shadow-md rounded-lg px-8 pt-8 pb-8 mb-4 w-full max-w-sm space-y-5"
         onSubmit={handleSubmit}
       >
-        {/* Se estiver logando via Token, esconde os campos e mostra mensagem */}
+        {/* Se estiver a logar com Token, mostra apenas carregando */}
         {magicToken && loading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-4"></div>
@@ -138,7 +138,7 @@ export function LoginScreen() {
           <Button
             type="button"
             variant="secondary"
-            onClick={() => navigate('/login')}
+            onClick={() => navigate('/login')} // Limpa a URL para tentar manual
             className="w-full"
           >
             Tentar Login Manual

@@ -1,4 +1,5 @@
 import { QRCodeSVG } from 'qrcode.react';
+import { Button } from './ui/Button';
 
 interface ModalQrCodeProps {
   token: string;
@@ -8,7 +9,8 @@ interface ModalQrCodeProps {
 
 export function ModalQrCode({ token, nomeUsuario, onClose }: ModalQrCodeProps) {
 
-  // Gera a URL correta dinamicamente
+  // MUDANÇA CRÍTICA: Gera uma URL completa em vez de JSON
+  // Isso faz a câmera do celular reconhecer como link e abrir o navegador
   const loginUrl = `${window.location.origin}/login?magicToken=${token}`;
 
   return (
@@ -22,7 +24,7 @@ export function ModalQrCode({ token, nomeUsuario, onClose }: ModalQrCodeProps) {
       >
         {/* Cabeçalho */}
         <div className="bg-gray-50 px-6 py-4 border-b border-gray-100 text-center">
-          <h3 className="text-lg font-bold text-primary">Acesso Rápido (QR Code)</h3>
+          <h3 className="text-lg font-bold text-primary">Acesso Rápido</h3>
         </div>
 
         <div className="p-6 space-y-6">
@@ -30,10 +32,10 @@ export function ModalQrCode({ token, nomeUsuario, onClose }: ModalQrCodeProps) {
             Peça ao operador <span className="font-bold text-text">{nomeUsuario}</span> para apontar a câmera.
           </p>
 
-          {/* Área do QR Code - SEM O LINK EMBAIXO */}
+          {/* Área do QR Code */}
           <div className="flex justify-center p-4 bg-white rounded-lg border border-gray-100 shadow-inner">
             <QRCodeSVG
-              value={loginUrl}
+              value={loginUrl} // Agora é uma URL!
               size={220}
               bgColor={"#ffffff"}
               fgColor={"#000000"}
@@ -42,18 +44,21 @@ export function ModalQrCode({ token, nomeUsuario, onClose }: ModalQrCodeProps) {
             />
           </div>
 
-          {/* Mensagem Explicativa */}
-          <p className="text-xs text-center text-blue-600 bg-blue-50 p-3 rounded-lg border border-blue-100">
-            Este código conecta o operador <strong>automaticamente</strong> sem precisar de senha.
-          </p>
+          {/* Sem texto de link aqui em baixo, apenas a instrução */}
+          <div className="bg-blue-50 p-3 rounded-lg border border-blue-100 text-center">
+            <p className="text-xs text-blue-800">
+              Este código conecta o operador <strong>automaticamente</strong>.
+            </p>
+          </div>
 
-          <button
+          <Button
             type="button"
-            className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 px-4 rounded-lg focus:outline-none w-full transition-colors"
+            variant="secondary"
+            className="w-full"
             onClick={onClose}
           >
             Fechar Janela
-          </button>
+          </Button>
         </div>
       </div>
     </div>
