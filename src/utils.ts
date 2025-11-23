@@ -1,6 +1,4 @@
-// Declara a variável global XLSX que vem do script CDN no index.html
-//
-declare const XLSX: any;
+import * as XLSX from 'xlsx';
 
 /**
  * Exporta um array de dados JSON para um ficheiro Excel (XLSX).
@@ -16,7 +14,7 @@ export const exportarParaExcel = (data: any[], nomeFicheiro: string) => {
     const wb = XLSX.utils.book_new();
 
     // 3. Adicionar a planilha ao workbook
-    XLSX.utils.book_append_sheet(wb, ws, "Dados"); // O nome da aba será "Dados"
+    XLSX.utils.book_append_sheet(wb, ws, "Dados");
 
     // 4. Iniciar o download do ficheiro
     XLSX.writeFile(wb, nomeFicheiro);

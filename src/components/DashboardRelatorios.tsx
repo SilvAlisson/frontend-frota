@@ -1,41 +1,28 @@
 import { useState, useEffect } from 'react';
-import { api } from '../services/api'; // Usando a instância global
+import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { Button } from './ui/Button';
+// Importação dos tipos (Tipagem estrita)
+import type { Veiculo, KpiData } from '../types';
 
-// Interfaces
 interface DashboardRelatoriosProps {
-  token: string; // Mantido para compatibilidade com o pai
-  veiculos: any[];
+  token: string; // Mantido para compatibilidade, embora o axios trate
+  veiculos: Veiculo[];
 }
 
-interface KpiData {
-  custoTotalGeral: number;
-  custoTotalCombustivel: number;
-  custoTotalAditivo: number;
-  custoTotalManutencao: number;
-  kmTotalRodado: number;
-  litrosTotaisConsumidos: number;
-  consumoMedioKML: number;
-  custoMedioPorKM: number;
-}
-
-// === NOVO DESIGN DO CARD KPI ===
-// Ícone com fundo colorido + Tipografia forte (Inter)
+// === DESIGN DO CARD KPI ===
 function KpiCard({ titulo, valor, descricao, corIcone, iconSvg }: {
   titulo: string,
   valor: string,
   descricao: string,
-  corIcone: string, // ex: 'bg-blue-50 text-blue-600'
+  corIcone: string,
   iconSvg: React.ReactNode
 }) {
   return (
     <div className="bg-white rounded-card p-6 shadow-card border border-gray-100 flex items-start gap-4 transition-transform hover:-translate-y-1 hover:shadow-card-hover">
-      {/* Ícone com fundo colorido */}
       <div className={`p-3 rounded-xl ${corIcone} flex-shrink-0`}>
         {iconSvg}
       </div>
-
       <div>
         <p className="text-sm font-bold text-text-secondary uppercase tracking-wider mb-1">
           {titulo}
@@ -51,7 +38,6 @@ function KpiCard({ titulo, valor, descricao, corIcone, iconSvg }: {
   );
 }
 
-// Estilos de Inputs (Selects) para manter consistência
 const selectStyle = "w-full appearance-none bg-gray-50 border border-gray-200 text-text py-2.5 px-4 pr-8 rounded-input focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium cursor-pointer";
 const labelStyle = "block text-xs font-bold text-text-secondary mb-1.5 uppercase tracking-wide";
 
@@ -60,7 +46,7 @@ export function DashboardRelatorios({ veiculos }: DashboardRelatoriosProps) {
   // Estados
   const [ano, setAno] = useState(new Date().getFullYear());
   const [mes, setMes] = useState(new Date().getMonth() + 1);
-  const [veiculoIdFiltro, setVeiculoIdFiltro] = useState(''); // '' = Frota Inteira
+  const [veiculoIdFiltro, setVeiculoIdFiltro] = useState('');
 
   const [kpis, setKpis] = useState<KpiData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -72,12 +58,15 @@ export function DashboardRelatorios({ veiculos }: DashboardRelatoriosProps) {
       setLoading(true);
       setError('');
       try {
-        const params: any = { ano, mes };
+        // Tipagem dos parâmetros da requisição
+        const params: Record<string, string | number> = { ano, mes };
         if (veiculoIdFiltro) params.veiculoId = veiculoIdFiltro;
 
-        // Usando a API global (o token já vai no header automaticamente)
         const response = await api.get('/relatorio/sumario', { params });
-        setKpis(response.data.kpis);
+
+        // O backend retorna { filtros: {...}, kpis: {...} }
+        // Garantimos que estamos a pegar a parte 'kpis' com a tipagem correta
+        setKpis(response.data.kpis as KpiData);
 
       } catch (err) {
         console.error("Erro ao carregar KPIs:", err);
@@ -95,13 +84,13 @@ export function DashboardRelatorios({ veiculos }: DashboardRelatoriosProps) {
   const formatKML = (value: number) => `${value.toFixed(2).replace('.', ',')} km/l`;
   const formatRperKM = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')} /km`;
 
-  // Opções de Filtro
   const mesesOptions = [
     { v: 1, n: 'Janeiro' }, { v: 2, n: 'Fevereiro' }, { v: 3, n: 'Março' },
     { v: 4, n: 'Abril' }, { v: 5, n: 'Maio' }, { v: 6, n: 'Junho' },
     { v: 7, n: 'Julho' }, { v: 8, n: 'Agosto' }, { v: 9, n: 'Setembro' },
     { v: 10, n: 'Outubro' }, { v: 11, n: 'Novembro' }, { v: 12, n: 'Dezembro' },
   ];
+
   const anosOptions = [
     new Date().getFullYear(),
     new Date().getFullYear() - 1,
@@ -132,7 +121,7 @@ export function DashboardRelatorios({ veiculos }: DashboardRelatoriosProps) {
       <div className="flex flex-wrap gap-4 p-5 bg-white rounded-card shadow-sm border border-gray-100 items-end justify-between">
         <div className="flex flex-wrap gap-4 w-full lg:w-auto">
 
-          {/* Select Mês */}
+          {/* Mês */}
           <div className="w-full sm:w-40">
             <label className={labelStyle}>Mês</label>
             <div className="relative">
@@ -143,7 +132,7 @@ export function DashboardRelatorios({ veiculos }: DashboardRelatoriosProps) {
             </div>
           </div>
 
-          {/* Select Ano */}
+          {/* Ano */}
           <div className="w-full sm:w-32">
             <label className={labelStyle}>Ano</label>
             <div className="relative">
@@ -154,7 +143,7 @@ export function DashboardRelatorios({ veiculos }: DashboardRelatoriosProps) {
             </div>
           </div>
 
-          {/* Select Veículo */}
+          {/* Veículo */}
           <div className="w-full sm:w-64">
             <label className={labelStyle}>Veículo</label>
             <div className="relative">
@@ -167,7 +156,7 @@ export function DashboardRelatorios({ veiculos }: DashboardRelatoriosProps) {
           </div>
         </div>
 
-        {/* Botão Exportar */}
+        {/* Exportar */}
         <div className="flex-shrink-0 w-full lg:w-auto">
           <Button
             variant="success"
@@ -195,11 +184,9 @@ export function DashboardRelatorios({ veiculos }: DashboardRelatoriosProps) {
 
       {error && <p className="text-center text-error bg-red-50 p-3 rounded-lg border border-red-100 font-medium">{error}</p>}
 
-      {/* GRID DE CARDS (KPIs) */}
+      {/* GRID DE KPIS */}
       {kpis && !loading && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-
-          {/* --- BLOCO 1: TOTAIS (Azul / Roxo) --- */}
           <KpiCard
             titulo="Custo Total"
             valor={formatCurrency(kpis.custoTotalGeral)}
@@ -214,8 +201,6 @@ export function DashboardRelatorios({ veiculos }: DashboardRelatoriosProps) {
             corIcone="bg-indigo-50 text-indigo-600"
             iconSvg={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" /></svg>}
           />
-
-          {/* --- BLOCO 2: EFICIÊNCIA (Verde / Laranja) --- */}
           <KpiCard
             titulo="Custo por KM"
             valor={formatRperKM(kpis.custoMedioPorKM)}
@@ -230,8 +215,6 @@ export function DashboardRelatorios({ veiculos }: DashboardRelatoriosProps) {
             corIcone="bg-orange-50 text-orange-600"
             iconSvg={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" /></svg>}
           />
-
-          {/* --- BLOCO 3: DETALHE DE GASTOS (Cores Secundárias) --- */}
           <KpiCard
             titulo="Total Combustível"
             valor={formatCurrency(kpis.custoTotalCombustivel)}

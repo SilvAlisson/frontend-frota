@@ -47,8 +47,8 @@ export interface Jornada {
   fotoInicioUrl?: string | null;
   fotoFimUrl?: string | null;
   observacoes?: string | null;
-  
-  // Relacionamentos (Geralmente vêm expandidos da API)
+
+  // Relacionamentos
   veiculo: {
     id: string;
     placa: string;
@@ -58,7 +58,7 @@ export interface Jornada {
     id: string;
     nome: string;
   };
-  encarregado?: { // Pode ser nulo se não expandido ou opcional
+  encarregado?: {
     id: string;
     nome: string;
   };
@@ -142,7 +142,7 @@ export interface PlanoManutencao {
   kmProximaManutencao?: number | null;
   dataProximaManutencao?: string | null;
   veiculo: {
-    id: string; // Útil para formulários
+    id: string;
     placa: string;
     modelo: string;
   };
@@ -171,4 +171,25 @@ export interface KpiData {
   litrosTotaisConsumidos: number;
   consumoMedioKML: number;
   custoMedioPorKM: number;
+}
+
+// =========================================
+// HELPERS & UI TYPES (Auxiliares)
+// =========================================
+
+export interface SelectOption {
+  label: string;
+  value: string;
+}
+
+export interface VeiculoSimplificado {
+  id: string;
+  placa: string;
+  modelo: string;
+}
+
+export interface UsuarioSimplificado {
+  id: string;
+  nome: string;
+  role: string;
 }
