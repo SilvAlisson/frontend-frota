@@ -67,7 +67,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   // 3. MUTATION: Gerar QR Code
   const qrMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const response = await api.post(`/user/${userId}/generate-token`);
+      const response = await api.post(`/auth/user/${userId}/generate-token`);
       return response.data.loginToken;
     },
     onError: () => alert("Erro ao gerar QR Code.")
