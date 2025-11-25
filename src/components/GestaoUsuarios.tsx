@@ -24,7 +24,7 @@ function IconeQrCode() {
 }
 
 interface GestaoUsuariosProps {
-  token: string; // Mantido por compatibilidade
+  // token removido
   adminUserId: string;
 }
 
@@ -67,7 +67,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   // 3. MUTATION: Gerar QR Code
   const qrMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const response = await api.post(`/user/${userId}/generate-token`); // Ajuste para a rota correta se necessário
+      const response = await api.post(`/user/${userId}/generate-token`);
       return response.data.loginToken;
     },
     onError: () => alert("Erro ao gerar QR Code.")
@@ -123,7 +123,11 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
       {modo === 'editando' && usuarioIdSelecionado && (
         <div className="bg-white p-6 rounded-card shadow-card border border-gray-100">
-          <FormEditarUsuario userId={usuarioIdSelecionado} onSuccess={handleVoltar} onCancelar={handleVoltar} />
+          <FormEditarUsuario
+            userId={usuarioIdSelecionado}
+            onSuccess={handleVoltar}
+            onCancelar={handleVoltar}
+          />
         </div>
       )}
 

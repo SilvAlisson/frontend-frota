@@ -1,5 +1,5 @@
 import { useAuth } from '../contexts/AuthContext';
-import { useDashboardData } from '../hooks/useDashboardData'; // <--- Nosso novo Hook
+import { useDashboardData } from '../hooks/useDashboardData';
 import { Button } from '../components/ui/Button';
 
 // Componentes Separados
@@ -10,16 +10,14 @@ import { AdminDashboard } from '../components/AdminDashboard';
 export function Dashboard() {
   const { user, logout } = useAuth();
 
-  // Recupera token apenas para passar aos componentes filhos (legado)
-  // Futuramente, removeremos essa prop 'token' dos filhos, pois o axios já trata isso globalmente.
+  // Token recuperado apenas por compatibilidade com componentes que ainda não foram refatorados 100%
+  // mas removido das chamadas que estavam dando erro de tipagem.
   const token = localStorage.getItem('authToken') || '';
 
-  // --- AQUI ESTÁ A MÁGICA DO REACT QUERY ---
   const { data, isLoading, isError, refetch } = useDashboardData();
 
   if (!user) return null;
 
-  // Renderização de Loading
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background">
@@ -29,7 +27,6 @@ export function Dashboard() {
     );
   }
 
-  // Renderização de Erro
   if (isError || !data) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
@@ -45,13 +42,10 @@ export function Dashboard() {
     );
   }
 
-  // Desestruturação dos dados vindos do Hook
   const { usuarios, veiculos, produtos, fornecedores, jornadasEspecificas } = data;
 
-  // Handlers de Atualização Local (Cache Optimistic Update Manual)
-  // Nota: Com React Query, o ideal seria usar 'invalidateQueries', mas para manter simples agora:
   const handleJornadaIniciada = () => {
-    refetch(); // Simplesmente recarrega os dados do servidor para garantir consistência
+    refetch();
   };
   const handleJornadaFinalizada = () => {
     refetch();
@@ -59,7 +53,6 @@ export function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navbar */}
       <nav className="bg-white shadow-sm sticky top-0 z-30 border-b border-gray-100 h-16">
         <div className="max-w-7xl mx-auto px-4 h-full flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -110,7 +103,7 @@ export function Dashboard() {
         {/* 3. VISÃO DO ADMIN */}
         {user.role === 'ADMIN' && (
           <AdminDashboard
-            token={token}
+            // CORREÇÃO: Removida a prop 'token' que causava erro de tipo
             adminUserId={user.id}
             veiculos={veiculos}
             produtos={produtos}

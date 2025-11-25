@@ -2,9 +2,8 @@ import { useState } from 'react';
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { parseDecimal, formatKmVisual } from '../utils'; // Importar utilitários
+import { parseDecimal, formatKmVisual } from '../utils';
 
-// Interfaces
 interface IniciarJornadaProps {
   token: string;
   usuarios: any[];
@@ -14,7 +13,6 @@ interface IniciarJornadaProps {
   jornadasAtivas: any[];
 }
 
-// Estilos para os Selects (já que ainda não temos um componente Select UI próprio)
 const inputStyle = "w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none transition-all duration-200";
 const labelStyle = "block mb-1.5 text-sm font-medium text-text-secondary";
 
@@ -27,29 +25,24 @@ export function IniciarJornada({
   jornadasAtivas
 }: IniciarJornadaProps) {
 
-  // Estados do formulário
   const [veiculoId, setVeiculoId] = useState('');
   const [encarregadoId, setEncarregadoId] = useState('');
   const [kmInicio, setKmInicio] = useState('');
 
-  // Estados de controle
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [avisoVeiculo, setAvisoVeiculo] = useState('');
 
-  // Estados do modal
   const [modalAberto, setModalAberto] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
 
   const isEsteVeiculoJaAberto = jornadasAtivas.some(j => j.veiculoId === veiculoId);
 
-  // --- Handler para formatar KM visualmente ---
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setKmInicio(formatKmVisual(e.target.value));
   };
 
-  // Handler de mudança de veículo (verifica duplicidade)
   const handleVeiculoChange = (veiculoIdSelecionado: string) => {
     setVeiculoId(veiculoIdSelecionado);
     setAvisoVeiculo('');
@@ -61,14 +54,12 @@ export function IniciarJornada({
     }
   };
 
-  // Handler de Submissão (Valida e abre Modal)
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
     setError('');
     setSuccess('');
 
-    // Validações
     if (isEsteVeiculoJaAberto) {
       setError(`Você já iniciou uma jornada com este veículo. Finalize-a na coluna ao lado.`);
       setLoading(false);
@@ -80,7 +71,6 @@ export function IniciarJornada({
       return;
     }
 
-    // Converter string formatada ("19.000") para número (19000)
     const kmInicioFloat = parseDecimal(kmInicio);
 
     if (isNaN(kmInicioFloat) || kmInicioFloat <= 0) {
@@ -90,17 +80,15 @@ export function IniciarJornada({
     }
 
     try {
-      // Prepara os dados para o modal
       const dadosCompletosDoFormulario = {
         veiculoId: veiculoId,
         operadorId: operadorLogadoId,
         encarregadoId: encarregadoId,
-        kmInicio: kmInicioFloat, // Envia o número limpo
-        // fotoInicioUrl será adicionado pelo modal após upload
+        kmInicio: kmInicioFloat,
       };
 
       setFormDataParaModal(dadosCompletosDoFormulario);
-      setModalAberto(true); // Abre o modal para foto
+      setModalAberto(true);
 
     } catch (err) {
       console.error("Erro ao preparar dados:", err);
@@ -110,12 +98,10 @@ export function IniciarJornada({
     }
   };
 
-  // Callback de sucesso vindo do Modal
   const handleModalSuccess = (novaJornada: any) => {
     setSuccess('Jornada iniciada com sucesso!');
     onJornadaIniciada(novaJornada);
 
-    // Limpa tudo
     setModalAberto(false);
     setFormDataParaModal(null);
     setVeiculoId('');
@@ -142,7 +128,6 @@ export function IniciarJornada({
           </p>
         </div>
 
-        {/* Campo Veículo */}
         <div>
           <label className={labelStyle}>Veículo</label>
           <div className="relative">
@@ -165,7 +150,6 @@ export function IniciarJornada({
           </div>
         </div>
 
-        {/* Campo Encarregado */}
         <div>
           <label className={labelStyle}>Encarregado</label>
           <div className="relative">
@@ -190,10 +174,9 @@ export function IniciarJornada({
           </div>
         </div>
 
-        {/* Campo KM Inicial - USANDO O COMPONENTE INPUT */}
         <Input
           label="KM Inicial (Odómetro)"
-          type="text" // Texto para permitir pontos
+          type="text"
           inputMode="numeric"
           placeholder="Ex: 19.000"
           value={kmInicio}
@@ -201,7 +184,6 @@ export function IniciarJornada({
           disabled={loading}
         />
 
-        {/* Mensagens de Feedback */}
         {avisoVeiculo && (
           <div className="flex items-center gap-2 p-3 rounded-md bg-yellow-50 border border-yellow-200 text-yellow-800 text-sm">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0"><path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" /></svg>
@@ -237,21 +219,15 @@ export function IniciarJornada({
         )}
       </form>
 
-      {/* Renderização do Modal */}
       {modalAberto && formDataParaModal && (
         <ModalConfirmacaoFoto
           token={token}
           titulo="Confirmar Início de Jornada"
-
-          // Dados para confirmação visual (Número formatado)
           kmParaConfirmar={parseDecimal(kmInicio)}
-
-          // Dados para envio (já preparados no handleSubmit)
           dadosJornada={formDataParaModal}
           apiEndpoint="/jornada/iniciar"
           apiMethod="POST"
           jornadaId={null}
-
           onClose={() => setModalAberto(false)}
           onSuccess={handleModalSuccess}
         />

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { RENDER_API_BASE_URL } from '../config';
+import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
-import { Button } from './ui/Button'; // Componente UI
-import { Input } from './ui/Input';   // Componente UI
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { TableStyles } from '../styles/table';
 
 // Tipos
 interface ItemManutencao {
@@ -32,7 +32,6 @@ interface OrdemServico {
 }
 
 interface HistoricoManutencoesProps {
-  token: string;
   userRole: string;
   veiculos: any[];
 }
@@ -61,7 +60,7 @@ const tipoCores: { [key: string]: string } = {
   LAVAGEM: 'bg-green-100 text-green-800',
 };
 
-export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoManutencoesProps) {
+export function HistoricoManutencoes({ userRole, veiculos }: HistoricoManutencoesProps) {
 
   const [historico, setHistorico] = useState<OrdemServico[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,11 +71,6 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState('');
   const [dataInicioFiltro, setDataInicioFiltro] = useState('');
   const [dataFimFiltro, setDataFimFiltro] = useState('');
-
-  const api = axios.create({
-    baseURL: RENDER_API_BASE_URL,
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
 
   useEffect(() => {
     const fetchHistorico = async () => {
@@ -100,7 +94,7 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
     };
 
     fetchHistorico();
-  }, [token, veiculoIdFiltro, dataInicioFiltro, dataFimFiltro]);
+  }, [veiculoIdFiltro, dataInicioFiltro, dataFimFiltro]);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm(`Tem a certeza que quer REMOVER permanentemente este registo?`)) return;
@@ -110,8 +104,8 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
     try {
       await api.delete(`/ordem-servico/${id}`);
       setHistorico(prev => prev.filter(os => os.id !== id));
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
+    } catch (err: any) {
+      if (err.response?.data?.error) {
         setError(err.response.data.error);
       } else {
         setError('Falha ao remover o registo.');
@@ -157,8 +151,7 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
       <h3 className="text-xl font-semibold text-primary text-center mb-4">
         Histórico de Manutenções ({historico.length > 0 ? `${historico.length}` : 'Recentes'})
       </h3>
-      
-      {/* Filtros */}
+
       <FiltrosHistorico
         veiculos={veiculos}
         veiculoId={veiculoIdFiltro}
@@ -174,9 +167,9 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
 
       {error && <p className="text-center text-error bg-red-50 p-3 rounded border border-red-200">{error}</p>}
       {loading && <p className="text-center text-primary">A carregar histórico...</p>}
-      
+
       {!loading && historico.length === 0 && !error && (
-        <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4">
+        <div className={TableStyles.emptyState}>
           <p>Nenhum registo encontrado para os filtros selecionados.</p>
         </div>
       )}
@@ -184,7 +177,7 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
       <div className="max-h-[600px] overflow-y-auto space-y-3 pr-2 custom-scrollbar">
         {!loading && historico.map((os) => (
           <div key={os.id} className={`bg-white shadow-sm border border-gray-200 rounded-card p-4 transition-opacity ${deletingId === os.id ? 'opacity-50' : 'opacity-100'}`}>
-            
+
             {/* Cabeçalho do Card */}
             <div className="flex justify-between items-start mb-2">
               <div>
@@ -202,7 +195,7 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
                 {userRole === 'ADMIN' && (
                   <Button
                     variant="danger"
-                    className="!p-1.5 h-8 w-8"
+                    className={TableStyles.actionButton}
                     onClick={() => handleDelete(os.id)}
                     disabled={deletingId === os.id}
                     title="Remover"
@@ -215,7 +208,7 @@ export function HistoricoManutencoes({ token, userRole, veiculos }: HistoricoMan
             {/* Grid de Detalhes */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm border-t border-b border-gray-100 py-2 my-2">
               <div><span className="font-semibold text-gray-500 block">KM Veículo</span><span className="text-gray-800">{os.kmAtual} KM</span></div>
-               <div><span className="font-semibold text-gray-500 block">Oficina</span><span className="text-gray-800">{os.fornecedor.nome}</span></div>
+              <div><span className="font-semibold text-gray-500 block">Oficina</span><span className="text-gray-800">{os.fornecedor.nome}</span></div>
               <div>
                 <span className="font-semibold text-gray-500 block">Tipo</span>
                 <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${tipoCores[os.tipo] || 'bg-gray-100 text-gray-800'}`}>
@@ -278,11 +271,11 @@ function FiltrosHistorico({
     <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100 items-end">
       <div className="w-full sm:w-auto"><Input label="Início" type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} /></div>
       <div className="w-full sm:w-auto"><Input label="Fim" type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} /></div>
-      
+
       <div className="flex-grow min-w-[200px]">
         <label className="block mb-1.5 text-sm font-medium text-text-secondary">Veículo</label>
         <div className="relative">
-           <select className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none" value={veiculoId} onChange={(e) => setVeiculoId(e.target.value)}>
+          <select className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none" value={veiculoId} onChange={(e) => setVeiculoId(e.target.value)}>
             <option value="">-- Todos --</option>
             {veiculos.map(v => (
               <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>
@@ -293,7 +286,7 @@ function FiltrosHistorico({
       </div>
 
       <div className="w-full sm:w-auto">
-         <Button variant="success" onClick={onExportar} disabled={historicoLength === 0 || loading} className="w-full sm:w-auto">Exportar</Button>
+        <Button variant="success" onClick={onExportar} disabled={historicoLength === 0 || loading} className="w-full sm:w-auto">Exportar</Button>
       </div>
     </div>
   );

@@ -1,149 +1,120 @@
 import { useState } from 'react';
-import axios from 'axios';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
-import { RENDER_API_BASE_URL } from '../../config';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
+// Definimos as roles explicitamente para o Zod
+const usuarioSchema = z.object({
+  nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
+  email: z.string().email("Email inválido"),
+  password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
+  matricula: z.string().optional(),
+  // CORREÇÃO: Removido errorMap e definido valores explicitamente para evitar erro de overload
+  role: z.enum(["OPERADOR", "ENCARREGADO", "ADMIN"]),
+});
+
+type UsuarioForm = z.infer<typeof usuarioSchema>;
+
 interface FormCadastrarUsuarioProps {
-  token: string;
-  onUsuarioAdicionado: () => void;
+  onSuccess: () => void;
   onCancelar: () => void;
 }
 
-export function FormCadastrarUsuario({ token, onUsuarioAdicionado, onCancelar }: FormCadastrarUsuarioProps) {
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [matricula, setMatricula] = useState('');
-  const [role, setRole] = useState('ENCARREGADO');
+export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsuarioProps) {
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    if (!nome || !email || !password || !role) {
-      setError('Nome, Email, Senha e Função são obrigatórios.');
-      setLoading(false);
-      return;
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting }
+  } = useForm<UsuarioForm>({
+    // CORREÇÃO: 'as any' resolve incompatibilidades de versão entre Zod/RHF
+    resolver: zodResolver(usuarioSchema) as any,
+    defaultValues: {
+      nome: '',
+      email: '',
+      password: '',
+      matricula: '',
+      role: 'OPERADOR'
     }
+  });
 
-    const api = axios.create({
-      baseURL: RENDER_API_BASE_URL,
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-
+  const onSubmit = async (data: UsuarioForm) => {
+    setSuccessMsg('');
     try {
-      await api.post('/user/register', {
-        nome: DOMPurify.sanitize(nome),
-        email: DOMPurify.sanitize(email),
-        password: password,
-        matricula: DOMPurify.sanitize(matricula) || null,
-        role: role,
+      await api.post('/auth/register', {
+        nome: DOMPurify.sanitize(data.nome),
+        email: DOMPurify.sanitize(data.email),
+        password: data.password,
+        matricula: data.matricula ? DOMPurify.sanitize(data.matricula) : null,
+        role: data.role,
       });
 
-      setNome('');
-      setEmail('');
-      setPassword('');
-      setMatricula('');
-      onUsuarioAdicionado();
+      setSuccessMsg('Utilizador cadastrado com sucesso!');
+      reset();
 
-    } catch (err) {
+      setTimeout(() => {
+        onSuccess();
+      }, 1500);
+
+    } catch (err: any) {
       console.error("Erro ao cadastrar usuário:", err);
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
-        setError(err.response.data.error);
+      if (err.response?.data?.error) {
+        setError('root', { message: err.response.data.error });
       } else {
-        setError('Falha ao cadastrar usuário.');
+        setError('root', { message: 'Falha ao cadastrar usuário.' });
       }
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
-
-      {/* CABEÇALHO COM ÍCONE */}
+    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
       <div className="text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-50 mb-3">
-          {/* Ícone de Usuário/Avatar */}
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-indigo-600">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
-          </svg>
-        </div>
-        <h4 className="text-xl font-bold text-primary">
-          Novo Colaborador
-        </h4>
-        <p className="text-sm text-text-secondary mt-1">
-          Crie o acesso para um motorista ou gestor.
-        </p>
+        <h4 className="text-xl font-bold text-primary">Novo Colaborador</h4>
+        <p className="text-sm text-text-secondary mt-1">Crie o acesso para um motorista ou gestor.</p>
       </div>
 
-      {/* GRID DE CAMPOS */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Nome ocupa as duas colunas */}
         <div className="md:col-span-2">
-          <Input label="Nome Completo" value={nome} onChange={(e) => setNome(e.target.value)} placeholder="Ex: João da Silva" disabled={loading} />
+          <Input label="Nome Completo" {...register('nome')} error={errors.nome?.message} disabled={isSubmitting} />
         </div>
 
-        <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="joao@klin.com" disabled={loading} />
-        <Input label="Matrícula (Opcional)" value={matricula} onChange={(e) => setMatricula(e.target.value)} placeholder="12345" disabled={loading} />
+        <Input label="Email" type="email" {...register('email')} error={errors.email?.message} disabled={isSubmitting} />
 
-        <Input label="Senha Provisória" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="******" disabled={loading} />
+        <Input label="Senha Inicial" type="password" {...register('password')} error={errors.password?.message} disabled={isSubmitting} />
 
-        {/* Select Customizado */}
+        <Input label="Matrícula (Opcional)" {...register('matricula')} error={errors.matricula?.message} disabled={isSubmitting} />
+
         <div>
-          <label className="block mb-1.5 text-sm font-medium text-text-secondary">Função (Role)</label>
+          <label className="block mb-1.5 text-sm font-medium text-text-secondary">Função</label>
           <div className="relative">
             <select
-              className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              disabled={loading}
+              className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary"
+              {...register('role')}
+              disabled={isSubmitting}
             >
               <option value="OPERADOR">Motorista (Operador)</option>
               <option value="ENCARREGADO">Gestor (Encarregado)</option>
+              <option value="ADMIN">Administrador</option>
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
           </div>
+          {errors.role && <p className="text-xs text-error mt-1">{errors.role.message}</p>}
         </div>
       </div>
 
-      {/* MENSAGEM DE ERRO */}
-      {error && (
-        <div className="flex items-center gap-3 p-3 rounded-md bg-red-50 border border-red-200 text-error text-sm animate-pulse">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
-            <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-          </svg>
-          <span>{error}</span>
-        </div>
-      )}
+      {errors.root && <p className="text-error text-sm text-center bg-red-50 p-2 rounded">{errors.root.message}</p>}
+      {successMsg && <p className="text-success text-sm text-center bg-green-50 p-2 rounded">{successMsg}</p>}
 
-      {/* BOTÕES */}
       <div className="flex gap-3 pt-2">
-        <Button
-          type="button"
-          variant="secondary"
-          className="flex-1"
-          disabled={loading}
-          onClick={onCancelar}
-        >
-          Cancelar
-        </Button>
-        <Button
-          type="submit"
-          variant="primary"
-          className="flex-1"
-          isLoading={loading}
-        >
-          {loading ? 'Criando...' : 'Criar Acesso'}
-        </Button>
+        <Button type="button" variant="secondary" className="flex-1" disabled={isSubmitting} onClick={onCancelar}>Cancelar</Button>
+        <Button type="submit" variant="primary" className="flex-1" disabled={isSubmitting} isLoading={isSubmitting}>Cadastrar</Button>
       </div>
     </form>
   );

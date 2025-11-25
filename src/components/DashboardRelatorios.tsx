@@ -6,7 +6,7 @@ import { Button } from './ui/Button';
 import type { Veiculo, KpiData } from '../types';
 
 interface DashboardRelatoriosProps {
-  token: string; // Mantido para compatibilidade, embora o axios trate
+  // Token removido
   veiculos: Veiculo[];
 }
 

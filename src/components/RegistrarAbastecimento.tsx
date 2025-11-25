@@ -1,231 +1,250 @@
 import { useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import DOMPurify from 'dompurify';
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { formatKmVisual, parseDecimal } from '../utils';
-// Importação de tipos (corrigido para verbatimModuleSyntax)
-import type { Veiculo, User, Produto, Fornecedor } from '../types';
+import { parseDecimal, formatKmVisual } from '../utils';
 
-// --- 1. SCHEMA DE VALIDAÇÃO (ZOD) ---
-const abastecimentoSchema = z.object({
-  veiculoId: z.string().min(1, "Selecione um veículo"),
-  operadorId: z.string().min(1, "Selecione um operador"),
-  fornecedorId: z.string().min(1, "Selecione um fornecedor"),
-  // Refine garante que o KM visual (string) seja um número válido maior que 0
-  kmOdometro: z.string().min(1, "KM é obrigatório").refine((val) => parseDecimal(val) > 0, "KM deve ser válido"),
-  dataHora: z.string().min(1, "Data e hora são obrigatórias"),
-  placaCartaoUsado: z.string().length(4, "Deve ter exatamente 4 dígitos"),
-  justificativa: z.string().optional(),
-  itens: z.array(z.object({
-    produtoId: z.string().min(1, "Selecione o produto"),
-    // z.coerce.number() converte strings de input HTML para numbers automaticamente
-    quantidade: z.coerce.number().gt(0, "Deve ser maior que zero"),
-    valorPorUnidade: z.coerce.number().gt(0, "Deve ser maior que zero"),
-  })).min(1, "Adicione pelo menos um item")
-});
-
-// Tipo inferido do Schema
-type AbastecimentoForm = z.infer<typeof abastecimentoSchema>;
-
-// --- 2. PROPS TIPADAS ---
 interface RegistrarAbastecimentoProps {
-  token: string;
-  usuarios: User[];
-  veiculos: Veiculo[];
-  produtos: Produto[];
-  fornecedores: Fornecedor[];
+  // Token removido
+  usuarios: any[];
+  veiculos: any[];
+  produtos: any[];
+  fornecedores: any[];
+}
+interface ItemAbastecimento {
+  produtoId: string;
+  quantidade: string;
+  valorPorUnidade: string;
 }
 
+const labelStyle = "block mb-1.5 text-sm font-medium text-text-secondary";
+const selectStyle = "w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none transition-all duration-200";
+
 export function RegistrarAbastecimento({
-  token,
   usuarios,
   veiculos,
   produtos,
   fornecedores
 }: RegistrarAbastecimentoProps) {
 
+  const [veiculoId, setVeiculoId] = useState('');
+  const [operadorId, setOperadorId] = useState('');
+  const [fornecedorId, setFornecedorId] = useState('');
+  const [kmOdometro, setKmOdometro] = useState('');
+  const [dataHora, setDataHora] = useState(new Date().toISOString().slice(0, 16));
+  const [placaCartaoUsado, setPlacaCartaoUsado] = useState('');
+  const [justificativa, setJustificativa] = useState('');
+  const [itens, setItens] = useState<ItemAbastecimento[]>([
+    { produtoId: '', quantidade: '', valorPorUnidade: '' }
+  ]);
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [modalAberto, setModalAberto] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
-  const [success, setSuccess] = useState('');
 
-  // --- 3. SETUP DO REACT HOOK FORM ---
-  const {
-    register,
-    control,
-    handleSubmit,
-    setValue,
-    watch,
-    reset,
-    formState: { errors, isSubmitting }
-  } = useForm<AbastecimentoForm>({
-    // Cast 'as any' resolve o conflito de tipagem estrita (unknown vs number) do ZodResolver
-    // A lógica de runtime do z.coerce garante que será number.
-    resolver: zodResolver(abastecimentoSchema) as any,
-    defaultValues: {
-      dataHora: new Date().toISOString().slice(0, 16),
-      itens: [{ produtoId: '', quantidade: 0, valorPorUnidade: 0 }]
+  const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setKmOdometro(formatKmVisual(e.target.value));
+  };
+
+  const handleItemChange = (index: number, field: keyof ItemAbastecimento, value: string) => {
+    const novosItens = [...itens];
+    novosItens[index][field] = value;
+    setItens(novosItens);
+  };
+  const handleAddItem = () => {
+    setItens([...itens, { produtoId: '', quantidade: '', valorPorUnidade: '' }]);
+  };
+  const handleRemoveItem = (index: number) => {
+    if (itens.length > 1) {
+      const novosItens = itens.filter((_, i) => i !== index);
+      setItens(novosItens);
     }
-  });
+  };
 
-  // Gerenciador de Array de Itens Dinâmicos
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "itens"
-  });
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setLoading(true);
+    setError('');
+    setSuccess('');
 
-  // Observar itens para calcular total em tempo real
-  const itensObservados = watch("itens");
+    if (!veiculoId || !operadorId || !fornecedorId || !kmOdometro || !dataHora || !placaCartaoUsado ||
+      itens.some(item => !item.produtoId || !item.quantidade || !item.valorPorUnidade)) {
+      setError('Preencha todos os campos obrigatórios.');
+      setLoading(false);
+      return;
+    }
 
-  // --- 4. HANDLERS ---
+    if (placaCartaoUsado.length !== 4) {
+      setError('Os últimos dígitos do cartão devem ter 4 números.');
+      setLoading(false);
+      return;
+    }
 
-  const onValidSubmit = (data: AbastecimentoForm) => {
-    // Prepara os dados finais
-    const dadosFormatados = {
-      ...data,
-      kmOdometro: parseDecimal(data.kmOdometro), // Converte string visual para número
-      dataHora: new Date(data.dataHora).toISOString(),
-      // O Zod já garantiu que os números dos itens estão corretos via coerce
-    };
+    try {
+      const itensFormatados = itens.map(item => ({
+        produtoId: item.produtoId,
+        quantidade: parseFloat(item.quantidade),
+        valorPorUnidade: parseFloat(item.valorPorUnidade)
+      }));
 
-    setFormDataParaModal(dadosFormatados);
-    setModalAberto(true);
+      const dadosCompletosDoFormulario = {
+        veiculoId,
+        operadorId,
+        fornecedorId,
+        kmOdometro: parseDecimal(kmOdometro),
+        dataHora: new Date(dataHora).toISOString(),
+        placaCartaoUsado: DOMPurify.sanitize(placaCartaoUsado),
+        justificativa: DOMPurify.sanitize(justificativa) || null,
+        itens: itensFormatados
+      };
+
+      setFormDataParaModal(dadosCompletosDoFormulario);
+      setModalAberto(true);
+
+    } catch (err) {
+      console.error("Erro ao preparar dados:", err);
+      setError('Falha ao preparar dados para envio.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleModalSuccess = () => {
     setSuccess('Abastecimento registrado com sucesso!');
     setModalAberto(false);
     setFormDataParaModal(null);
-    reset(); // Limpa o formulário magicamente
-    setTimeout(() => setSuccess(''), 5000);
+
+    // Reset Form
+    setVeiculoId('');
+    setOperadorId('');
+    setFornecedorId('');
+    setKmOdometro('');
+    setPlacaCartaoUsado('');
+    setJustificativa('');
+    setItens([{ produtoId: '', quantidade: '', valorPorUnidade: '' }]);
+
+    setTimeout(() => setSuccess(''), 4000);
   };
 
-  // Formatador visual para o KM enquanto digita
-  const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value;
-    setValue("kmOdometro", formatKmVisual(rawValue));
-  };
-
-  // Estilos auxiliares
-  const selectClass = "w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none transition-all duration-200";
-  const labelClass = "block mb-1.5 text-sm font-medium text-text-secondary";
 
   return (
     <>
-      <form onSubmit={handleSubmit(onValidSubmit)} className="space-y-6">
+      <form className="space-y-6" onSubmit={handleSubmit}>
 
-        {/* Cabeçalho */}
         <div className="text-center mb-6">
-          <h4 className="text-xl font-bold text-primary">Novo Abastecimento</h4>
-          <p className="text-sm text-text-secondary">Preencha os dados com atenção.</p>
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-50 mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-green-600">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+            </svg>
+          </div>
+          <h4 className="text-xl font-bold text-primary">
+            Novo Abastecimento
+          </h4>
         </div>
 
-        {/* Grid Principal */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-          {/* Veículo */}
           <div>
-            <label className={labelClass}>Veículo</label>
-            <select {...register("veiculoId")} className={selectClass}>
-              <option value="">Selecione...</option>
-              {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>)}
-            </select>
-            {errors.veiculoId && <span className="text-xs text-error">{errors.veiculoId.message}</span>}
+            <label className={labelStyle}>Veículo</label>
+            <div className="relative">
+              <select className={selectStyle} value={veiculoId} onChange={(e) => setVeiculoId(e.target.value)}>
+                <option value="">Selecione...</option>
+                {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>)}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
+            </div>
           </div>
-
-          {/* Operador */}
           <div>
-            <label className={labelClass}>Operador</label>
-            <select {...register("operadorId")} className={selectClass}>
-              <option value="">Selecione...</option>
-              {usuarios.filter(u => u.role === 'OPERADOR').map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
-            </select>
-            {errors.operadorId && <span className="text-xs text-error">{errors.operadorId.message}</span>}
+            <label className={labelStyle}>Operador</label>
+            <div className="relative">
+              <select className={selectStyle} value={operadorId} onChange={(e) => setOperadorId(e.target.value)}>
+                <option value="">Selecione...</option>
+                {usuarios.filter(u => u.role === 'OPERADOR').map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
+            </div>
           </div>
-
-          {/* Fornecedor */}
           <div>
-            <label className={labelClass}>Fornecedor</label>
-            <select {...register("fornecedorId")} className={selectClass}>
-              <option value="">Selecione...</option>
-              {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-            </select>
-            {errors.fornecedorId && <span className="text-xs text-error">{errors.fornecedorId.message}</span>}
+            <label className={labelStyle}>Fornecedor (Posto)</label>
+            <div className="relative">
+              <select className={selectStyle} value={fornecedorId} onChange={(e) => setFornecedorId(e.target.value)}>
+                <option value="">Selecione...</option>
+                {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
+            </div>
           </div>
-
-          {/* KM (Com formatação visual) */}
           <div>
-            <label className={labelClass}>KM Odômetro</label>
+            <label className={labelStyle}>KM Odômetro</label>
             <Input
-              {...register("kmOdometro")}
-              onChange={(e) => {
-                register("kmOdometro").onChange(e); // Mantém o hook do RHF
-                handleKmChange(e); // Aplica nossa formatação
-              }}
+              type="text"
+              inputMode="numeric"
               placeholder="Ex: 50.420"
-              error={errors.kmOdometro?.message}
+              value={kmOdometro}
+              onChange={handleKmChange}
             />
           </div>
-
-          {/* Data */}
           <div>
-            <label className={labelClass}>Data e Hora</label>
-            <Input type="datetime-local" {...register("dataHora")} error={errors.dataHora?.message} />
+            <label className={labelStyle}>Data e Hora</label>
+            <Input type="datetime-local" value={dataHora} onChange={(e) => setDataHora(e.target.value)} />
           </div>
-
-          {/* Cartão */}
           <div>
-            <label className={labelClass}>Final do Cartão (4 dígitos)</label>
+            <label className={labelStyle}>Últimos 4 Dígitos do Cartão</label>
             <Input
-              type="number"
+              type="text"
+              inputMode="numeric"
+              value={placaCartaoUsado}
+              onChange={(e) => setPlacaCartaoUsado(e.target.value)}
               placeholder="Ex: 1234"
               maxLength={4}
-              {...register("placaCartaoUsado")}
-              error={errors.placaCartaoUsado?.message}
             />
           </div>
         </div>
 
-        {/* Itens Dinâmicos */}
-        <div className="bg-gray-50 p-4 rounded-card border border-gray-200">
-          <h4 className="text-sm font-bold text-text-secondary uppercase mb-3">Itens</h4>
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
+          <h4 className="text-sm font-bold text-text-secondary uppercase tracking-wide mb-4">Itens Abastecidos</h4>
 
           <div className="space-y-3">
-            {fields.map((field, index) => {
-              // Cálculo do total da linha para visualização
-              const qtd = itensObservados[index]?.quantidade || 0;
-              const val = itensObservados[index]?.valorPorUnidade || 0;
-              const total = qtd * val;
+            {itens.map((item, index) => {
+              const quantidade = parseFloat(item.quantidade);
+              const valorPorUnidade = parseFloat(item.valorPorUnidade);
+              const valorTotalItem = (quantidade > 0 && valorPorUnidade > 0) ? (quantidade * valorPorUnidade) : 0;
 
               return (
-                <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end bg-white p-3 rounded border border-gray-100">
-
+                <div key={index} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end bg-white p-3 rounded-md shadow-sm border border-gray-100">
                   <div className="sm:col-span-5">
-                    <label className="text-xs text-gray-500 block mb-1">Produto</label>
-                    <select {...register(`itens.${index}.produtoId`)} className={selectClass + " py-1 text-sm"}>
-                      <option value="">Selecione...</option>
-                      {produtos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                    </select>
+                    <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Produto</label>
+                    <div className="relative">
+                      <select
+                        className={selectStyle + " py-2 text-sm"}
+                        value={item.produtoId}
+                        onChange={(e) => handleItemChange(index, 'produtoId', e.target.value)}
+                      >
+                        <option value="">Produto...</option>
+                        {produtos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
+                    </div>
                   </div>
-
                   <div className="sm:col-span-2">
-                    <label className="text-xs text-gray-500 block mb-1">Qtd</label>
-                    <Input type="number" step="0.01" {...register(`itens.${index}.quantidade`, { valueAsNumber: true })} />
+                    <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Litros</label>
+                    <Input type="number" placeholder="Qtd" className="!py-2 text-right text-sm" value={item.quantidade} onChange={(e) => handleItemChange(index, 'quantidade', e.target.value)} />
                   </div>
-
                   <div className="sm:col-span-2">
-                    <label className="text-xs text-gray-500 block mb-1">Valor Un.</label>
-                    <Input type="number" step="0.01" {...register(`itens.${index}.valorPorUnidade`, { valueAsNumber: true })} />
+                    <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Valor Un.</label>
+                    <Input type="number" step="0.01" placeholder="R$" className="!py-2 text-right text-sm" value={item.valorPorUnidade} onChange={(e) => handleItemChange(index, 'valorPorUnidade', e.target.value)} />
                   </div>
-
-                  <div className="sm:col-span-3 flex justify-end items-center gap-2">
-                    <span className="text-sm font-bold text-gray-600 bg-gray-50 px-2 py-1 rounded">
-                      R$ {total.toFixed(2)}
-                    </span>
-                    {fields.length > 1 && (
-                      <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-600 font-bold px-2">✕</button>
+                  <div className="sm:col-span-3 flex items-center justify-end gap-2">
+                    <div className="text-right bg-gray-50 px-3 py-2 rounded border border-gray-200 w-full">
+                      <span className="text-xs text-gray-500 sm:hidden mr-2">Total:</span>
+                      <span className="text-sm font-bold text-gray-700">{valorTotalItem > 0 ? `R$ ${valorTotalItem.toFixed(2)}` : 'R$ 0,00'}</span>
+                    </div>
+                    {itens.length > 1 && (
+                      <button type="button" onClick={() => handleRemoveItem(index)} className="text-red-400 hover:text-red-600 p-2 transition-colors">
+                        ✕
+                      </button>
                     )}
                   </div>
                 </div>
@@ -233,41 +252,40 @@ export function RegistrarAbastecimento({
             })}
           </div>
 
-          <div className="mt-3">
-            <Button type="button" variant="secondary" onClick={() => append({ produtoId: '', quantidade: 0, valorPorUnidade: 0 })} className="text-xs">
-              + Adicionar Item
-            </Button>
-            {errors.itens && <p className="text-xs text-error mt-2">{errors.itens.root?.message}</p>}
+          <div className="mt-4">
+            <Button type="button" variant="secondary" onClick={handleAddItem} className="text-xs">+ Adicionar Item</Button>
           </div>
         </div>
 
-        {/* Justificativa */}
-        <div>
-          <label className={labelClass}>Justificativa (Opcional)</label>
+        <div className="pt-4">
+          <label className={labelStyle}>Justificativas</label>
           <textarea
-            {...register("justificativa")}
-            className={selectClass + " h-20 resize-none"}
-            placeholder="Observações adicionais..."
-          />
+            className={selectStyle + " h-24 resize-none"}
+            value={justificativa}
+            onChange={(e) => setJustificativa(e.target.value)}
+            placeholder="Justificar se houve uso de cartão de outro veículo ou outra ocorrência (opcional)"
+          ></textarea>
         </div>
 
-        {success && <div className="p-3 bg-green-50 text-success rounded text-center font-medium">{success}</div>}
+        {error && <p className="text-center text-error bg-red-50 p-3 rounded-md border border-red-200">{error}</p>}
+        {success && <p className="text-center text-success bg-green-50 p-3 rounded-md border border-green-200">{success}</p>}
 
-        <Button type="submit" className="w-full" isLoading={isSubmitting}>
-          {isSubmitting ? 'Validando...' : 'Registrar Abastecimento'}
-        </Button>
+        <div className="pt-4">
+          <Button type="submit" disabled={loading} isLoading={loading} className="w-full">
+            {loading ? 'Validando...' : 'Registrar Abastecimento'}
+          </Button>
+        </div>
       </form>
 
-      {/* Modal de Confirmação */}
       {modalAberto && formDataParaModal && (
         <ModalConfirmacaoFoto
-          token={token}
-          titulo="Foto da Nota Fiscal"
-          kmParaConfirmar={formDataParaModal.kmOdometro}
-          jornadaId={null}
+          token={""} // Axios global
+          titulo="Envie a foto da nota fiscal"
           dadosJornada={formDataParaModal}
           apiEndpoint="/abastecimento"
           apiMethod="POST"
+          kmParaConfirmar={null}
+          jornadaId={null}
           onClose={() => setModalAberto(false)}
           onSuccess={handleModalSuccess}
         />

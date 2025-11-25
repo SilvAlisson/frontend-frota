@@ -1,9 +1,21 @@
 import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import axios from 'axios';
 import DOMPurify from 'dompurify';
 import { RENDER_API_BASE_URL } from '../../config';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+
+// 1. Definição do Schema de Validação com Zod
+const fornecedorSchema = z.object({
+  nome: z.string().min(1, 'O Nome é obrigatório.'),
+  cnpj: z.string().optional(), // Opcional, mas podemos adicionar regex se quiser: .regex(/^\d{14}$/, 'CNPJ inválido')
+});
+
+// Inferência do tipo TypeScript a partir do schema (Magia do Zod!)
+type FornecedorFormData = z.infer<typeof fornecedorSchema>;
 
 interface FormCadastrarFornecedorProps {
   token: string;
@@ -12,22 +24,27 @@ interface FormCadastrarFornecedorProps {
 }
 
 export function FormCadastrarFornecedor({ token, onFornecedorAdicionado, onCancelar }: FormCadastrarFornecedorProps) {
-  const [nome, setNome] = useState('');
-  const [cnpj, setCnpj] = useState('');
+
+  // 2. Configuração do React Hook Form
+  const {
+    register,
+    handleSubmit,
+    formState: { errors }
+  } = useForm<FornecedorFormData>({
+    resolver: zodResolver(fornecedorSchema),
+    defaultValues: {
+      nome: '',
+      cnpj: ''
+    }
+  });
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [serverError, setServerError] = useState(''); // Erro que vem da API, não de validação
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // 3. Função de Submissão (Só é chamada se a validação do Zod passar)
+  const onSubmit = async (data: FornecedorFormData) => {
     setLoading(true);
-    setError('');
-
-    if (!nome) {
-      setError('O Nome é obrigatório.');
-      setLoading(false);
-      return;
-    }
+    setServerError('');
 
     const api = axios.create({
       baseURL: RENDER_API_BASE_URL,
@@ -36,20 +53,18 @@ export function FormCadastrarFornecedor({ token, onFornecedorAdicionado, onCance
 
     try {
       await api.post('/fornecedor', {
-        nome: DOMPurify.sanitize(nome),
-        cnpj: DOMPurify.sanitize(cnpj) || null,
+        nome: DOMPurify.sanitize(data.nome),
+        cnpj: data.cnpj ? DOMPurify.sanitize(data.cnpj) : null,
       });
-      
-      setNome('');
-      setCnpj('');
+
       onFornecedorAdicionado();
 
     } catch (err) {
       console.error("Erro ao cadastrar fornecedor:", err);
       if (axios.isAxiosError(err) && err.response?.data?.error) {
-        setError(err.response.data.error); 
+        setServerError(err.response.data.error);
       } else {
-        setError('Falha ao cadastrar fornecedor.');
+        setServerError('Falha ao cadastrar fornecedor.');
       }
     } finally {
       setLoading(false);
@@ -57,8 +72,9 @@ export function FormCadastrarFornecedor({ token, onFornecedorAdicionado, onCance
   };
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit}>
-      {/* CABEÇALHO COM ÍCONE */}
+    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+
+      {/* CABEÇALHO COM ÍCONE (Inalterado) */}
       <div className="text-center">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 mb-3">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-primary">
@@ -76,48 +92,50 @@ export function FormCadastrarFornecedor({ token, onFornecedorAdicionado, onCance
         <Input
           label="Nome do Fornecedor"
           type="text"
-          value={nome}
-          onChange={(e) => setNome(e.target.value)}
           placeholder="Ex: Posto Quarto de Milha"
           disabled={loading}
+          // 4. Integração com Hook Form
+          {...register('nome')}
+          // O componente Input já deve estar preparado para receber a prop 'error'
+          error={errors.nome?.message}
         />
-        
+
         <Input
           label="CNPJ (Opcional)"
           type="text"
-          value={cnpj}
-          onChange={(e) => setCnpj(e.target.value)}
           placeholder="00.000.000/0000-00"
           disabled={loading}
+          {...register('cnpj')}
+          error={errors.cnpj?.message}
         />
       </div>
 
-      {/* MENSAGEM DE ERRO ESTILIZADA */}
-      {error && (
+      {/* MENSAGEM DE ERRO DO SERVIDOR */}
+      {serverError && (
         <div className="flex items-center gap-3 p-3 rounded-md bg-red-50 border border-red-200 text-error text-sm animate-pulse">
-           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
-             <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-           </svg>
-           <span>{error}</span>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
+            <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
+          </svg>
+          <span>{serverError}</span>
         </div>
       )}
 
       {/* BOTÕES */}
       <div className="flex gap-3 pt-2">
-        <Button 
-          type="button" 
-          variant="secondary" 
-          className="flex-1" 
-          disabled={loading} 
+        <Button
+          type="button"
+          variant="secondary"
+          className="flex-1"
+          disabled={loading}
           onClick={onCancelar}
         >
           Cancelar
         </Button>
-        
-        <Button 
-          type="submit" 
-          variant="primary" 
-          className="flex-1" 
+
+        <Button
+          type="submit"
+          variant="primary"
+          className="flex-1"
           disabled={loading}
           isLoading={loading}
         >

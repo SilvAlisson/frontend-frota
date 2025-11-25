@@ -11,12 +11,12 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   // Tenta recuperar o token salvo no navegador
   const token = localStorage.getItem('authToken');
-  
+
   // Se existir um token, adiciona-o ao cabeçalho Authorization
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  
+
   return config;
 }, (error) => {
   return Promise.reject(error);
