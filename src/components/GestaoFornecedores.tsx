@@ -138,7 +138,6 @@ export function GestaoFornecedores({ }: GestaoFornecedoresProps) {
       {modo === 'adicionando' && (
         <div className="bg-surface p-6 rounded-card shadow-card border border-gray-100">
           <FormCadastrarFornecedor
-            token="" // Mantido apenas para compatibilidade da prop do Form, mas não usado
             onFornecedorAdicionado={handleSucesso}
             onCancelar={handleCancelarForm}
           />
