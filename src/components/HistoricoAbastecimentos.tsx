@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { RENDER_API_BASE_URL } from '../config';
+import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
-import { Button } from './ui/Button'; // NOVO
-import { Input } from './ui/Input'; // NOVO
+import { Button } from './ui/Button';
+import { Input } from './ui/Input';
+import { TableStyles } from '../styles/table';
 
-// Tipos
+// ...Interfaces (Abastecimento, ItemAbastecimento) mantidas...
 interface ItemAbastecimento {
   quantidade: number;
   produto: {
@@ -33,12 +33,11 @@ interface Abastecimento {
 }
 
 interface HistoricoAbastecimentosProps {
-  token: string;
-  userRole: string; 
+  // Removido token
+  userRole: string;
   veiculos: any[];
 }
 
-// Ícones
 function IconeFoto() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
@@ -54,7 +53,7 @@ function IconeLixo() {
   );
 }
 
-export function HistoricoAbastecimentos({ token, userRole, veiculos }: HistoricoAbastecimentosProps) {
+export function HistoricoAbastecimentos({ userRole, veiculos }: HistoricoAbastecimentosProps) {
 
   const [historico, setHistorico] = useState<Abastecimento[]>([]);
   const [loading, setLoading] = useState(true);
@@ -65,32 +64,28 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
   const [dataFimFiltro, setDataFimFiltro] = useState('');
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState('');
 
-  const api = axios.create({
-    baseURL: RENDER_API_BASE_URL,
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
+  const fetchHistorico = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const params: any = {};
+      if (dataInicioFiltro) params.dataInicio = dataInicioFiltro;
+      if (dataFimFiltro) params.dataFim = dataFimFiltro;
+      if (veiculoIdFiltro) params.veiculoId = veiculoIdFiltro;
+
+      const response = await api.get('/abastecimentos/recentes', { params });
+      setHistorico(response.data);
+    } catch (err) {
+      console.error("Erro ao buscar histórico:", err);
+      setError('Falha ao carregar histórico.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchHistorico = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const params: any = {};
-        if (dataInicioFiltro) params.dataInicio = dataInicioFiltro;
-        if (dataFimFiltro) params.dataFim = dataFimFiltro;
-        if (veiculoIdFiltro) params.veiculoId = veiculoIdFiltro;
-        
-        const response = await api.get('/abastecimentos/recentes', { params });
-        setHistorico(response.data);
-      } catch (err) {
-        console.error("Erro ao buscar histórico:", err);
-        setError('Falha ao carregar histórico.');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchHistorico();
-  }, [token, dataInicioFiltro, dataFimFiltro, veiculoIdFiltro]);
+  }, [dataInicioFiltro, dataFimFiltro, veiculoIdFiltro]);
 
   const handleDelete = async (id: string) => {
     if (!window.confirm(`Tem a certeza que quer REMOVER este registo?`)) return;
@@ -99,8 +94,8 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
     try {
       await api.delete(`/abastecimento/${id}`);
       setHistorico(prev => prev.filter(ab => ab.id !== id));
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
+    } catch (err: any) {
+      if (err.response?.data?.error) {
         setError(err.response.data.error);
       } else {
         setError('Falha ao remover o registo.');
@@ -145,7 +140,7 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
       <h3 className="text-xl font-semibold text-primary text-center mb-4">
         Histórico de Abastecimentos ({historico.length > 0 ? `${historico.length}` : 'Recentes'})
       </h3>
-      
+
       <FiltrosHistorico
         veiculos={veiculos}
         veiculoId={veiculoIdFiltro}
@@ -158,12 +153,12 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
         loading={loading}
         historicoLength={historico.length}
       />
-      
+
       {error && <p className="text-center text-error bg-red-50 p-3 rounded border border-red-200">{error}</p>}
       {loading && <p className="text-center text-primary">A carregar histórico...</p>}
-      
+
       {!loading && historico.length === 0 && !error && (
-        <div className="bg-blue-50 border-l-4 border-blue-500 text-blue-700 p-4">
+        <div className={TableStyles.emptyState}>
           <p>Nenhum registo encontrado.</p>
         </div>
       )}
@@ -171,13 +166,13 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
       <div className="max-h-[600px] overflow-y-auto space-y-3 pr-2 custom-scrollbar">
         {!loading && historico.map((ab) => (
           <div key={ab.id} className={`bg-white shadow-sm border border-gray-200 rounded-card p-4 transition-opacity ${deletingId === ab.id ? 'opacity-50' : 'opacity-100'}`}>
-            
+
             <div className="flex justify-between items-start mb-2">
               <div>
                 <span className="font-bold text-lg text-primary">{formatDateTime(ab.dataHora)}</span>
                 <p className="text-sm text-gray-700 font-semibold">{ab.veiculo.placa} ({ab.veiculo.modelo})</p>
               </div>
-              
+
               <div className="flex items-center gap-3">
                 {ab.fotoNotaFiscalUrl ? (
                   <a href={ab.fotoNotaFiscalUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:text-primary-hover font-medium underline inline-flex items-center gap-1">
@@ -186,10 +181,10 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
                 ) : <span className="text-sm text-gray-400 italic">(Sem foto)</span>}
 
                 {userRole === 'ADMIN' && (
-                  <Button 
-                    variant="danger" 
-                    className="!p-1.5 h-8 w-8" 
-                    onClick={() => handleDelete(ab.id)} 
+                  <Button
+                    variant="danger"
+                    className={TableStyles.actionButton}
+                    onClick={() => handleDelete(ab.id)}
                     disabled={deletingId === ab.id}
                     title="Remover"
                     icon={<IconeLixo />}
@@ -208,8 +203,8 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
               <div className="text-sm text-gray-600">
                 <span className="font-semibold block text-gray-500">Itens:</span>
                 <ul className="list-disc list-inside">
-                  {ab.itens.map(item => (
-                    <li key={item.produto.nome}>{item.produto.nome} ({item.quantidade} {item.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'Un'})</li>
+                  {ab.itens.map((item, idx) => (
+                    <li key={idx}>{item.produto.nome} ({item.quantidade} {item.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'Un'})</li>
                   ))}
                 </ul>
               </div>
@@ -225,7 +220,7 @@ export function HistoricoAbastecimentos({ token, userRole, veiculos }: Historico
   );
 }
 
-// Sub-componente de Filtros
+// Sub-componente de Filtros (Reutilizado)
 interface FiltrosProps {
   veiculos: any[];
   veiculoId: string;
@@ -244,20 +239,20 @@ function FiltrosHistorico({ veiculos, veiculoId, setVeiculoId, dataInicio, setDa
     <div className="flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg border border-gray-100 items-end">
       <div className="w-full sm:w-auto"><Input label="Início" type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} /></div>
       <div className="w-full sm:w-auto"><Input label="Fim" type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} /></div>
-      
+
       <div className="flex-grow min-w-[200px]">
         <label className="block mb-1.5 text-sm font-medium text-text-secondary">Veículo</label>
         <div className="relative">
-            <select className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none" value={veiculoId} onChange={(e) => setVeiculoId(e.target.value)}>
-              <option value="">-- Todos --</option>
-              {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>)}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
+          <select className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent appearance-none" value={veiculoId} onChange={(e) => setVeiculoId(e.target.value)}>
+            <option value="">-- Todos --</option>
+            {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>)}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
         </div>
       </div>
 
       <div className="w-full sm:w-auto">
-         <Button variant="success" onClick={onExportar} disabled={historicoLength === 0 || loading} className="w-full sm:w-auto">Exportar</Button>
+        <Button variant="success" onClick={onExportar} disabled={historicoLength === 0 || loading} className="w-full sm:w-auto">Exportar</Button>
       </div>
     </div>
   );

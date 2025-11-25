@@ -1,10 +1,11 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import * as z from 'zod';
 import { api } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import DOMPurify from 'dompurify';
 
 // 1. Schema (idêntico ao de cadastro para consistência)
 const veiculoSchema = z.object({
@@ -26,6 +27,9 @@ interface FormEditarVeiculoProps {
 
 export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEditarVeiculoProps) {
 
+  const [loadingData, setLoadingData] = useState(true);
+  const [successMsg, setSuccessMsg] = useState('');
+
   const {
     register,
     handleSubmit,
@@ -33,12 +37,22 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
     setError,
     formState: { errors, isSubmitting }
   } = useForm<VeiculoForm>({
-    resolver: zodResolver(veiculoSchema) as any
+    resolver: zodResolver(veiculoSchema) as any,
+    defaultValues: {
+      placa: '',
+      modelo: '',
+      ano: new Date().getFullYear(),
+      tipoVeiculo: '',
+      vencimentoCiv: '',
+      vencimentoCipp: '',
+    }
   });
 
   // 2. Carregar dados iniciais
   useEffect(() => {
     async function loadData() {
+      if (!veiculoId) return;
+      setLoadingData(true);
       try {
         const response = await api.get(`/veiculo/${veiculoId}`);
         const data = response.data;
@@ -56,25 +70,33 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
       } catch (err) {
         console.error(err);
         setError('root', { message: "Falha ao carregar dados do veículo." });
+      } finally {
+        setLoadingData(false);
       }
     }
 
-    if (veiculoId) {
-      loadData();
-    }
+    loadData();
   }, [veiculoId, reset, setError]);
 
   // 3. Enviar atualização
   const onSubmit = async (data: VeiculoForm) => {
+    setSuccessMsg('');
     try {
       const payload = {
-        ...data,
+        placa: DOMPurify.sanitize(data.placa),
+        modelo: DOMPurify.sanitize(data.modelo),
+        ano: data.ano,
+        tipoVeiculo: DOMPurify.sanitize(data.tipoVeiculo),
         vencimentoCiv: data.vencimentoCiv || null,
         vencimentoCipp: data.vencimentoCipp || null,
       };
 
       await api.put(`/veiculo/${veiculoId}`, payload);
-      onSuccess(); // Fecha e atualiza a lista
+      setSuccessMsg('Veículo atualizado com sucesso!');
+
+      setTimeout(() => {
+        onSuccess();
+      }, 1500);
 
     } catch (err: any) {
       console.error(err);
@@ -82,6 +104,15 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
       setError('root', { message: msg });
     }
   };
+
+  if (loadingData) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
+        <p className="text-sm text-text-secondary">A carregar dados do veículo...</p>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -100,22 +131,26 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
           label="Placa"
           {...register("placa")}
           error={errors.placa?.message}
+          disabled={isSubmitting}
         />
         <Input
           label="Modelo"
           {...register("modelo")}
           error={errors.modelo?.message}
+          disabled={isSubmitting}
         />
         <Input
           label="Ano"
           type="number"
           {...register("ano")}
           error={errors.ano?.message}
+          disabled={isSubmitting}
         />
         <Input
           label="Tipo (Munck...)"
           {...register("tipoVeiculo")}
           error={errors.tipoVeiculo?.message}
+          disabled={isSubmitting}
         />
       </div>
 
@@ -127,19 +162,27 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
             type="date"
             {...register("vencimentoCiv")}
             error={errors.vencimentoCiv?.message}
+            disabled={isSubmitting}
           />
           <Input
             label="Vencimento CIPP"
             type="date"
             {...register("vencimentoCipp")}
             error={errors.vencimentoCipp?.message}
+            disabled={isSubmitting}
           />
         </div>
       </div>
 
       {errors.root && (
-        <div className="p-3 bg-red-50 text-error text-sm rounded text-center border border-red-100">
+        <div className="p-3 bg-red-50 text-error text-sm rounded text-center border border-red-100 animate-pulse">
           {errors.root.message}
+        </div>
+      )}
+
+      {successMsg && (
+        <div className="p-3 bg-green-50 text-success text-sm rounded text-center border border-green-100 font-medium">
+          {successMsg}
         </div>
       )}
 
@@ -155,6 +198,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
         </Button>
         <Button
           type="submit"
+          variant="primary"
           className="flex-1"
           isLoading={isSubmitting}
         >

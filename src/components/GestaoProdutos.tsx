@@ -1,27 +1,21 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { RENDER_API_BASE_URL } from '../config';
+import { api } from '../services/api';
 import { FormCadastrarProduto } from './forms/FormCadastrarProduto';
 import { FormEditarProduto } from './forms/FormEditarProduto';
 import { exportarParaExcel } from '../utils';
-import { Button } from './ui/Button'; // Componente de UI padronizado
+import { Button } from './ui/Button';
+import { TableStyles } from '../styles/table';
 
-// Tipos
 interface Produto {
   id: string;
   nome: string;
   tipo: string;
   unidadeMedida: string;
 }
-interface GestaoProdutosProps {
-  token: string;
-}
 
-// Estilos da Tabela (Padronizado)
-const thStyle = "px-4 py-3 text-left text-xs font-bold text-text-secondary uppercase tracking-wider bg-gray-50 border-b border-gray-100";
-const tdStyle = "px-4 py-3 text-sm text-text border-b border-gray-50 align-middle";
+// Removido 'token'
+interface GestaoProdutosProps { }
 
-// Ícones
 function IconeLixo() {
   return (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
@@ -38,8 +32,8 @@ function IconeEditar() {
   );
 }
 
-export function GestaoProdutos({ token }: GestaoProdutosProps) {
-  
+export function GestaoProdutos({ }: GestaoProdutosProps) {
+
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -47,11 +41,6 @@ export function GestaoProdutos({ token }: GestaoProdutosProps) {
   const [modo, setModo] = useState<'listando' | 'adicionando' | 'editando'>('listando');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [produtoIdSelecionado, setProdutoIdSelecionado] = useState<string | null>(null);
-
-  const api = axios.create({
-    baseURL: RENDER_API_BASE_URL,
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
 
   // 1. Buscar produtos
   const fetchProdutos = async () => {
@@ -69,7 +58,7 @@ export function GestaoProdutos({ token }: GestaoProdutosProps) {
 
   useEffect(() => {
     fetchProdutos();
-  }, []); // Apenas na montagem
+  }, []);
 
   // 2. Apagar produto
   const handleDelete = async (produtoId: string) => {
@@ -81,11 +70,11 @@ export function GestaoProdutos({ token }: GestaoProdutosProps) {
     setError('');
     setSuccess('');
     try {
-      await api.delete(`/produto/${produtoId}`); // Rota DELETE
+      await api.delete(`/produto/${produtoId}`);
       setSuccess('Produto removido com sucesso.');
-      fetchProdutos(); // Atualiza a lista
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
+      fetchProdutos();
+    } catch (err: any) {
+      if (err.response?.data?.error) {
         setError(err.response.data.error);
       } else {
         setError('Falha ao remover produto.');
@@ -94,7 +83,7 @@ export function GestaoProdutos({ token }: GestaoProdutosProps) {
       setDeletingId(null);
     }
   };
-  
+
   // 3. Controladores de estado (Modo)
   const handleAbrirEdicao = (produtoId: string) => {
     setProdutoIdSelecionado(produtoId);
@@ -109,32 +98,23 @@ export function GestaoProdutos({ token }: GestaoProdutosProps) {
     setError('');
     setSuccess('');
   };
-  
-  const handleProdutoAdicionado = () => {
-    setSuccess('Produto adicionado com sucesso!');
-    setModo('listando');
-    fetchProdutos(); // Re-busca a lista
-  };
 
-  const handleProdutoEditado = () => {
-    setSuccess('Produto atualizado com sucesso!');
+  const handleSucesso = () => {
     setModo('listando');
     setProdutoIdSelecionado(null);
-    fetchProdutos(); // Re-busca a lista
+    fetchProdutos();
   };
 
-  // 4. Handler para o botão de exportar
   const handleExportar = () => {
     setError('');
     setSuccess('');
     try {
-      // Formatar os dados (removendo o ID)
       const dadosFormatados = produtos.map(p => ({
         'Nome': p.nome,
         'Tipo': p.tipo,
         'Unidade de Medida': p.unidadeMedida,
       }));
-      
+
       exportarParaExcel(dadosFormatados, "Lista_Produtos_Servicos.xlsx");
       setSuccess('Lista de produtos e serviços exportada com sucesso!');
 
@@ -155,30 +135,28 @@ export function GestaoProdutos({ token }: GestaoProdutosProps) {
       {error && <p className="text-center text-error bg-red-50 p-3 rounded border border-red-200">{error}</p>}
       {success && <p className="text-center text-success bg-green-50 p-3 rounded border border-green-200">{success}</p>}
 
-      {/* Modo de Adição (Formulário) */}
+      {/* Modo de Adição */}
       {modo === 'adicionando' && (
         <div className="bg-surface p-6 rounded-card shadow-card border border-gray-100">
           <FormCadastrarProduto
-            token={token} 
-            onProdutoAdicionado={handleProdutoAdicionado}
+            onSuccess={handleSucesso}
             onCancelar={handleCancelarForm}
           />
         </div>
       )}
 
-      {/* Modo de Edição (Formulário) */}
+      {/* Modo de Edição */}
       {modo === 'editando' && produtoIdSelecionado && (
         <div className="bg-surface p-6 rounded-card shadow-card border border-gray-100">
           <FormEditarProduto
-            token={token}
             produtoId={produtoIdSelecionado}
-            onProdutoEditado={handleProdutoEditado}
+            onSuccess={handleSucesso}
             onCancelar={handleCancelarForm}
           />
         </div>
       )}
 
-      {/* Modo de Listagem (Tabela) */}
+      {/* Modo de Listagem */}
       {modo === 'listando' && (
         <div>
           <div className="mb-4 flex justify-between items-center gap-2 flex-wrap">
@@ -188,7 +166,7 @@ export function GestaoProdutos({ token }: GestaoProdutosProps) {
             >
               + Novo Produto/Serviço
             </Button>
-            
+
             <Button
               variant="success"
               className="text-sm"
@@ -209,57 +187,56 @@ export function GestaoProdutos({ token }: GestaoProdutosProps) {
           ) : (
             <div className="overflow-hidden shadow-card rounded-card border border-gray-100 bg-white">
               {produtos.length === 0 ? (
-                 <div className="text-center py-10">
-                    <p className="text-text-secondary">Nenhum produto cadastrado.</p>
-                 </div>
+                <div className={TableStyles.emptyState}>
+                  Nenhum produto cadastrado.
+                </div>
               ) : (
                 <table className="min-w-full">
-                    <thead className="bg-gray-50">
+                  <thead className="bg-gray-50">
                     <tr>
-                        <th className={thStyle}>Nome</th>
-                        <th className={thStyle}>Tipo</th>
-                        <th className={thStyle}>Unidade de Medida</th>
-                        <th className={thStyle}>Ações</th>
+                      <th className={TableStyles.th}>Nome</th>
+                      <th className={TableStyles.th}>Tipo</th>
+                      <th className={TableStyles.th}>Unidade de Medida</th>
+                      <th className={TableStyles.th}>Ações</th>
                     </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
                     {produtos.map((produto) => (
-                        <tr key={produto.id} className="hover:bg-gray-50 transition-colors">
-                        <td className={tdStyle + " font-medium"}>{produto.nome}</td>
-                        <td className={tdStyle}>
-                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                            produto.tipo === 'COMBUSTIVEL' ? 'bg-orange-100 text-orange-800' :
+                      <tr key={produto.id} className={TableStyles.rowHover}>
+                        <td className={TableStyles.td + " font-medium"}>{produto.nome}</td>
+                        <td className={TableStyles.td}>
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${produto.tipo === 'COMBUSTIVEL' ? 'bg-orange-100 text-orange-800' :
                             produto.tipo === 'ADITIVO' ? 'bg-blue-100 text-blue-800' :
-                            produto.tipo === 'SERVICO' ? 'bg-indigo-100 text-indigo-800' :
-                            'bg-gray-100 text-gray-800'
+                              produto.tipo === 'SERVICO' ? 'bg-indigo-100 text-indigo-800' :
+                                'bg-gray-100 text-gray-800'
                             }`}>
                             {produto.tipo}
-                            </span>
+                          </span>
                         </td>
-                        <td className={tdStyle}>{produto.unidadeMedida}</td>
-                        <td className={tdStyle}>
-                            <div className="flex gap-2">
-                            <Button 
-                                variant="secondary"
-                                className="!p-2 h-8 w-8"
-                                onClick={() => handleAbrirEdicao(produto.id)}
-                                title="Editar"
-                                icon={<IconeEditar />}
+                        <td className={TableStyles.td}>{produto.unidadeMedida}</td>
+                        <td className={TableStyles.td}>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="secondary"
+                              className={TableStyles.actionButton}
+                              onClick={() => handleAbrirEdicao(produto.id)}
+                              title="Editar"
+                              icon={<IconeEditar />}
                             />
                             <Button
-                                variant="danger"
-                                className="!p-2 h-8 w-8"
-                                onClick={() => handleDelete(produto.id)}
-                                disabled={deletingId === produto.id}
-                                isLoading={deletingId === produto.id}
-                                title="Remover"
-                                icon={<IconeLixo />}
+                              variant="danger"
+                              className={TableStyles.actionButton}
+                              onClick={() => handleDelete(produto.id)}
+                              disabled={deletingId === produto.id}
+                              isLoading={deletingId === produto.id}
+                              title="Remover"
+                              icon={<IconeLixo />}
                             />
-                            </div>
+                          </div>
                         </td>
-                        </tr>
+                      </tr>
                     ))}
-                    </tbody>
+                  </tbody>
                 </table>
               )}
             </div>

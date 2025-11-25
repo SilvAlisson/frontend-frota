@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
-import { RENDER_API_BASE_URL } from '../config';
+import { api } from '../services/api';
 import { FormCadastrarFornecedor } from './forms/FormCadastrarFornecedor';
 import { FormEditarFornecedor } from './forms/FormEditarFornecedor';
 import { exportarParaExcel } from '../utils';
-import { Button } from './ui/Button'; // Componente de UI reutilizável
+import { Button } from './ui/Button';
+import { TableStyles } from '../styles/table';
 
 // Tipos
 interface Fornecedor {
@@ -12,13 +12,8 @@ interface Fornecedor {
   nome: string;
   cnpj: string | null;
 }
-interface GestaoFornecedoresProps {
-  token: string;
-}
-
-// Estilos da Tabela (Padronizado com os outros componentes)
-const thStyle = "px-4 py-3 text-left text-xs font-bold text-text-secondary uppercase tracking-wider bg-gray-50 border-b border-gray-100";
-const tdStyle = "px-4 py-3 text-sm text-text border-b border-gray-50 align-middle";
+// Removido 'token' das props
+interface GestaoFornecedoresProps { }
 
 // Ícones
 function IconeLixo() {
@@ -37,8 +32,8 @@ function IconeEditar() {
   );
 }
 
-export function GestaoFornecedores({ token }: GestaoFornecedoresProps) {
-  
+export function GestaoFornecedores({ }: GestaoFornecedoresProps) {
+
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -46,11 +41,6 @@ export function GestaoFornecedores({ token }: GestaoFornecedoresProps) {
   const [modo, setModo] = useState<'listando' | 'adicionando' | 'editando'>('listando');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [fornecedorIdSelecionado, setFornecedorIdSelecionado] = useState<string | null>(null);
-
-  const api = axios.create({
-    baseURL: RENDER_API_BASE_URL,
-    headers: { 'Authorization': `Bearer ${token}` }
-  });
 
   // 1. Buscar
   const fetchFornecedores = async () => {
@@ -83,8 +73,8 @@ export function GestaoFornecedores({ token }: GestaoFornecedoresProps) {
       await api.delete(`/fornecedor/${fornecedorId}`);
       setSuccess('Fornecedor removido com sucesso.');
       fetchFornecedores(); // Atualiza a lista
-    } catch (err) {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
+    } catch (err: any) {
+      if (err.response?.data?.error) {
         setError(err.response.data.error);
       } else {
         setError('Falha ao remover fornecedor.');
@@ -93,7 +83,7 @@ export function GestaoFornecedores({ token }: GestaoFornecedoresProps) {
       setDeletingId(null);
     }
   };
-  
+
   // 3. Controladores de estado (Modo)
   const handleAbrirEdicao = (fornecedorId: string) => {
     setFornecedorIdSelecionado(fornecedorId);
@@ -108,15 +98,9 @@ export function GestaoFornecedores({ token }: GestaoFornecedoresProps) {
     setError('');
     setSuccess('');
   };
-  
-  const handleFornecedorAdicionado = () => {
-    setSuccess('Fornecedor adicionado com sucesso!');
-    setModo('listando');
-    fetchFornecedores();
-  };
 
-  const handleFornecedorEditado = () => {
-    setSuccess('Fornecedor atualizado com sucesso!');
+  const handleSucesso = () => {
+    // Callback unificado para adição e edição
     setModo('listando');
     setFornecedorIdSelecionado(null);
     fetchFornecedores();
@@ -130,7 +114,7 @@ export function GestaoFornecedores({ token }: GestaoFornecedoresProps) {
         'Nome': f.nome,
         'CNPJ': f.cnpj || '---',
       }));
-      
+
       exportarParaExcel(dadosFormatados, "Lista_Fornecedores.xlsx");
       setSuccess('Lista de fornecedores exportada com sucesso!');
 
@@ -154,8 +138,7 @@ export function GestaoFornecedores({ token }: GestaoFornecedoresProps) {
       {modo === 'adicionando' && (
         <div className="bg-surface p-6 rounded-card shadow-card border border-gray-100">
           <FormCadastrarFornecedor
-            token={token} 
-            onFornecedorAdicionado={handleFornecedorAdicionado}
+            onFornecedorAdicionado={handleSucesso}
             onCancelar={handleCancelarForm}
           />
         </div>
@@ -165,9 +148,8 @@ export function GestaoFornecedores({ token }: GestaoFornecedoresProps) {
       {modo === 'editando' && fornecedorIdSelecionado && (
         <div className="bg-surface p-6 rounded-card shadow-card border border-gray-100">
           <FormEditarFornecedor
-            token={token}
             fornecedorId={fornecedorIdSelecionado}
-            onFornecedorEditado={handleFornecedorEditado}
+            onSuccess={handleSucesso} // Usando a nova prop padronizada
             onCancelar={handleCancelarForm}
           />
         </div>
@@ -198,45 +180,47 @@ export function GestaoFornecedores({ token }: GestaoFornecedoresProps) {
             <p className="text-center text-primary py-8">A carregar fornecedores...</p>
           ) : (
             <div className="overflow-hidden shadow-card rounded-card border border-gray-100 bg-white">
-              <table className="min-w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className={thStyle}>Nome</th>
-                    <th className={thStyle}>CNPJ</th>
-                    <th className={thStyle}>Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {fornecedores.map((f) => (
-                    <tr key={f.id} className="hover:bg-gray-50 transition-colors">
-                      <td className={tdStyle + " font-medium"}>{f.nome}</td>
-                      <td className={tdStyle}>{f.cnpj || '---'}</td>
-                      <td className={tdStyle}>
-                        <div className="flex gap-2">
-                          <Button 
-                            variant="secondary"
-                            className="!p-2 h-8 w-8"
-                            onClick={() => handleAbrirEdicao(f.id)}
-                            title="Editar"
-                          >
-                            <IconeEditar />
-                          </Button>
-                          <Button
-                            variant="danger"
-                            className="!p-2 h-8 w-8"
-                            onClick={() => handleDelete(f.id)}
-                            disabled={deletingId === f.id}
-                            isLoading={deletingId === f.id}
-                            title="Remover Fornecedor"
-                          >
-                            <IconeLixo />
-                          </Button>
-                        </div>
-                      </td>
+              {fornecedores.length === 0 ? (
+                <div className={TableStyles.emptyState}>Nenhum fornecedor encontrado.</div>
+              ) : (
+                <table className="min-w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className={TableStyles.th}>Nome</th>
+                      <th className={TableStyles.th}>CNPJ</th>
+                      <th className={TableStyles.th}>Ações</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {fornecedores.map((f) => (
+                      <tr key={f.id} className={TableStyles.rowHover}>
+                        <td className={TableStyles.td + " font-medium"}>{f.nome}</td>
+                        <td className={TableStyles.td}>{f.cnpj || '---'}</td>
+                        <td className={TableStyles.td}>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="secondary"
+                              className={TableStyles.actionButton}
+                              onClick={() => handleAbrirEdicao(f.id)}
+                              title="Editar"
+                              icon={<IconeEditar />}
+                            />
+                            <Button
+                              variant="danger"
+                              className={TableStyles.actionButton}
+                              onClick={() => handleDelete(f.id)}
+                              disabled={deletingId === f.id}
+                              isLoading={deletingId === f.id}
+                              title="Remover Fornecedor"
+                              icon={<IconeLixo />}
+                            />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
             </div>
           )}
         </div>

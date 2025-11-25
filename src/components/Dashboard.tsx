@@ -1,83 +1,59 @@
-import { useState, useEffect } from 'react';
-import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useDashboardData } from '../hooks/useDashboardData';
 import { Button } from '../components/ui/Button';
 
-// Novos Componentes Separados
 import { DashboardOperador } from '../components/DashboardOperador';
 import { DashboardEncarregado } from '../components/DashboardEncarregado';
 import { AdminDashboard } from '../components/AdminDashboard';
 
 export function Dashboard() {
     const { user, logout } = useAuth();
-    const token = localStorage.getItem('authToken') || '';
 
-    // Dados Globais
-    const [usuarios, setUsuarios] = useState<any[]>([]);
-    const [veiculos, setVeiculos] = useState<any[]>([]);
-    const [produtos, setProdutos] = useState<any[]>([]);
-    const [fornecedores, setFornecedores] = useState<any[]>([]);
+    // token removido, pois a autenticação é via api.ts
+    // const token = localStorage.getItem('authToken') || '';
 
-    // Dados Específicos
-    const [jornadasOperador, setJornadasOperador] = useState<any[]>([]);
-    const [jornadasAbertasGestao, setJornadasAbertasGestao] = useState<any[]>([]);
-
-    const [loadingDados, setLoadingDados] = useState(true);
-    const [error, setError] = useState('');
-
-    useEffect(() => {
-        let isMounted = true;
-        const carregarDados = async () => {
-            if (!user) return;
-            setLoadingDados(true);
-            try {
-                // Promise.all para paralelizar requests
-                const requests = [
-                    api.get('/users'),
-                    api.get('/veiculos'),
-                    api.get('/produtos'),
-                    api.get('/fornecedores'),
-                ];
-
-                if (user.role === 'OPERADOR') requests.push(api.get('/jornadas/minhas-abertas-operador'));
-                if (user.role === 'ENCARREGADO') requests.push(api.get('/jornadas/abertas'));
-
-                const responses = await Promise.all(requests);
-                if (!isMounted) return;
-
-                setUsuarios(responses[0].data);
-                setVeiculos(responses[1].data);
-                setProdutos(responses[2].data);
-                setFornecedores(responses[3].data);
-
-                if (user.role === 'OPERADOR' && responses[4]) setJornadasOperador(responses[4].data);
-                if (user.role === 'ENCARREGADO' && responses[4]) setJornadasAbertasGestao(responses[4].data);
-
-            } catch (err: any) {
-                console.error("Erro ao carregar dados:", err);
-                if (err.response?.status === 401) logout();
-                else setError('Não foi possível carregar os dados do sistema.');
-            } finally {
-                if (isMounted) setLoadingDados(false);
-            }
-        };
-
-        carregarDados();
-        return () => { isMounted = false; };
-    }, [user, logout]);
-
-    // Handlers de Atualização Local
-    const handleJornadaIniciada = (nova: any) => setJornadasOperador(prev => [...prev, nova]);
-    const handleJornadaFinalizada = (id: string) => {
-        setJornadasOperador(prev => prev.filter(j => j.id !== id));
-        setJornadasAbertasGestao(prev => prev.filter(j => j.id !== id));
-    };
+    const { data, isLoading, isError, refetch } = useDashboardData();
 
     if (!user) return null;
 
+    if (isLoading) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-200 border-t-primary mb-4"></div>
+                <p className="text-text-secondary font-medium animate-pulse">A sincronizar frota...</p>
+            </div>
+        );
+    }
+
+    if (isError || !data) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+                <div className="bg-red-50 p-6 rounded-card border border-red-100 text-center max-w-md">
+                    <h3 className="text-red-800 font-bold mb-2">Falha na Conexão</h3>
+                    <p className="text-red-600 text-sm mb-4">Não foi possível carregar os dados do sistema. Verifique sua internet.</p>
+                    <div className="flex gap-2 justify-center">
+                        <Button variant="secondary" onClick={() => window.location.reload()}>Recarregar Página</Button>
+                        <Button variant="primary" onClick={() => refetch()}>Tentar Novamente</Button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    const { usuarios, veiculos, produtos, fornecedores, jornadasEspecificas } = data;
+
+    // Legado: ainda necessário para passar props para filhos, embora o token seja global
+    const token = localStorage.getItem('authToken') || '';
+
+    const handleJornadaIniciada = () => {
+        refetch();
+    };
+    const handleJornadaFinalizada = () => {
+        refetch();
+    };
+
     return (
         <div className="min-h-screen bg-background">
-            {/* Navbar Simples */}
             <nav className="bg-white shadow-sm sticky top-0 z-30 border-b border-gray-100 h-16">
                 <div className="max-w-7xl mx-auto px-4 h-full flex justify-between items-center">
                     <div className="flex items-center gap-3">
@@ -97,38 +73,42 @@ export function Dashboard() {
             </nav>
 
             <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-                {error && <div className="mb-6 p-4 bg-red-50 border border-red-200 text-error rounded-lg">{error}</div>}
 
-                {loadingDados ? (
-                    <div className="flex flex-col items-center justify-center py-32 opacity-70">
-                        <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-primary mb-4"></div>
-                        <p className="text-gray-500 font-medium">A sincronizar frota...</p>
-                    </div>
-                ) : (
-                    <>
-                        {user.role === 'OPERADOR' && (
-                            <DashboardOperador
-                                token={token} user={user} usuarios={usuarios} veiculos={veiculos}
-                                jornadasAtivas={jornadasOperador}
-                                onJornadaIniciada={handleJornadaIniciada} onJornadaFinalizada={handleJornadaFinalizada}
-                            />
-                        )}
-
-                        {user.role === 'ENCARREGADO' && (
-                            <DashboardEncarregado
-                                token={token} user={user} veiculos={veiculos} usuarios={usuarios} produtos={produtos} fornecedores={fornecedores}
-                                jornadasAbertas={jornadasAbertasGestao} onJornadaFinalizada={handleJornadaFinalizada}
-                            />
-                        )}
-
-                        {user.role === 'ADMIN' && (
-                            <AdminDashboard
-                                token={token} adminUserId={user.id}
-                                veiculos={veiculos} produtos={produtos} fornecedores={fornecedores}
-                            />
-                        )}
-                    </>
+                {user.role === 'OPERADOR' && (
+                    <DashboardOperador
+                        token={token}
+                        user={user}
+                        usuarios={usuarios}
+                        veiculos={veiculos}
+                        jornadasAtivas={jornadasEspecificas}
+                        onJornadaIniciada={handleJornadaIniciada}
+                        onJornadaFinalizada={handleJornadaFinalizada}
+                    />
                 )}
+
+                {user.role === 'ENCARREGADO' && (
+                    <DashboardEncarregado
+                        token={token}
+                        user={user}
+                        veiculos={veiculos}
+                        usuarios={usuarios}
+                        produtos={produtos}
+                        fornecedores={fornecedores}
+                        jornadasAbertas={jornadasEspecificas}
+                        onJornadaFinalizada={handleJornadaFinalizada}
+                    />
+                )}
+
+                {user.role === 'ADMIN' && (
+                    <AdminDashboard
+                        // token removido aqui para Admin
+                        adminUserId={user.id}
+                        veiculos={veiculos}
+                        produtos={produtos}
+                        fornecedores={fornecedores}
+                    />
+                )}
+
             </main>
         </div>
     );
