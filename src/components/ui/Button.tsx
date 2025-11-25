@@ -1,13 +1,11 @@
 import React from 'react';
 
-// Define as variantes possíveis para o nosso botão
 type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
 
-// Define as props do botão, estendendo as props nativas do HTML (onClick, disabled, type, etc.)
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: ButtonVariant;
-  isLoading?: boolean; // Adicionamos uma prop para mostrar estado de carregamento facilmente
-  icon?: React.ReactNode; // Para ícones à esquerda (opcional)
+  isLoading?: boolean;
+  icon?: React.ReactNode;
 }
 
 export function Button({
@@ -20,17 +18,18 @@ export function Button({
   ...rest
 }: ButtonProps) {
 
-  // Estilos base (comuns a todos os botões)
-  // Nota: 'rounded-button' vem do nosso index.css (--border-radius-button)
-  const baseStyles = "inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold transition-all duration-200 rounded-button focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow-md active:scale-95";
+  // ATUALIZADO:
+  // - rounded-button: Agora funciona porque corrigimos o CSS (--radius-button)
+  // - shadow-button: Nova sombra definida no CSS
+  // - transform active:scale-95: Efeito de clique mais perceptível
+  const baseStyles = "cursor-pointer inline-flex items-center justify-center gap-2 px-4 py-2 text-sm font-bold transition-all duration-200 rounded-button focus:outline-none focus:ring-2 focus:ring-offset-1 disabled:opacity-50 disabled:cursor-not-allowed shadow-button hover:shadow-button-hover active:scale-95";
 
-  // Estilos específicos de cada variante (usando as cores do index.css)
   const variants: Record<ButtonVariant, string> = {
-    primary: "bg-primary text-surface hover:bg-primary-hover focus:ring-primary",
-    secondary: "bg-surface text-text border border-gray-200 hover:bg-gray-50 focus:ring-gray-300",
+    primary: "bg-primary text-surface hover:bg-primary-hover focus:ring-primary hover:-translate-y-0.5", // Efeito de leve subida no hover
+    secondary: "bg-surface text-text border border-gray-200 hover:bg-gray-50 focus:ring-gray-300 hover:border-gray-300",
     ghost: "bg-transparent text-primary hover:bg-primary-soft shadow-none hover:shadow-none",
-    danger: "bg-error text-surface hover:bg-red-700 focus:ring-error",
-    success: "bg-success text-surface hover:bg-green-700 focus:ring-success",
+    danger: "bg-error text-surface hover:bg-red-600 focus:ring-error hover:-translate-y-0.5",
+    success: "bg-success text-surface hover:bg-green-600 focus:ring-success hover:-translate-y-0.5",
   };
 
   return (
@@ -39,7 +38,6 @@ export function Button({
       disabled={disabled || isLoading}
       {...rest}
     >
-      {/* Se estiver a carregar, mostra um spinner automático */}
       {isLoading && (
         <svg className="animate-spin h-4 w-4 text-current" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -47,7 +45,6 @@ export function Button({
         </svg>
       )}
 
-      {/* Se tiver ícone e NÃO estiver a carregar, mostra o ícone */}
       {!isLoading && icon && <span className="w-4 h-4 flex items-center justify-center">{icon}</span>}
 
       {children}

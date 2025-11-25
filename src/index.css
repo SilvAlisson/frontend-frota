@@ -1,41 +1,37 @@
 @import "tailwindcss";
 
 @theme {
-  /* Paleta Refinada */
+  /* --- CORES --- */
   --color-primary: #007EAD;
   --color-primary-hover: #00638a;
   --color-primary-soft: #E0F2F8;
-  /* Fundo suave para ícones/botões */
-
+  
   --color-background: #F8FAFC;
-  /* Cinza muito claro, melhor que branco puro para fundo */
   --color-surface: #FFFFFF;
 
-  /* Cores Semânticas */
   --color-success: #10B981;
   --color-warning: #F59E0B;
   --color-error: #EF4444;
 
-  /* Tipografia Moderna */
   --color-text: #1E293B;
-  /* Slate-800 (Mais suave que preto puro) */
   --color-text-secondary: #64748B;
-  /* Slate-500 */
 
-  /* Forçar a fonte Inter */
   --font-sans: 'Inter', system-ui, sans-serif;
 
-  /* Tokens de Espaçamento e Borda Modernos */
-  --border-radius-card: 1rem;
-  /* 16px - Cantos mais arredondados */
-  --border-radius-input: 0.75rem;
-  /* 12px */
-  --border-radius-button: 0.75rem;
-  /* 12px */
+  /* --- BORDAS (CORREÇÃO: usar prefixo --radius-*) --- */
+  /* Isso gera automaticamente as classes: rounded-card, rounded-input, rounded-button */
+  --radius-card: 1rem;       /* 16px */
+  --radius-input: 0.75rem;   /* 12px */
+  --radius-button: 0.75rem;  /* 12px */
 
-  /* Sombras Suaves (Diffuse Shadows) */
-  --box-shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-  --box-shadow-card-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  /* --- SOMBRAS (CORREÇÃO: usar prefixo --shadow-*) --- */
+  /* Isso gera automaticamente as classes: shadow-card, shadow-card-hover */
+  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  --shadow-card-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  
+  /* Sombra específica para botões para dar profundidade */
+  --shadow-button: 0 2px 4px rgba(0, 0, 0, 0.1);
+  --shadow-button-hover: 0 4px 6px rgba(0, 0, 0, 0.12);
 }
 
 /* Estilos Globais */
@@ -43,24 +39,20 @@ body {
   background-color: var(--color-background);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
-  /* Deixa a fonte mais nítida */
 }
 
-/* Scrollbar bonita */
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
   background: #CBD5E1;
   border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
   background: #94A3B8;
 }
