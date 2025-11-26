@@ -215,7 +215,7 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoProps) {
           disabled={isSubmitting}
           isLoading={isSubmitting}
         >
-          {isSubmitting ? 'A guardar...' : 'Criar Plano'}
+          {isSubmitting ? 'Salvando...' : 'Plano criado'}
         </Button>
       </form>
 

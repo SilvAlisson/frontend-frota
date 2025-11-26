@@ -88,7 +88,7 @@ export function HistoricoAbastecimentos({ userRole, veiculos }: HistoricoAbastec
   }, [dataInicioFiltro, dataFimFiltro, veiculoIdFiltro]);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm(`Tem a certeza que quer REMOVER este registo?`)) return;
+    if (!window.confirm(`Tem certeza que quer REMOVER este registro?`)) return;
     setDeletingId(id);
     setError('');
     try {
@@ -155,7 +155,7 @@ export function HistoricoAbastecimentos({ userRole, veiculos }: HistoricoAbastec
       />
 
       {error && <p className="text-center text-error bg-red-50 p-3 rounded border border-red-200">{error}</p>}
-      {loading && <p className="text-center text-primary">A carregar histórico...</p>}
+      {loading && <p className="text-center text-primary">Carregando histórico...</p>}
 
       {!loading && historico.length === 0 && !error && (
         <div className={TableStyles.emptyState}>

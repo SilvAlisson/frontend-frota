@@ -14,7 +14,7 @@ export function LoginScreen() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  // Hook para ler parâmetros da URL (ex: ?magicToken=xyz)
+  // Hook para ler parâmetros da URL
   const [searchParams] = useSearchParams();
   const magicToken = searchParams.get('magicToken');
 
@@ -73,7 +73,7 @@ export function LoginScreen() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
 
-      {/* Fundo Decorativo Moderno */}
+      {/* Fundo Decorativo */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
         <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-primary/10 rounded-full blur-3xl opacity-60"></div>
         <div className="absolute bottom-[-10%] left-[-5%] w-72 h-72 bg-blue-400/10 rounded-full blur-3xl opacity-60"></div>
@@ -111,8 +111,8 @@ export function LoginScreen() {
               <div className="text-center py-10 space-y-4">
                 <div className="inline-block animate-spin rounded-full h-10 w-10 border-[3px] border-gray-200 border-t-primary"></div>
                 <div>
-                  <p className="text-primary font-bold text-lg animate-pulse">A autenticar acesso...</p>
-                  <p className="text-xs text-gray-400 mt-1">A validar as suas credenciais de segurança</p>
+                  <p className="text-primary font-bold text-lg animate-pulse">Autenticando acesso...</p>
+                  <p className="text-xs text-gray-400 mt-1">A validando suas credenciais de segurança</p>
                 </div>
               </div>
             ) : (
@@ -125,7 +125,7 @@ export function LoginScreen() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
-                  className="py-3" // Input um pouco maior para facilitar o toque
+                  className="py-3"
                 />
 
                 <div className="space-y-1">
@@ -164,7 +164,7 @@ export function LoginScreen() {
                 isLoading={loading}
                 className="w-full py-3.5 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
               >
-                {loading ? 'A entrar...' : 'Aceder ao Painel'}
+                {loading ? 'Entrando...' : 'Acessando o Painel'}
               </Button>
             )}
 

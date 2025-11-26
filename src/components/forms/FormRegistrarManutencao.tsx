@@ -157,7 +157,7 @@ export function FormRegistrarManutencao({
               <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17 17.25 21A2.25 2.25 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.5 2.5 0 0 1-2.88 1.132l-3.128-.686a1 1 0 0 1-.602-.602l-.686-3.128a2.5 2.5 0 0 1 1.132-2.88L6.25 10" />
             </svg>
           </div>
-          <h4 className="text-xl font-bold text-primary">Registar Manutenção</h4>
+          <h4 className="text-xl font-bold text-primary">Registrar Manutenção</h4>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -292,7 +292,7 @@ export function FormRegistrarManutencao({
         {success && <p className="text-center text-success bg-green-50 p-3 rounded border border-green-200">{success}</p>}
 
         <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting} className="w-full">
-          {isSubmitting ? 'A Validar...' : 'Registar Serviço'}
+          {isSubmitting ? 'A Validar...' : 'Registrar Serviço'}
         </Button>
       </form>
 

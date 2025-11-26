@@ -162,7 +162,7 @@ export function RankingOperadores({ }: RankingProps) {
       {loading && (
         <div className="text-center py-10">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-          <p className="text-text-secondary">A calcular indicadores...</p>
+          <p className="text-text-secondary">Calculando indicadores...</p>
         </div>
       )}
 

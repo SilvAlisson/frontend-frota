@@ -75,10 +75,10 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
   const handleDelete = async (id: string) => {
     if (id === adminUserId) {
-      alert("Não pode remover o seu próprio usuário.");
+      alert("Você não pode remover o seu próprio usuário.");
       return;
     }
-    if (!window.confirm("Tem a certeza que quer remover este utilizador?")) return;
+    if (!window.confirm("Tem certeza que deseja REMOVER este utilizador?")) return;
     deleteMutation.mutate(id);
   };
 
@@ -110,7 +110,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-xl font-semibold text-primary text-center">Gestão de Utilizadores</h3>
+      <h3 className="text-xl font-semibold text-primary text-center">Gestão de Integrantes</h3>
 
       {errorMsg && <div className="p-3 bg-red-50 text-error border border-red-200 rounded text-center text-sm">{errorMsg}</div>}
 

@@ -99,7 +99,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Fo
     return (
       <div className="flex flex-col items-center justify-center py-10 space-y-3">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <p className="text-sm text-text-secondary">A carregar dados do fornecedor...</p>
+        <p className="text-sm text-text-secondary">Carregando dados do fornecedor...</p>
       </div>
     );
   }

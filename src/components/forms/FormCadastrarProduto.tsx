@@ -11,7 +11,7 @@ const tiposDeProduto = ["COMBUSTIVEL", "ADITIVO", "SERVICO", "OUTRO"];
 
 // 1. Schema Zod
 const produtoSchema = z.object({
-  nome: z.string().min(2, "Nome deve ter pelo menos 2 carateres"),
+  nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   tipo: z.string().min(1, "Selecione o tipo"),
   unidadeMedida: z.string().min(1, "Unidade de medida obrigatória"),
 });
@@ -57,7 +57,7 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormCadastrarPro
       setSuccessMsg('Produto cadastrado com sucesso!');
       reset(); // Limpa campos
 
-      // Aguarda um pouco para o utilizador ver a mensagem antes de fechar
+      // Aguarda um pouco para o integrante ver a mensagem antes de fechar
       setTimeout(() => {
         onSuccess();
       }, 1500);
@@ -161,7 +161,7 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormCadastrarPro
           disabled={isSubmitting}
           isLoading={isSubmitting}
         >
-          {isSubmitting ? 'A Registar...' : 'Guardar Produto'}
+          {isSubmitting ? 'Registrando...' : 'Salvando Produto'}
         </Button>
       </div>
     </form>

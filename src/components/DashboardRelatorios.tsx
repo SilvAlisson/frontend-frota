@@ -148,7 +148,7 @@ export function DashboardRelatorios({ veiculos }: DashboardRelatoriosProps) {
             <label className={labelStyle}>Veículo</label>
             <div className="relative">
               <select className={selectStyle} value={veiculoIdFiltro} onChange={(e) => setVeiculoIdFiltro(e.target.value)}>
-                <option value="">Todas as Viaturas</option>
+                <option value="">Todos os Veículos</option>
                 {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>)}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
@@ -178,7 +178,7 @@ export function DashboardRelatorios({ veiculos }: DashboardRelatoriosProps) {
       {loading && (
         <div className="text-center py-20">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-primary font-medium">A calcular indicadores...</p>
+          <p className="text-primary font-medium">Calculando indicadores...</p>
         </div>
       )}
 

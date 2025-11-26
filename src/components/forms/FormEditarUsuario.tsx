@@ -104,7 +104,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
 
       await api.put(`/user/${userId}`, dataToUpdate);
 
-      setSuccessMsg('Utilizador atualizado com sucesso!');
+      setSuccessMsg('Integrante atualizado com sucesso!');
 
       setTimeout(() => {
         onSuccess();
@@ -125,7 +125,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
     return (
       <div className="flex flex-col items-center justify-center py-10 space-y-3">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <p className="text-sm text-text-secondary">A carregar dados do colaborador...</p>
+        <p className="text-sm text-text-secondary">Carregando dados do integrante...</p>
       </div>
     );
   }

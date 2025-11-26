@@ -97,7 +97,7 @@ export function HistoricoManutencoes({ userRole, veiculos }: HistoricoManutencoe
   }, [veiculoIdFiltro, dataInicioFiltro, dataFimFiltro]);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm(`Tem a certeza que quer REMOVER permanentemente este registo?`)) return;
+    if (!window.confirm(`Tem certeza que quer REMOVER permanentemente este registo?`)) return;
 
     setDeletingId(id);
     setError('');
@@ -166,7 +166,7 @@ export function HistoricoManutencoes({ userRole, veiculos }: HistoricoManutencoe
       />
 
       {error && <p className="text-center text-error bg-red-50 p-3 rounded border border-red-200">{error}</p>}
-      {loading && <p className="text-center text-primary">A carregar histórico...</p>}
+      {loading && <p className="text-center text-primary">Carregando histórico...</p>}
 
       {!loading && historico.length === 0 && !error && (
         <div className={TableStyles.emptyState}>
@@ -188,7 +188,7 @@ export function HistoricoManutencoes({ userRole, veiculos }: HistoricoManutencoe
               <div className="flex items-center gap-3">
                 {os.fotoComprovanteUrl ? (
                   <a href={os.fotoComprovanteUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:text-primary-hover font-medium underline inline-flex items-center gap-1">
-                    Comprovativo <IconeFoto />
+                    Comprovante <IconeFoto />
                   </a>
                 ) : <span className="text-sm text-gray-400 italic">(Sem foto)</span>}
 

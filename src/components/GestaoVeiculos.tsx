@@ -63,7 +63,7 @@ export function GestaoVeiculos({ }: GestaoVeiculosProps) {
   }, []);
 
   const handleDelete = async (veiculoId: string) => {
-    if (!window.confirm("Tem a certeza que quer REMOVER este veículo? Esta ação pode falhar se ele tiver registos associados.")) {
+    if (!window.confirm("Tem certeza que quer REMOVER este veículo? Esta ação pode falhar se ele tiver arquivos associados.")) {
       return;
     }
 
@@ -155,7 +155,7 @@ export function GestaoVeiculos({ }: GestaoVeiculosProps) {
           </div>
 
           {loading ? (
-            <p className="text-center text-primary py-8">A carregar veículos...</p>
+            <p className="text-center text-primary py-8">Carregando veículos...</p>
           ) : (
             <div className="overflow-x-auto shadow-card rounded-card border border-gray-100 bg-white">
               {veiculos.length === 0 ? (

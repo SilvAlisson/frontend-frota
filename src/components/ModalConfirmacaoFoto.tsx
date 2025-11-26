@@ -40,7 +40,7 @@ export function ModalConfirmacaoFoto({
   const handleSubmit = async () => {
     setLoading(true);
     setError('');
-    setUploadProgress('A preparar envio...');
+    setUploadProgress('Preparando envio...');
 
     if (!foto) {
       setError('A foto é obrigatória para auditoria.');
@@ -50,7 +50,7 @@ export function ModalConfirmacaoFoto({
 
     try {
       // 1. Upload Supabase
-      setUploadProgress('A enviar foto para a nuvem...');
+      setUploadProgress('Enviando foto para a nuvem...');
 
       const fileType = apiEndpoint.split('/')[1] || 'geral';
       const fileExt = foto.name.split('.').pop();
@@ -93,7 +93,7 @@ export function ModalConfirmacaoFoto({
       }
 
       // 4. Send to Backend
-      setUploadProgress('A registar dados no sistema...');
+      setUploadProgress('Registrando dados no sistema...');
 
       let response;
       if (apiMethod === 'POST') {
@@ -145,7 +145,7 @@ export function ModalConfirmacaoFoto({
           {kmParaConfirmar !== null && (
             <div className="bg-blue-50 p-4 rounded-lg border border-blue-100 text-center shadow-inner">
               <p className="text-xs text-blue-600 font-bold uppercase tracking-wide mb-1">
-                Valor Registado
+                Valor Registrado
               </p>
               <p className="text-4xl font-bold text-primary tracking-tight">
                 {kmParaConfirmar.toLocaleString('pt-BR')} <span className="text-lg text-gray-500 font-medium">KM</span>
@@ -156,7 +156,7 @@ export function ModalConfirmacaoFoto({
           {/* Image Upload Area */}
           <div className="space-y-2">
             <label className="block text-sm font-bold text-gray-700 mb-1">
-              Comprovativo / Foto <span className="text-error">*</span>
+              Comprovante / Foto <span className="text-error">*</span>
             </label>
 
             <div className={fileInputContainer}>

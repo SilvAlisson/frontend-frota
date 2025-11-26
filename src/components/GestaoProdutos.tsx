@@ -62,7 +62,7 @@ export function GestaoProdutos({ }: GestaoProdutosProps) {
 
   // 2. Apagar produto
   const handleDelete = async (produtoId: string) => {
-    if (!window.confirm("Tem a certeza que quer REMOVER este produto? Esta ação pode falhar se ele estiver a ser usado em algum registo.")) {
+    if (!window.confirm("Tem certeza que quer REMOVER este produto? Esta ação pode falhar se ele estiver sendo usado em algum arquivo.")) {
       return;
     }
 
@@ -183,7 +183,7 @@ export function GestaoProdutos({ }: GestaoProdutosProps) {
           </div>
 
           {loading ? (
-            <p className="text-center text-primary py-8">A carregar produtos...</p>
+            <p className="text-center text-primary py-8">Carregando produtos...</p>
           ) : (
             <div className="overflow-hidden shadow-card rounded-card border border-gray-100 bg-white">
               {produtos.length === 0 ? (

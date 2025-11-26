@@ -1,11 +1,11 @@
 import * as XLSX from 'xlsx';
 
 /**
- * Exporta um array de dados JSON para um ficheiro Excel (XLSX).
+ * Exporta um array de dados JSON para um arquivo Excel (XLSX).
  * @param data Array de objectos a exportar.
- * @param nomeFicheiro O nome do ficheiro (ex: "relatorio.xlsx").
+ * @param nomeArquivo
  */
-export const exportarParaExcel = (data: any[], nomeFicheiro: string) => {
+export const exportarParaExcel = (data: any[], nomeArquivo: string) => {
   try {
     // 1. Criar a "worksheet" (planilha) a partir dos dados JSON
     const ws = XLSX.utils.json_to_sheet(data);
@@ -17,11 +17,11 @@ export const exportarParaExcel = (data: any[], nomeFicheiro: string) => {
     XLSX.utils.book_append_sheet(wb, ws, "Dados");
 
     // 4. Iniciar o download do ficheiro
-    XLSX.writeFile(wb, nomeFicheiro);
+    XLSX.writeFile(wb, nomeArquivo);
 
   } catch (error) {
     console.error("Erro ao exportar para Excel:", error);
-    alert("Ocorreu um erro ao tentar exportar o ficheiro Excel.");
+    alert("Ocorreu um erro ao tentar exportar o arquivo Excel.");
   }
 };
 

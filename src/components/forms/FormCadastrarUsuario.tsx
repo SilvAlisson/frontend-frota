@@ -57,7 +57,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
         role: data.role,
       });
 
-      setSuccessMsg('Utilizador cadastrado com sucesso!');
+      setSuccessMsg('Integrante cadastrado com sucesso!');
       reset();
 
       setTimeout(() => {

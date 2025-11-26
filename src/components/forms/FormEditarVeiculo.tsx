@@ -109,7 +109,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
     return (
       <div className="flex flex-col items-center justify-center py-10">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
-        <p className="text-sm text-text-secondary">A carregar dados do veículo...</p>
+        <p className="text-sm text-text-secondary">Carregando dados do veículo...</p>
       </div>
     );
   }
