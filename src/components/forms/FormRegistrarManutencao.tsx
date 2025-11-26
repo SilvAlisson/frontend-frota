@@ -97,17 +97,37 @@ export function FormRegistrarManutencao({
     setValue("kmAtual", formatKmVisual(e.target.value));
   };
 
-  const onValidSubmit = (data: ManutencaoForm) => {
+  const onValidSubmit = async (data: ManutencaoForm) => {
     setErrorApi('');
     setSuccess('');
 
     const kmInputFloat = parseDecimal(data.kmAtual);
 
+    // 1. Validação Local (Rápida - baseada no dado carregado ao abrir a tela)
     if (kmInputFloat <= ultimoKmRegistrado && ultimoKmRegistrado > 0) {
       setErrorApi(`O KM inserido (${kmInputFloat}) deve ser maior que o último registrado (${ultimoKmRegistrado}).`);
       return;
     }
 
+    // 2. Validação em Tempo Real (Segurança - consulta o banco agora)
+    try {
+      // Usamos uma variável de loading local ou aproveitamos o isSubmitting se integrarmos ao hook form
+      // Aqui faremos uma verificação rápida
+      const response = await api.get(`/veiculo/${data.veiculoId}`);
+      const kmBanco = response.data.ultimoKm || 0;
+
+      if (kmInputFloat <= kmBanco) {
+        setErrorApi(`Atenção: O veículo acabou de registrar ${kmBanco} KM em outra operação. Ajuste o valor.`);
+        setUltimoKmRegistrado(kmBanco); // Atualiza a tela para o usuário ver o novo valor
+        return; // Bloqueia o fluxo
+      }
+    } catch (err) {
+      console.error("Erro de validação de KM:", err);
+      setErrorApi("Não foi possível validar a quilometragem atual. Verifique sua conexão.");
+      return;
+    }
+
+    // Se passou, prepara os dados
     const itensFormatados = data.itens.map(item => ({
       produtoId: item.produtoId,
       quantidade: data.tipo === 'LAVAGEM' ? 1 : item.quantidade,

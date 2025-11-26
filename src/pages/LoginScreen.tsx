@@ -26,19 +26,17 @@ export function LoginScreen() {
         setError('');
 
         try {
-          // Chama a rota especial do backend para trocar o token curto pelo JWT
           const response = await api.post('/auth/login-token', {
             loginToken: magicToken
           });
 
-          // Se sucesso, guarda a sessão e entra
           login(response.data);
           navigate('/');
 
         } catch (err: any) {
           console.error("Falha no login por QR Code:", err);
           setError('QR Code inválido ou expirado.');
-          setLoading(false); // Libera a tela se falhar para tentar manual
+          setLoading(false);
         }
       };
 
@@ -46,7 +44,7 @@ export function LoginScreen() {
     }
   }, [magicToken, login, navigate]);
 
-  // Login Manual (Email/Senha)
+  // Login Manual
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
@@ -97,7 +95,7 @@ export function LoginScreen() {
         {/* Card de Login */}
         <div className="bg-white rounded-card shadow-card p-8 border border-gray-50 relative overflow-hidden">
 
-          {/* Barra de progresso superior (visual) se estiver carregando */}
+          {/* Barra de progresso superior (visual) */}
           {loading && (
             <div className="absolute top-0 left-0 w-full h-1 bg-gray-100 overflow-hidden">
               <div className="h-full bg-primary animate-[loading_1s_ease-in-out_infinite]"></div>
@@ -138,10 +136,17 @@ export function LoginScreen() {
                     disabled={loading}
                     className="py-3"
                   />
-                  {/* Link de esqueceu a senha (decorativo por enquanto) */}
-                  {/* <div className="text-right">
-                        <a href="#" className="text-xs text-primary hover:underline font-medium">Esqueceu a senha?</a>
-                      </div> */}
+
+                  {/* Botão Esqueceu a Senha (NOVO) */}
+                  <div className="text-right">
+                    <button
+                      type="button"
+                      onClick={() => alert("Para redefinir sua senha, entre em contato com o gestor da frota ou o suporte técnico.")}
+                      className="text-xs text-primary hover:text-primary-hover hover:underline font-medium bg-transparent border-none p-0 cursor-pointer transition-colors"
+                    >
+                      Esqueceu a senha?
+                    </button>
+                  </div>
                 </div>
               </>
             )}
