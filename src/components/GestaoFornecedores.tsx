@@ -62,7 +62,7 @@ export function GestaoFornecedores({ }: GestaoFornecedoresProps) {
 
   // 2. Apagar
   const handleDelete = async (fornecedorId: string) => {
-    if (!window.confirm("Tem certeza que quer REMOVER este fornecedor? Esta ação pode falhar se ele estiver a ser usado em algum arquivo.")) {
+    if (!window.confirm("Tem certeza que quer REMOVER este fornecedor? Esta ação pode falhar se ele estiver sendo utilizado em algum arquivo.")) {
       return;
     }
 

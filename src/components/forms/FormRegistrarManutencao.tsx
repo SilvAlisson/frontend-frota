@@ -292,14 +292,14 @@ export function FormRegistrarManutencao({
         {success && <p className="text-center text-success bg-green-50 p-3 rounded border border-green-200">{success}</p>}
 
         <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting} className="w-full">
-          {isSubmitting ? 'A Validar...' : 'Registrar Serviço'}
+          {isSubmitting ? 'Validando...' : 'Serviço registrado!'}
         </Button>
       </form>
 
       {modalAberto && formDataParaModal && (
         <ModalConfirmacaoFoto
           token={""} // Já tratado pelo axios global
-          titulo="Envie o Comprovativo"
+          titulo="Envie o Comprovante"
           dadosJornada={formDataParaModal}
           apiEndpoint="/ordem-servico"
           apiMethod="POST"

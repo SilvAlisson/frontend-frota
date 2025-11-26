@@ -16,7 +16,7 @@ export const exportarParaExcel = (data: any[], nomeArquivo: string) => {
     // 3. Adicionar a planilha ao workbook
     XLSX.utils.book_append_sheet(wb, ws, "Dados");
 
-    // 4. Iniciar o download do ficheiro
+    // 4. Iniciar o download do arquivo
     XLSX.writeFile(wb, nomeArquivo);
 
   } catch (error) {

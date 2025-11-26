@@ -98,7 +98,7 @@ export function HistoricoAbastecimentos({ userRole, veiculos }: HistoricoAbastec
       if (err.response?.data?.error) {
         setError(err.response.data.error);
       } else {
-        setError('Falha ao remover o registo.');
+        setError('Falha ao remover o registro.');
       }
     } finally {
       setDeletingId(null);
@@ -159,7 +159,7 @@ export function HistoricoAbastecimentos({ userRole, veiculos }: HistoricoAbastec
 
       {!loading && historico.length === 0 && !error && (
         <div className={TableStyles.emptyState}>
-          <p>Nenhum registo encontrado.</p>
+          <p>Nenhum registro encontrado.</p>
         </div>
       )}
 

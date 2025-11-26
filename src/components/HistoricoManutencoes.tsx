@@ -97,7 +97,7 @@ export function HistoricoManutencoes({ userRole, veiculos }: HistoricoManutencoe
   }, [veiculoIdFiltro, dataInicioFiltro, dataFimFiltro]);
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm(`Tem certeza que quer REMOVER permanentemente este registo?`)) return;
+    if (!window.confirm(`Tem certeza que quer REMOVER permanentemente este registro?`)) return;
 
     setDeletingId(id);
     setError('');
@@ -108,7 +108,7 @@ export function HistoricoManutencoes({ userRole, veiculos }: HistoricoManutencoe
       if (err.response?.data?.error) {
         setError(err.response.data.error);
       } else {
-        setError('Falha ao remover o registo.');
+        setError('Falha ao remover o registro.');
       }
     } finally {
       setDeletingId(null);
@@ -136,7 +136,7 @@ export function HistoricoManutencoes({ userRole, veiculos }: HistoricoManutencoe
           'Itens/Serviços': itensFormatados,
           'Oficina/Fornecedor': os.fornecedor.nome,
           'Custo Total (R$)': os.custoTotal.toFixed(2).replace('.', ','),
-          'Registado Por': os.encarregado.nome,
+          'Registrado Por': os.encarregado.nome,
           'Link Comprovativo': os.fotoComprovanteUrl || 'N/A',
         };
       });
@@ -170,7 +170,7 @@ export function HistoricoManutencoes({ userRole, veiculos }: HistoricoManutencoe
 
       {!loading && historico.length === 0 && !error && (
         <div className={TableStyles.emptyState}>
-          <p>Nenhum registo encontrado para os filtros selecionados.</p>
+          <p>Nenhum registro encontrado para os filtros selecionados.</p>
         </div>
       )}
 

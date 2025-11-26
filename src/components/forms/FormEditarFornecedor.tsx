@@ -174,7 +174,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Fo
           disabled={isSubmitting}
           isLoading={isSubmitting}
         >
-          {isSubmitting ? 'A guardar...' : 'Guardar Alterações'}
+          {isSubmitting ? 'Salvando...' : 'Alterações salvas!'}
         </Button>
       </div>
     </form>

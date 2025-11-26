@@ -86,7 +86,7 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormCadastrarPro
           Novo Item de Estoque
         </h4>
         <p className="text-sm text-text-secondary mt-1">
-          Registe combustíveis, peças ou serviços.
+          Registre combustíveis, peças ou serviços.
         </p>
       </div>
 

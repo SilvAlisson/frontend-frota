@@ -78,7 +78,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
       alert("Você não pode remover o seu próprio usuário.");
       return;
     }
-    if (!window.confirm("Tem certeza que deseja REMOVER este utilizador?")) return;
+    if (!window.confirm("Tem certeza que deseja REMOVER este usuário?")) return;
     deleteMutation.mutate(id);
   };
 
@@ -134,7 +134,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
       {modo === 'listando' && (
         <div>
           <div className="mb-4 flex justify-between items-center flex-wrap gap-2">
-            <Button variant="primary" onClick={() => setModo('adicionando')}>+ Novo Utilizador</Button>
+            <Button variant="primary" onClick={() => setModo('adicionando')}>+ Novo Usuário</Button>
             <Button variant="success" onClick={handleExportar} disabled={usuarios.length === 0}>Exportar Excel</Button>
           </div>
 
@@ -191,7 +191,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                       </td>
                     </tr>
                   ))}
-                  {usuarios.length === 0 && <tr><td colSpan={5} className="text-center py-8 text-gray-500">Nenhum utilizador encontrado.</td></tr>}
+                  {usuarios.length === 0 && <tr><td colSpan={5} className="text-center py-8 text-gray-500">Nenhum usuário encontrado.</td></tr>}
                 </tbody>
               </table>
             </div>

@@ -112,7 +112,7 @@ export function LoginScreen() {
                 <div className="inline-block animate-spin rounded-full h-10 w-10 border-[3px] border-gray-200 border-t-primary"></div>
                 <div>
                   <p className="text-primary font-bold text-lg animate-pulse">Autenticando acesso...</p>
-                  <p className="text-xs text-gray-400 mt-1">A validando suas credenciais de segurança</p>
+                  <p className="text-xs text-gray-400 mt-1">Validando suas credenciais de segurança</p>
                 </div>
               </div>
             ) : (

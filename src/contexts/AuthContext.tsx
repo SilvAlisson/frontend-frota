@@ -25,7 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setUser(JSON.parse(storedUser));
       } catch (error) {
-        console.error("Erro ao recuperar utilizador:", error);
+        console.error("Erro ao recuperar usuário:", error);
         // Se o JSON estiver corrompido, limpa tudo
         localStorage.removeItem('authToken');
         localStorage.removeItem('authUser');

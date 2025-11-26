@@ -107,7 +107,7 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoProps) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Tem a certeza que quer apagar este plano?")) return;
+    if (!window.confirm("Tem certeza que quer apagar este plano?")) return;
 
     try {
       await api.delete(`/plano-manutencao/${id}`);
