@@ -7,31 +7,28 @@ export const api = axios.create({
 });
 
 // Interceptor de Requisição
-// Antes de cada pedido sair do frontend, este código corre automaticamente.
 api.interceptors.request.use((config) => {
-  // Tenta recuperar o token salvo no navegador
   const token = localStorage.getItem('authToken');
-
-  // Se existir um token, adiciona-o ao cabeçalho Authorization
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-
   return config;
 }, (error) => {
   return Promise.reject(error);
 });
 
-// Interceptor de Resposta (Opcional, mas recomendado)
-// Útil para lidar com sessões expiradas globalmente
+// Interceptor de Resposta
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     // Se a API retornar 401 (Não Autorizado), significa que o token é inválido ou expirou
     if (error.response && error.response.status === 401) {
-      // Podemos limpar o localStorage e forçar logout, se desejado
-      // localStorage.clear();
-      // window.location.href = '/login'; // Redirecionamento forçado (opcional)
+      // Limpa o armazenamento local para evitar loops e remove dados obsoletos
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('authUser');
+
+      // Força o redirecionamento para o login
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }
