@@ -137,7 +137,7 @@ export function HistoricoManutencoes({ userRole, veiculos }: HistoricoManutencoe
           'Oficina/Fornecedor': os.fornecedor.nome,
           'Custo Total (R$)': os.custoTotal.toFixed(2).replace('.', ','),
           'Registrado Por': os.encarregado.nome,
-          'Link Comprovativo': os.fotoComprovanteUrl || 'N/A',
+          'Link do Comprovante': os.fotoComprovanteUrl || 'N/A',
         };
       });
       exportarParaExcel(dadosFormatados, "Historico_Manutencoes.xlsx");

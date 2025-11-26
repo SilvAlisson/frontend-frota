@@ -177,7 +177,7 @@ export function GestaoFornecedores({ }: GestaoFornecedoresProps) {
           </div>
 
           {loading ? (
-            <p className="text-center text-primary py-8">A carregar fornecedores...</p>
+            <p className="text-center text-primary py-8">Carregando fornecedores...</p>
           ) : (
             <div className="overflow-hidden shadow-card rounded-card border border-gray-100 bg-white">
               {fornecedores.length === 0 ? (

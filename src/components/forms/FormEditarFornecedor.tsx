@@ -9,7 +9,7 @@ import { Input } from '../ui/Input';
 
 // 1. Schema de Validação Zod
 const fornecedorSchema = z.object({
-  nome: z.string().min(2, "Nome deve ter pelo menos 2 carateres"),
+  nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
   cnpj: z.string().optional(),
 });
 

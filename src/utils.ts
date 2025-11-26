@@ -2,7 +2,7 @@ import * as XLSX from 'xlsx';
 
 /**
  * Exporta um array de dados JSON para um arquivo Excel (XLSX).
- * @param data Array de objectos a exportar.
+ * @param data Array de objetos a exportar.
  * @param nomeArquivo
  */
 export const exportarParaExcel = (data: any[], nomeArquivo: string) => {
