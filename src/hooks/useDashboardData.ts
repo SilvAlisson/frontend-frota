@@ -6,14 +6,22 @@ export function useDashboardData() {
     const { user } = useAuth();
 
     return useQuery({
-        // A chave única do cache. Se o user.role mudar, ele refaz a busca.
         queryKey: ['dashboard-data', user?.role],
 
-        // A função que busca os dados
         queryFn: async () => {
             if (!user) return null;
 
-            // 1. Requisições Comuns (Todo mundo precisa)
+            // --- NOVO BLOCO: GATILHO DE LIMPEZA ---
+            try {
+                // Pede ao backend para verificar e fechar jornadas > 17h
+                await api.post('/jornada/verificar-timeouts').catch(err => 
+                    console.warn("Falha silenciosa ao verificar timeouts:", err)
+                );
+            } catch (e) {
+                // Ignora erros para não travar o dashboard
+            }
+            // --------------------------------------
+
             const requests = [
                 api.get('/users'),         // 0
                 api.get('/veiculos'),      // 1
@@ -21,28 +29,25 @@ export function useDashboardData() {
                 api.get('/fornecedores'),  // 3
             ];
 
-            // 2. Requisições Específicas por Perfil
             if (user.role === 'OPERADOR') {
                 requests.push(api.get('/jornadas/minhas-abertas-operador')); // 4
-            } else if (user.role === 'ENCARREGADO') {
+            } else if (user.role === 'ENCARREGADO' || user.role === 'ADMIN') {
                 requests.push(api.get('/jornadas/abertas')); // 4
             }
 
-            // 3. Executa tudo em paralelo
             const responses = await Promise.all(requests);
 
-            // 4. Retorna o objeto estruturado
             return {
                 usuarios: responses[0].data,
                 veiculos: responses[1].data,
                 produtos: responses[2].data,
                 fornecedores: responses[3].data,
-                // Se tiver índice 4, pega o data, senão array vazio
                 jornadasEspecificas: responses[4] ? responses[4].data : [],
             };
         },
 
-        // Só executa se tiver usuário logado
         enabled: !!user,
+        // Atualiza a cada 1 minuto para manter os dados frescos
+        refetchInterval: 1000 * 60, 
     });
 }
