@@ -11,13 +11,11 @@ interface Jornada {
 }
 
 interface JornadaCardProps {
-  // Token removido, pois api.ts lida com isso, mas mantido na prop do FinalizarJornada por compatibilidade temporária
-  token: string;
   jornada: Jornada;
   onJornadaFinalizada: () => void;
 }
 
-export function JornadaCard({ token, jornada, onJornadaFinalizada }: JornadaCardProps) {
+export function JornadaCard({ jornada, onJornadaFinalizada }: JornadaCardProps) {
 
   const [tempoDecorrido, setTempoDecorrido] = useState<string>("--:--:--");
 

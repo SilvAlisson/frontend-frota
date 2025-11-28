@@ -10,10 +10,6 @@ import { AdminDashboard } from '../components/AdminDashboard';
 export function Dashboard() {
   const { user, logout } = useAuth();
 
-  // Token recuperado apenas por compatibilidade com componentes que ainda não foram refatorados 100%
-  // mas removido das chamadas que estavam dando erro de tipagem.
-  const token = localStorage.getItem('authToken') || '';
-
   const { data, isLoading, isError, refetch } = useDashboardData();
 
   if (!user) return null;
@@ -76,7 +72,6 @@ export function Dashboard() {
         {/* 1. VISÃO DO OPERADOR */}
         {user.role === 'OPERADOR' && (
           <DashboardOperador
-            token={token}
             user={user}
             usuarios={usuarios}
             veiculos={veiculos}
@@ -89,7 +84,6 @@ export function Dashboard() {
         {/* 2. VISÃO DO ENCARREGADO */}
         {user.role === 'ENCARREGADO' && (
           <DashboardEncarregado
-            token={token}
             user={user}
             veiculos={veiculos}
             usuarios={usuarios}
@@ -103,7 +97,6 @@ export function Dashboard() {
         {/* 3. VISÃO DO ADMIN */}
         {user.role === 'ADMIN' && (
           <AdminDashboard
-            // CORREÇÃO: Removida a prop 'token' que causava erro de tipo
             adminUserId={user.id}
             veiculos={veiculos}
             produtos={produtos}
