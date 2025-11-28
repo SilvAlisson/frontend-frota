@@ -7,9 +7,9 @@ import { RegistrarAbastecimento } from './RegistrarAbastecimento';
 import { HistoricoAbastecimentos } from './HistoricoAbastecimentos';
 import { FormRegistrarManutencao } from './forms/FormRegistrarManutencao';
 import { HistoricoManutencoes } from './HistoricoManutencoes';
+import { MinhaEquipe } from './MinhaEquipe';
 
 interface DashboardEncarregadoProps {
-    token: string;
     user: any;
     veiculos: any[];
     usuarios: any[];
@@ -22,10 +22,9 @@ interface DashboardEncarregadoProps {
 const abaAtivaStyle = "inline-block p-4 text-primary border-b-2 border-primary rounded-t-lg active";
 const abaInativaStyle = "inline-block p-4 border-b-2 border-transparent rounded-t-lg hover:text-gray-600 hover:border-gray-300";
 
-type AbaEncarregado = 'alertas' | 'dashboard' | 'ranking' | 'jornadas' | 'abastecimento' | 'hist_abastecimento' | 'manutencao' | 'hist_manutencao';
+type AbaEncarregado = 'alertas' | 'equipe' | 'dashboard' | 'ranking' | 'jornadas' | 'abastecimento' | 'hist_abastecimento' | 'manutencao' | 'hist_manutencao';
 
 export function DashboardEncarregado({
-    // token, // Não usado, mantido na interface acima só para compatibilidade com Dashboard.tsx se necessário, mas aqui não usamos
     user,
     veiculos,
     usuarios,
@@ -39,14 +38,15 @@ export function DashboardEncarregado({
 
     const renderAbaEncarregado = () => {
         switch (abaEncarregado) {
-            case 'alertas': return <PainelAlertas />; // Removido token
-            case 'dashboard': return <DashboardRelatorios veiculos={veiculos} />; // Removido token
-            case 'ranking': return <RankingOperadores />; // Removido token
-            case 'jornadas': return <GestaoJornadas jornadasAbertas={jornadasAbertas} onJornadaFinalizadaManualmente={onJornadaFinalizada} />; // Removido token
-            case 'abastecimento': return <RegistrarAbastecimento usuarios={usuarios} veiculos={veiculos} produtos={produtos} fornecedores={fornecedores} />; // Removido token
-            case 'hist_abastecimento': return <HistoricoAbastecimentos userRole={user.role} veiculos={veiculos} />; // Removido token
-            case 'manutencao': return <FormRegistrarManutencao veiculos={veiculos} produtos={produtos} fornecedores={fornecedores} />; // Removido token
-            case 'hist_manutencao': return <HistoricoManutencoes userRole={user.role} veiculos={veiculos} />; // Removido token
+            case 'alertas': return <PainelAlertas />;
+            case 'equipe': return <MinhaEquipe usuarios={usuarios} jornadasAbertas={jornadasAbertas} />; // <--- Nova Aba
+            case 'dashboard': return <DashboardRelatorios veiculos={veiculos} />;
+            case 'ranking': return <RankingOperadores />;
+            case 'jornadas': return <GestaoJornadas jornadasAbertas={jornadasAbertas} onJornadaFinalizadaManualmente={onJornadaFinalizada} />;
+            case 'abastecimento': return <RegistrarAbastecimento usuarios={usuarios} veiculos={veiculos} produtos={produtos} fornecedores={fornecedores} />;
+            case 'hist_abastecimento': return <HistoricoAbastecimentos userRole={user.role} veiculos={veiculos} />;
+            case 'manutencao': return <FormRegistrarManutencao veiculos={veiculos} produtos={produtos} fornecedores={fornecedores} />;
+            case 'hist_manutencao': return <HistoricoManutencoes userRole={user.role} veiculos={veiculos} />;
             default: return null;
         }
     };
@@ -57,13 +57,14 @@ export function DashboardEncarregado({
                 <ul className="flex flex-nowrap -mb-px text-sm font-medium text-center min-w-max px-2">
                     {[
                         { id: 'alertas', label: 'Alertas' },
-                        { id: 'dashboard', label: 'Dashboard' },
-                        { id: 'ranking', label: 'Ranking' },
-                        { id: 'jornadas', label: 'Gestão Jornadas' },
+                        { id: 'equipe', label: 'Minha Equipe' }, // <--- Botão visível
+                        { id: 'jornadas', label: 'Gestão Jornadas' }, // Reordenado para ficar próximo
                         { id: 'abastecimento', label: 'Abastecimento' },
-                        { id: 'hist_abastecimento', label: 'Hist. Abastecimento' },
                         { id: 'manutencao', label: 'Manutenção' },
-                        { id: 'hist_manutencao', label: 'Hist. Manutenção' },
+                        { id: 'dashboard', label: 'Relatórios' },
+                        { id: 'ranking', label: 'Ranking' },
+                        { id: 'hist_abastecimento', label: 'Hist. Abast.' },
+                        { id: 'hist_manutencao', label: 'Hist. Manut.' },
                     ].map((aba) => (
                         <li key={aba.id} className="mr-2">
                             <button
