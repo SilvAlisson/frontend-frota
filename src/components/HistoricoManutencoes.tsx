@@ -34,6 +34,11 @@ interface OrdemServico {
 interface HistoricoManutencoesProps {
   userRole: string;
   veiculos: any[];
+  // Filtro inicial opcional
+  filtroInicial?: {
+    veiculoId?: string;
+    dataInicio?: string;
+  };
 }
 
 // Ícones
@@ -60,7 +65,7 @@ const tipoCores: { [key: string]: string } = {
   LAVAGEM: 'bg-green-100 text-green-800',
 };
 
-export function HistoricoManutencoes({ userRole, veiculos }: HistoricoManutencoesProps) {
+export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: HistoricoManutencoesProps) {
 
   const [historico, setHistorico] = useState<OrdemServico[]>([]);
   const [loading, setLoading] = useState(true);
@@ -68,8 +73,8 @@ export function HistoricoManutencoes({ userRole, veiculos }: HistoricoManutencoe
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Filtros
-  const [veiculoIdFiltro, setVeiculoIdFiltro] = useState('');
-  const [dataInicioFiltro, setDataInicioFiltro] = useState('');
+  const [veiculoIdFiltro, setVeiculoIdFiltro] = useState(filtroInicial?.veiculoId || '');
+  const [dataInicioFiltro, setDataInicioFiltro] = useState(filtroInicial?.dataInicio || '');
   const [dataFimFiltro, setDataFimFiltro] = useState('');
 
   useEffect(() => {
