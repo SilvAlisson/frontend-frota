@@ -49,7 +49,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
   const onSubmit = async (data: UsuarioForm) => {
     setSuccessMsg('');
     try {
-      await api.post('/auth/register', {
+      await api.post('/user/register', {
         nome: DOMPurify.sanitize(data.nome),
         email: DOMPurify.sanitize(data.email),
         password: data.password,
