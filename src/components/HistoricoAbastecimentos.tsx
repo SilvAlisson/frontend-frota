@@ -5,7 +5,6 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { TableStyles } from '../styles/table';
 
-// ...Interfaces (Abastecimento, ItemAbastecimento) mantidas...
 interface ItemAbastecimento {
   quantidade: number;
   produto: {
@@ -33,9 +32,13 @@ interface Abastecimento {
 }
 
 interface HistoricoAbastecimentosProps {
-  // Removido token
   userRole: string;
   veiculos: any[];
+  // Prop opcional para já abrir filtrado
+  filtroInicial?: {
+    veiculoId?: string;
+    dataInicio?: string;
+  };
 }
 
 function IconeFoto() {
@@ -53,16 +56,21 @@ function IconeLixo() {
   );
 }
 
-export function HistoricoAbastecimentos({ userRole, veiculos }: HistoricoAbastecimentosProps) {
+export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: HistoricoAbastecimentosProps) {
 
   const [historico, setHistorico] = useState<Abastecimento[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const [dataInicioFiltro, setDataInicioFiltro] = useState('');
+  const [dataInicioFiltro, setDataInicioFiltro] = useState(filtroInicial?.dataInicio || '');
   const [dataFimFiltro, setDataFimFiltro] = useState('');
-  const [veiculoIdFiltro, setVeiculoIdFiltro] = useState('');
+  const [veiculoIdFiltro, setVeiculoIdFiltro] = useState(filtroInicial?.veiculoId || '');
+
+  // Efeito para aplicar filtros se eles mudarem externamente (embora react reinicie componente ao mudar aba normalmente)
+  useEffect(() => {
+    if (filtroInicial?.veiculoId) setVeiculoIdFiltro(filtroInicial.veiculoId);
+  }, [filtroInicial]);
 
   const fetchHistorico = async () => {
     setLoading(true);

@@ -6,21 +6,20 @@ import { PainelAlertas } from './PainelAlertas';
 import { RankingOperadores } from './RankingOperadores';
 import { HistoricoAbastecimentos } from './HistoricoAbastecimentos';
 import { HistoricoManutencoes } from './HistoricoManutencoes';
+import { HistoricoJornadas } from './HistoricoJornadas'; // Nova importação
 import { GestaoUsuarios } from './GestaoUsuarios';
 import { GestaoVeiculos } from './GestaoVeiculos';
 import { GestaoProdutos } from './GestaoProdutos';
 import { GestaoFornecedores } from './GestaoFornecedores';
 
-// Tipos
 interface AdminDashboardProps {
-  // token removido
   veiculos: any[];
   produtos: any[];
   fornecedores: any[];
   adminUserId: string;
 }
 
-type AbaAdmin = 'alertas' | 'dashboard' | 'ranking' | 'hist_abastecimento' | 'hist_manutencao' | 'veiculo' | 'usuario' | 'produto' | 'fornecedor' | 'manutencao' | 'planos';
+type AbaAdmin = 'alertas' | 'dashboard' | 'ranking' | 'hist_abastecimento' | 'hist_manutencao' | 'hist_jornada' | 'veiculo' | 'usuario' | 'produto' | 'fornecedor' | 'manutencao' | 'planos';
 
 export function AdminDashboard({
   veiculos,
@@ -30,6 +29,14 @@ export function AdminDashboard({
 }: AdminDashboardProps) {
 
   const [abaAtiva, setAbaAtiva] = useState<AbaAdmin>('alertas');
+
+  // Função Drill-down: recebe o comando do Dashboard e troca a aba
+  const handleDrillDown = (tipo: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => {
+    if (tipo === 'ABASTECIMENTO') setAbaAtiva('hist_abastecimento');
+    if (tipo === 'MANUTENCAO') setAbaAtiva('hist_manutencao');
+    if (tipo === 'JORNADA') setAbaAtiva('hist_jornada');
+    if (tipo === 'GERAL') setAbaAtiva('dashboard'); // Fica onde está
+  };
 
   const abas = [
     {
@@ -48,6 +55,11 @@ export function AdminDashboard({
       )
     },
     {
+      id: 'hist_jornada', label: 'Jornadas (Hist.)', icon: ( // NOVA ABA
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>
+      )
+    },
+    {
       id: 'hist_abastecimento', label: 'Hist. Abastecimento', icon: (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
       )
@@ -57,6 +69,7 @@ export function AdminDashboard({
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
       )
     },
+    // ... Demais abas de gestão
     {
       id: 'veiculo', label: 'Veículos', icon: (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>
@@ -92,35 +105,23 @@ export function AdminDashboard({
   const renderAbaConteudo = () => {
     switch (abaAtiva) {
       case 'alertas': return <PainelAlertas />;
-      case 'dashboard': return <DashboardRelatorios veiculos={veiculos} />;
+      case 'dashboard': return <DashboardRelatorios veiculos={veiculos} onDrillDown={handleDrillDown} />;
       case 'ranking': return <RankingOperadores />;
       case 'hist_abastecimento': return <HistoricoAbastecimentos userRole="ADMIN" veiculos={veiculos} />;
       case 'hist_manutencao': return <HistoricoManutencoes userRole="ADMIN" veiculos={veiculos} />;
+      case 'hist_jornada': return <HistoricoJornadas veiculos={veiculos} />; // Nova Aba
       case 'veiculo': return <GestaoVeiculos />;
       case 'usuario': return <GestaoUsuarios adminUserId={adminUserId} />;
       case 'produto': return <GestaoProdutos />;
       case 'fornecedor': return <GestaoFornecedores />;
-      case 'manutencao':
-        return (
-          <FormRegistrarManutencao
-            veiculos={veiculos}
-            produtos={produtos}
-            fornecedores={fornecedores}
-          />
-        );
-      case 'planos':
-        return (
-          <FormPlanoManutencao
-            veiculos={veiculos}
-          />
-        );
+      case 'manutencao': return <FormRegistrarManutencao veiculos={veiculos} produtos={produtos} fornecedores={fornecedores} />;
+      case 'planos': return <FormPlanoManutencao veiculos={veiculos} />;
       default: return null;
     }
   };
 
   return (
     <div className="space-y-6">
-
       <div className="bg-white shadow-sm rounded-lg p-2 border border-gray-200 overflow-x-auto">
         <div className="flex space-x-1 min-w-max">
           {abas.map((aba) => {
@@ -147,7 +148,6 @@ export function AdminDashboard({
       <div className="bg-white shadow rounded-lg p-6 border border-gray-100 min-h-[500px]">
         {renderAbaConteudo()}
       </div>
-
     </div>
   );
 }
