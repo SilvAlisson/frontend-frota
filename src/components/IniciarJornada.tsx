@@ -5,7 +5,6 @@ import { Input } from './ui/Input';
 import { parseDecimal, formatKmVisual } from '../utils';
 
 interface IniciarJornadaProps {
-  token: string;
   usuarios: any[];
   veiculos: any[];
   operadorLogadoId: string;
@@ -17,7 +16,6 @@ const inputStyle = "w-full px-4 py-2 text-text bg-white border border-gray-300 r
 const labelStyle = "block mb-1.5 text-sm font-medium text-text-secondary";
 
 export function IniciarJornada({
-  token,
   usuarios,
   veiculos,
   operadorLogadoId,
@@ -221,7 +219,6 @@ export function IniciarJornada({
 
       {modalAberto && formDataParaModal && (
         <ModalConfirmacaoFoto
-          token={token}
           titulo="Confirmar Início de Jornada"
           kmParaConfirmar={parseDecimal(kmInicio)}
           dadosJornada={formDataParaModal}

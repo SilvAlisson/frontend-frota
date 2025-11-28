@@ -2,7 +2,6 @@ import { IniciarJornada } from './IniciarJornada';
 import { JornadaCard } from './JornadaCard';
 
 interface DashboardOperadorProps {
-    token: string;
     user: any;
     usuarios: any[];
     veiculos: any[];
@@ -12,7 +11,6 @@ interface DashboardOperadorProps {
 }
 
 export function DashboardOperador({
-    token,
     user,
     usuarios,
     veiculos,
@@ -22,10 +20,8 @@ export function DashboardOperador({
 }: DashboardOperadorProps) {
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Coluna da Esquerda: Iniciar Nova */}
             <div className="bg-white shadow-card rounded-card p-6 border border-gray-100">
                 <IniciarJornada
-                    token={token}
                     usuarios={usuarios}
                     veiculos={veiculos}
                     operadorLogadoId={user.id}
@@ -34,7 +30,6 @@ export function DashboardOperador({
                 />
             </div>
 
-            {/* Coluna da Direita: Jornadas Ativas */}
             <div className="space-y-6">
                 {jornadasAtivas.length === 0 && (
                     <div className="bg-white shadow-sm rounded-card p-8 text-center border border-dashed border-gray-300">
@@ -44,7 +39,6 @@ export function DashboardOperador({
                 {jornadasAtivas.map((jornada) => (
                     <JornadaCard
                         key={jornada.id}
-                        token={token}
                         jornada={jornada}
                         onJornadaFinalizada={() => onJornadaFinalizada(jornada.id)}
                     />
