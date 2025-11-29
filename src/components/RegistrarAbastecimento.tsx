@@ -6,7 +6,6 @@ import { Input } from './ui/Input';
 import { parseDecimal, formatKmVisual } from '../utils';
 
 interface RegistrarAbastecimentoProps {
-  // Token removido
   usuarios: any[];
   veiculos: any[];
   produtos: any[];
@@ -279,7 +278,6 @@ export function RegistrarAbastecimento({
 
       {modalAberto && formDataParaModal && (
         <ModalConfirmacaoFoto
-          token={""} // Axios global
           titulo="Envie a foto da nota fiscal"
           dadosJornada={formDataParaModal}
           apiEndpoint="/abastecimento"

@@ -1,34 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { api } from '../../services/api';
-import DOMPurify from 'dompurify';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
+import { api } from '../../services/api'; // Use global api
+import { Button } from '../ui/Button';    // Use shared UI component
+import { Input } from '../ui/Input';      // Use shared UI component
 
-// 1. Schema Híbrido (Validação robusta + Tipagem correta)
+// --- LÓGICA DO FORMULÁRIO ---
+
 const fornecedorSchema = z.object({
   nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  // Aceita string opcional OU string vazia (para funcionar com o reset/defaultValues sem 'as any')
+  // Aceita string opcional (undefined) OU string vazia
   cnpj: z.union([z.string().optional(), z.literal('')]),
 });
 
-// Inferência de tipo automática do Zod
 type FornecedorForm = z.infer<typeof fornecedorSchema>;
 
-interface FormEditarFornecedorProps {
-  fornecedorId: string;
-  onSuccess: () => void;
+interface FormCadastrarFornecedorProps {
+  onSuccess: () => void; // Padronizado para onSuccess
   onCancelar: () => void;
 }
 
-export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: FormEditarFornecedorProps) {
+export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormCadastrarFornecedorProps) {
 
-  const [loadingData, setLoadingData] = useState(true);
   const [successMsg, setSuccessMsg] = useState('');
 
-  // 2. React Hook Form (Sem 'as any' graças ao schema ajustado)
   const {
     register,
     handleSubmit,
@@ -39,87 +35,47 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Fo
     resolver: zodResolver(fornecedorSchema),
     defaultValues: {
       nome: '',
-      cnpj: '' // Valor inicial compatível com z.literal('')
+      cnpj: ''
     }
   });
 
-  // 3. Carregar dados para Edição
-  useEffect(() => {
-    if (!fornecedorId) return;
-
-    const fetchFornecedor = async () => {
-      setLoadingData(true);
-      try {
-        const response = await api.get(`/fornecedor/${fornecedorId}`);
-        const fornecedor = response.data;
-
-        // Atualiza o formulário. Se cnpj vier null do banco, converte para ''
-        reset({
-          nome: fornecedor.nome || '',
-          cnpj: fornecedor.cnpj || '',
-        });
-
-      } catch (err) {
-        console.error("Erro ao buscar dados do fornecedor:", err);
-        setError('root', { message: 'Falha ao carregar os dados do fornecedor.' });
-      } finally {
-        setLoadingData(false);
-      }
-    };
-
-    fetchFornecedor();
-  }, [fornecedorId, reset, setError]);
-
-  // 4. Submit (Lógica de Edição PUT)
   const onSubmit = async (data: FornecedorForm) => {
     setSuccessMsg('');
     try {
-      await api.put(`/fornecedor/${fornecedorId}`, {
-        nome: DOMPurify.sanitize(data.nome),
-        // Se a string for vazia, envia null para o banco
-        cnpj: data.cnpj && data.cnpj.trim() !== '' ? DOMPurify.sanitize(data.cnpj) : null,
+      // Envio para API real
+      await api.post('/fornecedor', {
+        nome: data.nome,
+        // Envia null se estiver vazio
+        cnpj: data.cnpj && data.cnpj.trim() !== '' ? data.cnpj : null,
       });
 
-      setSuccessMsg('Fornecedor atualizado com sucesso!');
+      setSuccessMsg('Fornecedor cadastrado com sucesso!');
+      reset();
 
       setTimeout(() => {
         onSuccess();
       }, 1500);
 
     } catch (err: any) {
-      console.error("Erro ao atualizar fornecedor:", err);
-      if (err.response?.data?.error) {
-        setError('root', { message: err.response.data.error });
-      } else {
-        setError('root', { message: 'Falha ao atualizar fornecedor.' });
-      }
+      console.error("Erro ao cadastrar fornecedor:", err);
+      setError('root', { message: 'Falha ao cadastrar fornecedor.' });
     }
   };
-
-  // Loading State
-  if (loadingData) {
-    return (
-      <div className="flex flex-col items-center justify-center py-10 space-y-3">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <p className="text-sm text-text-secondary">Carregando dados...</p>
-      </div>
-    );
-  }
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
 
-      <div className="text-center">
+      <div className="text-center mb-6">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 mb-3">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-primary">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-blue-600">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72m-13.5 8.65h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
           </svg>
         </div>
-        <h4 className="text-xl font-bold text-primary">
-          Editar Fornecedor
+        <h4 className="text-xl font-bold text-gray-900">
+          Novo Fornecedor
         </h4>
-        <p className="text-sm text-text-secondary mt-1">
-          Atualize os dados cadastrais do parceiro.
+        <p className="text-sm text-gray-500 mt-1">
+          Cadastre oficinas ou postos de combustível.
         </p>
       </div>
 
@@ -141,14 +97,15 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Fo
         />
       </div>
 
+      {/* Feedback */}
       {errors.root && (
-        <div className="p-3 bg-red-50 text-error border border-red-200 rounded text-center text-sm">
+        <div className="p-3 bg-red-50 text-red-600 border border-red-200 rounded text-center text-sm">
           {errors.root.message}
         </div>
       )}
 
       {successMsg && (
-        <div className="p-3 bg-green-50 text-success border border-green-200 rounded text-center text-sm font-medium">
+        <div className="p-3 bg-green-50 text-green-700 border border-green-200 rounded text-center text-sm font-medium">
           {successMsg}
         </div>
       )}
@@ -171,7 +128,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Fo
           disabled={isSubmitting}
           isLoading={isSubmitting}
         >
-          {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
+          {isSubmitting ? 'Salvando...' : 'Cadastrar'}
         </Button>
       </div>
     </form>

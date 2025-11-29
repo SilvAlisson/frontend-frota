@@ -2,15 +2,13 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { api } from '../../services/api';
+import { api } from '../../services/api'; // API Real
 import DOMPurify from 'dompurify';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
+import { Button } from '../ui/Button';    // UI Real
+import { Input } from '../ui/Input';      // UI Real
 
-// 1. Schema de Validação Zod
 const fornecedorSchema = z.object({
   nome: z.string().min(1, 'O Nome é obrigatório.'),
-  // Aceita string opcional (undefined) OU string vazia (valor inicial do input)
   cnpj: z.union([z.string().optional(), z.literal('')]),
 });
 
@@ -26,7 +24,6 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
   const [loadingData, setLoadingData] = useState(true);
   const [successMsg, setSuccessMsg] = useState('');
 
-  // 2. React Hook Form
   const {
     register,
     handleSubmit,
@@ -38,7 +35,6 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
     defaultValues: { nome: '', cnpj: '' }
   });
 
-  // 3. Carregar dados
   useEffect(() => {
     if (!fornecedorId) return;
 
@@ -56,13 +52,11 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
       });
   }, [fornecedorId, reset, setError]);
 
-  // 4. Submit
   const onSubmit = async (data: FornecedorFormData) => {
     setSuccessMsg('');
     try {
       await api.put(`/fornecedor/${fornecedorId}`, {
         nome: DOMPurify.sanitize(data.nome),
-        // Lógica: se string vazia ou undefined, envia null
         cnpj: data.cnpj && data.cnpj.trim() !== '' ? DOMPurify.sanitize(data.cnpj) : null,
       });
 
@@ -88,8 +82,6 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-
-      {/* Visual Rico (Igual ao Cadastro) */}
       <div className="text-center mb-6">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 mb-3">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-primary">

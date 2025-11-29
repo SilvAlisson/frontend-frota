@@ -1,90 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-
-// --- MOCKS & COMPONENTES UI (Para funcionamento isolado no Canvas) ---
-
-// Simulação da API
-const api = {
-  get: (url: string) =>
-    new Promise<{ data: any }>((resolve) => {
-      console.log(`GET ${url}`);
-      setTimeout(() => {
-        // Simula retorno de dados do produto
-        resolve({
-          data: {
-            id: '123',
-            nome: 'DIESEL S10',
-            tipo: 'COMBUSTIVEL',
-            unidadeMedida: 'Litro'
-          }
-        });
-      }, 1000);
-    }),
-  put: (url: string, data: any) =>
-    new Promise((resolve) => {
-      console.log(`PUT ${url}`, data);
-      setTimeout(() => {
-        resolve({ data: { ...data } });
-      }, 1000);
-    })
-};
-
-// Componente Button Simplificado
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary';
-  isLoading?: boolean;
-}
-const Button = ({ variant = 'primary', isLoading, className = '', children, disabled, ...props }: ButtonProps) => {
-  const baseStyle = "px-4 py-2 rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2";
-  const variants = {
-    primary: "bg-orange-600 text-white hover:bg-orange-700 focus:ring-orange-500 disabled:bg-orange-300",
-    secondary: "bg-gray-200 text-gray-800 hover:bg-gray-300 focus:ring-gray-500 disabled:bg-gray-100"
-  };
-
-  return (
-    <button
-      disabled={disabled || isLoading}
-      className={`${baseStyle} ${variants[variant]} ${className}`}
-      {...props}
-    >
-      {isLoading ? (
-        <span className="flex items-center gap-2">
-          <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          Carregando...
-        </span>
-      ) : children}
-    </button>
-  );
-};
-
-// Componente Input Simplificado
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
-  label?: string;
-  error?: string;
-}
-const Input = React.forwardRef<HTMLInputElement, InputProps>(({ label, error, className = '', ...props }, ref) => (
-  <div className="w-full">
-    {label && <label className="block mb-1.5 text-sm font-medium text-gray-700">{label}</label>}
-    <input
-      ref={ref}
-      className={`w-full px-4 py-2 text-gray-900 bg-white border rounded-md focus:outline-none focus:ring-2 focus:border-transparent disabled:bg-gray-100 ${error ? 'border-red-500 focus:ring-red-500' : 'border-gray-300 focus:ring-orange-500'
-        } ${className}`}
-      {...props}
-    />
-    {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
-  </div>
-));
-Input.displayName = 'Input';
-
+import { api } from '../../services/api'; // API Real
+import { Button } from '../ui/Button';    // UI Real
+import { Input } from '../ui/Input';      // UI Real
 
 // --- LÓGICA DO FORMULÁRIO ---
 
-// Usamos 'as const' para o TypeScript entender que isso é uma Tupla imutável
 const tiposDeProduto = ["COMBUSTIVEL", "ADITIVO", "SERVICO", "OUTRO"] as const;
 
 const produtoSchema = z.object({
@@ -93,7 +16,6 @@ const produtoSchema = z.object({
     .min(2, "Nome deve ter pelo menos 2 caracteres")
     .transform((val) => val.toUpperCase()),
 
-  // CORREÇÃO: Uso de 'message' para compatibilidade de tipos
   tipo: z.enum(tiposDeProduto, {
     message: "Selecione um tipo válido",
   }),
@@ -141,8 +63,7 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
         const response = await api.get(`/produto/${produtoId}`);
         const produto = response.data;
 
-        // Verifica se o tipo vindo do banco é válido no nosso enum, senão fallback para OUTRO
-        // Cast necessário pois tiposDeProduto é readonly
+        // Verifica se o tipo vindo do banco é válido no nosso enum
         const tipoValido = tiposDeProduto.includes(produto.tipo as any)
           ? (produto.tipo as typeof tiposDeProduto[number])
           : 'OUTRO';
@@ -168,7 +89,7 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
     setSuccessMsg('');
     try {
       await api.put(`/produto/${produtoId}`, {
-        nome: data.nome, // Já vem em UPPERCASE graças ao transform do Zod
+        nome: data.nome,
         tipo: data.tipo,
         unidadeMedida: data.unidadeMedida,
       });
@@ -290,19 +211,6 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
           </Button>
         </div>
       </form>
-    </div>
-  );
-}
-
-// Componente principal para renderização no Canvas
-export default function App() {
-  return (
-    <div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center">
-      <FormEditarProduto
-        produtoId="123" // ID fictício para carregar os dados do mock
-        onSuccess={() => console.log("Success callback triggered")}
-        onCancelar={() => console.log("Cancel callback triggered")}
-      />
     </div>
   );
 }

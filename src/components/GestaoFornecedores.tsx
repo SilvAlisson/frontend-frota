@@ -1,38 +1,51 @@
 import { useState, useEffect } from 'react';
-import { api } from '../services/api';
+// Importação direta do arquivo do formulário
 import { FormCadastrarFornecedor } from './forms/FormCadastrarFornecedor';
-import { FormEditarFornecedor } from './forms/FormEditarFornecedor';
-import { exportarParaExcel } from '../utils';
-import { Button } from './ui/Button';
-import { TableStyles } from '../styles/table';
 
-// Tipos
+// --- MOCKS (Para funcionamento isolado) ---
+const api = {
+  get: (url: string) =>
+    new Promise<{ data: any[] }>((resolve) => {
+      console.log(`GET ${url}`);
+      setTimeout(() => {
+        resolve({
+          data: [
+            { id: '1', nome: 'Posto Shell Central', cnpj: '12.345.678/0001-90' },
+            { id: '2', nome: 'Oficina do Zé', cnpj: '' },
+          ]
+        });
+      }, 800);
+    }),
+  delete: (url: string) =>
+    new Promise((resolve) => {
+      console.log(`DELETE ${url}`);
+      setTimeout(() => resolve({ success: true }), 800);
+    })
+};
+
+const Button = ({ variant, className, isLoading, icon, children, ...props }: any) => (
+  <button
+    className={`flex items-center justify-center gap-2 px-3 py-2 rounded font-medium transition-colors ${variant === 'primary' ? 'bg-blue-600 text-white hover:bg-blue-700' :
+      variant === 'danger' ? 'bg-red-100 text-red-600 hover:bg-red-200' :
+        variant === 'success' ? 'bg-green-600 text-white hover:bg-green-700' :
+          'bg-gray-100 text-gray-700 hover:bg-gray-200'
+      } ${className}`}
+    disabled={isLoading}
+    {...props}
+  >
+    {isLoading ? '...' : <>{icon} {children}</>}
+  </button>
+);
+
+// --- COMPONENTE GESTÃO FORNECEDORES ---
+
 interface Fornecedor {
   id: string;
   nome: string;
   cnpj: string | null;
 }
-// Removido 'token' das props
-interface GestaoFornecedoresProps { }
 
-// Ícones
-function IconeLixo() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-      <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.54 0c-.34.055-.68.11-.1022.166m11.54 0c.376.09.74.19 1.097.302l-1.148 3.896M12 18V9" />
-    </svg>
-  );
-}
-
-function IconeEditar() {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-      <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-    </svg>
-  );
-}
-
-export function GestaoFornecedores({ }: GestaoFornecedoresProps) {
+export function GestaoFornecedores() {
 
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [loading, setLoading] = useState(true);
@@ -40,9 +53,9 @@ export function GestaoFornecedores({ }: GestaoFornecedoresProps) {
   const [success, setSuccess] = useState('');
   const [modo, setModo] = useState<'listando' | 'adicionando' | 'editando'>('listando');
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const [fornecedorIdSelecionado, setFornecedorIdSelecionado] = useState<string | null>(null);
 
-  // 1. Buscar
   const fetchFornecedores = async () => {
     setLoading(true);
     setError('');
@@ -60,11 +73,8 @@ export function GestaoFornecedores({ }: GestaoFornecedoresProps) {
     fetchFornecedores();
   }, []);
 
-  // 2. Apagar
   const handleDelete = async (fornecedorId: string) => {
-    if (!window.confirm("Tem certeza que quer REMOVER este fornecedor? Esta ação pode falhar se ele estiver sendo utilizado em algum arquivo.")) {
-      return;
-    }
+    if (!window.confirm("Tem certeza que quer remover este fornecedor?")) return;
 
     setDeletingId(fornecedorId);
     setError('');
@@ -72,24 +82,18 @@ export function GestaoFornecedores({ }: GestaoFornecedoresProps) {
     try {
       await api.delete(`/fornecedor/${fornecedorId}`);
       setSuccess('Fornecedor removido com sucesso.');
-      fetchFornecedores(); // Atualiza a lista
-    } catch (err: any) {
-      if (err.response?.data?.error) {
-        setError(err.response.data.error);
-      } else {
-        setError('Falha ao remover fornecedor.');
-      }
+      setFornecedores(prev => prev.filter(f => f.id !== fornecedorId));
+    } catch (err) {
+      setError('Falha ao remover fornecedor.');
     } finally {
       setDeletingId(null);
     }
   };
 
-  // 3. Controladores de estado (Modo)
-  const handleAbrirEdicao = (fornecedorId: string) => {
-    setFornecedorIdSelecionado(fornecedorId);
-    setModo('editando');
-    setError('');
-    setSuccess('');
+  const handleSucesso = () => {
+    setModo('listando');
+    setFornecedorIdSelecionado(null);
+    fetchFornecedores();
   };
 
   const handleCancelarForm = () => {
@@ -99,132 +103,104 @@ export function GestaoFornecedores({ }: GestaoFornecedoresProps) {
     setSuccess('');
   };
 
-  const handleSucesso = () => {
-    // Callback unificado para adição e edição
-    setModo('listando');
-    setFornecedorIdSelecionado(null);
-    fetchFornecedores();
-  };
-
-  const handleExportar = () => {
-    setError('');
-    setSuccess('');
-    try {
-      const dadosFormatados = fornecedores.map(f => ({
-        'Nome': f.nome,
-        'CNPJ': f.cnpj || '---',
-      }));
-
-      exportarParaExcel(dadosFormatados, "Lista_Fornecedores.xlsx");
-      setSuccess('Lista de fornecedores exportada com sucesso!');
-
-    } catch (err) {
-      setError('Ocorreu um erro ao preparar os dados para exportação.');
-      console.error(err);
-    }
-  };
-
-  // Renderização
   return (
-    <div className="space-y-4">
-      <h3 className="text-xl font-semibold text-primary text-center">
-        Gestão de Fornecedores (Postos/Oficinas)
+    <div className="space-y-4 p-4 bg-gray-50 min-h-screen">
+      <h3 className="text-xl font-semibold text-gray-800 text-center">
+        Gestão de Fornecedores
       </h3>
 
-      {error && <p className="text-center text-error bg-red-50 p-3 rounded border border-red-200">{error}</p>}
-      {success && <p className="text-center text-success bg-green-50 p-3 rounded border border-green-200">{success}</p>}
+      {error && <p className="text-center text-red-600 bg-red-50 p-3 rounded">{error}</p>}
+      {success && <p className="text-center text-green-600 bg-green-50 p-3 rounded">{success}</p>}
 
-      {/* Modo de Adição */}
+      {/* MODO ADICIONAR */}
       {modo === 'adicionando' && (
-        <div className="bg-surface p-6 rounded-card shadow-card border border-gray-100">
+        <div className="bg-white p-6 rounded-lg shadow border border-gray-100 max-w-lg mx-auto">
           <FormCadastrarFornecedor
-            onFornecedorAdicionado={handleSucesso}
+            onSuccess={handleSucesso}
             onCancelar={handleCancelarForm}
           />
         </div>
       )}
 
-      {/* Modo de Edição */}
+      {/* MODO EDITAR (Placeholder para exemplo) */}
       {modo === 'editando' && fornecedorIdSelecionado && (
-        <div className="bg-surface p-6 rounded-card shadow-card border border-gray-100">
-          <FormEditarFornecedor
-            fornecedorId={fornecedorIdSelecionado}
-            onSuccess={handleSucesso} // Usando a nova prop padronizada
-            onCancelar={handleCancelarForm}
-          />
+        <div className="bg-white p-6 rounded-lg shadow border border-gray-100 max-w-lg mx-auto text-center">
+          <p className="text-gray-500 mb-4">Formulário de Edição para ID: {fornecedorIdSelecionado}</p>
+          <Button variant="secondary" onClick={handleCancelarForm}>Cancelar</Button>
         </div>
       )}
 
-      {/* Modo de Listagem (Tabela) */}
+      {/* MODO LISTAGEM */}
       {modo === 'listando' && (
-        <div>
-          <div className="mb-4 flex justify-between items-center gap-2 flex-wrap">
+        <div className="max-w-4xl mx-auto">
+          <div className="mb-4 flex justify-between items-center">
             <Button
               variant="primary"
               onClick={() => { setModo('adicionando'); setSuccess(''); setError(''); }}
             >
               + Novo Fornecedor
             </Button>
-
-            <Button
-              variant="success"
-              className="text-sm"
-              onClick={handleExportar}
-              disabled={fornecedores.length === 0}
-            >
-              Exportar Excel
+            <Button variant="secondary" onClick={fetchFornecedores}>
+              Atualizar
             </Button>
           </div>
 
           {loading ? (
-            <p className="text-center text-primary py-8">Carregando fornecedores...</p>
+            <p className="text-center text-gray-500 py-8">Carregando...</p>
           ) : (
-            <div className="overflow-hidden shadow-card rounded-card border border-gray-100 bg-white">
-              {fornecedores.length === 0 ? (
-                <div className={TableStyles.emptyState}>Nenhum fornecedor encontrado.</div>
-              ) : (
-                <table className="min-w-full">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className={TableStyles.th}>Nome</th>
-                      <th className={TableStyles.th}>CNPJ</th>
-                      <th className={TableStyles.th}>Ações</th>
+            <div className="bg-white rounded-lg shadow overflow-hidden border border-gray-200">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CNPJ</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {fornecedores.map((f) => (
+                    <tr key={f.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{f.nome}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{f.cnpj || '-'}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div className="flex gap-2">
+                          <Button
+                            variant="secondary"
+                            className="!px-2 !py-1 text-xs"
+                            onClick={() => { setFornecedorIdSelecionado(f.id); setModo('editando'); }}
+                          >
+                            Editar
+                          </Button>
+                          <Button
+                            variant="danger"
+                            className="!px-2 !py-1 text-xs"
+                            onClick={() => handleDelete(f.id)}
+                            isLoading={deletingId === f.id}
+                          >
+                            Excluir
+                          </Button>
+                        </div>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {fornecedores.map((f) => (
-                      <tr key={f.id} className={TableStyles.rowHover}>
-                        <td className={TableStyles.td + " font-medium"}>{f.nome}</td>
-                        <td className={TableStyles.td}>{f.cnpj || '---'}</td>
-                        <td className={TableStyles.td}>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="secondary"
-                              className={TableStyles.actionButton}
-                              onClick={() => handleAbrirEdicao(f.id)}
-                              title="Editar"
-                              icon={<IconeEditar />}
-                            />
-                            <Button
-                              variant="danger"
-                              className={TableStyles.actionButton}
-                              onClick={() => handleDelete(f.id)}
-                              disabled={deletingId === f.id}
-                              isLoading={deletingId === f.id}
-                              title="Remover Fornecedor"
-                              icon={<IconeLixo />}
-                            />
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+                  ))}
+                  {fornecedores.length === 0 && (
+                    <tr>
+                      <td colSpan={3} className="px-6 py-10 text-center text-gray-500">
+                        Nenhum fornecedor encontrado.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
       )}
     </div>
   );
+}
+
+// App Wrapper
+export default function App() {
+  return <GestaoFornecedores />;
 }
