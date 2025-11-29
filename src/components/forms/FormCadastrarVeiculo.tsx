@@ -7,19 +7,26 @@ import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
-// 1. Schema de Validação Zod
+// 1. Schema de Validação Zod (Híbrido e Robusto)
 const veiculoSchema = z.object({
   placa: z.string()
     .min(7, "A placa deve ter 7 caracteres")
     .max(7, "A placa deve ter 7 caracteres")
     .transform(val => val.toUpperCase()),
+
   modelo: z.string().min(2, "Modelo é obrigatório"),
-  ano: z.coerce.number()
+
+  // number com message customizada para erro de tipo
+  ano: z.number({ message: "Ano inválido" })
     .min(1900, "Ano inválido")
     .max(new Date().getFullYear() + 1, "Ano inválido"),
+
   tipoVeiculo: z.string().min(2, "Tipo é obrigatório"),
-  vencimentoCiv: z.string().optional(),
-  vencimentoCipp: z.string().optional(),
+
+  // MELHORIA: z.union aceita string opcional (undefined) ou vazia (valor do input limpo)
+  // Isso evita erros de tipagem no resolver e dispensa o 'as any'
+  vencimentoCiv: z.union([z.string().optional(), z.literal('')]),
+  vencimentoCipp: z.union([z.string().optional(), z.literal('')]),
 });
 
 type VeiculoForm = z.infer<typeof veiculoSchema>;
@@ -39,8 +46,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
     setError,
     formState: { errors, isSubmitting }
   } = useForm<VeiculoForm>({
-    // CORREÇÃO AQUI: Adicionado 'as any' para resolver o conflito de tipagem do coerce
-    resolver: zodResolver(veiculoSchema) as any,
+    resolver: zodResolver(veiculoSchema),
     defaultValues: {
       placa: '',
       modelo: '',
@@ -62,8 +68,9 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
         modelo: DOMPurify.sanitize(data.modelo),
         ano: data.ano,
         tipoVeiculo: DOMPurify.sanitize(data.tipoVeiculo),
-        vencimentoCiv: data.vencimentoCiv || null,
-        vencimentoCipp: data.vencimentoCipp || null,
+        // Lógica: se string vazia ou undefined, envia null
+        vencimentoCiv: data.vencimentoCiv && data.vencimentoCiv !== '' ? data.vencimentoCiv : null,
+        vencimentoCipp: data.vencimentoCipp && data.vencimentoCipp !== '' ? data.vencimentoCipp : null,
       });
 
       setSuccessMsg(`Veículo ${data.placa} cadastrado com sucesso!`);
@@ -123,17 +130,17 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
           error={errors.tipoVeiculo?.message}
           disabled={isSubmitting}
         />
+        {/* valueAsNumber garante que o valor chegue como number para validação correta do z.number */}
         <Input
           label="Ano"
           type="number"
           placeholder="2020"
-          {...register('ano')}
+          {...register('ano', { valueAsNumber: true })}
           error={errors.ano?.message}
           disabled={isSubmitting}
         />
       </div>
 
-      {/* Secção de Documentação */}
       <div className="pt-4 border-t border-gray-100 mt-6">
         <h4 className="text-sm font-bold text-text-secondary mb-4 uppercase tracking-wide text-center md:text-left flex items-center gap-2">
           <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
@@ -158,7 +165,6 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
         </div>
       </div>
 
-      {/* Feedback */}
       {errors.root && (
         <div className="flex items-center gap-3 p-3 rounded-md bg-red-50 border border-red-200 text-error text-sm animate-pulse mt-4">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">

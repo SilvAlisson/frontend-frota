@@ -9,21 +9,20 @@ import { Input } from '../ui/Input';
 
 // 1. Schema de Validação Zod
 const fornecedorSchema = z.object({
-  nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  cnpj: z.string().optional(),
+  nome: z.string().min(1, 'O Nome é obrigatório.'),
+  // Aceita string opcional (undefined) OU string vazia (valor inicial do input)
+  cnpj: z.union([z.string().optional(), z.literal('')]),
 });
 
-type FornecedorForm = z.infer<typeof fornecedorSchema>;
+type FornecedorFormData = z.infer<typeof fornecedorSchema>;
 
-interface FormEditarFornecedorProps {
-  // Removemos 'token' pois a instância 'api' já gere isso
+interface Props {
   fornecedorId: string;
-  onSuccess: () => void; // Renomeado de onFornecedorEditado para padronizar
+  onSuccess: () => void;
   onCancelar: () => void;
 }
 
-export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: FormEditarFornecedorProps) {
-
+export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Props) {
   const [loadingData, setLoadingData] = useState(true);
   const [successMsg, setSuccessMsg] = useState('');
 
@@ -34,48 +33,37 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Fo
     reset,
     setError,
     formState: { errors, isSubmitting }
-  } = useForm<FornecedorForm>({
+  } = useForm<FornecedorFormData>({
     resolver: zodResolver(fornecedorSchema),
-    defaultValues: {
-      nome: '',
-      cnpj: ''
-    }
+    defaultValues: { nome: '', cnpj: '' }
   });
 
-  // 3. Carregar dados iniciais
+  // 3. Carregar dados
   useEffect(() => {
     if (!fornecedorId) return;
 
-    const fetchFornecedor = async () => {
-      setLoadingData(true);
-      try {
-        const response = await api.get(`/fornecedor/${fornecedorId}`);
-        const fornecedor = response.data;
-
-        // Atualiza o formulário com os dados vindos do backend
+    api.get(`/fornecedor/${fornecedorId}`)
+      .then(res => {
         reset({
-          nome: fornecedor.nome || '',
-          cnpj: fornecedor.cnpj || '',
+          nome: res.data.nome || '',
+          cnpj: res.data.cnpj || ''
         });
-
-      } catch (err) {
-        console.error("Erro ao buscar dados do fornecedor:", err);
-        setError('root', { message: 'Falha ao carregar os dados do fornecedor.' });
-      } finally {
         setLoadingData(false);
-      }
-    };
-
-    fetchFornecedor();
+      })
+      .catch(() => {
+        setError('root', { message: 'Erro ao carregar dados do fornecedor.' });
+        setLoadingData(false);
+      });
   }, [fornecedorId, reset, setError]);
 
   // 4. Submit
-  const onSubmit = async (data: FornecedorForm) => {
+  const onSubmit = async (data: FornecedorFormData) => {
     setSuccessMsg('');
     try {
       await api.put(`/fornecedor/${fornecedorId}`, {
         nome: DOMPurify.sanitize(data.nome),
-        cnpj: data.cnpj ? DOMPurify.sanitize(data.cnpj) : null,
+        // Lógica: se string vazia ou undefined, envia null
+        cnpj: data.cnpj && data.cnpj.trim() !== '' ? DOMPurify.sanitize(data.cnpj) : null,
       });
 
       setSuccessMsg('Fornecedor atualizado com sucesso!');
@@ -85,21 +73,15 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Fo
       }, 1500);
 
     } catch (err: any) {
-      console.error("Erro ao atualizar fornecedor:", err);
-      if (err.response?.data?.error) {
-        setError('root', { message: err.response.data.error });
-      } else {
-        setError('root', { message: 'Falha ao atualizar fornecedor.' });
-      }
+      setError('root', { message: err.response?.data?.error || 'Falha ao atualizar.' });
     }
   };
 
-  // Loading State Visual (Inicial)
   if (loadingData) {
     return (
       <div className="flex flex-col items-center justify-center py-10 space-y-3">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <p className="text-sm text-text-secondary">Carregando dados do fornecedor...</p>
+        <p className="text-sm text-text-secondary">Carregando dados...</p>
       </div>
     );
   }
@@ -107,7 +89,8 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Fo
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
 
-      <div className="text-center">
+      {/* Visual Rico (Igual ao Cadastro) */}
+      <div className="text-center mb-6">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 mb-3">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-primary">
             <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
@@ -123,13 +106,12 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Fo
 
       <div className="space-y-4">
         <Input
-          label="Nome do Fornecedor (Posto/Oficina)"
+          label="Nome"
           placeholder="Nome do estabelecimento"
           {...register('nome')}
           error={errors.nome?.message}
           disabled={isSubmitting}
         />
-
         <Input
           label="CNPJ (Opcional)"
           placeholder="00.000.000/0000-00"
@@ -139,7 +121,6 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Fo
         />
       </div>
 
-      {/* ERRO GERAL */}
       {errors.root && (
         <div className="flex items-center gap-3 p-3 rounded-md bg-red-50 border border-red-200 text-error text-sm animate-pulse">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
@@ -149,10 +130,12 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Fo
         </div>
       )}
 
-      {/* SUCESSO */}
       {successMsg && (
-        <div className="p-3 bg-green-50 text-success border border-green-200 rounded text-center text-sm font-medium">
-          {successMsg}
+        <div className="flex items-center gap-3 p-3 rounded-md bg-green-50 border border-green-200 text-success text-sm font-medium">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
+            <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
+          </svg>
+          <span>{successMsg}</span>
         </div>
       )}
 
@@ -161,20 +144,19 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Fo
           type="button"
           variant="secondary"
           className="flex-1"
-          disabled={isSubmitting}
           onClick={onCancelar}
+          disabled={isSubmitting}
         >
           Cancelar
         </Button>
-
         <Button
           type="submit"
           variant="primary"
           className="flex-1"
-          disabled={isSubmitting}
           isLoading={isSubmitting}
+          disabled={isSubmitting}
         >
-          {isSubmitting ? 'Salvando...' : 'Alterações salvas!'}
+          Salvar Alterações
         </Button>
       </div>
     </form>

@@ -10,18 +10,6 @@ export function useDashboardData() {
 
         queryFn: async () => {
             if (!user) return null;
-
-            // --- NOVO BLOCO: GATILHO DE LIMPEZA ---
-            try {
-                // Pede ao backend para verificar e fechar jornadas > 17h
-                await api.post('/jornada/verificar-timeouts').catch(err => 
-                    console.warn("Falha silenciosa ao verificar timeouts:", err)
-                );
-            } catch (e) {
-                // Ignora erros para não travar o dashboard
-            }
-            // --------------------------------------
-
             const requests = [
                 api.get('/users'),         // 0
                 api.get('/veiculos'),      // 1
@@ -47,7 +35,6 @@ export function useDashboardData() {
         },
 
         enabled: !!user,
-        // Atualiza a cada 1 minuto para manter os dados frescos
-        refetchInterval: 1000 * 60, 
+        refetchInterval: 1000 * 60, // Atualiza a cada 1 minuto
     });
 }

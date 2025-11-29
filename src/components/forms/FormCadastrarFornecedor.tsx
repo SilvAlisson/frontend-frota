@@ -1,111 +1,177 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
-import { api } from '../../services/api'; // <--- Usar a instância global
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
+// 1. Schema Híbrido (Validação robusta + Tipagem correta)
 const fornecedorSchema = z.object({
-  nome: z.string().min(1, 'O Nome é obrigatório.'),
-  cnpj: z.string().optional(),
+  nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  // Aceita string opcional OU string vazia (para funcionar com o reset/defaultValues sem 'as any')
+  cnpj: z.union([z.string().optional(), z.literal('')]),
 });
 
-type FornecedorFormData = z.infer<typeof fornecedorSchema>;
+// Inferência de tipo automática do Zod
+type FornecedorForm = z.infer<typeof fornecedorSchema>;
 
-interface FormCadastrarFornecedorProps {
-  // Token removido, não é necessário
-  onFornecedorAdicionado: () => void;
+interface FormEditarFornecedorProps {
+  fornecedorId: string;
+  onSuccess: () => void;
   onCancelar: () => void;
 }
 
-export function FormCadastrarFornecedor({ onFornecedorAdicionado, onCancelar }: FormCadastrarFornecedorProps) {
+export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: FormEditarFornecedorProps) {
 
+  const [loadingData, setLoadingData] = useState(true);
+  const [successMsg, setSuccessMsg] = useState('');
+
+  // 2. React Hook Form (Sem 'as any' graças ao schema ajustado)
   const {
     register,
     handleSubmit,
-    setError, // Importante para definir erros do backend
-    formState: { errors, isSubmitting } // Usar isSubmitting nativo
-  } = useForm<FornecedorFormData>({
-    resolver: zodResolver(fornecedorSchema) as any,
-    defaultValues: { nome: '', cnpj: '' }
+    reset,
+    setError,
+    formState: { errors, isSubmitting }
+  } = useForm<FornecedorForm>({
+    resolver: zodResolver(fornecedorSchema),
+    defaultValues: {
+      nome: '',
+      cnpj: '' // Valor inicial compatível com z.literal('')
+    }
   });
 
-  const [successMsg, setSuccessMsg] = useState('');
+  // 3. Carregar dados para Edição
+  useEffect(() => {
+    if (!fornecedorId) return;
 
-  const onSubmit = async (data: FornecedorFormData) => {
+    const fetchFornecedor = async () => {
+      setLoadingData(true);
+      try {
+        const response = await api.get(`/fornecedor/${fornecedorId}`);
+        const fornecedor = response.data;
+
+        // Atualiza o formulário. Se cnpj vier null do banco, converte para ''
+        reset({
+          nome: fornecedor.nome || '',
+          cnpj: fornecedor.cnpj || '',
+        });
+
+      } catch (err) {
+        console.error("Erro ao buscar dados do fornecedor:", err);
+        setError('root', { message: 'Falha ao carregar os dados do fornecedor.' });
+      } finally {
+        setLoadingData(false);
+      }
+    };
+
+    fetchFornecedor();
+  }, [fornecedorId, reset, setError]);
+
+  // 4. Submit (Lógica de Edição PUT)
+  const onSubmit = async (data: FornecedorForm) => {
     setSuccessMsg('');
     try {
-      // Usa a api global que já injeta o token automaticamente
-      await api.post('/fornecedor', {
+      await api.put(`/fornecedor/${fornecedorId}`, {
         nome: DOMPurify.sanitize(data.nome),
-        cnpj: data.cnpj ? DOMPurify.sanitize(data.cnpj) : null,
+        // Se a string for vazia, envia null para o banco
+        cnpj: data.cnpj && data.cnpj.trim() !== '' ? DOMPurify.sanitize(data.cnpj) : null,
       });
 
-      setSuccessMsg('Fornecedor cadastrado com sucesso!');
+      setSuccessMsg('Fornecedor atualizado com sucesso!');
 
       setTimeout(() => {
-        onFornecedorAdicionado();
+        onSuccess();
       }, 1500);
 
     } catch (err: any) {
-      console.error("Erro ao cadastrar fornecedor:", err);
+      console.error("Erro ao atualizar fornecedor:", err);
       if (err.response?.data?.error) {
-        // Define o erro no formulário
         setError('root', { message: err.response.data.error });
       } else {
-        setError('root', { message: 'Falha ao cadastrar fornecedor.' });
+        setError('root', { message: 'Falha ao atualizar fornecedor.' });
       }
     }
   };
 
+  // Loading State
+  if (loadingData) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 space-y-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="text-sm text-text-secondary">Carregando dados...</p>
+      </div>
+    );
+  }
+
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+
       <div className="text-center">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 mb-3">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-primary">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72m-13.5 8.65h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
           </svg>
         </div>
-        <h4 className="text-xl font-bold text-primary">Novo Fornecedor</h4>
-        <p className="text-sm text-text-secondary mt-1">Cadastre um posto ou oficina parceira.</p>
+        <h4 className="text-xl font-bold text-primary">
+          Editar Fornecedor
+        </h4>
+        <p className="text-sm text-text-secondary mt-1">
+          Atualize os dados cadastrais do parceiro.
+        </p>
       </div>
 
       <div className="space-y-4">
         <Input
           label="Nome do Fornecedor"
-          placeholder="Ex: Posto Quarto de Milha"
-          disabled={isSubmitting}
+          placeholder="Ex: Posto Matriz"
           {...register('nome')}
           error={errors.nome?.message}
+          disabled={isSubmitting}
         />
+
         <Input
           label="CNPJ (Opcional)"
           placeholder="00.000.000/0000-00"
-          disabled={isSubmitting}
           {...register('cnpj')}
           error={errors.cnpj?.message}
+          disabled={isSubmitting}
         />
       </div>
 
       {errors.root && (
-        <div className="p-3 rounded-md bg-red-50 border border-red-200 text-error text-sm text-center">
+        <div className="p-3 bg-red-50 text-error border border-red-200 rounded text-center text-sm">
           {errors.root.message}
         </div>
       )}
+
       {successMsg && (
-        <div className="p-3 rounded-md bg-green-50 border border-green-200 text-success text-sm text-center">
+        <div className="p-3 bg-green-50 text-success border border-green-200 rounded text-center text-sm font-medium">
           {successMsg}
         </div>
       )}
 
       <div className="flex gap-3 pt-2">
-        <Button type="button" variant="secondary" className="flex-1" disabled={isSubmitting} onClick={onCancelar}>
+        <Button
+          type="button"
+          variant="secondary"
+          className="flex-1"
+          disabled={isSubmitting}
+          onClick={onCancelar}
+        >
           Cancelar
         </Button>
-        <Button type="submit" variant="primary" className="flex-1" disabled={isSubmitting} isLoading={isSubmitting}>
-          {isSubmitting ? 'Salvando...' : 'Salvar Fornecedor'}
+
+        <Button
+          type="submit"
+          variant="primary"
+          className="flex-1"
+          disabled={isSubmitting}
+          isLoading={isSubmitting}
+        >
+          {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
         </Button>
       </div>
     </form>
