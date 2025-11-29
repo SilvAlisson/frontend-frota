@@ -7,14 +7,18 @@ import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
-// 1. Schema Zod
+// 1. Schema Zod (Híbrido e Robusto)
 const editarUsuarioSchema = z.object({
   nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
   email: z.string().email("Email inválido"),
-  matricula: z.string().optional(),
+
+  // Aceita string opcional OU string vazia (para funcionar com o reset/defaultValues sem 'as any')
+  matricula: z.union([z.string().optional(), z.literal('')]),
+
   role: z.enum(['OPERADOR', 'ENCARREGADO', 'ADMIN']),
 
-  password: z.string().optional().refine(val => !val || val.length >= 6, {
+  // Senha opcional no update: aceita undefined, string vazia, ou string >= 6 chars
+  password: z.string().optional().or(z.literal('')).refine(val => !val || val.length >= 6, {
     message: "A nova senha deve ter no mínimo 6 caracteres"
   })
 });
@@ -40,8 +44,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
     setError,
     formState: { errors, isSubmitting }
   } = useForm<EditarUsuarioForm>({
-    // CORREÇÃO: 'as any' para compatibilidade de tipos
-    resolver: zodResolver(editarUsuarioSchema) as any,
+    resolver: zodResolver(editarUsuarioSchema), // Sem 'as any'
     defaultValues: {
       nome: '',
       email: '',
@@ -63,12 +66,13 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
 
         // Verifica se o role vindo do banco é válido, senão define um padrão
         const roleValida = ['OPERADOR', 'ENCARREGADO', 'ADMIN'].includes(user.role)
-          ? user.role
+          ? (user.role as 'OPERADOR' | 'ENCARREGADO' | 'ADMIN')
           : 'ENCARREGADO';
 
         reset({
           nome: user.nome || '',
           email: user.email || '',
+          // Se vier null do banco, converte para string vazia para o input
           matricula: user.matricula || '',
           role: roleValida,
           password: ''
@@ -93,7 +97,10 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
       const dataToUpdate: any = {
         nome: DOMPurify.sanitize(data.nome),
         email: DOMPurify.sanitize(data.email),
-        matricula: data.matricula ? DOMPurify.sanitize(data.matricula) : null,
+        // Lógica: Se matrícula for vazia ou só espaços, envia null
+        matricula: data.matricula && data.matricula.trim() !== ''
+          ? DOMPurify.sanitize(data.matricula)
+          : null,
         role: data.role,
       };
 

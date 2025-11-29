@@ -1,3 +1,5 @@
+import { useEffect } from 'react';
+import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { Button } from '../components/ui/Button';
@@ -9,6 +11,21 @@ import { AdminDashboard } from '../components/AdminDashboard';
 
 export function Dashboard() {
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    const verificarJornadasVencidas = async () => {
+      try {
+        await api.post('/jornada/verificar-timeouts');
+      } catch (err) {
+        console.warn("Não foi possível verificar timeouts automaticamente:", err);
+      }
+    };
+
+    if (user) {
+      verificarJornadasVencidas();
+    }
+  }, [user]);
+  // -----------------------------------------------
 
   const { data, isLoading, isError, refetch } = useDashboardData();
 
