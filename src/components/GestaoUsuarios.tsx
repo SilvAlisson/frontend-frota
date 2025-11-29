@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../services/api';
+import { api } from '../services/api'; // API Real
 import { FormCadastrarUsuario } from './forms/FormCadastrarUsuario';
 import { FormEditarUsuario } from './forms/FormEditarUsuario';
 import { ModalQrCode } from './ModalQrCode';
 import { exportarParaExcel } from '../utils';
-import { Button } from './ui/Button';
+import { Button } from './ui/Button'; // UI Real
 import { TableStyles } from '../styles/table';
 import type { User } from '../types';
 
@@ -44,10 +44,10 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   const { data: usuarios = [], isLoading } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
-      const response = await api.get('/user'); // Endpoint correto singular
+      const response = await api.get('/user'); // Endpoint correto singular (conforme backend)
       return response.data;
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: 1000 * 60 * 5, // Cache de 5 minutos
   });
 
   // 2. MUTATION: Deletar
@@ -83,6 +83,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   };
 
   const handleGerarQrCode = async (user: User) => {
+    // Chama a mutation para gerar o token
     const token = await qrMutation.mutateAsync(user.id);
     if (token) {
       setTokenQr(token);
@@ -105,6 +106,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   const handleVoltar = () => {
     setModo('listando');
     setUsuarioIdSelecionado(null);
+    // Revalida a query para atualizar a lista após cadastro/edição
     queryClient.invalidateQueries({ queryKey: ['users'] });
   };
 
