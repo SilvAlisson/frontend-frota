@@ -2,22 +2,16 @@ import { useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { api } from '../../services/api';
+import { api } from '../../services/api'; // Real API
 import DOMPurify from 'dompurify';
-import { Button } from '../ui/Button';
-import { Input } from '../ui/Input';
+import { Button } from '../ui/Button';    // Real UI
+import { Input } from '../ui/Input';      // Real UI
 
-// 1. Schema Zod (Híbrido e Robusto)
 const editarUsuarioSchema = z.object({
   nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
   email: z.string().email("Email inválido"),
-
-  // Aceita string opcional OU string vazia (para funcionar com o reset/defaultValues sem 'as any')
   matricula: z.union([z.string().optional(), z.literal('')]),
-
   role: z.enum(['OPERADOR', 'ENCARREGADO', 'ADMIN']),
-
-  // Senha opcional no update: aceita undefined, string vazia, ou string >= 6 chars
   password: z.string().optional().or(z.literal('')).refine(val => !val || val.length >= 6, {
     message: "A nova senha deve ter no mínimo 6 caracteres"
   })
@@ -36,7 +30,6 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
   const [loadingData, setLoadingData] = useState(true);
   const [successMsg, setSuccessMsg] = useState('');
 
-  // 2. React Hook Form
   const {
     register,
     handleSubmit,
@@ -44,7 +37,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
     setError,
     formState: { errors, isSubmitting }
   } = useForm<EditarUsuarioForm>({
-    resolver: zodResolver(editarUsuarioSchema), // Sem 'as any'
+    resolver: zodResolver(editarUsuarioSchema),
     defaultValues: {
       nome: '',
       email: '',
@@ -54,7 +47,6 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
     }
   });
 
-  // 3. Carregar dados
   useEffect(() => {
     if (!userId) return;
 
@@ -64,7 +56,6 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
         const response = await api.get(`/user/${userId}`);
         const user = response.data;
 
-        // Verifica se o role vindo do banco é válido, senão define um padrão
         const roleValida = ['OPERADOR', 'ENCARREGADO', 'ADMIN'].includes(user.role)
           ? (user.role as 'OPERADOR' | 'ENCARREGADO' | 'ADMIN')
           : 'ENCARREGADO';
@@ -72,7 +63,6 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
         reset({
           nome: user.nome || '',
           email: user.email || '',
-          // Se vier null do banco, converte para string vazia para o input
           matricula: user.matricula || '',
           role: roleValida,
           password: ''
@@ -89,22 +79,18 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
     fetchUsuario();
   }, [userId, reset, setError]);
 
-
-  // 4. Submit
   const onSubmit: SubmitHandler<EditarUsuarioForm> = async (data) => {
     setSuccessMsg('');
     try {
       const dataToUpdate: any = {
         nome: DOMPurify.sanitize(data.nome),
         email: DOMPurify.sanitize(data.email),
-        // Lógica: Se matrícula for vazia ou só espaços, envia null
         matricula: data.matricula && data.matricula.trim() !== ''
           ? DOMPurify.sanitize(data.matricula)
           : null,
         role: data.role,
       };
 
-      // Só envia a senha se ela foi preenchida
       if (data.password && data.password.trim() !== '') {
         dataToUpdate.password = data.password;
       }
@@ -127,7 +113,6 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
     }
   };
 
-  // Loading State Visual
   if (loadingData) {
     return (
       <div className="flex flex-col items-center justify-center py-10 space-y-3">
@@ -139,7 +124,6 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-
       <div className="text-center">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-50 mb-3">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-indigo-600">
@@ -188,7 +172,6 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
           disabled={isSubmitting}
         />
 
-        {/* Select Customizado */}
         <div>
           <label className="block mb-1.5 text-sm font-medium text-text-secondary">Função (Role)</label>
           <div className="relative">
@@ -209,7 +192,6 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
         </div>
       </div>
 
-      {/* FEEDBACK ERRO */}
       {errors.root && (
         <div className="flex items-center gap-3 p-3 rounded-md bg-red-50 border border-red-200 text-error text-sm animate-pulse">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
@@ -219,14 +201,12 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
         </div>
       )}
 
-      {/* FEEDBACK SUCESSO */}
       {successMsg && (
         <div className="p-3 bg-green-50 text-success border border-green-200 rounded text-center text-sm font-medium">
           {successMsg}
         </div>
       )}
 
-      {/* BOTÕES */}
       <div className="flex gap-3 pt-2">
         <Button
           type="button"

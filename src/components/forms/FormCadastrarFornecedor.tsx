@@ -1,41 +1,10 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-
-// --- MOCKS (Para funcionamento isolado no Canvas) ---
-const api = {
-  post: (url: string, data: any) =>
-    new Promise((resolve) => {
-      console.log(`POST ${url}`, data);
-      setTimeout(() => resolve({ data: { id: '999', ...data } }), 1000);
-    })
-};
-
-const Button = ({ isLoading, children, variant, className, ...props }: any) => (
-  <button
-    className={`px-4 py-2 rounded text-white font-bold transition-colors w-full ${variant === 'secondary' ? 'bg-gray-400 hover:bg-gray-500' : 'bg-blue-600 hover:bg-blue-700'
-      } ${isLoading ? 'opacity-70 cursor-not-allowed' : ''} ${className}`}
-    disabled={isLoading}
-    {...props}
-  >
-    {isLoading ? 'Carregando...' : children}
-  </button>
-);
-
-const Input = React.forwardRef(({ label, error, ...props }: any, ref: any) => (
-  <div className="w-full">
-    {label && <label className="block mb-1.5 text-sm font-medium text-gray-700">{label}</label>}
-    <input
-      ref={ref}
-      className={`w-full px-4 py-2 text-gray-900 bg-white border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 ${error ? 'border-red-500' : 'border-gray-300'
-        }`}
-      {...props}
-    />
-    {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
-  </div>
-));
-Input.displayName = 'Input';
+import { api } from '../../services/api'; // Use global api
+import { Button } from '../ui/Button';    // Use shared UI component
+import { Input } from '../ui/Input';      // Use shared UI component
 
 // --- LÓGICA DO FORMULÁRIO ---
 
@@ -73,7 +42,7 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormCadastrar
   const onSubmit = async (data: FornecedorForm) => {
     setSuccessMsg('');
     try {
-      // Simula envio para API
+      // Envio para API real
       await api.post('/fornecedor', {
         nome: data.nome,
         // Envia null se estiver vazio
@@ -163,18 +132,5 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormCadastrar
         </Button>
       </div>
     </form>
-  );
-}
-
-export default function App() {
-  return (
-    <div className="p-8 bg-gray-50 min-h-screen flex items-center justify-center">
-      <div className="bg-white p-6 rounded-lg shadow max-w-md w-full">
-        <FormCadastrarFornecedor
-          onSuccess={() => console.log('Sucesso')}
-          onCancelar={() => console.log('Cancelar')}
-        />
-      </div>
-    </div>
   );
 }

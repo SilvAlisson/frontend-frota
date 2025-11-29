@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { api } from '../services/api';
+import { api } from '../services/api'; // API Real
 import { FormCadastrarProduto } from './forms/FormCadastrarProduto';
 import { FormEditarProduto } from './forms/FormEditarProduto';
 import { exportarParaExcel } from '../utils';
-import { Button } from './ui/Button';
+import { Button } from './ui/Button'; // UI Real
 import { TableStyles } from '../styles/table';
 
 interface Produto {
@@ -13,7 +13,6 @@ interface Produto {
   unidadeMedida: string;
 }
 
-// Removido 'token'
 interface GestaoProdutosProps { }
 
 function IconeLixo() {
@@ -42,12 +41,11 @@ export function GestaoProdutos({ }: GestaoProdutosProps) {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [produtoIdSelecionado, setProdutoIdSelecionado] = useState<string | null>(null);
 
-  // 1. Buscar produtos
   const fetchProdutos = async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await api.get('/produtos');
+      const response = await api.get('/produto'); // Endpoint singular
       setProdutos(response.data);
     } catch (err) {
       setError('Falha ao carregar produtos.');
@@ -60,9 +58,8 @@ export function GestaoProdutos({ }: GestaoProdutosProps) {
     fetchProdutos();
   }, []);
 
-  // 2. Apagar produto
   const handleDelete = async (produtoId: string) => {
-    if (!window.confirm("Tem certeza que quer REMOVER este produto? Esta ação pode falhar se ele estiver sendo usado em algum arquivo.")) {
+    if (!window.confirm("Tem certeza que quer REMOVER este produto?")) {
       return;
     }
 
@@ -84,7 +81,6 @@ export function GestaoProdutos({ }: GestaoProdutosProps) {
     }
   };
 
-  // 3. Controladores de estado (Modo)
   const handleAbrirEdicao = (produtoId: string) => {
     setProdutoIdSelecionado(produtoId);
     setModo('editando');
@@ -120,12 +116,9 @@ export function GestaoProdutos({ }: GestaoProdutosProps) {
 
     } catch (err) {
       setError('Ocorreu um erro ao preparar os dados para exportação.');
-      console.error(err);
     }
   };
 
-
-  // Renderização
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-semibold text-primary text-center">
@@ -135,9 +128,8 @@ export function GestaoProdutos({ }: GestaoProdutosProps) {
       {error && <p className="text-center text-error bg-red-50 p-3 rounded border border-red-200">{error}</p>}
       {success && <p className="text-center text-success bg-green-50 p-3 rounded border border-green-200">{success}</p>}
 
-      {/* Modo de Adição */}
       {modo === 'adicionando' && (
-        <div className="bg-surface p-6 rounded-card shadow-card border border-gray-100">
+        <div className="bg-white p-6 rounded-card shadow-card border border-gray-100">
           <FormCadastrarProduto
             onSuccess={handleSucesso}
             onCancelar={handleCancelarForm}
@@ -145,9 +137,8 @@ export function GestaoProdutos({ }: GestaoProdutosProps) {
         </div>
       )}
 
-      {/* Modo de Edição */}
       {modo === 'editando' && produtoIdSelecionado && (
-        <div className="bg-surface p-6 rounded-card shadow-card border border-gray-100">
+        <div className="bg-white p-6 rounded-card shadow-card border border-gray-100">
           <FormEditarProduto
             produtoId={produtoIdSelecionado}
             onSuccess={handleSucesso}
@@ -156,7 +147,6 @@ export function GestaoProdutos({ }: GestaoProdutosProps) {
         </div>
       )}
 
-      {/* Modo de Listagem */}
       {modo === 'listando' && (
         <div>
           <div className="mb-4 flex justify-between items-center gap-2 flex-wrap">
@@ -183,7 +173,10 @@ export function GestaoProdutos({ }: GestaoProdutosProps) {
           </div>
 
           {loading ? (
-            <p className="text-center text-primary py-8">Carregando produtos...</p>
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+              <p className="text-primary mt-2">Carregando produtos...</p>
+            </div>
           ) : (
             <div className="overflow-hidden shadow-card rounded-card border border-gray-100 bg-white">
               {produtos.length === 0 ? (
@@ -218,14 +211,14 @@ export function GestaoProdutos({ }: GestaoProdutosProps) {
                           <div className="flex gap-2">
                             <Button
                               variant="secondary"
-                              className={TableStyles.actionButton}
+                              className="!p-2 h-8 w-8"
                               onClick={() => handleAbrirEdicao(produto.id)}
                               title="Editar"
                               icon={<IconeEditar />}
                             />
                             <Button
                               variant="danger"
-                              className={TableStyles.actionButton}
+                              className="!p-2 h-8 w-8"
                               onClick={() => handleDelete(produto.id)}
                               disabled={deletingId === produto.id}
                               isLoading={deletingId === produto.id}

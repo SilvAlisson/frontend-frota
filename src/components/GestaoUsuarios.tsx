@@ -6,11 +6,12 @@ import { FormEditarUsuario } from './forms/FormEditarUsuario';
 import { ModalQrCode } from './ModalQrCode';
 import { exportarParaExcel } from '../utils';
 import { Button } from './ui/Button';
+import { TableStyles } from '../styles/table';
 import type { User } from '../types';
 
 // Estilos
-const thStyle = "px-4 py-3 text-left text-xs font-bold text-text-secondary uppercase tracking-wider bg-gray-50 border-b border-gray-100";
-const tdStyle = "px-4 py-3 text-sm text-text border-b border-gray-50 align-middle";
+const thStyle = TableStyles.th;
+const tdStyle = TableStyles.td;
 
 // Ícones
 function IconeLixo() {
@@ -24,7 +25,6 @@ function IconeQrCode() {
 }
 
 interface GestaoUsuariosProps {
-  // token removido
   adminUserId: string;
 }
 
@@ -44,7 +44,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   const { data: usuarios = [], isLoading } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
-      const response = await api.get('/users');
+      const response = await api.get('/user'); // Endpoint correto singular
       return response.data;
     },
     staleTime: 1000 * 60 * 5,
