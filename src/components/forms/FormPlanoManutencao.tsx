@@ -14,15 +14,12 @@ const tiposIntervalo = ["KM", "TEMPO"] as const;
 // --- MUDANÇAS ZOD V4 ---
 const planoSchema = z.object({
   veiculoId: z.string().min(1, { error: "Selecione um veículo" }),
-
   descricao: z.string()
     .min(3, { error: "Descrição deve ter no mínimo 3 caracteres" })
     .transform(val => val.toUpperCase()),
-
   tipoIntervalo: z.enum(tiposIntervalo, {
     error: "Selecione um tipo válido"
   }),
-
   valorIntervalo: z.coerce.number()
     .min(1, { error: "O intervalo deve ser maior que 0" }),
 });
@@ -97,24 +94,25 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Tem certeza que deseja remover este plano?")) return;
+    if (!window.confirm("Tem a certeza que deseja remover este plano?")) return;
 
     setDeletingId(id);
     setErrorMsg('');
     setSuccessMsg('');
 
     try {
+      // Requisição ao backend primeiro
       await api.delete(`/plano-manutencao/${id}`);
 
-      // Atualiza a lista localmente imediatamente
+      // Se bem sucedido (não lançou exceção), atualiza o estado local
       setPlanos(prev => prev.filter(p => p.id !== id));
       setSuccessMsg('Plano removido.');
 
     } catch (err: any) {
-      console.error("Erro ao deletar:", err);
-      const msg = err.response?.data?.error || 'Erro ao remover plano.';
+      console.error("Erro ao apagar:", err);
+      const msg = err.response?.data?.error || 'Erro ao remover plano. Verifique a conexão.';
       setErrorMsg(msg);
-      // Se deu erro, recarrega a lista original para garantir consistência
+      // Se falhou, recarrega a lista original para garantir que a interface mostra a verdade
       fetchPlanos();
     } finally {
       setDeletingId(null);
