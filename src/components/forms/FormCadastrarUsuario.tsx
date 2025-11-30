@@ -15,6 +15,11 @@ const usuarioSchema = z.object({
   // Union limpo para Zod v4
   matricula: z.union([z.string().optional(), z.literal('')]),
   role: z.enum(["OPERADOR", "ENCARREGADO", "ADMIN"]),
+  cargoId: z.string().optional(),
+  cnhNumero: z.string().optional(),
+  cnhCategoria: z.string().optional(),
+  cnhValidade: z.string().optional(),
+  dataAdmissao: z.string().optional(),
 });
 
 type UsuarioForm = z.infer<typeof usuarioSchema>;

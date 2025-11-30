@@ -6,11 +6,12 @@ import { PainelAlertas } from './PainelAlertas';
 import { RankingOperadores } from './RankingOperadores';
 import { HistoricoAbastecimentos } from './HistoricoAbastecimentos';
 import { HistoricoManutencoes } from './HistoricoManutencoes';
-import { HistoricoJornadas } from './HistoricoJornadas'; // Nova importação
+import { HistoricoJornadas } from './HistoricoJornadas';
 import { GestaoUsuarios } from './GestaoUsuarios';
 import { GestaoVeiculos } from './GestaoVeiculos';
 import { GestaoProdutos } from './GestaoProdutos';
 import { GestaoFornecedores } from './GestaoFornecedores';
+import { GestaoCargos } from './GestaoCargos'
 
 interface AdminDashboardProps {
   veiculos: any[];
@@ -19,7 +20,7 @@ interface AdminDashboardProps {
   adminUserId: string;
 }
 
-type AbaAdmin = 'alertas' | 'dashboard' | 'ranking' | 'hist_abastecimento' | 'hist_manutencao' | 'hist_jornada' | 'veiculo' | 'usuario' | 'produto' | 'fornecedor' | 'manutencao' | 'planos';
+type AbaAdmin = 'alertas' | 'dashboard' | 'ranking' | 'hist_abastecimento' | 'hist_manutencao' | 'hist_jornada' | 'veiculo' | 'usuario' | 'produto' | 'fornecedor' | 'manutencao' | 'planos' | 'cargo';
 
 export function AdminDashboard({
   veiculos,
@@ -30,12 +31,11 @@ export function AdminDashboard({
 
   const [abaAtiva, setAbaAtiva] = useState<AbaAdmin>('alertas');
 
-  // Função Drill-down: recebe o comando do Dashboard e troca a aba
   const handleDrillDown = (tipo: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => {
     if (tipo === 'ABASTECIMENTO') setAbaAtiva('hist_abastecimento');
     if (tipo === 'MANUTENCAO') setAbaAtiva('hist_manutencao');
     if (tipo === 'JORNADA') setAbaAtiva('hist_jornada');
-    if (tipo === 'GERAL') setAbaAtiva('dashboard'); // Fica onde está
+    if (tipo === 'GERAL') setAbaAtiva('dashboard');
   };
 
   const abas = [
@@ -69,7 +69,11 @@ export function AdminDashboard({
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>
       )
     },
-    // ... Demais abas de gestão
+    {
+      id: 'cargos', label: 'Cargos (RH)', icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z" /></svg>
+      )
+    },
     {
       id: 'veiculo', label: 'Veículos', icon: (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>
@@ -109,7 +113,8 @@ export function AdminDashboard({
       case 'ranking': return <RankingOperadores />;
       case 'hist_abastecimento': return <HistoricoAbastecimentos userRole="ADMIN" veiculos={veiculos} />;
       case 'hist_manutencao': return <HistoricoManutencoes userRole="ADMIN" veiculos={veiculos} />;
-      case 'hist_jornada': return <HistoricoJornadas veiculos={veiculos} />; // Nova Aba
+      case 'hist_jornada': return <HistoricoJornadas veiculos={veiculos} />;
+      case 'cargo': return <GestaoCargos />;
       case 'veiculo': return <GestaoVeiculos />;
       case 'usuario': return <GestaoUsuarios adminUserId={adminUserId} />;
       case 'produto': return <GestaoProdutos />;

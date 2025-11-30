@@ -216,3 +216,21 @@ export interface UsuarioSimplificado {
   nome: string;
   role: string;
 }
+
+// --- RH & CARGOS ---
+export interface TreinamentoObrigatorio {
+  id: string;
+  nome: string;
+  validadeMeses: number;
+  diasAntecedenciaAlerta: number;
+}
+
+export interface Cargo {
+  id: string;
+  nome: string;
+  descricao?: string | null;
+  requisitos: TreinamentoObrigatorio[];
+  _count?: {
+    colaboradores: number;
+  };
+}
