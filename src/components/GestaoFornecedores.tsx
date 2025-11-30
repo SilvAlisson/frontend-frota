@@ -4,7 +4,6 @@ import { FormCadastrarFornecedor } from './forms/FormCadastrarFornecedor';
 import { FormEditarFornecedor } from './forms/FormEditarFornecedor';
 import { Button } from './ui/Button';
 import { TableStyles } from '../styles/table';
-// Ajuste: Importação explícita de tipo para evitar erro de verbatimModuleSyntax
 import type { Fornecedor } from '../types';
 
 // Ícones
@@ -54,11 +53,15 @@ export function GestaoFornecedores() {
     try {
       await api.delete(`/fornecedor/${fornecedorId}`);
       setSuccess('Fornecedor removido com sucesso.');
+
+      // Atualiza a lista removendo o item localmente para feedback instantâneo
       setFornecedores(prev => prev.filter(f => f.id !== fornecedorId));
+
+      // await fetchFornecedores(); 
     } catch (err: any) {
       console.error(err);
       // Tratamento de erro vindo do backend (ex: chave estrangeira)
-      const msg = err.response?.data?.error || 'Falha ao remover fornecedor.';
+      const msg = err.response?.data?.error || 'Falha ao remover fornecedor. Verifique se ele possui vínculos.';
       setError(msg);
     } finally {
       setDeletingId(null);

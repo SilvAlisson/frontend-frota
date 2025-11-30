@@ -8,19 +8,21 @@ import { Input } from '../ui/Input';
 
 const tiposDeProduto = ["COMBUSTIVEL", "ADITIVO", "SERVICO", "OUTRO"] as const;
 
+// --- ZOD V4 SCHEMA ---
 const produtoSchema = z.object({
   nome: z.string()
     .trim()
-    .min(2, "Nome deve ter pelo menos 2 caracteres")
+    .min(2, { error: "Nome deve ter pelo menos 2 caracteres" })
     .transform((val) => val.toUpperCase()),
 
+  // V4: 'message' -> 'error'
   tipo: z.enum(tiposDeProduto, {
-    message: "Selecione um tipo válido",
+    error: "Selecione um tipo válido",
   }),
 
   unidadeMedida: z.string()
     .trim()
-    .min(1, "Unidade de medida obrigatória"),
+    .min(1, { error: "Unidade de medida obrigatória" }),
 });
 
 type ProdutoForm = z.infer<typeof produtoSchema>;
@@ -39,7 +41,7 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormCadastrarPro
     setError,
     formState: { errors, isSubmitting }
   } = useForm<ProdutoForm>({
-    resolver: zodResolver(produtoSchema),
+    resolver: zodResolver(produtoSchema), // Casting opcional se não houver z.coerce
     defaultValues: {
       nome: '',
       tipo: 'COMBUSTIVEL',

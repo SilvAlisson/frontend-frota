@@ -13,19 +13,16 @@ const tiposIntervalo = ["KM", "TEMPO"] as const;
 
 // --- MUDANÇAS ZOD V4 ---
 const planoSchema = z.object({
-  // Atualizado para usar { error: ... } em vez de string direta ou message
   veiculoId: z.string().min(1, { error: "Selecione um veículo" }),
 
   descricao: z.string()
     .min(3, { error: "Descrição deve ter no mínimo 3 caracteres" })
     .transform(val => val.toUpperCase()),
 
-  // 'message' substituído por 'error' na v4
   tipoIntervalo: z.enum(tiposIntervalo, {
     error: "Selecione um tipo válido"
   }),
 
-  // z.coerce agora infere input como 'unknown', necessitando do cast no resolver
   valorIntervalo: z.coerce.number()
     .min(1, { error: "O intervalo deve ser maior que 0" }),
 });
@@ -45,6 +42,7 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
   const [planos, setPlanos] = useState<PlanoManutencao[]>([]);
   const [loadingList, setLoadingList] = useState(false);
   const [successMsg, setSuccessMsg] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const {
@@ -55,8 +53,6 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
     watch,
     formState: { errors, isSubmitting }
   } = useForm<PlanoForm>({
-    // FIX ZOD V4: 'as any' para contornar incompatibilidade de tipos
-    // entre z.coerce (unknown) e a tipagem estrita do RHF
     resolver: zodResolver(planoSchema) as any,
     defaultValues: {
       veiculoId: '',
@@ -86,6 +82,7 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
 
   const onSubmit = async (data: PlanoForm) => {
     setSuccessMsg('');
+    setErrorMsg('');
     try {
       await api.post('/plano-manutencao', data);
       setSuccessMsg('Plano criado com sucesso!');
@@ -101,13 +98,24 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
 
   const handleDelete = async (id: string) => {
     if (!window.confirm("Tem certeza que deseja remover este plano?")) return;
+
     setDeletingId(id);
+    setErrorMsg('');
+    setSuccessMsg('');
+
     try {
       await api.delete(`/plano-manutencao/${id}`);
+
+      // Atualiza a lista localmente imediatamente
       setPlanos(prev => prev.filter(p => p.id !== id));
-    } catch (err) {
+      setSuccessMsg('Plano removido.');
+
+    } catch (err: any) {
       console.error("Erro ao deletar:", err);
-      alert('Erro ao remover plano.');
+      const msg = err.response?.data?.error || 'Erro ao remover plano.';
+      setErrorMsg(msg);
+      // Se deu erro, recarrega a lista original para garantir consistência
+      fetchPlanos();
     } finally {
       setDeletingId(null);
     }
@@ -191,6 +199,12 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
           {errors.root && (
             <div className="p-3 rounded-md bg-red-50 border border-red-200 text-error text-sm text-center">
               {errors.root.message}
+            </div>
+          )}
+
+          {errorMsg && (
+            <div className="p-3 rounded-md bg-red-50 border border-red-200 text-error text-sm text-center">
+              {errorMsg}
             </div>
           )}
 
