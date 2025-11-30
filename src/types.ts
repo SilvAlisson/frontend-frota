@@ -234,3 +234,13 @@ export interface Cargo {
     colaboradores: number;
   };
 }
+
+export interface TreinamentoRealizado {
+  id: string;
+  nome: string;
+  descricao?: string | null;
+  dataRealizacao: string;
+  dataVencimento?: string | null;
+  comprovanteUrl?: string | null;
+  userId: string;
+}

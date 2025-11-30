@@ -6,20 +6,42 @@ import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { useQuery } from '@tanstack/react-query';
 
-// --- ZOD V4 SCHEMA ---
+// Interface para Cargo
+interface Cargo {
+  id: string;
+  nome: string;
+}
+
+const ROLES = ["OPERADOR", "ENCARREGADO", "ADMIN"] as const;
+
+// --- ZOD SCHEMA ---
+
 const usuarioSchema = z.object({
-  nome: z.string().min(3, { error: "Nome deve ter pelo menos 3 caracteres" }),
-  email: z.string().email({ error: "Email inválido" }),
-  password: z.string().min(6, { error: "A senha deve ter no mínimo 6 caracteres" }),
-  // Union limpo para Zod v4
+  nome: z.string()
+    .min(1, { message: "Nome é obrigatório" })
+    .min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
+
+  email: z.string()
+    .min(1, { message: "Email é obrigatório" })
+    .email({ message: "Email inválido" }),
+
+  password: z.string()
+    .min(1, { message: "Senha é obrigatória" })
+    .min(6, { message: "A senha deve ter no mínimo 6 caracteres" }),
+
   matricula: z.union([z.string().optional(), z.literal('')]),
-  role: z.enum(["OPERADOR", "ENCARREGADO", "ADMIN"]),
-  cargoId: z.string().optional(),
-  cnhNumero: z.string().optional(),
-  cnhCategoria: z.string().optional(),
-  cnhValidade: z.string().optional(),
-  dataAdmissao: z.string().optional(),
+  role: z.enum(ROLES, {
+    message: "Selecione uma função válida"
+  }),
+
+  // Campos Opcionais de RH
+  cargoId: z.string().optional().or(z.literal('')),
+  cnhNumero: z.string().optional().or(z.literal('')),
+  cnhCategoria: z.string().optional().or(z.literal('')),
+  cnhValidade: z.string().optional().or(z.literal('')),
+  dataAdmissao: z.string().optional().or(z.literal('')),
 });
 
 type UsuarioForm = z.infer<typeof usuarioSchema>;
@@ -33,11 +55,22 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
 
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Busca de Cargos
+  const { data: cargos = [], isLoading: isLoadingCargos } = useQuery<Cargo[]>({
+    queryKey: ['cargos-select'],
+    queryFn: async () => {
+      const response = await api.get('/cargos');
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
   const {
     register,
     handleSubmit,
     reset,
     setError,
+    watch,
     formState: { errors, isSubmitting }
   } = useForm<UsuarioForm>({
     resolver: zodResolver(usuarioSchema),
@@ -46,9 +79,16 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
       email: '',
       password: '',
       matricula: '',
-      role: 'OPERADOR'
+      role: 'OPERADOR',
+      cargoId: '',
+      cnhNumero: '',
+      cnhCategoria: '',
+      cnhValidade: '',
+      dataAdmissao: ''
     }
   });
+
+  const roleSelecionada = watch('role');
 
   const onSubmit = async (data: UsuarioForm) => {
     setSuccessMsg('');
@@ -61,6 +101,12 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
           ? DOMPurify.sanitize(data.matricula)
           : null,
         role: data.role,
+        // Envio dos dados de RH
+        cargoId: data.cargoId || null,
+        cnhNumero: data.cnhNumero || null,
+        cnhCategoria: data.cnhCategoria || null,
+        cnhValidade: data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
+        dataAdmissao: data.dataAdmissao ? new Date(data.dataAdmissao).toISOString() : null,
       });
 
       setSuccessMsg('Integrante cadastrado com sucesso!');
@@ -142,15 +188,88 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
               {...register('role')}
               disabled={isSubmitting}
             >
-              <option value="OPERADOR">Motorista (Operador)</option>
-              <option value="ENCARREGADO">Gestor (Encarregado)</option>
-              <option value="ADMIN">Administrador</option>
+              {ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {role === 'OPERADOR' ? 'Motorista (Operador)' :
+                    role === 'ENCARREGADO' ? 'Gestor (Encarregado)' : 'Administrador'}
+                </option>
+              ))}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
             </div>
           </div>
           {errors.role && <p className="text-xs text-error mt-1">{errors.role.message}</p>}
+        </div>
+      </div>
+
+      {/* SEÇÃO DE RH */}
+      <div className="mt-6 pt-4 border-t border-gray-100">
+        <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-primary">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" />
+          </svg>
+          Dados Funcionais (RH)
+        </h5>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="md:col-span-2">
+            <label className="block mb-1.5 text-sm font-medium text-text-secondary">Cargo / Função</label>
+            <div className="relative">
+              <select
+                className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none"
+                {...register('cargoId')}
+                disabled={isSubmitting || isLoadingCargos}
+              >
+                <option value="">Selecione o cargo...</option>
+                {cargos.map((cargo) => (
+                  <option key={cargo.id} value={cargo.id}>{cargo.nome}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+            {isLoadingCargos && <p className="text-xs text-primary mt-1">Carregando cargos...</p>}
+          </div>
+
+          {/* Campos de CNH - Apenas para Operadores */}
+          {roleSelecionada === 'OPERADOR' && (
+            <>
+              <div className="md:col-span-1">
+                <Input
+                  label="Nº CNH"
+                  placeholder="Registro CNH"
+                  {...register('cnhNumero')}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <div className="md:col-span-1">
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    label="Categoria"
+                    placeholder="AE"
+                    {...register('cnhCategoria')}
+                    disabled={isSubmitting}
+                  />
+                  <Input
+                    label="Validade CNH"
+                    type="date"
+                    {...register('cnhValidade')}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+              <div className="md:col-span-1">
+                <Input
+                  label="Data de Admissão"
+                  type="date"
+                  {...register('dataAdmissao')}
+                  disabled={isSubmitting}
+                />
+              </div>
+            </>
+          )}
         </div>
       </div>
 
