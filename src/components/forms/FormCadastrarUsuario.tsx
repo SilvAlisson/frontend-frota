@@ -7,13 +7,12 @@ import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
-// 1. Schema Híbrido (Robustez + Tipagem)
+// --- ZOD V4 SCHEMA ---
 const usuarioSchema = z.object({
-  nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
-  email: z.string().email("Email inválido"),
-  password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
-  // Aceita string opcional (undefined) OU string vazia (valor inicial do input)
-  // Isso elimina a necessidade de usar 'as any' no resolver
+  nome: z.string().min(3, { error: "Nome deve ter pelo menos 3 caracteres" }),
+  email: z.string().email({ error: "Email inválido" }),
+  password: z.string().min(6, { error: "A senha deve ter no mínimo 6 caracteres" }),
+  // Union limpo para Zod v4
   matricula: z.union([z.string().optional(), z.literal('')]),
   role: z.enum(["OPERADOR", "ENCARREGADO", "ADMIN"]),
 });
@@ -29,7 +28,6 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
 
   const [successMsg, setSuccessMsg] = useState('');
 
-  // 2. React Hook Form (Tipagem estrita funcionando)
   const {
     register,
     handleSubmit,
@@ -47,15 +45,13 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
     }
   });
 
-  // 3. Submit Handler
   const onSubmit = async (data: UsuarioForm) => {
     setSuccessMsg('');
     try {
       await api.post('/user/register', {
         nome: DOMPurify.sanitize(data.nome),
         email: DOMPurify.sanitize(data.email),
-        password: data.password, // Senha não sanitiza (pode ter caracteres especiais)
-        // Lógica: Se matrícula for vazia ou só espaços, envia null
+        password: data.password,
         matricula: data.matricula && data.matricula.trim() !== ''
           ? DOMPurify.sanitize(data.matricula)
           : null,
@@ -82,7 +78,6 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
 
-      {/* Cabeçalho Visual (Estilo Rico) */}
       <div className="text-center">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-50 mb-3">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-indigo-600">
@@ -146,7 +141,6 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
               <option value="ENCARREGADO">Gestor (Encarregado)</option>
               <option value="ADMIN">Administrador</option>
             </select>
-            {/* Seta do Select */}
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
             </div>
@@ -155,7 +149,6 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
         </div>
       </div>
 
-      {/* Feedback de Erro */}
       {errors.root && (
         <div className="flex items-center gap-3 p-3 rounded-md bg-red-50 border border-red-200 text-error text-sm animate-pulse">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
@@ -165,7 +158,6 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
         </div>
       )}
 
-      {/* Feedback de Sucesso */}
       {successMsg && (
         <div className="flex items-center gap-3 p-3 rounded-md bg-green-50 border border-green-200 text-success text-sm font-medium">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">

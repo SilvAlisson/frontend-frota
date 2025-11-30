@@ -2,18 +2,20 @@ import { useState, useEffect } from 'react';
 import { useForm, type SubmitHandler } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { api } from '../../services/api'; // Real API
+import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
-import { Button } from '../ui/Button';    // Real UI
-import { Input } from '../ui/Input';      // Real UI
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
+// --- ZOD V4 SCHEMA ---
 const editarUsuarioSchema = z.object({
-  nome: z.string().min(3, "Nome deve ter pelo menos 3 caracteres"),
-  email: z.string().email("Email inválido"),
+  nome: z.string().min(3, { error: "Nome deve ter pelo menos 3 caracteres" }),
+  email: z.string().email({ error: "Email inválido" }),
   matricula: z.union([z.string().optional(), z.literal('')]),
   role: z.enum(['OPERADOR', 'ENCARREGADO', 'ADMIN']),
+  // Refine atualizado com lógica segura para senha opcional
   password: z.string().optional().or(z.literal('')).refine(val => !val || val.length >= 6, {
-    message: "A nova senha deve ter no mínimo 6 caracteres"
+    message: "A nova senha deve ter no mínimo 6 caracteres" // Refine ainda aceita message como segundo argumento na v4, ou path
   })
 });
 

@@ -7,24 +7,23 @@ import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
-// 1. Schema de Validação Zod (Híbrido e Robusto)
+// --- ZOD V4 SCHEMA ---
 const veiculoSchema = z.object({
   placa: z.string()
-    .min(7, "A placa deve ter 7 caracteres")
-    .max(7, "A placa deve ter 7 caracteres")
+    .min(7, { error: "A placa deve ter 7 caracteres" })
+    .max(7, { error: "A placa deve ter 7 caracteres" })
     .transform(val => val.toUpperCase()),
 
-  modelo: z.string().min(2, "Modelo é obrigatório"),
+  modelo: z.string().min(2, { error: "Modelo é obrigatório" }),
 
-  // number com message customizada para erro de tipo
-  ano: z.number({ message: "Ano inválido" })
-    .min(1900, "Ano inválido")
-    .max(new Date().getFullYear() + 1, "Ano inválido"),
+  // Zod v4: Use { error: "..." } em vez de { message: "..." }
+  ano: z.number({ error: "Ano inválido" })
+    .min(1900, { error: "Ano inválido" })
+    .max(new Date().getFullYear() + 1, { error: "Ano inválido" }),
 
-  tipoVeiculo: z.string().min(2, "Tipo é obrigatório"),
+  tipoVeiculo: z.string().min(2, { error: "Tipo é obrigatório" }),
 
-  // MELHORIA: z.union aceita string opcional (undefined) ou vazia (valor do input limpo)
-  // Isso evita erros de tipagem no resolver e dispensa o 'as any'
+  // Union para campos opcionais que podem vir vazios
   vencimentoCiv: z.union([z.string().optional(), z.literal('')]),
   vencimentoCipp: z.union([z.string().optional(), z.literal('')]),
 });
@@ -38,7 +37,6 @@ interface FormCadastrarVeiculoProps {
 
 export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVeiculoProps) {
 
-  // 2. Configuração do Hook Form
   const {
     register,
     handleSubmit,
@@ -46,7 +44,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
     setError,
     formState: { errors, isSubmitting }
   } = useForm<VeiculoForm>({
-    resolver: zodResolver(veiculoSchema),
+    resolver: zodResolver(veiculoSchema) as any, // 'as any' previne conflitos de tipo estrito na v4
     defaultValues: {
       placa: '',
       modelo: '',
@@ -59,7 +57,6 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
 
   const [successMsg, setSuccessMsg] = useState('');
 
-  // 3. Submit
   const onSubmit = async (data: VeiculoForm) => {
     setSuccessMsg('');
     try {
@@ -68,7 +65,6 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
         modelo: DOMPurify.sanitize(data.modelo),
         ano: data.ano,
         tipoVeiculo: DOMPurify.sanitize(data.tipoVeiculo),
-        // Lógica: se string vazia ou undefined, envia null
         vencimentoCiv: data.vencimentoCiv && data.vencimentoCiv !== '' ? data.vencimentoCiv : null,
         vencimentoCipp: data.vencimentoCipp && data.vencimentoCipp !== '' ? data.vencimentoCipp : null,
       });
@@ -130,7 +126,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
           error={errors.tipoVeiculo?.message}
           disabled={isSubmitting}
         />
-        {/* valueAsNumber garante que o valor chegue como number para validação correta do z.number */}
+        {/* valueAsNumber garante que o valor chegue como number */}
         <Input
           label="Ano"
           type="number"

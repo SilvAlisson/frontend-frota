@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { api } from '../../services/api'; // Use global api
-import { Button } from '../ui/Button';    // Use shared UI component
-import { Input } from '../ui/Input';      // Use shared UI component
+import { api } from '../../services/api';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
-// --- LÓGICA DO FORMULÁRIO ---
-
+// --- ZOD V4 SCHEMA ---
 const fornecedorSchema = z.object({
-  nome: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
+  nome: z.string().min(2, { error: "Nome deve ter pelo menos 2 caracteres" }),
   // Aceita string opcional (undefined) OU string vazia
   cnpj: z.union([z.string().optional(), z.literal('')]),
 });
@@ -17,7 +16,7 @@ const fornecedorSchema = z.object({
 type FornecedorForm = z.infer<typeof fornecedorSchema>;
 
 interface FormCadastrarFornecedorProps {
-  onSuccess: () => void; // Padronizado para onSuccess
+  onSuccess: () => void;
   onCancelar: () => void;
 }
 

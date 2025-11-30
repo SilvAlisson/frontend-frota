@@ -2,13 +2,14 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { api } from '../../services/api'; // API Real
+import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
-import { Button } from '../ui/Button';    // UI Real
-import { Input } from '../ui/Input';      // UI Real
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 
+// --- ZOD V4 SCHEMA ---
 const fornecedorSchema = z.object({
-  nome: z.string().min(1, 'O Nome é obrigatório.'),
+  nome: z.string().min(1, { error: 'O Nome é obrigatório.' }),
   cnpj: z.union([z.string().optional(), z.literal('')]),
 });
 

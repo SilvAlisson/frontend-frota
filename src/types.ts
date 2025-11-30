@@ -2,13 +2,22 @@
 // ENTIDADES PRINCIPAIS (Dados Mestre)
 // =========================================
 
+export type UserRole = 'ADMIN' | 'ENCARREGADO' | 'OPERADOR' | 'RH' | 'COORDENADOR';
+
 export interface User {
   id: string;
   nome: string;
   email: string;
   matricula: string | null;
-  role: 'ADMIN' | 'ENCARREGADO' | 'OPERADOR';
+  role: UserRole;
+  // RH Fields
+  cnhNumero?: string | null;
+  cnhCategoria?: string | null;
+  cnhValidade?: string | null; // ISO Date string
+  dataAdmissao?: string | null; // ISO Date string
 }
+
+export type TipoCombustivel = 'DIESEL_S10' | 'GASOLINA_COMUM' | 'ETANOL' | 'GNV';
 
 export interface Veiculo {
   id: string;
@@ -16,14 +25,19 @@ export interface Veiculo {
   modelo: string;
   ano: number;
   tipoVeiculo: string | null;
+  tipoCombustivel: TipoCombustivel;
+  capacidadeTanque: number | null;
   vencimentoCiv?: string | null;
   vencimentoCipp?: string | null;
+  ultimoKm?: number; // Campo calculado que vem do backend em getById
 }
+
+export type TipoProduto = 'COMBUSTIVEL' | 'ADITIVO' | 'SERVICO' | 'OUTRO';
 
 export interface Produto {
   id: string;
   nome: string;
-  tipo: string; // "COMBUSTIVEL" | "ADITIVO" | "SERVICO" | "OUTRO"
+  tipo: TipoProduto;
   unidadeMedida: string;
 }
 
@@ -69,9 +83,11 @@ export interface ItemAbastecimento {
   id?: string;
   quantidade: number;
   valorPorUnidade: number;
+  valorTotal?: number;
   produto: {
+    id: string;
     nome: string;
-    tipo: string;
+    tipo: TipoProduto;
   };
 }
 
@@ -82,7 +98,8 @@ export interface Abastecimento {
   custoTotal: number;
   placaCartaoUsado?: string | null;
   justificativa?: string | null;
-  fotoNotaFiscalUrl?: string | null;
+  observacoes?: string | null;
+  fotoNotaFiscalUrl: string | null;
 
   veiculo: {
     placa: string;
@@ -98,11 +115,15 @@ export interface Abastecimento {
 }
 
 // --- MANUTENÇÃO (Ordem de Serviço) ---
+export type TipoManutencao = 'PREVENTIVA' | 'CORRETIVA' | 'LAVAGEM';
+
 export interface ItemManutencao {
   id?: string;
   quantidade: number;
   valorPorUnidade: number;
+  valorTotal?: number;
   produto: {
+    id: string;
     nome: string;
     tipo?: string;
   };
@@ -112,7 +133,7 @@ export interface OrdemServico {
   id: string;
   data: string;
   kmAtual: number;
-  tipo: string; // "PREVENTIVA" | "CORRETIVA" | "LAVAGEM"
+  tipo: TipoManutencao;
   custoTotal: number;
   observacoes?: string | null;
   fotoComprovanteUrl?: string | null;
@@ -134,10 +155,12 @@ export interface OrdemServico {
 // GESTÃO E RELATÓRIOS
 // =========================================
 
+export type TipoIntervaloManutencao = 'KM' | 'TEMPO';
+
 export interface PlanoManutencao {
   id: string;
   descricao: string;
-  tipoIntervalo: 'KM' | 'TEMPO';
+  tipoIntervalo: TipoIntervaloManutencao;
   valorIntervalo: number;
   kmProximaManutencao?: number | null;
   dataProximaManutencao?: string | null;
