@@ -18,12 +18,23 @@ interface JornadaItemProps {
   token: string; // Mantido apenas para compatibilidade se o pai ainda passar
   jornada: Jornada;
   onFinalizada: (jornadaId: string) => void;
+  onExcluida?: (jornadaId: string) => void; // Nova prop para callback de exclusão
 }
 
-export function JornadaGestaoItem({ jornada, onFinalizada }: JornadaItemProps) {
+// Ícone de Lixeira para o botão de excluir
+function IconeLixo() {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+      <path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.54 0c-.34.055-.68.11-.1022.166m11.54 0c.376.09.74.19 1.097.302l-1.148 3.896M12 18V9" />
+    </svg>
+  );
+}
+
+export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: JornadaItemProps) {
 
   const [kmFim, setKmFim] = useState('');
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false); // Estado para loading da exclusão
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,11 +77,50 @@ export function JornadaGestaoItem({ jornada, onFinalizada }: JornadaItemProps) {
     }
   };
 
+  const handleDelete = async () => {
+    const confirmacao = window.confirm(
+      `ATENÇÃO: Tem certeza que deseja EXCLUIR PERMANENTEMENTE esta jornada em aberto do operador ${jornada.operador.nome}?\n\nEsta ação não pode ser desfeita e é recomendada apenas para corrigir erros de lançamento.`
+    );
+
+    if (!confirmacao) return;
+
+    setDeleting(true);
+    try {
+      await api.delete(`/jornada/${jornada.id}`);
+      
+      // Atualiza a lista no pai
+      if (onExcluida) {
+        onExcluida(jornada.id);
+      } else {
+        onFinalizada(jornada.id); // Fallback para atualizar a lista
+      }
+    } catch (err: any) {
+      console.error("Erro ao excluir jornada:", err);
+      alert("Erro ao excluir a jornada. Verifique se você tem permissão.");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
-    <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:border-primary/50 transition-all duration-200">
+    <div className="bg-white p-5 rounded-lg shadow-sm border border-gray-200 hover:border-primary/50 transition-all duration-200 relative group">
+
+      {/* Botão de Excluir (Posicionado no canto superior direito) */}
+      <div className="absolute top-3 right-3 z-10">
+        <Button
+          type="button"
+          variant="secondary" // Visual mais discreto (ghost/secondary)
+          className="!p-1.5 h-8 w-8 text-gray-400 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors shadow-none"
+          onClick={handleDelete}
+          disabled={loading || deleting}
+          isLoading={deleting}
+          title="Excluir Jornada (Correção de Erro)"
+          icon={<IconeLixo />}
+        />
+      </div>
 
       {/* Cabeçalho do Item */}
-      <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-4">
+      <div className="flex flex-col md:flex-row justify-between md:items-start gap-4 mb-4 pr-8"> {/* pr-8 para não sobrepor o botão de excluir */}
 
         {/* Lado Esquerdo: Operador e Veículo */}
         <div>
@@ -135,13 +185,13 @@ export function JornadaGestaoItem({ jornada, onFinalizada }: JornadaItemProps) {
                 placeholder={`KM Final (> ${jornada.kmInicio})`}
                 value={kmFim}
                 onChange={(e) => setKmFim(e.target.value)}
-                disabled={loading}
+                disabled={loading || deleting}
               />
             </div>
             <Button
               type="submit"
-              variant="danger"
-              disabled={loading || !kmFim}
+              variant="primary" // Alterado de danger para primary para diferenciar da exclusão
+              disabled={loading || !kmFim || deleting}
               isLoading={loading}
               className="w-full sm:w-auto whitespace-nowrap"
             >
