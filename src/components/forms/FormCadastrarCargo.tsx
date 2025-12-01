@@ -79,7 +79,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormCadastrarCargo
             <div className="space-y-4">
                 <Input
                     label="Nome do Cargo"
-                    placeholder="Ex: MOTORISTA CARRETA"
+                    placeholder="Ex: OPERADOR DE EQUIPAMENTOS"
                     {...register('nome')}
                     error={errors.nome?.message}
                     disabled={isSubmitting}
