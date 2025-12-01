@@ -27,11 +27,17 @@ interface JornadaHistorico {
 
 interface HistoricoJornadasProps {
     veiculos: any[];
+    userRole?: string;
 }
 
-export function HistoricoJornadas({ veiculos }: HistoricoJornadasProps) {
+function IconeLixo() {
+    return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.54 0c-.34.055-.68.11-.1022.166m11.54 0c.376.09.74.19 1.097.302l-1.148 3.896M12 18V9" /></svg>;
+}
+
+export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: HistoricoJornadasProps) {
     const [historico, setHistorico] = useState<JornadaHistorico[]>([]);
     const [loading, setLoading] = useState(true);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
     const [error, setError] = useState('');
 
     // Filtros
@@ -48,13 +54,11 @@ export function HistoricoJornadas({ veiculos }: HistoricoJornadasProps) {
             if (dataFim) params.dataFim = dataFim;
             if (veiculoId) params.veiculoId = veiculoId;
 
-            // Endpoint presumido para buscar jornadas finalizadas
-            const response = await api.get('/jornadas/historico', { params });
+            const response = await api.get('/jornada/historico', { params });
             setHistorico(response.data);
         } catch (err) {
             console.error("Erro ao buscar histórico de jornadas:", err);
-            // Fallback visual caso o endpoint ainda não exista no backend
-            setError('Não foi possível carregar o histórico de jornadas no momento.');
+            setError('Não foi possível carregar o histórico.');
         } finally {
             setLoading(false);
         }
@@ -63,6 +67,21 @@ export function HistoricoJornadas({ veiculos }: HistoricoJornadasProps) {
     useEffect(() => {
         fetchHistorico();
     }, [dataInicio, dataFim, veiculoId]);
+
+    const handleDelete = async (id: string) => {
+        if (!window.confirm("ATENÇÃO: Tem certeza que deseja excluir este registro histórico?")) return;
+
+        setDeletingId(id);
+        try {
+            await api.delete(`/jornada/${id}`);
+            // Remove da lista localmente
+            setHistorico(prev => prev.filter(item => item.id !== id));
+        } catch (err) {
+            alert("Erro ao excluir jornada.");
+        } finally {
+            setDeletingId(null);
+        }
+    };
 
     const handleExportar = () => {
         if (historico.length === 0) return;
@@ -127,6 +146,8 @@ export function HistoricoJornadas({ veiculos }: HistoricoJornadasProps) {
                                 <th className={TableStyles.th}>Motorista</th>
                                 <th className={`${TableStyles.th} text-right`}>Distância</th>
                                 <th className={TableStyles.th}>Status</th>
+                                {/* Coluna de Ações condicional */}
+                                {userRole === 'ADMIN' && <th className={TableStyles.th}>Ações</th>}
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
@@ -167,11 +188,25 @@ export function HistoricoJornadas({ veiculos }: HistoricoJornadasProps) {
                                             </span>
                                         )}
                                     </td>
+                                    {/* Botão Delete */}
+                                    {userRole === 'ADMIN' && (
+                                        <td className={TableStyles.td}>
+                                            <Button
+                                                variant="danger"
+                                                className="!p-2 h-8 w-8"
+                                                onClick={() => handleDelete(jornada.id)}
+                                                disabled={deletingId === jornada.id}
+                                                isLoading={deletingId === jornada.id}
+                                                title="Excluir registro"
+                                                icon={<IconeLixo />}
+                                            />
+                                        </td>
+                                    )}
                                 </tr>
                             ))}
                             {historico.length === 0 && (
                                 <tr>
-                                    <td colSpan={5} className="text-center py-10 text-gray-500">
+                                    <td colSpan={userRole === 'ADMIN' ? 6 : 5} className="text-center py-10 text-gray-500">
                                         Nenhuma viagem encontrada neste período.
                                     </td>
                                 </tr>

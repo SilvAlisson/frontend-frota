@@ -14,7 +14,8 @@ interface Cargo {
   nome: string;
 }
 
-const ROLES = ["OPERADOR", "ENCARREGADO", "ADMIN"] as const;
+// Constante com todas as funções do sistema
+const ROLES = ["OPERADOR", "ENCARREGADO", "ADMIN", "RH", "COORDENADOR"] as const;
 
 // --- ZOD SCHEMA ---
 
@@ -32,6 +33,7 @@ const usuarioSchema = z.object({
     .min(6, { message: "A senha deve ter no mínimo 6 caracteres" }),
 
   matricula: z.union([z.string().optional(), z.literal('')]),
+  
   role: z.enum(ROLES, {
     message: "Selecione uma função válida"
   }),
@@ -55,7 +57,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
 
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Busca de Cargos
+  // Busca de Cargos para o select
   const { data: cargos = [], isLoading: isLoadingCargos } = useQuery<Cargo[]>({
     queryKey: ['cargos-select'],
     queryFn: async () => {
@@ -126,6 +128,18 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
     }
   };
 
+  // Função auxiliar para renderizar o nome amigável da função
+  const getRoleLabel = (role: typeof ROLES[number]) => {
+    switch (role) {
+      case 'OPERADOR': return 'Motorista (Operador)';
+      case 'ENCARREGADO': return 'Gestor (Encarregado)';
+      case 'RH': return 'Recursos Humanos (RH)';
+      case 'COORDENADOR': return 'Coordenador';
+      case 'ADMIN': return 'Administrador';
+      default: return role;
+    }
+  };
+
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
 
@@ -139,7 +153,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
           Novo Colaborador
         </h4>
         <p className="text-sm text-text-secondary mt-1">
-          Crie o acesso para um motorista ou gestor.
+          Crie o acesso para um motorista, gestor, RH ou coordenador.
         </p>
       </div>
 
@@ -190,8 +204,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
             >
               {ROLES.map((role) => (
                 <option key={role} value={role}>
-                  {role === 'OPERADOR' ? 'Motorista (Operador)' :
-                    role === 'ENCARREGADO' ? 'Gestor (Encarregado)' : 'Administrador'}
+                  {getRoleLabel(role)}
                 </option>
               ))}
             </select>

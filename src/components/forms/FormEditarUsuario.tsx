@@ -6,16 +6,37 @@ import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { useQuery } from '@tanstack/react-query';
+
+// Interface para Cargo
+interface Cargo {
+  id: string;
+  nome: string;
+}
+
+// Constante com todas as funções do sistema
+const ROLES = ["OPERADOR", "ENCARREGADO", "ADMIN", "RH", "COORDENADOR"] as const;
 
 // --- ZOD V4 SCHEMA ---
 const editarUsuarioSchema = z.object({
   nome: z.string().min(3, { error: "Nome deve ter pelo menos 3 caracteres" }),
   email: z.string().email({ error: "Email inválido" }),
   matricula: z.union([z.string().optional(), z.literal('')]),
-  role: z.enum(['OPERADOR', 'ENCARREGADO', 'ADMIN']),
+  
+  role: z.enum(ROLES, {
+    error: "Selecione uma função válida"
+  }),
+
+  // Campos Opcionais de RH
+  cargoId: z.string().optional().or(z.literal('')),
+  cnhNumero: z.string().optional().or(z.literal('')),
+  cnhCategoria: z.string().optional().or(z.literal('')),
+  cnhValidade: z.string().optional().or(z.literal('')),
+  dataAdmissao: z.string().optional().or(z.literal('')),
+
   // Refine atualizado com lógica segura para senha opcional
   password: z.string().optional().or(z.literal('')).refine(val => !val || val.length >= 6, {
-    message: "A nova senha deve ter no mínimo 6 caracteres" // Refine ainda aceita message como segundo argumento na v4, ou path
+    message: "A nova senha deve ter no mínimo 6 caracteres"
   })
 });
 
@@ -32,11 +53,22 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
   const [loadingData, setLoadingData] = useState(true);
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Busca de Cargos para o select
+  const { data: cargos = [], isLoading: isLoadingCargos } = useQuery<Cargo[]>({
+    queryKey: ['cargos-select'],
+    queryFn: async () => {
+      const response = await api.get('/cargos');
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
   const {
     register,
     handleSubmit,
     reset,
     setError,
+    watch,
     formState: { errors, isSubmitting }
   } = useForm<EditarUsuarioForm>({
     resolver: zodResolver(editarUsuarioSchema),
@@ -45,9 +77,16 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
       email: '',
       matricula: '',
       role: 'ENCARREGADO',
-      password: ''
+      password: '',
+      cargoId: '',
+      cnhNumero: '',
+      cnhCategoria: '',
+      cnhValidade: '',
+      dataAdmissao: ''
     }
   });
+
+  const roleSelecionada = watch('role');
 
   useEffect(() => {
     if (!userId) return;
@@ -58,8 +97,9 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
         const response = await api.get(`/user/${userId}`);
         const user = response.data;
 
-        const roleValida = ['OPERADOR', 'ENCARREGADO', 'ADMIN'].includes(user.role)
-          ? (user.role as 'OPERADOR' | 'ENCARREGADO' | 'ADMIN')
+        // Validação mais robusta da role vinda do banco
+        const roleValida = ROLES.includes(user.role as any)
+          ? (user.role as typeof ROLES[number])
           : 'ENCARREGADO';
 
         reset({
@@ -67,7 +107,14 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
           email: user.email || '',
           matricula: user.matricula || '',
           role: roleValida,
-          password: ''
+          password: '',
+          // Campos de RH
+          cargoId: user.cargoId || '',
+          cnhNumero: user.cnhNumero || '',
+          cnhCategoria: user.cnhCategoria || '',
+          // Formata datas ISO para YYYY-MM-DD do input date
+          cnhValidade: user.cnhValidade ? user.cnhValidade.split('T')[0] : '',
+          dataAdmissao: user.dataAdmissao ? user.dataAdmissao.split('T')[0] : '',
         });
 
       } catch (err) {
@@ -91,6 +138,12 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
           ? DOMPurify.sanitize(data.matricula)
           : null,
         role: data.role,
+        // Campos de RH
+        cargoId: data.cargoId || null,
+        cnhNumero: data.cnhNumero || null,
+        cnhCategoria: data.cnhCategoria || null,
+        cnhValidade: data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
+        dataAdmissao: data.dataAdmissao ? new Date(data.dataAdmissao).toISOString() : null,
       };
 
       if (data.password && data.password.trim() !== '') {
@@ -112,6 +165,18 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
       } else {
         setError('root', { message: 'Falha ao atualizar usuário.' });
       }
+    }
+  };
+
+  // Função auxiliar para renderizar o nome amigável da função
+  const getRoleLabel = (role: typeof ROLES[number]) => {
+    switch (role) {
+      case 'OPERADOR': return 'Motorista (Operador)';
+      case 'ENCARREGADO': return 'Gestor (Encarregado)';
+      case 'RH': return 'Recursos Humanos (RH)';
+      case 'COORDENADOR': return 'Coordenador';
+      case 'ADMIN': return 'Administrador';
+      default: return role;
     }
   };
 
@@ -182,9 +247,11 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
               {...register('role')}
               disabled={isSubmitting}
             >
-              <option value="OPERADOR">Motorista (Operador)</option>
-              <option value="ENCARREGADO">Gestor (Encarregado)</option>
-              <option value="ADMIN">Administrador</option>
+              {ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {getRoleLabel(role)}
+                </option>
+              ))}
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -193,6 +260,74 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
           {errors.role && <p className="mt-1 text-xs text-error">{errors.role.message}</p>}
         </div>
       </div>
+
+      {/* SEÇÃO DE RH (EXIBIR APENAS SE FOR OPERADOR) */}
+      {/* Se quiser que apareça para todos, remova a condição roleSelecionada === 'OPERADOR' */}
+      {roleSelecionada === 'OPERADOR' && (
+        <div className="mt-6 pt-4 border-t border-gray-100">
+          <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-primary">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" />
+            </svg>
+            Dados Funcionais (RH)
+          </h5>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="md:col-span-2">
+              <label className="block mb-1.5 text-sm font-medium text-text-secondary">Cargo / Função</label>
+              <div className="relative">
+                <select
+                  className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none"
+                  {...register('cargoId')}
+                  disabled={isSubmitting || isLoadingCargos}
+                >
+                  <option value="">Selecione o cargo...</option>
+                  {cargos.map((cargo) => (
+                    <option key={cargo.id} value={cargo.id}>{cargo.nome}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </div>
+              {isLoadingCargos && <p className="text-xs text-primary mt-1">Carregando cargos...</p>}
+            </div>
+
+            <div className="md:col-span-1">
+              <Input
+                label="Nº CNH"
+                placeholder="Registro CNH"
+                {...register('cnhNumero')}
+                disabled={isSubmitting}
+              />
+            </div>
+            <div className="md:col-span-1">
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  label="Categoria"
+                  placeholder="AE"
+                  {...register('cnhCategoria')}
+                  disabled={isSubmitting}
+                />
+                <Input
+                  label="Validade CNH"
+                  type="date"
+                  {...register('cnhValidade')}
+                  disabled={isSubmitting}
+                />
+              </div>
+            </div>
+            <div className="md:col-span-1">
+              <Input
+                label="Data de Admissão"
+                type="date"
+                {...register('dataAdmissao')}
+                disabled={isSubmitting}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {errors.root && (
         <div className="flex items-center gap-3 p-3 rounded-md bg-red-50 border border-red-200 text-error text-sm animate-pulse">
@@ -204,8 +339,11 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
       )}
 
       {successMsg && (
-        <div className="p-3 bg-green-50 text-success border border-green-200 rounded text-center text-sm font-medium">
-          {successMsg}
+        <div className="flex items-center gap-3 p-3 rounded-md bg-green-50 border border-green-200 text-success text-sm font-medium">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
+            <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
+          </svg>
+          <span>{successMsg}</span>
         </div>
       )}
 

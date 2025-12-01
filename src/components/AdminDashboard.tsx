@@ -113,7 +113,7 @@ export function AdminDashboard({
       case 'ranking': return <RankingOperadores />;
       case 'hist_abastecimento': return <HistoricoAbastecimentos userRole="ADMIN" veiculos={veiculos} />;
       case 'hist_manutencao': return <HistoricoManutencoes userRole="ADMIN" veiculos={veiculos} />;
-      case 'hist_jornada': return <HistoricoJornadas veiculos={veiculos} />;
+      case 'hist_jornada': return <HistoricoJornadas veiculos={veiculos} userRole="ADMIN" />;
       case 'cargo': return <GestaoCargos />;
       case 'veiculo': return <GestaoVeiculos />;
       case 'usuario': return <GestaoUsuarios adminUserId={adminUserId} />;
