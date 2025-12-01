@@ -8,6 +8,7 @@ import { Button } from '../components/ui/Button';
 import { DashboardOperador } from '../components/DashboardOperador';
 import { DashboardEncarregado } from '../components/DashboardEncarregado';
 import { AdminDashboard } from '../components/AdminDashboard';
+import { DashboardRH } from '../components/DashboardRH'; // <--- Importe o novo componente
 
 export function Dashboard() {
   const { user, logout } = useAuth();
@@ -25,7 +26,6 @@ export function Dashboard() {
       verificarJornadasVencidas();
     }
   }, [user]);
-  // -----------------------------------------------
 
   const { data, isLoading, isError, refetch } = useDashboardData();
 
@@ -57,12 +57,8 @@ export function Dashboard() {
 
   const { usuarios, veiculos, produtos, fornecedores, jornadasEspecificas } = data;
 
-  const handleJornadaIniciada = () => {
-    refetch();
-  };
-  const handleJornadaFinalizada = () => {
-    refetch();
-  };
+  const handleJornadaIniciada = () => refetch();
+  const handleJornadaFinalizada = () => refetch();
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,8 +94,8 @@ export function Dashboard() {
           />
         )}
 
-        {/* 2. VISÃO DO ENCARREGADO */}
-        {user.role === 'ENCARREGADO' && (
+        {/* 2. VISÃO DO ENCARREGADO E COORDENADOR */}
+        {(user.role === 'ENCARREGADO' || user.role === 'COORDENADOR') && (
           <DashboardEncarregado
             user={user}
             veiculos={veiculos}
@@ -111,7 +107,12 @@ export function Dashboard() {
           />
         )}
 
-        {/* 3. VISÃO DO ADMIN */}
+        {/* 3. VISÃO DO RH (NOVA) */}
+        {user.role === 'RH' && (
+          <DashboardRH user={user} />
+        )}
+
+        {/* 4. VISÃO DO ADMIN */}
         {user.role === 'ADMIN' && (
           <AdminDashboard
             adminUserId={user.id}
