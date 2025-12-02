@@ -13,13 +13,13 @@ interface ModalProps {
     onClose: () => void;
 }
 
-// Schema de validação
+
 const treinamentoSchema = z.object({
-    nome: z.string().min(2, "Nome do curso é obrigatório"),
-    dataRealizacao: z.string().min(1, "Data de realização é obrigatória"),
+    nome: z.string().min(2, { error: "Nome do curso é obrigatório" }),
+    dataRealizacao: z.string().min(1, { error: "Data de realização é obrigatória" }),
     dataVencimento: z.string().optional().or(z.literal('')),
     descricao: z.string().optional(),
-    comprovanteUrl: z.string().url("URL inválida").optional().or(z.literal('')),
+    comprovanteUrl: z.string().optional().or(z.literal('')),
 });
 
 type TreinamentoForm = z.infer<typeof treinamentoSchema>;
@@ -28,9 +28,8 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
     const [treinamentos, setTreinamentos] = useState<TreinamentoRealizado[]>([]);
     const [loading, setLoading] = useState(true);
     const [deletingId, setDeletingId] = useState<string | null>(null);
-    const [importando, setImportando] = useState(false); // Estado para loading da importação
+    const [importando, setImportando] = useState(false);
 
-    // Referência para o input de arquivo oculto
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const {
@@ -39,7 +38,7 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
         reset,
         formState: { errors, isSubmitting }
     } = useForm<TreinamentoForm>({
-        resolver: zodResolver(treinamentoSchema),
+        resolver: zodResolver(treinamentoSchema) as any,
         defaultValues: {
             nome: '',
             dataRealizacao: new Date().toISOString().split('T')[0],

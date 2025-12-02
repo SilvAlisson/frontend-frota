@@ -5,19 +5,20 @@ import * as z from 'zod';
 import { api } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-// Removido TableStyles pois não estava a ser usado
 
 // --- SCHEMA ---
 const requisitoSchema = z.object({
-    nome: z.string().min(2, "Nome do curso é obrigatório"),
-    // z.coerce converte strings para numbers, mas pode gerar conflito de tipo 'unknown'
-    validadeMeses: z.coerce.number().min(0, "Validade inválida"),
-    diasAntecedenciaAlerta: z.coerce.number().min(1, "Mínimo 1 dia").default(30),
+    nome: z.string().min(2, { error: "Nome do curso é obrigatório" }),
+
+    // z.coerce converte strings para numbers
+    validadeMeses: z.coerce.number().min(0, { error: "Validade inválida" }),
+
+    diasAntecedenciaAlerta: z.coerce.number().min(1, { error: "Mínimo 1 dia" }).default(30),
 });
 
 const cargoSchema = z.object({
     nome: z.string()
-        .min(3, "Nome do cargo deve ter no mínimo 3 caracteres")
+        .min(3, { error: "Nome do cargo deve ter no mínimo 3 caracteres" })
         .transform(val => val.toUpperCase()),
     descricao: z.string().optional(),
     requisitos: z.array(requisitoSchema).optional(),
@@ -40,7 +41,6 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormCadastrarCargo
         handleSubmit,
         formState: { errors, isSubmitting }
     } = useForm<CargoForm>({
-        // FIX ZOD v4: O 'as any' resolve o erro de que 'unknown' não é assinável a 'number'
         resolver: zodResolver(cargoSchema) as any,
         defaultValues: {
             nome: '',

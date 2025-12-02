@@ -21,21 +21,21 @@ const ROLES = ["OPERADOR", "ENCARREGADO", "ADMIN", "RH", "COORDENADOR"] as const
 
 const usuarioSchema = z.object({
   nome: z.string()
-    .min(1, { message: "Nome é obrigatório" })
-    .min(3, { message: "Nome deve ter pelo menos 3 caracteres" }),
+    .min(1, { error: "Nome é obrigatório" })
+    .min(3, { error: "Nome deve ter pelo menos 3 caracteres" }),
 
   email: z.string()
-    .min(1, { message: "Email é obrigatório" })
-    .email({ message: "Email inválido" }),
+    .min(1, { error: "Email é obrigatório" })
+    .email({ error: "Email inválido" }),
 
   password: z.string()
-    .min(1, { message: "Senha é obrigatória" })
-    .min(6, { message: "A senha deve ter no mínimo 6 caracteres" }),
+    .min(1, { error: "Senha é obrigatória" })
+    .min(6, { error: "A senha deve ter no mínimo 6 caracteres" }),
 
   matricula: z.union([z.string().optional(), z.literal('')]),
-  
+
   role: z.enum(ROLES, {
-    message: "Selecione uma função válida"
+    error: "Selecione uma função válida"
   }),
 
   // Campos Opcionais de RH

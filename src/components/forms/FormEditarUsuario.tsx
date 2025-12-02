@@ -17,12 +17,12 @@ interface Cargo {
 // Constante com todas as funções do sistema
 const ROLES = ["OPERADOR", "ENCARREGADO", "ADMIN", "RH", "COORDENADOR"] as const;
 
-// --- ZOD V4 SCHEMA ---
+// --- ZOD SCHEMA  ---
 const editarUsuarioSchema = z.object({
   nome: z.string().min(3, { error: "Nome deve ter pelo menos 3 caracteres" }),
   email: z.string().email({ error: "Email inválido" }),
   matricula: z.union([z.string().optional(), z.literal('')]),
-  
+
   role: z.enum(ROLES, {
     error: "Selecione uma função válida"
   }),
@@ -34,9 +34,9 @@ const editarUsuarioSchema = z.object({
   cnhValidade: z.string().optional().or(z.literal('')),
   dataAdmissao: z.string().optional().or(z.literal('')),
 
-  // Refine atualizado com lógica segura para senha opcional
+  // Refine
   password: z.string().optional().or(z.literal('')).refine(val => !val || val.length >= 6, {
-    message: "A nova senha deve ter no mínimo 6 caracteres"
+    error: "A nova senha deve ter no mínimo 6 caracteres"
   })
 });
 
@@ -262,7 +262,6 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
       </div>
 
       {/* SEÇÃO DE RH (EXIBIR APENAS SE FOR OPERADOR) */}
-      {/* Se quiser que apareça para todos, remova a condição roleSelecionada === 'OPERADOR' */}
       {roleSelecionada === 'OPERADOR' && (
         <div className="mt-6 pt-4 border-t border-gray-100">
           <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
