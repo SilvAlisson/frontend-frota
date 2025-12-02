@@ -8,7 +8,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, className = '', ...rest }, ref) => {
 
-    // Estilos base do input (usa o token rounded-input do index.css)
+    // Estilos base do input
     const baseStyles = `
       w-full px-4 py-2 text-text bg-white border 
       rounded-input transition-all duration-200
@@ -24,9 +24,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     return (
       <div className="w-full">
-        {/* Label opcional */}
+        {/* Label */}
         {label && (
-          <label className="block mb-1.5 text-sm font-medium text-text-secondary">
+          <label
+            className="block mb-1.5 text-sm font-medium text-text-secondary whitespace-nowrap overflow-hidden text-ellipsis"
+            title={label}
+          >
             {label}
           </label>
         )}
@@ -37,7 +40,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {...rest}
         />
 
-        {/* Mensagem de erro opcional */}
+        {/* Mensagem de erro */}
         {error && (
           <p className="mt-1 text-xs text-error animate-pulse">
             {error}
