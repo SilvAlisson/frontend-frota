@@ -9,29 +9,44 @@ import { Input } from '../ui/Input';
 import { parseDecimal, formatKmVisual } from '../../utils';
 import type { Veiculo, Produto, Fornecedor } from '../../types';
 
-// --- 1. SCHEMA ZOD V4 ---
+// --- 1. SCHEMA ZOD INTELIGENTE ---
+// Validação condicional: Só exige Veículo e KM se "vinculadoVeiculo" for true
 const manutencaoSchema = z.object({
-  veiculoId: z.string().min(1, { error: "Selecione um veículo" }),
-  fornecedorId: z.string().min(1, { error: "Selecione uma oficina/fornecedor" }),
-  kmAtual: z.string().min(1, { error: "KM é obrigatório" }),
-  data: z.string().min(1, { error: "Data é obrigatória" }),
-  tipo: z.enum(["PREVENTIVA", "CORRETIVA", "LAVAGEM"], {
-    error: "Tipo de manutenção inválido"
+  tipo: z.enum(["PREVENTIVA", "CORRETIVA"], {
+    error: "Selecione o tipo de manutenção"
   }),
+
+  vinculadoVeiculo: z.boolean(),
+
+  veiculoId: z.string().optional().nullable(),
+  kmAtual: z.string().optional().nullable(),
+
+  fornecedorId: z.string().min(1, { error: "Selecione o fornecedor/oficina" }),
+  data: z.string().min(1, { error: "Data é obrigatória" }),
   observacoes: z.string().optional(),
+
   itens: z.array(z.object({
     produtoId: z.string().min(1, { error: "Selecione o item" }),
-
-    // Zod v4: errorMap removido em favor de 'error'. 
-    // Pode passar uma string direta ou função.
-    quantidade: z.coerce.number({
-      error: "Qtd inválida"
-    }).min(0.01, { error: "Qtd deve ser maior que 0" }),
-
-    valorPorUnidade: z.coerce.number({
-      error: "Valor inválido"
-    }).min(0, { error: "Valor não pode ser negativo" }),
+    quantidade: z.coerce.number().min(0.01, { error: "Qtd inválida" }),
+    valorPorUnidade: z.coerce.number().min(0, { error: "Valor inválido" }),
   })).min(1, { error: "Adicione pelo menos um serviço ou peça" })
+}).superRefine((data, ctx) => {
+  if (data.vinculadoVeiculo) {
+    if (!data.veiculoId || data.veiculoId === "") {
+      ctx.addIssue({
+        code: "custom",
+        message: "Selecione o veículo",
+        path: ["veiculoId"]
+      });
+    }
+    if (!data.kmAtual || data.kmAtual === "") {
+      ctx.addIssue({
+        code: "custom",
+        message: "KM é obrigatório para serviços em veículos",
+        path: ["kmAtual"]
+      });
+    }
+  }
 });
 
 type ManutencaoForm = z.infer<typeof manutencaoSchema>;
@@ -64,11 +79,11 @@ export function FormRegistrarManutencao({
     reset,
     formState: { errors, isSubmitting }
   } = useForm<ManutencaoForm>({
-    // FIX ZOD V4: 'as any' necessário devido à mudança de tipagem do z.coerce (unknown)
     resolver: zodResolver(manutencaoSchema) as any,
     defaultValues: {
-      data: new Date().toISOString().slice(0, 10),
       tipo: 'CORRETIVA',
+      vinculadoVeiculo: true,
+      data: new Date().toISOString().slice(0, 10),
       observacoes: '',
       itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: 0 }]
     }
@@ -79,21 +94,22 @@ export function FormRegistrarManutencao({
     name: "itens"
   });
 
+  // Observadores para lógica visual
   const veiculoIdSelecionado = watch('veiculoId');
+  const vinculadoVeiculo = watch('vinculadoVeiculo');
   const tipoManutencao = watch('tipo');
   const itensObservados = watch('itens');
 
   // --- 3. EFEITOS ---
-  // Busca o KM em tempo real da API quando o veículo muda
+  // Busca o KM apenas se tiver veículo selecionado E estiver vinculado
   useEffect(() => {
-    if (!veiculoIdSelecionado) {
+    if (!vinculadoVeiculo || !veiculoIdSelecionado) {
       setUltimoKmRegistrado(0);
       return;
     }
 
     const fetchInfoVeiculo = async () => {
       try {
-        // Endpoint que retorna detalhes do veículo incluindo ultimoKm calculado
         const response = await api.get<Veiculo>(`/veiculo/${veiculoIdSelecionado}`);
         setUltimoKmRegistrado(response.data.ultimoKm || 0);
       } catch (err) {
@@ -101,7 +117,7 @@ export function FormRegistrarManutencao({
       }
     };
     fetchInfoVeiculo();
-  }, [veiculoIdSelecionado]);
+  }, [veiculoIdSelecionado, vinculadoVeiculo]);
 
   // --- 4. HANDLERS ---
 
@@ -113,26 +129,29 @@ export function FormRegistrarManutencao({
     setErrorApi('');
     setSuccess('');
 
-    const kmInputFloat = parseDecimal(data.kmAtual);
+    let kmInputFloat = null;
 
-    // Validação de consistência do KM no Frontend (Pré-check)
-    if (kmInputFloat <= ultimoKmRegistrado && ultimoKmRegistrado > 0) {
-      setErrorApi(`O KM inserido (${kmInputFloat}) deve ser maior que o último registrado (${ultimoKmRegistrado}).`);
-      return;
+    // Validação de consistência do KM no Frontend (Pré-check) apenas se tiver veículo
+    if (data.vinculadoVeiculo) {
+      kmInputFloat = parseDecimal(data.kmAtual || '0');
+      if (kmInputFloat <= ultimoKmRegistrado && ultimoKmRegistrado > 0) {
+        setErrorApi(`O KM inserido (${kmInputFloat}) deve ser maior que o último registrado (${ultimoKmRegistrado}).`);
+        return;
+      }
     }
 
     // Formata itens
     const itensFormatados = data.itens.map(item => ({
       produtoId: item.produtoId,
-      quantidade: data.tipo === 'LAVAGEM' ? 1 : item.quantidade,
+      quantidade: item.quantidade,
       valorPorUnidade: item.valorPorUnidade
     }));
 
-    // Payload para o endpoint /api/ordem-servico
+    // Payload inteligente: envia null se não vinculado
     const payloadFinal = {
-      veiculoId: data.veiculoId,
+      veiculoId: data.vinculadoVeiculo ? data.veiculoId : null,
       fornecedorId: data.fornecedorId,
-      kmAtual: kmInputFloat,
+      kmAtual: kmInputFloat, // Será null se não tiver veículo
       data: new Date(data.data).toISOString(),
       tipo: data.tipo,
       observacoes: data.observacoes,
@@ -152,6 +171,7 @@ export function FormRegistrarManutencao({
       veiculoId: '',
       fornecedorId: '',
       kmAtual: '',
+      vinculadoVeiculo: true,
       data: new Date().toISOString().slice(0, 10),
       tipo: 'CORRETIVA',
       observacoes: '',
@@ -162,9 +182,6 @@ export function FormRegistrarManutencao({
     setTimeout(() => setSuccess(''), 4000);
   };
 
-  // Filtra produtos para mostrar apenas Serviços ou Outros (Peças normalmente entram aqui também se configurado)
-  const produtosFiltrados = produtos;
-
   const selectClass = "w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none";
   const labelClass = "block mb-1.5 text-sm font-medium text-text-secondary";
 
@@ -172,34 +189,90 @@ export function FormRegistrarManutencao({
     <>
       <form onSubmit={handleSubmit(onValidSubmit)} className="space-y-6 bg-white p-6 rounded-card shadow-card border border-gray-100">
 
+        {/* HEADER & TIPO */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-50 mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-red-600">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17 17.25 21A2.25 2.25 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.5 2.5 0 0 1-2.88 1.132l-3.128-.686a1 1 0 0 1-.602-.602l-.686-3.128a2.5 2.5 0 0 1 1.132-2.88L6.25 10" />
-            </svg>
+          <h4 className="text-xl font-bold text-primary mb-2">Registrar Ordem de Serviço</h4>
+          <p className="text-sm text-text-secondary mb-4">Selecione a categoria do serviço realizado.</p>
+
+          <div className="flex gap-2 p-1 bg-gray-100 rounded-lg max-w-md mx-auto">
+            <button
+              type="button"
+              onClick={() => setValue('tipo', 'PREVENTIVA')}
+              className={`flex-1 py-2 text-sm font-bold rounded-md transition-all duration-200 ${tipoManutencao === 'PREVENTIVA'
+                ? 'bg-white text-blue-600 shadow-sm ring-1 ring-black/5'
+                : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              Preventiva / Lavagem
+            </button>
+            <button
+              type="button"
+              onClick={() => setValue('tipo', 'CORRETIVA')}
+              className={`flex-1 py-2 text-sm font-bold rounded-md transition-all duration-200 ${tipoManutencao === 'CORRETIVA'
+                ? 'bg-white text-orange-600 shadow-sm ring-1 ring-black/5'
+                : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+              Corretiva / Reparo
+            </button>
           </div>
-          <h4 className="text-xl font-bold text-primary">Registrar Manutenção</h4>
-          <p className="text-sm text-text-secondary mt-1">Lançamento de OS, peças e serviços.</p>
+        </div>
+
+        {/* TOGGLE: VINCULADO A VEÍCULO? */}
+        <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-4 flex items-center gap-3">
+          <input
+            id="checkVinculo"
+            type="checkbox"
+            className="w-5 h-5 text-primary rounded focus:ring-primary cursor-pointer"
+            {...register('vinculadoVeiculo')}
+          />
+          <label htmlFor="checkVinculo" className="text-sm font-medium text-gray-700 cursor-pointer select-none flex-1">
+            O serviço foi realizado em um <strong>Veículo da Frota</strong>?
+            <span className="block text-xs text-gray-500 font-normal mt-0.5">
+              Desmarque para serviços em equipamentos, caçambas, predial ou estoque.
+            </span>
+          </label>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className={labelClass}>Veículo</label>
-            <div className="relative">
-              <select {...register("veiculoId")} className={selectClass} disabled={isSubmitting}>
-                <option value="">Selecione...</option>
-                {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>)}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
-            </div>
-            {errors.veiculoId && <span className="text-xs text-error">{errors.veiculoId.message}</span>}
-            {ultimoKmRegistrado > 0 && (
-              <p className="text-xs text-primary mt-1 font-medium">Último KM: {ultimoKmRegistrado.toLocaleString('pt-BR')}</p>
-            )}
-          </div>
 
-          <div>
-            <label className={labelClass}>Oficina / Lava-Rápido</label>
+          {/* SEÇÃO DO VEÍCULO (CONDICIONAL) */}
+          {vinculadoVeiculo && (
+            <>
+              <div className="animate-fadeIn">
+                <label className={labelClass}>Veículo <span className="text-red-500">*</span></label>
+                <div className="relative">
+                  <select {...register("veiculoId")} className={selectClass} disabled={isSubmitting}>
+                    <option value="">Selecione...</option>
+                    {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>)}
+                  </select>
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
+                </div>
+                {errors.veiculoId && <span className="text-xs text-error">{errors.veiculoId.message}</span>}
+                {ultimoKmRegistrado > 0 && (
+                  <p className="text-xs text-primary mt-1 font-medium">Último KM: {ultimoKmRegistrado.toLocaleString('pt-BR')}</p>
+                )}
+              </div>
+
+              <div className="animate-fadeIn">
+                <label className={labelClass}>KM Atual <span className="text-red-500">*</span></label>
+                <Input
+                  {...register("kmAtual")}
+                  onChange={(e: any) => {
+                    register("kmAtual").onChange(e);
+                    handleKmChange(e);
+                  }}
+                  placeholder={ultimoKmRegistrado > 0 ? `> ${ultimoKmRegistrado}` : "Ex: 50.420"}
+                  error={errors.kmAtual?.message}
+                  disabled={isSubmitting}
+                />
+              </div>
+            </>
+          )}
+
+          {/* CAMPOS COMUNS */}
+          <div className={!vinculadoVeiculo ? "md:col-span-2" : ""}>
+            <label className={labelClass}>Oficina / Fornecedor</label>
             <div className="relative">
               <select {...register("fornecedorId")} className={selectClass} disabled={isSubmitting}>
                 <option value="">Selecione...</option>
@@ -210,45 +283,20 @@ export function FormRegistrarManutencao({
             {errors.fornecedorId && <span className="text-xs text-error">{errors.fornecedorId.message}</span>}
           </div>
 
-          <div>
-            <label className={labelClass}>KM Atual</label>
-            <Input
-              {...register("kmAtual")}
-              onChange={(e: any) => {
-                register("kmAtual").onChange(e);
-                handleKmChange(e);
-              }}
-              placeholder={ultimoKmRegistrado > 0 ? `> ${ultimoKmRegistrado}` : "Ex: 50.420"}
-              error={errors.kmAtual?.message}
-              disabled={isSubmitting}
-            />
-          </div>
-
-          <div>
+          <div className={!vinculadoVeiculo ? "md:col-span-2" : ""}>
             <label className={labelClass}>Data do Serviço</label>
             <Input type="date" {...register("data")} error={errors.data?.message} disabled={isSubmitting} />
           </div>
 
-          <div>
-            <label className={labelClass}>Tipo de Serviço</label>
-            <div className="relative">
-              <select {...register("tipo")} className={selectClass} disabled={isSubmitting}>
-                <option value="CORRETIVA">Manutenção Corretiva</option>
-                <option value="PREVENTIVA">Manutenção Preventiva</option>
-                <option value="LAVAGEM">Lavagem</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
-            </div>
-          </div>
         </div>
 
+        {/* ITENS DA OS */}
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
-          <h4 className="text-sm font-bold text-text-secondary uppercase tracking-wide mb-3">Itens da Ordem de Serviço</h4>
+          <h4 className="text-sm font-bold text-text-secondary uppercase tracking-wide mb-3">Itens e Serviços</h4>
 
           <div className="space-y-3">
             {fields.map((field, index) => {
-              const isLavagem = tipoManutencao === 'LAVAGEM';
-              const qtd = isLavagem ? 1 : (itensObservados[index]?.quantidade || 0);
+              const qtd = itensObservados[index]?.quantidade || 0;
               const val = itensObservados[index]?.valorPorUnidade || 0;
               const total = qtd * val;
 
@@ -256,31 +304,29 @@ export function FormRegistrarManutencao({
                 <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end bg-white p-3 rounded border border-gray-100 shadow-sm">
 
                   <div className="sm:col-span-5">
-                    <label className="text-xs text-gray-500 block mb-1 font-medium">Item / Serviço</label>
+                    <label className="text-xs text-gray-500 block mb-1 font-medium">Descrição</label>
                     <div className="relative">
                       <select {...register(`itens.${index}.produtoId`)} className={selectClass + " py-2 text-sm"} disabled={isSubmitting}>
                         <option value="">Selecione...</option>
-                        {produtosFiltrados.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                        {produtos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                       </select>
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
                     </div>
                   </div>
 
-                  {!isLavagem && (
-                    <div className="sm:col-span-2">
-                      <label className="text-xs text-gray-500 block mb-1 font-medium">Qtd</label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        {...register(`itens.${index}.quantidade`, { valueAsNumber: true })}
-                        disabled={isSubmitting}
-                        className="!py-2 text-right"
-                      />
-                    </div>
-                  )}
+                  <div className="sm:col-span-2">
+                    <label className="text-xs text-gray-500 block mb-1 font-medium">Qtd</label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      {...register(`itens.${index}.quantidade`, { valueAsNumber: true })}
+                      disabled={isSubmitting}
+                      className="!py-2 text-right"
+                    />
+                  </div>
 
-                  <div className={isLavagem ? "sm:col-span-4" : "sm:col-span-2"}>
-                    <label className="text-xs text-gray-500 block mb-1 font-medium">Valor {isLavagem ? 'Total' : 'Un.'}</label>
+                  <div className="sm:col-span-2">
+                    <label className="text-xs text-gray-500 block mb-1 font-medium">Valor Un.</label>
                     <Input
                       type="number"
                       step="0.01"
@@ -303,12 +349,15 @@ export function FormRegistrarManutencao({
             })}
           </div>
 
-          <div className="mt-4">
+          <div className="mt-4 flex justify-between items-center">
             <Button type="button" variant="secondary" onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })} className="text-xs h-8" disabled={isSubmitting}>
               + Adicionar Item
             </Button>
-            {errors.itens && <p className="text-xs text-error mt-2 font-medium">{errors.itens.root?.message}</p>}
+            <span className="text-sm font-bold text-gray-700">
+              Total Geral: R$ {itensObservados.reduce((acc, i) => acc + (i.quantidade * i.valorPorUnidade || 0), 0).toFixed(2)}
+            </span>
           </div>
+          {errors.itens && <p className="text-xs text-error mt-2 font-medium">{errors.itens.root?.message}</p>}
         </div>
 
         <div>
@@ -316,7 +365,7 @@ export function FormRegistrarManutencao({
           <textarea
             {...register("observacoes")}
             className={selectClass + " h-24 resize-none py-3"}
-            placeholder="Detalhes técnicos, número da OS em papel, etc..."
+            placeholder="Detalhes técnicos, número da OS em papel, descrição do reparo..."
             disabled={isSubmitting}
           />
         </div>
@@ -335,7 +384,8 @@ export function FormRegistrarManutencao({
           dadosJornada={formDataParaModal}
           apiEndpoint="/ordem-servico"
           apiMethod="POST"
-          kmParaConfirmar={null}
+          // Passa null se não tiver veículo, assim a modal não tenta exibir "Valor Registrado: KM"
+          kmParaConfirmar={formDataParaModal.veiculoId ? formDataParaModal.kmAtual : null}
           jornadaId={null}
           onClose={() => setModalAberto(false)}
           onSuccess={handleModalSuccess}
