@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import axios from 'axios';
 import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
@@ -9,25 +10,27 @@ import { Input } from '../ui/Input';
 
 // --- ZOD V4 SCHEMA ---
 const veiculoSchema = z.object({
-  placa: z.string()
+  placa: z.string({ error: "A placa é obrigatória" })
     .min(7, { error: "A placa deve ter 7 caracteres" })
     .max(7, { error: "A placa deve ter 7 caracteres" })
     .transform(val => val.toUpperCase()),
 
-  modelo: z.string().min(2, { error: "Modelo é obrigatório" }),
+  modelo: z.string({ error: "O modelo é obrigatório" })
+    .min(2, { error: "Modelo muito curto" }),
 
-  // Zod v4: Use { error: "..." } em vez de { message: "..." }
-  ano: z.number({ error: "Ano inválido" })
-    .min(1900, { error: "Ano inválido" })
-    .max(new Date().getFullYear() + 1, { error: "Ano inválido" }),
+  // z.coerce converte a string do input para number automaticamente
+  ano: z.coerce.number({ error: "Ano inválido" })
+    .min(1900, { error: "Ano inválido (mínimo 1900)" })
+    .max(new Date().getFullYear() + 1, { error: "Ano não pode ser futuro" }),
 
-  tipoVeiculo: z.string().min(2, { error: "Tipo é obrigatório" }),
+  tipoVeiculo: z.string({ error: "O tipo é obrigatório" })
+    .min(2, { error: "Tipo obrigatório" }),
 
-  // Union para campos opcionais que podem vir vazios
   vencimentoCiv: z.union([z.string().optional(), z.literal('')]),
   vencimentoCipp: z.union([z.string().optional(), z.literal('')]),
 });
 
+// Tipo inferido para uso no onSubmit
 type VeiculoForm = z.infer<typeof veiculoSchema>;
 
 interface FormCadastrarVeiculoProps {
@@ -37,14 +40,16 @@ interface FormCadastrarVeiculoProps {
 
 export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVeiculoProps) {
 
+  // 🟢 CORREÇÃO PRINCIPAL: Removemos o <VeiculoForm> explícito
+  // O TypeScript infere automaticamente Input/Output através do zodResolver
   const {
     register,
     handleSubmit,
     reset,
     setError,
     formState: { errors, isSubmitting }
-  } = useForm<VeiculoForm>({
-    resolver: zodResolver(veiculoSchema) as any, // 'as any' previne conflitos de tipo estrito na v4
+  } = useForm({
+    resolver: zodResolver(veiculoSchema), // Sem 'as any'
     defaultValues: {
       placa: '',
       modelo: '',
@@ -57,6 +62,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
 
   const [successMsg, setSuccessMsg] = useState('');
 
+  // Aqui podemos tipar explicitamente o data, pois o handleSubmit garante que ele obedece ao schema
   const onSubmit = async (data: VeiculoForm) => {
     setSuccessMsg('');
     try {
@@ -65,8 +71,8 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
         modelo: DOMPurify.sanitize(data.modelo),
         ano: data.ano,
         tipoVeiculo: DOMPurify.sanitize(data.tipoVeiculo),
-        vencimentoCiv: data.vencimentoCiv && data.vencimentoCiv !== '' ? data.vencimentoCiv : null,
-        vencimentoCipp: data.vencimentoCipp && data.vencimentoCipp !== '' ? data.vencimentoCipp : null,
+        vencimentoCiv: data.vencimentoCiv || null,
+        vencimentoCipp: data.vencimentoCipp || null,
       });
 
       setSuccessMsg(`Veículo ${data.placa} cadastrado com sucesso!`);
@@ -76,9 +82,9 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
         onSuccess();
       }, 1500);
 
-    } catch (err: any) {
+    } catch (err) {
       console.error("Erro ao cadastrar veículo:", err);
-      if (err.response?.data?.error) {
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
         setError('root', { message: err.response.data.error });
       } else {
         setError('root', { message: 'Falha ao cadastrar veículo.' });
@@ -126,12 +132,13 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
           error={errors.tipoVeiculo?.message}
           disabled={isSubmitting}
         />
-        {/* valueAsNumber garante que o valor chegue como number */}
+        
+        {/* Input simplificado: valueAsNumber não é mais necessário com z.coerce */}
         <Input
           label="Ano"
           type="number"
           placeholder="2020"
-          {...register('ano', { valueAsNumber: true })}
+          {...register('ano')}
           error={errors.ano?.message}
           disabled={isSubmitting}
         />
