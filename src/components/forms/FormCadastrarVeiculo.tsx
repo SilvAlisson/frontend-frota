@@ -1,47 +1,54 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import axios from 'axios';
 import { api } from '../../services/api';
-import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import type { Veiculo } from '../../types';
 
-// --- ZOD V4 SCHEMA ---
+const tiposDeVeiculo = ["CAMINHAO", "CARRETA", "UTILITARIO", "OUTRO"] as const;
+const tiposDeCombustivel = ["DIESEL_S10", "GASOLINA_COMUM", "ETANOL", "GNV"] as const;
+
+// --- SCHEMA ZOD V4 ---
 const veiculoSchema = z.object({
-  placa: z.string({ error: "A placa é obrigatória" })
-    .min(7, { error: "A placa deve ter 7 caracteres" })
-    .max(7, { error: "A placa deve ter 7 caracteres" })
+  placa: z.string({ error: "Placa inválida" })
+    .min(7, { error: "Placa inválida" })
     .transform(val => val.toUpperCase()),
 
-  modelo: z.string({ error: "O modelo é obrigatório" })
-    .min(2, { error: "Modelo muito curto" }),
+  modelo: z.string({ error: "Modelo é obrigatório" })
+    .min(1, { error: "Modelo é obrigatório" }),
 
-  // z.coerce converte a string do input para number automaticamente
   ano: z.coerce.number({ error: "Ano inválido" })
-    .min(1900, { error: "Ano inválido (mínimo 1900)" })
+    .min(1900, { error: "Ano inválido" })
     .max(new Date().getFullYear() + 1, { error: "Ano não pode ser futuro" }),
 
-  tipoVeiculo: z.string({ error: "O tipo é obrigatório" })
-    .min(2, { error: "Tipo obrigatório" }),
+  tipoVeiculo: z.enum(tiposDeVeiculo, {
+    error: "Selecione um tipo de veículo válido"
+  }).nullable().optional(),
 
-  vencimentoCiv: z.union([z.string().optional(), z.literal('')]),
-  vencimentoCipp: z.union([z.string().optional(), z.literal('')]),
+  tipoCombustivel: z.enum(tiposDeCombustivel).default('DIESEL_S10'),
+
+  capacidadeTanque: z.coerce.number().positive().optional().nullable(),
+
+  vencimentoCiv: z.string().optional().nullable(),
+  vencimentoCipp: z.string().optional().nullable(),
 });
 
-// Tipo inferido para uso no onSubmit
-type VeiculoForm = z.infer<typeof veiculoSchema>;
+type VeiculoFormValues = z.infer<typeof veiculoSchema>;
 
-interface FormCadastrarVeiculoProps {
+interface FormEditarVeiculoProps {
+  veiculoId: string;
   onSuccess: () => void;
   onCancelar: () => void;
 }
 
-export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVeiculoProps) {
+export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEditarVeiculoProps) {
 
-  // 🟢 CORREÇÃO PRINCIPAL: Removemos o <VeiculoForm> explícito
-  // O TypeScript infere automaticamente Input/Output através do zodResolver
+  const [loadingData, setLoadingData] = useState(true);
+  const [successMsg, setSuccessMsg] = useState('');
+
+  // ✅ CORREÇÃO: Sem tipagem explícita, sem 'as any'
   const {
     register,
     handleSubmit,
@@ -49,163 +56,197 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
     setError,
     formState: { errors, isSubmitting }
   } = useForm({
-    resolver: zodResolver(veiculoSchema), // Sem 'as any'
-    defaultValues: {
-      placa: '',
-      modelo: '',
-      ano: new Date().getFullYear(),
-      tipoVeiculo: '',
-      vencimentoCiv: '',
-      vencimentoCipp: ''
-    }
+    resolver: zodResolver(veiculoSchema),
   });
 
-  const [successMsg, setSuccessMsg] = useState('');
+  useEffect(() => {
+    if (!veiculoId) return;
 
-  // Aqui podemos tipar explicitamente o data, pois o handleSubmit garante que ele obedece ao schema
-  const onSubmit = async (data: VeiculoForm) => {
+    const fetchVeiculo = async () => {
+      setLoadingData(true);
+      try {
+        const response = await api.get<Veiculo>(`/veiculo/${veiculoId}`);
+        const veiculo = response.data;
+
+        reset({
+          placa: veiculo.placa,
+          modelo: veiculo.modelo,
+          ano: veiculo.ano,
+          tipoVeiculo: (veiculo.tipoVeiculo as any) || 'OUTRO',
+          tipoCombustivel: veiculo.tipoCombustivel || 'DIESEL_S10',
+          capacidadeTanque: veiculo.capacidadeTanque,
+          vencimentoCiv: veiculo.vencimentoCiv || '',
+          vencimentoCipp: veiculo.vencimentoCipp || ''
+        });
+      } catch (err) {
+        console.error("Erro ao carregar veículo", err);
+        setError('root', { message: 'Erro ao carregar dados do servidor.' });
+      } finally {
+        setLoadingData(false);
+      }
+    };
+
+    fetchVeiculo();
+  }, [veiculoId, reset, setError]);
+
+  const onSubmit = async (data: VeiculoFormValues) => {
     setSuccessMsg('');
     try {
-      await api.post('/veiculo', {
-        placa: DOMPurify.sanitize(data.placa),
-        modelo: DOMPurify.sanitize(data.modelo),
-        ano: data.ano,
-        tipoVeiculo: DOMPurify.sanitize(data.tipoVeiculo),
-        vencimentoCiv: data.vencimentoCiv || null,
-        vencimentoCipp: data.vencimentoCipp || null,
-      });
+      const payload = {
+        ...data,
+        vencimentoCiv: data.vencimentoCiv === '' ? null : data.vencimentoCiv,
+        vencimentoCipp: data.vencimentoCipp === '' ? null : data.vencimentoCipp,
+        capacidadeTanque: data.capacidadeTanque || null,
+        tipoVeiculo: data.tipoVeiculo || null
+      };
 
-      setSuccessMsg(`Veículo ${data.placa} cadastrado com sucesso!`);
-      reset();
+      await api.put(`/veiculo/${veiculoId}`, payload);
 
-      setTimeout(() => {
-        onSuccess();
-      }, 1500);
+      setSuccessMsg('Veículo atualizado com sucesso!');
+      setTimeout(() => onSuccess(), 1500);
 
-    } catch (err) {
-      console.error("Erro ao cadastrar veículo:", err);
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
+    } catch (err: any) {
+      console.error(err);
+      if (err.response?.data?.error) {
         setError('root', { message: err.response.data.error });
       } else {
-        setError('root', { message: 'Falha ao cadastrar veículo.' });
+        setError('root', { message: 'Falha ao salvar veículo.' });
       }
     }
   };
 
+  if (loadingData) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 space-y-3">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="text-sm text-gray-500">Carregando dados...</p>
+      </div>
+    );
+  }
+
   return (
-    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+    <div className="max-w-md mx-auto p-6 bg-white rounded-lg shadow-sm border border-gray-100">
+      <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
 
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-50 mb-3">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-green-600">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-          </svg>
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-primary">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
+            </svg>
+          </div>
+          <h4 className="text-xl font-bold text-gray-900">Editar Veículo</h4>
+          <p className="text-sm text-gray-500">Atualize os dados da frota.</p>
         </div>
-        <h4 className="text-xl font-bold text-primary">
-          Novo Veículo
-        </h4>
-        <p className="text-sm text-text-secondary mt-1">
-          Adicione um novo veículo à frota.
-        </p>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label="Placa"
-          placeholder="ABC1D23"
-          {...register('placa')}
-          error={errors.placa?.message}
-          disabled={isSubmitting}
-          maxLength={7}
-        />
-        <Input
-          label="Modelo"
-          placeholder="Ex: VW Constellation"
-          {...register('modelo')}
-          error={errors.modelo?.message}
-          disabled={isSubmitting}
-        />
-        <Input
-          label="Tipo de Caminhão"
-          placeholder="Poliguindaste, Munck..."
-          {...register('tipoVeiculo')}
-          error={errors.tipoVeiculo?.message}
-          disabled={isSubmitting}
-        />
-        
-        {/* Input simplificado: valueAsNumber não é mais necessário com z.coerce */}
-        <Input
-          label="Ano"
-          type="number"
-          placeholder="2020"
-          {...register('ano')}
-          error={errors.ano?.message}
-          disabled={isSubmitting}
-        />
-      </div>
-
-      <div className="pt-4 border-t border-gray-100 mt-6">
-        <h4 className="text-sm font-bold text-text-secondary mb-4 uppercase tracking-wide text-center md:text-left flex items-center gap-2">
-          <svg className="w-4 h-4 text-text-secondary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-          Controle de Documentação (Opcional)
-        </h4>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-4">
           <Input
-            label="Vencimento CIV"
-            type="date"
-            {...register('vencimentoCiv')}
-            error={errors.vencimentoCiv?.message}
+            label="Placa"
+            {...register('placa')}
+            error={errors.placa?.message as string}
             disabled={isSubmitting}
           />
+
           <Input
-            label="Vencimento CIPP"
-            type="date"
-            {...register('vencimentoCipp')}
-            error={errors.vencimentoCipp?.message}
+            label="Modelo"
+            {...register('modelo')}
+            error={errors.modelo?.message as string}
             disabled={isSubmitting}
           />
-        </div>
-      </div>
 
-      {errors.root && (
-        <div className="flex items-center gap-3 p-3 rounded-md bg-red-50 border border-red-200 text-error text-sm animate-pulse mt-4">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
-            <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-          </svg>
-          <span>{errors.root.message}</span>
-        </div>
-      )}
+          <div className="grid grid-cols-2 gap-4">
+            <Input
+              label="Ano"
+              type="number"
+              {...register('ano')}
+              error={errors.ano?.message as string}
+              disabled={isSubmitting}
+            />
 
-      {successMsg && (
-        <div className="flex items-center gap-3 p-3 rounded-md bg-green-50 border border-green-200 text-success text-sm mt-4">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
-            <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
-          </svg>
-          <span>{successMsg}</span>
-        </div>
-      )}
+            <div>
+              <label className="block mb-1.5 text-sm font-medium text-gray-700">Tipo</label>
+              <div className="relative">
+                <select
+                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-input appearance-none focus:outline-none focus:ring-2 focus:ring-primary"
+                  {...register('tipoVeiculo')}
+                  disabled={isSubmitting}
+                >
+                  <option value="">Selecione...</option>
+                  {tiposDeVeiculo.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </div>
+              {errors.tipoVeiculo && <p className="mt-1 text-xs text-red-500">{errors.tipoVeiculo.message as string}</p>}
+            </div>
+          </div>
 
-      <div className="pt-4 flex gap-3">
-        <Button
-          type="button"
-          variant="secondary"
-          className="flex-1"
-          disabled={isSubmitting}
-          onClick={onCancelar}
-        >
-          Cancelar
-        </Button>
-        <Button
-          type="submit"
-          variant="primary"
-          className="flex-1"
-          disabled={isSubmitting}
-          isLoading={isSubmitting}
-        >
-          {isSubmitting ? 'Registrando...' : 'Cadastrar Veículo'}
-        </Button>
-      </div>
-    </form>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block mb-1.5 text-sm font-medium text-gray-700">Combustível</label>
+              <div className="relative">
+                <select
+                  className="w-full px-4 py-2 bg-white border border-gray-300 rounded-input appearance-none focus:outline-none focus:ring-2 focus:ring-primary"
+                  {...register('tipoCombustivel')}
+                  disabled={isSubmitting}
+                >
+                  {tiposDeCombustivel.map(t => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </div>
+            </div>
+            <Input
+              label="Tanque (L)"
+              type="number"
+              placeholder="Ex: 400"
+              {...register('capacidadeTanque')}
+              error={errors.capacidadeTanque?.message as string}
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-100 mt-2">
+            <Input
+              label="Vencimento CIV"
+              type="date"
+              {...register('vencimentoCiv')}
+              error={errors.vencimentoCiv?.message as string}
+              disabled={isSubmitting}
+            />
+            <Input
+              label="Vencimento CIPP"
+              type="date"
+              {...register('vencimentoCipp')}
+              error={errors.vencimentoCipp?.message as string}
+              disabled={isSubmitting}
+            />
+          </div>
+        </div>
+
+        {errors.root && (
+          <div className="p-3 bg-red-50 text-error border border-red-200 rounded text-sm text-center">
+            {errors.root.message}
+          </div>
+        )}
+
+        {successMsg && (
+          <div className="p-3 bg-green-50 text-success border border-green-200 rounded text-sm text-center font-medium">
+            {successMsg}
+          </div>
+        )}
+
+        <div className="flex gap-3 pt-2">
+          <Button type="button" variant="secondary" className="flex-1" onClick={onCancelar} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button type="submit" className="flex-1" isLoading={isSubmitting} disabled={isSubmitting}>
+            Salvar Alterações
+          </Button>
+        </div>
+
+      </form>
+    </div>
   );
 }

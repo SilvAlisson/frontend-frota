@@ -10,7 +10,6 @@ import { parseDecimal, formatKmVisual } from '../../utils';
 import type { Veiculo, Produto, Fornecedor } from '../../types';
 
 // --- 1. SCHEMA ZOD INTELIGENTE ---
-// Validação condicional: Só exige Veículo e KM se "vinculadoVeiculo" for true
 const manutencaoSchema = z.object({
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"], {
     error: "Selecione o tipo de manutenção"
@@ -27,6 +26,7 @@ const manutencaoSchema = z.object({
 
   itens: z.array(z.object({
     produtoId: z.string().min(1, { error: "Selecione o item" }),
+    // z.coerce converte para number, então o Output é number
     quantidade: z.coerce.number().min(0.01, { error: "Qtd inválida" }),
     valorPorUnidade: z.coerce.number().min(0, { error: "Valor inválido" }),
   })).min(1, { error: "Adicione pelo menos um serviço ou peça" })
@@ -49,6 +49,7 @@ const manutencaoSchema = z.object({
   }
 });
 
+// Extraímos o tipo de SAÍDA do esquema (onde quantidade é number)
 type ManutencaoForm = z.infer<typeof manutencaoSchema>;
 
 interface FormRegistrarManutencaoProps {
@@ -78,8 +79,9 @@ export function FormRegistrarManutencao({
     setValue,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm<ManutencaoForm>({
-    resolver: zodResolver(manutencaoSchema) as any,
+  } = useForm({
+    // Removemos o genérico <ManutencaoForm> aqui para evitar conflito de Input/Output do z.coerce
+    resolver: zodResolver(manutencaoSchema),
     defaultValues: {
       tipo: 'CORRETIVA',
       vinculadoVeiculo: true,
@@ -94,14 +96,16 @@ export function FormRegistrarManutencao({
     name: "itens"
   });
 
-  // Observadores para lógica visual
+  // Observadores
   const veiculoIdSelecionado = watch('veiculoId');
   const vinculadoVeiculo = watch('vinculadoVeiculo');
   const tipoManutencao = watch('tipo');
-  const itensObservados = watch('itens');
+  
+  // ✅ CORREÇÃO: Cast explícito para o tipo de SAÍDA do esquema.
+  // Isso diz ao TS: "Eu garanto que, ao ler estes dados, quantidade e valor são números".
+  const itensObservados = watch('itens') as ManutencaoForm['itens'];
 
   // --- 3. EFEITOS ---
-  // Busca o KM apenas se tiver veículo selecionado E estiver vinculado
   useEffect(() => {
     if (!vinculadoVeiculo || !veiculoIdSelecionado) {
       setUltimoKmRegistrado(0);
@@ -125,13 +129,13 @@ export function FormRegistrarManutencao({
     setValue("kmAtual", formatKmVisual(e.target.value));
   };
 
+  // Aqui usamos o tipo ManutencaoForm para o data, pois o handleSubmit já nos entrega os dados validados/transformados
   const onValidSubmit = async (data: ManutencaoForm) => {
     setErrorApi('');
     setSuccess('');
 
     let kmInputFloat = null;
 
-    // Validação de consistência do KM no Frontend (Pré-check) apenas se tiver veículo
     if (data.vinculadoVeiculo) {
       kmInputFloat = parseDecimal(data.kmAtual || '0');
       if (kmInputFloat <= ultimoKmRegistrado && ultimoKmRegistrado > 0) {
@@ -140,18 +144,16 @@ export function FormRegistrarManutencao({
       }
     }
 
-    // Formata itens
     const itensFormatados = data.itens.map(item => ({
       produtoId: item.produtoId,
       quantidade: item.quantidade,
       valorPorUnidade: item.valorPorUnidade
     }));
 
-    // Payload inteligente: envia null se não vinculado
     const payloadFinal = {
       veiculoId: data.vinculadoVeiculo ? data.veiculoId : null,
       fornecedorId: data.fornecedorId,
-      kmAtual: kmInputFloat, // Será null se não tiver veículo
+      kmAtual: kmInputFloat,
       data: new Date(data.data).toISOString(),
       tipo: data.tipo,
       observacoes: data.observacoes,
@@ -235,7 +237,6 @@ export function FormRegistrarManutencao({
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
           {/* SEÇÃO DO VEÍCULO (CONDICIONAL) */}
           {vinculadoVeiculo && (
             <>
@@ -248,7 +249,7 @@ export function FormRegistrarManutencao({
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
                 </div>
-                {errors.veiculoId && <span className="text-xs text-error">{errors.veiculoId.message}</span>}
+                {errors.veiculoId && <span className="text-xs text-error">{errors.veiculoId.message as string}</span>}
                 {ultimoKmRegistrado > 0 && (
                   <p className="text-xs text-primary mt-1 font-medium">Último KM: {ultimoKmRegistrado.toLocaleString('pt-BR')}</p>
                 )}
@@ -263,7 +264,7 @@ export function FormRegistrarManutencao({
                     handleKmChange(e);
                   }}
                   placeholder={ultimoKmRegistrado > 0 ? `> ${ultimoKmRegistrado}` : "Ex: 50.420"}
-                  error={errors.kmAtual?.message}
+                  error={errors.kmAtual?.message as string}
                   disabled={isSubmitting}
                 />
               </div>
@@ -280,14 +281,13 @@ export function FormRegistrarManutencao({
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
             </div>
-            {errors.fornecedorId && <span className="text-xs text-error">{errors.fornecedorId.message}</span>}
+            {errors.fornecedorId && <span className="text-xs text-error">{errors.fornecedorId.message as string}</span>}
           </div>
 
           <div className={!vinculadoVeiculo ? "md:col-span-2" : ""}>
             <label className={labelClass}>Data do Serviço</label>
-            <Input type="date" {...register("data")} error={errors.data?.message} disabled={isSubmitting} />
+            <Input type="date" {...register("data")} error={errors.data?.message as string} disabled={isSubmitting} />
           </div>
-
         </div>
 
         {/* ITENS DA OS */}
@@ -296,8 +296,10 @@ export function FormRegistrarManutencao({
 
           <div className="space-y-3">
             {fields.map((field, index) => {
-              const qtd = itensObservados[index]?.quantidade || 0;
-              const val = itensObservados[index]?.valorPorUnidade || 0;
+              // Acessamos com segurança os valores observados
+              const itemAtual = itensObservados?.[index];
+              const qtd = itemAtual?.quantidade || 0;
+              const val = itemAtual?.valorPorUnidade || 0;
               const total = qtd * val;
 
               return (
@@ -354,7 +356,7 @@ export function FormRegistrarManutencao({
               + Adicionar Item
             </Button>
             <span className="text-sm font-bold text-gray-700">
-              Total Geral: R$ {itensObservados.reduce((acc, i) => acc + (i.quantidade * i.valorPorUnidade || 0), 0).toFixed(2)}
+              Total Geral: R$ {(itensObservados || []).reduce((acc, i) => acc + ((i.quantidade || 0) * (i.valorPorUnidade || 0)), 0).toFixed(2)}
             </span>
           </div>
           {errors.itens && <p className="text-xs text-error mt-2 font-medium">{errors.itens.root?.message}</p>}
@@ -384,7 +386,6 @@ export function FormRegistrarManutencao({
           dadosJornada={formDataParaModal}
           apiEndpoint="/ordem-servico"
           apiMethod="POST"
-          // Passa null se não tiver veículo, assim a modal não tenta exibir "Valor Registrado: KM"
           kmParaConfirmar={formDataParaModal.veiculoId ? formDataParaModal.kmAtual : null}
           jornadaId={null}
           onClose={() => setModalAberto(false)}

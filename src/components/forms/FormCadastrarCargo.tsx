@@ -6,25 +6,28 @@ import { api } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
-// --- SCHEMA ---
+// --- SCHEMA ZOD V4 ---
 const requisitoSchema = z.object({
-    nome: z.string().min(2, { error: "Nome do curso é obrigatório" }),
+    nome: z.string({ error: "Nome do curso é obrigatório" })
+        .min(2, { error: "Nome muito curto" }),
 
-    // z.coerce converte strings para numbers
-    validadeMeses: z.coerce.number().min(0, { error: "Validade inválida" }),
+    validadeMeses: z.coerce.number({ error: "Validade inválida" })
+        .min(0, { error: "Validade inválida" }),
 
-    diasAntecedenciaAlerta: z.coerce.number().min(1, { error: "Mínimo 1 dia" }).default(30),
+    diasAntecedenciaAlerta: z.coerce.number()
+        .min(1, { error: "Mínimo 1 dia" }).default(30),
 });
 
 const cargoSchema = z.object({
-    nome: z.string()
-        .min(3, { error: "Nome do cargo deve ter no mínimo 3 caracteres" })
+    nome: z.string({ error: "Nome é obrigatório" })
+        .min(3, { error: "Mínimo 3 caracteres" })
         .transform(val => val.toUpperCase()),
     descricao: z.string().optional(),
     requisitos: z.array(requisitoSchema).optional(),
 });
 
-type CargoForm = z.infer<typeof cargoSchema>;
+// Inferência automática do tipo a partir do schema
+type CargoFormValues = z.infer<typeof cargoSchema>;
 
 interface FormCadastrarCargoProps {
     onSuccess: () => void;
@@ -35,17 +38,18 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormCadastrarCargo
     const [successMsg, setSuccessMsg] = useState('');
     const [errorMsg, setErrorMsg] = useState('');
 
+    // ✅ CORREÇÃO: Removido <CargoForm> e 'as any'.
+    // O hook infere os tipos com base no resolver.
     const {
         register,
         control,
         handleSubmit,
         formState: { errors, isSubmitting }
-    } = useForm<CargoForm>({
-        resolver: zodResolver(cargoSchema) as any,
+    } = useForm({
+        resolver: zodResolver(cargoSchema),
         defaultValues: {
             nome: '',
             descricao: '',
-            // Inicia com um requisito vazio para facilitar
             requisitos: [{ nome: '', validadeMeses: 12, diasAntecedenciaAlerta: 30 }]
         }
     });
@@ -55,7 +59,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormCadastrarCargo
         name: "requisitos"
     });
 
-    const onSubmit = async (data: CargoForm) => {
+    const onSubmit = async (data: CargoFormValues) => {
         setSuccessMsg('');
         setErrorMsg('');
         try {
@@ -81,7 +85,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormCadastrarCargo
                     label="Nome do Cargo"
                     placeholder="Ex: OPERADOR DE EQUIPAMENTOS"
                     {...register('nome')}
-                    error={errors.nome?.message}
+                    error={errors.nome?.message as string}
                     disabled={isSubmitting}
                 />
 
