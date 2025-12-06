@@ -2,38 +2,75 @@ import axios from 'axios';
 import { toast } from 'sonner';
 
 /**
- * Trata o erro e retorna uma mensagem amigável.
- * Opcionalmente dispara logo o toast.
+ * Analisa um erro (da API ou Javascript) e retorna uma mensagem amigável.
+ * Também dispara um toast de notificação automaticamente.
  */
-export const handleApiError = (error: unknown, customMessage = 'Ocorreu um erro inesperado.') => {
-    let message = customMessage;
+export function handleApiError(error: unknown, defaultMessage = 'Ocorreu um erro inesperado.'): string {
+    let message = defaultMessage;
+    let description = '';
 
     if (axios.isAxiosError(error)) {
-        // 1. Tenta pegar a mensagem específica enviada pelo backend
-        if (error.response?.data?.error) {
-            message = error.response.data.error;
+        const responseData = error.response?.data as any;
+
+        // 1. Prioridade: Mensagem explícita enviada pelo nosso Backend
+        if (responseData?.error) {
+            message = responseData.error;
         }
-        // 2. Fallbacks para códigos HTTP comuns
-        else if (error.response?.status === 401) {
-            message = 'Sessão expirada. Por favor faça login novamente.';
-        } else if (error.response?.status === 403) {
-            message = 'Você não tem permissão para realizar esta ação.';
-        } else if (error.response?.status === 404) {
-            message = 'Recurso não encontrado no servidor.';
-        } else if (error.response?.status === 500) {
-            message = 'Erro interno do servidor. Tente mais tarde.';
-        } else if (error.code === 'ERR_NETWORK') {
-            message = 'Falha na conexão. Verifique sua internet.';
+        else if (responseData?.message) {
+            message = responseData.message;
         }
-    } else if (error instanceof Error) {
-        message = error.message;
+        // 2. Fallbacks baseados no Status HTTP
+        else if (error.response) {
+            switch (error.response.status) {
+                case 400:
+                    message = 'Requisição inválida. Verifique os dados enviados.';
+                    break;
+                case 401:
+                    message = 'Sessão expirada.';
+                    description = 'Por favor, faça login novamente.';
+                    break;
+                case 403:
+                    message = 'Acesso negado.';
+                    description = 'Você não tem permissão para realizar esta ação.';
+                    break;
+                case 404:
+                    message = 'Recurso não encontrado.';
+                    break;
+                case 422:
+                    message = 'Erro de validação.';
+                    description = 'Verifique os campos preenchidos.';
+                    break;
+                case 429:
+                    message = 'Muitas requisições.';
+                    description = 'Aguarde um momento e tente novamente.';
+                    break;
+                case 500:
+                    message = 'Erro interno do servidor.';
+                    description = 'A equipe técnica já foi notificada.';
+                    break;
+                default:
+                    message = `Erro desconhecido (${error.response.status})`;
+            }
+        }
+        // 3. Erros de Rede (Offline, DNS, Timeout)
+        else if (error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') {
+            message = 'Sem conexão com o servidor.';
+            description = 'Verifique sua internet e tente novamente.';
+        }
+    }
+    else if (error instanceof Error) {
+        // CORREÇÃO: Uso de import.meta.env.DEV (padrão Vite) em vez de process.env
+        if (import.meta.env.DEV) {
+            console.error('[Non-Axios Error]', error);
+        }
+        // message = error.message; // Opcional
     }
 
-    // Dispara o toast de erro automaticamente
-    toast.error('Erro', {
-        description: message,
+    // Dispara o Toast Visual
+    toast.error(message, {
+        description: description || undefined,
+        duration: 5000,
     });
 
-    // Retorna a mensagem caso o componente precise dela para outro fim
     return message;
-};
+}

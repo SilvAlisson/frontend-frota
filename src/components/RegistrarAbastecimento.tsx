@@ -4,21 +4,24 @@ import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { parseDecimal, formatKmVisual } from '../utils';
+import { toast } from 'sonner';
+import type { User, Veiculo, Produto, Fornecedor } from '../types';
 
 interface RegistrarAbastecimentoProps {
-  usuarios: any[];
-  veiculos: any[];
-  produtos: any[];
-  fornecedores: any[];
+  usuarios: User[];
+  veiculos: Veiculo[];
+  produtos: Produto[];
+  fornecedores: Fornecedor[];
 }
+
 interface ItemAbastecimento {
   produtoId: string;
   quantidade: string;
   valorPorUnidade: string;
 }
 
-const labelStyle = "block mb-1.5 text-sm font-medium text-text-secondary";
-const selectStyle = "w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none transition-all duration-200";
+const selectStyle = "w-full px-4 py-2.5 text-sm text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-50 appearance-none transition-all shadow-sm cursor-pointer hover:border-gray-400";
+const labelStyle = "block mb-1.5 text-sm font-bold text-text-secondary";
 
 export function RegistrarAbastecimento({
   usuarios,
@@ -34,13 +37,12 @@ export function RegistrarAbastecimento({
   const [dataHora, setDataHora] = useState(new Date().toISOString().slice(0, 16));
   const [placaCartaoUsado, setPlacaCartaoUsado] = useState('');
   const [justificativa, setJustificativa] = useState('');
+
   const [itens, setItens] = useState<ItemAbastecimento[]>([
     { produtoId: '', quantidade: '', valorPorUnidade: '' }
   ]);
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [modalAberto, setModalAberto] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
 
@@ -53,9 +55,11 @@ export function RegistrarAbastecimento({
     novosItens[index][field] = value;
     setItens(novosItens);
   };
+
   const handleAddItem = () => {
     setItens([...itens, { produtoId: '', quantidade: '', valorPorUnidade: '' }]);
   };
+
   const handleRemoveItem = (index: number) => {
     if (itens.length > 1) {
       const novosItens = itens.filter((_, i) => i !== index);
@@ -66,18 +70,17 @@ export function RegistrarAbastecimento({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setLoading(true);
-    setError('');
-    setSuccess('');
 
+    // Validação Manual Rápida (Pode migrar para Zod se desejar padronizar 100%)
     if (!veiculoId || !operadorId || !fornecedorId || !kmOdometro || !dataHora || !placaCartaoUsado ||
       itens.some(item => !item.produtoId || !item.quantidade || !item.valorPorUnidade)) {
-      setError('Preencha todos os campos obrigatórios.');
+      toast.warning('Preencha todos os campos obrigatórios.');
       setLoading(false);
       return;
     }
 
     if (placaCartaoUsado.length !== 4) {
-      setError('Os últimos dígitos do cartão devem ter 4 números.');
+      toast.error('Os últimos dígitos do cartão devem ter 4 números.');
       setLoading(false);
       return;
     }
@@ -89,7 +92,7 @@ export function RegistrarAbastecimento({
         valorPorUnidade: parseFloat(item.valorPorUnidade)
       }));
 
-      const dadosCompletosDoFormulario = {
+      const dadosFormulario = {
         veiculoId,
         operadorId,
         fornecedorId,
@@ -100,19 +103,19 @@ export function RegistrarAbastecimento({
         itens: itensFormatados
       };
 
-      setFormDataParaModal(dadosCompletosDoFormulario);
+      setFormDataParaModal(dadosFormulario);
       setModalAberto(true);
 
     } catch (err) {
       console.error("Erro ao preparar dados:", err);
-      setError('Falha ao preparar dados para envio.');
+      toast.error('Falha ao preparar dados para envio.');
     } finally {
       setLoading(false);
     }
   };
 
   const handleModalSuccess = () => {
-    setSuccess('Abastecimento registrado com sucesso!');
+    toast.success('Abastecimento registrado com sucesso!');
     setModalAberto(false);
     setFormDataParaModal(null);
 
@@ -124,86 +127,106 @@ export function RegistrarAbastecimento({
     setPlacaCartaoUsado('');
     setJustificativa('');
     setItens([{ produtoId: '', quantidade: '', valorPorUnidade: '' }]);
-
-    setTimeout(() => setSuccess(''), 4000);
   };
 
+  // Cálculo do total geral em tempo real
+  const totalGeral = itens.reduce((acc, item) => {
+    const qtd = parseFloat(item.quantidade) || 0;
+    const val = parseFloat(item.valorPorUnidade) || 0;
+    return acc + (qtd * val);
+  }, 0);
 
   return (
     <>
-      <form className="space-y-6" onSubmit={handleSubmit}>
+      <form className="space-y-8 bg-white p-6 rounded-card shadow-card border border-gray-100" onSubmit={handleSubmit}>
 
         <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-green-50 mb-3">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-green-600">
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-green-50 mb-3 ring-4 ring-green-50/50">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-green-600">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
           </div>
           <h4 className="text-xl font-bold text-primary">
             Novo Abastecimento
           </h4>
+          <p className="text-sm text-text-secondary mt-1">
+            Registre os detalhes do abastecimento realizado.
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className={labelStyle}>Veículo</label>
-            <div className="relative">
-              <select className={selectStyle} value={veiculoId} onChange={(e) => setVeiculoId(e.target.value)}>
+            <div className="relative group">
+              <select className={selectStyle} value={veiculoId} onChange={(e) => setVeiculoId(e.target.value)} disabled={loading}>
                 <option value="">Selecione...</option>
                 {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>)}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 group-hover:text-primary transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
             </div>
           </div>
+
           <div>
-            <label className={labelStyle}>Operador</label>
-            <div className="relative">
-              <select className={selectStyle} value={operadorId} onChange={(e) => setOperadorId(e.target.value)}>
+            <label className={labelStyle}>Motorista</label>
+            <div className="relative group">
+              <select className={selectStyle} value={operadorId} onChange={(e) => setOperadorId(e.target.value)} disabled={loading}>
                 <option value="">Selecione...</option>
                 {usuarios.filter(u => u.role === 'OPERADOR').map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 group-hover:text-primary transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
             </div>
           </div>
+
           <div>
-            <label className={labelStyle}>Fornecedor (Posto)</label>
-            <div className="relative">
-              <select className={selectStyle} value={fornecedorId} onChange={(e) => setFornecedorId(e.target.value)}>
+            <label className={labelStyle}>Posto / Fornecedor</label>
+            <div className="relative group">
+              <select className={selectStyle} value={fornecedorId} onChange={(e) => setFornecedorId(e.target.value)} disabled={loading}>
                 <option value="">Selecione...</option>
                 {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 group-hover:text-primary transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
             </div>
           </div>
+
           <div>
-            <label className={labelStyle}>KM Odômetro</label>
             <Input
+              label="KM Odômetro"
               type="text"
               inputMode="numeric"
               placeholder="Ex: 50.420"
               value={kmOdometro}
               onChange={handleKmChange}
+              disabled={loading}
             />
           </div>
+
           <div>
             <label className={labelStyle}>Data e Hora</label>
-            <Input type="datetime-local" value={dataHora} onChange={(e) => setDataHora(e.target.value)} />
+            <Input type="datetime-local" value={dataHora} onChange={(e) => setDataHora(e.target.value)} disabled={loading} />
           </div>
+
           <div>
-            <label className={labelStyle}>Últimos 4 Dígitos do Cartão</label>
             <Input
+              label="Final do Cartão (4 dígitos)"
               type="text"
               inputMode="numeric"
               value={placaCartaoUsado}
               onChange={(e) => setPlacaCartaoUsado(e.target.value)}
               placeholder="Ex: 1234"
               maxLength={4}
+              disabled={loading}
             />
           </div>
         </div>
 
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 mt-6">
-          <h4 className="text-sm font-bold text-text-secondary uppercase tracking-wide mb-4">Itens Abastecidos</h4>
+        {/* ITENS ABASTECIDOS */}
+        <div className="bg-gray-50/80 p-5 rounded-xl border border-gray-200 mt-6">
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="text-sm font-bold text-text-secondary uppercase tracking-wide">Detalhes do Abastecimento</h4>
+            <span className="text-xs font-mono bg-white px-2 py-1 rounded border border-gray-200 text-gray-500">
+              {itens.length} item(ns)
+            </span>
+          </div>
 
           <div className="space-y-3">
             {itens.map((item, index) => {
@@ -212,37 +235,62 @@ export function RegistrarAbastecimento({
               const valorTotalItem = (quantidade > 0 && valorPorUnidade > 0) ? (quantidade * valorPorUnidade) : 0;
 
               return (
-                <div key={index} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end bg-white p-3 rounded-md shadow-sm border border-gray-100">
+                <div key={index} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start bg-white p-3 rounded-lg shadow-sm border border-gray-200">
+
                   <div className="sm:col-span-5">
-                    <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Produto</label>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 pl-1">Produto</label>
                     <div className="relative">
                       <select
                         className={selectStyle + " py-2 text-sm"}
                         value={item.produtoId}
                         onChange={(e) => handleItemChange(index, 'produtoId', e.target.value)}
+                        disabled={loading}
                       >
-                        <option value="">Produto...</option>
+                        <option value="">Selecione...</option>
                         {produtos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                       </select>
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
                     </div>
                   </div>
+
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Litros</label>
-                    <Input type="number" placeholder="Qtd" className="!py-2 text-right text-sm" value={item.quantidade} onChange={(e) => handleItemChange(index, 'quantidade', e.target.value)} />
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 pl-1">Litros</label>
+                    <Input
+                      type="number"
+                      placeholder="0,00"
+                      className="!py-2 text-right text-sm"
+                      value={item.quantidade}
+                      onChange={(e) => handleItemChange(index, 'quantidade', e.target.value)}
+                      disabled={loading}
+                    />
                   </div>
+
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-medium text-gray-500 mb-1 sm:hidden">Valor Un.</label>
-                    <Input type="number" step="0.01" placeholder="R$" className="!py-2 text-right text-sm" value={item.valorPorUnidade} onChange={(e) => handleItemChange(index, 'valorPorUnidade', e.target.value)} />
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 pl-1">Valor Un.</label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      placeholder="R$ 0,00"
+                      className="!py-2 text-right text-sm"
+                      value={item.valorPorUnidade}
+                      onChange={(e) => handleItemChange(index, 'valorPorUnidade', e.target.value)}
+                      disabled={loading}
+                    />
                   </div>
-                  <div className="sm:col-span-3 flex items-center justify-end gap-2">
-                    <div className="text-right bg-gray-50 px-3 py-2 rounded border border-gray-200 w-full">
-                      <span className="text-xs text-gray-500 sm:hidden mr-2">Total:</span>
-                      <span className="text-sm font-bold text-gray-700">{valorTotalItem > 0 ? `R$ ${valorTotalItem.toFixed(2)}` : 'R$ 0,00'}</span>
+
+                  <div className="sm:col-span-3 flex items-end justify-end gap-2 h-full pb-0.5">
+                    <div className="text-right">
+                      <p className="text-[10px] text-gray-400 font-bold uppercase">Subtotal</p>
+                      <p className="text-sm font-bold text-gray-700">{valorTotalItem > 0 ? `R$ ${valorTotalItem.toFixed(2)}` : 'R$ 0,00'}</p>
                     </div>
                     {itens.length > 1 && (
-                      <button type="button" onClick={() => handleRemoveItem(index)} className="text-red-400 hover:text-red-600 p-2 transition-colors">
-                        ✕
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveItem(index)}
+                        className="text-gray-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded transition-colors mb-0.5"
+                        disabled={loading}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
                     )}
                   </div>
@@ -251,29 +299,37 @@ export function RegistrarAbastecimento({
             })}
           </div>
 
-          <div className="mt-4">
-            <Button type="button" variant="secondary" onClick={handleAddItem} className="text-xs">+ Adicionar Item</Button>
+          <div className="mt-5 flex justify-between items-center pt-4 border-t border-gray-200">
+            <Button type="button" variant="secondary" onClick={handleAddItem} className="text-xs h-8 bg-white" disabled={loading}>
+              + Adicionar Item
+            </Button>
+
+            <div className="text-right">
+              <span className="text-xs text-gray-500 uppercase font-bold mr-2">Total Geral</span>
+              <span className="text-xl font-bold text-green-600">R$ {totalGeral.toFixed(2)}</span>
+            </div>
           </div>
         </div>
 
-        <div className="pt-4">
-          <label className={labelStyle}>Justificativas</label>
+        <div className="pt-2">
+          <label className={labelStyle}>Justificativa (Opcional)</label>
           <textarea
-            className={selectStyle + " h-24 resize-none"}
+            className="w-full px-4 py-3 text-sm text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none transition-all h-24"
             value={justificativa}
             onChange={(e) => setJustificativa(e.target.value)}
-            placeholder="Justificar se houve uso de cartão de outro veículo ou outra ocorrência (opcional)"
+            placeholder="Caso tenha usado o cartão de outro veículo ou ocorrido algo incomum..."
+            disabled={loading}
           ></textarea>
         </div>
 
-        {error && <p className="text-center text-error bg-red-50 p-3 rounded-md border border-red-200">{error}</p>}
-        {success && <p className="text-center text-success bg-green-50 p-3 rounded-md border border-green-200">{success}</p>}
-
-        <div className="pt-4">
-          <Button type="submit" disabled={loading} isLoading={loading} className="w-full">
-            {loading ? 'Validando...' : 'Registrar Abastecimento'}
-          </Button>
-        </div>
+        <Button
+          type="submit"
+          disabled={loading}
+          isLoading={loading}
+          className="w-full py-3.5 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30"
+        >
+          {loading ? 'Validando...' : 'Registrar Abastecimento'}
+        </Button>
       </form>
 
       {modalAberto && formDataParaModal && (

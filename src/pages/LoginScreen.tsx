@@ -1,42 +1,58 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
+import { toast } from 'sonner';
+
+// --- SCHEMA ZOD V4 ---
+const loginSchema = z.object({
+  email: z.string()
+    .min(1, { message: "Digite seu email" })
+    .email({ message: "Formato de email inválido" }),
+  password: z.string()
+    .min(1, { message: "Digite sua senha" })
+});
+
+type LoginFormValues = z.input<typeof loginSchema>;
 
 export function LoginScreen() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-
   const { login } = useAuth();
   const navigate = useNavigate();
-
-  // Hook para ler parâmetros da URL
   const [searchParams] = useSearchParams();
   const magicToken = searchParams.get('magicToken');
 
-  // Efeito: Se tiver token na URL, tenta logar sozinho
+  // Estado local apenas para controlar o loading visual do Magic Token
+  const [isMagicLoggingIn, setIsMagicLoggingIn] = useState(!!magicToken);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting }
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema)
+  });
+
+  // --- LOGIN VIA QR CODE (MAGIC TOKEN) ---
   useEffect(() => {
     if (magicToken) {
       const realizarLoginPorToken = async () => {
-        setLoading(true);
-        setError('');
-
+        setIsMagicLoggingIn(true);
         try {
-          const response = await api.post('/auth/login-token', {
-            loginToken: magicToken
-          });
-
+          const response = await api.post('/auth/login-token', { loginToken: magicToken });
           login(response.data);
-          navigate('/');
-
-        } catch (err: any) {
+          toast.success(`Bem-vindo, ${response.data.user.nome.split(' ')[0]}!`);
+          navigate('/', { replace: true });
+        } catch (err) {
           console.error("Falha no login por QR Code:", err);
-          setError('QR Code inválido ou expirado.');
-          setLoading(false);
+          toast.error('O código de acesso expirou ou é inválido.');
+          // Remove o token da URL para mostrar o form de login normal
+          navigate('/login', { replace: true });
+          setIsMagicLoggingIn(false);
         }
       };
 
@@ -44,152 +60,130 @@ export function LoginScreen() {
     }
   }, [magicToken, login, navigate]);
 
-  // Login Manual
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setError('');
-    setLoading(true);
-
+  // --- LOGIN MANUAL ---
+  const onSubmit = async (data: LoginFormValues) => {
     try {
-      const response = await api.post('/auth/login', {
-        email,
-        password
-      });
+      const response = await api.post('/auth/login', data);
       login(response.data);
-      navigate('/');
+      toast.success('Login realizado com sucesso!');
+      navigate('/', { replace: true });
     } catch (err: any) {
-      if (err.response) {
-        setError(err.response.data.error || 'Credenciais inválidas.');
+      if (err.response?.data?.error) {
+        toast.error(err.response.data.error);
       } else {
-        setError('Não foi possível conectar ao servidor.');
+        toast.error('Erro de conexão. Tente novamente.');
       }
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background relative overflow-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden">
 
-      {/* Fundo Decorativo */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
-        <div className="absolute top-[-10%] right-[-5%] w-96 h-96 bg-primary/10 rounded-full blur-3xl opacity-60"></div>
-        <div className="absolute bottom-[-10%] left-[-5%] w-72 h-72 bg-blue-400/10 rounded-full blur-3xl opacity-60"></div>
+      {/* Fundo Decorativo (Blob Animation) */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10 pointer-events-none">
+        <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-3xl opacity-70 animate-pulse"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-blue-400/10 rounded-full blur-3xl opacity-60"></div>
       </div>
 
-      <div className="w-full max-w-md px-6">
+      <div className="w-full max-w-md px-6 animate-in fade-in zoom-in-95 duration-500">
 
-        {/* Cabeçalho da Tela */}
+        {/* Cabeçalho */}
         <div className="text-center mb-8">
-          <div className="inline-flex p-4 bg-white rounded-2xl shadow-lg shadow-gray-200/50 mb-6">
+          <div className="inline-flex p-4 bg-white rounded-2xl shadow-lg shadow-gray-200/50 mb-6 ring-1 ring-gray-100">
             <img src="/logo.png" alt="Logo KLIN" className="h-12 w-auto object-contain" />
           </div>
-          <h2 className="text-3xl font-bold text-text tracking-tight">
+          <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
             Bem-vindo
           </h2>
-          <p className="text-text-secondary mt-2 font-medium">
+          <p className="text-gray-500 mt-2 font-medium">
             Acesse o painel de gestão de frota
           </p>
         </div>
 
         {/* Card de Login */}
-        <div className="bg-white rounded-card shadow-card p-8 border border-gray-50 relative overflow-hidden">
+        <div className="bg-white rounded-2xl shadow-xl shadow-gray-200/40 p-8 border border-gray-100 relative overflow-hidden">
 
-          {/* Barra de progresso superior (visual) */}
-          {loading && (
+          {/* Barra de Carregamento Superior */}
+          {(isSubmitting || isMagicLoggingIn) && (
             <div className="absolute top-0 left-0 w-full h-1 bg-gray-100 overflow-hidden">
-              <div className="h-full bg-primary animate-[loading_1s_ease-in-out_infinite]"></div>
+              <div className="h-full bg-primary w-1/3 animate-[loading_1s_ease-in-out_infinite]"></div>
             </div>
           )}
 
-          <form className="space-y-5" onSubmit={handleSubmit}>
-
-            {/* Estado de Carregamento do Token Mágico */}
-            {magicToken && loading ? (
-              <div className="text-center py-10 space-y-4">
-                <div className="inline-block animate-spin rounded-full h-10 w-10 border-[3px] border-gray-200 border-t-primary"></div>
-                <div>
-                  <p className="text-primary font-bold text-lg animate-pulse">Autenticando acesso...</p>
-                  <p className="text-xs text-gray-400 mt-1">Validando suas credenciais de segurança</p>
+          {isMagicLoggingIn ? (
+            /* Estado de Login via Token */
+            <div className="text-center py-12 space-y-5">
+              <div className="relative inline-block">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-gray-100 border-t-primary"></div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="h-2 w-2 bg-primary rounded-full"></div>
                 </div>
               </div>
-            ) : (
-              /* Formulário Manual */
-              <>
+              <div className="space-y-1">
+                <p className="text-primary font-bold text-lg animate-pulse">Validando Acesso...</p>
+                <p className="text-xs text-gray-400">Verificando credenciais de segurança</p>
+              </div>
+            </div>
+          ) : (
+            /* Formulário Manual */
+            <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+              <Input
+                label="Email Corporativo"
+                type="email"
+                placeholder="seu.nome@klin.com.br"
+                {...register('email')}
+                error={errors.email?.message}
+                disabled={isSubmitting}
+                autoFocus
+                className="py-3"
+              />
+
+              <div className="space-y-1">
                 <Input
-                  label="Email Corporativo"
-                  type="email"
-                  placeholder="seu.nome@klin.com.br"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
+                  label="Senha"
+                  type="password"
+                  placeholder="••••••••"
+                  {...register('password')}
+                  error={errors.password?.message}
+                  disabled={isSubmitting}
                   className="py-3"
                 />
 
-                <div className="space-y-1">
-                  <Input
-                    label="Senha"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    disabled={loading}
-                    className="py-3"
-                  />
-
-                  {/* Botão Esqueceu a Senha (NOVO) */}
-                  <div className="text-right">
-                    <button
-                      type="button"
-                      onClick={() => alert("Para redefinir sua senha, entre em contato com o gestor da frota ou o suporte técnico.")}
-                      className="text-xs text-primary hover:text-primary-hover hover:underline font-medium bg-transparent border-none p-0 cursor-pointer transition-colors"
-                    >
-                      Esqueceu a senha?
-                    </button>
-                  </div>
+                <div className="text-right pt-1">
+                  <button
+                    type="button"
+                    onClick={() => toast.info("Entre em contato com o gestor da frota para redefinir sua senha.")}
+                    className="text-xs text-primary hover:text-primary-hover font-semibold transition-colors"
+                    disabled={isSubmitting}
+                  >
+                    Esqueceu a senha?
+                  </button>
                 </div>
-              </>
-            )}
-
-            {/* Mensagem de Erro */}
-            {error && (
-              <div className="p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5">
-                  <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                </svg>
-                <p className="text-red-700 text-sm font-medium">{error}</p>
               </div>
-            )}
 
-            {/* Botão de Login Manual */}
-            {!magicToken && (
               <Button
                 type="submit"
                 variant="primary"
-                isLoading={loading}
-                className="w-full py-3.5 text-base font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+                isLoading={isSubmitting}
+                disabled={isSubmitting}
+                className="w-full py-3.5 text-base font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all mt-2"
               >
-                {loading ? 'Entrando...' : 'Acessando o Painel'}
+                {isSubmitting ? 'Entrando...' : 'Acessar Painel'}
               </Button>
-            )}
+            </form>
+          )}
 
-            {/* Botão para cancelar login automático se falhar */}
-            {magicToken && !loading && error && (
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => navigate('/login')}
-                className="w-full py-3 border-gray-200 text-gray-600"
-              >
-                Voltar ao Login Manual
-              </Button>
-            )}
-          </form>
         </div>
 
-        <p className="text-center text-xs text-gray-400 mt-8 font-medium">
-          &copy; {new Date().getFullYear()} KLIN. Todos os direitos reservados.
-        </p>
+        <div className="mt-8 text-center space-y-2">
+          <p className="text-xs text-gray-400 font-medium">
+            &copy; {new Date().getFullYear()} KLIN Produtos de Limpeza.
+          </p>
+          <p className="text-[10px] text-gray-300 uppercase tracking-widest">
+            Sistema de Gestão de Frota v2.0
+          </p>
+        </div>
+
       </div>
     </div>
   );

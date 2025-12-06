@@ -61,7 +61,6 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
     staleTime: 1000 * 60 * 10, // 10 minutos de cache
   });
 
-  // ✅ CORREÇÃO: useForm sem genérico explícito
   const {
     register,
     handleSubmit,
@@ -116,8 +115,8 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
         setTimeout(onSuccess, 800);
         return 'Colaborador cadastrado com sucesso!';
       },
-      error: (err) => {
-        console.error(err);
+      error: (err) => { // CORREÇÃO APLICADA: Mensagem específica
+        console.error("Erro ao cadastrar usuário:", err);
         return err.response?.data?.error || 'Erro ao cadastrar. Verifique o email.';
       }
     });
@@ -163,7 +162,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
             label="Nome Completo"
             placeholder="Ex: João da Silva"
             {...register('nome')}
-            error={errors.nome?.message as string}
+            error={errors.nome?.message}
             disabled={isSubmitting}
             autoFocus
           />
@@ -174,7 +173,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
           type="email"
           placeholder="joao@empresa.com"
           {...register('email')}
-          error={errors.email?.message as string}
+          error={errors.email?.message}
           disabled={isSubmitting}
         />
 
@@ -197,7 +196,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
           label="Matrícula (Opcional)"
           placeholder="Ex: 12345"
           {...register('matricula')}
-          error={errors.matricula?.message as string}
+          error={errors.matricula?.message}
           disabled={isSubmitting}
         />
 
@@ -292,7 +291,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
             </div>
           </div>
         </div>
-      )}
+      </div>
 
       <div className="flex gap-3 pt-6 border-t border-gray-100">
         <Button
