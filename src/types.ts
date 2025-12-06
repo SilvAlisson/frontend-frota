@@ -1,7 +1,3 @@
-// =========================================
-// ENTIDADES PRINCIPAIS (Dados Mestre)
-// =========================================
-
 export type UserRole = 'ADMIN' | 'ENCARREGADO' | 'OPERADOR' | 'RH' | 'COORDENADOR';
 
 export interface User {
@@ -10,6 +6,7 @@ export interface User {
   email: string;
   matricula: string | null;
   role: UserRole;
+  fotoUrl?: string | null;
   // RH Fields
   cnhNumero?: string | null;
   cnhCategoria?: string | null;
@@ -32,7 +29,7 @@ export interface Veiculo {
   ultimoKm?: number; // Campo calculado que vem do backend em getById
 }
 
-export type TipoProduto = 'COMBUSTIVEL' | 'ADITIVO' | 'SERVICO' | 'OUTRO';
+export type TipoProduto = 'COMBUSTIVEL' | 'ADITIVO' | 'LAVAGEM' | 'PECA' | 'SERVICO' | 'OUTRO';
 
 export interface Produto {
   id: string;
@@ -41,10 +38,14 @@ export interface Produto {
   unidadeMedida: string;
 }
 
+// --- ATUALIZAÇÃO: Tipos de Fornecedor ---
+export type TipoFornecedor = 'POSTO' | 'OFICINA' | 'OUTROS';
+
 export interface Fornecedor {
   id: string;
   nome: string;
   cnpj: string | null;
+  tipo: TipoFornecedor; // Adicionado para permitir filtros
 }
 
 // =========================================

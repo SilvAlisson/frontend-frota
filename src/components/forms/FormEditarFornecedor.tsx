@@ -8,6 +8,9 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { toast } from 'sonner';
 
+// Lista de Tipos
+const tiposFornecedor = ["POSTO", "OFICINA", "OUTROS"] as const;
+
 // --- 1. SCHEMA ZOD V4 ---
 const fornecedorSchema = z.object({
   nome: z.string({ error: 'O Nome é obrigatório.' })
@@ -16,6 +19,9 @@ const fornecedorSchema = z.object({
 
   // Aceita string vazia ou undefined
   cnpj: z.string().optional().or(z.literal('')),
+
+  // Novo campo
+  tipo: z.enum(tiposFornecedor, { error: "Selecione o tipo" }).default('OUTROS'),
 });
 
 type FornecedorFormInput = z.input<typeof fornecedorSchema>;
@@ -36,7 +42,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
     formState: { errors, isSubmitting }
   } = useForm<FornecedorFormInput>({
     resolver: zodResolver(fornecedorSchema),
-    defaultValues: { nome: '', cnpj: '' },
+    defaultValues: { nome: '', cnpj: '', tipo: 'OUTROS' },
     mode: 'onBlur'
   });
 
@@ -47,9 +53,14 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
     const fetchDados = async () => {
       try {
         const { data } = await api.get(`/fornecedor/${fornecedorId}`);
+
+        // Validação de segurança para o tipo
+        const tipoValido = tiposFornecedor.includes(data.tipo) ? data.tipo : 'OUTROS';
+
         reset({
           nome: data.nome || '',
-          cnpj: data.cnpj || ''
+          cnpj: data.cnpj || '',
+          tipo: tipoValido
         });
       } catch (error) {
         console.error(error);
@@ -70,6 +81,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
       cnpj: data.cnpj && data.cnpj.trim() !== ''
         ? DOMPurify.sanitize(data.cnpj)
         : null,
+      tipo: data.tipo, // Envia o tipo atualizado
     };
 
     const promise = api.put(`/fornecedor/${fornecedorId}`, payload);
@@ -126,6 +138,24 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
           disabled={isSubmitting}
           className="uppercase font-medium"
         />
+
+        <div>
+          <label className="block mb-1.5 text-sm font-bold text-gray-500">Categoria</label>
+          <div className="relative">
+            <select
+              className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-input appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow cursor-pointer hover:border-gray-400"
+              {...register('tipo')}
+              disabled={isSubmitting}
+            >
+              <option value="POSTO">Posto de Combustível</option>
+              <option value="OFICINA">Oficina Mecânica</option>
+              <option value="OUTROS">Outros Serviços</option>
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+            </div>
+          </div>
+        </div>
 
         <Input
           label="CNPJ (Opcional)"

@@ -46,4 +46,5 @@ export const formatKmVisual = (value: string | number) => {
   const numbers = stringValue.replace(/\D/g, "");
   // Adiciona pontos de milhar
   return numbers.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  tipo: TipoFornecedor;
 };
