@@ -21,14 +21,17 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Se a API retornar 401 (Não Autorizado), significa que o token é inválido ou expirou
+    // Se a API retornar 401 (Não Autorizado)
     if (error.response && error.response.status === 401) {
-      // Limpa o armazenamento local para evitar loops e remove dados obsoletos
+      
+      // Limpa os dados locais
       localStorage.removeItem('authToken');
       localStorage.removeItem('authUser');
 
-      // Força o redirecionamento para o login
-      window.location.href = '/login';
+
+      if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   }

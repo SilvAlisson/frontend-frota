@@ -108,7 +108,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormCadastrarCargo
                     label="Título do Cargo"
                     placeholder="Ex: LÍDER DE LOGÍSTICA"
                     {...register('nome')}
-                    error={errors.nome?.message}
+                    error={errors.nome?.message as string}
                     disabled={isSubmitting}
                     className="uppercase font-semibold tracking-wide"
                     autoFocus

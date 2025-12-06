@@ -61,6 +61,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
     staleTime: 1000 * 60 * 10, // 10 minutos de cache
   });
 
+  // ✅ CORREÇÃO: useForm sem genérico explícito
   const {
     register,
     handleSubmit,
@@ -162,7 +163,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
             label="Nome Completo"
             placeholder="Ex: João da Silva"
             {...register('nome')}
-            error={errors.nome?.message}
+            error={errors.nome?.message as string}
             disabled={isSubmitting}
             autoFocus
           />
@@ -173,7 +174,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
           type="email"
           placeholder="joao@empresa.com"
           {...register('email')}
-          error={errors.email?.message}
+          error={errors.email?.message as string}
           disabled={isSubmitting}
         />
 
@@ -196,7 +197,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
           label="Matrícula (Opcional)"
           placeholder="Ex: 12345"
           {...register('matricula')}
-          error={errors.matricula?.message}
+          error={errors.matricula?.message as string}
           disabled={isSubmitting}
         />
 
@@ -291,7 +292,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       <div className="flex gap-3 pt-6 border-t border-gray-100">
         <Button

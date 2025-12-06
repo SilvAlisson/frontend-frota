@@ -26,7 +26,7 @@ const veiculoSchema = z.object({
     .max(new Date().getFullYear() + 1, { error: "Ano não pode ser futuro" }),
 
   tipoVeiculo: z.enum(tiposDeVeiculo, {
-    error: "Selecione um tipo de veículo válido"
+    error: "Selecione um tipo de veículo válido" // v4: 'error' substitui 'errorMap' simples
   }).nullable().optional(),
 
   tipoCombustivel: z.enum(tiposDeCombustivel).default('DIESEL_S10'),
@@ -49,6 +49,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
 
   const [loadingData, setLoadingData] = useState(true);
 
+  // ✅ CORREÇÃO: Sem <VeiculoForm> e sem 'as any'
   const {
     register,
     handleSubmit,

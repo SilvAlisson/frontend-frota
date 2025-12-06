@@ -10,7 +10,6 @@ const fileInputLabel = "text-sm text-gray-600 font-medium";
 const hiddenInput = "absolute inset-0 w-full h-full opacity-0 cursor-pointer";
 
 interface ModalProps {
-  token: string; // Mantido por compatibilidade de props, mas usamos api.ts internamente
   titulo: string;
   kmParaConfirmar: number | null;
   jornadaId: string | null;

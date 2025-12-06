@@ -2,14 +2,18 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import axios from 'axios';
 import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
-// --- ZOD V4 SCHEMA ---
+const tiposDeVeiculo = ["CAMINHAO", "CARRETA", "UTILITARIO", "OUTRO"] as const;
+const tiposDeCombustivel = ["DIESEL_S10", "GASOLINA_COMUM", "ETANOL", "GNV"] as const;
+
+// --- SCHEMA ZOD V4 (Corrigido) ---
 const veiculoSchema = z.object({
-  placa: z.string()
+  placa: z.string({ error: "A placa é obrigatória" })
     .min(7, { error: "A placa deve ter 7 caracteres" })
     .max(7, { error: "A placa deve ter 7 caracteres" })
     .transform(val => val.toUpperCase()),
@@ -19,14 +23,16 @@ const veiculoSchema = z.object({
     .min(1900, { error: "Ano inválido" })
     .max(new Date().getFullYear() + 1, { error: "Ano inválido" }),
 
-  tipoVeiculo: z.string().min(2, { error: "Tipo é obrigatório" }),
+  tipoCombustivel: z.enum(tiposDeCombustivel).default('DIESEL_S10'),
+  
+  capacidadeTanque: z.coerce.number().positive().optional().nullable(),
 
-  // Union para campos opcionais que podem vir vazios
   vencimentoCiv: z.union([z.string().optional(), z.literal('')]),
   vencimentoCipp: z.union([z.string().optional(), z.literal('')]),
 });
 
-type VeiculoForm = z.infer<typeof veiculoSchema>;
+// Tipo inferido automaticamente do schema
+type VeiculoFormValues = z.infer<typeof veiculoSchema>;
 
 interface FormCadastrarVeiculoProps {
   onSuccess: () => void;
@@ -48,6 +54,8 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
       modelo: '',
       ano: new Date().getFullYear(),
       tipoVeiculo: '',
+      tipoCombustivel: 'DIESEL_S10',
+      capacidadeTanque: 0,
       vencimentoCiv: '',
       vencimentoCipp: ''
     }
@@ -55,7 +63,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
 
   const [successMsg, setSuccessMsg] = useState('');
 
-  const onSubmit = async (data: VeiculoForm) => {
+  const onSubmit = async (data: VeiculoFormValues) => {
     setSuccessMsg('');
     try {
       await api.post('/veiculo', {
@@ -63,8 +71,10 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
         modelo: DOMPurify.sanitize(data.modelo),
         ano: data.ano,
         tipoVeiculo: DOMPurify.sanitize(data.tipoVeiculo),
-        vencimentoCiv: data.vencimentoCiv && data.vencimentoCiv !== '' ? data.vencimentoCiv : null,
-        vencimentoCipp: data.vencimentoCipp && data.vencimentoCipp !== '' ? data.vencimentoCipp : null,
+        tipoCombustivel: data.tipoCombustivel,
+        capacidadeTanque: data.capacidadeTanque || null,
+        vencimentoCiv: data.vencimentoCiv || null,
+        vencimentoCipp: data.vencimentoCipp || null,
       });
 
       setSuccessMsg(`Veículo ${data.placa} cadastrado com sucesso!`);
@@ -76,7 +86,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
 
     } catch (err: any) {
       console.error("Erro ao cadastrar veículo:", err);
-      if (err.response?.data?.error) {
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
         setError('root', { message: err.response.data.error });
       } else {
         setError('root', { message: 'Falha ao cadastrar veículo.' });
@@ -106,7 +116,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
           label="Placa"
           placeholder="ABC1D23"
           {...register('placa')}
-          error={errors.placa?.message}
+          error={errors.placa?.message as string}
           disabled={isSubmitting}
           maxLength={7}
         />
@@ -114,14 +124,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
           label="Modelo"
           placeholder="Ex: VW Constellation"
           {...register('modelo')}
-          error={errors.modelo?.message}
-          disabled={isSubmitting}
-        />
-        <Input
-          label="Tipo de Caminhão"
-          placeholder="Poliguindaste, Munck..."
-          {...register('tipoVeiculo')}
-          error={errors.tipoVeiculo?.message}
+          error={errors.modelo?.message as string}
           disabled={isSubmitting}
         />
         {/* valueAsNumber garante que o valor chegue como number para o RHF antes do Zod validar */}
@@ -129,10 +132,37 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
           label="Ano"
           type="number"
           placeholder="2020"
-          {...register('ano', { valueAsNumber: true })}
-          error={errors.ano?.message}
+          {...register('ano')}
+          error={errors.ano?.message as string}
           disabled={isSubmitting}
         />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+         <div>
+            <label className="block mb-1.5 text-sm font-medium text-text-secondary">Combustível</label>
+            <div className="relative">
+              <select
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-input appearance-none focus:outline-none focus:ring-2 focus:ring-primary"
+                {...register('tipoCombustivel')}
+                disabled={isSubmitting}
+              >
+                {tiposDeCombustivel.map(t => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+          </div>
+          
+          <Input
+            label="Tanque (Litros)"
+            type="number"
+            placeholder="Ex: 400"
+            {...register('capacidadeTanque')}
+            error={errors.capacidadeTanque?.message as string}
+            disabled={isSubmitting}
+          />
       </div>
 
       <div className="pt-4 border-t border-gray-100 mt-6">
@@ -146,14 +176,14 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
             label="Vencimento CIV"
             type="date"
             {...register('vencimentoCiv')}
-            error={errors.vencimentoCiv?.message}
+            error={errors.vencimentoCiv?.message as string}
             disabled={isSubmitting}
           />
           <Input
             label="Vencimento CIPP"
             type="date"
             {...register('vencimentoCipp')}
-            error={errors.vencimentoCipp?.message}
+            error={errors.vencimentoCipp?.message as string}
             disabled={isSubmitting}
           />
         </div>

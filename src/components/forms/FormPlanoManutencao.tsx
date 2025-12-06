@@ -8,10 +8,9 @@ import { Input } from '../ui/Input';
 import type { PlanoManutencao, Veiculo } from '../../types';
 import { TableStyles } from '../../styles/table';
 
-// --- SCHEMA ---
 const tiposIntervalo = ["KM", "TEMPO"] as const;
 
-// --- MUDANÇAS ZOD V4 ---
+// --- SCHEMA ZOD V4 ---
 const planoSchema = z.object({
   veiculoId: z.string().min(1, { error: "Selecione um veículo" }),
   descricao: z.string()
@@ -24,7 +23,7 @@ const planoSchema = z.object({
     .min(1, { error: "O intervalo deve ser maior que 0" }),
 });
 
-type PlanoForm = z.infer<typeof planoSchema>;
+type PlanoFormValues = z.infer<typeof planoSchema>;
 
 interface FormPlanoManutencaoProps {
   veiculos: Veiculo[];
@@ -42,6 +41,7 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
   const [errorMsg, setErrorMsg] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // ✅ CORREÇÃO
   const {
     register,
     handleSubmit,
@@ -49,8 +49,8 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
     setError,
     watch,
     formState: { errors, isSubmitting }
-  } = useForm<PlanoForm>({
-    resolver: zodResolver(planoSchema) as any,
+  } = useForm({
+    resolver: zodResolver(planoSchema),
     defaultValues: {
       veiculoId: '',
       descricao: '',
@@ -77,7 +77,7 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
     fetchPlanos();
   }, []);
 
-  const onSubmit = async (data: PlanoForm) => {
+  const onSubmit = async (data: PlanoFormValues) => {
     setSuccessMsg('');
     setErrorMsg('');
     try {
@@ -101,18 +101,13 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
     setSuccessMsg('');
 
     try {
-      // Requisição ao backend primeiro
       await api.delete(`/plano-manutencao/${id}`);
-
-      // Se bem sucedido (não lançou exceção), atualiza o estado local
       setPlanos(prev => prev.filter(p => p.id !== id));
       setSuccessMsg('Plano removido.');
-
     } catch (err: any) {
       console.error("Erro ao apagar:", err);
       const msg = err.response?.data?.error || 'Erro ao remover plano. Verifique a conexão.';
       setErrorMsg(msg);
-      // Se falhou, recarrega a lista original para garantir que a interface mostra a verdade
       fetchPlanos();
     } finally {
       setDeletingId(null);
@@ -121,8 +116,6 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-      {/* Coluna 1: Formulário */}
       <div className="bg-white p-6 rounded-card shadow-card border border-gray-100 h-fit">
         <div className="text-center md:text-left mb-6">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-orange-50 mb-3">
@@ -156,14 +149,14 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
             </div>
-            {errors.veiculoId && <p className="mt-1 text-xs text-error">{errors.veiculoId.message}</p>}
+            {errors.veiculoId && <p className="mt-1 text-xs text-error">{errors.veiculoId.message as string}</p>}
           </div>
 
           <Input
             label="Descrição do Plano"
             placeholder="Ex: Troca de Óleo Motor"
             {...register('descricao')}
-            error={errors.descricao?.message}
+            error={errors.descricao?.message as string}
             disabled={isSubmitting}
           />
 
@@ -189,7 +182,7 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
               type="number"
               placeholder={tipoIntervalo === 'KM' ? 'Ex: 10000' : 'Ex: 6'}
               {...register('valorIntervalo')}
-              error={errors.valorIntervalo?.message}
+              error={errors.valorIntervalo?.message as string}
               disabled={isSubmitting}
             />
           </div>
@@ -223,7 +216,6 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
         </form>
       </div>
 
-      {/* Coluna 2: Lista */}
       <div className="space-y-4">
         <div className="flex items-center justify-between mb-4">
           <h4 className="text-lg font-semibold text-text flex items-center gap-2">

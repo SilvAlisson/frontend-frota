@@ -10,8 +10,8 @@ import { toast } from 'sonner';
 import type { TreinamentoRealizado, User } from '../types';
 
 interface ModalProps {
-    usuario: User;
-    onClose: () => void;
+  usuario: User;
+  onClose: () => void;
 }
 
 // --- 1. SCHEMA ZOD V4 (Robusto) ---
@@ -294,6 +294,8 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
                             </Button>
                         </form>
                     </div>
+                    <Button type="submit" className="w-full" isLoading={isSubmitting}>Adicionar Manual</Button>
+                </form>
 
                     {/* Footer Importação */}
                     <div className="mt-8 pt-6 border-t border-gray-200/60">
@@ -426,5 +428,6 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
                 </div>
             </div>
         </div>
-    );
+    </div>
+  );
 }
