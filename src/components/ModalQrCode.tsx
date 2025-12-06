@@ -6,14 +6,14 @@ import { toast } from 'sonner';
 interface ModalQrCodeProps {
   token: string;
   nomeUsuario: string;
+  fotoUrl?: string | null; // Nova prop opcional
   onClose: () => void;
 }
 
-export function ModalQrCode({ token, nomeUsuario, onClose }: ModalQrCodeProps) {
+export function ModalQrCode({ token, nomeUsuario, fotoUrl, onClose }: ModalQrCodeProps) {
   const loginUrl = `${window.location.origin}/login?magicToken=${token}`;
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Fechar com ESC
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -99,9 +99,12 @@ export function ModalQrCode({ token, nomeUsuario, onClose }: ModalQrCodeProps) {
 
             {/* FOTO / AVATAR (Círculo Grande) */}
             <div className="w-32 h-32 rounded-full bg-white p-1.5 shadow-lg mb-3">
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-4xl font-bold text-slate-500 border border-slate-100 overflow-hidden">
-                {/* Se tiver foto no futuro: <img src={user.foto} ... /> */}
-                {nomeUsuario.charAt(0).toUpperCase()}
+              <div className="w-full h-full rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-4xl font-bold text-slate-500 border border-slate-100 overflow-hidden relative">
+                {fotoUrl ? (
+                  <img src={fotoUrl} alt={nomeUsuario} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{nomeUsuario.charAt(0).toUpperCase()}</span>
+                )}
               </div>
             </div>
 
@@ -114,7 +117,7 @@ export function ModalQrCode({ token, nomeUsuario, onClose }: ModalQrCodeProps) {
             </h2>
 
             <div className="bg-blue-50 text-blue-700 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-blue-100 mb-6">
-              Motorista
+              Operador de Equipamentos
             </div>
 
             {/* QR Code */}
