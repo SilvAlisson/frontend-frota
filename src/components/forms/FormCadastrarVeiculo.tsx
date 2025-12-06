@@ -15,9 +15,7 @@ const veiculoSchema = z.object({
     .transform(val => val.toUpperCase()),
 
   modelo: z.string().min(2, { error: "Modelo é obrigatório" }),
-
-  // Zod v4: Use { error: "..." } em vez de { message: "..." }
-  ano: z.number({ error: "Ano inválido" })
+  ano: z.coerce.number({ error: "Ano inválido" })
     .min(1900, { error: "Ano inválido" })
     .max(new Date().getFullYear() + 1, { error: "Ano inválido" }),
 
@@ -44,7 +42,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
     setError,
     formState: { errors, isSubmitting }
   } = useForm<VeiculoForm>({
-    resolver: zodResolver(veiculoSchema) as any, // 'as any' previne conflitos de tipo estrito na v4
+    resolver: zodResolver(veiculoSchema) as any,
     defaultValues: {
       placa: '',
       modelo: '',
@@ -126,7 +124,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
           error={errors.tipoVeiculo?.message}
           disabled={isSubmitting}
         />
-        {/* valueAsNumber garante que o valor chegue como number */}
+        {/* valueAsNumber garante que o valor chegue como number para o RHF antes do Zod validar */}
         <Input
           label="Ano"
           type="number"

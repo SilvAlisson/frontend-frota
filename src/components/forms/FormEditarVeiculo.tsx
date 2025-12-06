@@ -1,31 +1,30 @@
-import { useState, useEffect } from 'react'; // React removido do import (não é necessário para JSX moderno)
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { toast } from 'sonner';
 import { api } from '../../services/api';
+import { handleApiError } from '../../utils/errorHandler';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import type { Veiculo } from '../../types';
 
-// Tipos alinhados com o Prisma/Backend
 const tiposDeVeiculo = ["CAMINHAO", "CARRETA", "UTILITARIO", "OUTRO"] as const;
 const tiposDeCombustivel = ["DIESEL_S10", "GASOLINA_COMUM", "ETANOL", "GNV"] as const;
 
-// --- MUDANÇAS ZOD V4 ---
+// --- SCHEMA ZOD V4 ---
 const veiculoSchema = z.object({
-  placa: z.string()
-    .min(7, { error: "Placa inválida" }) // Use 'error' em vez de string direta ou objeto message para consistência na v4
+  placa: z.string({ error: "Placa inválida" })
+    .min(7, { error: "Placa inválida" })
     .transform(val => val.toUpperCase()),
 
-  modelo: z.string().min(1, { error: "Modelo é obrigatório" }),
+  modelo: z.string({ error: "Modelo é obrigatório" })
+    .min(1, { error: "Modelo é obrigatório" }),
 
-  // z.coerce na v4 define o input como 'unknown'.
-  // Para manter a sanidade do TS com React Hook Form, o ideal é usar pipe ou aceitar a coerção.
-  ano: z.coerce.number()
+  ano: z.coerce.number({ error: "Ano inválido" })
     .min(1900, { error: "Ano inválido" })
     .max(new Date().getFullYear() + 1, { error: "Ano não pode ser futuro" }),
 
-  // 'message' foi depreciado/removido em favor de 'error' na v4
   tipoVeiculo: z.enum(tiposDeVeiculo, {
     error: "Selecione um tipo de veículo válido"
   }).nullable().optional(),
@@ -34,11 +33,11 @@ const veiculoSchema = z.object({
 
   capacidadeTanque: z.coerce.number().positive().optional().nullable(),
 
-  vencimentoCiv: z.string().optional().nullable(),
-  vencimentoCipp: z.string().optional().nullable(),
+  vencimentoCiv: z.union([z.string().optional(), z.literal('')]),
+  vencimentoCipp: z.union([z.string().optional(), z.literal('')]),
 });
 
-type VeiculoForm = z.infer<typeof veiculoSchema>;
+type VeiculoFormValues = z.infer<typeof veiculoSchema>;
 
 interface FormEditarVeiculoProps {
   veiculoId: string;
@@ -49,19 +48,14 @@ interface FormEditarVeiculoProps {
 export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEditarVeiculoProps) {
 
   const [loadingData, setLoadingData] = useState(true);
-  const [successMsg, setSuccessMsg] = useState('');
 
   const {
     register,
     handleSubmit,
     reset,
-    setError,
     formState: { errors, isSubmitting }
-  } = useForm<VeiculoForm>({
-    // FIX CRÍTICO V4: O casting 'as any' resolve o erro de tipagem onde
-    // o Zod v4 diz que o input é 'unknown' (devido ao coerce) e o RHF espera 'number'.
-    // É a solução mais limpa sem reescrever todo o schema com z.preprocess.
-    resolver: zodResolver(veiculoSchema) as any,
+  } = useForm({
+    resolver: zodResolver(veiculoSchema),
   });
 
   useEffect(() => {
@@ -84,18 +78,16 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
           vencimentoCipp: veiculo.vencimentoCipp || ''
         });
       } catch (err) {
-        console.error("Erro ao carregar veículo", err);
-        setError('root', { message: 'Erro ao carregar dados do servidor.' });
+        handleApiError(err, 'Erro ao carregar dados do veículo.');
       } finally {
         setLoadingData(false);
       }
     };
 
     fetchVeiculo();
-  }, [veiculoId, reset, setError]);
+  }, [veiculoId, reset]);
 
-  const onSubmit = async (data: VeiculoForm) => {
-    setSuccessMsg('');
+  const onSubmit = async (data: VeiculoFormValues) => {
     try {
       const payload = {
         ...data,
@@ -107,16 +99,11 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
 
       await api.put(`/veiculo/${veiculoId}`, payload);
 
-      setSuccessMsg('Veículo atualizado com sucesso!');
+      toast.success('Veículo atualizado!');
       setTimeout(() => onSuccess(), 1500);
 
-    } catch (err: any) {
-      console.error(err);
-      if (err.response?.data?.error) {
-        setError('root', { message: err.response.data.error });
-      } else {
-        setError('root', { message: 'Falha ao salvar veículo.' });
-      }
+    } catch (err) {
+      handleApiError(err, 'Falha ao salvar veículo.');
     }
   };
 
@@ -147,14 +134,14 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
           <Input
             label="Placa"
             {...register('placa')}
-            error={errors.placa?.message}
+            error={errors.placa?.message as string}
             disabled={isSubmitting}
           />
 
           <Input
             label="Modelo"
             {...register('modelo')}
-            error={errors.modelo?.message}
+            error={errors.modelo?.message as string}
             disabled={isSubmitting}
           />
 
@@ -163,7 +150,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
               label="Ano"
               type="number"
               {...register('ano')}
-              error={errors.ano?.message}
+              error={errors.ano?.message as string}
               disabled={isSubmitting}
             />
 
@@ -182,7 +169,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
               </div>
-              {errors.tipoVeiculo && <p className="mt-1 text-xs text-red-500">{errors.tipoVeiculo.message}</p>}
+              {errors.tipoVeiculo && <p className="mt-1 text-xs text-red-500">{errors.tipoVeiculo.message as string}</p>}
             </div>
           </div>
 
@@ -207,7 +194,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
               type="number"
               placeholder="Ex: 400"
               {...register('capacidadeTanque')}
-              error={errors.capacidadeTanque?.message}
+              error={errors.capacidadeTanque?.message as string}
               disabled={isSubmitting}
             />
           </div>
@@ -217,30 +204,18 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
               label="Vencimento CIV"
               type="date"
               {...register('vencimentoCiv')}
-              error={errors.vencimentoCiv?.message}
+              error={errors.vencimentoCiv?.message as string}
               disabled={isSubmitting}
             />
             <Input
               label="Vencimento CIPP"
               type="date"
               {...register('vencimentoCipp')}
-              error={errors.vencimentoCipp?.message}
+              error={errors.vencimentoCipp?.message as string}
               disabled={isSubmitting}
             />
           </div>
         </div>
-
-        {errors.root && (
-          <div className="p-3 bg-red-50 text-error border border-red-200 rounded text-sm text-center">
-            {errors.root.message}
-          </div>
-        )}
-
-        {successMsg && (
-          <div className="p-3 bg-green-50 text-success border border-green-200 rounded text-sm text-center font-medium">
-            {successMsg}
-          </div>
-        )}
 
         <div className="flex gap-3 pt-2">
           <Button type="button" variant="secondary" className="flex-1" onClick={onCancelar} disabled={isSubmitting}>

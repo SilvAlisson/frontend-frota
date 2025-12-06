@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -7,6 +6,7 @@ import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 
 // Interface para Cargo
 interface Cargo {
@@ -14,31 +14,28 @@ interface Cargo {
   nome: string;
 }
 
-// Constante com todas as funções do sistema
 const ROLES = ["OPERADOR", "ENCARREGADO", "ADMIN", "RH", "COORDENADOR"] as const;
 
-// --- ZOD SCHEMA ---
-
+// --- SCHEMA ZOD V4 (Robustez & Segurança) ---
 const usuarioSchema = z.object({
-  nome: z.string()
-    .min(1, { error: "Nome é obrigatório" })
-    .min(3, { error: "Nome deve ter pelo menos 3 caracteres" }),
+  nome: z.string({ error: "Nome é obrigatório" })
+    .min(3, { error: "Nome muito curto (mín. 3 letras)" })
+    .transform(val => val.trim()), // Sanitização básica
 
-  email: z.string()
-    .min(1, { error: "Email é obrigatório" })
-    .email({ error: "Email inválido" }),
+  email: z.string({ error: "Email é obrigatório" })
+    .email({ error: "Formato de email inválido" })
+    .toLowerCase(),
 
-  password: z.string()
-    .min(1, { error: "Senha é obrigatória" })
+  password: z.string({ error: "Senha é obrigatória" })
     .min(6, { error: "A senha deve ter no mínimo 6 caracteres" }),
 
-  matricula: z.union([z.string().optional(), z.literal('')]),
+  matricula: z.string().optional().or(z.literal('')),
 
   role: z.enum(ROLES, {
     error: "Selecione uma função válida"
   }),
 
-  // Campos Opcionais de RH
+  // Campos condicionais (RH) - Validação base, refinada no submit
   cargoId: z.string().optional().or(z.literal('')),
   cnhNumero: z.string().optional().or(z.literal('')),
   cnhCategoria: z.string().optional().or(z.literal('')),
@@ -46,7 +43,7 @@ const usuarioSchema = z.object({
   dataAdmissao: z.string().optional().or(z.literal('')),
 });
 
-type UsuarioForm = z.infer<typeof usuarioSchema>;
+type UsuarioFormInput = z.input<typeof usuarioSchema>;
 
 interface FormCadastrarUsuarioProps {
   onSuccess: () => void;
@@ -55,109 +52,111 @@ interface FormCadastrarUsuarioProps {
 
 export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsuarioProps) {
 
-  const [successMsg, setSuccessMsg] = useState('');
-
-  // Busca de Cargos para o select
   const { data: cargos = [], isLoading: isLoadingCargos } = useQuery<Cargo[]>({
     queryKey: ['cargos-select'],
     queryFn: async () => {
       const response = await api.get('/cargos');
       return response.data;
     },
-    staleTime: 1000 * 60 * 10,
+    staleTime: 1000 * 60 * 10, // 10 minutos de cache
   });
 
   const {
     register,
     handleSubmit,
     reset,
-    setError,
     watch,
     formState: { errors, isSubmitting }
-  } = useForm<UsuarioForm>({
+  } = useForm<UsuarioFormInput>({
     resolver: zodResolver(usuarioSchema),
     defaultValues: {
       nome: '',
       email: '',
       password: '',
       matricula: '',
-      role: 'OPERADOR',
+      role: 'OPERADOR', // Default mais comum
       cargoId: '',
       cnhNumero: '',
       cnhCategoria: '',
       cnhValidade: '',
       dataAdmissao: ''
-    }
+    },
+    mode: 'onBlur'
   });
 
   const roleSelecionada = watch('role');
 
-  const onSubmit = async (data: UsuarioForm) => {
-    setSuccessMsg('');
-    try {
-      await api.post('/user/register', {
-        nome: DOMPurify.sanitize(data.nome),
-        email: DOMPurify.sanitize(data.email),
-        password: data.password,
-        matricula: data.matricula && data.matricula.trim() !== ''
-          ? DOMPurify.sanitize(data.matricula)
-          : null,
-        role: data.role,
-        // Envio dos dados de RH
-        cargoId: data.cargoId || null,
-        cnhNumero: data.cnhNumero || null,
-        cnhCategoria: data.cnhCategoria || null,
-        cnhValidade: data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
-        dataAdmissao: data.dataAdmissao ? new Date(data.dataAdmissao).toISOString() : null,
-      });
+  const onSubmit = async (data: UsuarioFormInput) => {
+    // Lógica de Negócio: Limpar campos de RH se não for Operador
+    // Isso garante a integridade dos dados no backend
+    const isOperador = data.role === 'OPERADOR';
 
-      setSuccessMsg('Integrante cadastrado com sucesso!');
-      reset();
+    const payload = {
+      nome: DOMPurify.sanitize(data.nome),
+      email: DOMPurify.sanitize(data.email),
+      password: data.password,
+      matricula: data.matricula ? DOMPurify.sanitize(data.matricula) : null,
+      role: data.role,
 
-      setTimeout(() => {
-        onSuccess();
-      }, 1500);
+      // Envia null se não for operador ou se o campo estiver vazio
+      cargoId: isOperador && data.cargoId ? data.cargoId : null,
+      cnhNumero: isOperador && data.cnhNumero ? data.cnhNumero : null,
+      cnhCategoria: isOperador && data.cnhCategoria ? data.cnhCategoria : null,
+      cnhValidade: isOperador && data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
+      dataAdmissao: data.dataAdmissao ? new Date(data.dataAdmissao).toISOString() : null,
+    };
 
-    } catch (err: any) {
-      console.error("Erro ao cadastrar usuário:", err);
-      if (err.response?.data?.error) {
-        setError('root', { message: err.response.data.error });
-      } else {
-        setError('root', { message: 'Falha ao cadastrar usuário.' });
+    const promise = api.post('/user/register', payload);
+
+    toast.promise(promise, {
+      loading: 'Criando credenciais de acesso...',
+      success: () => {
+        reset();
+        setTimeout(onSuccess, 800);
+        return 'Colaborador cadastrado com sucesso!';
+      },
+      error: (err) => {
+        console.error(err);
+        return err.response?.data?.error || 'Erro ao cadastrar. Verifique o email.';
       }
-    }
+    });
   };
 
-  // Função auxiliar para renderizar o nome amigável da função
+  // Helper para rótulos amigáveis no select
   const getRoleLabel = (role: typeof ROLES[number]) => {
     switch (role) {
       case 'OPERADOR': return 'Motorista (Operador)';
-      case 'ENCARREGADO': return 'Gestor (Encarregado)';
+      case 'ENCARREGADO': return 'Gestor de Frota (Encarregado)';
       case 'RH': return 'Recursos Humanos (RH)';
-      case 'COORDENADOR': return 'Coordenador';
-      case 'ADMIN': return 'Administrador';
+      case 'COORDENADOR': return 'Coordenador Geral';
+      case 'ADMIN': return 'Administrador do Sistema';
       default: return role;
     }
   };
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+    <form className="space-y-8" onSubmit={handleSubmit(onSubmit)}>
 
-      <div className="text-center">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-indigo-50 mb-3">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-indigo-600">
+      {/* HEADER VISUAL */}
+      <div className="text-center relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-gradient-to-r from-transparent via-indigo-200 to-transparent rounded-full" />
+
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-indigo-50 text-indigo-600 mb-4 shadow-sm ring-4 ring-white">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
             <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
           </svg>
         </div>
-        <h4 className="text-xl font-bold text-primary">
+        <h4 className="text-2xl font-bold text-gray-900 tracking-tight">
           Novo Colaborador
         </h4>
-        <p className="text-sm text-text-secondary mt-1">
-          Crie o acesso para um motorista, gestor, RH ou coordenador.
+        <p className="text-sm text-text-secondary mt-1 max-w-xs mx-auto leading-relaxed">
+          Crie o acesso para motoristas, gestores ou equipe administrativa.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 p-1">
+
+        {/* DADOS PESSOAIS E ACESSO */}
         <div className="md:col-span-2">
           <Input
             label="Nome Completo"
@@ -165,11 +164,12 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
             {...register('nome')}
             error={errors.nome?.message}
             disabled={isSubmitting}
+            autoFocus
           />
         </div>
 
         <Input
-          label="Email"
+          label="Email Corporativo"
           type="email"
           placeholder="joao@empresa.com"
           {...register('email')}
@@ -177,14 +177,20 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
           disabled={isSubmitting}
         />
 
-        <Input
-          label="Senha Inicial"
-          type="password"
-          placeholder="******"
-          {...register('password')}
-          error={errors.password?.message}
-          disabled={isSubmitting}
-        />
+        <div className="relative group">
+          <Input
+            label="Senha Inicial"
+            type="password"
+            placeholder="******"
+            {...register('password')}
+            error={errors.password?.message}
+            disabled={isSubmitting}
+          />
+          {/* Micro-interação: Dica de senha */}
+          <span className="absolute right-0 top-0 text-[10px] text-gray-400 font-medium px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity">
+            Mín. 6 dígitos
+          </span>
+        </div>
 
         <Input
           label="Matrícula (Opcional)"
@@ -195,10 +201,10 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
         />
 
         <div>
-          <label className="block mb-1.5 text-sm font-medium text-text-secondary">Função</label>
+          <label className="block mb-1.5 text-sm font-medium text-text-secondary">Função / Perfil</label>
           <div className="relative">
             <select
-              className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none"
+              className="w-full px-4 py-2.5 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none transition-all shadow-sm cursor-pointer hover:border-gray-400"
               {...register('role')}
               disabled={isSubmitting}
             >
@@ -212,99 +218,82 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
             </div>
           </div>
-          {errors.role && <p className="text-xs text-error mt-1">{errors.role.message}</p>}
+          {errors.role && <p className="text-xs text-error mt-1 animate-pulse">{errors.role.message}</p>}
         </div>
       </div>
 
-      {/* SEÇÃO DE RH */}
-      <div className="mt-6 pt-4 border-t border-gray-100">
-        <h5 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-3 flex items-center gap-2">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-primary">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Zm6-10.125a1.875 1.875 0 1 1-3.75 0 1.875 1.875 0 0 1 3.75 0Zm1.294 6.336a6.721 6.721 0 0 1-3.17.789 6.721 6.721 0 0 1-3.168-.789 3.376 3.376 0 0 1 6.338 0Z" />
-          </svg>
-          Dados Funcionais (RH)
-        </h5>
+      {/* SEÇÃO RH (CONDICIONAL COM ANIMAÇÃO) */}
+      {/* Usamos max-h e opacity para transição suave ao invés de montar/desmontar */}
+      <div className={`transition-all duration-500 ease-in-out overflow-hidden ${roleSelecionada === 'OPERADOR' ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-50'}`}>
+        <div className="mt-6 pt-6 border-t border-dashed border-gray-200">
+          <h5 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-indigo-500"></span>
+            Dados Funcionais (RH)
+          </h5>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="md:col-span-2">
-            <label className="block mb-1.5 text-sm font-medium text-text-secondary">Cargo / Função</label>
-            <div className="relative">
-              <select
-                className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none"
-                {...register('cargoId')}
-                disabled={isSubmitting || isLoadingCargos}
-              >
-                <option value="">Selecione o cargo...</option>
-                {cargos.map((cargo) => (
-                  <option key={cargo.id} value={cargo.id}>{cargo.nome}</option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-              </div>
-            </div>
-            {isLoadingCargos && <p className="text-xs text-primary mt-1">Carregando cargos...</p>}
-          </div>
-
-          {/* Campos de CNH - Apenas para Operadores */}
-          {roleSelecionada === 'OPERADOR' && (
-            <>
-              <div className="md:col-span-1">
-                <Input
-                  label="Nº CNH"
-                  placeholder="Registro CNH"
-                  {...register('cnhNumero')}
-                  disabled={isSubmitting}
-                />
-              </div>
-              <div className="md:col-span-1">
-                <div className="grid grid-cols-2 gap-2">
-                  <Input
-                    label="Categoria"
-                    placeholder="AE"
-                    {...register('cnhCategoria')}
-                    disabled={isSubmitting}
-                  />
-                  <Input
-                    label="Validade CNH"
-                    type="date"
-                    {...register('cnhValidade')}
-                    disabled={isSubmitting}
-                  />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-gray-50/50 p-4 rounded-xl border border-gray-100 transition-colors hover:border-indigo-100">
+            <div className="md:col-span-2">
+              <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase tracking-wide">Cargo / Função</label>
+              <div className="relative">
+                <select
+                  className="w-full px-4 py-2 text-sm text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none transition-all shadow-sm"
+                  {...register('cargoId')}
+                  disabled={isSubmitting || isLoadingCargos}
+                >
+                  <option value="">Selecione o cargo...</option>
+                  {cargos.map((cargo) => (
+                    <option key={cargo.id} value={cargo.id}>{cargo.nome}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
               </div>
-              <div className="md:col-span-1">
+              {isLoadingCargos && <p className="text-xs text-primary mt-1 animate-pulse">Sincronizando cargos...</p>}
+            </div>
+
+            <div className="md:col-span-1">
+              <Input
+                label="Nº CNH"
+                placeholder="Registro CNH"
+                {...register('cnhNumero')}
+                disabled={isSubmitting}
+                className="bg-white"
+              />
+            </div>
+            <div className="md:col-span-1">
+              <div className="grid grid-cols-2 gap-2">
                 <Input
-                  label="Data de Admissão"
-                  type="date"
-                  {...register('dataAdmissao')}
+                  label="Categoria"
+                  placeholder="AE"
+                  {...register('cnhCategoria')}
                   disabled={isSubmitting}
+                  className="bg-white text-center uppercase"
+                  maxLength={2}
+                />
+                <Input
+                  label="Validade CNH"
+                  type="date"
+                  {...register('cnhValidade')}
+                  disabled={isSubmitting}
+                  className="bg-white"
                 />
               </div>
-            </>
-          )}
+            </div>
+            <div className="md:col-span-2">
+              <Input
+                label="Data de Admissão"
+                type="date"
+                {...register('dataAdmissao')}
+                disabled={isSubmitting}
+                className="bg-white"
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      {errors.root && (
-        <div className="flex items-center gap-3 p-3 rounded-md bg-red-50 border border-red-200 text-error text-sm animate-pulse">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
-            <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-          </svg>
-          <span>{errors.root.message}</span>
-        </div>
-      )}
-
-      {successMsg && (
-        <div className="flex items-center gap-3 p-3 rounded-md bg-green-50 border border-green-200 text-success text-sm font-medium">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
-            <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
-          </svg>
-          <span>{successMsg}</span>
-        </div>
-      )}
-
-      <div className="flex gap-3 pt-2">
+      <div className="flex gap-3 pt-6 border-t border-gray-100">
         <Button
           type="button"
           variant="secondary"
@@ -317,11 +306,11 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
         <Button
           type="submit"
           variant="primary"
-          className="flex-1"
+          className="flex-[2] shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/30 transition-all"
           disabled={isSubmitting}
           isLoading={isSubmitting}
         >
-          Cadastrar
+          {isSubmitting ? 'Registrando...' : 'Cadastrar Colaborador'}
         </Button>
       </div>
     </form>
