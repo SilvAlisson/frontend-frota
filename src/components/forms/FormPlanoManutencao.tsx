@@ -19,7 +19,7 @@ const planoSchema = z.object({
   tipoIntervalo: z.enum(tiposIntervalo, {
     error: "Selecione um tipo válido"
   }),
-  valorIntervalo: z.coerce.number()
+  valorIntervalo: z.coerce.number({ error: "Valor inválido" })
     .min(1, { error: "O intervalo deve ser maior que 0" }),
 });
 

@@ -18,17 +18,10 @@ const veiculoSchema = z.object({
     .max(7, { error: "A placa deve ter 7 caracteres" })
     .transform(val => val.toUpperCase()),
 
-  modelo: z.string({ error: "O modelo é obrigatório" })
-    .min(2, { error: "Modelo muito curto" }),
-
-  // z.coerce converte input para number
-  // invalid_type_error foi removido no v4 -> usa-se 'error'
+  modelo: z.string().min(2, { error: "Modelo é obrigatório" }),
   ano: z.coerce.number({ error: "Ano inválido" })
-    .min(1900, { error: "Ano inválido (mínimo 1900)" })
-    .max(new Date().getFullYear() + 1, { error: "Ano não pode ser futuro" }),
-
-  tipoVeiculo: z.string({ error: "O tipo é obrigatório" })
-    .min(2, { error: "Tipo obrigatório" }),
+    .min(1900, { error: "Ano inválido" })
+    .max(new Date().getFullYear() + 1, { error: "Ano inválido" }),
 
   tipoCombustivel: z.enum(tiposDeCombustivel).default('DIESEL_S10'),
   
@@ -54,8 +47,8 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
     reset,
     setError,
     formState: { errors, isSubmitting }
-  } = useForm({
-    resolver: zodResolver(veiculoSchema),
+  } = useForm<VeiculoForm>({
+    resolver: zodResolver(veiculoSchema) as any,
     defaultValues: {
       placa: '',
       modelo: '',
@@ -134,26 +127,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
           error={errors.modelo?.message as string}
           disabled={isSubmitting}
         />
-        
-        {/* Dropdown de Tipos */}
-        <div>
-          <label className="block mb-1.5 text-sm font-medium text-text-secondary">Tipo</label>
-          <div className="relative">
-            <select
-              className="w-full px-4 py-2 bg-white border border-gray-300 rounded-input appearance-none focus:outline-none focus:ring-2 focus:ring-primary"
-              {...register('tipoVeiculo')}
-              disabled={isSubmitting}
-            >
-              <option value="">Selecione...</option>
-              {tiposDeVeiculo.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-          </div>
-          {errors.tipoVeiculo && <p className="mt-1 text-xs text-red-500">{errors.tipoVeiculo.message as string}</p>}
-        </div>
-        
+        {/* valueAsNumber garante que o valor chegue como number para o RHF antes do Zod validar */}
         <Input
           label="Ano"
           type="number"

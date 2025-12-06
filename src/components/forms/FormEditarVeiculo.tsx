@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { toast } from 'sonner';
 import { api } from '../../services/api';
+import { handleApiError } from '../../utils/errorHandler';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import type { Veiculo } from '../../types';
@@ -10,7 +12,7 @@ import type { Veiculo } from '../../types';
 const tiposDeVeiculo = ["CAMINHAO", "CARRETA", "UTILITARIO", "OUTRO"] as const;
 const tiposDeCombustivel = ["DIESEL_S10", "GASOLINA_COMUM", "ETANOL", "GNV"] as const;
 
-// --- SCHEMA ZOD V4 (Corrigido) ---
+// --- SCHEMA ZOD V4 ---
 const veiculoSchema = z.object({
   placa: z.string({ error: "Placa inválida" })
     .min(7, { error: "Placa inválida" })
@@ -46,14 +48,12 @@ interface FormEditarVeiculoProps {
 export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEditarVeiculoProps) {
 
   const [loadingData, setLoadingData] = useState(true);
-  const [successMsg, setSuccessMsg] = useState('');
 
   // ✅ CORREÇÃO: Sem <VeiculoForm> e sem 'as any'
   const {
     register,
     handleSubmit,
     reset,
-    setError,
     formState: { errors, isSubmitting }
   } = useForm({
     resolver: zodResolver(veiculoSchema),
@@ -79,18 +79,16 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
           vencimentoCipp: veiculo.vencimentoCipp || ''
         });
       } catch (err) {
-        console.error("Erro ao carregar veículo", err);
-        setError('root', { message: 'Erro ao carregar dados do servidor.' });
+        handleApiError(err, 'Erro ao carregar dados do veículo.');
       } finally {
         setLoadingData(false);
       }
     };
 
     fetchVeiculo();
-  }, [veiculoId, reset, setError]);
+  }, [veiculoId, reset]);
 
   const onSubmit = async (data: VeiculoFormValues) => {
-    setSuccessMsg('');
     try {
       const payload = {
         ...data,
@@ -102,16 +100,11 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
 
       await api.put(`/veiculo/${veiculoId}`, payload);
 
-      setSuccessMsg('Veículo atualizado com sucesso!');
+      toast.success('Veículo atualizado!');
       setTimeout(() => onSuccess(), 1500);
 
-    } catch (err: any) {
-      console.error(err);
-      if (err.response?.data?.error) {
-        setError('root', { message: err.response.data.error });
-      } else {
-        setError('root', { message: 'Falha ao salvar veículo.' });
-      }
+    } catch (err) {
+      handleApiError(err, 'Falha ao salvar veículo.');
     }
   };
 
@@ -224,18 +217,6 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
             />
           </div>
         </div>
-
-        {errors.root && (
-          <div className="p-3 bg-red-50 text-error border border-red-200 rounded text-sm text-center">
-            {errors.root.message}
-          </div>
-        )}
-
-        {successMsg && (
-          <div className="p-3 bg-green-50 text-success border border-green-200 rounded text-sm text-center font-medium">
-            {successMsg}
-          </div>
-        )}
 
         <div className="flex gap-3 pt-2">
           <Button type="button" variant="secondary" className="flex-1" onClick={onCancelar} disabled={isSubmitting}>

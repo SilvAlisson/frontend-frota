@@ -9,7 +9,7 @@ import { Input } from '../ui/Input';
 
 // --- ZOD V4 SCHEMA ---
 const fornecedorSchema = z.object({
-  nome: z.string().min(1, { error: 'O Nome é obrigatório.' }),
+  nome: z.string().min(1, { error: 'O Nome é obrigatório.' }), // message -> error
   cnpj: z.union([z.string().optional(), z.literal('')]),
 });
 
