@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DOMPurify from 'dompurify';
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto';
 import { Button } from './ui/Button';
@@ -12,6 +12,10 @@ interface RegistrarAbastecimentoProps {
   veiculos: Veiculo[];
   produtos: Produto[];
   fornecedores: Fornecedor[];
+  // Novas props para contexto do Operador
+  usuarioLogado?: User;
+  veiculoPreSelecionadoId?: string;
+  onClose?: () => void;
 }
 
 interface ItemAbastecimento {
@@ -20,18 +24,24 @@ interface ItemAbastecimento {
   valorPorUnidade: string;
 }
 
-const selectStyle = "w-full px-4 py-2.5 text-sm text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-50 appearance-none transition-all shadow-sm cursor-pointer hover:border-gray-400";
+const selectStyle = "w-full px-4 py-2.5 text-sm text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none transition-all shadow-sm cursor-pointer hover:border-gray-400 disabled:cursor-not-allowed";
 const labelStyle = "block mb-1.5 text-sm font-bold text-text-secondary";
 
 export function RegistrarAbastecimento({
   usuarios,
   veiculos,
   produtos,
-  fornecedores
+  fornecedores,
+  usuarioLogado,
+  veiculoPreSelecionadoId,
+  onClose
 }: RegistrarAbastecimentoProps) {
 
-  const [veiculoId, setVeiculoId] = useState('');
-  const [operadorId, setOperadorId] = useState('');
+  // Se for operador, já inicia com ele selecionado
+  const operadorInicial = usuarioLogado?.role === 'OPERADOR' ? usuarioLogado.id : '';
+
+  const [veiculoId, setVeiculoId] = useState(veiculoPreSelecionadoId || '');
+  const [operadorId, setOperadorId] = useState(operadorInicial);
   const [fornecedorId, setFornecedorId] = useState('');
   const [kmOdometro, setKmOdometro] = useState('');
   const [dataHora, setDataHora] = useState(new Date().toISOString().slice(0, 16));
@@ -46,8 +56,12 @@ export function RegistrarAbastecimento({
   const [modalAberto, setModalAberto] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
 
+  // Atualiza veículo se a prop mudar (ex: carregou a jornada depois)
+  useEffect(() => {
+    if (veiculoPreSelecionadoId) setVeiculoId(veiculoPreSelecionadoId);
+  }, [veiculoPreSelecionadoId]);
+
   // FILTRO RÍGIDO: Apenas Combustível e Aditivo aparecem aqui.
-  // Lavagem e Reparos não devem poluir esta lista.
   const produtosAbastecimento = produtos.filter(p =>
     ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo)
   );
@@ -102,7 +116,7 @@ export function RegistrarAbastecimento({
 
       const dadosFormulario = {
         veiculoId,
-        operadorId: operadorId || null, // Opcional se for Admin fazendo
+        operadorId: operadorId || null,
         fornecedorId,
         kmOdometro: kmEnvio,
         dataHora: new Date(dataHora).toISOString(),
@@ -127,14 +141,15 @@ export function RegistrarAbastecimento({
     setModalAberto(false);
     setFormDataParaModal(null);
 
-    // Reset Form
-    setVeiculoId('');
-    setOperadorId('');
+    // Reset Form (mantendo operador e veículo se for o caso)
     setFornecedorId('');
     setKmOdometro('');
     setPlacaCartaoUsado('');
     setJustificativa('');
     setItens([{ produtoId: '', quantidade: '', valorPorUnidade: '' }]);
+
+    // Se tiver função de fechar (modal), chama ela
+    if (onClose) onClose();
   };
 
   // Cálculo do total geral em tempo real
@@ -144,11 +159,24 @@ export function RegistrarAbastecimento({
     return acc + (qtd * val);
   }, 0);
 
+  // Verifica se é operador para travar o select
+  const isOperadorTravado = usuarioLogado?.role === 'OPERADOR';
+
   return (
     <>
       <form className="space-y-8 bg-white p-6 rounded-card shadow-card border border-gray-100" onSubmit={handleSubmit}>
 
-        <div className="text-center mb-6">
+        <div className="text-center mb-6 relative">
+          {onClose && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="absolute -right-2 -top-2 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+          )}
+
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-green-50 mb-3 ring-4 ring-green-50/50">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-green-600">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -166,7 +194,12 @@ export function RegistrarAbastecimento({
           <div>
             <label className={labelStyle}>Veículo</label>
             <div className="relative group">
-              <select className={selectStyle} value={veiculoId} onChange={(e) => setVeiculoId(e.target.value)} disabled={loading}>
+              <select
+                className={selectStyle}
+                value={veiculoId}
+                onChange={(e) => setVeiculoId(e.target.value)}
+                disabled={loading || !!veiculoPreSelecionadoId} // Trava se vier pré-selecionado (cenário de jornada ativa)
+              >
                 <option value="">Selecione...</option>
                 {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>)}
               </select>
@@ -175,9 +208,14 @@ export function RegistrarAbastecimento({
           </div>
 
           <div>
-            <label className={labelStyle}>Motorista (Opcional)</label>
+            <label className={labelStyle}>Motorista</label>
             <div className="relative group">
-              <select className={selectStyle} value={operadorId} onChange={(e) => setOperadorId(e.target.value)} disabled={loading}>
+              <select
+                className={selectStyle}
+                value={operadorId}
+                onChange={(e) => setOperadorId(e.target.value)}
+                disabled={loading || isOperadorTravado} // Trava se for o próprio operador
+              >
                 <option value="">Selecione...</option>
                 {usuarios.filter(u => u.role === 'OPERADOR').map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
               </select>
@@ -330,14 +368,28 @@ export function RegistrarAbastecimento({
           ></textarea>
         </div>
 
-        <Button
-          type="submit"
-          disabled={loading}
-          isLoading={loading}
-          className="w-full py-3.5 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30"
-        >
-          {loading ? 'Validando...' : 'Registrar Abastecimento'}
-        </Button>
+        <div className="flex gap-3">
+          {onClose && (
+            <Button
+              type="button"
+              variant="secondary"
+              className="flex-1 py-3.5"
+              onClick={onClose}
+              disabled={loading}
+            >
+              Cancelar
+            </Button>
+          )}
+          <Button
+            type="submit"
+            disabled={loading}
+            isLoading={loading}
+            className={`py-3.5 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 ${onClose ? 'flex-[2]' : 'w-full'}`}
+          >
+            {loading ? 'Validando...' : 'Registrar Abastecimento'}
+          </Button>
+        </div>
+
       </form>
 
       {modalAberto && formDataParaModal && (
