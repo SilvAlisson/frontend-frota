@@ -132,6 +132,9 @@ export function Dashboard() {
             user={user}
             usuarios={usuarios}
             veiculos={veiculos}
+            // Novas props adicionadas:
+            produtos={produtos}
+            fornecedores={fornecedores}
             jornadasAtivas={jornadasAtivas}
             onJornadaIniciada={handleAtualizarDados}
             onJornadaFinalizada={handleAtualizarDados}
