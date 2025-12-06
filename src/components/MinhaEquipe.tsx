@@ -18,24 +18,26 @@ export function MinhaEquipe({ usuarios, jornadasAbertas }: MinhaEquipeProps) {
   const [modalQrOpen, setModalQrOpen] = useState(false);
   const [tokenQr, setTokenQr] = useState<string | null>(null);
   const [nomeQr, setNomeQr] = useState('');
+  const [fotoQr, setFotoQr] = useState<string | null | undefined>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   // Filtra apenas operadores
   const operadores = usuarios.filter(u => u.role === 'OPERADOR');
 
-  const handleGerarQrCode = async (userId: string, nome: string) => {
-    setLoadingId(userId);
+  const handleGerarQrCode = async (user: User) => {
+    setLoadingId(user.id);
 
-    const promise = api.post(`/auth/user/${userId}/generate-token`);
+    const promise = api.post(`/auth/user/${user.id}/generate-token`);
 
     toast.promise(promise, {
       loading: 'Gerando código de acesso...',
       success: (response) => {
         setTokenQr(response.data.loginToken);
-        setNomeQr(nome);
+        setNomeQr(user.nome);
+        setFotoQr(user.fotoUrl);
         setModalQrOpen(true);
         setLoadingId(null);
-        return `QR Code gerado para ${nome.split(' ')[0]}`;
+        return `QR Code gerado para ${user.nome.split(' ')[0]}`;
       },
       error: () => {
         setLoadingId(null);
@@ -72,10 +74,14 @@ export function MinhaEquipe({ usuarios, jornadasAbertas }: MinhaEquipeProps) {
               className="group bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
             >
 
-              {/* Info Motorista */}
+              {/* Info Motorista COM FOTO */}
               <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-500 border-2 border-white shadow-sm group-hover:scale-105 transition-transform">
-                  {op.nome.charAt(0).toUpperCase()}
+                <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-500 border-2 border-white shadow-sm group-hover:scale-105 transition-transform overflow-hidden">
+                  {op.fotoUrl ? (
+                    <img src={op.fotoUrl} alt={op.nome} className="w-full h-full object-cover" />
+                  ) : (
+                    op.nome.charAt(0).toUpperCase()
+                  )}
                 </div>
                 <div>
                   <h4 className="font-bold text-gray-900">{op.nome}</h4>
@@ -110,7 +116,7 @@ export function MinhaEquipe({ usuarios, jornadasAbertas }: MinhaEquipeProps) {
                 <Button
                   variant="secondary"
                   className="text-xs py-2 px-4 h-9 w-full sm:w-auto shadow-sm"
-                  onClick={() => handleGerarQrCode(op.id, op.nome)}
+                  onClick={() => handleGerarQrCode(op)} // Passa o objeto usuário inteiro
                   disabled={loadingId === op.id}
                   isLoading={loadingId === op.id}
                   icon={<IconeQrCode />}
@@ -134,7 +140,8 @@ export function MinhaEquipe({ usuarios, jornadasAbertas }: MinhaEquipeProps) {
         <ModalQrCode
           token={tokenQr}
           nomeUsuario={nomeQr}
-          onClose={() => { setModalQrOpen(false); setTokenQr(null); }}
+          fotoUrl={fotoQr} // Passa a foto para o modal
+          onClose={() => { setModalQrOpen(false); setTokenQr(null); setFotoQr(null); }}
         />
       )}
     </div>

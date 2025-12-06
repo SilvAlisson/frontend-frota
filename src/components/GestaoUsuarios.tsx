@@ -30,6 +30,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   const [modalQrOpen, setModalQrOpen] = useState(false);
   const [tokenQr, setTokenQr] = useState<string | null>(null);
   const [nomeQr, setNomeQr] = useState('');
+  const [fotoQr, setFotoQr] = useState<string | null | undefined>(null);
 
   // QUERY: Listar Usuários
   const { data: usuarios = [], isLoading } = useQuery<User[]>({
@@ -50,7 +51,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
     onError: (err: any) => {
-      throw err; // Propaga para o toast
+      throw err;
     }
   });
 
@@ -79,6 +80,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
       success: (response) => {
         setTokenQr(response.data.loginToken);
         setNomeQr(user.nome);
+        setFotoQr(user.fotoUrl);
         setModalQrOpen(true);
         return `QR Code gerado para ${user.nome}`;
       },
@@ -200,8 +202,12 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
                   {/* Avatar & Info */}
                   <div className="flex items-center gap-4 mb-4">
-                    <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-500 border-2 border-white shadow-sm">
-                      {user.nome.charAt(0).toUpperCase()}
+                    <div className="h-12 w-12 rounded-full bg-gray-100 flex items-center justify-center text-lg font-bold text-gray-500 border-2 border-white shadow-sm overflow-hidden">
+                      {user.fotoUrl ? (
+                        <img src={user.fotoUrl} alt={user.nome} className="w-full h-full object-cover" />
+                      ) : (
+                        user.nome.charAt(0).toUpperCase()
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-gray-900 truncate" title={user.nome}>
@@ -293,7 +299,12 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
       {/* --- MODAIS --- */}
       {modalQrOpen && tokenQr && (
-        <ModalQrCode token={tokenQr} nomeUsuario={nomeQr} onClose={() => { setModalQrOpen(false); setTokenQr(null); }} />
+        <ModalQrCode
+          token={tokenQr}
+          nomeUsuario={nomeQr}
+          fotoUrl={fotoQr}
+          onClose={() => { setModalQrOpen(false); setTokenQr(null); setFotoQr(null); }}
+        />
       )}
 
       {usuarioParaTreinamento && (
