@@ -16,9 +16,20 @@ api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('authToken');
 
-    if (token) {
+    // Lista de rotas que NÃO devem enviar o Authorization header,
+    // pois são rotas de autenticação (login, token de acesso, etc.).
+    const isAuthRoute =
+      config.url?.includes('/auth/login') ||
+      config.url?.includes('/auth/login-token') || // <-- Adicionado para cobrir o QR Code
+      config.url?.includes('/auth/register');
+
+    // Anexar o token APENAS se ele existir E NÃO for uma rota de autenticação.
+    if (token && !isAuthRoute) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // IMPORTANTE: Para requisições de login (sem token), garantimos que o header não seja enviado, 
+    // mesmo que um token antigo exista no localStorage.
 
     return config;
   },
@@ -40,10 +51,6 @@ api.interceptors.response.use(
       if (!isLoginPage) {
         localStorage.removeItem('authToken');
         localStorage.removeItem('authUser');
-
-        // O toast pode não aparecer tempo suficiente antes do reload, 
-        // mas é boa prática tentar notificar.
-        // toast.error("Sessão expirada. Faça login novamente.");
 
         window.location.href = '/login';
       }
