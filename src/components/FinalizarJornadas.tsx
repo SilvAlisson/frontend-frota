@@ -1,20 +1,17 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { parseDecimal, formatKmVisual } from '../utils';
-
-// Interfaces
-interface JornadaAtiva {
-  id: string;
-  dataInicio: string;
-  kmInicio: number;
-  veiculo: { placa: string; modelo: string };
-  encarregado: { nome: string };
-}
+import { toast } from 'sonner';
+import type { Jornada } from '../types'; // Importando o tipo global
 
 interface FinalizarJornadaProps {
-  jornadaParaFinalizar: JornadaAtiva;
+  // Usamos o tipo Jornada global aqui. Isso resolve o erro de compatibilidade.
+  jornadaParaFinalizar: Jornada;
   onJornadaFinalizada: () => void;
 }
 
@@ -23,104 +20,148 @@ export function FinalizarJornada({
   onJornadaFinalizada
 }: FinalizarJornadaProps) {
 
-  const [kmFim, setKmFim] = useState('');
-  const [error, setError] = useState('');
   const [modalAberto, setModalAberto] = useState(false);
+  const [dadosValidacao, setDadosValidacao] = useState<{ kmFim: number } | null>(null);
+
+  // --- SCHEMA ZOD ---
+  const finalizarSchema = z.object({
+    kmFimInput: z.string({ error: "KM Final obrigatório" })
+      .min(1, { message: "Informe o KM do painel" })
+  }).superRefine((val, ctx) => {
+    const kmFim = parseDecimal(val.kmFimInput);
+
+    if (kmFim <= 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "KM inválido",
+        path: ["kmFimInput"]
+      });
+      return;
+    }
+
+    if (kmFim < jornadaParaFinalizar.kmInicio) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Deve ser maior que ${jornadaParaFinalizar.kmInicio.toLocaleString('pt-BR')}`,
+        path: ["kmFimInput"]
+      });
+    }
+  });
+
+  type FinalizarFormValues = z.input<typeof finalizarSchema>;
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors, isSubmitting }
+  } = useForm<FinalizarFormValues>({
+    resolver: zodResolver(finalizarSchema),
+    defaultValues: {
+      kmFimInput: ''
+    },
+    mode: 'onChange'
+  });
+
+  // --- CÁLCULOS VISUAIS ---
+  const kmFimInput = watch('kmFimInput');
+  const kmFimAtual = parseDecimal(kmFimInput);
+  const distanciaPercorrida = kmFimAtual > jornadaParaFinalizar.kmInicio
+    ? kmFimAtual - jornadaParaFinalizar.kmInicio
+    : 0;
+
+  // Fallback seguro para o nome do encarregado (caso venha undefined do backend)
+  const nomeEncarregado = jornadaParaFinalizar.encarregado?.nome || 'Sistema/Admin';
 
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setKmFim(formatKmVisual(e.target.value));
+    setValue("kmFimInput", formatKmVisual(e.target.value), { shouldValidate: true });
   };
 
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setError('');
-
-    if (!kmFim) {
-      setError('O KM Final é obrigatório.');
-      return;
-    }
-
-    const kmFimFloat = parseDecimal(kmFim);
-
-    if (isNaN(kmFimFloat) || kmFimFloat <= 0) {
-      setError('KM Final deve ser um número positivo e válido.');
-      return;
-    }
-
-    if (kmFimFloat < jornadaParaFinalizar.kmInicio) {
-      setError(`KM Final (${kmFimFloat.toLocaleString('pt-BR')}) não pode ser menor que o KM Inicial (${jornadaParaFinalizar.kmInicio.toLocaleString('pt-BR')}).`);
-      return;
-    }
-
+  const onSubmit = (data: FinalizarFormValues) => {
+    const kmFimFloat = parseDecimal(data.kmFimInput);
+    setDadosValidacao({ kmFim: kmFimFloat });
     setModalAberto(true);
   };
 
   const handleModalSuccess = () => {
+    toast.success("Jornada finalizada com sucesso!");
     onJornadaFinalizada();
-    setKmFim('');
+    reset();
     setModalAberto(false);
   };
 
   return (
     <>
-      <form
-        className="space-y-6"
-        onSubmit={handleSubmit}
-      >
-        <div className="text-center">
-          <h3 className="text-xl font-semibold text-primary">
-            Finalizar Jornada Atual
+      <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+
+        <div className="text-center mb-2">
+          <h3 className="text-xl font-bold text-primary">
+            Finalizar Jornada
           </h3>
           <p className="text-xs text-text-secondary mt-1">
-            Confirme os dados para encerrar o turno.
+            Confirme o odômetro final para fechar o turno.
           </p>
         </div>
 
-        {/* Resumo da Jornada */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm space-y-2">
-          <div className="flex justify-between">
-            <span className="text-text-secondary">KM Inicial:</span>
-            <span className="font-bold text-text">{jornadaParaFinalizar.kmInicio.toLocaleString('pt-BR')}</span>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+            <span className="text-[10px] text-gray-400 font-bold uppercase block mb-1">KM Inicial</span>
+            <span className="text-sm font-bold text-gray-700">
+              {jornadaParaFinalizar.kmInicio.toLocaleString('pt-BR')}
+            </span>
           </div>
-          <div className="flex justify-between">
-            <span className="text-text-secondary">Encarregado:</span>
-            <span className="font-bold text-text">{jornadaParaFinalizar.encarregado.nome}</span>
+
+          <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+            <span className="text-[10px] text-gray-400 font-bold uppercase block mb-1">Percorrido</span>
+            <span className={`text-sm font-bold ${distanciaPercorrida > 0 ? 'text-primary' : 'text-gray-400'}`}>
+              {distanciaPercorrida > 0 ? `+ ${distanciaPercorrida.toLocaleString('pt-BR')} km` : '--'}
+            </span>
           </div>
         </div>
 
-        {/* Campo KM Final */}
-        <div>
+        <div className="relative">
           <Input
-            label="KM Final"
+            label="KM Final (Painel)"
             id={`kmFim-${jornadaParaFinalizar.id}`}
             type="text"
             inputMode="numeric"
-            placeholder={`Maior que ${jornadaParaFinalizar.kmInicio}`}
-            value={kmFim}
-            onChange={handleKmChange}
-            error={error} // Passa o erro diretamente para o Input
+            placeholder={`> ${jornadaParaFinalizar.kmInicio}`}
+            {...register('kmFimInput')}
+            onChange={(e: any) => {
+              register('kmFimInput').onChange(e);
+              handleKmChange(e);
+            }}
+            error={errors.kmFimInput?.message}
+            className="text-lg font-bold tracking-wide"
+            autoFocus
           />
+
+          <div className="mt-2 flex justify-between items-center text-xs text-gray-400 px-1">
+            <span>Encarregado: <strong>{nomeEncarregado}</strong></span>
+          </div>
         </div>
 
         <Button
           type="submit"
           variant="primary"
-          className="w-full py-3"
-          disabled={!kmFim}
+          className="w-full py-3 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+          disabled={isSubmitting || !kmFimInput}
         >
-          Finalizar Jornada
+          Confirmar Encerramento
         </Button>
       </form>
 
-      {modalAberto && (
+      {modalAberto && dadosValidacao && (
         <ModalConfirmacaoFoto
-          titulo="Confirmar Fim de Jornada"
-          kmParaConfirmar={parseDecimal(kmFim)}
+          titulo="Comprovante Final"
+          kmParaConfirmar={dadosValidacao.kmFim}
           jornadaId={jornadaParaFinalizar.id}
           apiEndpoint={`/jornada/finalizar/:jornadaId`}
           apiMethod="PUT"
           dadosJornada={{
-            kmFim: parseDecimal(kmFim),
+            kmFim: dadosValidacao.kmFim,
           }}
           onClose={() => setModalAberto(false)}
           onSuccess={handleModalSuccess}

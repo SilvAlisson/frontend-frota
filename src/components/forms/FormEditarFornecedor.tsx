@@ -6,14 +6,19 @@ import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { toast } from 'sonner';
 
-// --- ZOD V4 SCHEMA ---
+// --- 1. SCHEMA ZOD V4 ---
 const fornecedorSchema = z.object({
-  nome: z.string().min(1, { error: 'O Nome é obrigatório.' }), // message -> error
-  cnpj: z.union([z.string().optional(), z.literal('')]),
+  nome: z.string({ error: 'O Nome é obrigatório.' })
+    .min(2, { error: 'O nome deve ter pelo menos 2 caracteres.' })
+    .transform(val => val.trim().toUpperCase()), // Normalização
+
+  // Aceita string vazia ou undefined
+  cnpj: z.string().optional().or(z.literal('')),
 });
 
-type FornecedorFormData = z.infer<typeof fornecedorSchema>;
+type FornecedorFormInput = z.input<typeof fornecedorSchema>;
 
 interface Props {
   fornecedorId: string;
@@ -23,88 +28,105 @@ interface Props {
 
 export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Props) {
   const [loadingData, setLoadingData] = useState(true);
-  const [successMsg, setSuccessMsg] = useState('');
 
   const {
     register,
     handleSubmit,
     reset,
-    setError,
     formState: { errors, isSubmitting }
-  } = useForm<FornecedorFormData>({
+  } = useForm<FornecedorFormInput>({
     resolver: zodResolver(fornecedorSchema),
-    defaultValues: { nome: '', cnpj: '' }
+    defaultValues: { nome: '', cnpj: '' },
+    mode: 'onBlur'
   });
 
+  // --- CARREGAMENTO INICIAL ---
   useEffect(() => {
     if (!fornecedorId) return;
 
-    api.get(`/fornecedor/${fornecedorId}`)
-      .then(res => {
+    const fetchDados = async () => {
+      try {
+        const { data } = await api.get(`/fornecedor/${fornecedorId}`);
         reset({
-          nome: res.data.nome || '',
-          cnpj: res.data.cnpj || ''
+          nome: data.nome || '',
+          cnpj: data.cnpj || ''
         });
+      } catch (error) {
+        console.error(error);
+        toast.error('Erro ao carregar dados do fornecedor.');
+        onCancelar(); // Fecha se falhar o carregamento
+      } finally {
         setLoadingData(false);
-      })
-      .catch(() => {
-        setError('root', { message: 'Erro ao carregar dados do fornecedor.' });
-        setLoadingData(false);
-      });
-  }, [fornecedorId, reset, setError]);
+      }
+    };
 
-  const onSubmit = async (data: FornecedorFormData) => {
-    setSuccessMsg('');
-    try {
-      await api.put(`/fornecedor/${fornecedorId}`, {
-        nome: DOMPurify.sanitize(data.nome),
-        cnpj: data.cnpj && data.cnpj.trim() !== '' ? DOMPurify.sanitize(data.cnpj) : null,
-      });
+    fetchDados();
+  }, [fornecedorId, reset, onCancelar]);
 
-      setSuccessMsg('Fornecedor atualizado com sucesso!');
+  // --- 2. SUBMISSÃO COM TOAST PROMISE ---
+  const onSubmit = async (data: FornecedorFormInput) => {
+    const payload = {
+      nome: DOMPurify.sanitize(data.nome),
+      cnpj: data.cnpj && data.cnpj.trim() !== ''
+        ? DOMPurify.sanitize(data.cnpj)
+        : null,
+    };
 
-      setTimeout(() => {
-        onSuccess();
-      }, 1500);
+    const promise = api.put(`/fornecedor/${fornecedorId}`, payload);
 
-    } catch (err: any) {
-      setError('root', { message: err.response?.data?.error || 'Falha ao atualizar.' });
-    }
+    toast.promise(promise, {
+      loading: 'Atualizando cadastro...',
+      success: () => {
+        setTimeout(onSuccess, 800);
+        return 'Fornecedor atualizado com sucesso!';
+      },
+      error: (err) => {
+        console.error(err);
+        return err.response?.data?.error || 'Falha ao atualizar. Tente novamente.';
+      }
+    });
   };
 
   if (loadingData) {
     return (
-      <div className="flex flex-col items-center justify-center py-10 space-y-3">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        <p className="text-sm text-text-secondary">Carregando dados...</p>
+      <div className="flex flex-col items-center justify-center py-12 space-y-4">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-100 border-t-blue-600"></div>
+        <p className="text-sm text-gray-500 font-medium animate-pulse">Sincronizando dados...</p>
       </div>
     );
   }
 
   return (
-    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-      <div className="text-center mb-6">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 mb-3">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6 text-primary">
+    <form className="space-y-8" onSubmit={handleSubmit(onSubmit)}>
+
+      {/* HEADER VISUAL */}
+      <div className="text-center relative">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-gradient-to-r from-transparent via-blue-200 to-transparent rounded-full" />
+
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 mb-4 shadow-sm ring-4 ring-white">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
             <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
           </svg>
         </div>
-        <h4 className="text-xl font-bold text-primary">
+
+        <h4 className="text-2xl font-bold text-gray-900 tracking-tight">
           Editar Fornecedor
         </h4>
-        <p className="text-sm text-text-secondary mt-1">
-          Atualize os dados cadastrais do parceiro.
+        <p className="text-sm text-text-secondary mt-1 max-w-xs mx-auto leading-relaxed">
+          Atualize as informações cadastrais do parceiro.
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-5 px-1">
         <Input
-          label="Nome"
+          label="Nome do Fornecedor"
           placeholder="Nome do estabelecimento"
           {...register('nome')}
           error={errors.nome?.message}
           disabled={isSubmitting}
+          className="uppercase font-medium"
         />
+
         <Input
           label="CNPJ (Opcional)"
           placeholder="00.000.000/0000-00"
@@ -114,25 +136,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
         />
       </div>
 
-      {errors.root && (
-        <div className="flex items-center gap-3 p-3 rounded-md bg-red-50 border border-red-200 text-error text-sm animate-pulse">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
-            <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-          </svg>
-          <span>{errors.root.message}</span>
-        </div>
-      )}
-
-      {successMsg && (
-        <div className="flex items-center gap-3 p-3 rounded-md bg-green-50 border border-green-200 text-success text-sm font-medium">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0">
-            <path fillRule="evenodd" d="M10 18a8 8 0 1 0 0-16 8 8 0 0 0 0 16Zm3.857-9.809a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" />
-          </svg>
-          <span>{successMsg}</span>
-        </div>
-      )}
-
-      <div className="flex gap-3 pt-2">
+      <div className="flex gap-3 pt-6 border-t border-gray-100 mt-6">
         <Button
           type="button"
           variant="secondary"
@@ -145,11 +149,11 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
         <Button
           type="submit"
           variant="primary"
-          className="flex-1"
+          className="flex-[2] shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 text-white"
           isLoading={isSubmitting}
           disabled={isSubmitting}
         >
-          Salvar Alterações
+          {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
         </Button>
       </div>
     </form>

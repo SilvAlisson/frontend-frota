@@ -115,8 +115,8 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
         setTimeout(onSuccess, 800);
         return 'Colaborador cadastrado com sucesso!';
       },
-      error: (err) => {
-        console.error(err);
+      error: (err) => { // CORREÇÃO APLICADA: Mensagem específica
+        console.error("Erro ao cadastrar usuário:", err);
         return err.response?.data?.error || 'Erro ao cadastrar. Verifique o email.';
       }
     });

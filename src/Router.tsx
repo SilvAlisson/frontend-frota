@@ -1,37 +1,42 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
-import { LoginScreen } from './pages/LoginScreen'; // Vamos extrair o Login para um arquivo separado depois ou manter no App por enquanto
-import { Dashboard } from './pages/Dashboard'; // O mesmo para o Dashboard
+import { LoginScreen } from './pages/LoginScreen';
+import { Dashboard } from './pages/Dashboard';
 
-// Componente para proteger rotas privadas
-function PrivateRoute({ children }: { children: JSX.Element }) {
+// Componente de Proteção de Rotas
+function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuth();
 
   if (loading) {
-    return <div className="flex justify-center items-center h-screen text-primary">Carregando...</div>;
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-primary mb-4"></div>
+        <p className="text-sm text-text-secondary font-medium animate-pulse">Verificando credenciais...</p>
+      </div>
+    );
   }
 
-  return isAuthenticated ? children : <Navigate to="/login" />;
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
 }
 
 export function Router() {
   return (
     <Routes>
+      {/* Rota Pública */}
       <Route path="/login" element={<LoginScreen />} />
-      
-      <Route 
-        path="/" 
+
+      {/* Rotas Privadas */}
+      <Route
+        path="/"
         element={
           <PrivateRoute>
             <Dashboard />
           </PrivateRoute>
-        } 
+        }
       />
-      
-      {/* Você pode adicionar rotas específicas aqui futuramente, ex: */}
-      {/* <Route path="/veiculos" element={<PrivateRoute><GestaoVeiculos /></PrivateRoute>} /> */}
 
-      <Route path="*" element={<Navigate to="/" />} />
+      {/* Fallback para rotas desconhecidas */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
