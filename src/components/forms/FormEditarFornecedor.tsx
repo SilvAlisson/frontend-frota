@@ -8,19 +8,20 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { toast } from 'sonner';
 
-// Lista de Tipos
-const tiposFornecedor = ["POSTO", "OFICINA", "OUTROS"] as const;
+// Lista de Tipos (ATUALIZADA com LAVA_JATO e SEGURADORA para sincronizar com o backend)
+const tiposFornecedor = ["POSTO", "OFICINA", "LAVA_JATO", "SEGURADORA", "OUTROS"] as const;
 
-// --- 1. SCHEMA ZOD V4 ---
+// --- 1. SCHEMA ZOD V4 (Atualizado com todos os tipos) ---
 const fornecedorSchema = z.object({
+  // Uso de 'error' no lugar de 'message' e 'required_error' é a sintaxe recomendada do Zod V4
   nome: z.string({ error: 'O Nome é obrigatório.' })
-    .min(2, { error: 'O nome deve ter pelo menos 2 caracteres.' })
+    .min(2, { message: 'O nome deve ter pelo menos 2 caracteres.' })
     .transform(val => val.trim().toUpperCase()), // Normalização
 
   // Aceita string vazia ou undefined
   cnpj: z.string().optional().or(z.literal('')),
 
-  // Novo campo
+  // Enum com os novos tipos, garantindo que o valor enviado é uma das chaves
   tipo: z.enum(tiposFornecedor, { error: "Selecione o tipo" }).default('OUTROS'),
 });
 
@@ -55,8 +56,9 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
         const { data } = await api.get(`/fornecedor/${fornecedorId}`);
 
         // Validação de segurança para o tipo
-        const tipoValido = tiposFornecedor.includes(data.tipo) ? data.tipo : 'OUTROS';
+        const tipoValido = tiposFornecedor.includes(data.tipo as any) ? data.tipo : 'OUTROS';
 
+        // O valor do campo 'tipo' no reset deve ser a chave do ENUM (POSTO, OFICINA, etc.)
         reset({
           nome: data.nome || '',
           cnpj: data.cnpj || '',
@@ -81,7 +83,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
       cnpj: data.cnpj && data.cnpj.trim() !== ''
         ? DOMPurify.sanitize(data.cnpj)
         : null,
-      tipo: data.tipo, // Envia o tipo atualizado
+      tipo: data.tipo, // Envia o valor do ENUM (POSTO, LAVA_JATO, etc.)
     };
 
     const promise = api.put(`/fornecedor/${fornecedorId}`, payload);
@@ -149,6 +151,8 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
             >
               <option value="POSTO">Posto de Combustível</option>
               <option value="OFICINA">Oficina Mecânica</option>
+              <option value="LAVA_JATO">Lava Jato</option>
+              <option value="SEGURADORA">Seguradora</option>
               <option value="OUTROS">Outros Serviços</option>
             </select>
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
