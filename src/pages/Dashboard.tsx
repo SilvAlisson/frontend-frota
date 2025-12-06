@@ -19,7 +19,6 @@ export function Dashboard() {
       if (user?.role === 'ADMIN' || user?.role === 'ENCARREGADO') {
         try {
           await api.post('/jornada/verificar-timeouts');
-          // Não precisamos de feedback visual aqui, é uma tarefa de fundo
         } catch (err) {
           console.warn("Não foi possível verificar timeouts automaticamente:", err);
         }
@@ -164,6 +163,7 @@ export function Dashboard() {
             veiculos={veiculos}
             produtos={produtos}
             fornecedores={fornecedores}
+            usuarios={usuarios}
           />
         )}
 
