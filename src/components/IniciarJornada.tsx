@@ -11,7 +11,7 @@ interface IniciarJornadaProps {
   veiculos: Veiculo[];
   operadorLogadoId: string;
   onJornadaIniciada: (novaJornada: any) => void;
-  jornadasAtivas: Jornada[]; // Ajustar para tipo correto se possível
+  jornadasAtivas: Jornada[];
 }
 
 const selectStyle = "w-full px-4 py-3 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-50 appearance-none transition-all cursor-pointer shadow-sm hover:border-gray-400";
@@ -34,10 +34,6 @@ export function IniciarJornada({
   const [modalAberto, setModalAberto] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
 
-  // Verifica se o motorista JÁ tem uma jornada em outro veículo (regra de negócio comum)
-  // Se o backend permitir múltiplas, pode remover esta checagem específica
-  const isEsteVeiculoJaAberto = jornadasAtivas.some(j => j.veiculo?.id === veiculoId);
-
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setKmInicio(formatKmVisual(e.target.value));
   };
@@ -48,12 +44,13 @@ export function IniciarJornada({
 
     if (!veiculoIdSelecionado) return;
 
-    // Verifica se ESTE veículo já está em uso por OUTRA pessoa (se a lista incluir jornadas de todos)
-    // Ajuste a lógica conforme o que vem em 'jornadasAtivas'
-    const jornadaDesteVeiculo = jornadasAtivas.find(j => j.veiculo?.id === veiculoIdSelecionado);
+    // Busca se existe jornada ativa para este veículo (de QUALQUER motorista)
+    const jornadaExistente = jornadasAtivas.find(j => j.veiculo?.id === veiculoIdSelecionado);
 
-    if (jornadaDesteVeiculo) {
-      setAvisoVeiculo(`Veículo em uso por ${jornadaDesteVeiculo.operador?.nome} desde ${new Date(jornadaDesteVeiculo.dataInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}.`);
+    if (jornadaExistente) {
+      const nomeMotorista = jornadaExistente.operador?.nome || "Outro motorista";
+      const horaInicio = new Date(jornadaExistente.dataInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      setAvisoVeiculo(`ATENÇÃO: Este veículo está em uso por ${nomeMotorista} desde às ${horaInicio}.`);
     }
   };
 
@@ -61,11 +58,6 @@ export function IniciarJornada({
     event.preventDefault();
     setLoading(true);
 
-    if (isEsteVeiculoJaAberto) {
-      toast.error('Este veículo já está em uma jornada ativa.');
-      setLoading(false);
-      return;
-    }
     if (!veiculoId || !encarregadoId || !kmInicio) {
       toast.warning('Por favor, preencha todos os campos.');
       setLoading(false);
@@ -77,6 +69,24 @@ export function IniciarJornada({
       toast.error('O KM Inicial deve ser válido.');
       setLoading(false);
       return;
+    }
+
+    // --- LÓGICA DE CONFIRMAÇÃO DE VEÍCULO EM USO ---
+    // Se o veículo já estiver em uso, pedimos confirmação extra
+    const jornadaConflitante = jornadasAtivas.find(j => j.veiculo?.id === veiculoId);
+
+    if (jornadaConflitante) {
+      const confirmar = window.confirm(
+        `AVISO CRÍTICO:\n\n` +
+        `O veículo selecionado já consta como EM ROTA com o motorista: ${jornadaConflitante.operador?.nome}.\n\n` +
+        `Tem certeza que selecionou o veículo correto e deseja iniciar uma nova jornada mesmo assim?`
+      );
+
+      if (!confirmar) {
+        setLoading(false);
+        return; // Usuário cancelou, não faz nada
+      }
+      // Se confirmou, o código segue abaixo para abrir o modal de foto
     }
 
     // Preparar para Modal de Foto
@@ -145,13 +155,16 @@ export function IniciarJornada({
             </div>
           </div>
 
-          {/* Aviso de Indisponibilidade */}
-          {(avisoVeiculo || isEsteVeiculoJaAberto) && (
-            <div className="mt-2 flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-100 text-red-700 text-xs font-medium animate-in slide-in-from-top-1">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 flex-shrink-0 mt-0.5">
+          {/* Aviso de Indisponibilidade VISUAL */}
+          {avisoVeiculo && (
+            <div className="mt-3 flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-100 text-amber-800 text-xs font-medium animate-in slide-in-from-top-1">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0 text-amber-500">
                 <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
               </svg>
-              <span>{avisoVeiculo || "Veículo já possui jornada ativa."}</span>
+              <div className="flex-1">
+                <p className="font-bold mb-0.5">Veículo em uso</p>
+                {avisoVeiculo.replace('ATENÇÃO: ', '')}
+              </div>
             </div>
           )}
         </div>
@@ -199,7 +212,7 @@ export function IniciarJornada({
           type="submit"
           className="w-full py-3.5 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
           isLoading={loading}
-          disabled={loading || !veiculoId || !encarregadoId || !kmInicio || isEsteVeiculoJaAberto || !!avisoVeiculo}
+          disabled={loading || !veiculoId || !encarregadoId || !kmInicio}
         >
           {loading ? 'Validando...' : 'Confirmar Saída'}
         </Button>
