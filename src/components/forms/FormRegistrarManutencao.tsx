@@ -15,7 +15,6 @@ const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 
 // --- 1. SCHEMA ZOD V4 (Inteligente & Condicional) ---
 const manutencaoSchema = z.object({
-  // Mantemos o tipo no schema para o backend, mas simplificamos na UI
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"]).default('CORRETIVA'),
 
   alvo: z.enum(ALVOS_MANUTENCAO),
@@ -36,7 +35,6 @@ const manutencaoSchema = z.object({
     produtoId: z.string({ error: "Item obrigatório" })
       .min(1, { message: "Selecione o serviço/peça" }),
 
-    // Coerce para numbers
     quantidade: z.coerce.number()
       .min(0.01, { message: "Qtd inválida" }),
 
@@ -44,7 +42,6 @@ const manutencaoSchema = z.object({
       .min(0, { message: "Valor inválido" }),
   })).min(1, { message: "Adicione pelo menos um item à OS" })
 })
-  // Refinamento: Se alvo for VEICULO, exige veiculoId e kmAtual
   .superRefine((data, ctx) => {
     if (data.alvo === 'VEICULO') {
       if (!data.veiculoId) {
@@ -82,12 +79,12 @@ export function FormRegistrarManutencao({
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
   const [ultimoKmRegistrado, setUltimoKmRegistrado] = useState<number>(0);
 
-  // FILTRO DE PRODUTOS: Remove Combustível, Aditivo e Lavagem
+  // FILTRO: Remove Combustível e Aditivo (vão no Abastecimento) e Lavagem (se for o caso)
+  // Deixa apenas Peças, Serviços e Outros
   const produtosManutencao = produtos.filter(p =>
     !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)
   );
 
-  // --- 2. HOOK FORM CONFIG ---
   const {
     register,
     control,
@@ -113,12 +110,10 @@ export function FormRegistrarManutencao({
     name: "itens"
   });
 
-  // Observadores
   const alvoSelecionado = watch('alvo');
   const veiculoIdSelecionado = watch('veiculoId');
   const itensObservados = watch('itens');
 
-  // --- 3. FETCH KM VEÍCULO ---
   useEffect(() => {
     if (alvoSelecionado !== 'VEICULO' || !veiculoIdSelecionado) {
       setUltimoKmRegistrado(0);
@@ -136,7 +131,6 @@ export function FormRegistrarManutencao({
     fetchInfoVeiculo();
   }, [veiculoIdSelecionado, alvoSelecionado]);
 
-  // --- 4. HANDLERS ---
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue("kmAtual", formatKmVisual(e.target.value));
   };
@@ -144,23 +138,20 @@ export function FormRegistrarManutencao({
   const onValidSubmit = async (data: ManutencaoFormInput) => {
     let kmInputFloat = null;
 
-    // Validação lógica de KM
     if (data.alvo === 'VEICULO') {
       kmInputFloat = parseDecimal(data.kmAtual || '0');
       if (kmInputFloat <= ultimoKmRegistrado && ultimoKmRegistrado > 0) {
         toast.warning(`Atenção: O KM informado é menor que o último registrado (${ultimoKmRegistrado.toLocaleString('pt-BR')}).`);
-        // Não impedimos, apenas avisamos (pode ser correção)
       }
     }
 
-    // Preparar dados
     const payloadFinal = {
       tipo: data.tipo,
       veiculoId: data.alvo === 'VEICULO' ? data.veiculoId : null,
       fornecedorId: data.fornecedorId,
       kmAtual: kmInputFloat,
       data: new Date(data.data).toISOString(),
-      // Se for "Outros", adiciona prefixo na observação para facilitar identificação no histórico
+      // Texto de prefixo para Outros
       observacoes: `${data.alvo === 'OUTROS' ? '[Manutenção de Equipamento/Caixa] ' : ''}${data.observacoes || ''}`,
       itens: data.itens.map(item => ({
         produtoId: item.produtoId,
@@ -174,7 +165,7 @@ export function FormRegistrarManutencao({
   };
 
   const handleModalSuccess = () => {
-    toast.success('Manutenção registrada com sucesso!');
+    toast.success('Ordem de Serviço registrada com sucesso!');
     setModalAberto(false);
     setFormDataParaModal(null);
 
@@ -191,7 +182,6 @@ export function FormRegistrarManutencao({
     setUltimoKmRegistrado(0);
   };
 
-  // Cálculo do total em tempo real
   const totalGeral = (itensObservados || []).reduce((acc, item) => {
     const qtd = Number(item.quantidade) || 0;
     const val = Number(item.valorPorUnidade) || 0;
@@ -202,13 +192,12 @@ export function FormRegistrarManutencao({
     <>
       <form onSubmit={handleSubmit(onValidSubmit)} className="space-y-8 bg-white p-6 rounded-card shadow-card border border-gray-100">
 
-        {/* HEADER */}
         <div className="text-center mb-6">
           <h4 className="text-xl font-bold text-gray-800 mb-2">Nova Ordem de Serviço</h4>
           <p className="text-sm text-text-secondary">Registro de peças e serviços de manutenção.</p>
         </div>
 
-        {/* SELETOR DE ALVO (Veículo vs Outros) */}
+        {/* SELETOR DE ALVO */}
         <div className="flex p-1 bg-gray-100 rounded-lg mb-6">
           <button
             type="button"
@@ -232,7 +221,6 @@ export function FormRegistrarManutencao({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-          {/* CAMPOS DE VEÍCULO (Condicional) */}
           {alvoSelecionado === 'VEICULO' ? (
             <>
               <div className="animate-in fade-in slide-in-from-top-2 duration-300">
@@ -267,19 +255,17 @@ export function FormRegistrarManutencao({
               </div>
             </>
           ) : (
-            /* Aviso Informativo para "Outros" */
             <div className="md:col-span-2 bg-amber-50 p-4 rounded-xl border border-amber-100 text-amber-800 text-sm flex items-center gap-3 animate-in fade-in">
               <div className="bg-amber-100 p-2 rounded-full">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>
               </div>
               <div>
                 <strong>Manutenção de Caixas/Equipamentos:</strong>
-                <p className="text-xs mt-0.5 opacity-90">Descreva detalhadamente no campo de observações qual equipamento está sendo reparado (Ex: Caixa 05, Container Azul, Compressor).</p>
+                <p className="text-xs mt-0.5 opacity-90">Descreva qual equipamento/caixa sendo reparado (Ex: Caixa CA 05 enviada para reparo).</p>
               </div>
             </div>
           )}
 
-          {/* CAMPOS COMUNS */}
           <div className={alvoSelecionado === 'OUTROS' ? "" : "md:col-span-2"}>
             <label className="block mb-1.5 text-sm font-medium text-text-secondary">Oficina / Fornecedor</label>
             <div className="relative group">
@@ -301,7 +287,7 @@ export function FormRegistrarManutencao({
         {/* LISTA DE ITENS */}
         <div className="bg-gray-50/80 p-5 rounded-xl border border-gray-200 mt-6">
           <div className="flex justify-between items-center mb-4">
-            <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Itens e Serviços</h4>
+            <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Peças e Serviços</h4>
             <span className="text-xs font-mono bg-white px-2 py-1 rounded border border-gray-200 text-gray-500">
               {fields.length} item(ns)
             </span>
@@ -316,7 +302,6 @@ export function FormRegistrarManutencao({
               return (
                 <div key={field.id} className="grid grid-cols-12 gap-3 items-start bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
 
-                  {/* Produto (Filtrado) */}
                   <div className="col-span-12 sm:col-span-5">
                     <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Descrição</label>
                     <div className="relative">
@@ -332,7 +317,6 @@ export function FormRegistrarManutencao({
                     </div>
                   </div>
 
-                  {/* Quantidade */}
                   <div className="col-span-4 sm:col-span-2">
                     <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Qtd</label>
                     <input
@@ -344,7 +328,6 @@ export function FormRegistrarManutencao({
                     />
                   </div>
 
-                  {/* Valor Unit */}
                   <div className="col-span-4 sm:col-span-2">
                     <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Valor Un.</label>
                     <input
@@ -356,7 +339,6 @@ export function FormRegistrarManutencao({
                     />
                   </div>
 
-                  {/* Subtotal & Remover */}
                   <div className="col-span-4 sm:col-span-3 flex justify-end items-end gap-2 h-full pb-1">
                     <div className="text-right">
                       <p className="text-[10px] text-gray-400 font-bold uppercase">Subtotal</p>
@@ -398,7 +380,6 @@ export function FormRegistrarManutencao({
           {errors.itens && <p className="text-xs text-red-500 font-medium mt-2 text-right">{errors.itens.root?.message || "Verifique os itens da lista."}</p>}
         </div>
 
-        {/* OBSERVAÇÕES */}
         <div>
           <label className="block mb-1.5 text-sm font-medium text-text-secondary">Observações</label>
           <textarea
@@ -410,7 +391,6 @@ export function FormRegistrarManutencao({
           />
         </div>
 
-        {/* SUBMIT */}
         <Button
           type="submit"
           disabled={isSubmitting}
@@ -421,14 +401,12 @@ export function FormRegistrarManutencao({
         </Button>
       </form>
 
-      {/* MODAL DE FOTO/CONFIRMAÇÃO */}
       {modalAberto && formDataParaModal && (
         <ModalConfirmacaoFoto
           titulo="Comprovante da Manutenção"
           dadosJornada={formDataParaModal}
           apiEndpoint="/ordem-servico"
           apiMethod="POST"
-          // Passa null se não tiver veículo (caso de manutenção de Caixas) para não confundir
           kmParaConfirmar={formDataParaModal.veiculoId ? formDataParaModal.kmAtual : null}
           jornadaId={null}
           onClose={() => setModalAberto(false)}

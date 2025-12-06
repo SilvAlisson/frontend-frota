@@ -46,6 +46,12 @@ export function RegistrarAbastecimento({
   const [modalAberto, setModalAberto] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
 
+  // FILTRO RÍGIDO: Apenas Combustível e Aditivo aparecem aqui.
+  // Lavagem e Reparos não devem poluir esta lista.
+  const produtosAbastecimento = produtos.filter(p =>
+    ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo)
+  );
+
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setKmOdometro(formatKmVisual(e.target.value));
   };
@@ -71,10 +77,9 @@ export function RegistrarAbastecimento({
     event.preventDefault();
     setLoading(true);
 
-    // Validação Manual Rápida (Pode migrar para Zod se desejar padronizar 100%)
-    if (!veiculoId || !operadorId || !fornecedorId || !kmOdometro || !dataHora || !placaCartaoUsado ||
+    if (!veiculoId || !fornecedorId || !placaCartaoUsado ||
       itens.some(item => !item.produtoId || !item.quantidade || !item.valorPorUnidade)) {
-      toast.warning('Preencha todos os campos obrigatórios.');
+      toast.warning('Preencha Veículo, Fornecedor, Cartão e Itens.');
       setLoading(false);
       return;
     }
@@ -92,11 +97,14 @@ export function RegistrarAbastecimento({
         valorPorUnidade: parseFloat(item.valorPorUnidade)
       }));
 
+      // Se KM não for informado (ex: lavagem se fosse o caso, ou erro), envia 0
+      const kmEnvio = kmOdometro ? parseDecimal(kmOdometro) : 0;
+
       const dadosFormulario = {
         veiculoId,
-        operadorId,
+        operadorId: operadorId || null, // Opcional se for Admin fazendo
         fornecedorId,
-        kmOdometro: parseDecimal(kmOdometro),
+        kmOdometro: kmEnvio,
         dataHora: new Date(dataHora).toISOString(),
         placaCartaoUsado: DOMPurify.sanitize(placaCartaoUsado),
         justificativa: DOMPurify.sanitize(justificativa) || null,
@@ -150,7 +158,7 @@ export function RegistrarAbastecimento({
             Novo Abastecimento
           </h4>
           <p className="text-sm text-text-secondary mt-1">
-            Registre os detalhes do abastecimento realizado.
+            Registre combustíveis e aditivos.
           </p>
         </div>
 
@@ -167,7 +175,7 @@ export function RegistrarAbastecimento({
           </div>
 
           <div>
-            <label className={labelStyle}>Motorista</label>
+            <label className={labelStyle}>Motorista (Opcional)</label>
             <div className="relative group">
               <select className={selectStyle} value={operadorId} onChange={(e) => setOperadorId(e.target.value)} disabled={loading}>
                 <option value="">Selecione...</option>
@@ -222,7 +230,7 @@ export function RegistrarAbastecimento({
         {/* ITENS ABASTECIDOS */}
         <div className="bg-gray-50/80 p-5 rounded-xl border border-gray-200 mt-6">
           <div className="flex justify-between items-center mb-4">
-            <h4 className="text-sm font-bold text-text-secondary uppercase tracking-wide">Detalhes do Abastecimento</h4>
+            <h4 className="text-sm font-bold text-text-secondary uppercase tracking-wide">Itens do Abastecimento</h4>
             <span className="text-xs font-mono bg-white px-2 py-1 rounded border border-gray-200 text-gray-500">
               {itens.length} item(ns)
             </span>
@@ -238,7 +246,7 @@ export function RegistrarAbastecimento({
                 <div key={index} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start bg-white p-3 rounded-lg shadow-sm border border-gray-200">
 
                   <div className="sm:col-span-5">
-                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 pl-1">Produto</label>
+                    <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 pl-1">Combustível / Aditivo</label>
                     <div className="relative">
                       <select
                         className={selectStyle + " py-2 text-sm"}
@@ -247,7 +255,7 @@ export function RegistrarAbastecimento({
                         disabled={loading}
                       >
                         <option value="">Selecione...</option>
-                        {produtos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                        {produtosAbastecimento.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                       </select>
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
                     </div>
