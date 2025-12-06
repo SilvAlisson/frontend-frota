@@ -12,11 +12,13 @@ import { GestaoVeiculos } from './GestaoVeiculos';
 import { GestaoProdutos } from './GestaoProdutos';
 import { GestaoFornecedores } from './GestaoFornecedores';
 import { GestaoCargos } from './GestaoCargos';
+import { RegistrarAbastecimento } from './RegistrarAbastecimento'; // Importado
 
 interface AdminDashboardProps {
   veiculos: any[];
   produtos: any[];
   fornecedores: any[];
+  usuarios: any[]; // Adicionado para poder selecionar motorista no abastecimento
   adminUserId: string;
 }
 
@@ -24,12 +26,13 @@ type AbaAdmin =
   | 'alertas' | 'dashboard' | 'ranking' // Visão Geral
   | 'hist_jornada' | 'hist_abastecimento' | 'hist_manutencao' // Históricos
   | 'veiculo' | 'usuario' | 'cargo' | 'produto' | 'fornecedor' // Cadastros
-  | 'manutencao' | 'planos'; // Operacional
+  | 'manutencao' | 'abastecimento' | 'planos'; // Operacional
 
 export function AdminDashboard({
   veiculos,
   produtos,
   fornecedores,
+  usuarios,
   adminUserId
 }: AdminDashboardProps) {
 
@@ -45,7 +48,6 @@ export function AdminDashboard({
     setAbaAtiva(mapa[tipo]);
   };
 
-  // Configuração das Abas com agrupamento visual implícito pela ordem
   const abas = [
     // --- VISÃO GERAL ---
     { id: 'alertas', label: 'Alertas', icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" /></svg> },
@@ -57,7 +59,8 @@ export function AdminDashboard({
     { id: 'hist_abastecimento', label: 'Hist. Abast.', icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg> },
     { id: 'hist_manutencao', label: 'Hist. Manut.', icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg> },
 
-    // --- OPERACIONAL ---
+    // --- OPERACIONAL (Adicionado Abastecimento) ---
+    { id: 'abastecimento', label: 'Novo Abastec.', icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg> },
     { id: 'manutencao', label: 'Nova OS', icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17 17.25 21A2.25 2.25 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.5 2.5 0 0 1-2.88 1.132l-3.128-.686a1 1 0 0 1-.602-.602l-.686-3.128a2.5 2.5 0 0 1 1.132-2.88L6.25 10" /></svg> },
     { id: 'planos', label: 'Planos Prev.', icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg> },
 
@@ -90,6 +93,7 @@ export function AdminDashboard({
 
       // --- OPERACIONAL ---
       case 'manutencao': return <FormRegistrarManutencao veiculos={veiculos} produtos={produtos} fornecedores={fornecedores} />;
+      case 'abastecimento': return <RegistrarAbastecimento usuarios={usuarios} veiculos={veiculos} produtos={produtos} fornecedores={fornecedores} />;
       case 'planos': return <FormPlanoManutencao veiculos={veiculos} />;
 
       default: return null;

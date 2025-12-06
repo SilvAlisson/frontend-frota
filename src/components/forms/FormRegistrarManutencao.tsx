@@ -10,13 +10,15 @@ import { parseDecimal, formatKmVisual } from '../../utils';
 import { toast } from 'sonner';
 import type { Veiculo, Produto, Fornecedor } from '../../types';
 
+// Opções de "Alvo" da manutenção
+const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
+
 // --- 1. SCHEMA ZOD V4 (Inteligente & Condicional) ---
 const manutencaoSchema = z.object({
-  tipo: z.enum(["PREVENTIVA", "CORRETIVA"], {
-    error: "Selecione o tipo"
-  }),
+  // Mantemos o tipo no schema para o backend, mas simplificamos na UI
+  tipo: z.enum(["PREVENTIVA", "CORRETIVA"]).default('CORRETIVA'),
 
-  vinculadoVeiculo: z.boolean(),
+  alvo: z.enum(ALVOS_MANUTENCAO),
 
   // Opcionais na definição base, refinados depois
   veiculoId: z.string().optional().nullable(),
@@ -42,9 +44,9 @@ const manutencaoSchema = z.object({
       .min(0, { message: "Valor inválido" }),
   })).min(1, { message: "Adicione pelo menos um item à OS" })
 })
-  // Refinamento: Se vinculado a veículo, exige veiculoId e kmAtual
+  // Refinamento: Se alvo for VEICULO, exige veiculoId e kmAtual
   .superRefine((data, ctx) => {
-    if (data.vinculadoVeiculo) {
+    if (data.alvo === 'VEICULO') {
       if (!data.veiculoId) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -80,6 +82,11 @@ export function FormRegistrarManutencao({
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
   const [ultimoKmRegistrado, setUltimoKmRegistrado] = useState<number>(0);
 
+  // FILTRO DE PRODUTOS: Remove Combustível, Aditivo e Lavagem
+  const produtosManutencao = produtos.filter(p =>
+    !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)
+  );
+
   // --- 2. HOOK FORM CONFIG ---
   const {
     register,
@@ -92,8 +99,8 @@ export function FormRegistrarManutencao({
   } = useForm<ManutencaoFormInput>({
     resolver: zodResolver(manutencaoSchema),
     defaultValues: {
+      alvo: 'VEICULO',
       tipo: 'CORRETIVA',
-      vinculadoVeiculo: true,
       data: new Date().toISOString().slice(0, 10),
       observacoes: '',
       itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: 0 }]
@@ -107,14 +114,13 @@ export function FormRegistrarManutencao({
   });
 
   // Observadores
+  const alvoSelecionado = watch('alvo');
   const veiculoIdSelecionado = watch('veiculoId');
-  const vinculadoVeiculo = watch('vinculadoVeiculo');
-  const tipoManutencao = watch('tipo');
   const itensObservados = watch('itens');
 
   // --- 3. FETCH KM VEÍCULO ---
   useEffect(() => {
-    if (!vinculadoVeiculo || !veiculoIdSelecionado) {
+    if (alvoSelecionado !== 'VEICULO' || !veiculoIdSelecionado) {
       setUltimoKmRegistrado(0);
       return;
     }
@@ -128,7 +134,7 @@ export function FormRegistrarManutencao({
       }
     };
     fetchInfoVeiculo();
-  }, [veiculoIdSelecionado, vinculadoVeiculo]);
+  }, [veiculoIdSelecionado, alvoSelecionado]);
 
   // --- 4. HANDLERS ---
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,27 +144,28 @@ export function FormRegistrarManutencao({
   const onValidSubmit = async (data: ManutencaoFormInput) => {
     let kmInputFloat = null;
 
-    // Validação lógica de KM (Front-end check para UX rápida)
-    if (data.vinculadoVeiculo) {
+    // Validação lógica de KM
+    if (data.alvo === 'VEICULO') {
       kmInputFloat = parseDecimal(data.kmAtual || '0');
       if (kmInputFloat <= ultimoKmRegistrado && ultimoKmRegistrado > 0) {
-        toast.error(`KM inválido! Deve ser maior que o último registrado (${ultimoKmRegistrado.toLocaleString('pt-BR')}).`);
-        return;
+        toast.warning(`Atenção: O KM informado é menor que o último registrado (${ultimoKmRegistrado.toLocaleString('pt-BR')}).`);
+        // Não impedimos, apenas avisamos (pode ser correção)
       }
     }
 
     // Preparar dados
     const payloadFinal = {
-      veiculoId: data.vinculadoVeiculo ? data.veiculoId : null,
+      tipo: data.tipo,
+      veiculoId: data.alvo === 'VEICULO' ? data.veiculoId : null,
       fornecedorId: data.fornecedorId,
       kmAtual: kmInputFloat,
       data: new Date(data.data).toISOString(),
-      tipo: data.tipo,
-      observacoes: data.observacoes,
+      // Se for "Outros", adiciona prefixo na observação para facilitar identificação no histórico
+      observacoes: `${data.alvo === 'OUTROS' ? '[Manutenção de Equipamento/Caixa] ' : ''}${data.observacoes || ''}`,
       itens: data.itens.map(item => ({
         produtoId: item.produtoId,
-        quantidade: item.quantidade, // Zod coerce já converteu
-        valorPorUnidade: item.valorPorUnidade // Zod coerce já converteu
+        quantidade: item.quantidade,
+        valorPorUnidade: item.valorPorUnidade
       }))
     };
 
@@ -167,15 +174,15 @@ export function FormRegistrarManutencao({
   };
 
   const handleModalSuccess = () => {
-    toast.success('Ordem de Serviço registrada com sucesso!');
+    toast.success('Manutenção registrada com sucesso!');
     setModalAberto(false);
     setFormDataParaModal(null);
 
     reset({
+      alvo: 'VEICULO',
       veiculoId: '',
       fornecedorId: '',
       kmAtual: '',
-      vinculadoVeiculo: true,
       data: new Date().toISOString().slice(0, 10),
       tipo: 'CORRETIVA',
       observacoes: '',
@@ -197,60 +204,36 @@ export function FormRegistrarManutencao({
 
         {/* HEADER */}
         <div className="text-center mb-6">
-          <h4 className="text-xl font-bold text-primary mb-2">Registrar Manutenção</h4>
-          <p className="text-sm text-text-secondary">Lance ordens de serviço, peças ou lavagens.</p>
+          <h4 className="text-xl font-bold text-gray-800 mb-2">Nova Ordem de Serviço</h4>
+          <p className="text-sm text-text-secondary">Registro de peças e serviços de manutenção.</p>
         </div>
 
-        {/* SELETOR DE TIPO (Visual Toggle) */}
-        <div className="flex justify-center mb-6">
-          <div className="inline-flex bg-gray-100 p-1 rounded-lg">
-            <button
-              type="button"
-              onClick={() => setValue('tipo', 'PREVENTIVA')}
-              className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${tipoManutencao === 'PREVENTIVA'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-                }`}
-            >
-              Preventiva / Lavagem
-            </button>
-            <button
-              type="button"
-              onClick={() => setValue('tipo', 'CORRETIVA')}
-              className={`px-4 py-2 text-sm font-bold rounded-md transition-all ${tipoManutencao === 'CORRETIVA'
-                ? 'bg-white text-orange-600 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
-                }`}
-            >
-              Corretiva / Reparo
-            </button>
-          </div>
-        </div>
-
-        {/* VÍNCULO VEÍCULO */}
-        <div
-          className={`border rounded-lg p-4 transition-colors ${vinculadoVeiculo ? 'bg-blue-50/50 border-blue-100' : 'bg-gray-50 border-gray-200'
-            }`}
-        >
-          <div className="flex items-center gap-3">
-            <input
-              id="checkVinculo"
-              type="checkbox"
-              className="w-5 h-5 text-primary rounded focus:ring-primary cursor-pointer accent-primary"
-              {...register('vinculadoVeiculo')}
-            />
-            <label htmlFor="checkVinculo" className="text-sm font-medium text-gray-700 cursor-pointer select-none flex-1">
-              Vinculado a um <strong>Veículo da Frota</strong>?
-              <span className="block text-xs text-gray-500 font-normal mt-0.5">
-                Desmarque para manutenções prediais, ferramentas ou estoque geral.
-              </span>
-            </label>
-          </div>
+        {/* SELETOR DE ALVO (Veículo vs Outros) */}
+        <div className="flex p-1 bg-gray-100 rounded-lg mb-6">
+          <button
+            type="button"
+            onClick={() => setValue('alvo', 'VEICULO')}
+            className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${alvoSelecionado === 'VEICULO'
+              ? 'bg-white shadow text-blue-700'
+              : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Veículo da Frota
+          </button>
+          <button
+            type="button"
+            onClick={() => setValue('alvo', 'OUTROS')}
+            className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${alvoSelecionado === 'OUTROS'
+              ? 'bg-white shadow text-blue-700'
+              : 'text-gray-500 hover:text-gray-700'}`}
+          >
+            Caixas / Outros
+          </button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* CAMPOS DE VEÍCULO (Animação de entrada) */}
-          {vinculadoVeiculo && (
+
+          {/* CAMPOS DE VEÍCULO (Condicional) */}
+          {alvoSelecionado === 'VEICULO' ? (
             <>
               <div className="animate-in fade-in slide-in-from-top-2 duration-300">
                 <label className="block mb-1.5 text-sm font-medium text-text-secondary">Veículo</label>
@@ -283,10 +266,21 @@ export function FormRegistrarManutencao({
                 />
               </div>
             </>
+          ) : (
+            /* Aviso Informativo para "Outros" */
+            <div className="md:col-span-2 bg-amber-50 p-4 rounded-xl border border-amber-100 text-amber-800 text-sm flex items-center gap-3 animate-in fade-in">
+              <div className="bg-amber-100 p-2 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>
+              </div>
+              <div>
+                <strong>Manutenção de Caixas/Equipamentos:</strong>
+                <p className="text-xs mt-0.5 opacity-90">Descreva detalhadamente no campo de observações qual equipamento está sendo reparado (Ex: Caixa 05, Container Azul, Compressor).</p>
+              </div>
+            </div>
           )}
 
           {/* CAMPOS COMUNS */}
-          <div className={!vinculadoVeiculo ? "md:col-span-2" : ""}>
+          <div className={alvoSelecionado === 'OUTROS' ? "" : "md:col-span-2"}>
             <label className="block mb-1.5 text-sm font-medium text-text-secondary">Oficina / Fornecedor</label>
             <div className="relative group">
               <select {...register("fornecedorId")} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-input focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all cursor-pointer" disabled={isSubmitting}>
@@ -298,7 +292,7 @@ export function FormRegistrarManutencao({
             {errors.fornecedorId && <span className="text-xs text-error mt-1 block">{errors.fornecedorId.message}</span>}
           </div>
 
-          <div className={!vinculadoVeiculo ? "md:col-span-2" : ""}>
+          <div className={alvoSelecionado === 'OUTROS' ? "" : "md:col-span-2"}>
             <label className="block mb-1.5 text-sm font-medium text-text-secondary">Data do Serviço</label>
             <Input type="date" {...register("data")} error={errors.data?.message} disabled={isSubmitting} />
           </div>
@@ -315,17 +309,14 @@ export function FormRegistrarManutencao({
 
           <div className="space-y-3">
             {fields.map((field, index) => {
-              // Valores para cálculo visual do subtotal
               const item = itensObservados[index];
               const subtotal = (Number(item?.quantidade) || 0) * (Number(item?.valorPorUnidade) || 0);
-
-              // Erros específicos do item
               const errItem = errors.itens?.[index];
 
               return (
                 <div key={field.id} className="grid grid-cols-12 gap-3 items-start bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
 
-                  {/* Produto */}
+                  {/* Produto (Filtrado) */}
                   <div className="col-span-12 sm:col-span-5">
                     <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Descrição</label>
                     <div className="relative">
@@ -335,7 +326,7 @@ export function FormRegistrarManutencao({
                         disabled={isSubmitting}
                       >
                         <option value="">Selecione...</option>
-                        {produtos.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                        {produtosManutencao.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                       </select>
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
                     </div>
@@ -347,7 +338,7 @@ export function FormRegistrarManutencao({
                     <input
                       type="number"
                       step="0.01"
-                      {...register(`itens.${index}.quantidade`)} // Zod coerce cuida da conversão
+                      {...register(`itens.${index}.quantidade`)}
                       className="w-full px-2 py-2 text-sm text-right border border-gray-200 rounded-md focus:ring-2 focus:border-primary outline-none"
                       disabled={isSubmitting}
                     />
@@ -359,7 +350,7 @@ export function FormRegistrarManutencao({
                     <input
                       type="number"
                       step="0.01"
-                      {...register(`itens.${index}.valorPorUnidade`)} // Zod coerce cuida da conversão
+                      {...register(`itens.${index}.valorPorUnidade`)}
                       className="w-full px-2 py-2 text-sm text-right border border-gray-200 rounded-md focus:ring-2 focus:border-primary outline-none"
                       disabled={isSubmitting}
                     />
@@ -412,9 +403,9 @@ export function FormRegistrarManutencao({
           <label className="block mb-1.5 text-sm font-medium text-text-secondary">Observações</label>
           <textarea
             {...register("observacoes")}
-            className="w-full px-4 py-3 text-sm bg-white border border-gray-300 rounded-input focus:ring-2 focus:ring-primary focus:border-transparent outline-none resize-none transition-all"
+            className="w-full px-4 py-3 text-sm bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none transition-all"
             rows={3}
-            placeholder="Detalhes técnicos, número da OS em papel, descrição do reparo..."
+            placeholder={alvoSelecionado === 'OUTROS' ? "Descreva qual caixa ou equipamento..." : "Detalhes técnicos, descrição do serviço..."}
             disabled={isSubmitting}
           />
         </div>
@@ -424,9 +415,9 @@ export function FormRegistrarManutencao({
           type="submit"
           disabled={isSubmitting}
           isLoading={isSubmitting}
-          className="w-full py-3 text-base shadow-lg shadow-primary/20"
+          className="w-full py-3 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
         >
-          {isSubmitting ? 'Validando...' : 'Registrar Ordem de Serviço'}
+          {isSubmitting ? 'Validando...' : 'Registrar Manutenção'}
         </Button>
       </form>
 
@@ -437,7 +428,7 @@ export function FormRegistrarManutencao({
           dadosJornada={formDataParaModal}
           apiEndpoint="/ordem-servico"
           apiMethod="POST"
-          // Passa null se não tiver veículo para evitar labels de KM confusos
+          // Passa null se não tiver veículo (caso de manutenção de Caixas) para não confundir
           kmParaConfirmar={formDataParaModal.veiculoId ? formDataParaModal.kmAtual : null}
           jornadaId={null}
           onClose={() => setModalAberto(false)}
