@@ -66,6 +66,11 @@ export function RegistrarAbastecimento({
     ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo)
   );
 
+  // -------------------------------------------------------------
+  // CORREÇÃO: Filtro robusto para mostrar apenas POSTOS
+  // -------------------------------------------------------------
+  const fornecedoresPosto = fornecedores.filter(f => f.tipo === 'POSTO');
+
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setKmOdometro(formatKmVisual(e.target.value));
   };
@@ -226,9 +231,10 @@ export function RegistrarAbastecimento({
           <div>
             <label className={labelStyle}>Posto / Fornecedor</label>
             <div className="relative group">
+              {/* ALTERAÇÃO: Agora usa o array filtrado fornecedoresPosto */}
               <select className={selectStyle} value={fornecedorId} onChange={(e) => setFornecedorId(e.target.value)} disabled={loading}>
                 <option value="">Selecione...</option>
-                {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                {fornecedoresPosto.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 group-hover:text-primary transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
             </div>
