@@ -10,16 +10,17 @@ import { toast } from 'sonner';
 // Importe o tipo Jornada global se possível, senão ajuste a interface local:
 import type { Jornada } from '../types';
 
-interface FinalizarJornadaProps {
+interface JornadaCardProps {
   // Usamos o tipo Jornada global aqui para garantir compatibilidade
-  jornadaParaFinalizar: Jornada;
+  jornada: Jornada; // Alterei o nome da prop para ser mais genérico
   onJornadaFinalizada: () => void;
 }
 
-export function FinalizarJornada({
-  jornadaParaFinalizar,
+// O componente principal agora se chama JornadaCard, resolvendo o erro de importação.
+export function JornadaCard({
+  jornada, // Renomeado jornadaParaFinalizar para jornada para simplificar
   onJornadaFinalizada
-}: FinalizarJornadaProps) {
+}: JornadaCardProps) {
 
   const [modalAberto, setModalAberto] = useState(false);
   const [dadosValidacao, setDadosValidacao] = useState<{ kmFim: number } | null>(null);
@@ -37,10 +38,10 @@ export function FinalizarJornada({
       });
       return;
     }
-    if (kmFim < jornadaParaFinalizar.kmInicio) {
+    if (kmFim < jornada.kmInicio) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Deve ser maior que ${jornadaParaFinalizar.kmInicio.toLocaleString('pt-BR')}`,
+        message: `Deve ser maior que ${jornada.kmInicio.toLocaleString('pt-BR')}`,
         path: ["kmFimInput"]
       });
     }
@@ -65,8 +66,8 @@ export function FinalizarJornada({
 
   const kmFimInput = watch('kmFimInput');
   const kmFimAtual = parseDecimal(kmFimInput);
-  const distanciaPercorrida = kmFimAtual > jornadaParaFinalizar.kmInicio
-    ? kmFimAtual - jornadaParaFinalizar.kmInicio
+  const distanciaPercorrida = kmFimAtual > jornada.kmInicio
+    ? kmFimAtual - jornada.kmInicio
     : 0;
 
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -87,7 +88,7 @@ export function FinalizarJornada({
   };
 
   // Fallback seguro para nome do encarregado
-  const nomeEncarregado = jornadaParaFinalizar.encarregado?.nome || 'Não informado';
+  const nomeEncarregado = jornada.encarregado?.nome || 'Não informado';
 
   return (
     <>
@@ -106,7 +107,7 @@ export function FinalizarJornada({
           <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
             <span className="text-[10px] text-gray-400 font-bold uppercase block mb-1">KM Inicial</span>
             <span className="text-sm font-bold text-gray-700">
-              {jornadaParaFinalizar.kmInicio.toLocaleString('pt-BR')}
+              {jornada.kmInicio.toLocaleString('pt-BR')}
             </span>
           </div>
 
@@ -121,10 +122,10 @@ export function FinalizarJornada({
         <div className="relative">
           <Input
             label="KM Final (Painel)"
-            id={`kmFim-${jornadaParaFinalizar.id}`}
+            id={`kmFim-${jornada.id}`}
             type="text"
             inputMode="numeric"
-            placeholder={`> ${jornadaParaFinalizar.kmInicio}`}
+            placeholder={`> ${jornada.kmInicio}`}
             {...register('kmFimInput')}
             onChange={(e: any) => {
               register('kmFimInput').onChange(e);
@@ -154,7 +155,7 @@ export function FinalizarJornada({
         <ModalConfirmacaoFoto
           titulo="Comprovante Final"
           kmParaConfirmar={dadosValidacao.kmFim}
-          jornadaId={jornadaParaFinalizar.id}
+          jornadaId={jornada.id}
           apiEndpoint={`/jornada/finalizar/:jornadaId`}
           apiMethod="PUT"
           dadosJornada={{
