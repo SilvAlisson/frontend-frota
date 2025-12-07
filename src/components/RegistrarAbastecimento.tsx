@@ -1,4 +1,7 @@
 import { useState, useEffect } from 'react';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import DOMPurify from 'dompurify';
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto';
 import { Button } from './ui/Button';
@@ -7,21 +10,56 @@ import { parseDecimal, formatKmVisual } from '../utils';
 import { toast } from 'sonner';
 import type { User, Veiculo, Produto, Fornecedor } from '../types';
 
+// --- SCHEMA ZOD V4 ---
+const itemAbastecimentoSchema = z.object({
+  produtoId: z.string({ error: "Selecione o produto" })
+    .min(1, { error: "Selecione o produto" }),
+
+  // Coerce converte string do input para number. .gt(0) impede 0 ou negativo.
+  quantidade: z.coerce.number({ error: "Qtd inválida" })
+    .gt(0, { error: "Deve ser maior que 0" }),
+
+  valorPorUnidade: z.coerce.number({ error: "Valor inválido" })
+    .gt(0, { error: "Deve ser maior que 0" }),
+});
+
+const abastecimentoSchema = z.object({
+  veiculoId: z.string({ error: "Selecione o veículo" })
+    .min(1, { error: "Selecione o veículo" }),
+
+  operadorId: z.string().optional(),
+
+  fornecedorId: z.string({ error: "Selecione o fornecedor" })
+    .min(1, { error: "Selecione o fornecedor" }),
+
+  // Mantemos como string para validar a máscara visual e convertemos no submit
+  kmOdometro: z.string({ error: "Informe o KM" })
+    .min(1, { error: "Informe o KM atual" }),
+
+  dataHora: z.string({ error: "Data é obrigatória" }),
+
+  placaCartaoUsado: z.string({ error: "Cartão obrigatório" })
+    .length(4, { error: "Deve ter exatamente 4 dígitos" })
+    .regex(/^\d+$/, { error: "Apenas números" }),
+
+  justificativa: z.string().optional(),
+
+  // Validação do Array
+  itens: z.array(itemAbastecimentoSchema)
+    .min(1, { error: "Adicione pelo menos um item" })
+});
+
+// Tipos
+type AbastecimentoFormValues = z.input<typeof abastecimentoSchema>;
+
 interface RegistrarAbastecimentoProps {
   usuarios: User[];
   veiculos: Veiculo[];
   produtos: Produto[];
   fornecedores: Fornecedor[];
-  // Novas props para contexto do Operador
   usuarioLogado?: User;
   veiculoPreSelecionadoId?: string;
   onClose?: () => void;
-}
-
-interface ItemAbastecimento {
-  produtoId: string;
-  quantidade: string;
-  valorPorUnidade: string;
 }
 
 const selectStyle = "w-full px-4 py-2.5 text-sm text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none transition-all shadow-sm cursor-pointer hover:border-gray-400 disabled:cursor-not-allowed";
@@ -37,107 +75,91 @@ export function RegistrarAbastecimento({
   onClose
 }: RegistrarAbastecimentoProps) {
 
-  // Se for operador, já inicia com ele selecionado
-  const operadorInicial = usuarioLogado?.role === 'OPERADOR' ? usuarioLogado.id : '';
-
-  const [veiculoId, setVeiculoId] = useState(veiculoPreSelecionadoId || '');
-  const [operadorId, setOperadorId] = useState(operadorInicial);
-  const [fornecedorId, setFornecedorId] = useState('');
-  const [kmOdometro, setKmOdometro] = useState('');
-  const [dataHora, setDataHora] = useState(new Date().toISOString().slice(0, 16));
-  const [placaCartaoUsado, setPlacaCartaoUsado] = useState('');
-  const [justificativa, setJustificativa] = useState('');
-
-  const [itens, setItens] = useState<ItemAbastecimento[]>([
-    { produtoId: '', quantidade: '', valorPorUnidade: '' }
-  ]);
-
-  const [loading, setLoading] = useState(false);
+  // Estado para o Modal (único estado manual necessário agora)
   const [modalAberto, setModalAberto] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
 
-  // Atualiza veículo se a prop mudar (ex: carregou a jornada depois)
+  // Setup do React Hook Form
+  const {
+    register,
+    control,
+    handleSubmit,
+    setValue,
+    reset,
+    formState: { errors, isSubmitting }
+  } = useForm<AbastecimentoFormValues>({
+    resolver: zodResolver(abastecimentoSchema),
+    defaultValues: {
+      veiculoId: veiculoPreSelecionadoId || '',
+      operadorId: usuarioLogado?.role === 'OPERADOR' ? usuarioLogado.id : '',
+      fornecedorId: '',
+      kmOdometro: '',
+      dataHora: new Date().toISOString().slice(0, 16),
+      placaCartaoUsado: '',
+      justificativa: '',
+      itens: [{ produtoId: '', quantidade: 0, valorPorUnidade: 0 }] // Inicializa com 1 item zerado
+    }
+  });
+
+  // Gerenciamento do Array Dinâmico
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "itens"
+  });
+
+  // Observa os itens para cálculo do total em tempo real
+  const itensWatch = useWatch({ control, name: "itens" });
+
+  // Cálculo do total geral (Memoizado visualmente pelo React Hook Form via watch)
+  const totalGeral = itensWatch?.reduce((acc, item) => {
+    const qtd = Number(item.quantidade) || 0;
+    const val = Number(item.valorPorUnidade) || 0;
+    return acc + (qtd * val);
+  }, 0) || 0;
+
+  // Atualiza veículo se a prop mudar
   useEffect(() => {
-    if (veiculoPreSelecionadoId) setVeiculoId(veiculoPreSelecionadoId);
-  }, [veiculoPreSelecionadoId]);
+    if (veiculoPreSelecionadoId) {
+      setValue('veiculoId', veiculoPreSelecionadoId);
+    }
+  }, [veiculoPreSelecionadoId, setValue]);
 
-  // FILTRO RÍGIDO: Apenas Combustível e Aditivo aparecem aqui.
-  const produtosAbastecimento = produtos.filter(p =>
-    ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo)
-  );
-
-  // -------------------------------------------------------------
-  // CORREÇÃO: Filtro robusto para mostrar apenas POSTOS
-  // -------------------------------------------------------------
+  // Filtros de Listas
+  const produtosAbastecimento = produtos.filter(p => ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo));
   const fornecedoresPosto = fornecedores.filter(f => f.tipo === 'POSTO');
+  const isOperadorTravado = usuarioLogado?.role === 'OPERADOR';
 
+  // Handler customizado para KM (Máscara Visual + Atualização do Form)
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setKmOdometro(formatKmVisual(e.target.value));
+    const rawValue = e.target.value;
+    const formatted = formatKmVisual(rawValue);
+    setValue('kmOdometro', formatted, { shouldValidate: true });
   };
 
-  const handleItemChange = (index: number, field: keyof ItemAbastecimento, value: string) => {
-    const novosItens = [...itens];
-    novosItens[index][field] = value;
-    setItens(novosItens);
-  };
-
-  const handleAddItem = () => {
-    setItens([...itens, { produtoId: '', quantidade: '', valorPorUnidade: '' }]);
-  };
-
-  const handleRemoveItem = (index: number) => {
-    if (itens.length > 1) {
-      const novosItens = itens.filter((_, i) => i !== index);
-      setItens(novosItens);
-    }
-  };
-
-  const handleSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    setLoading(true);
-
-    if (!veiculoId || !fornecedorId || !placaCartaoUsado ||
-      itens.some(item => !item.produtoId || !item.quantidade || !item.valorPorUnidade)) {
-      toast.warning('Preencha Veículo, Fornecedor, Cartão e Itens.');
-      setLoading(false);
-      return;
-    }
-
-    if (placaCartaoUsado.length !== 4) {
-      toast.error('Os últimos dígitos do cartão devem ter 4 números.');
-      setLoading(false);
-      return;
-    }
-
+  const onSubmit = async (data: AbastecimentoFormValues) => {
     try {
-      const itensFormatados = itens.map(item => ({
-        produtoId: item.produtoId,
-        quantidade: parseFloat(item.quantidade),
-        valorPorUnidade: parseFloat(item.valorPorUnidade)
-      }));
-
-      // Se KM não for informado (ex: lavagem se fosse o caso, ou erro), envia 0
-      const kmEnvio = kmOdometro ? parseDecimal(kmOdometro) : 0;
-
-      const dadosFormulario = {
-        veiculoId,
-        operadorId: operadorId || null,
-        fornecedorId,
-        kmOdometro: kmEnvio,
-        dataHora: new Date(dataHora).toISOString(),
-        placaCartaoUsado: DOMPurify.sanitize(placaCartaoUsado),
-        justificativa: DOMPurify.sanitize(justificativa) || null,
-        itens: itensFormatados
+      // Formatação final dos dados para o padrão que o Modal/API esperam
+      const dadosFormatados = {
+        veiculoId: data.veiculoId,
+        operadorId: data.operadorId || null,
+        fornecedorId: data.fornecedorId,
+        // Converte a string mascarada "10.500" para number 10500
+        kmOdometro: data.kmOdometro ? parseDecimal(data.kmOdometro) : 0,
+        dataHora: new Date(data.dataHora).toISOString(),
+        placaCartaoUsado: DOMPurify.sanitize(data.placaCartaoUsado),
+        justificativa: data.justificativa ? DOMPurify.sanitize(data.justificativa) : null,
+        itens: data.itens.map(item => ({
+          produtoId: item.produtoId,
+          quantidade: Number(item.quantidade),
+          valorPorUnidade: Number(item.valorPorUnidade)
+        }))
       };
 
-      setFormDataParaModal(dadosFormulario);
+      setFormDataParaModal(dadosFormatados);
       setModalAberto(true);
-
     } catch (err) {
       console.error("Erro ao preparar dados:", err);
-      toast.error('Falha ao preparar dados para envio.');
-    } finally {
-      setLoading(false);
+      toast.error('Falha ao preparar dados.');
     }
   };
 
@@ -146,30 +168,24 @@ export function RegistrarAbastecimento({
     setModalAberto(false);
     setFormDataParaModal(null);
 
-    // Reset Form (mantendo operador e veículo se for o caso)
-    setFornecedorId('');
-    setKmOdometro('');
-    setPlacaCartaoUsado('');
-    setJustificativa('');
-    setItens([{ produtoId: '', quantidade: '', valorPorUnidade: '' }]);
+    // Reset inteligente: Limpa tudo, mas mantém ID do operador logado e veículo pré-selecionado
+    reset({
+      veiculoId: veiculoPreSelecionadoId || '',
+      operadorId: usuarioLogado?.role === 'OPERADOR' ? usuarioLogado.id : '',
+      fornecedorId: '',
+      kmOdometro: '',
+      dataHora: new Date().toISOString().slice(0, 16),
+      placaCartaoUsado: '',
+      justificativa: '',
+      itens: [{ produtoId: '', quantidade: 0, valorPorUnidade: 0 }]
+    });
 
-    // Se tiver função de fechar (modal), chama ela
     if (onClose) onClose();
   };
 
-  // Cálculo do total geral em tempo real
-  const totalGeral = itens.reduce((acc, item) => {
-    const qtd = parseFloat(item.quantidade) || 0;
-    const val = parseFloat(item.valorPorUnidade) || 0;
-    return acc + (qtd * val);
-  }, 0);
-
-  // Verifica se é operador para travar o select
-  const isOperadorTravado = usuarioLogado?.role === 'OPERADOR';
-
   return (
     <>
-      <form className="space-y-8 bg-white p-6 rounded-card shadow-card border border-gray-100" onSubmit={handleSubmit}>
+      <form className="space-y-8 bg-white p-6 rounded-card shadow-card border border-gray-100" onSubmit={handleSubmit(onSubmit)}>
 
         <div className="text-center mb-6 relative">
           {onClose && (
@@ -187,12 +203,8 @@ export function RegistrarAbastecimento({
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
             </svg>
           </div>
-          <h4 className="text-xl font-bold text-primary">
-            Novo Abastecimento
-          </h4>
-          <p className="text-sm text-text-secondary mt-1">
-            Registre combustíveis e aditivos.
-          </p>
+          <h4 className="text-xl font-bold text-primary">Novo Abastecimento</h4>
+          <p className="text-sm text-text-secondary mt-1">Registre combustíveis e aditivos.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -201,15 +213,15 @@ export function RegistrarAbastecimento({
             <div className="relative group">
               <select
                 className={selectStyle}
-                value={veiculoId}
-                onChange={(e) => setVeiculoId(e.target.value)}
-                disabled={loading || !!veiculoPreSelecionadoId} // Trava se vier pré-selecionado (cenário de jornada ativa)
+                {...register('veiculoId')}
+                disabled={isSubmitting || !!veiculoPreSelecionadoId}
               >
                 <option value="">Selecione...</option>
                 {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} ({v.modelo})</option>)}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 group-hover:text-primary transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
             </div>
+            {errors.veiculoId && <p className="text-xs text-red-500 mt-1">{errors.veiculoId.message}</p>}
           </div>
 
           <div>
@@ -217,9 +229,8 @@ export function RegistrarAbastecimento({
             <div className="relative group">
               <select
                 className={selectStyle}
-                value={operadorId}
-                onChange={(e) => setOperadorId(e.target.value)}
-                disabled={loading || isOperadorTravado} // Trava se for o próprio operador
+                {...register('operadorId')}
+                disabled={isSubmitting || isOperadorTravado}
               >
                 <option value="">Selecione...</option>
                 {usuarios.filter(u => u.role === 'OPERADOR').map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
@@ -231,78 +242,78 @@ export function RegistrarAbastecimento({
           <div>
             <label className={labelStyle}>Posto / Fornecedor</label>
             <div className="relative group">
-              {/* ALTERAÇÃO: Agora usa o array filtrado fornecedoresPosto */}
-              <select className={selectStyle} value={fornecedorId} onChange={(e) => setFornecedorId(e.target.value)} disabled={loading}>
+              <select className={selectStyle} {...register('fornecedorId')} disabled={isSubmitting}>
                 <option value="">Selecione...</option>
                 {fornecedoresPosto.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 group-hover:text-primary transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
             </div>
+            {errors.fornecedorId && <p className="text-xs text-red-500 mt-1">{errors.fornecedorId.message}</p>}
           </div>
 
           <div>
             <Input
               label="KM Odômetro"
-              type="text"
               inputMode="numeric"
               placeholder="Ex: 50.420"
-              value={kmOdometro}
+              // Usamos registro manual do onChange para manter a máscara
+              {...register('kmOdometro')}
               onChange={handleKmChange}
-              disabled={loading}
+              error={errors.kmOdometro?.message}
+              disabled={isSubmitting}
             />
           </div>
 
           <div>
             <label className={labelStyle}>Data e Hora</label>
-            <Input type="datetime-local" value={dataHora} onChange={(e) => setDataHora(e.target.value)} disabled={loading} />
+            <Input type="datetime-local" {...register('dataHora')} disabled={isSubmitting} error={errors.dataHora?.message} />
           </div>
 
           <div>
             <Input
               label="Final do Cartão (4 dígitos)"
-              type="text"
               inputMode="numeric"
-              value={placaCartaoUsado}
-              onChange={(e) => setPlacaCartaoUsado(e.target.value)}
               placeholder="Ex: 1234"
               maxLength={4}
-              disabled={loading}
+              {...register('placaCartaoUsado')}
+              disabled={isSubmitting}
+              error={errors.placaCartaoUsado?.message}
             />
           </div>
         </div>
 
-        {/* ITENS ABASTECIDOS */}
+        {/* ITENS ABASTECIDOS (Field Array) */}
         <div className="bg-gray-50/80 p-5 rounded-xl border border-gray-200 mt-6">
           <div className="flex justify-between items-center mb-4">
             <h4 className="text-sm font-bold text-text-secondary uppercase tracking-wide">Itens do Abastecimento</h4>
             <span className="text-xs font-mono bg-white px-2 py-1 rounded border border-gray-200 text-gray-500">
-              {itens.length} item(ns)
+              {fields.length} item(ns)
             </span>
           </div>
 
           <div className="space-y-3">
-            {itens.map((item, index) => {
-              const quantidade = parseFloat(item.quantidade);
-              const valorPorUnidade = parseFloat(item.valorPorUnidade);
-              const valorTotalItem = (quantidade > 0 && valorPorUnidade > 0) ? (quantidade * valorPorUnidade) : 0;
+            {fields.map((field, index) => {
+              // Cálculos visuais para cada item
+              const qtd = Number(itensWatch?.[index]?.quantidade) || 0;
+              const val = Number(itensWatch?.[index]?.valorPorUnidade) || 0;
+              const subtotal = qtd * val;
 
               return (
-                <div key={index} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start bg-white p-3 rounded-lg shadow-sm border border-gray-200">
-
+                <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-start bg-white p-3 rounded-lg shadow-sm border border-gray-200">
                   <div className="sm:col-span-5">
                     <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1 pl-1">Combustível / Aditivo</label>
                     <div className="relative">
                       <select
                         className={selectStyle + " py-2 text-sm"}
-                        value={item.produtoId}
-                        onChange={(e) => handleItemChange(index, 'produtoId', e.target.value)}
-                        disabled={loading}
+                        {...register(`itens.${index}.produtoId`)}
+                        disabled={isSubmitting}
                       >
                         <option value="">Selecione...</option>
                         {produtosAbastecimento.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                       </select>
                       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
                     </div>
+                    {errors.itens?.[index]?.produtoId && <p className="text-[10px] text-red-500 pl-1">{errors.itens[index]?.produtoId?.message}</p>}
                   </div>
 
                   <div className="sm:col-span-2">
@@ -311,10 +322,12 @@ export function RegistrarAbastecimento({
                       type="number"
                       placeholder="0,00"
                       className="!py-2 text-right text-sm"
-                      value={item.quantidade}
-                      onChange={(e) => handleItemChange(index, 'quantidade', e.target.value)}
-                      disabled={loading}
+                      {...register(`itens.${index}.quantidade`)}
+                      disabled={isSubmitting}
+                      // Step any permite decimais
+                      step="any"
                     />
+                    {errors.itens?.[index]?.quantidade && <p className="text-[10px] text-red-500 pl-1">{errors.itens[index]?.quantidade?.message}</p>}
                   </div>
 
                   <div className="sm:col-span-2">
@@ -324,23 +337,23 @@ export function RegistrarAbastecimento({
                       step="0.01"
                       placeholder="R$ 0,00"
                       className="!py-2 text-right text-sm"
-                      value={item.valorPorUnidade}
-                      onChange={(e) => handleItemChange(index, 'valorPorUnidade', e.target.value)}
-                      disabled={loading}
+                      {...register(`itens.${index}.valorPorUnidade`)}
+                      disabled={isSubmitting}
                     />
+                    {errors.itens?.[index]?.valorPorUnidade && <p className="text-[10px] text-red-500 pl-1">{errors.itens[index]?.valorPorUnidade?.message}</p>}
                   </div>
 
                   <div className="sm:col-span-3 flex items-end justify-end gap-2 h-full pb-0.5">
                     <div className="text-right">
                       <p className="text-[10px] text-gray-400 font-bold uppercase">Subtotal</p>
-                      <p className="text-sm font-bold text-gray-700">{valorTotalItem > 0 ? `R$ ${valorTotalItem.toFixed(2)}` : 'R$ 0,00'}</p>
+                      <p className="text-sm font-bold text-gray-700">{subtotal > 0 ? `R$ ${subtotal.toFixed(2)}` : 'R$ 0,00'}</p>
                     </div>
-                    {itens.length > 1 && (
+                    {fields.length > 1 && (
                       <button
                         type="button"
-                        onClick={() => handleRemoveItem(index)}
+                        onClick={() => remove(index)}
                         className="text-gray-400 hover:text-red-600 p-1.5 hover:bg-red-50 rounded transition-colors mb-0.5"
-                        disabled={loading}
+                        disabled={isSubmitting}
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
@@ -352,7 +365,14 @@ export function RegistrarAbastecimento({
           </div>
 
           <div className="mt-5 flex justify-between items-center pt-4 border-t border-gray-200">
-            <Button type="button" variant="secondary" onClick={handleAddItem} className="text-xs h-8 bg-white" disabled={loading}>
+            <Button
+              type="button"
+              variant="secondary"
+              // Adiciona novo item com valores padrão zerados
+              onClick={() => append({ produtoId: '', quantidade: 0, valorPorUnidade: 0 })}
+              className="text-xs h-8 bg-white"
+              disabled={isSubmitting}
+            >
               + Adicionar Item
             </Button>
 
@@ -367,10 +387,9 @@ export function RegistrarAbastecimento({
           <label className={labelStyle}>Justificativa (Opcional)</label>
           <textarea
             className="w-full px-4 py-3 text-sm text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none transition-all h-24"
-            value={justificativa}
-            onChange={(e) => setJustificativa(e.target.value)}
+            {...register('justificativa')}
             placeholder="Caso tenha usado o cartão de outro veículo ou ocorrido algo incomum..."
-            disabled={loading}
+            disabled={isSubmitting}
           ></textarea>
         </div>
 
@@ -381,23 +400,24 @@ export function RegistrarAbastecimento({
               variant="secondary"
               className="flex-1 py-3.5"
               onClick={onClose}
-              disabled={loading}
+              disabled={isSubmitting}
             >
               Cancelar
             </Button>
           )}
           <Button
             type="submit"
-            disabled={loading}
-            isLoading={loading}
+            disabled={isSubmitting}
+            isLoading={isSubmitting}
             className={`py-3.5 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 ${onClose ? 'flex-[2]' : 'w-full'}`}
           >
-            {loading ? 'Validando...' : 'Registrar Abastecimento'}
+            {isSubmitting ? 'Validando...' : 'Registrar Abastecimento'}
           </Button>
         </div>
 
       </form>
 
+      {/* MODAL DE CONFIRMAÇÃO DA FOTO */}
       {modalAberto && formDataParaModal && (
         <ModalConfirmacaoFoto
           titulo="Envie a foto da nota fiscal"
