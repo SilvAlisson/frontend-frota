@@ -177,10 +177,10 @@ export function LoginScreen() {
 
         <div className="mt-8 text-center space-y-2">
           <p className="text-xs text-gray-400 font-medium">
-            &copy; {new Date().getFullYear()} KLIN Produtos de Limpeza.
+            &copy; {new Date().getFullYear()} KLIN Frota Inteligente.
           </p>
           <p className="text-[10px] text-gray-300 uppercase tracking-widest">
-            Sistema de Gestão de Frota v2.0
+            Sistema de Gestão de Frota v 2.0
           </p>
         </div>
 
