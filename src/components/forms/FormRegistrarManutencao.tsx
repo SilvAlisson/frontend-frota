@@ -12,19 +12,22 @@ import type { Veiculo, Produto, Fornecedor } from '../../types';
 
 // Opções de "Alvo" da manutenção
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
+type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
-// --- 1. SCHEMA ZOD V4 (Inteligente & Condicional) ---
+// --- 1. SCHEMA ZOD V4 (Atualizado) ---
 const manutencaoSchema = z.object({
-  tipo: z.enum(["PREVENTIVA", "CORRETIVA"]).default('CORRETIVA'),
-
+  tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
   alvo: z.enum(ALVOS_MANUTENCAO),
 
-  // Opcionais na definição base, refinados depois
+  // CORREÇÃO 4: KM agora é totalmente opcional no schema
   veiculoId: z.string().optional().nullable(),
   kmAtual: z.string().optional().nullable(),
 
+  // CORREÇÃO 3: Novo campo para CA (Controle de caixa/EPI)
+  numeroCA: z.string().optional(),
+
   fornecedorId: z.string({ error: "Fornecedor obrigatório" })
-    .min(1, { message: "Selecione a oficina/fornecedor" }),
+    .min(1, { message: "Selecione o fornecedor" }),
 
   data: z.string({ error: "Data obrigatória" })
     .min(1, { message: "Data inválida" }),
@@ -43,6 +46,7 @@ const manutencaoSchema = z.object({
   })).min(1, { message: "Adicione pelo menos um item à OS" })
 })
   .superRefine((data, ctx) => {
+    // Validação Condicional
     if (data.alvo === 'VEICULO') {
       if (!data.veiculoId) {
         ctx.addIssue({
@@ -51,11 +55,15 @@ const manutencaoSchema = z.object({
           path: ["veiculoId"]
         });
       }
-      if (!data.kmAtual) {
+      // KM não é mais verificado aqui (Opcional)
+    }
+
+    if (data.alvo === 'OUTROS') {
+      if (!data.numeroCA) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Informe o KM atual",
-          path: ["kmAtual"]
+          message: "Informe o nº do CA",
+          path: ["numeroCA"]
         });
       }
     }
@@ -79,11 +87,23 @@ export function FormRegistrarManutencao({
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
   const [ultimoKmRegistrado, setUltimoKmRegistrado] = useState<number>(0);
 
-  // FILTRO: Remove Combustível e Aditivo (vão no Abastecimento) e Lavagem (se for o caso)
-  // Deixa apenas Peças, Serviços e Outros
+  // CORREÇÃO 3: Controle das Abas
+  const [abaAtiva, setAbaAtiva] = useState<TipoManutencao>('CORRETIVA');
+
+  // Filtro de Produtos (Remove Combustível/Aditivo/Lavagem)
   const produtosManutencao = produtos.filter(p =>
     !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)
   );
+
+  // CORREÇÃO 3: Filtro de Fornecedores por Aba
+  const fornecedoresFiltrados = fornecedores.filter(f => {
+    if (abaAtiva === 'CORRETIVA') {
+      // Na corretiva, removemos Posto e Lava Jato da lista
+      return !['POSTO', 'LAVA_JATO'].includes(f.tipo);
+    }
+    // Na preventiva, mostra todos (ou ajuste conforme necessidade)
+    return true;
+  });
 
   const {
     register,
@@ -110,10 +130,16 @@ export function FormRegistrarManutencao({
     name: "itens"
   });
 
+  // Sincroniza a aba com o valor do formulário
+  useEffect(() => {
+    setValue('tipo', abaAtiva);
+  }, [abaAtiva, setValue]);
+
   const alvoSelecionado = watch('alvo');
   const veiculoIdSelecionado = watch('veiculoId');
   const itensObservados = watch('itens');
 
+  // Busca último KM para referência (apenas informativo agora)
   useEffect(() => {
     if (alvoSelecionado !== 'VEICULO' || !veiculoIdSelecionado) {
       setUltimoKmRegistrado(0);
@@ -138,21 +164,27 @@ export function FormRegistrarManutencao({
   const onValidSubmit = async (data: ManutencaoFormInput) => {
     let kmInputFloat = null;
 
-    if (data.alvo === 'VEICULO') {
-      kmInputFloat = parseDecimal(data.kmAtual || '0');
-      if (kmInputFloat <= ultimoKmRegistrado && ultimoKmRegistrado > 0) {
-        toast.warning(`Atenção: O KM informado é menor que o último registrado (${ultimoKmRegistrado.toLocaleString('pt-BR')}).`);
+    if (data.alvo === 'VEICULO' && data.kmAtual) {
+      kmInputFloat = parseDecimal(data.kmAtual);
+      // Aviso sutil se KM for menor, mas permite salvar (flexibilidade)
+      if (kmInputFloat < ultimoKmRegistrado && ultimoKmRegistrado > 0) {
+        toast.warning(`Nota: KM informado é menor que o último (${ultimoKmRegistrado}).`);
       }
+    }
+
+    // Formata observação incluindo o CA se houver
+    let obsFinal = data.observacoes || '';
+    if (data.alvo === 'OUTROS' && data.numeroCA) {
+      obsFinal = `[CA: ${data.numeroCA}] ${obsFinal}`;
     }
 
     const payloadFinal = {
       tipo: data.tipo,
       veiculoId: data.alvo === 'VEICULO' ? data.veiculoId : null,
       fornecedorId: data.fornecedorId,
-      kmAtual: kmInputFloat,
+      kmAtual: kmInputFloat, // Pode ser null agora
       data: new Date(data.data).toISOString(),
-      // Texto de prefixo para Outros
-      observacoes: `${data.alvo === 'OUTROS' ? '[Manutenção de Equipamento/Caixa] ' : ''}${data.observacoes || ''}`,
+      observacoes: obsFinal,
       itens: data.itens.map(item => ({
         produtoId: item.produtoId,
         quantidade: item.quantidade,
@@ -174,8 +206,9 @@ export function FormRegistrarManutencao({
       veiculoId: '',
       fornecedorId: '',
       kmAtual: '',
+      numeroCA: '',
       data: new Date().toISOString().slice(0, 10),
-      tipo: 'CORRETIVA',
+      tipo: abaAtiva, // Mantém a aba atual
       observacoes: '',
       itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: 0 }]
     });
@@ -190,224 +223,239 @@ export function FormRegistrarManutencao({
 
   return (
     <>
-      <form onSubmit={handleSubmit(onValidSubmit)} className="space-y-8 bg-white p-6 rounded-card shadow-card border border-gray-100">
+      <div className="bg-white p-6 rounded-card shadow-card border border-gray-100">
 
-        <div className="text-center mb-6">
-          <h4 className="text-xl font-bold text-gray-800 mb-2">Nova Ordem de Serviço</h4>
-          <p className="text-sm text-text-secondary">Registro de peças e serviços de manutenção.</p>
-        </div>
-
-        {/* SELETOR DE ALVO */}
-        <div className="flex p-1 bg-gray-100 rounded-lg mb-6">
+        {/* CORREÇÃO 3: ABAS DE TIPO DE MANUTENÇÃO */}
+        <div className="flex mb-6 border-b border-gray-200">
           <button
             type="button"
-            onClick={() => setValue('alvo', 'VEICULO')}
-            className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${alvoSelecionado === 'VEICULO'
-              ? 'bg-white shadow text-blue-700'
-              : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setAbaAtiva('CORRETIVA')}
+            className={`flex-1 pb-3 text-sm font-bold uppercase tracking-wide transition-colors ${abaAtiva === 'CORRETIVA'
+              ? 'text-red-600 border-b-2 border-red-600'
+              : 'text-gray-400 hover:text-gray-600'
+              }`}
           >
-            Veículo da Frota
+            Corretiva / Reparo
           </button>
           <button
             type="button"
-            onClick={() => setValue('alvo', 'OUTROS')}
-            className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${alvoSelecionado === 'OUTROS'
-              ? 'bg-white shadow text-blue-700'
-              : 'text-gray-500 hover:text-gray-700'}`}
+            onClick={() => setAbaAtiva('PREVENTIVA')}
+            className={`flex-1 pb-3 text-sm font-bold uppercase tracking-wide transition-colors ${abaAtiva === 'PREVENTIVA'
+              ? 'text-blue-600 border-b-2 border-blue-600'
+              : 'text-gray-400 hover:text-gray-600'
+              }`}
           >
-            Caixas / Outros
+            Preventiva
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <form onSubmit={handleSubmit(onValidSubmit)} className="space-y-6">
 
-          {alvoSelecionado === 'VEICULO' ? (
-            <>
-              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                <label className="block mb-1.5 text-sm font-medium text-text-secondary">Veículo</label>
-                <div className="relative group">
+          {/* SELETOR DE ALVO */}
+          <div className="flex p-1 bg-gray-50 rounded-lg border border-gray-200">
+            <button
+              type="button"
+              onClick={() => setValue('alvo', 'VEICULO')}
+              className={`flex-1 py-2 text-xs font-bold rounded transition-all ${alvoSelecionado === 'VEICULO'
+                ? 'bg-white shadow-sm text-gray-800'
+                : 'text-gray-400 hover:bg-gray-100'}`}
+            >
+              Veículo
+            </button>
+            <button
+              type="button"
+              onClick={() => setValue('alvo', 'OUTROS')}
+              className={`flex-1 py-2 text-xs font-bold rounded transition-all ${alvoSelecionado === 'OUTROS'
+                ? 'bg-white shadow-sm text-gray-800'
+                : 'text-gray-400 hover:bg-gray-100'}`}
+            >
+              Caixa / Equipamento
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+            {alvoSelecionado === 'VEICULO' ? (
+              <div className="md:col-span-2 space-y-4">
+                <div className="animate-in fade-in slide-in-from-top-1">
+                  <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Veículo</label>
+                  {/* CORREÇÃO 5: Select limpo (sem wrapper com ícone extra) */}
                   <select
                     {...register("veiculoId")}
-                    className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-input focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all cursor-pointer"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none"
                     disabled={isSubmitting}
                   >
                     <option value="">Selecione...</option>
                     {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>)}
                   </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
+                  {errors.veiculoId && <span className="text-xs text-error mt-1 block">{errors.veiculoId.message}</span>}
                 </div>
-                {errors.veiculoId && <span className="text-xs text-error mt-1 block">{errors.veiculoId.message}</span>}
-                {ultimoKmRegistrado > 0 && <p className="text-xs text-blue-600 mt-1 font-medium bg-blue-50 inline-block px-2 py-0.5 rounded">Último: {ultimoKmRegistrado.toLocaleString('pt-BR')} KM</p>}
-              </div>
 
-              <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                <label className="block mb-1.5 text-sm font-medium text-text-secondary">KM Atual</label>
+                <div className="animate-in fade-in slide-in-from-top-1">
+                  <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">KM Atual (Opcional)</label>
+                  <Input
+                    {...register("kmAtual")}
+                    onChange={(e) => {
+                      register("kmAtual").onChange(e);
+                      handleKmChange(e);
+                    }}
+                    placeholder={ultimoKmRegistrado > 0 ? `Ref: ${ultimoKmRegistrado} km` : "Ex: 50.000"}
+                    error={errors.kmAtual?.message}
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="md:col-span-2 animate-in fade-in slide-in-from-top-1">
+                {/* CORREÇÃO 3: Pergunta do CA */}
+                <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Qual o CA da Caixa?</label>
                 <Input
-                  {...register("kmAtual")}
-                  onChange={(e) => {
-                    register("kmAtual").onChange(e);
-                    handleKmChange(e);
-                  }}
-                  placeholder={ultimoKmRegistrado > 0 ? `> ${ultimoKmRegistrado}` : "Ex: 50.420"}
-                  error={errors.kmAtual?.message}
+                  {...register("numeroCA")}
+                  placeholder="Digite o número do CA ou Identificação"
+                  error={errors.numeroCA?.message}
                   disabled={isSubmitting}
+                  autoFocus
                 />
+                <p className="text-[10px] text-gray-400 mt-1">Identificação obrigatória para reparo de caixas.</p>
               </div>
-            </>
-          ) : (
-            <div className="md:col-span-2 bg-amber-50 p-4 rounded-xl border border-amber-100 text-amber-800 text-sm flex items-center gap-3 animate-in fade-in">
-              <div className="bg-amber-100 p-2 rounded-full">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" /></svg>
-              </div>
-              <div>
-                <strong>Manutenção de Caixas/Equipamentos:</strong>
-                <p className="text-xs mt-0.5 opacity-90">Descreva qual equipamento/caixa sendo reparado (Ex: Caixa CA 05 enviada para reparo).</p>
-              </div>
-            </div>
-          )}
+            )}
 
-          <div className={alvoSelecionado === 'OUTROS' ? "" : "md:col-span-2"}>
-            <label className="block mb-1.5 text-sm font-medium text-text-secondary">Oficina / Fornecedor</label>
-            <div className="relative group">
-              <select {...register("fornecedorId")} className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-input focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all cursor-pointer" disabled={isSubmitting}>
+            <div className="md:col-span-2">
+              <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">
+                {abaAtiva === 'CORRETIVA' ? 'Oficina de Reparo' : 'Fornecedor / Oficina'}
+              </label>
+              <select
+                {...register("fornecedorId")}
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none"
+                disabled={isSubmitting}
+              >
                 <option value="">Selecione...</option>
-                {fornecedores.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+                {fornecedoresFiltrados.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
+              {errors.fornecedorId && <span className="text-xs text-error mt-1 block">{errors.fornecedorId.message}</span>}
             </div>
-            {errors.fornecedorId && <span className="text-xs text-error mt-1 block">{errors.fornecedorId.message}</span>}
+
+            <div className="md:col-span-2">
+              <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Data do Serviço</label>
+              <Input type="date" {...register("data")} error={errors.data?.message} disabled={isSubmitting} />
+            </div>
           </div>
 
-          <div className={alvoSelecionado === 'OUTROS' ? "" : "md:col-span-2"}>
-            <label className="block mb-1.5 text-sm font-medium text-text-secondary">Data do Serviço</label>
-            <Input type="date" {...register("data")} error={errors.data?.message} disabled={isSubmitting} />
-          </div>
-        </div>
+          {/* LISTA DE ITENS */}
+          <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-200">
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="text-xs font-bold text-gray-500 uppercase">Peças e Serviços</h4>
+              <span className="text-[10px] bg-white px-2 py-1 rounded border border-gray-200 text-gray-400">{fields.length} itens</span>
+            </div>
 
-        {/* LISTA DE ITENS */}
-        <div className="bg-gray-50/80 p-5 rounded-xl border border-gray-200 mt-6">
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wide">Peças e Serviços</h4>
-            <span className="text-xs font-mono bg-white px-2 py-1 rounded border border-gray-200 text-gray-500">
-              {fields.length} item(ns)
-            </span>
-          </div>
+            <div className="space-y-3">
+              {fields.map((field, index) => {
+                const item = itensObservados[index];
+                const subtotal = (Number(item?.quantidade) || 0) * (Number(item?.valorPorUnidade) || 0);
+                const errItem = errors.itens?.[index];
 
-          <div className="space-y-3">
-            {fields.map((field, index) => {
-              const item = itensObservados[index];
-              const subtotal = (Number(item?.quantidade) || 0) * (Number(item?.valorPorUnidade) || 0);
-              const errItem = errors.itens?.[index];
-
-              return (
-                <div key={field.id} className="grid grid-cols-12 gap-3 items-start bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-
-                  <div className="col-span-12 sm:col-span-5">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Descrição</label>
-                    <div className="relative">
+                return (
+                  <div key={field.id} className="grid grid-cols-12 gap-2 items-start bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
+                    <div className="col-span-12 sm:col-span-6">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Item</label>
                       <select
                         {...register(`itens.${index}.produtoId`)}
-                        className={`w-full pl-3 pr-8 py-2 text-sm border rounded-md focus:ring-2 outline-none appearance-none ${errItem?.produtoId ? 'border-red-300' : 'border-gray-200 focus:border-primary'}`}
+                        className={`w-full p-2 text-sm border rounded-md focus:ring-2 outline-none appearance-none bg-white ${errItem?.produtoId ? 'border-red-300' : 'border-gray-200 focus:border-primary'}`}
                         disabled={isSubmitting}
                       >
                         <option value="">Selecione...</option>
                         {produtosManutencao.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                       </select>
-                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400"><svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
+                    </div>
+
+                    <div className="col-span-4 sm:col-span-2">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Qtd</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        {...register(`itens.${index}.quantidade`)}
+                        className="w-full p-2 text-sm border border-gray-200 rounded-md outline-none focus:border-primary text-center"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+
+                    <div className="col-span-4 sm:col-span-2">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">R$ Unit.</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        {...register(`itens.${index}.valorPorUnidade`)}
+                        className="w-full p-2 text-sm border border-gray-200 rounded-md outline-none focus:border-primary text-right"
+                        disabled={isSubmitting}
+                      />
+                    </div>
+
+                    <div className="col-span-4 sm:col-span-2 flex flex-col justify-end items-end h-full pb-2">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block opacity-0">Sub</label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-gray-700">R$ {subtotal.toFixed(2)}</span>
+                        {fields.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => remove(index)}
+                            className="text-gray-300 hover:text-red-500 transition-colors"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
-
-                  <div className="col-span-4 sm:col-span-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Qtd</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      {...register(`itens.${index}.quantidade`)}
-                      className="w-full px-2 py-2 text-sm text-right border border-gray-200 rounded-md focus:ring-2 focus:border-primary outline-none"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  <div className="col-span-4 sm:col-span-2">
-                    <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block pl-1">Valor Un.</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      {...register(`itens.${index}.valorPorUnidade`)}
-                      className="w-full px-2 py-2 text-sm text-right border border-gray-200 rounded-md focus:ring-2 focus:border-primary outline-none"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-
-                  <div className="col-span-4 sm:col-span-3 flex justify-end items-end gap-2 h-full pb-1">
-                    <div className="text-right">
-                      <p className="text-[10px] text-gray-400 font-bold uppercase">Subtotal</p>
-                      <p className="text-sm font-bold text-gray-700">R$ {subtotal.toFixed(2)}</p>
-                    </div>
-                    {fields.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => remove(index)}
-                        className="text-gray-400 hover:text-red-500 hover:bg-red-50 p-1.5 rounded transition-colors mb-0.5"
-                        title="Remover item"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="mt-5 flex justify-between items-center pt-4 border-t border-gray-200">
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })}
-              className="text-xs h-8 bg-white"
-              disabled={isSubmitting}
-            >
-              + Adicionar Item
-            </Button>
-
-            <div className="text-right">
-              <span className="text-xs text-gray-500 uppercase font-bold mr-2">Total Geral</span>
-              <span className="text-lg font-bold text-primary">R$ {totalGeral.toFixed(2)}</span>
+                );
+              })}
             </div>
+
+            <div className="mt-4 flex justify-between items-center pt-2">
+              <button
+                type="button"
+                onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })}
+                className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                disabled={isSubmitting}
+              >
+                + Adicionar Item
+              </button>
+              <div className="text-right">
+                <span className="text-xs text-gray-400 uppercase font-bold mr-2">Total Estimado</span>
+                <span className="text-base font-bold text-gray-800">R$ {totalGeral.toFixed(2)}</span>
+              </div>
+            </div>
+            {errors.itens && <p className="text-xs text-red-500 font-medium mt-2 text-right">{errors.itens.root?.message}</p>}
           </div>
 
-          {errors.itens && <p className="text-xs text-red-500 font-medium mt-2 text-right">{errors.itens.root?.message || "Verifique os itens da lista."}</p>}
-        </div>
+          <div>
+            <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Observações</label>
+            <textarea
+              {...register("observacoes")}
+              className="w-full px-4 py-3 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none transition-all"
+              rows={2}
+              placeholder={alvoSelecionado === 'OUTROS' ? "Descreva o defeito da caixa..." : "Detalhes do serviço..."}
+              disabled={isSubmitting}
+            />
+          </div>
 
-        <div>
-          <label className="block mb-1.5 text-sm font-medium text-text-secondary">Observações</label>
-          <textarea
-            {...register("observacoes")}
-            className="w-full px-4 py-3 text-sm bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none transition-all"
-            rows={3}
-            placeholder={alvoSelecionado === 'OUTROS' ? "Descreva qual caixa ou equipamento..." : "Detalhes técnicos, descrição do serviço..."}
+          <Button
+            type="submit"
             disabled={isSubmitting}
-          />
-        </div>
-
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          isLoading={isSubmitting}
-          className="w-full py-3 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
-        >
-          {isSubmitting ? 'Validando...' : 'Registrar Manutenção'}
-        </Button>
-      </form>
+            isLoading={isSubmitting}
+            className="w-full py-3.5 text-base shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all"
+          >
+            {isSubmitting ? 'Salvando...' : `Confirmar ${abaAtiva === 'CORRETIVA' ? 'Reparo' : 'Manutenção'}`}
+          </Button>
+        </form>
+      </div>
 
       {modalAberto && formDataParaModal && (
         <ModalConfirmacaoFoto
-          titulo="Comprovante da Manutenção"
+          titulo={`Comprovante - ${formDataParaModal.tipo}`}
           dadosJornada={formDataParaModal}
           apiEndpoint="/ordem-servico"
           apiMethod="POST"
-          kmParaConfirmar={formDataParaModal.veiculoId ? formDataParaModal.kmAtual : null}
+          kmParaConfirmar={null}
           jornadaId={null}
           onClose={() => setModalAberto(false)}
           onSuccess={handleModalSuccess}

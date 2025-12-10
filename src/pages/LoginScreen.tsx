@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -9,11 +9,11 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { toast } from 'sonner';
 
-// --- SCHEMA ZOD V4 ---
+// --- SCHEMA ZOD V4 (Atualizado) ---
 const loginSchema = z.object({
   email: z.string()
     .min(1, { message: "Digite seu email" })
-    .email({ message: "Formato de email inválido" }),
+    .pipe(z.email({ message: "Formato de email inválido" })), // Sintaxe correta Zod v4
   password: z.string()
     .min(1, { message: "Digite sua senha" })
 });
@@ -25,6 +25,9 @@ export function LoginScreen() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const magicToken = searchParams.get('magicToken');
+
+  // Trava para evitar múltiplas tentativas de login no StrictMode do React
+  const loginAttempted = useRef(false);
 
   // Estado local apenas para controlar o loading visual do Magic Token
   const [isMagicLoggingIn, setIsMagicLoggingIn] = useState(!!magicToken);
@@ -39,7 +42,10 @@ export function LoginScreen() {
 
   // --- LOGIN VIA QR CODE (MAGIC TOKEN) ---
   useEffect(() => {
-    if (magicToken) {
+    // Só executa se tiver token e se ainda não tiver tentado (trava useRef)
+    if (magicToken && !loginAttempted.current) {
+      loginAttempted.current = true; // Marca como executado imediatamente
+
       const realizarLoginPorToken = async () => {
         setIsMagicLoggingIn(true);
         try {

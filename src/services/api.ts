@@ -8,7 +8,7 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 20000, // 20 segundos de timeout para evitar hangs
+  timeout: 60000, // 20 segundos de timeout para evitar hangs
 });
 
 // --- Interceptor de Requisição ---
@@ -20,7 +20,7 @@ api.interceptors.request.use(
     // pois são rotas de autenticação (login, token de acesso, etc.).
     const isAuthRoute =
       config.url?.includes('/auth/login') ||
-      config.url?.includes('/auth/login-token') || // <-- Adicionado para cobrir o QR Code
+      config.url?.includes('/auth/login-token') ||
       config.url?.includes('/auth/register');
 
     // Anexar o token APENAS se ele existir E NÃO for uma rota de autenticação.
