@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { useDashboardData } from '../hooks/useDashboardData';
 import { Button } from '../components/ui/Button';
@@ -13,24 +11,9 @@ import { DashboardRH } from '../components/DashboardRH';
 export function Dashboard() {
   const { user, logout } = useAuth();
 
-  // Efeito para limpeza automática de jornadas vencidas ao abrir o app
-  useEffect(() => {
-    const verificarJornadasVencidas = async () => {
-      if (user?.role === 'ADMIN' || user?.role === 'ENCARREGADO') {
-        try {
-          await api.post('/jornada/verificar-timeouts');
-        } catch (err) {
-          console.warn("Não foi possível verificar timeouts automaticamente:", err);
-        }
-      }
-    };
-
-    if (user) {
-      verificarJornadasVencidas();
-    }
-  }, [user]);
-
   // Hook inteligente que busca dados em paralelo e faz cache
+  // Otimização: Agora usamos o backend (Cron) para verificar timeouts, 
+  // removendo a carga excessiva do frontend ao abrir o painel.
   const { data, isLoading, isError, refetch } = useDashboardData();
 
   if (!user) return null;

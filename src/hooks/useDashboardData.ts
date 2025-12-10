@@ -20,33 +20,33 @@ export function useDashboardData() {
         queryFn: async () => {
             if (!user) throw new Error("Usuário não autenticado");
 
-            const usersReq = api.get<User[]>('/user');
-            const veiculosReq = api.get<Veiculo[]>('/veiculos');
-            const produtosReq = api.get<Produto[]>('/produto');
-            const fornecedoresReq = api.get<Fornecedor[]>('/fornecedor');
-
-            const jornadasReq = api.get<Jornada[]>('/jornada/abertas');
-
-            const [
-                usersRes,
-                veiculosRes,
-                produtosRes,
-                fornecedoresRes,
-                jornadasRes
-            ] = await Promise.all([
-                usersReq,
-                veiculosReq,
-                produtosReq,
-                fornecedoresReq,
-                jornadasReq
+            // BLINDAGEM: Usamos allSettled para que o erro de uma única requisição
+            // (ex: falha ao carregar fornecedores) não derrube todo o painel.
+            const results = await Promise.allSettled([
+                api.get<User[]>('/user'),
+                api.get<Veiculo[]>('/veiculos'),
+                api.get<Produto[]>('/produto'),
+                api.get<Fornecedor[]>('/fornecedor'),
+                api.get<Jornada[]>('/jornada/abertas')
             ]);
 
+            // Função auxiliar para extrair dados com segurança
+            const unwrap = <T>(result: PromiseSettledResult<{ data: T }>, context: string): T => {
+                if (result.status === 'fulfilled') {
+                    return result.value.data;
+                } else {
+                    console.warn(`[Dashboard] Falha parcial ao carregar ${context}:`, result.reason);
+                    // Retorna array vazio para a interface não quebrar com undefined
+                    return [] as any;
+                }
+            };
+
             return {
-                usuarios: usersRes.data,
-                veiculos: veiculosRes.data,
-                produtos: produtosRes.data,
-                fornecedores: fornecedoresRes.data,
-                jornadasAtivas: jornadasRes.data,
+                usuarios: unwrap(results[0], 'usuários'),
+                veiculos: unwrap(results[1], 'veículos'),
+                produtos: unwrap(results[2], 'produtos'),
+                fornecedores: unwrap(results[3], 'fornecedores'),
+                jornadasAtivas: unwrap(results[4], 'jornadas'),
             };
         },
 
