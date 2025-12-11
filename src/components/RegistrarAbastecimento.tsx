@@ -15,7 +15,6 @@ const itemAbastecimentoSchema = z.object({
   produtoId: z.string({ error: "Selecione o produto" })
     .min(1, { error: "Selecione o produto" }),
 
-  // Coerce converte string do input para number. .gt(0) impede 0 ou negativo.
   quantidade: z.coerce.number({ error: "Qtd inválida" })
     .gt(0, { error: "Deve ser maior que 0" }),
 
@@ -32,7 +31,6 @@ const abastecimentoSchema = z.object({
   fornecedorId: z.string({ error: "Selecione o fornecedor" })
     .min(1, { error: "Selecione o fornecedor" }),
 
-  // Mantemos como string para validar a máscara visual e convertemos no submit
   kmOdometro: z.string({ error: "Informe o KM" })
     .min(1, { error: "Informe o KM atual" }),
 
@@ -44,12 +42,10 @@ const abastecimentoSchema = z.object({
 
   justificativa: z.string().optional(),
 
-  // Validação do Array
   itens: z.array(itemAbastecimentoSchema)
     .min(1, { error: "Adicione pelo menos um item" })
 });
 
-// Tipos
 type AbastecimentoFormValues = z.input<typeof abastecimentoSchema>;
 
 interface RegistrarAbastecimentoProps {
@@ -75,11 +71,9 @@ export function RegistrarAbastecimento({
   onClose
 }: RegistrarAbastecimentoProps) {
 
-  // Estado para o Modal (único estado manual necessário agora)
   const [modalAberto, setModalAberto] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
 
-  // Setup do React Hook Form
   const {
     register,
     control,
@@ -97,39 +91,35 @@ export function RegistrarAbastecimento({
       dataHora: new Date().toISOString().slice(0, 16),
       placaCartaoUsado: '',
       justificativa: '',
-      itens: [{ produtoId: '', quantidade: 0, valorPorUnidade: 0 }] // Inicializa com 1 item zerado
+      itens: [{ produtoId: '', quantidade: 0, valorPorUnidade: 0 }]
     }
   });
 
-  // Gerenciamento do Array Dinâmico
   const { fields, append, remove } = useFieldArray({
     control,
     name: "itens"
   });
 
-  // Observa os itens para cálculo do total em tempo real
   const itensWatch = useWatch({ control, name: "itens" });
 
-  // Cálculo do total geral (Memoizado visualmente pelo React Hook Form via watch)
   const totalGeral = itensWatch?.reduce((acc, item) => {
     const qtd = Number(item.quantidade) || 0;
     const val = Number(item.valorPorUnidade) || 0;
     return acc + (qtd * val);
   }, 0) || 0;
 
-  // Atualiza veículo se a prop mudar
   useEffect(() => {
     if (veiculoPreSelecionadoId) {
       setValue('veiculoId', veiculoPreSelecionadoId);
     }
   }, [veiculoPreSelecionadoId, setValue]);
 
-  // Filtros de Listas
   const produtosAbastecimento = produtos.filter(p => ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo));
   const fornecedoresPosto = fornecedores.filter(f => f.tipo === 'POSTO');
+  
+  // Apenas operadores ficam travados no próprio nome. Encarregados/Admins podem mudar.
   const isOperadorTravado = usuarioLogado?.role === 'OPERADOR';
 
-  // Handler customizado para KM (Máscara Visual + Atualização do Form)
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawValue = e.target.value;
     const formatted = formatKmVisual(rawValue);
@@ -138,12 +128,10 @@ export function RegistrarAbastecimento({
 
   const onSubmit = async (data: AbastecimentoFormValues) => {
     try {
-      // Formatação final dos dados para o padrão que o Modal/API esperam
       const dadosFormatados = {
         veiculoId: data.veiculoId,
         operadorId: data.operadorId || null,
         fornecedorId: data.fornecedorId,
-        // Converte a string mascarada "10.500" para number 10500
         kmOdometro: data.kmOdometro ? parseDecimal(data.kmOdometro) : 0,
         dataHora: new Date(data.dataHora).toISOString(),
         placaCartaoUsado: DOMPurify.sanitize(data.placaCartaoUsado),
@@ -168,7 +156,6 @@ export function RegistrarAbastecimento({
     setModalAberto(false);
     setFormDataParaModal(null);
 
-    // Reset inteligente: Limpa tudo, mas mantém ID do operador logado e veículo pré-selecionado
     reset({
       veiculoId: veiculoPreSelecionadoId || '',
       operadorId: usuarioLogado?.role === 'OPERADOR' ? usuarioLogado.id : '',
@@ -233,7 +220,11 @@ export function RegistrarAbastecimento({
                 disabled={isSubmitting || isOperadorTravado}
               >
                 <option value="">Selecione...</option>
-                {usuarios.filter(u => u.role === 'OPERADOR').map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
+                {/* CORREÇÃO: Mostra OPERADORES e ENCARREGADOS */}
+                {usuarios
+                  .filter(u => ['OPERADOR', 'ENCARREGADO'].includes(u.role))
+                  .map(u => <option key={u.id} value={u.id}>{u.nome}</option>)
+                }
               </select>
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 group-hover:text-primary transition-colors"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
             </div>
@@ -256,7 +247,6 @@ export function RegistrarAbastecimento({
               label="KM Odômetro"
               inputMode="numeric"
               placeholder="Ex: 50.420"
-              // Usamos registro manual do onChange para manter a máscara
               {...register('kmOdometro')}
               onChange={handleKmChange}
               error={errors.kmOdometro?.message}
@@ -293,7 +283,6 @@ export function RegistrarAbastecimento({
 
           <div className="space-y-3">
             {fields.map((field, index) => {
-              // Cálculos visuais para cada item
               const qtd = Number(itensWatch?.[index]?.quantidade) || 0;
               const val = Number(itensWatch?.[index]?.valorPorUnidade) || 0;
               const subtotal = qtd * val;
@@ -321,10 +310,10 @@ export function RegistrarAbastecimento({
                     <Input
                       type="number"
                       placeholder="0,00"
-                      className="!py-2 text-right text-sm"
+                      // Estilo limpo sem setas
+                      className="!py-2 text-right text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       {...register(`itens.${index}.quantidade`)}
                       disabled={isSubmitting}
-                      // Step any permite decimais
                       step="any"
                     />
                     {errors.itens?.[index]?.quantidade && <p className="text-[10px] text-red-500 pl-1">{errors.itens[index]?.quantidade?.message}</p>}
@@ -336,7 +325,8 @@ export function RegistrarAbastecimento({
                       type="number"
                       step="0.01"
                       placeholder="R$ 0,00"
-                      className="!py-2 text-right text-sm"
+                      // Estilo limpo sem setas
+                      className="!py-2 text-right text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       {...register(`itens.${index}.valorPorUnidade`)}
                       disabled={isSubmitting}
                     />
@@ -368,7 +358,6 @@ export function RegistrarAbastecimento({
             <Button
               type="button"
               variant="secondary"
-              // Adiciona novo item com valores padrão zerados
               onClick={() => append({ produtoId: '', quantidade: 0, valorPorUnidade: 0 })}
               className="text-xs h-8 bg-white"
               disabled={isSubmitting}
