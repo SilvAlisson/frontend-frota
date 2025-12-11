@@ -5,25 +5,28 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { toast } from 'sonner';
 
-// Tipos
+// Tipos Atualizados
 interface ItemManutencao {
   produto: {
     nome: string;
   };
-  quantidade: number; // Adicionado para melhor detalhamento se disponível
-  valorTotalItem?: number; // Adicionado para melhor detalhamento se disponível
+  quantidade: number;
+  valorTotalItem?: number;
 }
+
 interface OrdemServico {
   id: string;
   data: string;
-  kmAtual: number;
-  custoTotal: number;
+  // CORREÇÃO: Aceita null (opcional) e string (decimal do banco)
+  kmAtual: number | null; 
+  custoTotal: number | string; 
   tipo: 'PREVENTIVA' | 'CORRETIVA' | 'LAVAGEM';
   fotoComprovanteUrl: string | null;
+  // CORREÇÃO: Veículo pode ser nulo (Manutenção de Caixas)
   veiculo: {
     placa: string;
     modelo: string;
-  };
+  } | null; 
   encarregado: {
     nome: string;
   };
@@ -31,6 +34,7 @@ interface OrdemServico {
     nome: string;
   };
   itens: ItemManutencao[];
+  observacoes?: string;
 }
 
 interface HistoricoManutencoesProps {
@@ -62,6 +66,15 @@ export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: Hist
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState(filtroInicial?.veiculoId || '');
   const [dataInicioFiltro, setDataInicioFiltro] = useState(filtroInicial?.dataInicio || '');
   const [dataFimFiltro, setDataFimFiltro] = useState('');
+
+  // CORREÇÃO: Função segura para formatar moeda (aceita string ou number)
+  // Resolve o erro "toFixed is not a function"
+  const formatCurrency = (value: number | string | undefined | null) => {
+    const num = Number(value) || 0;
+    return `R$ ${num.toFixed(2).replace('.', ',')}`;
+  };
+
+  const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('pt-BR', { dateStyle: 'short', timeZone: 'UTC' });
 
   useEffect(() => {
     const fetchHistorico = async () => {
@@ -106,9 +119,6 @@ export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: Hist
     });
   };
 
-  const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')}`;
-  const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('pt-BR', { dateStyle: 'short', timeZone: 'UTC' });
-
   const handleExportar = () => {
     if (historico.length === 0) return;
 
@@ -116,15 +126,20 @@ export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: Hist
       try {
         const dadosFormatados = historico.map(os => {
           const itensFormatados = os.itens.map(item => item.produto.nome).join(', ');
+          
+          // Tratamento seguro para conversão de valores na exportação
+          const custoNum = Number(os.custoTotal) || 0;
+          
           return {
             'Data': formatDate(os.data),
             'Placa': os.veiculo?.placa || 'N/A',
             'Modelo': os.veiculo?.modelo || 'N/A',
-            'KM Atual': os.kmAtual,
+            'KM Atual': os.kmAtual ? os.kmAtual.toString() : '-',
             'Tipo': os.tipo,
             'Itens/Serviços': itensFormatados,
+            'Observações': os.observacoes || '',
             'Oficina/Fornecedor': os.fornecedor.nome,
-            'Custo Total (R$)': os.custoTotal.toFixed(2).replace('.', ','),
+            'Custo Total (R$)': custoNum.toFixed(2).replace('.', ','),
             'Registrado Por': os.encarregado.nome,
             'Link do Comprovante': os.fotoComprovanteUrl || 'N/A',
           };
@@ -207,7 +222,10 @@ export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: Hist
                         <span className="text-xs font-normal text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">{os.veiculo.modelo}</span>
                       </>
                     ) : (
-                      <span className="text-sm font-bold text-gray-500 italic">Não vinculado a veículo</span>
+                      <span className="text-sm font-bold text-gray-500 italic flex items-center gap-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0-3-3m3 3 3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>
+                        Caixa / Equipamento
+                      </span>
                     )}
                   </div>
 
@@ -215,7 +233,7 @@ export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: Hist
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase ${tipoConfig[os.tipo]?.color || 'bg-gray-100 text-gray-600'}`}>
                       {tipoConfig[os.tipo]?.label || os.tipo}
                     </span>
-                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <span className="text-xs text-gray-400 flex items-center gap-1 truncate max-w-[150px]" title={os.fornecedor.nome}>
                       • {os.fornecedor.nome}
                     </span>
                   </div>
@@ -255,17 +273,21 @@ export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: Hist
                 <ul className="list-disc list-inside text-sm text-gray-700 space-y-0.5">
                   {os.itens.map((item, index) => (
                     <li key={index} className="truncate">
-                      {item.produto.nome}
+                      {item.produto.nome} {item.quantidade > 1 ? `(x${item.quantidade})` : ''}
                     </li>
                   ))}
                 </ul>
                 <div className="text-xs text-gray-400 pt-1 mt-1 border-t border-gray-100">
-                  Reg.: {os.encarregado.nome} {os.kmAtual > 0 && `• KM ${os.kmAtual.toLocaleString('pt-BR')}`}
+                  Reg.: {os.encarregado.nome} 
+                  {/* Exibe KM apenas se existir */}
+                  {os.kmAtual !== null && os.kmAtual > 0 && ` • KM ${Number(os.kmAtual).toLocaleString('pt-BR')}`}
+                  {os.observacoes && <span className="block mt-0.5 italic text-gray-500">"{os.observacoes}"</span>}
                 </div>
               </div>
 
               <div className="text-right">
                 <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Custo Total</span>
+                {/* Uso seguro da função formatCurrency */}
                 <span className="text-lg font-bold text-gray-900">{formatCurrency(os.custoTotal)}</span>
               </div>
             </div>
