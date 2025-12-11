@@ -4,35 +4,40 @@ import { exportarParaExcel } from '../utils';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { toast } from 'sonner';
+import { FormEditarManutencao } from './forms/FormEditarManutencao';
 
-// Tipos Atualizados
+// Tipos
 interface ItemManutencao {
   produto: {
     nome: string;
   };
+  produtoId?: string; // Necessário para edição
   quantidade: number;
   valorTotalItem?: number;
+  valorPorUnidade?: number; // Necessário para edição
 }
 
 interface OrdemServico {
   id: string;
   data: string;
-  // CORREÇÃO: Aceita null (opcional) e string (decimal do banco)
-  kmAtual: number | null; 
-  custoTotal: number | string; 
+  kmAtual: number | null;
+  custoTotal: number | string;
   tipo: 'PREVENTIVA' | 'CORRETIVA' | 'LAVAGEM';
   fotoComprovanteUrl: string | null;
-  // CORREÇÃO: Veículo pode ser nulo (Manutenção de Caixas)
   veiculo: {
+    id: string;
     placa: string;
     modelo: string;
-  } | null; 
+  } | null;
+  veiculoId?: string | null; // Útil para edição
   encarregado: {
     nome: string;
   };
   fornecedor: {
+    id: string;
     nome: string;
   };
+  fornecedorId?: string; // Útil para edição
   itens: ItemManutencao[];
   observacoes?: string;
 }
@@ -40,6 +45,9 @@ interface OrdemServico {
 interface HistoricoManutencoesProps {
   userRole: string;
   veiculos: any[];
+  // Novos dados necessários para o formulário de edição
+  produtos: any[];
+  fornecedores: any[];
   filtroInicial?: {
     veiculoId?: string;
     dataInicio?: string;
@@ -49,6 +57,7 @@ interface HistoricoManutencoesProps {
 // Ícones
 function IconeFoto() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 0 0 3 8.25v10.5A2.25 2.25 0 0 0 5.25 21h10.5A2.25 2.25 0 0 0 18 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>; }
 function IconeLixo() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.54 0c-.34.055-.68.11-.1022.166m11.54 0c.376.09.74.19 1.097.302l-1.148 3.896M12 18V9" /></svg>; }
+function IconeLapis() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" /></svg>; }
 
 // Cores para os Tipos
 const tipoConfig = {
@@ -57,18 +66,19 @@ const tipoConfig = {
   LAVAGEM: { color: 'bg-green-50 text-green-700 border-green-100', label: 'Lavagem' },
 };
 
-export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: HistoricoManutencoesProps) {
+export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedores, filtroInicial }: HistoricoManutencoesProps) {
 
   const [historico, setHistorico] = useState<OrdemServico[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  
+  // Estado para controlar qual OS está sendo editada
+  const [editingOS, setEditingOS] = useState<OrdemServico | null>(null);
 
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState(filtroInicial?.veiculoId || '');
   const [dataInicioFiltro, setDataInicioFiltro] = useState(filtroInicial?.dataInicio || '');
   const [dataFimFiltro, setDataFimFiltro] = useState('');
 
-  // CORREÇÃO: Função segura para formatar moeda (aceita string ou number)
-  // Resolve o erro "toFixed is not a function"
   const formatCurrency = (value: number | string | undefined | null) => {
     const num = Number(value) || 0;
     return `R$ ${num.toFixed(2).replace('.', ',')}`;
@@ -76,26 +86,26 @@ export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: Hist
 
   const formatDate = (dateStr: string) => new Date(dateStr).toLocaleDateString('pt-BR', { dateStyle: 'short', timeZone: 'UTC' });
 
+  const fetchHistorico = async () => {
+    setLoading(true);
+    try {
+      const params: any = {};
+      if (veiculoIdFiltro) params.veiculoId = veiculoIdFiltro;
+      if (dataInicioFiltro) params.dataInicio = dataInicioFiltro;
+      if (dataFimFiltro) params.dataFim = dataFimFiltro;
+
+      const response = await api.get('/ordens-servico/recentes', { params });
+      setHistorico(response.data);
+
+    } catch (err) {
+      console.error("Erro ao buscar histórico:", err);
+      toast.error('Falha ao carregar histórico de manutenções.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchHistorico = async () => {
-      setLoading(true);
-      try {
-        const params: any = {};
-        if (veiculoIdFiltro) params.veiculoId = veiculoIdFiltro;
-        if (dataInicioFiltro) params.dataInicio = dataInicioFiltro;
-        if (dataFimFiltro) params.dataFim = dataFimFiltro;
-
-        const response = await api.get('/ordens-servico/recentes', { params });
-        setHistorico(response.data);
-
-      } catch (err) {
-        console.error("Erro ao buscar histórico:", err);
-        toast.error('Falha ao carregar histórico de manutenções.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchHistorico();
   }, [veiculoIdFiltro, dataInicioFiltro, dataFimFiltro]);
 
@@ -126,10 +136,7 @@ export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: Hist
       try {
         const dadosFormatados = historico.map(os => {
           const itensFormatados = os.itens.map(item => item.produto.nome).join(', ');
-          
-          // Tratamento seguro para conversão de valores na exportação
           const custoNum = Number(os.custoTotal) || 0;
-          
           return {
             'Data': formatDate(os.data),
             'Placa': os.veiculo?.placa || 'N/A',
@@ -159,7 +166,26 @@ export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: Hist
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 relative">
+
+      {/* MODAL DE EDIÇÃO */}
+      {editingOS && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-xl shadow-2xl">
+            <FormEditarManutencao 
+              osParaEditar={editingOS}
+              veiculos={veiculos}
+              produtos={produtos}
+              fornecedores={fornecedores}
+              onCancel={() => setEditingOS(null)}
+              onSuccess={() => {
+                setEditingOS(null);
+                fetchHistorico(); // Atualiza a lista após editar
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       {/* CABEÇALHO E FILTROS */}
       <div className="flex flex-col gap-4 border-b border-gray-100 pb-6">
@@ -253,6 +279,17 @@ export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: Hist
                   </a>
                 )}
 
+                {/* Botão de EDITAR (Novo) */}
+                {(userRole === 'ADMIN' || userRole === 'ENCARREGADO') && (
+                   <Button
+                     variant="ghost"
+                     className="!p-2 h-8 w-8 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
+                     onClick={() => setEditingOS(os)}
+                     title="Editar registro"
+                     icon={<IconeLapis />}
+                   />
+                 )}
+
                 {userRole === 'ADMIN' && (
                   <Button
                     variant="ghost"
@@ -279,7 +316,6 @@ export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: Hist
                 </ul>
                 <div className="text-xs text-gray-400 pt-1 mt-1 border-t border-gray-100">
                   Reg.: {os.encarregado.nome} 
-                  {/* Exibe KM apenas se existir */}
                   {os.kmAtual !== null && os.kmAtual > 0 && ` • KM ${Number(os.kmAtual).toLocaleString('pt-BR')}`}
                   {os.observacoes && <span className="block mt-0.5 italic text-gray-500">"{os.observacoes}"</span>}
                 </div>
@@ -287,7 +323,6 @@ export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: Hist
 
               <div className="text-right">
                 <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider">Custo Total</span>
-                {/* Uso seguro da função formatCurrency */}
                 <span className="text-lg font-bold text-gray-900">{formatCurrency(os.custoTotal)}</span>
               </div>
             </div>
@@ -299,7 +334,7 @@ export function HistoricoManutencoes({ userRole, veiculos, filtroInicial }: Hist
   );
 }
 
-// Sub-componente de Filtros (Reutilizável)
+// Sub-componente de Filtros
 interface FiltrosProps {
   veiculos: any[];
   veiculoId: string;

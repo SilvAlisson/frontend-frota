@@ -12,21 +12,21 @@ import { GestaoVeiculos } from './GestaoVeiculos';
 import { GestaoProdutos } from './GestaoProdutos';
 import { GestaoFornecedores } from './GestaoFornecedores';
 import { GestaoCargos } from './GestaoCargos';
-import { RegistrarAbastecimento } from './RegistrarAbastecimento'; // Importado
+import { RegistrarAbastecimento } from './RegistrarAbastecimento';
 
 interface AdminDashboardProps {
   veiculos: any[];
   produtos: any[];
   fornecedores: any[];
-  usuarios: any[]; // Adicionado para poder selecionar motorista no abastecimento
+  usuarios: any[];
   adminUserId: string;
 }
 
 type AbaAdmin =
-  | 'alertas' | 'dashboard' | 'ranking' // Visão Geral
-  | 'hist_jornada' | 'hist_abastecimento' | 'hist_manutencao' // Históricos
-  | 'veiculo' | 'usuario' | 'cargo' | 'produto' | 'fornecedor' // Cadastros
-  | 'manutencao' | 'abastecimento' | 'planos'; // Operacional
+  | 'alertas' | 'dashboard' | 'ranking'
+  | 'hist_jornada' | 'hist_abastecimento' | 'hist_manutencao'
+  | 'veiculo' | 'usuario' | 'cargo' | 'produto' | 'fornecedor'
+  | 'manutencao' | 'abastecimento' | 'planos';
 
 export function AdminDashboard({
   veiculos,
@@ -59,7 +59,7 @@ export function AdminDashboard({
     { id: 'hist_abastecimento', label: 'Hist. Abast.', icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg> },
     { id: 'hist_manutencao', label: 'Hist. Manut.', icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 0 0 2.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 0 0-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75 2.25 2.25 0 0 0-.1-.664m-5.8 0A2.251 2.251 0 0 1 13.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25ZM6.75 12h.008v.008H6.75V12Zm0 3h.008v.008H6.75V15Zm0 3h.008v.008H6.75V18Z" /></svg> },
 
-    // --- OPERACIONAL (Adicionado Abastecimento) ---
+    // --- OPERACIONAL ---
     { id: 'abastecimento', label: 'Novo Abastec.', icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg> },
     { id: 'manutencao', label: 'Nova OS', icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17 17.25 21A2.25 2.25 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.5 2.5 0 0 1-2.88 1.132l-3.128-.686a1 1 0 0 1-.602-.602l-.686-3.128a2.5 2.5 0 0 1 1.132-2.88L6.25 10" /></svg> },
     { id: 'planos', label: 'Planos Prev.', icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg> },
@@ -82,7 +82,14 @@ export function AdminDashboard({
       // --- HISTÓRICOS ---
       case 'hist_jornada': return <HistoricoJornadas veiculos={veiculos} userRole="ADMIN" />;
       case 'hist_abastecimento': return <HistoricoAbastecimentos userRole="ADMIN" veiculos={veiculos} />;
-      case 'hist_manutencao': return <HistoricoManutencoes userRole="ADMIN" veiculos={veiculos} />;
+      case 'hist_manutencao': 
+        // ATUALIZAÇÃO CRÍTICA: Passando produtos e fornecedores para permitir edição
+        return <HistoricoManutencoes 
+                  userRole="ADMIN" 
+                  veiculos={veiculos} 
+                  produtos={produtos}        // <-- NOVO
+                  fornecedores={fornecedores} // <-- NOVO
+               />;
 
       // --- CADASTROS ---
       case 'veiculo': return <GestaoVeiculos />;
@@ -103,7 +110,7 @@ export function AdminDashboard({
   return (
     <div className="space-y-6">
 
-      {/* MENU SUPERIOR COM SCROLL HORIZONTAL SUAVE */}
+      {/* MENU SUPERIOR */}
       <div className="bg-white shadow-sm rounded-2xl p-2 border border-gray-100 overflow-x-auto custom-scrollbar">
         <div className="flex space-x-1 min-w-max">
           {abas.map((aba) => {
@@ -119,15 +126,10 @@ export function AdminDashboard({
                     : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'}
                 `}
               >
-                {/* Ícone */}
                 <span className={`transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
                   {aba.icon}
                 </span>
-
-                {/* Texto */}
                 {aba.label}
-
-                {/* Indicador de Ativo (Ponto) */}
                 {isActive && (
                   <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
                 )}
