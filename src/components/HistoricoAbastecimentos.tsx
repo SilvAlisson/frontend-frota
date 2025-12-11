@@ -12,11 +12,13 @@ interface ItemAbastecimento {
     tipo: string;
   };
 }
+
 interface Abastecimento {
   id: string;
   dataHora: string;
   kmOdometro: number;
-  custoTotal: number;
+  // CORREÇÃO: O backend pode enviar string (Decimal) ou number
+  custoTotal: number | string; 
   fotoNotaFiscalUrl: string | null;
   veiculo: {
     placa: string;
@@ -99,7 +101,13 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
     });
   };
 
-  const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')}`;
+  // CORREÇÃO: Converte string/number de forma segura antes de formatar
+  // Isso resolve o erro "toFixed is not a function"
+  const formatCurrency = (value: number | string) => {
+    const num = Number(value) || 0;
+    return `R$ ${num.toFixed(2).replace('.', ',')}`;
+  };
+  
   const formatDateTime = (dateStr: string) => new Date(dateStr).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
 
   const handleExportar = () => {
@@ -112,6 +120,10 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
       try {
         const dadosFormatados = historico.flatMap(ab => {
           const itensFormatados = ab.itens.map(item => `${item.produto.nome} (${item.quantidade} ${item.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'Un'})`).join(', ');
+          
+          // Conversão segura para o Excel também
+          const custoNum = Number(ab.custoTotal) || 0;
+
           return {
             'Data/Hora': formatDateTime(ab.dataHora),
             'Placa': ab.veiculo.placa,
@@ -120,7 +132,7 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
             'Itens': itensFormatados,
             'Fornecedor': ab.fornecedor.nome,
             'Operador': ab.operador.nome,
-            'Total (R$)': ab.custoTotal.toFixed(2).replace('.', ','),
+            'Total (R$)': custoNum.toFixed(2).replace('.', ','),
             'Nota Fiscal': ab.fotoNotaFiscalUrl || 'N/A',
           };
         });
@@ -239,8 +251,8 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
                     <span className="w-1.5 h-1.5 bg-primary rounded-full"></span>
                     <span className="font-medium">{item.produto.nome}</span>
                     <span className="text-gray-400 text-xs">
-                      ({item.quantidade} {item.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'un'} x {formatCurrency(item.quantidade > 0 ? (ab.custoTotal / item.quantidade) : 0)})
-                      {/* Nota: O cálculo unitário acima é uma aproximação se não tiver o valor unitário salvo no item, ajuste conforme seu backend */}
+                      {/* Cálculo unitário com conversão segura */}
+                      ({item.quantidade} {item.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'un'} x {formatCurrency(item.quantidade > 0 ? (Number(ab.custoTotal) / item.quantidade) : 0)})
                     </span>
                   </div>
                 ))}
@@ -295,7 +307,9 @@ function FiltrosHistorico({ veiculos, veiculoId, setVeiculoId, dataInicio, setDa
             onChange={(e) => setVeiculoId(e.target.value)}
           >
             <option value="">Todos os veículos</option>
-            {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>)}
+            {veiculos.map(v => (
+              <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>
+            ))}
           </select>
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
         </div>
