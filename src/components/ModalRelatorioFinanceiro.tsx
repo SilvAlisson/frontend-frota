@@ -77,22 +77,19 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
 
     // Processa Abastecimentos (Combustível + Aditivo)
     abastecimentos.forEach(a => {
-      // Tenta obter o ID de forma segura, priorizando a propriedade na raiz
-      const veiculoId = a.veiculoId || (a.veiculo && a.veiculo.id);
-
-      // Só processa se tivermos um ID válido e ele existir no nosso mapa de veículos ativos
-      if (veiculoId && veiculoStats[veiculoId]) {
-        veiculoStats[veiculoId].custoComb += Number(a.custoTotal);
+      // Como atualizamos o types.ts, agora o TS sabe que 'veiculoId' existe na raiz!
+      if (a.veiculoId && veiculoStats[a.veiculoId]) {
+        veiculoStats[a.veiculoId].custoComb += Number(a.custoTotal);
         
         const litros = a.itens.reduce((acc, item) => 
           item.produto.tipo === 'COMBUSTIVEL' ? acc + Number(item.quantidade) : acc, 0);
         
-        veiculoStats[veiculoId].litros += litros;
+        veiculoStats[a.veiculoId].litros += litros;
 
         // Atualiza range de KM para cálculo de rodagem
         if (a.kmOdometro > 0) {
-           if (a.kmOdometro < veiculoStats[veiculoId].minKm) veiculoStats[veiculoId].minKm = a.kmOdometro;
-           if (a.kmOdometro > veiculoStats[veiculoId].maxKm) veiculoStats[veiculoId].maxKm = a.kmOdometro;
+           if (a.kmOdometro < veiculoStats[a.veiculoId].minKm) veiculoStats[a.veiculoId].minKm = a.kmOdometro;
+           if (a.kmOdometro > veiculoStats[a.veiculoId].maxKm) veiculoStats[a.veiculoId].maxKm = a.kmOdometro;
         }
       }
     });
@@ -100,10 +97,8 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
     // Processa Manutenções
     manutencoes.forEach(m => {
        // m.veiculoId pode ser null (manutenção de equipamento)
-       const veiculoId = m.veiculoId || (m.veiculo && m.veiculo.id);
-
-       if (veiculoId && veiculoStats[veiculoId]) {
-         veiculoStats[veiculoId].custoManut += Number(m.custoTotal);
+       if (m.veiculoId && veiculoStats[m.veiculoId]) {
+         veiculoStats[m.veiculoId].custoManut += Number(m.custoTotal);
        }
     });
 
@@ -111,7 +106,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
     const listaCPK = Object.values(veiculoStats).map((v: any) => {
        let kmRodado = v.maxKm - v.minKm;
        
-       // Se só teve 1 abastecimento ou dados inconsistentes (min > max ou infinito), kmRodado = 0
+       // Se só teve 1 abastecimento ou dados inconsistentes, kmRodado = 0
        if (kmRodado < 0 || v.minKm === Infinity || v.maxKm === 0) kmRodado = 0;
 
        // Evita divisão por zero
@@ -121,7 +116,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
        return { ...v, kmRodado, cpk, mediaKmLi, totalGeral: v.custoComb + v.custoManut };
     }).sort((a, b) => b.totalGeral - a.totalGeral); // Ordena por maior custo total
 
-    // 3. Breakdown de Manutenção (DRE Simples)
+    // 3. Breakdown de Manutenção
     let manutCorretiva = 0;
     let manutPreventiva = 0;
     
@@ -130,7 +125,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
        if (m.tipo === 'CORRETIVA') {
          manutCorretiva += custo;
        } else {
-         // Agrupa Preventiva e Lavagem como "Prevenção/Cuidado"
+         // Agrupa Preventiva e Lavagem
          manutPreventiva += custo; 
        }
     });
