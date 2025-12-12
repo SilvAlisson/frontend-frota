@@ -8,6 +8,7 @@ import { exportarParaExcel } from '../utils';
 import { Button } from './ui/Button';
 import { ModalTreinamentosUsuario } from './ModalTreinamentosUsuario';
 import { toast } from 'sonner';
+// Importação correta do tipo atualizado
 import type { User } from '../types';
 
 // Ícones
@@ -121,6 +122,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
       case 'ENCARREGADO': return 'bg-blue-50 text-blue-700 border-blue-200';
       case 'RH': return 'bg-pink-50 text-pink-700 border-pink-200';
       case 'OPERADOR': return 'bg-green-50 text-green-700 border-green-200';
+      case 'COORDENADOR': return 'bg-orange-50 text-orange-700 border-orange-200';
       default: return 'bg-gray-50 text-gray-700 border-gray-200';
     }
   }

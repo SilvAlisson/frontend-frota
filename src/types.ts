@@ -38,14 +38,14 @@ export interface Produto {
   unidadeMedida: string;
 }
 
-// --- ATUALIZAÇÃO: Tipos de Fornecedor ---
-export type TipoFornecedor = 'POSTO' | 'OFICINA' | 'OUTROS';
+// --- ATUALIZAÇÃO: Tipos de Fornecedor Completos ---
+export type TipoFornecedor = 'POSTO' | 'OFICINA' | 'LAVA_JATO' | 'SEGURADORA' | 'OUTROS';
 
 export interface Fornecedor {
   id: string;
   nome: string;
   cnpj: string | null;
-  tipo: TipoFornecedor; // Adicionado para permitir filtros
+  tipo: TipoFornecedor;
 }
 
 // =========================================
@@ -97,12 +97,17 @@ export interface Abastecimento {
   dataHora: string;
   kmOdometro: number;
   custoTotal: number;
+  
+  // CORREÇÃO: Campo raiz necessário para relatórios
+  veiculoId: string;
+
   placaCartaoUsado?: string | null;
   justificativa?: string | null;
   observacoes?: string | null;
   fotoNotaFiscalUrl: string | null;
 
   veiculo: {
+    id: string; // CORREÇÃO: ID necessário para links/filtros
     placa: string;
     modelo: string;
   };
@@ -133,16 +138,25 @@ export interface ItemManutencao {
 export interface OrdemServico {
   id: string;
   data: string;
-  kmAtual: number;
+  
+  // CORREÇÃO: Aceita null para equipamentos/caixas
+  kmAtual: number | null;
+  
+  // CORREÇÃO: Campo raiz útil para edição
+  veiculoId: string | null;
+
   tipo: TipoManutencao;
   custoTotal: number;
   observacoes?: string | null;
   fotoComprovanteUrl?: string | null;
 
+  // CORREÇÃO: Veículo pode ser null
   veiculo: {
+    id: string; // ID necessário
     placa: string;
     modelo: string;
-  };
+  } | null;
+
   encarregado: {
     nome: string;
   };

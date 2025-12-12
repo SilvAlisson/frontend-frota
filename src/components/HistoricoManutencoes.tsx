@@ -5,49 +5,14 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { toast } from 'sonner';
 import { FormEditarManutencao } from './forms/FormEditarManutencao';
-
-// Tipos
-interface ItemManutencao {
-  produto: {
-    nome: string;
-  };
-  produtoId?: string; // Necessário para edição
-  quantidade: number;
-  valorTotalItem?: number;
-  valorPorUnidade?: number; // Necessário para edição
-}
-
-interface OrdemServico {
-  id: string;
-  data: string;
-  kmAtual: number | null;
-  custoTotal: number | string;
-  tipo: 'PREVENTIVA' | 'CORRETIVA' | 'LAVAGEM';
-  fotoComprovanteUrl: string | null;
-  veiculo: {
-    id: string;
-    placa: string;
-    modelo: string;
-  } | null;
-  veiculoId?: string | null; // Útil para edição
-  encarregado: {
-    nome: string;
-  };
-  fornecedor: {
-    id: string;
-    nome: string;
-  };
-  fornecedorId?: string; // Útil para edição
-  itens: ItemManutencao[];
-  observacoes?: string;
-}
+// IMPORTANTE: Usando tipos globais para garantir consistência
+import type { OrdemServico, Veiculo, Produto, Fornecedor } from '../types';
 
 interface HistoricoManutencoesProps {
   userRole: string;
-  veiculos: any[];
-  // Novos dados necessários para o formulário de edição
-  produtos: any[];
-  fornecedores: any[];
+  veiculos: Veiculo[];
+  produtos: Produto[];
+  fornecedores: Fornecedor[];
   filtroInicial?: {
     veiculoId?: string;
     dataInicio?: string;
@@ -59,8 +24,8 @@ function IconeFoto() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none
 function IconeLixo() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.54 0c-.34.055-.68.11-.1022.166m11.54 0c.376.09.74.19 1.097.302l-1.148 3.896M12 18V9" /></svg>; }
 function IconeLapis() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" /></svg>; }
 
-// Cores para os Tipos
-const tipoConfig = {
+// Cores para os Tipos (Record<string, ...> garante que a chave seja string)
+const tipoConfig: Record<string, { color: string; label: string }> = {
   PREVENTIVA: { color: 'bg-blue-50 text-blue-700 border-blue-100', label: 'Preventiva' },
   CORRETIVA: { color: 'bg-orange-50 text-orange-700 border-orange-100', label: 'Corretiva' },
   LAVAGEM: { color: 'bg-green-50 text-green-700 border-green-100', label: 'Lavagem' },
@@ -71,8 +36,6 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
   const [historico, setHistorico] = useState<OrdemServico[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  
-  // Estado para controlar qual OS está sendo editada
   const [editingOS, setEditingOS] = useState<OrdemServico | null>(null);
 
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState(filtroInicial?.veiculoId || '');
@@ -94,7 +57,8 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
       if (dataInicioFiltro) params.dataInicio = dataInicioFiltro;
       if (dataFimFiltro) params.dataFim = dataFimFiltro;
 
-      const response = await api.get('/ordens-servico/recentes', { params });
+      // Tipagem no retorno da API
+      const response = await api.get<OrdemServico[]>('/ordens-servico/recentes', { params });
       setHistorico(response.data);
 
     } catch (err) {
@@ -137,10 +101,11 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
         const dadosFormatados = historico.map(os => {
           const itensFormatados = os.itens.map(item => item.produto.nome).join(', ');
           const custoNum = Number(os.custoTotal) || 0;
+          
           return {
             'Data': formatDate(os.data),
-            'Placa': os.veiculo?.placa || 'N/A',
-            'Modelo': os.veiculo?.modelo || 'N/A',
+            'Placa': os.veiculo?.placa || 'N/A', // Trata null corretamente
+            'Modelo': os.veiculo?.modelo || 'Caixa/Equip.',
             'KM Atual': os.kmAtual ? os.kmAtual.toString() : '-',
             'Tipo': os.tipo,
             'Itens/Serviços': itensFormatados,
@@ -180,7 +145,7 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
               onCancel={() => setEditingOS(null)}
               onSuccess={() => {
                 setEditingOS(null);
-                fetchHistorico(); // Atualiza a lista após editar
+                fetchHistorico();
               }}
             />
           </div>
@@ -231,7 +196,6 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
         {!loading && historico.map((os) => (
           <div key={os.id} className={`group bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary/20 transition-all duration-200 ${deletingId === os.id ? 'opacity-50 pointer-events-none' : ''}`}>
 
-            {/* Linha 1: Data, Veículo, Tipo */}
             <div className="flex justify-between items-start mb-3">
               <div className="flex items-center gap-3">
                 <div className="bg-gray-50 px-3 py-1.5 rounded-lg text-center border border-gray-100 min-w-[80px]">
@@ -249,7 +213,7 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
                       </>
                     ) : (
                       <span className="text-sm font-bold text-gray-500 italic flex items-center gap-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0-3-3m3 3 3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-gray-400"><path strokeLinecap="round" strokeLinejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0-3-3m3 3 3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>
                         Caixa / Equipamento
                       </span>
                     )}
@@ -268,37 +232,18 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
 
               <div className="flex items-center gap-2">
                 {os.fotoComprovanteUrl && (
-                  <a
-                    href={os.fotoComprovanteUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                    title="Ver Comprovante"
-                  >
+                  <a href={os.fotoComprovanteUrl} target="_blank" rel="noopener noreferrer" className="p-2 text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" title="Ver Comprovante">
                     <IconeFoto />
                   </a>
                 )}
 
-                {/* Botão de EDITAR (Novo) */}
+                {/* Botão EDITAR */}
                 {(userRole === 'ADMIN' || userRole === 'ENCARREGADO') && (
-                   <Button
-                     variant="ghost"
-                     className="!p-2 h-8 w-8 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors"
-                     onClick={() => setEditingOS(os)}
-                     title="Editar registro"
-                     icon={<IconeLapis />}
-                   />
+                   <Button variant="ghost" className="!p-2 h-8 w-8 text-gray-400 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition-colors" onClick={() => setEditingOS(os)} title="Editar registro" icon={<IconeLapis />} />
                  )}
 
                 {userRole === 'ADMIN' && (
-                  <Button
-                    variant="ghost"
-                    className="!p-2 h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                    onClick={() => handleDelete(os.id)}
-                    disabled={deletingId === os.id}
-                    title="Remover registro"
-                    icon={<IconeLixo />}
-                  />
+                  <Button variant="ghost" className="!p-2 h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" onClick={() => handleDelete(os.id)} disabled={deletingId === os.id} title="Remover registro" icon={<IconeLixo />} />
                 )}
               </div>
             </div>
@@ -334,9 +279,9 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
   );
 }
 
-// Sub-componente de Filtros
+// Sub-componente de Filtros (mantido igual, apenas tipagem já inferida)
 interface FiltrosProps {
-  veiculos: any[];
+  veiculos: Veiculo[]; // Tipagem corrigida
   veiculoId: string;
   setVeiculoId: (val: string) => void;
   dataInicio: string;

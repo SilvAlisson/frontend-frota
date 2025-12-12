@@ -13,7 +13,10 @@ import { GestaoProdutos } from './GestaoProdutos';
 import { GestaoFornecedores } from './GestaoFornecedores';
 import { GestaoCargos } from './GestaoCargos';
 import { RegistrarAbastecimento } from './RegistrarAbastecimento';
+import { ModalRelatorioFinanceiro } from './ModalRelatorioFinanceiro';
+import { Button } from './ui/Button';
 
+// Tipos centralizados ajudam a evitar repetição, mas aqui mantemos 'any' para simplificar a integração com seu código existente se necessário
 interface AdminDashboardProps {
   veiculos: any[];
   produtos: any[];
@@ -37,6 +40,7 @@ export function AdminDashboard({
 }: AdminDashboardProps) {
 
   const [abaAtiva, setAbaAtiva] = useState<AbaAdmin>('alertas');
+  const [financeiroAberto, setFinanceiroAberto] = useState(false);
 
   const handleDrillDown = (tipo: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => {
     const mapa: Record<string, AbaAdmin> = {
@@ -83,12 +87,11 @@ export function AdminDashboard({
       case 'hist_jornada': return <HistoricoJornadas veiculos={veiculos} userRole="ADMIN" />;
       case 'hist_abastecimento': return <HistoricoAbastecimentos userRole="ADMIN" veiculos={veiculos} />;
       case 'hist_manutencao': 
-        // ATUALIZAÇÃO CRÍTICA: Passando produtos e fornecedores para permitir edição
         return <HistoricoManutencoes 
                   userRole="ADMIN" 
                   veiculos={veiculos} 
-                  produtos={produtos}        // <-- NOVO
-                  fornecedores={fornecedores} // <-- NOVO
+                  produtos={produtos} 
+                  fornecedores={fornecedores} 
                />;
 
       // --- CADASTROS ---
@@ -110,39 +113,65 @@ export function AdminDashboard({
   return (
     <div className="space-y-6">
 
-      {/* MENU SUPERIOR */}
-      <div className="bg-white shadow-sm rounded-2xl p-2 border border-gray-100 overflow-x-auto custom-scrollbar">
-        <div className="flex space-x-1 min-w-max">
-          {abas.map((aba) => {
-            const isActive = abaAtiva === aba.id;
-            return (
-              <button
-                key={aba.id}
-                onClick={() => setAbaAtiva(aba.id as AbaAdmin)}
-                className={`
-                  relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ease-out
-                  ${isActive
-                    ? 'text-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'}
-                `}
-              >
-                <span className={`transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
-                  {aba.icon}
-                </span>
-                {aba.label}
-                {isActive && (
-                  <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
-                )}
-              </button>
-            );
-          })}
+      {/* MENU SUPERIOR (Com botão financeiro integrado na linha, opcionalmente) */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex-1 bg-white shadow-sm rounded-2xl p-2 border border-gray-100 overflow-x-auto custom-scrollbar">
+          <div className="flex space-x-1 min-w-max">
+            {abas.map((aba) => {
+              const isActive = abaAtiva === aba.id;
+              return (
+                <button
+                  key={aba.id}
+                  onClick={() => setAbaAtiva(aba.id as AbaAdmin)}
+                  className={`
+                    relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ease-out
+                    ${isActive
+                      ? 'text-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'}
+                  `}
+                >
+                  <span className={`transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
+                    {aba.icon}
+                  </span>
+                  {aba.label}
+                  {isActive && (
+                    <span className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
         </div>
+        
+        {/* Botão CFO (Análise Financeira) destacado */}
+        <Button 
+          variant="secondary" 
+          onClick={() => setFinanceiroAberto(true)}
+          className="hidden md:flex h-full py-4 shadow-sm border border-gray-200"
+        >
+          💰 Análise
+        </Button>
+      </div>
+
+      {/* Botão Mobile (Aparece só em telas pequenas abaixo do menu) */}
+      <div className="md:hidden">
+         <Button variant="secondary" className="w-full" onClick={() => setFinanceiroAberto(true)}>
+            💰 Análise Financeira Completa
+         </Button>
       </div>
 
       {/* CONTEÚDO PRINCIPAL */}
       <div className="bg-white shadow-card rounded-2xl p-6 border border-gray-100 min-h-[600px] animate-in fade-in slide-in-from-bottom-2 duration-500">
         {renderAbaConteudo()}
       </div>
+
+      {/* MODAL FINANCEIRO */}
+      {financeiroAberto && (
+         <ModalRelatorioFinanceiro 
+            onClose={() => setFinanceiroAberto(false)}
+            veiculos={veiculos}
+         />
+      )}
     </div>
   );
 }
