@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod'; // CORREÇÃO: Importação nomeada (Melhor performance)
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
@@ -11,10 +11,11 @@ import { toast } from 'sonner';
 
 // --- SCHEMA ZOD V4 (Atualizado) ---
 const loginSchema = z.object({
-  email: z.string()
-    .min(1, { message: "Digite seu email" })
-    .pipe(z.email({ message: "Formato de email inválido" })), // Sintaxe correta Zod v4
-  password: z.string()
+  // V4: z.email() top-level (mais limpo e performático)
+  // Ele já valida que é string, que não é vazio e o formato
+  email: z.email({ error: "Formato de email inválido" }),
+
+  password: z.string({ error: "Digite sua senha" })
     .min(1, { message: "Digite sua senha" })
 });
 

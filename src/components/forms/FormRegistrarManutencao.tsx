@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
 import { api } from '../../services/api';
 import { ModalConfirmacaoFoto } from '../ModalConfirmacaoFoto';
 import { Button } from '../ui/Button';
@@ -27,23 +27,23 @@ const manutencaoSchema = z.object({
   numeroCA: z.string().optional(),
 
   fornecedorId: z.string({ error: "Fornecedor obrigatório" })
-    .min(1, { message: "Selecione o fornecedor" }),
+    .min(1, { error: "Selecione o fornecedor" }),
 
   data: z.string({ error: "Data obrigatória" })
-    .min(1, { message: "Data inválida" }),
+    .min(1, { error: "Data inválida" }),
 
   observacoes: z.string().optional(),
 
   itens: z.array(z.object({
     produtoId: z.string({ error: "Item obrigatório" })
-      .min(1, { message: "Selecione o serviço/peça" }),
+      .min(1, { error: "Selecione o serviço/peça" }),
 
     quantidade: z.coerce.number()
-      .min(0.01, { message: "Qtd inválida" }),
+      .min(0.01, { error: "Qtd inválida" }),
 
     valorPorUnidade: z.coerce.number()
-      .min(0, { message: "Valor inválido" }),
-  })).min(1, { message: "Adicione pelo menos um item à OS" })
+      .min(0, { error: "Valor inválido" }),
+  })).min(1, { error: "Adicione pelo menos um item à OS" })
 })
   .superRefine((data, ctx) => {
     // Validação Condicional

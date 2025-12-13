@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod'; // Import V4 limpo
+import { z } from 'zod';
 import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
@@ -15,6 +15,7 @@ const fornecedorSchema = z.object({
     .min(2, { error: "Nome deve ter pelo menos 2 caracteres" })
     .transform(val => val.trim().toUpperCase()),
 
+  // Aceita string vazia ou formato CNPJ válido
   cnpj: z.union([
     z.literal(''),
     z.string().regex(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/, {
@@ -22,16 +23,15 @@ const fornecedorSchema = z.object({
     }),
   ]).optional().nullable(),
 
-  // O .default() torna o input opcional, mas a saída obrigatória
+  // .default() torna a entrada opcional, mas garante um valor na saída
   tipo: z.enum(tiposFornecedor, { error: "Selecione a categoria" })
     .default('OUTROS'),
 });
 
-// --- CORREÇÃO DOS TIPOS (SOLUÇÃO DOS ERROS) ---
-// 1. Tipo de Entrada (O que o formulário manipula no front, aceita undefined nos defaults)
+// --- TIPAGEM ---
+// Input: Permite undefined/optional nos campos com default
 type FornecedorInput = z.input<typeof fornecedorSchema>;
-
-// 2. Tipo de Saída (O que o Zod entrega após validação/transformação, sem undefined)
+// Output: Garante os dados transformados e com defaults aplicados
 type FornecedorOutput = z.output<typeof fornecedorSchema>;
 
 interface FormCadastrarFornecedorProps {
@@ -41,8 +41,6 @@ interface FormCadastrarFornecedorProps {
 
 export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormCadastrarFornecedorProps) {
 
-  // A MÁGICA ACONTECE AQUI: Passamos 3 genéricos para o useForm
-  // <TipoEntrada, Contexto, TipoSaida>
   const {
     register,
     handleSubmit,
@@ -53,16 +51,15 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormCadastrar
     defaultValues: {
       nome: '',
       cnpj: '',
-      // Agora o TS aceita isso, pois o Input permite undefined/optional devido ao .default()
       tipo: 'OUTROS',
     },
     mode: 'onBlur'
   });
 
-  // O data aqui agora é automaticamente inferido como FornecedorOutput
   const onSubmit = async (data: FornecedorOutput) => {
     const payload = {
       nome: DOMPurify.sanitize(data.nome),
+      // Garante que string vazia vire null para o banco
       cnpj: data.cnpj && data.cnpj.trim() !== ''
         ? DOMPurify.sanitize(data.cnpj)
         : null,
@@ -87,11 +84,13 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormCadastrar
 
   return (
     <form className="space-y-8" onSubmit={handleSubmit(onSubmit)}>
-      {/* ... (O resto do JSX permanece idêntico ao anterior) ... */}
-
-      {/* Apenas para contexto visual, o trecho do Select permanece igual: */}
       <div className="text-center relative">
-        {/* Cabeçalho omitido para economizar espaço */}
+        <h4 className="text-2xl font-bold text-gray-900 tracking-tight">
+          Novo Parceiro
+        </h4>
+        <p className="text-sm text-text-secondary mt-1 max-w-xs mx-auto leading-relaxed">
+          Cadastre postos, oficinas ou prestadores de serviço.
+        </p>
       </div>
 
       <div className="space-y-5 px-1">
@@ -105,7 +104,6 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormCadastrar
           className="uppercase font-medium"
         />
 
-        {/* CAMPO DE TIPO */}
         <div>
           <label className="block mb-1.5 text-sm font-medium text-text-secondary">Categoria</label>
           <div className="relative group">
@@ -114,13 +112,12 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormCadastrar
               {...register('tipo')}
               disabled={isSubmitting}
             >
-              <option value="POSTO">Posto de Combustível</option>
-              <option value="OFICINA">Oficina Mecânica</option>
-              <option value="LAVA_JATO">Lava Jato</option>
-              <option value="SEGURADORA">Seguradora</option>
-              <option value="OUTROS">Outros Serviços</option>
+              {tiposFornecedor.map((tipo) => (
+                <option key={tipo} value={tipo}>
+                  {tipo.replace('_', ' ')}
+                </option>
+              ))}
             </select>
-            {/* Seta do select */}
             <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
             </div>
