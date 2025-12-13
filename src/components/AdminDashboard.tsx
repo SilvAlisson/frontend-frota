@@ -16,7 +16,7 @@ import { RegistrarAbastecimento } from './RegistrarAbastecimento';
 import { ModalRelatorioFinanceiro } from './ModalRelatorioFinanceiro';
 import { Button } from './ui/Button';
 // Certifique-se de ter criado este componente conforme o passo anterior
-import { ModalGerenciarServicos } from './modals/ModalGerenciarServicos';
+import { ModalGerenciarServicos } from './ModalGerenciarServicos';
 
 interface AdminDashboardProps {
   veiculos: any[];
