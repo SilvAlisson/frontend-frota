@@ -42,6 +42,8 @@ const abastecimentoSchema = z.object({
 
   justificativa: z.string().optional(),
 
+  // Foto validada apenas no Modal (para não bloquear o form inicial)
+
   itens: z.array(itemAbastecimentoSchema)
     .min(1, { error: "Adicione pelo menos um item" })
 });
@@ -116,8 +118,7 @@ export function RegistrarAbastecimento({
 
   const produtosAbastecimento = produtos.filter(p => ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo));
   const fornecedoresPosto = fornecedores.filter(f => f.tipo === 'POSTO');
-  
-  // Apenas operadores ficam travados no próprio nome. Encarregados/Admins podem mudar.
+
   const isOperadorTravado = usuarioLogado?.role === 'OPERADOR';
 
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -132,7 +133,7 @@ export function RegistrarAbastecimento({
         veiculoId: data.veiculoId,
         operadorId: data.operadorId || null,
         fornecedorId: data.fornecedorId,
-        kmOdometro: data.kmOdometro ? parseDecimal(data.kmOdometro) : 0,
+        kmOdometro: parseDecimal(data.kmOdometro),
         dataHora: new Date(data.dataHora).toISOString(),
         placaCartaoUsado: DOMPurify.sanitize(data.placaCartaoUsado),
         justificativa: data.justificativa ? DOMPurify.sanitize(data.justificativa) : null,
@@ -220,7 +221,6 @@ export function RegistrarAbastecimento({
                 disabled={isSubmitting || isOperadorTravado}
               >
                 <option value="">Selecione...</option>
-                {/* CORREÇÃO: Mostra OPERADORES e ENCARREGADOS */}
                 {usuarios
                   .filter(u => ['OPERADOR', 'ENCARREGADO'].includes(u.role))
                   .map(u => <option key={u.id} value={u.id}>{u.nome}</option>)
@@ -272,7 +272,6 @@ export function RegistrarAbastecimento({
           </div>
         </div>
 
-        {/* ITENS ABASTECIDOS (Field Array) */}
         <div className="bg-gray-50/80 p-5 rounded-xl border border-gray-200 mt-6">
           <div className="flex justify-between items-center mb-4">
             <h4 className="text-sm font-bold text-text-secondary uppercase tracking-wide">Itens do Abastecimento</h4>
@@ -310,7 +309,6 @@ export function RegistrarAbastecimento({
                     <Input
                       type="number"
                       placeholder="0,00"
-                      // Estilo limpo sem setas
                       className="!py-2 text-right text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       {...register(`itens.${index}.quantidade`)}
                       disabled={isSubmitting}
@@ -325,7 +323,6 @@ export function RegistrarAbastecimento({
                       type="number"
                       step="0.01"
                       placeholder="R$ 0,00"
-                      // Estilo limpo sem setas
                       className="!py-2 text-right text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       {...register(`itens.${index}.valorPorUnidade`)}
                       disabled={isSubmitting}
@@ -406,7 +403,6 @@ export function RegistrarAbastecimento({
 
       </form>
 
-      {/* MODAL DE CONFIRMAÇÃO DA FOTO */}
       {modalAberto && formDataParaModal && (
         <ModalConfirmacaoFoto
           titulo="Envie a foto da nota fiscal"

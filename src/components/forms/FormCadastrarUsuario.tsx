@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
 import { api } from '../../services/api';
 import { supabase } from '../../supabaseClient';
 import DOMPurify from 'dompurify';
@@ -24,8 +24,9 @@ const usuarioSchema = z.object({
     .min(3, { error: "Nome muito curto (mín. 3 letras)" })
     .transform(val => val.trim()),
 
-  email: z.string({ error: "Email é obrigatório" })
-    .email({ error: "Formato de email inválido" })
+  // V4: z.email() agora é top-level (substitui z.string().email())
+  // Isso já valida que é string, que não é vazio e o formato do email.
+  email: z.email({ error: "Email inválido ou obrigatório" })
     .toLowerCase(),
 
   password: z.string({ error: "Senha é obrigatória" })
@@ -38,6 +39,7 @@ const usuarioSchema = z.object({
   }),
 
   // Campos condicionais (RH)
+  // .or(z.literal('')) permite lidar com inputs vazios do HTML que o react-hook-form envia
   cargoId: z.string().optional().or(z.literal('')),
   cnhNumero: z.string().optional().or(z.literal('')),
   cnhCategoria: z.string().optional().or(z.literal('')),

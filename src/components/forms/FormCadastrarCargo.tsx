@@ -1,6 +1,6 @@
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod'; // CORREÇÃO: Importação nomeada para Zod v4
 import { api } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -176,8 +176,8 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormCadastrarCargo
                                         {...register(`requisitos.${index}.nome`)}
                                         placeholder="Ex: NR-35 Trabalho em Altura"
                                         className={`w-full px-3 py-2 text-sm bg-white border rounded-lg focus:outline-none focus:ring-2 transition-all shadow-sm ${errorNome
-                                                ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                                                : 'border-gray-200 focus:border-primary focus:ring-primary/10 hover:border-gray-300'
+                                            ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                                            : 'border-gray-200 focus:border-primary focus:ring-primary/10 hover:border-gray-300'
                                             }`}
                                         disabled={isSubmitting}
                                     />

@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
 import { api } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
-// ATUALIZAÇÃO: Lista sincronizada com o backend (produto.schemas.ts)
+// Lista sincronizada com o backend
 const tiposDeProduto = ["COMBUSTIVEL", "ADITIVO", "LAVAGEM", "PECA", "SERVICO", "OUTRO"] as const;
 
 const produtoSchema = z.object({
-  nome: z.string()
+  nome: z.string({ error: "Nome é obrigatório" })
     .trim()
     .min(2, { error: "Nome deve ter pelo menos 2 caracteres" })
     .transform((val) => val.toUpperCase()),
@@ -19,7 +19,7 @@ const produtoSchema = z.object({
     error: "Selecione um tipo válido",
   }),
 
-  unidadeMedida: z.string()
+  unidadeMedida: z.string({ error: "Unidade de medida obrigatória" })
     .trim()
     .min(1, { error: "Unidade de medida obrigatória" }),
 });

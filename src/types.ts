@@ -7,14 +7,16 @@ export interface User {
   matricula: string | null;
   role: UserRole;
   fotoUrl?: string | null;
+
   // RH Fields
   cnhNumero?: string | null;
   cnhCategoria?: string | null;
-  cnhValidade?: string | null; // ISO Date string
-  dataAdmissao?: string | null; // ISO Date string
+  cnhValidade?: string | null;
+  dataAdmissao?: string | null;
 }
 
 export type TipoCombustivel = 'DIESEL_S10' | 'GASOLINA_COMUM' | 'ETANOL' | 'GNV';
+export type StatusVeiculo = 'ATIVO' | 'EM_MANUTENCAO' | 'INATIVO';
 
 export interface Veiculo {
   id: string;
@@ -24,6 +26,9 @@ export interface Veiculo {
   tipoVeiculo: string | null;
   tipoCombustivel: TipoCombustivel;
   capacidadeTanque: number | null;
+
+  status: StatusVeiculo;
+
   vencimentoCiv?: string | null;
   vencimentoCipp?: string | null;
   ultimoKm?: number; // Campo calculado que vem do backend em getById
@@ -38,7 +43,6 @@ export interface Produto {
   unidadeMedida: string;
 }
 
-// --- ATUALIZAÇÃO: Tipos de Fornecedor Completos ---
 export type TipoFornecedor = 'POSTO' | 'OFICINA' | 'LAVA_JATO' | 'SEGURADORA' | 'OUTROS';
 
 export interface Fornecedor {
@@ -97,8 +101,7 @@ export interface Abastecimento {
   dataHora: string;
   kmOdometro: number;
   custoTotal: number;
-  
-  // CORREÇÃO: Campo raiz necessário para relatórios
+
   veiculoId: string;
 
   placaCartaoUsado?: string | null;
@@ -107,7 +110,7 @@ export interface Abastecimento {
   fotoNotaFiscalUrl: string | null;
 
   veiculo: {
-    id: string; // CORREÇÃO: ID necessário para links/filtros
+    id: string;
     placa: string;
     modelo: string;
   };
@@ -122,6 +125,7 @@ export interface Abastecimento {
 
 // --- MANUTENÇÃO (Ordem de Serviço) ---
 export type TipoManutencao = 'PREVENTIVA' | 'CORRETIVA' | 'LAVAGEM';
+export type StatusOS = 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'; // NOVO: Workflow de OS
 
 export interface ItemManutencao {
   id?: string;
@@ -138,21 +142,23 @@ export interface ItemManutencao {
 export interface OrdemServico {
   id: string;
   data: string;
-  
-  // CORREÇÃO: Aceita null para equipamentos/caixas
+
+  // Aceita null para equipamentos/caixas (manutenção externa)
   kmAtual: number | null;
-  
-  // CORREÇÃO: Campo raiz útil para edição
+
+  // ID raiz para edição
   veiculoId: string | null;
 
   tipo: TipoManutencao;
+  status: StatusOS;
+
   custoTotal: number;
   observacoes?: string | null;
   fotoComprovanteUrl?: string | null;
 
-  // CORREÇÃO: Veículo pode ser null
+  // Veículo pode ser null (ex: conserto de peça avulsa)
   veiculo: {
-    id: string; // ID necessário
+    id: string;
     placa: string;
     modelo: string;
   } | null;
@@ -212,27 +218,9 @@ export interface KpiData {
 }
 
 // =========================================
-// HELPERS & UI TYPES (Auxiliares)
+// RH & CARGOS
 // =========================================
 
-export interface SelectOption {
-  label: string;
-  value: string;
-}
-
-export interface VeiculoSimplificado {
-  id: string;
-  placa: string;
-  modelo: string;
-}
-
-export interface UsuarioSimplificado {
-  id: string;
-  nome: string;
-  role: string;
-}
-
-// --- RH & CARGOS ---
 export interface TreinamentoObrigatorio {
   id: string;
   nome: string;
@@ -258,4 +246,25 @@ export interface TreinamentoRealizado {
   dataVencimento?: string | null;
   comprovanteUrl?: string | null;
   userId: string;
+}
+
+// =========================================
+// HELPERS & UI TYPES (Auxiliares)
+// =========================================
+
+export interface SelectOption {
+  label: string;
+  value: string;
+}
+
+export interface VeiculoSimplificado {
+  id: string;
+  placa: string;
+  modelo: string;
+}
+
+export interface UsuarioSimplificado {
+  id: string;
+  nome: string;
+  role: string;
 }
