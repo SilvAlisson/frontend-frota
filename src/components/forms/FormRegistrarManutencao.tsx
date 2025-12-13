@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
 import { ModalConfirmacaoFoto } from '../ModalConfirmacaoFoto';
+import { ModalGerenciarServicos } from '../ModalGerenciarServicos';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { parseDecimal, formatKmVisual } from '../../utils';
@@ -14,16 +15,16 @@ import type { Veiculo, Produto, Fornecedor } from '../../types';
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
-// --- 1. SCHEMA ZOD V4 (Atualizado) ---
+// --- 1. SCHEMA ZOD V4 ---
 const manutencaoSchema = z.object({
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
   alvo: z.enum(ALVOS_MANUTENCAO),
 
-  // CORREÇÃO 4: KM agora é totalmente opcional no schema
+  // KM agora é totalmente opcional no schema
   veiculoId: z.string().optional().nullable(),
   kmAtual: z.string().optional().nullable(),
 
-  // CORREÇÃO 3: Novo campo para CA (Controle de caixa/EPI)
+  // Novo campo para CA (Controle de caixa/EPI)
   numeroCA: z.string().optional(),
 
   fornecedorId: z.string({ error: "Fornecedor obrigatório" })
@@ -55,7 +56,6 @@ const manutencaoSchema = z.object({
           path: ["veiculoId"]
         });
       }
-      // KM não é mais verificado aqui (Opcional)
     }
 
     if (data.alvo === 'OUTROS') {
@@ -84,10 +84,11 @@ export function FormRegistrarManutencao({
 }: FormRegistrarManutencaoProps) {
 
   const [modalAberto, setModalAberto] = useState(false);
+  const [modalServicosOpen, setModalServicosOpen] = useState(false); // [NOVO] Estado da Engrenagem
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
   const [ultimoKmRegistrado, setUltimoKmRegistrado] = useState<number>(0);
 
-  // CORREÇÃO 3: Controle das Abas
+  // Controle das Abas
   const [abaAtiva, setAbaAtiva] = useState<TipoManutencao>('CORRETIVA');
 
   // Filtro de Produtos (Remove Combustível/Aditivo/Lavagem)
@@ -95,7 +96,7 @@ export function FormRegistrarManutencao({
     !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)
   );
 
-  // CORREÇÃO 3: Filtro de Fornecedores por Aba
+  // Filtro de Fornecedores por Aba
   const fornecedoresFiltrados = fornecedores.filter(f => {
     if (abaAtiva === 'CORRETIVA') {
       // Na corretiva, removemos Posto e Lava Jato da lista
@@ -182,7 +183,7 @@ export function FormRegistrarManutencao({
       tipo: data.tipo,
       veiculoId: data.alvo === 'VEICULO' ? data.veiculoId : null,
       fornecedorId: data.fornecedorId,
-      kmAtual: kmInputFloat, // Pode ser null agora
+      kmAtual: kmInputFloat,
       data: new Date(data.data).toISOString(),
       observacoes: obsFinal,
       itens: data.itens.map(item => ({
@@ -208,7 +209,7 @@ export function FormRegistrarManutencao({
       kmAtual: '',
       numeroCA: '',
       data: new Date().toISOString().slice(0, 10),
-      tipo: abaAtiva, // Mantém a aba atual
+      tipo: abaAtiva,
       observacoes: '',
       itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: 0 }]
     });
@@ -225,7 +226,7 @@ export function FormRegistrarManutencao({
     <>
       <div className="bg-white p-6 rounded-card shadow-card border border-gray-100">
 
-        {/* CORREÇÃO 3: ABAS DE TIPO DE MANUTENÇÃO */}
+        {/* ABAS DE TIPO DE MANUTENÇÃO */}
         <div className="flex mb-6 border-b border-gray-200">
           <button
             type="button"
@@ -279,7 +280,7 @@ export function FormRegistrarManutencao({
               <div className="md:col-span-2 space-y-4">
                 <div className="animate-in fade-in slide-in-from-top-1">
                   <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Veículo</label>
-                  {/* CORREÇÃO 5: Select limpo (sem wrapper com ícone extra) */}
+                  {/* Select limpo (sem wrapper com ícone extra) */}
                   <select
                     {...register("veiculoId")}
                     className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none"
@@ -307,7 +308,7 @@ export function FormRegistrarManutencao({
               </div>
             ) : (
               <div className="md:col-span-2 animate-in fade-in slide-in-from-top-1">
-                {/* CORREÇÃO 3: Pergunta do CA */}
+                {/* Pergunta do CA */}
                 <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Qual o CA da Caixa?</label>
                 <Input
                   {...register("numeroCA")}
@@ -344,7 +345,20 @@ export function FormRegistrarManutencao({
           {/* LISTA DE ITENS */}
           <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-200">
             <div className="flex justify-between items-center mb-3">
-              <h4 className="text-xs font-bold text-gray-500 uppercase">Peças e Serviços</h4>
+              <div className="flex items-center gap-2">
+                <h4 className="text-xs font-bold text-gray-500 uppercase">Peças e Serviços</h4>
+                {/* Botão de Engrenagem para abrir Modal de Serviços */}
+                <button
+                  type="button"
+                  onClick={() => setModalServicosOpen(true)}
+                  className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-1 rounded-full transition-all"
+                  title="Gerenciar Catálogo de Serviços/Peças"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
+                    <path fillRule="evenodd" d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.206 1.25l-1.18 2.045a1 1 0 01-1.187.447l-1.598-.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.206-1.25l1.18-2.045a1 1 0 011.187-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                  </svg>
+                </button>
+              </div>
               <span className="text-[10px] bg-white px-2 py-1 rounded border border-gray-200 text-gray-400">{fields.length} itens</span>
             </div>
 
@@ -459,6 +473,18 @@ export function FormRegistrarManutencao({
           jornadaId={null}
           onClose={() => setModalAberto(false)}
           onSuccess={handleModalSuccess}
+        />
+      )}
+
+      {/* Renderiza o Modal de Serviços quando ativado */}
+      {modalServicosOpen && (
+        <ModalGerenciarServicos
+          onClose={() => {
+            setModalServicosOpen(false);
+            // Dica de ouro: Se quiser recarregar a lista de serviços no pai sem refresh,
+            // precisaria passar uma função 'onServiceAdded' ou usar React Query no componente pai.
+            // Por enquanto, o modal apenas gerencia o banco de dados.
+          }}
         />
       )}
     </>
