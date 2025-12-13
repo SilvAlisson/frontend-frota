@@ -79,7 +79,10 @@ export function DashboardEncarregado({
             case 'abastecimento': return <RegistrarAbastecimento usuarios={usuarios} veiculos={veiculos} produtos={produtos} fornecedores={fornecedores} />;
             case 'hist_abastecimento': return <HistoricoAbastecimentos userRole={user.role} veiculos={veiculos} />;
             case 'manutencao': return <FormRegistrarManutencao veiculos={veiculos} produtos={produtos} fornecedores={fornecedores} />;
-            case 'hist_manutencao': return <HistoricoManutencoes userRole={user.role} veiculos={veiculos} />;
+
+            // CORREÇÃO: Passando 'produtos' e 'fornecedores' que estavam faltando
+            case 'hist_manutencao': return <HistoricoManutencoes userRole={user.role} veiculos={veiculos} produtos={produtos} fornecedores={fornecedores} />;
+
             default: return null;
         }
     };

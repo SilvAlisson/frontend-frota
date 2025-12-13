@@ -29,9 +29,11 @@ type ServicoFormInput = z.input<typeof servicoSchema>;
 
 interface ModalGerenciarServicosProps {
     onClose: () => void;
+    // Callback para atualizar o pai sem refresh
+    onItemAdded?: (novoItem: Produto) => void;
 }
 
-export function ModalGerenciarServicos({ onClose }: ModalGerenciarServicosProps) {
+export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarServicosProps) {
     const [servicos, setServicos] = useState<Produto[]>([]);
     const [loading, setLoading] = useState(true);
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -75,10 +77,16 @@ export function ModalGerenciarServicos({ onClose }: ModalGerenciarServicosProps)
     // --- ADICIONAR ---
     const onSubmit = async (data: ServicoFormInput) => {
         try {
-            await api.post('/produto', data);
+            const response = await api.post('/produto', data);
             toast.success(`${data.tipo} adicionado!`);
+
             reset();
-            fetchServicos(); // Atualiza a lista instantaneamente
+            fetchServicos(); // Atualiza a lista da modal
+
+            // Notifica o componente pai para atualizar o select sem refresh
+            if (onItemAdded) {
+                onItemAdded(response.data);
+            }
         } catch (err: any) {
             if (err.response?.status === 409) {
                 toast.error('Este item já existe no catálogo.');
@@ -209,8 +217,8 @@ export function ModalGerenciarServicos({ onClose }: ModalGerenciarServicosProps)
                                         <div key={item.id} className="group flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200 hover:border-blue-300 hover:shadow-sm transition-all">
                                             <div className="flex items-center gap-3 overflow-hidden">
                                                 <div className={`p-2 rounded-lg shrink-0 ${item.tipo === 'SERVICO' ? 'bg-blue-50 text-blue-600' :
-                                                        item.tipo === 'PECA' ? 'bg-orange-50 text-orange-600' :
-                                                            'bg-gray-100 text-gray-600'
+                                                    item.tipo === 'PECA' ? 'bg-orange-50 text-orange-600' :
+                                                        'bg-gray-100 text-gray-600'
                                                     }`}>
                                                     {item.tipo === 'SERVICO' && <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" clipRule="evenodd" /></svg>}
                                                     {item.tipo === 'PECA' && <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4"><path fillRule="evenodd" d="M8.34 1.804A1 1 0 019.32 1h1.36a1 1 0 01.98.804l.295 1.473c.497.144.971.342 1.416.587l1.25-.834a1 1 0 011.262.125l.962.962a1 1 0 01.125 1.262l-.834 1.25c.245.445.443.919.587 1.416l1.473.294a1 1 0 01.804.98v1.361a1 1 0 01-.804.98l-1.473.295a6.995 6.995 0 01-.587 1.416l.834 1.25a1 1 0 01-.125 1.262l-.962.962a1 1 0 01-1.262.125l-1.25-.834a6.953 6.953 0 01-1.416.587l-.294 1.473a1 1 0 01-.98.804H9.32a1 1 0 01-.98-.804l-.295-1.473a6.995 6.995 0 01-1.416-.587l-1.25.834a1 1 0 01-1.262-.125l-.962-.962a1 1 0 01-.125-1.262l.834-1.25a6.953 6.953 0 01-.587-1.416l-1.473-.294a1 1 0 01-.804-.98V9.32a1 1 0 01.804-.98l1.473-.295c.144-.497.342-.971.587-1.416l-.834-1.25a1 1 0 01.125-1.262l.962-.962A1 1 0 015.38 3.03l1.25.834a6.957 6.957 0 011.416-.587l.294-1.473zM13 10a3 3 0 11-6 0 3 3 0 016 0z" clipRule="evenodd" /></svg>}
