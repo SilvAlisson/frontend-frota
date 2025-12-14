@@ -11,6 +11,7 @@ import { parseDecimal, formatKmVisual } from '../../utils';
 import { toast } from 'sonner';
 import type { Veiculo, Produto, Fornecedor } from '../../types';
 
+// Opções de "Alvo" da manutenção
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
@@ -19,8 +20,11 @@ const manutencaoSchema = z.object({
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
   alvo: z.enum(ALVOS_MANUTENCAO),
 
+  // KM agora é totalmente opcional no schema
   veiculoId: z.string().optional().nullable(),
   kmAtual: z.string().optional().nullable(),
+
+  // campo para CA (Controle de caixa)
   numeroCA: z.string().optional(),
 
   fornecedorId: z.string({ error: "Fornecedor obrigatório" })
@@ -43,12 +47,12 @@ const manutencaoSchema = z.object({
   })).min(1, { error: "Adicione pelo menos um item à OS" })
 })
   .superRefine((data, ctx) => {
-    // CORREÇÃO ZOD V4: Usar string "custom" em vez de ZodIssueCode.custom
+    // Validação Condicional
 
     if (data.alvo === 'VEICULO') {
       if (!data.veiculoId) {
         ctx.addIssue({
-          code: "custom", // <--- CORRIGIDO AQUI
+          code: "custom",
           message: "Selecione o veículo",
           path: ["veiculoId"]
         });
@@ -58,7 +62,7 @@ const manutencaoSchema = z.object({
     if (data.alvo === 'OUTROS') {
       if (!data.numeroCA) {
         ctx.addIssue({
-          code: "custom", // <--- E AQUI
+          code: "custom",
           message: "Informe o nº do CA",
           path: ["numeroCA"]
         });
@@ -70,7 +74,7 @@ type ManutencaoFormInput = z.input<typeof manutencaoSchema>;
 
 interface FormRegistrarManutencaoProps {
   veiculos: Veiculo[];
-  produtos: Produto[];
+  produtos: Produto[]; // Recebe produtos iniciais do pai
   fornecedores: Fornecedor[];
 }
 
@@ -81,26 +85,33 @@ export function FormRegistrarManutencao({
 }: FormRegistrarManutencaoProps) {
 
   const [modalAberto, setModalAberto] = useState(false);
-  const [modalServicosOpen, setModalServicosOpen] = useState(false);
+  const [modalServicosOpen, setModalServicosOpen] = useState(false); // Estado da Modal de Serviços
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
   const [ultimoKmRegistrado, setUltimoKmRegistrado] = useState<number>(0);
+
+  // Controle das Abas
   const [abaAtiva, setAbaAtiva] = useState<TipoManutencao>('CORRETIVA');
 
-  // Estado local para produtos (permite atualizar sem refresh)
+  // Estado local para produtos (permite atualizar sem refresh da página)
   const [listaProdutos, setListaProdutos] = useState<Produto[]>(produtos);
 
+  // Sincroniza se a prop mudar externamente (boa prática)
   useEffect(() => {
     setListaProdutos(produtos);
   }, [produtos]);
 
+  // Filtra produtos usando a lista local (e não mais a prop direta)
   const produtosManutencao = listaProdutos.filter(p =>
     !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)
   );
 
+  // Filtro de Fornecedores por Aba
   const fornecedoresFiltrados = fornecedores.filter(f => {
     if (abaAtiva === 'CORRETIVA') {
+      // Na corretiva, removemos Posto e Lava Jato da lista
       return !['POSTO', 'LAVA_JATO'].includes(f.tipo);
     }
+    // Na preventiva, mostra todos (ou ajuste conforme necessidade)
     return true;
   });
 
@@ -129,6 +140,7 @@ export function FormRegistrarManutencao({
     name: "itens"
   });
 
+  // Sincroniza a aba com o valor do formulário
   useEffect(() => {
     setValue('tipo', abaAtiva);
   }, [abaAtiva, setValue]);
@@ -137,6 +149,7 @@ export function FormRegistrarManutencao({
   const veiculoIdSelecionado = watch('veiculoId');
   const itensObservados = watch('itens');
 
+  // Busca último KM para referência (apenas informativo agora)
   useEffect(() => {
     if (alvoSelecionado !== 'VEICULO' || !veiculoIdSelecionado) {
       setUltimoKmRegistrado(0);
@@ -163,11 +176,13 @@ export function FormRegistrarManutencao({
 
     if (data.alvo === 'VEICULO' && data.kmAtual) {
       kmInputFloat = parseDecimal(data.kmAtual);
+      // Aviso sutil se KM for menor, mas permite salvar (flexibilidade)
       if (kmInputFloat < ultimoKmRegistrado && ultimoKmRegistrado > 0) {
         toast.warning(`Nota: KM informado é menor que o último (${ultimoKmRegistrado}).`);
       }
     }
 
+    // Formata observação incluindo o CA se houver
     let obsFinal = data.observacoes || '';
     if (data.alvo === 'OUTROS' && data.numeroCA) {
       obsFinal = `[CA: ${data.numeroCA}] ${obsFinal}`;
@@ -220,6 +235,7 @@ export function FormRegistrarManutencao({
     <>
       <div className="bg-white p-6 rounded-card shadow-card border border-gray-100 w-full">
 
+        {/* HEADER ABAS */}
         <div className="flex mb-6 border-b border-gray-200">
           <button
             type="button"
@@ -245,6 +261,7 @@ export function FormRegistrarManutencao({
 
         <form onSubmit={handleSubmit(onValidSubmit)} className="space-y-6">
 
+          {/* SELETOR DE ALVO */}
           <div className="flex p-1 bg-gray-50 rounded-lg border border-gray-200">
             <button
               type="button"
@@ -267,6 +284,7 @@ export function FormRegistrarManutencao({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
             {alvoSelecionado === 'VEICULO' ? (
               <div className="md:col-span-2 space-y-4">
                 <div className="animate-in fade-in slide-in-from-top-1">
@@ -298,6 +316,7 @@ export function FormRegistrarManutencao({
               </div>
             ) : (
               <div className="md:col-span-2 animate-in fade-in slide-in-from-top-1">
+                {/* Pergunta do CA */}
                 <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Qual o CA da Caixa?</label>
                 <Input
                   {...register("numeroCA")}
@@ -331,10 +350,12 @@ export function FormRegistrarManutencao({
             </div>
           </div>
 
+          {/* LISTA DE ITENS */}
           <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-200">
             <div className="flex justify-between items-center mb-3">
               <div className="flex items-center gap-2">
                 <h4 className="text-xs font-bold text-gray-500 uppercase">Peças e Serviços</h4>
+                {/* BOTÃO DE ENGRENAGEM PARA GERENCIAR SERVIÇOS */}
                 <button
                   type="button"
                   onClick={() => setModalServicosOpen(true)}
@@ -365,6 +386,7 @@ export function FormRegistrarManutencao({
                         disabled={isSubmitting}
                       >
                         <option value="">Selecione...</option>
+                        {/* Usa a lista local 'produtosManutencao' que atualiza sem refresh */}
                         {produtosManutencao.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                       </select>
                     </div>
