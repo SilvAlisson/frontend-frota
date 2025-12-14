@@ -12,8 +12,6 @@ export function Dashboard() {
   const { user, logout } = useAuth();
 
   // Hook inteligente que busca dados em paralelo e faz cache
-  // Otimização: Agora usamos o backend (Cron) para verificar timeouts, 
-  // removendo a carga excessiva do frontend ao abrir o painel.
   const { data, isLoading, isError, refetch } = useDashboardData();
 
   if (!user) return null;
@@ -56,8 +54,6 @@ export function Dashboard() {
   }
 
   const { usuarios, veiculos, produtos, fornecedores, jornadasAtivas } = data;
-
-  // Callbacks para atualizar os dados após ações (Refetch do React Query)
   const handleAtualizarDados = () => refetch();
 
   return (
@@ -65,13 +61,13 @@ export function Dashboard() {
 
       {/* NAVBAR SUPERIOR */}
       <nav className="bg-white/80 backdrop-blur-md shadow-sm sticky top-0 z-40 border-b border-gray-100 h-16 transition-all">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex justify-between items-center">
+        {/* w-full em vez de max-w-7xl para ocupar a tela toda */}
+        <div className="w-full px-4 sm:px-6 lg:px-8 h-full flex justify-between items-center">
 
           {/* Logo e Título */}
           <div className="flex items-center gap-3">
             <div className="bg-primary/10 p-1.5 rounded-lg">
               <img src="/logo.png" alt="Logo" className="h-8 w-auto" onError={(e) => e.currentTarget.style.display = 'none'} />
-              {/* Fallback visual se não tiver logo.png */}
               <svg className="h-6 w-6 text-primary hidden only:block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
               </svg>
@@ -107,7 +103,8 @@ export function Dashboard() {
       </nav>
 
       {/* CONTEÚDO PRINCIPAL */}
-      <main className="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      {/* CORREÇÃO: w-full e px ajustados para layout fluido */}
+      <main className="w-full py-8 px-4 sm:px-6 lg:px-8">
 
         {/* 1. VISÃO DO OPERADOR */}
         {user.role === 'OPERADOR' && (
@@ -115,7 +112,6 @@ export function Dashboard() {
             user={user}
             usuarios={usuarios}
             veiculos={veiculos}
-            // Novas props adicionadas:
             produtos={produtos}
             fornecedores={fornecedores}
             jornadasAtivas={jornadasAtivas}

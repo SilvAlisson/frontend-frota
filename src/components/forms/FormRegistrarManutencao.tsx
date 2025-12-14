@@ -1,30 +1,26 @@
 import { useState, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod'; // Importação nomeada para melhor tree-shaking
+import { z } from 'zod';
 import { api } from '../../services/api';
 import { ModalConfirmacaoFoto } from '../ModalConfirmacaoFoto';
-import { ModalGerenciarServicos } from '../ModalGerenciarServicos'; // Import Modal
+import { ModalGerenciarServicos } from '../ModalGerenciarServicos';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { parseDecimal, formatKmVisual } from '../../utils';
 import { toast } from 'sonner';
 import type { Veiculo, Produto, Fornecedor } from '../../types';
 
-// Opções de "Alvo" da manutenção
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
-// --- 1. SCHEMA ZOD V4 ---
+// --- SCHEMA ZOD V4 ---
 const manutencaoSchema = z.object({
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
   alvo: z.enum(ALVOS_MANUTENCAO),
 
-  // KM agora é totalmente opcional no schema
   veiculoId: z.string().optional().nullable(),
   kmAtual: z.string().optional().nullable(),
-
-  // Novo campo para CA (Controle de caixa/EPI)
   numeroCA: z.string().optional(),
 
   fornecedorId: z.string({ error: "Fornecedor obrigatório" })
@@ -47,11 +43,12 @@ const manutencaoSchema = z.object({
   })).min(1, { error: "Adicione pelo menos um item à OS" })
 })
   .superRefine((data, ctx) => {
-    // Validação Condicional
+    // CORREÇÃO ZOD V4: Usar string "custom" em vez de ZodIssueCode.custom
+
     if (data.alvo === 'VEICULO') {
       if (!data.veiculoId) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom", // <--- CORRIGIDO AQUI
           message: "Selecione o veículo",
           path: ["veiculoId"]
         });
@@ -61,7 +58,7 @@ const manutencaoSchema = z.object({
     if (data.alvo === 'OUTROS') {
       if (!data.numeroCA) {
         ctx.addIssue({
-          code: z.ZodIssueCode.custom,
+          code: "custom", // <--- E AQUI
           message: "Informe o nº do CA",
           path: ["numeroCA"]
         });
@@ -73,7 +70,7 @@ type ManutencaoFormInput = z.input<typeof manutencaoSchema>;
 
 interface FormRegistrarManutencaoProps {
   veiculos: Veiculo[];
-  produtos: Produto[]; // Recebe produtos iniciais do pai
+  produtos: Produto[];
   fornecedores: Fornecedor[];
 }
 
@@ -84,33 +81,26 @@ export function FormRegistrarManutencao({
 }: FormRegistrarManutencaoProps) {
 
   const [modalAberto, setModalAberto] = useState(false);
-  const [modalServicosOpen, setModalServicosOpen] = useState(false); // Estado da Modal de Serviços
+  const [modalServicosOpen, setModalServicosOpen] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
   const [ultimoKmRegistrado, setUltimoKmRegistrado] = useState<number>(0);
-
-  // Controle das Abas
   const [abaAtiva, setAbaAtiva] = useState<TipoManutencao>('CORRETIVA');
 
-  // NOVO: Estado local para produtos (permite atualizar sem refresh da página)
+  // Estado local para produtos (permite atualizar sem refresh)
   const [listaProdutos, setListaProdutos] = useState<Produto[]>(produtos);
 
-  // Sincroniza se a prop mudar externamente (boa prática)
   useEffect(() => {
     setListaProdutos(produtos);
   }, [produtos]);
 
-  // Filtra produtos usando a lista local
   const produtosManutencao = listaProdutos.filter(p =>
     !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)
   );
 
-  // Filtro de Fornecedores por Aba
   const fornecedoresFiltrados = fornecedores.filter(f => {
     if (abaAtiva === 'CORRETIVA') {
-      // Na corretiva, removemos Posto e Lava Jato da lista
       return !['POSTO', 'LAVA_JATO'].includes(f.tipo);
     }
-    // Na preventiva, mostra todos (ou ajuste conforme necessidade)
     return true;
   });
 
@@ -139,7 +129,6 @@ export function FormRegistrarManutencao({
     name: "itens"
   });
 
-  // Sincroniza a aba com o valor do formulário
   useEffect(() => {
     setValue('tipo', abaAtiva);
   }, [abaAtiva, setValue]);
@@ -148,7 +137,6 @@ export function FormRegistrarManutencao({
   const veiculoIdSelecionado = watch('veiculoId');
   const itensObservados = watch('itens');
 
-  // Busca último KM para referência (apenas informativo agora)
   useEffect(() => {
     if (alvoSelecionado !== 'VEICULO' || !veiculoIdSelecionado) {
       setUltimoKmRegistrado(0);
@@ -175,13 +163,11 @@ export function FormRegistrarManutencao({
 
     if (data.alvo === 'VEICULO' && data.kmAtual) {
       kmInputFloat = parseDecimal(data.kmAtual);
-      // Aviso sutil se KM for menor, mas permite salvar (flexibilidade)
       if (kmInputFloat < ultimoKmRegistrado && ultimoKmRegistrado > 0) {
         toast.warning(`Nota: KM informado é menor que o último (${ultimoKmRegistrado}).`);
       }
     }
 
-    // Formata observação incluindo o CA se houver
     let obsFinal = data.observacoes || '';
     if (data.alvo === 'OUTROS' && data.numeroCA) {
       obsFinal = `[CA: ${data.numeroCA}] ${obsFinal}`;
@@ -217,7 +203,7 @@ export function FormRegistrarManutencao({
       kmAtual: '',
       numeroCA: '',
       data: new Date().toISOString().slice(0, 10),
-      tipo: abaAtiva, // Mantém a aba atual
+      tipo: abaAtiva,
       observacoes: '',
       itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: 0 }]
     });
@@ -232,9 +218,8 @@ export function FormRegistrarManutencao({
 
   return (
     <>
-      <div className="bg-white p-6 rounded-card shadow-card border border-gray-100">
+      <div className="bg-white p-6 rounded-card shadow-card border border-gray-100 w-full">
 
-        {/* HEADER ABAS */}
         <div className="flex mb-6 border-b border-gray-200">
           <button
             type="button"
@@ -260,7 +245,6 @@ export function FormRegistrarManutencao({
 
         <form onSubmit={handleSubmit(onValidSubmit)} className="space-y-6">
 
-          {/* SELETOR DE ALVO */}
           <div className="flex p-1 bg-gray-50 rounded-lg border border-gray-200">
             <button
               type="button"
@@ -283,7 +267,6 @@ export function FormRegistrarManutencao({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
             {alvoSelecionado === 'VEICULO' ? (
               <div className="md:col-span-2 space-y-4">
                 <div className="animate-in fade-in slide-in-from-top-1">
@@ -315,7 +298,6 @@ export function FormRegistrarManutencao({
               </div>
             ) : (
               <div className="md:col-span-2 animate-in fade-in slide-in-from-top-1">
-                {/* Pergunta do CA */}
                 <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Qual o CA da Caixa?</label>
                 <Input
                   {...register("numeroCA")}
@@ -349,20 +331,18 @@ export function FormRegistrarManutencao({
             </div>
           </div>
 
-          {/* LISTA DE ITENS */}
           <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-200">
             <div className="flex justify-between items-center mb-3">
               <div className="flex items-center gap-2">
                 <h4 className="text-xs font-bold text-gray-500 uppercase">Peças e Serviços</h4>
-                {/* BOTÃO DE ENGRENAGEM PARA GERENCIAR SERVIÇOS */}
                 <button
                   type="button"
                   onClick={() => setModalServicosOpen(true)}
-                  className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-1 rounded-full transition-all"
+                  className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded-full transition-all border border-transparent hover:border-blue-100"
                   title="Gerenciar Catálogo de Serviços/Peças"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                    <path fillRule="evenodd" d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.206 1.25l-1.18 2.045a1 1 0 01-1.187.447l-1.598.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.206-1.25l1.18-2.045a1 1 0 011.187-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
+                    <path fillRule="evenodd" d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.206 1.25l-1.18 2.045a1 1 0 01-1.187.447l1.598.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.206-1.25l1.18-2.045a1 1 0 011.187-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
                   </svg>
                 </button>
               </div>
@@ -483,12 +463,12 @@ export function FormRegistrarManutencao({
         />
       )}
 
-      {/* RENDERIZAÇÃO DA MODAL DE SERVIÇOS */}
+      {/* RENDERIZAÇÃO DA MODAL DE SERVIÇOS (COM UPDATE AUTOMÁTICO) */}
       {modalServicosOpen && (
         <ModalGerenciarServicos
           onClose={() => setModalServicosOpen(false)}
           onItemAdded={(novoItem) => {
-            // Atualiza a lista local com o novo item e reordena
+            // Atualiza a lista local instantaneamente!
             setListaProdutos(prev => [...prev, novoItem].sort((a, b) => a.nome.localeCompare(b.nome)));
           }}
         />
