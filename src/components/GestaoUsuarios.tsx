@@ -32,6 +32,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   const [tokenQr, setTokenQr] = useState<string | null>(null);
   const [nomeQr, setNomeQr] = useState('');
   const [fotoQr, setFotoQr] = useState<string | null | undefined>(null);
+  const [roleQr, setRoleQr] = useState<string>(''); // NOVO ESTADO: Guarda o cargo para o crachá
 
   // QUERY: Listar Usuários
   const { data: usuarios = [], isLoading } = useQuery<User[]>({
@@ -82,6 +83,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
         setTokenQr(response.data.loginToken);
         setNomeQr(user.nome);
         setFotoQr(user.fotoUrl);
+        setRoleQr(user.role); // Salva o cargo do usuário selecionado
         setModalQrOpen(true);
         return `QR Code gerado para ${user.nome}`;
       },
@@ -306,7 +308,8 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
           token={tokenQr}
           nomeUsuario={nomeQr}
           fotoUrl={fotoQr}
-          onClose={() => { setModalQrOpen(false); setTokenQr(null); setFotoQr(null); }}
+          role={roleQr} // Passa o cargo para o modal
+          onClose={() => { setModalQrOpen(false); setTokenQr(null); setFotoQr(null); setRoleQr(''); }}
         />
       )}
 
