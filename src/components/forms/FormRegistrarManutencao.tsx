@@ -86,7 +86,6 @@ export function FormRegistrarManutencao({
   const [ultimoKmRegistrado, setUltimoKmRegistrado] = useState<number>(0);
   const [abaAtiva, setAbaAtiva] = useState<TipoManutencao>('CORRETIVA');
 
-  // Estado local para produtos (permite atualizar sem refresh)
   const [listaProdutos, setListaProdutos] = useState<Produto[]>(produtos);
 
   useEffect(() => {
@@ -173,12 +172,18 @@ export function FormRegistrarManutencao({
       obsFinal = `[CA: ${data.numeroCA}] ${obsFinal}`;
     }
 
+    // --- CORREÇÃO DE FUSO HORÁRIO (BRASIL) ---
+    // Pega a string 'YYYY-MM-DD' e adiciona 'T12:00:00'
+    // Isso força o horário a ser meio-dia local, evitando que o UTC jogue para o dia anterior
+    const dataString = data.data; 
+    const dataISOComMeioDia = new Date(dataString + 'T12:00:00').toISOString();
+
     const payloadFinal = {
       tipo: data.tipo,
       veiculoId: data.alvo === 'VEICULO' ? data.veiculoId : null,
       fornecedorId: data.fornecedorId,
       kmAtual: kmInputFloat,
-      data: new Date(data.data).toISOString(),
+      data: dataISOComMeioDia, // Data blindada contra fuso horário
       observacoes: obsFinal,
       itens: data.itens.map(item => ({
         produtoId: item.produtoId,
@@ -220,7 +225,7 @@ export function FormRegistrarManutencao({
 
   return (
     <>
-      <div className="bg-white p-4 sm:p-6 rounded-card shadow-card border border-gray-100 w-full">
+      <div className="bg-white p-4 sm:p-6 rounded-card shadow-card border border-gray-100 w-full animate-in fade-in duration-300">
 
         <div className="flex mb-6 border-b border-gray-200">
           <button
@@ -237,7 +242,7 @@ export function FormRegistrarManutencao({
             type="button"
             onClick={() => setAbaAtiva('PREVENTIVA')}
             className={`flex-1 pb-3 text-sm font-bold uppercase tracking-wide transition-colors ${abaAtiva === 'PREVENTIVA'
-              ? 'text-blue-600 border-b-2 border-blue-600'
+              ? 'text-primary border-b-2 border-primary' // Usando a cor da marca
               : 'text-gray-400 hover:text-gray-600'
               }`}
           >
@@ -268,7 +273,6 @@ export function FormRegistrarManutencao({
             </button>
           </div>
 
-          {/* DADOS GERAIS DO ATENDIMENTO */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {alvoSelecionado === 'VEICULO' ? (
               <div className="md:col-span-2 space-y-4">
@@ -276,7 +280,7 @@ export function FormRegistrarManutencao({
                   <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Veículo</label>
                   <select
                     {...register("veiculoId")}
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none"
+                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none cursor-pointer"
                     disabled={isSubmitting}
                   >
                     <option value="">Selecione...</option>
@@ -319,7 +323,7 @@ export function FormRegistrarManutencao({
               </label>
               <select
                 {...register("fornecedorId")}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none"
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none cursor-pointer"
                 disabled={isSubmitting}
               >
                 <option value="">Selecione...</option>
@@ -334,7 +338,6 @@ export function FormRegistrarManutencao({
             </div>
           </div>
 
-          {/* LISTA DE ITENS - LAYOUT OTIMIZADO PARA MOBILE */}
           <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
             <div className="flex flex-wrap justify-between items-center mb-4 gap-2">
               <h4 className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
@@ -344,11 +347,10 @@ export function FormRegistrarManutencao({
                 </span>
               </h4>
               
-              {/* BOTÃO PARA CADASTRAR NOVO SERVIÇO */}
               <button
                 type="button"
                 onClick={() => setModalServicosOpen(true)}
-                className="text-xs text-blue-600 font-bold hover:bg-blue-50 px-2 py-1 rounded transition-colors flex items-center gap-1 border border-blue-100 bg-white"
+                className="text-xs text-primary font-bold hover:bg-blue-50 px-2 py-1 rounded transition-colors flex items-center gap-1 border border-blue-100 bg-white cursor-pointer"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
                   <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
@@ -366,27 +368,24 @@ export function FormRegistrarManutencao({
                 return (
                   <div key={field.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm relative group">
                     
-                    {/* Botão Remover (Absoluto no topo) */}
                     {fields.length > 1 && (
                       <button
                         type="button"
                         onClick={() => remove(index)}
-                        className="absolute top-2 right-2 text-gray-300 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-colors z-10"
+                        className="absolute top-2 right-2 text-gray-300 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-colors z-10 cursor-pointer"
                         title="Remover item"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
                     )}
 
-                    {/* GRID RESPONSIVO: Mobile (2 colunas) vs Desktop (12 colunas) */}
                     <div className="grid grid-cols-2 sm:grid-cols-12 gap-3 sm:gap-4 items-start">
                       
-                      {/* 1. SELEÇÃO DO PRODUTO (Ocupa linha inteira no mobile col-span-2) */}
                       <div className="col-span-2 sm:col-span-6">
                         <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Peça ou Serviço</label>
                         <select
                           {...register(`itens.${index}.produtoId`)}
-                          className={`w-full p-2.5 text-sm border rounded-lg focus:ring-2 outline-none appearance-none bg-white ${errItem?.produtoId ? 'border-red-300' : 'border-gray-200 focus:border-primary'}`}
+                          className={`w-full p-2.5 text-sm border rounded-lg focus:ring-2 outline-none appearance-none bg-white cursor-pointer ${errItem?.produtoId ? 'border-red-300' : 'border-gray-200 focus:border-primary'}`}
                           disabled={isSubmitting}
                         >
                           <option value="">Selecione...</option>
@@ -395,7 +394,6 @@ export function FormRegistrarManutencao({
                         {errItem?.produtoId && <span className="text-[10px] text-red-500 block mt-1">{errItem.produtoId.message}</span>}
                       </div>
 
-                      {/* 2. QUANTIDADE */}
                       <div className="col-span-1 sm:col-span-2">
                         <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Qtd</label>
                         <input
@@ -407,7 +405,6 @@ export function FormRegistrarManutencao({
                         />
                       </div>
 
-                      {/* 3. VALOR UNITÁRIO */}
                       <div className="col-span-1 sm:col-span-2">
                         <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">R$ Unit.</label>
                         <input
@@ -420,7 +417,6 @@ export function FormRegistrarManutencao({
                         />
                       </div>
 
-                      {/* 4. SUBTOTAL (No mobile, fica na linha de baixo ou alinhado se couber. Aqui forçamos ocupar 2 cols no mobile para ficar clean no rodapé do card) */}
                       <div className="col-span-2 sm:col-span-2 flex justify-end items-center sm:block sm:text-right pt-2 sm:pt-6">
                         <span className="text-[10px] font-bold text-gray-400 uppercase mr-2 sm:hidden">Total Item:</span>
                         <span className="text-sm font-bold text-gray-700 bg-gray-50 px-2 py-1 rounded sm:bg-transparent sm:p-0">
@@ -438,7 +434,7 @@ export function FormRegistrarManutencao({
               <button
                 type="button"
                 onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })}
-                className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-primary hover:underline flex items-center gap-1 cursor-pointer"
                 disabled={isSubmitting}
               >
                 + Adicionar Item
@@ -466,7 +462,7 @@ export function FormRegistrarManutencao({
             type="submit"
             disabled={isSubmitting}
             isLoading={isSubmitting}
-            className="w-full py-3.5 text-base shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all"
+            className="w-full py-3.5 text-base shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all cursor-pointer"
           >
             {isSubmitting ? 'Salvando...' : `Confirmar ${abaAtiva === 'CORRETIVA' ? 'Reparo' : 'Manutenção'}`}
           </Button>
@@ -486,12 +482,10 @@ export function FormRegistrarManutencao({
         />
       )}
 
-      {/* RENDERIZAÇÃO DA MODAL DE SERVIÇOS (COM UPDATE AUTOMÁTICO) */}
       {modalServicosOpen && (
         <ModalGerenciarServicos
           onClose={() => setModalServicosOpen(false)}
           onItemAdded={(novoItem) => {
-            // Atualiza a lista local instantaneamente!
             setListaProdutos(prev => [...prev, novoItem].sort((a, b) => a.nome.localeCompare(b.nome)));
           }}
         />
