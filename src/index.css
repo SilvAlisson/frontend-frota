@@ -1,11 +1,26 @@
 @import "tailwindcss";
 
 @theme {
-  /* --- CORES DA EMPRESA --- */
-  --color-primary: #007EAD;
-  --color-primary-hover: #00638a;
-  --color-primary-soft: #E0F2F8;
+  /* --- CORES DA EMPRESA (Base: #007EAD) --- */
   
+  /* Cor Principal e suas variações para hover/fundo */
+  --color-primary: #007EAD;
+  --color-primary-hover: #00638a; /* Um tom mais escuro para hover */
+  --color-primary-foreground: #ffffff; /* Texto branco sobre o azul */
+
+  /* Paleta completa (substitui o que estava no config.ts) */
+  --color-primary-50: #f0f9ff;
+  --color-primary-100: #e0f2fe;
+  --color-primary-200: #bae6fd;
+  --color-primary-300: #7dd3fc;
+  --color-primary-400: #38bdf8;
+  --color-primary-500: #0ea5e9;
+  --color-primary-600: #007EAD; /* Sua cor principal aqui como 600 ou DEFAULT */
+  --color-primary-700: #0369a1;
+  --color-primary-800: #075985;
+  --color-primary-900: #0c4a6e;
+  
+  /* Cores de Sistema */
   --color-background: #F8FAFC;
   --color-surface: #FFFFFF;
 
@@ -16,14 +31,15 @@
   --color-text: #1E293B;
   --color-text-secondary: #64748B;
 
+  /* --- TIPOGRAFIA --- */
   --font-sans: 'Inter', system-ui, sans-serif;
 
-  /* --- BORDAS --- */
+  /* --- BORDAS (Radius) --- */
   --radius-card: 1rem;       /* 16px */
   --radius-input: 0.75rem;   /* 12px */
   --radius-button: 0.75rem;  /* 12px */
 
-  /* --- SOMBRAS --- */
+  /* --- SOMBRAS (Shadows) --- */
   --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
   --shadow-card-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
   
@@ -43,8 +59,9 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* --- CURSOR & INTERATIVIDADE  --- */
+/* --- CURSOR & INTERATIVIDADE (PROFISSIONALIZAÇÃO) --- */
 
+/* Força a "mãozinha" (pointer) em TUDO que for clicável */
 button, 
 [type='button'], 
 [type='submit'], 
@@ -62,7 +79,7 @@ select:disabled,
 textarea:disabled {
   cursor: not-allowed;
   opacity: 0.6;
-  background-color: #F1F5F9;
+  background-color: #F1F5F9; /* Slate-100 para indicar bloqueio */
 }
 
 /* --- SCROLLBAR PERSONALIZADA --- */
@@ -76,11 +93,11 @@ textarea:disabled {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: #CBD5E1; /* Cinza claro */
   border-radius: 4px;
   transition: background 0.2s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary);
+  background: var(--color-primary); /* Fica da cor da marca ao passar o mouse */
 }
