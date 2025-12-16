@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
@@ -14,7 +14,7 @@ import type { Veiculo, Produto, Fornecedor } from '../../types';
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
-// --- SCHEMA ZOD V4 ---
+// --- SCHEMA ZOD ---
 const manutencaoSchema = z.object({
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
   alvo: z.enum(ALVOS_MANUTENCAO),
@@ -209,7 +209,6 @@ export function FormRegistrarManutencao({
     });
     setUltimoKmRegistrado(0);
 
-    // Chama o callback de sucesso externo se existir (ex: para fechar modal pai ou recarregar lista)
     if (onSuccess) onSuccess();
   };
 
@@ -269,6 +268,7 @@ export function FormRegistrarManutencao({
             </button>
           </div>
 
+          {/* DADOS GERAIS DO ATENDIMENTO */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {alvoSelecionado === 'VEICULO' ? (
               <div className="md:col-span-2 space-y-4">
@@ -334,49 +334,56 @@ export function FormRegistrarManutencao({
             </div>
           </div>
 
+          {/* LISTA DE ITENS - LAYOUT OTIMIZADO PARA MOBILE */}
           <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-            <div className="flex justify-between items-center mb-3">
-              <div className="flex items-center gap-2">
-                <h4 className="text-xs font-bold text-gray-500 uppercase">Peças e Serviços</h4>
-                <button
-                  type="button"
-                  onClick={() => setModalServicosOpen(true)}
-                  className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded-full transition-all border border-transparent hover:border-blue-100"
-                  title="Gerenciar Catálogo de Serviços/Peças"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                    <path fillRule="evenodd" d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.206 1.25l-1.18 2.045a1 1 0 01-1.187.447l1.598.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.206-1.25l1.18-2.045a1 1 0 011.187-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-                  </svg>
-                </button>
-              </div>
-              <span className="text-[10px] bg-white px-2 py-1 rounded border border-gray-200 text-gray-400">{fields.length} itens</span>
+            <div className="flex flex-wrap justify-between items-center mb-4 gap-2">
+              <h4 className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
+                Itens da Manutenção
+                <span className="text-[10px] bg-white px-2 py-0.5 rounded border border-gray-200 text-gray-400 font-normal">
+                  {fields.length}
+                </span>
+              </h4>
+              
+              {/* BOTÃO PARA CADASTRAR NOVO SERVIÇO */}
+              <button
+                type="button"
+                onClick={() => setModalServicosOpen(true)}
+                className="text-xs text-blue-600 font-bold hover:bg-blue-50 px-2 py-1 rounded transition-colors flex items-center gap-1 border border-blue-100 bg-white"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3 h-3">
+                  <path d="M10.75 4.75a.75.75 0 00-1.5 0v4.5h-4.5a.75.75 0 000 1.5h4.5v4.5a.75.75 0 001.5 0v-4.5h4.5a.75.75 0 000-1.5h-4.5v-4.5z" />
+                </svg>
+                Novo Serviço/Peça
+              </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               {fields.map((field, index) => {
                 const item = itensObservados[index];
                 const subtotal = (Number(item?.quantidade) || 0) * (Number(item?.valorPorUnidade) || 0);
                 const errItem = errors.itens?.[index];
 
                 return (
-                  <div key={field.id} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm relative group">
+                  <div key={field.id} className="bg-white p-4 rounded-lg border border-gray-200 shadow-sm relative group">
                     
-                    {/* Botão Remover: Posição absoluta para não quebrar layout */}
+                    {/* Botão Remover (Absoluto no topo) */}
                     {fields.length > 1 && (
                       <button
                         type="button"
                         onClick={() => remove(index)}
-                        className="absolute top-2 right-2 text-gray-300 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors z-10"
+                        className="absolute top-2 right-2 text-gray-300 hover:text-red-500 p-1.5 rounded-full hover:bg-red-50 transition-colors z-10"
                         title="Remover item"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                       </button>
                     )}
 
-                    <div className="space-y-3">
-                      {/* Produto - Ocupa largura total */}
-                      <div>
-                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Item</label>
+                    {/* GRID RESPONSIVO: Mobile (2 colunas) vs Desktop (12 colunas) */}
+                    <div className="grid grid-cols-2 sm:grid-cols-12 gap-3 sm:gap-4 items-start">
+                      
+                      {/* 1. SELEÇÃO DO PRODUTO (Ocupa linha inteira no mobile col-span-2) */}
+                      <div className="col-span-2 sm:col-span-6">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Peça ou Serviço</label>
                         <select
                           {...register(`itens.${index}.produtoId`)}
                           className={`w-full p-2.5 text-sm border rounded-lg focus:ring-2 outline-none appearance-none bg-white ${errItem?.produtoId ? 'border-red-300' : 'border-gray-200 focus:border-primary'}`}
@@ -385,41 +392,42 @@ export function FormRegistrarManutencao({
                           <option value="">Selecione...</option>
                           {produtosManutencao.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
                         </select>
+                        {errItem?.produtoId && <span className="text-[10px] text-red-500 block mt-1">{errItem.produtoId.message}</span>}
                       </div>
 
-                      {/* Grid para Qtd e Valor */}
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Qtd</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            {...register(`itens.${index}.quantidade`)}
-                            className="w-full p-2.5 text-sm border border-gray-200 rounded-lg outline-none focus:border-primary text-center"
-                            disabled={isSubmitting}
-                          />
-                        </div>
-
-                        <div>
-                          <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">R$ Unit.</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            placeholder="0,00"
-                            {...register(`itens.${index}.valorPorUnidade`)}
-                            className="w-full p-2.5 text-sm border border-gray-200 rounded-lg outline-none focus:border-primary text-right"
-                            disabled={isSubmitting}
-                          />
-                        </div>
+                      {/* 2. QUANTIDADE */}
+                      <div className="col-span-1 sm:col-span-2">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Qtd</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          {...register(`itens.${index}.quantidade`)}
+                          className="w-full p-2.5 text-sm border border-gray-200 rounded-lg outline-none focus:border-primary text-center"
+                          disabled={isSubmitting}
+                        />
                       </div>
 
-                      {/* Subtotal alinhado à direita */}
-                      <div className="flex justify-end pt-2 border-t border-gray-50">
-                        <div className="text-right">
-                          <span className="text-[10px] text-gray-400 uppercase mr-2">Subtotal</span>
-                          <span className="text-sm font-bold text-gray-700">R$ {subtotal.toFixed(2)}</span>
-                        </div>
+                      {/* 3. VALOR UNITÁRIO */}
+                      <div className="col-span-1 sm:col-span-2">
+                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">R$ Unit.</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="0,00"
+                          {...register(`itens.${index}.valorPorUnidade`)}
+                          className="w-full p-2.5 text-sm border border-gray-200 rounded-lg outline-none focus:border-primary text-right"
+                          disabled={isSubmitting}
+                        />
                       </div>
+
+                      {/* 4. SUBTOTAL (No mobile, fica na linha de baixo ou alinhado se couber. Aqui forçamos ocupar 2 cols no mobile para ficar clean no rodapé do card) */}
+                      <div className="col-span-2 sm:col-span-2 flex justify-end items-center sm:block sm:text-right pt-2 sm:pt-6">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase mr-2 sm:hidden">Total Item:</span>
+                        <span className="text-sm font-bold text-gray-700 bg-gray-50 px-2 py-1 rounded sm:bg-transparent sm:p-0">
+                          R$ {subtotal.toFixed(2)}
+                        </span>
+                      </div>
+
                     </div>
                   </div>
                 );
