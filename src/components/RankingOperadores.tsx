@@ -186,15 +186,15 @@ export function RankingOperadores({ }: RankingProps) {
       )}
 
       {!loading && !error && ranking.length > 0 && (
-        <div className="bg-white shadow-card rounded-2xl border border-gray-100 overflow-hidden">
-          <table className="min-w-full">
+        <div className="bg-white shadow-card rounded-2xl border border-gray-100 overflow-x-auto">
+          <table className="min-w-full whitespace-nowrap">
             <thead className="bg-gray-50/80 border-b border-gray-100">
               <tr>
                 <th className={`${TableStyles.th} text-center w-16`}>Pos.</th>
                 <th className={TableStyles.th}>Motorista</th>
-                <th className={`${TableStyles.th} w-1/3`}>Eficiência (KM/L)</th>
-                <th className={`${TableStyles.th} text-right hidden sm:table-cell`}>KM Rodado</th>
-                <th className={`${TableStyles.th} text-right hidden sm:table-cell`}>Consumo</th>
+                <th className={`${TableStyles.th} w-1/3 min-w-[180px]`}>Eficiência (KM/L)</th>
+                <th className={`${TableStyles.th} text-right`}>KM Rodado</th>
+                <th className={`${TableStyles.th} text-right`}>Consumo</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -231,8 +231,8 @@ export function RankingOperadores({ }: RankingProps) {
                       </div>
                     </td>
 
-                    <td className={`${TableStyles.td} text-right text-gray-600 hidden sm:table-cell font-mono`}>{formatKm(op.totalKM)}</td>
-                    <td className={`${TableStyles.td} text-right text-gray-600 hidden sm:table-cell font-mono`}>{formatLitros(op.totalLitros)}</td>
+                    <td className={`${TableStyles.td} text-right text-gray-600 font-mono`}>{formatKm(op.totalKM)}</td>
+                    <td className={`${TableStyles.td} text-right text-gray-600 font-mono`}>{formatLitros(op.totalLitros)}</td>
                   </tr>
                 );
               })}

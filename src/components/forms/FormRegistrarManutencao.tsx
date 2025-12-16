@@ -43,12 +43,10 @@ const manutencaoSchema = z.object({
   })).min(1, { error: "Adicione pelo menos um item à OS" })
 })
   .superRefine((data, ctx) => {
-    // CORREÇÃO ZOD V4: Usar string "custom" em vez de ZodIssueCode.custom
-
     if (data.alvo === 'VEICULO') {
       if (!data.veiculoId) {
         ctx.addIssue({
-          code: "custom", // <--- CORRIGIDO AQUI
+          code: "custom",
           message: "Selecione o veículo",
           path: ["veiculoId"]
         });
@@ -58,7 +56,7 @@ const manutencaoSchema = z.object({
     if (data.alvo === 'OUTROS') {
       if (!data.numeroCA) {
         ctx.addIssue({
-          code: "custom", // <--- E AQUI
+          code: "custom",
           message: "Informe o nº do CA",
           path: ["numeroCA"]
         });
@@ -72,12 +70,14 @@ interface FormRegistrarManutencaoProps {
   veiculos: Veiculo[];
   produtos: Produto[];
   fornecedores: Fornecedor[];
+  onSuccess?: () => void;
 }
 
 export function FormRegistrarManutencao({
   veiculos,
   produtos,
-  fornecedores
+  fornecedores,
+  onSuccess
 }: FormRegistrarManutencaoProps) {
 
   const [modalAberto, setModalAberto] = useState(false);
@@ -208,6 +208,9 @@ export function FormRegistrarManutencao({
       itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: 0 }]
     });
     setUltimoKmRegistrado(0);
+
+    // Chama o callback de sucesso externo se existir (ex: para fechar modal pai ou recarregar lista)
+    if (onSuccess) onSuccess();
   };
 
   const totalGeral = (itensObservados || []).reduce((acc, item) => {
@@ -218,7 +221,7 @@ export function FormRegistrarManutencao({
 
   return (
     <>
-      <div className="bg-white p-6 rounded-card shadow-card border border-gray-100 w-full">
+      <div className="bg-white p-4 sm:p-6 rounded-card shadow-card border border-gray-100 w-full">
 
         <div className="flex mb-6 border-b border-gray-200">
           <button
@@ -331,7 +334,7 @@ export function FormRegistrarManutencao({
             </div>
           </div>
 
-          <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-200">
+          <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
             <div className="flex justify-between items-center mb-3">
               <div className="flex items-center gap-2">
                 <h4 className="text-xs font-bold text-gray-500 uppercase">Peças e Serviços</h4>
@@ -356,54 +359,66 @@ export function FormRegistrarManutencao({
                 const errItem = errors.itens?.[index];
 
                 return (
-                  <div key={field.id} className="grid grid-cols-12 gap-2 items-start bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="col-span-12 sm:col-span-6">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Item</label>
-                      <select
-                        {...register(`itens.${index}.produtoId`)}
-                        className={`w-full p-2 text-sm border rounded-md focus:ring-2 outline-none appearance-none bg-white ${errItem?.produtoId ? 'border-red-300' : 'border-gray-200 focus:border-primary'}`}
-                        disabled={isSubmitting}
+                  <div key={field.id} className="bg-white p-3 rounded-lg border border-gray-200 shadow-sm relative group">
+                    
+                    {/* Botão Remover: Posição absoluta para não quebrar layout */}
+                    {fields.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => remove(index)}
+                        className="absolute top-2 right-2 text-gray-300 hover:text-red-500 p-1 rounded-full hover:bg-red-50 transition-colors z-10"
+                        title="Remover item"
                       >
-                        <option value="">Selecione...</option>
-                        {produtosManutencao.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                      </select>
-                    </div>
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                      </button>
+                    )}
 
-                    <div className="col-span-4 sm:col-span-2">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Qtd</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        {...register(`itens.${index}.quantidade`)}
-                        className="w-full p-2 text-sm border border-gray-200 rounded-md outline-none focus:border-primary text-center"
-                        disabled={isSubmitting}
-                      />
-                    </div>
+                    <div className="space-y-3">
+                      {/* Produto - Ocupa largura total */}
+                      <div>
+                        <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Item</label>
+                        <select
+                          {...register(`itens.${index}.produtoId`)}
+                          className={`w-full p-2.5 text-sm border rounded-lg focus:ring-2 outline-none appearance-none bg-white ${errItem?.produtoId ? 'border-red-300' : 'border-gray-200 focus:border-primary'}`}
+                          disabled={isSubmitting}
+                        >
+                          <option value="">Selecione...</option>
+                          {produtosManutencao.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                        </select>
+                      </div>
 
-                    <div className="col-span-4 sm:col-span-2">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">R$ Unit.</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        {...register(`itens.${index}.valorPorUnidade`)}
-                        className="w-full p-2 text-sm border border-gray-200 rounded-md outline-none focus:border-primary text-right"
-                        disabled={isSubmitting}
-                      />
-                    </div>
+                      {/* Grid para Qtd e Valor */}
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Qtd</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            {...register(`itens.${index}.quantidade`)}
+                            className="w-full p-2.5 text-sm border border-gray-200 rounded-lg outline-none focus:border-primary text-center"
+                            disabled={isSubmitting}
+                          />
+                        </div>
 
-                    <div className="col-span-4 sm:col-span-2 flex flex-col justify-end items-end h-full pb-2">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block opacity-0">Sub</label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-gray-700">R$ {subtotal.toFixed(2)}</span>
-                        {fields.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => remove(index)}
-                            className="text-gray-300 hover:text-red-500 transition-colors"
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
-                        )}
+                        <div>
+                          <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">R$ Unit.</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            placeholder="0,00"
+                            {...register(`itens.${index}.valorPorUnidade`)}
+                            className="w-full p-2.5 text-sm border border-gray-200 rounded-lg outline-none focus:border-primary text-right"
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Subtotal alinhado à direita */}
+                      <div className="flex justify-end pt-2 border-t border-gray-50">
+                        <div className="text-right">
+                          <span className="text-[10px] text-gray-400 uppercase mr-2">Subtotal</span>
+                          <span className="text-sm font-bold text-gray-700">R$ {subtotal.toFixed(2)}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
