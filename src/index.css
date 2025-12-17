@@ -1,67 +1,80 @@
 @import "tailwindcss";
 
+/* 1. IMPORTAÇÃO DE TIPOGRAFIA (Estratégia de Design Industrial) */
+/* Inter: Para textos gerais (Interface Limpa) */
+/* JetBrains Mono: Para Placas, KMs, R$, Datas (Alinhamento perfeito de dígitos) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
 @theme {
-  /* --- CORES DA EMPRESA (Base: #007EAD) --- */
+  /* --- 2. PALETA 'CLEAN INDUSTRIAL' (Baseada no seu Azul #007EAD) --- */
   
-  /* Cor Principal e suas variações para hover/fundo */
-  --color-primary: #007EAD;
-  --color-primary-hover: #00638a; /* Um tom mais escuro para hover */
-  --color-primary-foreground: #ffffff; /* Texto branco sobre o azul */
+  /* Azul Marca KLIN (Convertido para OKLCH para melhor fidelidade em telas HD) */
+  --color-brand-50: oklch(0.96 0.03 235);
+  --color-brand-100: oklch(0.92 0.05 235);
+  --color-brand-200: oklch(0.85 0.08 235);
+  --color-brand-300: oklch(0.75 0.11 235);
+  --color-brand-400: oklch(0.65 0.14 235);
+  --color-brand-500: oklch(0.57 0.16 235); /* #007EAD Exato */
+  --color-brand-600: oklch(0.48 0.16 235);
+  --color-brand-700: oklch(0.40 0.14 235);
+  --color-brand-800: oklch(0.32 0.11 235);
+  --color-brand-900: oklch(0.24 0.08 235);
 
-  /* Paleta completa (substitui o que estava no config.ts) */
-  --color-primary-50: #f0f9ff;
-  --color-primary-100: #e0f2fe;
-  --color-primary-200: #bae6fd;
-  --color-primary-300: #7dd3fc;
-  --color-primary-400: #38bdf8;
-  --color-primary-500: #0ea5e9;
-  --color-primary-600: #007EAD; /* Sua cor principal aqui como 600 ou DEFAULT */
-  --color-primary-700: #0369a1;
-  --color-primary-800: #075985;
-  --color-primary-900: #0c4a6e;
+  /* Mapeamento Semântico (O sistema usa estas variáveis) */
+  --color-primary: var(--color-brand-500);
+  --color-primary-foreground: #ffffff;
   
-  /* Cores de Sistema */
-  --color-background: #F8FAFC;
+  --color-primary-soft: var(--color-brand-50);
+  --color-primary-hover: var(--color-brand-600);
+
+  /* Cores de Status Balanceadas (Não agridem a visão do operador) */
+  --color-status-success: oklch(0.65 0.18 145); /* Verde Esmeralda */
+  --color-status-warning: oklch(0.75 0.16 80);  /* Âmbar Suave */
+  --color-status-danger: oklch(0.55 0.22 25);   /* Vermelho Técnico */
+  --color-status-neutral: oklch(0.70 0.05 260); /* Cinza Inativo */
+
+  /* Estrutura Visual (Fundo não é branco puro para evitar fadiga) */
+  --color-background: #F8FAFC; 
   --color-surface: #FFFFFF;
+  --color-surface-dim: #F1F5F9;
 
-  --color-success: #10B981;
-  --color-warning: #F59E0B;
-  --color-error: #EF4444;
+  /* Fontes */
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  --color-text: #1E293B;
-  --color-text-secondary: #64748B;
-
-  /* --- TIPOGRAFIA --- */
-  --font-sans: 'Inter', system-ui, sans-serif;
-
-  /* --- BORDAS (Radius) --- */
-  --radius-card: 1rem;       /* 16px */
-  --radius-input: 0.75rem;   /* 12px */
-  --radius-button: 0.75rem;  /* 12px */
-
-  /* --- SOMBRAS (Shadows) --- */
-  --shadow-card: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
-  --shadow-card-hover: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+  /* Sombras "Bento Grid" (Profundidade Sutil) */
+  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --shadow-float: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
   
-  --shadow-button: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --shadow-button-hover: 0 4px 6px rgba(0, 0, 0, 0.12);
+  /* Bordas Modernas */
+  --radius-card: 1rem;      /* 16px */
+  --radius-input: 0.5rem;   /* 8px */
+  --radius-button: 0.5rem;  /* 8px */
 }
 
-/* --- ESTILOS GLOBAIS --- */
+/* 3. UTILITÁRIOS CUSTOMIZADOS (Efeitos de Vidro e Dados) */
+@utility glass-panel {
+  @apply bg-white/90 backdrop-blur-md border border-white/20 shadow-lg;
+}
+
+@utility text-data {
+  @apply font-mono tracking-tight text-slate-700;
+}
+
+/* --- 4. COMPORTAMENTO GLOBAL (UX Profissional) --- */
+
+body {
+  background-color: var(--color-background);
+  color: #0f172a; /* Slate-900 para contraste máximo de leitura */
+  font-feature-settings: "cv02", "cv03", "cv04"; /* Ativa recursos premium da fonte Inter */
+  -webkit-font-smoothing: antialiased;
+}
 
 html {
   scroll-behavior: smooth;
 }
 
-body {
-  background-color: var(--color-background);
-  color: var(--color-text);
-  -webkit-font-smoothing: antialiased;
-}
-
-/* --- CURSOR & INTERATIVIDADE (PROFISSIONALIZAÇÃO) --- */
-
-/* Força a "mãozinha" (pointer) em TUDO que for clicável */
+/* Cursor Pointer (Mãozinha) em tudo que é interativo */
 button, 
 [type='button'], 
 [type='submit'], 
@@ -72,32 +85,28 @@ select,
   cursor: pointer;
 }
 
-/* Estilo visual para elementos desabilitados (bloqueados) */
+/* Estado Desabilitado (Visualmente claro) */
 button:disabled,
 input:disabled,
 select:disabled,
 textarea:disabled {
   cursor: not-allowed;
   opacity: 0.6;
-  background-color: #F1F5F9; /* Slate-100 para indicar bloqueio */
+  background-color: var(--color-surface-dim);
 }
 
-/* --- SCROLLBAR PERSONALIZADA --- */
+/* Scrollbar Minimalista (Estilo App Nativo) */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
-
 ::-webkit-scrollbar-track {
   background: transparent;
 }
-
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1; /* Cinza claro */
-  border-radius: 4px;
-  transition: background 0.2s;
+  background: #cbd5e1;
+  border-radius: 3px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-primary); /* Fica da cor da marca ao passar o mouse */
+  background: var(--color-brand-400); /* Brilha com a cor da marca */
 }
