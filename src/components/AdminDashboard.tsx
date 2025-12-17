@@ -47,21 +47,16 @@ export function AdminDashboard({
   adminUserId
 }: AdminDashboardProps) {
 
-  // Estado principal de navegação
   const [categoriaAtiva, setCategoriaAtiva] = useState<CategoriaMenu>('VISAO_GERAL');
   const [viewAtiva, setViewAtiva] = useState<string>('dashboard');
-
   const [financeiroAberto, setFinanceiroAberto] = useState(false);
   const [modalServicosOpen, setModalServicosOpen] = useState(false);
-  
-  // Controle do Menu Mobile (Drawer)
   const [menuMobileAberto, setMenuMobileAberto] = useState(false);
 
-  // Função centralizada de navegação: muda a tela e fecha o menu (se estiver no mobile)
   const handleNavegacao = (cat: CategoriaMenu, view: string) => {
     setCategoriaAtiva(cat);
     setViewAtiva(view);
-    setMenuMobileAberto(false); // Fecha a gaveta automaticamente
+    setMenuMobileAberto(false);
   };
 
   const handleDrillDown = (tipo: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => {
@@ -71,25 +66,22 @@ export function AdminDashboard({
       'JORNADA': 'hist_jornada',
       'GERAL': 'dashboard'
     };
-    // Reutiliza handleNavegacao para garantir o comportamento correto
     handleNavegacao('OPERACIONAL', mapa[tipo]);
   };
 
   const renderContent = () => {
     switch (viewAtiva) {
-      // Visão Geral
       case 'dashboard': return <DashboardRelatorios veiculos={veiculos} onDrillDown={handleDrillDown} />;
       case 'alertas': return <PainelAlertas />;
       case 'ranking': return <RankingOperadores />;
-
-      // Operacional
       case 'nova_os': return (
-        <div className="space-y-4">
-          <div className="flex justify-end">
+        <div className="space-y-4 max-w-4xl mx-auto">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-gray-900 font-sans">Nova Manutenção</h2>
             <Button
               variant="secondary"
               onClick={() => setModalServicosOpen(true)}
-              className="text-xs h-8 shadow-sm border border-gray-200"
+              className="text-xs h-9 shadow-sm bg-white border border-gray-200 hover:bg-gray-50"
               icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M9.568 3H5.25A2.25 2.25 0 0 0 3 5.25v4.318c0 .597.237 1.17.659 1.591l9.581 9.581c.699.699 1.78.872 2.607.33a18.095 18.095 0 0 0 5.223-5.223c.542-.827.369-1.908-.33-2.607L11.16 3.66A2.25 2.25 0 0 0 9.568 3Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6Z" /></svg>}
             >
               Catálogo de Serviços
@@ -98,117 +90,115 @@ export function AdminDashboard({
           <FormRegistrarManutencao veiculos={veiculos} produtos={produtos} fornecedores={fornecedores} />
         </div>
       );
-      case 'nova_jornada': return <div className="text-center py-10 text-gray-500">Funcionalidade no App Mobile</div>;
+      case 'nova_jornada': return <div className="text-center py-20 text-gray-400 font-mono bg-gray-50 rounded-xl border border-dashed border-gray-200">Funcionalidade Disponível no App Mobile</div>;
       case 'novo_abastecimento': return <RegistrarAbastecimento usuarios={usuarios} veiculos={veiculos} produtos={produtos} fornecedores={fornecedores} />;
-      
       case 'hist_jornada': return <HistoricoJornadas veiculos={veiculos} userRole="ADMIN" />;
       case 'hist_abastecimento': return <HistoricoAbastecimentos userRole="ADMIN" veiculos={veiculos} />;
       case 'hist_manutencao': return <HistoricoManutencoes userRole="ADMIN" veiculos={veiculos} produtos={produtos} fornecedores={fornecedores} />;
       case 'planos': return <FormPlanoManutencao veiculos={veiculos} />;
-
-      // Cadastros
       case 'cad_veiculos': return <GestaoVeiculos />;
       case 'cad_pessoas': return <GestaoUsuarios adminUserId={adminUserId} />;
       case 'cad_cargos': return <GestaoCargos />;
       case 'cad_parceiros': return <GestaoFornecedores />;
       case 'cad_catalogo': return <GestaoProdutos />;
-
       default: return null;
     }
   };
 
-  // Componente interno para os links do menu (DRY - Don't Repeat Yourself)
-  // Isso evita duplicar o código do menu para a versão Desktop e Mobile
+  // MenuLinks com Lógica de Categoria Ativa Aplicada
   const MenuLinks = () => (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       {/* Bloco Visão Geral */}
       <div>
-        <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 px-2 transition-colors ${categoriaAtiva === 'VISAO_GERAL' ? 'text-primary' : 'text-gray-400'}`}>Visão Geral</h4>
-        <div className="space-y-1">
+        <h4 className={`text-[10px] font-bold uppercase tracking-widest mb-3 px-3 font-sans transition-colors ${categoriaAtiva === 'VISAO_GERAL' ? 'text-primary' : 'text-gray-400'}`}>
+          Gerencial
+        </h4>
+        <div className="space-y-0.5">
           <MenuButton active={viewAtiva === 'dashboard'} onClick={() => handleNavegacao('VISAO_GERAL', 'dashboard')} icon={Icons.Dashboard} label="Dashboard" />
-          <MenuButton active={viewAtiva === 'alertas'} onClick={() => handleNavegacao('VISAO_GERAL', 'alertas')} icon={Icons.Alertas} label="Alertas e Avisos" />
+          <MenuButton active={viewAtiva === 'alertas'} onClick={() => handleNavegacao('VISAO_GERAL', 'alertas')} icon={Icons.Alertas} label="Alertas" />
           <MenuButton active={viewAtiva === 'ranking'} onClick={() => handleNavegacao('VISAO_GERAL', 'ranking')} icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0V5.625a1.125 1.125 0 0 0-1.125-1.125h-2.75a1.125 1.125 0 0 0-1.125 1.125v8.625" /></svg>} label="Ranking" />
         </div>
       </div>
 
       {/* Bloco Operacional */}
       <div>
-        <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 px-2 transition-colors ${categoriaAtiva === 'OPERACIONAL' ? 'text-primary' : 'text-gray-400'}`}>Operacional</h4>
-        <div className="space-y-1">
+        <h4 className={`text-[10px] font-bold uppercase tracking-widest mb-3 px-3 font-sans transition-colors ${categoriaAtiva === 'OPERACIONAL' ? 'text-primary' : 'text-gray-400'}`}>
+          Operacional
+        </h4>
+        <div className="space-y-0.5">
           <MenuButton active={viewAtiva === 'nova_os'} onClick={() => handleNavegacao('OPERACIONAL', 'nova_os')} icon={Icons.Operacao} label="Nova Manutenção" />
           <MenuButton active={viewAtiva === 'novo_abastecimento'} onClick={() => handleNavegacao('OPERACIONAL', 'novo_abastecimento')} icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>} label="Novo Abastecimento" />
-
-          <div className="pt-2 pb-1 border-t border-gray-100 my-1"></div>
-
-          <MenuButton active={viewAtiva === 'hist_manutencao'} onClick={() => handleNavegacao('OPERACIONAL', 'hist_manutencao')} label="Histórico OS" small />
-          <MenuButton active={viewAtiva === 'hist_abastecimento'} onClick={() => handleNavegacao('OPERACIONAL', 'hist_abastecimento')} label="Histórico Abast." small />
-          <MenuButton active={viewAtiva === 'hist_jornada'} onClick={() => handleNavegacao('OPERACIONAL', 'hist_jornada')} label="Histórico Jornadas" small />
+          
+          <div className="h-4"></div> {/* Spacer */}
+          
+          <p className="px-3 text-[10px] font-bold text-gray-400 mb-1 font-sans">HISTÓRICOS</p>
+          <MenuButton active={viewAtiva === 'hist_manutencao'} onClick={() => handleNavegacao('OPERACIONAL', 'hist_manutencao')} label="Manutenções (OS)" small />
+          <MenuButton active={viewAtiva === 'hist_abastecimento'} onClick={() => handleNavegacao('OPERACIONAL', 'hist_abastecimento')} label="Abastecimentos" small />
+          <MenuButton active={viewAtiva === 'hist_jornada'} onClick={() => handleNavegacao('OPERACIONAL', 'hist_jornada')} label="Jornadas" small />
           <MenuButton active={viewAtiva === 'planos'} onClick={() => handleNavegacao('OPERACIONAL', 'planos')} label="Planos Preventivos" small />
         </div>
       </div>
 
       {/* Bloco Cadastros */}
       <div>
-        <h4 className={`text-xs font-bold uppercase tracking-wider mb-2 px-2 transition-colors ${categoriaAtiva === 'CADASTROS' ? 'text-primary' : 'text-gray-400'}`}>Cadastros</h4>
-        <div className="space-y-1">
+        <h4 className={`text-[10px] font-bold uppercase tracking-widest mb-3 px-3 font-sans transition-colors ${categoriaAtiva === 'CADASTROS' ? 'text-primary' : 'text-gray-400'}`}>
+          Cadastros
+        </h4>
+        <div className="space-y-0.5">
           <MenuButton active={viewAtiva === 'cad_veiculos'} onClick={() => handleNavegacao('CADASTROS', 'cad_veiculos')} icon={Icons.Cadastros} label="Veículos" />
-          <MenuButton active={viewAtiva === 'cad_pessoas'} onClick={() => handleNavegacao('CADASTROS', 'cad_pessoas')} label="Equipe & Acessos" />
-          <MenuButton active={viewAtiva === 'cad_cargos'} onClick={() => handleNavegacao('CADASTROS', 'cad_cargos')} label="Cargos & Treinamentos" />
-
-          <div className="pt-2 pb-1 border-t border-gray-100 my-1"></div>
-
-          <MenuButton active={viewAtiva === 'cad_parceiros'} onClick={() => handleNavegacao('CADASTROS', 'cad_parceiros')} label="Parceiros (Oficina/Posto)" highlight />
-          <MenuButton active={viewAtiva === 'cad_catalogo'} onClick={() => handleNavegacao('CADASTROS', 'cad_catalogo')} label="Catálogo (Serviços/Peças)" highlight />
+          <MenuButton active={viewAtiva === 'cad_pessoas'} onClick={() => handleNavegacao('CADASTROS', 'cad_pessoas')} label="Equipe" />
+          <MenuButton active={viewAtiva === 'cad_cargos'} onClick={() => handleNavegacao('CADASTROS', 'cad_cargos')} label="Cargos" />
+          <MenuButton active={viewAtiva === 'cad_parceiros'} onClick={() => handleNavegacao('CADASTROS', 'cad_parceiros')} label="Parceiros" />
+          <MenuButton active={viewAtiva === 'cad_catalogo'} onClick={() => handleNavegacao('CADASTROS', 'cad_catalogo')} label="Catálogo" />
         </div>
       </div>
 
-      {/* Botão Financeiro Destacado */}
-      <div className="mt-auto pt-4 border-t border-gray-100">
+      {/* Botão Financeiro */}
+      <div className="mt-auto">
         <Button
           variant="secondary"
           onClick={() => { setFinanceiroAberto(true); setMenuMobileAberto(false); }}
-          className="w-full justify-center py-3 shadow-md border-primary/20 text-primary bg-primary/5 hover:bg-primary/10"
+          className="w-full justify-start pl-3 py-2.5 shadow-none border border-transparent bg-brand-50 text-brand-700 hover:bg-brand-100 hover:border-brand-200 transition-colors"
+          icon={<span className="text-lg">💰</span>}
         >
-          💰 Inteligência Financeira
+          Relatório Financeiro
         </Button>
       </div>
     </div>
   );
 
   return (
-    <div className="flex flex-col md:flex-row gap-6 min-h-[80vh] relative">
+    // NOVO LAYOUT: H-SCREEN com Sidebar Fixa
+    <div className="flex h-screen bg-background overflow-hidden relative">
 
-      {/* 1. BOTÃO FLUTUANTE/TOPO PARA MOBILE (Só aparece em telas pequenas - md:hidden) */}
-      <div className="md:hidden mb-2">
-        <Button 
-          onClick={() => setMenuMobileAberto(true)} 
-          variant="secondary" 
-          className="w-full justify-between shadow-sm border border-gray-200" 
-          icon={<MenuIcon />}
-        >
-            Menu de Gestão
-        </Button>
-      </div>
-
-      {/* 2. SIDEBAR DESKTOP (Fixo, visível apenas em telas médias ou maiores - hidden md:flex) */}
-      <aside className="hidden md:flex w-64 bg-white rounded-2xl shadow-card border border-gray-100 p-4 flex-col gap-6 sticky top-6 h-fit shrink-0">
+      {/* SIDEBAR DESKTOP */}
+      <aside className="hidden md:flex w-64 bg-surface border-r border-gray-200 flex-col py-6 px-4 shrink-0 h-full overflow-y-auto">
+        <div className="mb-8 px-2 flex items-center gap-2">
+           {/* LOGO DA EMPRESA */}
+           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/30">KL</div>
+           <span className="font-bold text-gray-900 tracking-tight font-sans">Frota Inteligente</span>
+        </div>
         <MenuLinks />
       </aside>
 
-      {/* 3. SIDEBAR MOBILE (Overlay / Gaveta) */}
-      {/* Fica invisível por padrão, só renderiza se menuMobileAberto for true */}
+      {/* HEADER MOBILE */}
+      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-surface border-b border-gray-200 z-40 flex items-center justify-between px-4">
+         <div className="flex items-center gap-2">
+           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm">KL</div>
+           <span className="font-bold text-gray-900 font-sans">Frota</span>
+         </div>
+         <button onClick={() => setMenuMobileAberto(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+            <MenuIcon />
+         </button>
+      </div>
+
+      {/* SIDEBAR MOBILE (DRAWER) */}
       {menuMobileAberto && (
-        <div className="fixed inset-0 z-[60] md:hidden">
-          {/* Fundo escuro (Backdrop) que fecha o menu ao clicar fora */}
-          <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" 
-            onClick={() => setMenuMobileAberto(false)}
-          ></div>
-          
-          {/* O Menu em si (Desliza da esquerda) */}
-          <aside className="absolute inset-y-0 left-0 w-[85%] max-w-xs bg-white shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-left duration-300">
-            <div className="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-                <span className="font-bold text-lg text-gray-800">Menu de Gestão</span>
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={() => setMenuMobileAberto(false)} />
+          <aside className="absolute inset-y-0 left-0 w-[80%] max-w-xs bg-surface shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-left duration-300">
+            <div className="flex justify-between items-center mb-8">
+                <span className="font-bold text-lg text-gray-900 font-sans">Menu</span>
                 <button onClick={() => setMenuMobileAberto(false)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
                     <CloseIcon />
                 </button>
@@ -218,20 +208,17 @@ export function AdminDashboard({
         </div>
       )}
 
-      {/* 4. ÁREA DE CONTEÚDO */}
-      {/* max-w-full e overflow-hidden impedem que o conteúdo "vaze" lateralmente */}
-      <main className="flex-1 bg-white rounded-2xl shadow-card border border-gray-100 p-4 sm:p-6 min-h-[600px] w-full max-w-full overflow-x-hidden animate-in fade-in slide-in-from-bottom-2 duration-500">
-        {renderContent()}
+      {/* ÁREA DE CONTEÚDO SCROLLÁVEL */}
+      <main className="flex-1 overflow-y-auto bg-background p-4 sm:p-8 pt-20 md:pt-8 w-full">
+        <div className="max-w-[1600px] mx-auto min-h-full pb-10">
+           {renderContent()}
+        </div>
       </main>
 
       {/* MODAIS */}
       {financeiroAberto && (
-        <ModalRelatorioFinanceiro
-          onClose={() => setFinanceiroAberto(false)}
-          veiculos={veiculos}
-        />
+        <ModalRelatorioFinanceiro onClose={() => setFinanceiroAberto(false)} veiculos={veiculos} />
       )}
-
       {modalServicosOpen && (
         <ModalGerenciarServicos onClose={() => setModalServicosOpen(false)} />
       )}
@@ -239,19 +226,26 @@ export function AdminDashboard({
   );
 }
 
-// Componente auxiliar de botão do menu (Mantido)
+// Botão de Menu com Design System "Clean Industrial"
 function MenuButton({ active, onClick, icon, label, small, highlight }: any) {
   return (
     <button
       onClick={onClick}
       className={`
-        w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all duration-200
-        ${active ? 'bg-primary text-white shadow-md' : 'text-gray-600 hover:bg-gray-50'}
-        ${small ? 'text-xs pl-4' : 'text-sm font-medium'}
-        ${highlight && !active ? 'text-blue-600 font-bold bg-blue-50/50 hover:bg-blue-50' : ''}
+        w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all duration-200 group font-sans
+        ${active 
+          ? 'bg-primary text-white shadow-md shadow-primary/20 font-medium' 
+          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
+        ${small ? 'text-xs pl-9' : 'text-sm'}
+        ${highlight && !active ? 'text-blue-700 bg-blue-50/50 hover:bg-blue-50 font-medium' : ''}
       `}
     >
-      {icon && <span className={`${active ? 'text-white' : 'text-gray-400'}`}>{icon}</span>}
+      {/* Ícone com cor dinâmica */}
+      {icon && (
+        <span className={`transition-colors ${active ? 'text-white' : 'text-gray-400 group-hover:text-primary'}`}>
+          {icon}
+        </span>
+      )}
       {label}
     </button>
   );
