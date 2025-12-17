@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { Button } from './ui/Button';
-import { Input } from './ui/Input';
 import { toast } from 'sonner';
 
 interface ItemAbastecimento {
