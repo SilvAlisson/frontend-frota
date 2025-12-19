@@ -77,7 +77,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
     const fetchUsuario = async () => {
       setLoadingData(true);
       try {
-        const { data: user } = await api.get(`/user/${userId}`);
+        const { data: user } = await api.get(`/users/${userId}`);
         const roleValida = ROLES.includes(user.role as any) ? (user.role as typeof ROLES[number]) : 'ENCARREGADO';
 
         setFotoAtualUrl(user.fotoUrl || null); // Carrega foto existente

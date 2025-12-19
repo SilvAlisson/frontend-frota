@@ -107,7 +107,7 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
         const params: Record<string, string | number> = { ano, mes };
         if (veiculoIdFiltro) params.veiculoId = veiculoIdFiltro;
 
-        const response = await api.get('/relatorio/sumario', { params });
+        const response = await api.get('/relatorios/sumario', { params });
         setKpis(response.data.kpis as KpiData);
 
       } catch (err) {

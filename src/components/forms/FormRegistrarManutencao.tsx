@@ -167,7 +167,7 @@ export function FormRegistrarManutencao({
     const fetchInfoVeiculo = async () => {
       try {
         setUltimoKmRegistrado(0); // Feedback visual imediato
-        const { data } = await api.get<Veiculo>(`/veiculo/${veiculoIdSelecionado}`);
+        const { data } = await api.get<Veiculo>(`/veiculos/${veiculoIdSelecionado}`);
         if (isMounted) {
           setUltimoKmRegistrado(data.ultimoKm || 0);
         }

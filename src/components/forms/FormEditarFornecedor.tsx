@@ -61,7 +61,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
 
     const fetchDados = async () => {
       try {
-        const { data } = await api.get(`/fornecedor/${fornecedorId}`);
+        const { data } = await api.get(`/fornecedores/${fornecedorId}`);
 
         const tipoValido = tiposFornecedor.includes(data.tipo)
           ? data.tipo

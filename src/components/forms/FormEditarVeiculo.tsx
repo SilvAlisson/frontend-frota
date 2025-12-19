@@ -82,7 +82,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
     const fetchVeiculo = async () => {
       setLoadingData(true);
       try {
-        const { data: veiculo } = await api.get<Veiculo>(`/veiculo/${veiculoId}`);
+        const { data: veiculo } = await api.get<Veiculo>(`/veiculos/${veiculoId}`);
 
         reset({
           placa: veiculo.placa,

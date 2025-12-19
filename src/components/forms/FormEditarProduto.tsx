@@ -59,7 +59,7 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
     const fetchProduto = async () => {
       setLoadingData(true);
       try {
-        const { data } = await api.get(`/produto/${produtoId}`);
+        const { data } = await api.get(`/produtos/${produtoId}`);
 
         // Validação defensiva do tipo vindo do backend
         const tipoValido = tiposDeProduto.includes(data.tipo as any)
