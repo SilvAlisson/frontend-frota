@@ -36,8 +36,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   const { data: usuarios = [], isLoading } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
-      // CORREÇÃO: Alterado de /user para /users (Plural)
-      const response = await api.get('/users');
+      const response = await api.get('/user');
       return response.data;
     },
     staleTime: 1000 * 60 * 5,
@@ -45,7 +44,6 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      // CORREÇÃO: Alterado de /user para /users (Plural)
       await api.delete(`/users/${id}`);
     },
     onSuccess: () => {
@@ -77,7 +75,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
     // Confirmação para evitar resetar o token de alguém por engano
     if (!window.confirm(`Gerar um novo QR Code para ${user.nome}? O anterior deixará de funcionar.`)) return;
 
-    const promise = api.post(`/auth/users/${user.id}/generate-token`);
+    const promise = api.post(`/auth/user/${user.id}/generate-token`);
 
     toast.promise(promise, {
       loading: 'Gerando QR Code...',

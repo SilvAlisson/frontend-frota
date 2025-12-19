@@ -63,7 +63,7 @@ export function RankingOperadores({ }: RankingProps) {
       setLoading(true);
       setError('');
       try {
-        const response = await api.get('/relatorios/ranking-operadores', {
+        const response = await api.get('/relatorios/ranking', {
           params: { ano, mes }
         });
         setRanking(response.data);
