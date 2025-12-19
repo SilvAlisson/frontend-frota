@@ -36,7 +36,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   const { data: usuarios = [], isLoading } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
-      const response = await api.get('/user');
+      const response = await api.get('/users');
       return response.data;
     },
     staleTime: 1000 * 60 * 5,
