@@ -70,9 +70,9 @@ export function ModalConfirmacaoFoto({
       // 3. Prepare Payload
       let dadosCompletos = { ...dadosJornada };
 
-      if (apiEndpoint.includes('abastecimento')) {
+      if (apiEndpoint.includes('abastecimentos')) {
         dadosCompletos.fotoNotaFiscalUrl = fotoUrl;
-      } else if (apiEndpoint.includes('ordem-servico')) {
+      } else if (apiEndpoint.includes('ordens-servico')) {
         dadosCompletos.fotoComprovanteUrl = fotoUrl;
       } else if (apiMethod === 'POST') { // Iniciar Jornada
         dadosCompletos.fotoInicioUrl = fotoUrl;

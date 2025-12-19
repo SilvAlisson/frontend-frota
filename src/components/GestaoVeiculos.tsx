@@ -60,7 +60,7 @@ export function GestaoVeiculos() {
     if (!window.confirm("ATENÇÃO: Remover este veículo apagará todo o histórico associado. Continuar?")) return;
 
     setDeletingId(veiculoId);
-    const promise = api.delete(`/veiculo/${veiculoId}`);
+    const promise = api.delete(`/veiculos/${veiculoId}`);
 
     toast.promise(promise, {
       loading: 'Removendo...',

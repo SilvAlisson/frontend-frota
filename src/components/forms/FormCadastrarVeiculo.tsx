@@ -92,7 +92,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
       vencimentoCipp: data.vencimentoCipp ? new Date(data.vencimentoCipp).toISOString() : null,
     };
 
-    const promise = api.post('/veiculo', payload);
+    const promise = api.post('/veiculos', payload);
 
     toast.promise(promise, {
       loading: 'Cadastrando equipamento na frota...',

@@ -77,7 +77,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
     // Confirmação para evitar resetar o token de alguém por engano
     if (!window.confirm(`Gerar um novo QR Code para ${user.nome}? O anterior deixará de funcionar.`)) return;
 
-    const promise = api.post(`/auth/user/${user.id}/generate-token`);
+    const promise = api.post(`/auth/users/${user.id}/generate-token`);
 
     toast.promise(promise, {
       loading: 'Gerando QR Code...',

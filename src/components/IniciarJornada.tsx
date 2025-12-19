@@ -225,7 +225,7 @@ export function IniciarJornada({
           titulo="Foto do Painel (Saída)"
           kmParaConfirmar={parseDecimal(kmInicio)}
           dadosJornada={formDataParaModal}
-          apiEndpoint="/jornada/iniciar"
+          apiEndpoint="/jornadas/iniciar"
           apiMethod="POST"
           jornadaId={null}
           onClose={() => setModalAberto(false)}

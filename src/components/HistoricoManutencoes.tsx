@@ -78,7 +78,7 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
     if (!window.confirm(`Tem certeza que quer REMOVER permanentemente este registro?`)) return;
 
     setDeletingId(id);
-    const promise = api.delete(`/ordem-servico/${id}`);
+    const promise = api.delete(`/ordens-servico/${id}`);
 
     toast.promise(promise, {
       loading: 'Removendo OS...',

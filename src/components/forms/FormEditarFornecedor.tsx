@@ -96,7 +96,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
       tipo: data.tipo,
     };
 
-    const promise = api.put(`/fornecedor/${fornecedorId}`, payload);
+    const promise = api.put(`/fornecedores/${fornecedorId}`, payload);
 
     toast.promise(promise, {
       loading: 'Atualizando cadastro...',

@@ -158,7 +158,7 @@ export function FinalizarJornada({
           titulo="Comprovante Final"
           kmParaConfirmar={dadosValidacao.kmFim}
           jornadaId={jornadaParaFinalizar.id}
-          apiEndpoint={`/jornada/finalizar/:jornadaId`}
+          apiEndpoint={`/jornadas/finalizar/:jornadaId`}
           apiMethod="PUT"
           dadosJornada={{
             kmFim: dadosValidacao.kmFim,

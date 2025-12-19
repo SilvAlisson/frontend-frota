@@ -70,7 +70,7 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
         if (!window.confirm("ATENÇÃO: Tem certeza que deseja excluir este registro histórico?")) return;
 
         setDeletingId(id);
-        const promise = api.delete(`/jornada/${id}`);
+        const promise = api.delete(`/jornadas/${id}`);
 
         toast.promise(promise, {
             loading: 'Removendo registro...',

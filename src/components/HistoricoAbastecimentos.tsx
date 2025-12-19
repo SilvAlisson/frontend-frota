@@ -88,7 +88,7 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
     if (!window.confirm(`Tem certeza que quer REMOVER este registro?`)) return;
 
     setDeletingId(id);
-    const promise = api.delete(`/abastecimento/${id}`);
+    const promise = api.delete(`/abastecimentos/${id}`);
 
     toast.promise(promise, {
       loading: 'Removendo...',

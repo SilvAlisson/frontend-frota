@@ -156,7 +156,7 @@ export function JornadaCard({
           titulo="Comprovante Final"
           kmParaConfirmar={dadosValidacao.kmFim}
           jornadaId={jornada.id}
-          apiEndpoint={`/jornada/finalizar/:jornadaId`}
+          apiEndpoint={`/jornadas/finalizar/:jornadaId`}
           apiMethod="PUT"
           dadosJornada={{
             kmFim: dadosValidacao.kmFim,

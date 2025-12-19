@@ -66,7 +66,7 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormCadastrar
       tipo: data.tipo,
     };
 
-    const promise = api.post('/fornecedor', payload);
+    const promise = api.post('/fornecedores', payload);
 
     toast.promise(promise, {
       loading: 'Cadastrando parceiro...',

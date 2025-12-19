@@ -77,7 +77,7 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
     // --- ADICIONAR ---
     const onSubmit = async (data: ServicoFormInput) => {
         try {
-            const response = await api.post('/produto', data);
+            const response = await api.post('/produtos', data);
             toast.success(`${data.tipo} adicionado!`);
 
             reset();
@@ -102,7 +102,7 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
 
         setDeletingId(id);
         try {
-            await api.delete(`/produto/${id}`);
+            await api.delete(`/produtos/${id}`);
             setServicos(prev => prev.filter(p => p.id !== id));
             toast.success('Item removido.');
         } catch (err) {

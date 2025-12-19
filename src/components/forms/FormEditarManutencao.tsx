@@ -117,7 +117,7 @@ export function FormEditarManutencao({
     };
 
     try {
-      await api.put(`/ordem-servico/${osParaEditar.id}`, payload);
+      await api.put(`/ordens-servico/${osParaEditar.id}`, payload);
       toast.success("Manutenção atualizada com sucesso!");
       onSuccess();
     } catch (error) {

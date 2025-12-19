@@ -28,7 +28,7 @@ export function MinhaEquipe({ usuarios, jornadasAbertas }: MinhaEquipeProps) {
   const handleGerarQrCode = async (user: User) => {
     setLoadingId(user.id);
 
-    const promise = api.post(`/auth/user/${user.id}/generate-token`);
+    const promise = api.post(`/auth/users/${user.id}/generate-token`);
 
     toast.promise(promise, {
       loading: 'Gerando código de acesso...',

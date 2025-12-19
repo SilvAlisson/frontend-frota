@@ -407,7 +407,7 @@ export function RegistrarAbastecimento({
         <ModalConfirmacaoFoto
           titulo="Envie a foto da nota fiscal"
           dadosJornada={formDataParaModal}
-          apiEndpoint="/abastecimento"
+          apiEndpoint="/abastecimentos"
           apiMethod="POST"
           kmParaConfirmar={null}
           jornadaId={null}

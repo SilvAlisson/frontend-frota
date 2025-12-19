@@ -51,7 +51,7 @@ export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: Jornada
       return;
     }
 
-    const promise = api.put(`/jornada/finalizar/${jornada.id}`, {
+    const promise = api.put(`/jornadas/finalizar/${jornada.id}`, {
       kmFim: kmFimFloat,
       observacoes: `[Finalizado manualmente pelo Gestor]`
     });
@@ -74,7 +74,7 @@ export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: Jornada
     if (!window.confirm("Tem certeza que deseja excluir esta jornada em andamento?")) return;
 
     setDeleting(true);
-    const promise = api.delete(`/jornada/${jornada.id}`);
+    const promise = api.delete(`/jornadas/${jornada.id}`);
 
     toast.promise(promise, {
       loading: 'Excluindo jornada...',

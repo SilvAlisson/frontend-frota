@@ -486,7 +486,7 @@ export function FormRegistrarManutencao({
         <ModalConfirmacaoFoto
           titulo={`Comprovante - ${formDataParaModal.tipo}`}
           dadosJornada={formDataParaModal}
-          apiEndpoint="/ordem-servico"
+          apiEndpoint="/ordens-servico"
           apiMethod="POST"
           kmParaConfirmar={null}
           jornadaId={null}

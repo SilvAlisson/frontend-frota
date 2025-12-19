@@ -53,7 +53,7 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormCadastrarPro
   const onSubmit = async (data: ProdutoForm) => {
     setSuccessMsg('');
     try {
-      await api.post('/produto', {
+      await api.post('/produtos', {
         nome: data.nome,
         tipo: data.tipo,
         unidadeMedida: data.unidadeMedida,
