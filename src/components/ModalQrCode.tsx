@@ -6,11 +6,12 @@ import { toast } from 'sonner';
 interface ModalQrCodeProps {
   token: string;
   nomeUsuario: string;
-  fotoUrl?: string | null; // Nova prop opcional
+  fotoUrl?: string | null;
+  role: string;
   onClose: () => void;
 }
 
-export function ModalQrCode({ token, nomeUsuario, fotoUrl, onClose }: ModalQrCodeProps) {
+export function ModalQrCode({ token, nomeUsuario, fotoUrl, role, onClose }: ModalQrCodeProps) {
   const loginUrl = `${window.location.origin}/login?magicToken=${token}`;
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -67,6 +68,13 @@ export function ModalQrCode({ token, nomeUsuario, fotoUrl, onClose }: ModalQrCod
     }
   };
 
+  // Lógica para definir o texto do cargo
+  const getTituloCracha = (roleUser: string) => {
+    if (roleUser === 'ENCARREGADO') return 'Encarregado Operacional';
+    // Padrão para OPERADOR e outros
+    return 'Operador de Equipamentos';
+  };
+
   return (
     <div
       className="fixed inset-0 z-[99] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300 print:bg-white"
@@ -116,8 +124,9 @@ export function ModalQrCode({ token, nomeUsuario, fotoUrl, onClose }: ModalQrCod
               </span>
             </h2>
 
+            {/* Título do Cargo Dinâmico */}
             <div className="bg-blue-50 text-blue-700 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-blue-100 mb-6">
-              Operador de Equipamentos
+              {getTituloCracha(role)}
             </div>
 
             {/* QR Code */}

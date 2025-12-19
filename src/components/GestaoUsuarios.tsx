@@ -8,7 +8,6 @@ import { exportarParaExcel } from '../utils';
 import { Button } from './ui/Button';
 import { ModalTreinamentosUsuario } from './ModalTreinamentosUsuario';
 import { toast } from 'sonner';
-// Importação correta do tipo atualizado
 import type { User } from '../types';
 
 // Ícones
@@ -33,17 +32,15 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   const [nomeQr, setNomeQr] = useState('');
   const [fotoQr, setFotoQr] = useState<string | null | undefined>(null);
 
-  // QUERY: Listar Usuários
   const { data: usuarios = [], isLoading } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
       const response = await api.get('/user');
       return response.data;
     },
-    staleTime: 1000 * 60 * 5, // 5 min cache
+    staleTime: 1000 * 60 * 5,
   });
 
-  // MUTATION: Deletar
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       await api.delete(`/user/${id}`);
@@ -74,6 +71,9 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   };
 
   const handleGerarQrCode = async (user: User) => {
+    // Confirmação para evitar resetar o token de alguém por engano
+    if (!window.confirm(`Gerar um novo QR Code para ${user.nome}? O anterior deixará de funcionar.`)) return;
+
     const promise = api.post(`/auth/user/${user.id}/generate-token`);
 
     toast.promise(promise, {
@@ -89,6 +89,18 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
     });
   };
 
+  // Função para formatar o nome do cargo na interface (Visual)
+  const formatRole = (role: string) => {
+    const map: Record<string, string> = {
+      'ADMIN': 'Administrador',
+      'ENCARREGADO': 'Encarregado',
+      'OPERADOR': 'Operador',
+      'RH': 'RH',
+      'COORDENADOR': 'Coordenador'
+    };
+    return map[role] || role;
+  };
+
   const handleExportar = () => {
     if (usuarios.length === 0) return;
 
@@ -97,7 +109,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
         'Nome': u.nome,
         'Email': u.email,
         'Matrícula': u.matricula || '-',
-        'Função': u.role
+        'Função': formatRole(u.role) // Usa o nome formatado
       }));
       exportarParaExcel(dados, "Lista_Usuarios.xlsx");
       resolve(true);
@@ -224,7 +236,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                   {/* Badge de Função */}
                   <div className="mb-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border ${getRoleBadgeColor(user.role)}`}>
-                      {user.role}
+                      {formatRole(user.role)}
                     </span>
                     {user.matricula && (
                       <span className="ml-2 text-xs text-gray-400 font-mono">
@@ -244,7 +256,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                       icon={<IconeTreinamento />}
                     />
 
-                    {/* ATUALIZAÇÃO: Botão QR Code para OPERADOR e ENCARREGADO */}
+                    {/* Botão QR Code para OPERADOR e ENCARREGADO */}
                     {(user.role === 'OPERADOR' || user.role === 'ENCARREGADO') && (
                       <Button
                         variant="ghost"

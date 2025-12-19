@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -11,109 +11,115 @@ import { parseDecimal, formatKmVisual } from '../../utils';
 import { toast } from 'sonner';
 import type { Veiculo, Produto, Fornecedor } from '../../types';
 
-// Opções de "Alvo" da manutenção
+// --- TIPOS E CONSTANTES ---
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
-// --- SCHEMA ZOD V4 ---
+// Interface forte para o payload (Evita 'any')
+interface PayloadOrdemServico {
+  tipo: string;
+  veiculoId: string | null;
+  fornecedorId: string;
+  kmAtual: number | null;
+  data: string;
+  observacoes: string;
+  itens: { produtoId: string; quantidade: number; valorPorUnidade: number }[];
+}
+
+// --- SCHEMA ZOD ---
 const manutencaoSchema = z.object({
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
   alvo: z.enum(ALVOS_MANUTENCAO),
-
-  // KM agora é totalmente opcional no schema
   veiculoId: z.string().optional().nullable(),
   kmAtual: z.string().optional().nullable(),
-
-  // campo para CA (Controle de caixa)
   numeroCA: z.string().optional(),
-
-  fornecedorId: z.string({ error: "Fornecedor obrigatório" })
-    .min(1, { error: "Selecione o fornecedor" }),
-
-  data: z.string({ error: "Data obrigatória" })
-    .min(1, { error: "Data inválida" }),
-
+  fornecedorId: z.string({ error: "Fornecedor obrigatório" }).min(1, "Selecione o fornecedor"),
+  data: z.string({ error: "Data obrigatória" }).min(1, "Data inválida"),
   observacoes: z.string().optional(),
-
   itens: z.array(z.object({
-    produtoId: z.string({ error: "Item obrigatório" })
-      .min(1, { error: "Selecione o serviço/peça" }),
-
-    quantidade: z.coerce.number()
-      .min(0.01, { error: "Qtd inválida" }),
-
-    valorPorUnidade: z.coerce.number()
-      .min(0, { error: "Valor inválido" }),
-  })).min(1, { error: "Adicione pelo menos um item à OS" })
-})
-  .superRefine((data, ctx) => {
-    // Validação Condicional
-
-    if (data.alvo === 'VEICULO') {
-      if (!data.veiculoId) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Selecione o veículo",
-          path: ["veiculoId"]
-        });
-      }
-    }
-
-    if (data.alvo === 'OUTROS') {
-      if (!data.numeroCA) {
-        ctx.addIssue({
-          code: "custom",
-          message: "Informe o nº do CA",
-          path: ["numeroCA"]
-        });
-      }
-    }
-  });
+    produtoId: z.string({ error: "Item obrigatório" }).min(1, "Selecione o serviço/peça"),
+    quantidade: z.coerce.number().min(0.01, "Qtd inválida"),
+    valorPorUnidade: z.coerce.number().min(0, "Valor inválido"),
+  })).min(1, "Adicione pelo menos um item à OS")
+}).superRefine((data, ctx) => {
+  if (data.alvo === 'VEICULO' && !data.veiculoId) {
+    ctx.addIssue({ code: "custom", message: "Selecione o veículo", path: ["veiculoId"] });
+  }
+  if (data.alvo === 'OUTROS' && !data.numeroCA) {
+    ctx.addIssue({ code: "custom", message: "Informe o nº do CA", path: ["numeroCA"] });
+  }
+});
 
 type ManutencaoFormInput = z.input<typeof manutencaoSchema>;
 
 interface FormRegistrarManutencaoProps {
   veiculos: Veiculo[];
-  produtos: Produto[]; // Recebe produtos iniciais do pai
+  produtos: Produto[];
   fornecedores: Fornecedor[];
+  onSuccess?: () => void;
 }
+
+// --- COMPONENTE VISUAL: STEPPER ---
+const Stepper = ({ current, steps }: { current: number, steps: string[] }) => (
+  <div className="flex justify-between items-center mb-8 px-2">
+    {steps.map((label, index) => {
+      const stepNum = index + 1;
+      const isActive = stepNum === current;
+      const isCompleted = stepNum < current;
+
+      return (
+        <div key={stepNum} className="flex flex-col items-center relative z-10 w-1/3">
+          <div className={`
+            w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 border-2
+            ${isActive ? 'bg-primary text-white border-primary shadow-lg shadow-primary/30 scale-110' :
+              isCompleted ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-400 border-gray-200'}
+          `}>
+            {isCompleted ? '✓' : stepNum}
+          </div>
+          <span className={`text-[10px] mt-2 font-bold uppercase tracking-wider ${isActive ? 'text-primary' : 'text-gray-400'}`}>
+            {label}
+          </span>
+          {/* Linha de Conexão */}
+          {index !== steps.length - 1 && (
+            <div className={`absolute top-4 left-1/2 w-full h-[2px] -z-10 transition-colors duration-500 ${isCompleted ? 'bg-green-500' : 'bg-gray-100'}`} />
+          )}
+        </div>
+      );
+    })}
+  </div>
+);
 
 export function FormRegistrarManutencao({
   veiculos,
   produtos,
-  fornecedores
+  fornecedores,
+  onSuccess
 }: FormRegistrarManutencaoProps) {
 
+  const [step, setStep] = useState(1);
   const [modalAberto, setModalAberto] = useState(false);
-  const [modalServicosOpen, setModalServicosOpen] = useState(false); // Estado da Modal de Serviços
-  const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
+  const [modalServicosOpen, setModalServicosOpen] = useState(false);
+
+  // OTIMIZAÇÃO: Tipagem forte
+  const [formDataParaModal, setFormDataParaModal] = useState<PayloadOrdemServico | null>(null);
+
   const [ultimoKmRegistrado, setUltimoKmRegistrado] = useState<number>(0);
-
-  // Controle das Abas
   const [abaAtiva, setAbaAtiva] = useState<TipoManutencao>('CORRETIVA');
-
-  // Estado local para produtos (permite atualizar sem refresh da página)
   const [listaProdutos, setListaProdutos] = useState<Produto[]>(produtos);
 
-  // Sincroniza se a prop mudar externamente (boa prática)
-  useEffect(() => {
-    setListaProdutos(produtos);
-  }, [produtos]);
+  useEffect(() => { setListaProdutos(produtos); }, [produtos]);
 
-  // Filtra produtos usando a lista local (e não mais a prop direta)
-  const produtosManutencao = listaProdutos.filter(p =>
-    !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)
-  );
+  // OTIMIZAÇÃO: useMemo para evitar filtros desnecessários a cada render
+  const produtosManutencao = useMemo(() =>
+    listaProdutos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)),
+    [listaProdutos]);
 
-  // Filtro de Fornecedores por Aba
-  const fornecedoresFiltrados = fornecedores.filter(f => {
-    if (abaAtiva === 'CORRETIVA') {
-      // Na corretiva, removemos Posto e Lava Jato da lista
-      return !['POSTO', 'LAVA_JATO'].includes(f.tipo);
-    }
-    // Na preventiva, mostra todos (ou ajuste conforme necessidade)
-    return true;
-  });
+  const fornecedoresFiltrados = useMemo(() =>
+    fornecedores.filter(f => {
+      if (abaAtiva === 'CORRETIVA') return !['POSTO', 'LAVA_JATO'].includes(f.tipo);
+      return true;
+    }),
+    [fornecedores, abaAtiva]);
 
   const {
     register,
@@ -121,6 +127,7 @@ export function FormRegistrarManutencao({
     handleSubmit,
     watch,
     setValue,
+    trigger,
     reset,
     formState: { errors, isSubmitting }
   } = useForm<ManutencaoFormInput>({
@@ -135,22 +142,23 @@ export function FormRegistrarManutencao({
     mode: 'onBlur'
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control,
-    name: "itens"
-  });
+  const { fields, append, remove } = useFieldArray({ control, name: "itens" });
 
-  // Sincroniza a aba com o valor do formulário
-  useEffect(() => {
-    setValue('tipo', abaAtiva);
-  }, [abaAtiva, setValue]);
+  // OTIMIZAÇÃO: Função de troca de aba sem useEffect (Render único)
+  const handleTrocaAba = (novaAba: TipoManutencao) => {
+    setAbaAtiva(novaAba);
+    setValue('tipo', novaAba);
+    setValue('fornecedorId', ''); // Opcional: limpa fornecedor pois a lista mudou
+  };
 
   const alvoSelecionado = watch('alvo');
   const veiculoIdSelecionado = watch('veiculoId');
   const itensObservados = watch('itens');
 
-  // Busca último KM para referência (apenas informativo agora)
+  // OTIMIZAÇÃO: useEffect com Cleanup para evitar Race Condition
   useEffect(() => {
+    let isMounted = true;
+
     if (alvoSelecionado !== 'VEICULO' || !veiculoIdSelecionado) {
       setUltimoKmRegistrado(0);
       return;
@@ -158,47 +166,68 @@ export function FormRegistrarManutencao({
 
     const fetchInfoVeiculo = async () => {
       try {
+        setUltimoKmRegistrado(0); // Feedback visual imediato
         const { data } = await api.get<Veiculo>(`/veiculo/${veiculoIdSelecionado}`);
-        setUltimoKmRegistrado(data.ultimoKm || 0);
+        if (isMounted) {
+          setUltimoKmRegistrado(data.ultimoKm || 0);
+        }
       } catch (err) {
         console.error("Erro ao buscar KM:", err);
       }
     };
     fetchInfoVeiculo();
+
+    return () => { isMounted = false; };
   }, [veiculoIdSelecionado, alvoSelecionado]);
 
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue("kmAtual", formatKmVisual(e.target.value));
   };
 
+  // --- LÓGICA DE NAVEGAÇÃO ENTRE PASSOS ---
+  const nextStep = async () => {
+    let isValid = false;
+
+    if (step === 1) {
+      // Valida apenas campos do contexto inicial
+      isValid = await trigger(['alvo', 'veiculoId', 'fornecedorId', 'data', 'kmAtual', 'numeroCA', 'tipo']);
+    } else if (step === 2) {
+      // Valida se há itens e se estão preenchidos
+      isValid = await trigger('itens');
+    }
+
+    if (isValid) setStep(s => s + 1);
+  };
+
+  const prevStep = () => setStep(s => s - 1);
+
   const onValidSubmit = async (data: ManutencaoFormInput) => {
     let kmInputFloat = null;
-
     if (data.alvo === 'VEICULO' && data.kmAtual) {
       kmInputFloat = parseDecimal(data.kmAtual);
-      // Aviso sutil se KM for menor, mas permite salvar (flexibilidade)
       if (kmInputFloat < ultimoKmRegistrado && ultimoKmRegistrado > 0) {
         toast.warning(`Nota: KM informado é menor que o último (${ultimoKmRegistrado}).`);
       }
     }
 
-    // Formata observação incluindo o CA se houver
     let obsFinal = data.observacoes || '';
     if (data.alvo === 'OUTROS' && data.numeroCA) {
       obsFinal = `[CA: ${data.numeroCA}] ${obsFinal}`;
     }
 
-    const payloadFinal = {
+    const dataISOComMeioDia = new Date(data.data + 'T12:00:00').toISOString();
+
+    const payloadFinal: PayloadOrdemServico = {
       tipo: data.tipo,
-      veiculoId: data.alvo === 'VEICULO' ? data.veiculoId : null,
+      veiculoId: data.alvo === 'VEICULO' ? (data.veiculoId || null) : null,
       fornecedorId: data.fornecedorId,
       kmAtual: kmInputFloat,
-      data: new Date(data.data).toISOString(),
+      data: dataISOComMeioDia,
       observacoes: obsFinal,
       itens: data.itens.map(item => ({
         produtoId: item.produtoId,
-        quantidade: item.quantidade,
-        valorPorUnidade: item.valorPorUnidade
+        quantidade: Number(item.quantidade),
+        valorPorUnidade: Number(item.valorPorUnidade)
       }))
     };
 
@@ -207,10 +236,11 @@ export function FormRegistrarManutencao({
   };
 
   const handleModalSuccess = () => {
-    toast.success('Ordem de Serviço registrada com sucesso!');
+    toast.success('Ordem de Serviço registrada!');
     setModalAberto(false);
     setFormDataParaModal(null);
 
+    // Reset completo
     reset({
       alvo: 'VEICULO',
       veiculoId: '',
@@ -223,252 +253,232 @@ export function FormRegistrarManutencao({
       itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: 0 }]
     });
     setUltimoKmRegistrado(0);
+    setStep(1); // Volta para o passo 1
+
+    if (onSuccess) onSuccess();
   };
 
-  const totalGeral = (itensObservados || []).reduce((acc, item) => {
-    const qtd = Number(item.quantidade) || 0;
-    const val = Number(item.valorPorUnidade) || 0;
-    return acc + (qtd * val);
-  }, 0);
+  const totalGeral = useMemo(() => (itensObservados || []).reduce((acc, item) => {
+    return acc + ((Number(item.quantidade) || 0) * (Number(item.valorPorUnidade) || 0));
+  }, 0), [itensObservados]);
 
   return (
     <>
-      <div className="bg-white p-6 rounded-card shadow-card border border-gray-100 w-full">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-card border border-gray-100 w-full animate-in fade-in duration-500">
 
-        {/* HEADER ABAS */}
-        <div className="flex mb-6 border-b border-gray-200">
+        {/* TABS DE TIPO */}
+        <div className="flex mb-8 bg-gray-50 p-1 rounded-xl">
           <button
             type="button"
-            onClick={() => setAbaAtiva('CORRETIVA')}
-            className={`flex-1 pb-3 text-sm font-bold uppercase tracking-wide transition-colors ${abaAtiva === 'CORRETIVA'
-              ? 'text-red-600 border-b-2 border-red-600'
-              : 'text-gray-400 hover:text-gray-600'
+            onClick={() => handleTrocaAba('CORRETIVA')}
+            className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${abaAtiva === 'CORRETIVA' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
               }`}
           >
-            Corretiva / Reparo
+            Corretiva
           </button>
           <button
             type="button"
-            onClick={() => setAbaAtiva('PREVENTIVA')}
-            className={`flex-1 pb-3 text-sm font-bold uppercase tracking-wide transition-colors ${abaAtiva === 'PREVENTIVA'
-              ? 'text-blue-600 border-b-2 border-blue-600'
-              : 'text-gray-400 hover:text-gray-600'
+            onClick={() => handleTrocaAba('PREVENTIVA')}
+            className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${abaAtiva === 'PREVENTIVA' ? 'bg-white text-primary shadow-sm' : 'text-gray-400 hover:text-gray-600'
               }`}
           >
             Preventiva
           </button>
         </div>
 
+        <Stepper current={step} steps={['Contexto', 'Serviços', 'Revisão']} />
+
         <form onSubmit={handleSubmit(onValidSubmit)} className="space-y-6">
 
-          {/* SELETOR DE ALVO */}
-          <div className="flex p-1 bg-gray-50 rounded-lg border border-gray-200">
-            <button
-              type="button"
-              onClick={() => setValue('alvo', 'VEICULO')}
-              className={`flex-1 py-2 text-xs font-bold rounded transition-all ${alvoSelecionado === 'VEICULO'
-                ? 'bg-white shadow-sm text-gray-800'
-                : 'text-gray-400 hover:bg-gray-100'}`}
-            >
-              Veículo
-            </button>
-            <button
-              type="button"
-              onClick={() => setValue('alvo', 'OUTROS')}
-              className={`flex-1 py-2 text-xs font-bold rounded transition-all ${alvoSelecionado === 'OUTROS'
-                ? 'bg-white shadow-sm text-gray-800'
-                : 'text-gray-400 hover:bg-gray-100'}`}
-            >
-              Caixa / Equipamento
-            </button>
-          </div>
+          {/* --- PASSO 1: CONTEXTO --- */}
+          {step === 1 && (
+            <div className="space-y-5 animate-in slide-in-from-right-8 duration-300">
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="flex gap-4">
+                <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded transition-colors">
+                  <input
+                    type="radio"
+                    value="VEICULO"
+                    {...register('alvo')}
+                    className="accent-primary"
+                    onClick={() => setValue('alvo', 'VEICULO')}
+                  />
+                  <span className="text-sm font-medium text-gray-700">Veículo</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded transition-colors">
+                  <input
+                    type="radio"
+                    value="OUTROS"
+                    {...register('alvo')}
+                    className="accent-primary"
+                    onClick={() => setValue('alvo', 'OUTROS')}
+                  />
+                  <span className="text-sm font-medium text-gray-700">Equipamento/Caixa</span>
+                </label>
+              </div>
 
-            {alvoSelecionado === 'VEICULO' ? (
-              <div className="md:col-span-2 space-y-4">
-                <div className="animate-in fade-in slide-in-from-top-1">
-                  <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Veículo</label>
+              {alvoSelecionado === 'VEICULO' ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Veículo</label>
+                    <select
+                      {...register("veiculoId")}
+                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none appearance-none font-medium text-gray-700 text-sm"
+                    >
+                      <option value="">Selecione...</option>
+                      {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>)}
+                    </select>
+                    {errors.veiculoId && <span className="text-xs text-red-500 mt-1 block">{errors.veiculoId.message}</span>}
+                  </div>
+                  <div>
+                    <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">KM Atual</label>
+                    <Input
+                      {...register("kmAtual")}
+                      onChange={(e) => { register("kmAtual").onChange(e); handleKmChange(e); }}
+                      placeholder={ultimoKmRegistrado > 0 ? `Ref: ${ultimoKmRegistrado}` : "0"}
+                      error={errors.kmAtual?.message}
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Identificação (CA)</label>
+                  <Input {...register("numeroCA")} placeholder="Nº do CA ou Série" error={errors.numeroCA?.message} autoFocus />
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Oficina / Fornecedor</label>
                   <select
-                    {...register("veiculoId")}
-                    className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none"
-                    disabled={isSubmitting}
+                    {...register("fornecedorId")}
+                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none appearance-none font-medium text-gray-700 text-sm"
                   >
                     <option value="">Selecione...</option>
-                    {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>)}
+                    {fornecedoresFiltrados.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
                   </select>
-                  {errors.veiculoId && <span className="text-xs text-error mt-1 block">{errors.veiculoId.message}</span>}
+                  {errors.fornecedorId && <span className="text-xs text-red-500 mt-1 block">{errors.fornecedorId.message}</span>}
                 </div>
-
-                <div className="animate-in fade-in slide-in-from-top-1">
-                  <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">KM Atual (Opcional)</label>
-                  <Input
-                    {...register("kmAtual")}
-                    onChange={(e) => {
-                      register("kmAtual").onChange(e);
-                      handleKmChange(e);
-                    }}
-                    placeholder={ultimoKmRegistrado > 0 ? `Ref: ${ultimoKmRegistrado} km` : "Ex: 50.000"}
-                    error={errors.kmAtual?.message}
-                    disabled={isSubmitting}
-                  />
+                <div>
+                  <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Data</label>
+                  <Input type="date" {...register("data")} error={errors.data?.message} />
                 </div>
               </div>
-            ) : (
-              <div className="md:col-span-2 animate-in fade-in slide-in-from-top-1">
-                {/* Pergunta do CA */}
-                <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Qual o CA da Caixa?</label>
-                <Input
-                  {...register("numeroCA")}
-                  placeholder="Digite o número do CA ou Identificação"
-                  error={errors.numeroCA?.message}
-                  disabled={isSubmitting}
-                  autoFocus
-                />
-                <p className="text-[10px] text-gray-400 mt-1">Identificação obrigatória para reparo de caixas.</p>
-              </div>
-            )}
-
-            <div className="md:col-span-2">
-              <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">
-                {abaAtiva === 'CORRETIVA' ? 'Oficina de Reparo' : 'Fornecedor / Oficina'}
-              </label>
-              <select
-                {...register("fornecedorId")}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent outline-none appearance-none"
-                disabled={isSubmitting}
-              >
-                <option value="">Selecione...</option>
-                {fornecedoresFiltrados.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-              </select>
-              {errors.fornecedorId && <span className="text-xs text-error mt-1 block">{errors.fornecedorId.message}</span>}
             </div>
+          )}
 
-            <div className="md:col-span-2">
-              <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Data do Serviço</label>
-              <Input type="date" {...register("data")} error={errors.data?.message} disabled={isSubmitting} />
-            </div>
-          </div>
-
-          {/* LISTA DE ITENS */}
-          <div className="bg-gray-50/50 p-4 rounded-xl border border-gray-200">
-            <div className="flex justify-between items-center mb-3">
-              <div className="flex items-center gap-2">
-                <h4 className="text-xs font-bold text-gray-500 uppercase">Peças e Serviços</h4>
-                {/* BOTÃO DE ENGRENAGEM PARA GERENCIAR SERVIÇOS */}
+          {/* --- PASSO 2: ITENS --- */}
+          {step === 2 && (
+            <div className="space-y-4 animate-in slide-in-from-right-8 duration-300">
+              <div className="flex justify-between items-center">
+                <h4 className="text-sm font-bold text-gray-700">Lista de Serviços</h4>
                 <button
                   type="button"
                   onClick={() => setModalServicosOpen(true)}
-                  className="text-gray-400 hover:text-blue-600 hover:bg-blue-50 p-1.5 rounded-full transition-all border border-transparent hover:border-blue-100"
-                  title="Gerenciar Catálogo de Serviços/Peças"
+                  className="text-xs text-primary font-bold hover:underline"
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4">
-                    <path fillRule="evenodd" d="M7.84 1.804A1 1 0 018.82 1h2.36a1 1 0 01.98.804l.331 1.652a6.993 6.993 0 011.929 1.115l1.598-.54a1 1 0 011.186.447l1.18 2.044a1 1 0 01-.205 1.251l-1.267 1.113a7.047 7.047 0 010 2.228l1.267 1.113a1 1 0 01.206 1.25l-1.18 2.045a1 1 0 01-1.187.447l1.598.54a6.993 6.993 0 01-1.929 1.115l-.33 1.652a1 1 0 01-.98.804H8.82a1 1 0 01-.98-.804l-.331-1.652a6.993 6.993 0 01-1.929-1.115l-1.598.54a1 1 0 01-1.186-.447l-1.18-2.044a1 1 0 01.205-1.251l1.267-1.114a7.05 7.05 0 010-2.227L1.821 7.773a1 1 0 01-.206-1.25l1.18-2.045a1 1 0 011.187-.447l1.598.54A6.993 6.993 0 017.51 3.456l.33-1.652zM10 13a3 3 0 100-6 3 3 0 000 6z" clipRule="evenodd" />
-                  </svg>
+                  + Novo Item no Catálogo
                 </button>
               </div>
-              <span className="text-[10px] bg-white px-2 py-1 rounded border border-gray-200 text-gray-400">{fields.length} itens</span>
-            </div>
 
-            <div className="space-y-3">
-              {fields.map((field, index) => {
-                const item = itensObservados[index];
-                const subtotal = (Number(item?.quantidade) || 0) * (Number(item?.valorPorUnidade) || 0);
-                const errItem = errors.itens?.[index];
+              <div className="bg-gray-50 rounded-xl p-2 space-y-2 max-h-[350px] overflow-y-auto">
+                {fields.map((field, index) => {
+                  const errItem = errors.itens?.[index];
+                  return (
+                    <div key={field.id} className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm relative group">
+                      {fields.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => remove(index)}
+                          className="absolute -top-2 -right-2 bg-red-100 text-red-500 p-1 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                        </button>
+                      )}
 
-                return (
-                  <div key={field.id} className="grid grid-cols-12 gap-2 items-start bg-white p-3 rounded-lg border border-gray-200 shadow-sm">
-                    <div className="col-span-12 sm:col-span-6">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Item</label>
-                      <select
-                        {...register(`itens.${index}.produtoId`)}
-                        className={`w-full p-2 text-sm border rounded-md focus:ring-2 outline-none appearance-none bg-white ${errItem?.produtoId ? 'border-red-300' : 'border-gray-200 focus:border-primary'}`}
-                        disabled={isSubmitting}
-                      >
-                        <option value="">Selecione...</option>
-                        {/* Usa a lista local 'produtosManutencao' que atualiza sem refresh */}
-                        {produtosManutencao.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                      </select>
-                    </div>
-
-                    <div className="col-span-4 sm:col-span-2">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Qtd</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        {...register(`itens.${index}.quantidade`)}
-                        className="w-full p-2 text-sm border border-gray-200 rounded-md outline-none focus:border-primary text-center"
-                        disabled={isSubmitting}
-                      />
-                    </div>
-
-                    <div className="col-span-4 sm:col-span-2">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">R$ Unit.</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        {...register(`itens.${index}.valorPorUnidade`)}
-                        className="w-full p-2 text-sm border border-gray-200 rounded-md outline-none focus:border-primary text-right"
-                        disabled={isSubmitting}
-                      />
-                    </div>
-
-                    <div className="col-span-4 sm:col-span-2 flex flex-col justify-end items-end h-full pb-2">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block opacity-0">Sub</label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-gray-700">R$ {subtotal.toFixed(2)}</span>
-                        {fields.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => remove(index)}
-                            className="text-gray-300 hover:text-red-500 transition-colors"
+                      <div className="grid grid-cols-12 gap-2 items-center">
+                        <div className="col-span-6">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase">Item</label>
+                          <select
+                            {...register(`itens.${index}.produtoId`)}
+                            className={`w-full text-xs p-2 bg-gray-50 border rounded focus:ring-1 focus:ring-primary outline-none ${errItem?.produtoId ? 'border-red-300' : 'border-gray-200'}`}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
-                        )}
+                            <option value="">Selecione...</option>
+                            {produtosManutencao.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                          </select>
+                        </div>
+                        <div className="col-span-2">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase text-center block">Qtd</label>
+                          <input type="number" step="0.1" {...register(`itens.${index}.quantidade`)} className="w-full text-xs p-2 text-center border border-gray-200 rounded focus:ring-1 focus:ring-primary outline-none" />
+                        </div>
+                        <div className="col-span-4">
+                          <label className="text-[9px] font-bold text-gray-400 uppercase text-right block">Valor (Unit)</label>
+                          <input type="number" step="0.01" {...register(`itens.${index}.valorPorUnidade`)} className="w-full text-xs p-2 text-right border border-gray-200 rounded focus:ring-1 focus:ring-primary outline-none font-mono" placeholder="0.00" />
+                        </div>
                       </div>
+                      {(errItem?.produtoId || errItem?.quantidade || errItem?.valorPorUnidade) && <span className="text-[9px] text-red-500 block mt-1 text-center">Preencha todos os campos do item</span>}
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
 
-            <div className="mt-4 flex justify-between items-center pt-2">
               <button
                 type="button"
                 onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })}
-                className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
-                disabled={isSubmitting}
+                className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 text-sm font-bold hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
               >
-                + Adicionar Item
+                + Adicionar Outro Item
               </button>
-              <div className="text-right">
-                <span className="text-xs text-gray-400 uppercase font-bold mr-2">Total Estimado</span>
-                <span className="text-base font-bold text-gray-800">R$ {totalGeral.toFixed(2)}</span>
+
+              <div className="flex justify-end items-center gap-2 pt-2">
+                <span className="text-xs text-gray-400 uppercase font-bold">Subtotal Estimado:</span>
+                <span className="text-lg font-mono font-bold text-gray-900">R$ {totalGeral.toFixed(2)}</span>
+              </div>
+              {errors.itens && <p className="text-xs text-red-500 font-medium text-right">{errors.itens.root?.message || "Adicione itens válidos"}</p>}
+            </div>
+          )}
+
+          {/* --- PASSO 3: CONFIRMAÇÃO --- */}
+          {step === 3 && (
+            <div className="space-y-6 animate-in slide-in-from-right-8 duration-300">
+              <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
+                <div className="flex justify-between items-end mb-2">
+                  <span className="text-xs text-gray-500 font-bold uppercase">Total da Nota</span>
+                  <span className="text-3xl font-mono font-bold text-primary">R$ {totalGeral.toFixed(2)}</span>
+                </div>
+                <p className="text-xs text-gray-400 text-right">Confira os valores antes de salvar.</p>
+              </div>
+
+              <div>
+                <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Observações Gerais</label>
+                <textarea
+                  {...register("observacoes")}
+                  className="w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none min-h-[100px]"
+                  placeholder="Descreva detalhes adicionais, problemas encontrados..."
+                />
               </div>
             </div>
-            {errors.itens && <p className="text-xs text-red-500 font-medium mt-2 text-right">{errors.itens.root?.message}</p>}
+          )}
+
+          {/* NAVEGAÇÃO */}
+          <div className="flex gap-3 pt-4 border-t border-gray-100">
+            {step > 1 && (
+              <Button type="button" variant="secondary" onClick={prevStep} className="flex-1">
+                Voltar
+              </Button>
+            )}
+
+            {step < 3 ? (
+              <Button type="button" variant="primary" onClick={nextStep} className="flex-[2]">
+                Próximo
+              </Button>
+            ) : (
+              <Button type="submit" variant="success" isLoading={isSubmitting} className="flex-[2] shadow-lg shadow-green-500/20">
+                Finalizar OS
+              </Button>
+            )}
           </div>
 
-          <div>
-            <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Observações</label>
-            <textarea
-              {...register("observacoes")}
-              className="w-full px-4 py-3 text-sm bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent resize-none transition-all"
-              rows={2}
-              placeholder={alvoSelecionado === 'OUTROS' ? "Descreva o defeito da caixa..." : "Detalhes do serviço..."}
-              disabled={isSubmitting}
-            />
-          </div>
-
-          <Button
-            type="submit"
-            disabled={isSubmitting}
-            isLoading={isSubmitting}
-            className="w-full py-3.5 text-base shadow-lg shadow-primary/10 hover:shadow-primary/20 transition-all"
-          >
-            {isSubmitting ? 'Salvando...' : `Confirmar ${abaAtiva === 'CORRETIVA' ? 'Reparo' : 'Manutenção'}`}
-          </Button>
         </form>
       </div>
 
@@ -485,14 +495,10 @@ export function FormRegistrarManutencao({
         />
       )}
 
-      {/* RENDERIZAÇÃO DA MODAL DE SERVIÇOS (COM UPDATE AUTOMÁTICO) */}
       {modalServicosOpen && (
         <ModalGerenciarServicos
           onClose={() => setModalServicosOpen(false)}
-          onItemAdded={(novoItem) => {
-            // Atualiza a lista local instantaneamente!
-            setListaProdutos(prev => [...prev, novoItem].sort((a, b) => a.nome.localeCompare(b.nome)));
-          }}
+          onItemAdded={(novoItem) => setListaProdutos(prev => [...prev, novoItem].sort((a, b) => a.nome.localeCompare(b.nome)))}
         />
       )}
     </>

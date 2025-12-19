@@ -10,65 +10,74 @@ interface DashboardRelatoriosProps {
   onDrillDown?: (tipo: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => void;
 }
 
-// Componente de Card KPI Refinado
+// --- COMPONENTE INTERNO: CARD KPI INDUSTRIAL ---
+// Design focado em dados: removemos ícones decorativos para focar no valor e no status.
 function KpiCard({
   titulo,
   valor,
   descricao,
-  corIcone,
-  iconSvg,
   onClick,
-  loading
+  loading,
+  variant = 'default'
 }: {
   titulo: string,
   valor: string,
   descricao: string,
-  corIcone: string,
-  iconSvg: React.ReactNode,
   onClick?: () => void,
-  loading?: boolean
+  loading?: boolean,
+  variant?: 'default' | 'success' | 'warning' | 'danger' | 'info'
 }) {
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse">
-        <div className="flex items-start gap-4">
-          <div className="w-12 h-12 bg-gray-100 rounded-xl flex-shrink-0"></div>
-          <div className="space-y-2 flex-1">
-            <div className="h-3 bg-gray-100 rounded w-1/2"></div>
-            <div className="h-6 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-3 bg-gray-100 rounded w-1/3"></div>
-          </div>
-        </div>
+      <div className="bg-white rounded-xl h-[120px] p-5 shadow-sm border border-gray-100 animate-pulse flex flex-col justify-between">
+        <div className="h-3 bg-gray-100 rounded w-1/3"></div>
+        <div className="h-8 bg-gray-200 rounded w-2/3"></div>
+        <div className="h-3 bg-gray-50 rounded w-full"></div>
       </div>
     );
   }
+
+  // Mapeamento de cores de borda baseadas no tema OKLCH definido no index.css
+  const borderColors = {
+    default: 'border-l-primary',       // Azul Marca
+    success: 'border-l-status-success', // Verde
+    warning: 'border-l-status-warning', // Âmbar
+    danger: 'border-l-status-danger',   // Vermelho
+    info: 'border-l-blue-400'           // Azul Claro
+  };
 
   return (
     <div
       onClick={onClick}
       className={`
-        group relative bg-white rounded-2xl p-6 shadow-card border border-gray-100 
-        flex items-start gap-4 overflow-hidden
-        transition-all duration-300 ease-out
-        ${onClick ? 'cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:border-primary/20' : ''}
+        group relative bg-white rounded-xl p-5 shadow-sm border border-gray-200 
+        flex flex-col justify-between h-full min-h-[120px]
+        hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 cursor-pointer
+        border-l-[4px] ${borderColors[variant] || borderColors.default}
       `}
     >
-      {/* Background decorativo sutil no hover */}
-      <div className="absolute right-0 top-0 w-24 h-24 bg-gray-50 rounded-full -mr-8 -mt-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
-
-      <div className={`p-3.5 rounded-xl ${corIcone} flex-shrink-0 shadow-sm ring-1 ring-black/5 relative z-10 transition-transform group-hover:scale-110 duration-300`}>
-        {iconSvg}
+      {/* Cabeçalho: Título Técnico */}
+      <div className="flex justify-between items-start">
+        <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest font-sans">
+          {titulo}
+        </h4>
+        {/* Ícone de seta sutil que aparece no hover */}
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-3.5 h-3.5 text-gray-300 group-hover:text-primary transition-colors opacity-0 group-hover:opacity-100">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+        </svg>
       </div>
 
-      <div className="relative z-10">
-        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1 group-hover:text-gray-500 transition-colors">
-          {titulo}
-        </p>
-        <h3 className="text-2xl font-bold text-gray-900 tracking-tight leading-none mb-1.5">
+      {/* Valor: Fonte Mono para precisão numérica */}
+      <div className="mt-2">
+        <span className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight font-mono">
           {valor}
-        </h3>
-        <p className="text-[11px] text-gray-400 font-medium leading-tight">
+        </span>
+      </div>
+
+      {/* Rodapé: Contexto */}
+      <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
+        <p className="text-xs text-gray-500 font-medium truncate">
           {descricao}
         </p>
       </div>
@@ -76,8 +85,9 @@ function KpiCard({
   );
 }
 
-const selectStyle = "w-full appearance-none bg-white border border-gray-200 text-gray-700 py-2.5 px-4 pr-8 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/10 focus:border-primary transition-all font-medium cursor-pointer text-sm shadow-sm hover:border-gray-300";
-const labelStyle = "block text-[10px] font-bold text-gray-400 mb-1.5 uppercase tracking-wider pl-1";
+// Estilos reutilizáveis para inputs
+const selectStyle = "w-full appearance-none bg-white border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium cursor-pointer text-sm shadow-sm hover:border-gray-300 font-sans";
+const labelStyle = "block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider pl-1 font-sans";
 
 export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatoriosProps) {
 
@@ -102,21 +112,21 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
 
       } catch (err) {
         console.error("Erro ao carregar KPIs:", err);
-        setError('Não foi possível carregar os dados.');
-        toast.error("Falha ao atualizar indicadores.");
+        setError('Não foi possível atualizar os indicadores.');
+        toast.error("Falha ao carregar dados do dashboard.");
       } finally {
-        // Pequeno delay artificial para evitar flash de loading muito rápido e suavizar a transição
+        // Pequeno delay para suavizar a transição do esqueleto
         setTimeout(() => setLoading(false), 300);
       }
     };
     carregarSumario();
   }, [ano, mes, veiculoIdFiltro]);
 
-  // Formatadores
-  const formatCurrency = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')}`;
+  // Formatadores (Usando toLocaleString para garantir padrão BR)
+  const formatCurrency = (value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   const formatKm = (value: number) => `${value.toLocaleString('pt-BR')} km`;
-  const formatKML = (value: number) => `${value.toFixed(2).replace('.', ',')} km/l`;
-  const formatRperKM = (value: number) => `R$ ${value.toFixed(2).replace('.', ',')} /km`;
+  const formatKML = (value: number) => `${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  const formatRperKM = (value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   const mesesOptions = [
     { v: 1, n: 'Janeiro' }, { v: 2, n: 'Fevereiro' }, { v: 3, n: 'Março' },
@@ -161,157 +171,149 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
   };
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
 
-      {/* BARRA DE FILTROS E CONTROLES */}
-      <div className="bg-gray-50/50 p-1 rounded-2xl border border-gray-100">
-        <div className="flex flex-wrap gap-4 p-4 bg-white rounded-xl shadow-sm items-end justify-between">
-
-          <div className="flex flex-wrap gap-4 w-full lg:w-auto">
-            {/* Filtro de Mês */}
+      {/* HEADER DE CONTROLE (Glassmorphism) */}
+      <div className="bg-white/80 backdrop-blur-md p-1 rounded-xl border border-gray-200 shadow-sm sticky top-0 z-20">
+        <div className="flex flex-wrap gap-3 p-3 bg-gray-50/50 rounded-lg items-end justify-between">
+          
+          <div className="flex flex-wrap gap-3 w-full lg:w-auto items-end">
+            {/* Filtro Mês */}
             <div className="w-full sm:w-40">
-              <label className={labelStyle}>Mês de Referência</label>
-              <div className="relative group">
+              <label className={labelStyle}>Mês</label>
+              <div className="relative">
                 <select className={selectStyle} value={mes} onChange={(e) => setMes(Number(e.target.value))}>
                   {mesesOptions.map(m => <option key={m.v} value={m.v}>{m.n}</option>)}
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 group-hover:text-primary transition-colors">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
               </div>
             </div>
 
-            {/* Filtro de Ano */}
-            <div className="w-full sm:w-32">
+            {/* Filtro Ano */}
+            <div className="w-full sm:w-28">
               <label className={labelStyle}>Ano</label>
-              <div className="relative group">
+              <div className="relative">
                 <select className={selectStyle} value={ano} onChange={(e) => setAno(Number(e.target.value))}>
                   {anosOptions.map(a => <option key={a} value={a}>{a}</option>)}
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 group-hover:text-primary transition-colors">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
               </div>
             </div>
 
-            {/* Filtro de Veículo */}
+            {/* Filtro Veículo */}
             <div className="w-full sm:w-64">
-              <label className={labelStyle}>Filtrar Veículo</label>
-              <div className="relative group">
+              <label className={labelStyle}>Veículo</label>
+              <div className="relative">
                 <select className={selectStyle} value={veiculoIdFiltro} onChange={(e) => setVeiculoIdFiltro(e.target.value)}>
-                  <option value="">Todos os Veículos</option>
+                  <option value="">Todos da Frota</option>
                   {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>)}
                 </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400 group-hover:text-primary transition-colors">
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-400">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Ação Principal */}
-          <div className="flex-shrink-0 w-full lg:w-auto">
+          {/* Botão Exportar */}
+          <div className="w-full lg:w-auto">
             <Button
               variant="success"
               onClick={handleExportar}
               disabled={!kpis || loading}
-              className="w-full lg:w-auto shadow-md shadow-green-500/10"
+              className="w-full shadow-sm"
               icon={
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
                 </svg>
               }
             >
-              Baixar Excel
+              Excel
             </Button>
           </div>
         </div>
       </div>
 
       {error && (
-        <div className="flex items-center justify-center p-8 bg-red-50 rounded-2xl border border-red-100">
-          <p className="text-red-600 font-medium flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
-            {error}
-          </p>
+        <div className="p-4 bg-red-50 text-red-700 rounded-lg border border-red-100 text-sm font-medium flex items-center justify-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" /></svg>
+          {error}
         </div>
       )}
 
-      {/* GRID DE KPIS - Com Skeleton Loading */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Total Geral */}
-        <KpiCard
-          loading={loading}
-          titulo="Custo Total"
-          valor={kpis ? formatCurrency(kpis.custoTotalGeral) : '-'}
-          descricao="Operação Global"
-          corIcone="bg-blue-50 text-blue-600"
-          iconSvg={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>}
-          onClick={() => onDrillDown?.('GERAL')}
-        />
+      {/* --- BENTO GRID: LAYOUT INTELIGENTE --- */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        {/* DESTAQUE: Custo Total (Ocupa 2 colunas em telas grandes) */}
+        <div className="lg:col-span-2">
+          <KpiCard
+            loading={loading}
+            titulo="Custo Total Operacional"
+            valor={kpis ? formatCurrency(kpis.custoTotalGeral) : '-'}
+            descricao="Soma de combustível, manutenções e insumos no período"
+            onClick={() => onDrillDown?.('GERAL')}
+            variant="default" // Cor da Marca
+          />
+        </div>
 
-        {/* Quilometragem */}
+        {/* MÉTRICAS FÍSICAS */}
         <KpiCard
           loading={loading}
           titulo="Quilometragem"
           valor={kpis ? formatKm(kpis.kmTotalRodado) : '-'}
-          descricao="Percorrido no período"
-          corIcone="bg-indigo-50 text-indigo-600"
-          iconSvg={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" /></svg>}
+          descricao="Distância total percorrida pela frota"
           onClick={() => onDrillDown?.('JORNADA')}
+          variant="info"
         />
 
-        {/* Custo / KM */}
+        <KpiCard
+          loading={loading}
+          titulo="Média Consumo"
+          valor={kpis ? formatKML(kpis.consumoMedioKML) + ' km/l' : '-'}
+          descricao="Eficiência energética média"
+          onClick={() => onDrillDown?.('ABASTECIMENTO')}
+          variant="success"
+        />
+
+        {/* CUSTOS DETALHADOS */}
+        <KpiCard
+          loading={loading}
+          titulo="Combustível"
+          valor={kpis ? formatCurrency(kpis.custoTotalCombustivel) : '-'}
+          descricao="Abastecimentos (Diesel, GNV, Gasolina)"
+          onClick={() => onDrillDown?.('ABASTECIMENTO')}
+          variant="default"
+        />
+
+        <KpiCard
+          loading={loading}
+          titulo="Manutenção"
+          valor={kpis ? formatCurrency(kpis.custoTotalManutencao) : '-'}
+          descricao="Peças, Serviços Mecânicos e Lavagens"
+          onClick={() => onDrillDown?.('MANUTENCAO')}
+          variant="warning" // Atenção para manutenção
+        />
+
+        <KpiCard
+          loading={loading}
+          titulo="Aditivos (Arla)"
+          valor={kpis ? formatCurrency(kpis.custoTotalAditivo) : '-'}
+          descricao="Arla 32 e Lubrificantes"
+          onClick={() => onDrillDown?.('ABASTECIMENTO')}
+          variant="info"
+        />
+
         <KpiCard
           loading={loading}
           titulo="Custo por KM"
-          valor={kpis ? formatRperKM(kpis.custoMedioPorKM) : '-'}
-          descricao="Eficiência Financeira"
-          corIcone="bg-emerald-50 text-emerald-600"
-          iconSvg={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z" /></svg>}
+          valor={kpis ? formatRperKM(kpis.custoMedioPorKM) + '/km' : '-'}
+          descricao="Indicador chave de eficiência financeira"
           onClick={() => onDrillDown?.('ABASTECIMENTO')}
-        />
-
-        {/* Consumo Médio */}
-        <KpiCard
-          loading={loading}
-          titulo="Consumo Médio"
-          valor={kpis ? formatKML(kpis.consumoMedioKML) : '-'}
-          descricao="Eficiência de Combustível"
-          corIcone="bg-orange-50 text-orange-600"
-          iconSvg={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" /></svg>}
-          onClick={() => onDrillDown?.('ABASTECIMENTO')}
-        />
-
-        {/* Detalhes Financeiros */}
-        <KpiCard
-          loading={loading}
-          titulo="Total Combustível"
-          valor={kpis ? formatCurrency(kpis.custoTotalCombustivel) : '-'}
-          descricao="Diesel, Gasolina, etc."
-          corIcone="bg-amber-50 text-amber-600"
-          iconSvg={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3" /></svg>}
-          onClick={() => onDrillDown?.('ABASTECIMENTO')}
-        />
-
-        <KpiCard
-          loading={loading}
-          titulo="Total Aditivos"
-          valor={kpis ? formatCurrency(kpis.custoTotalAditivo) : '-'}
-          descricao="Arla 32, Lubrificantes"
-          corIcone="bg-cyan-50 text-cyan-600"
-          iconSvg={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M9.75 3.104v5.714a2.25 2.25 0 0 1-.659 1.591L5 14.5M9.75 3.104c-.251.023-.501.05-.75.082m.75-.082a24.301 24.301 0 0 1 4.5 0m0 0v5.714c0 .597.237 1.17.659 1.591L19.8 15.3M14.25 3.104c.251.023.501.05.75.082M19.8 15.3l-1.57.393A9.065 9.065 0 0 1 12 15a9.065 9.065 0 0 0-6.23-.693L5 14.5m14.8.8 1.402 1.402c1.232 1.232.65 3.318-1.067 3.611A48.309 48.309 0 0 1 12 21c-2.773 0-5.491-.235-8.135-.687-1.718-.293-2.3-2.379-1.067-3.61L5 14.5" /></svg>}
-          onClick={() => onDrillDown?.('ABASTECIMENTO')}
-        />
-
-        <KpiCard
-          loading={loading}
-          titulo="Total Manutenção"
-          valor={kpis ? formatCurrency(kpis.custoTotalManutencao) : '-'}
-          descricao="Peças, Serviços e Lavagens"
-          corIcone="bg-rose-50 text-rose-600"
-          iconSvg={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17 17.25 21A2.25 2.25 0 0 0 21 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.5 2.5 0 0 1-2.88 1.132l-3.128-.686a1 1 0 0 1-.602-.602l-.686-3.128a2.5 2.5 0 0 1 1.132-2.88L6.25 10" /></svg>}
-          onClick={() => onDrillDown?.('MANUTENCAO')}
+          variant={kpis && kpis.custoMedioPorKM > 3.5 ? 'danger' : 'success'} // Condicional inteligente
         />
       </div>
     </div>
