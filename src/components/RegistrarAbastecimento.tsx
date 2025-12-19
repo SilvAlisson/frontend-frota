@@ -42,8 +42,6 @@ const abastecimentoSchema = z.object({
 
   justificativa: z.string().optional(),
 
-  // Foto validada apenas no Modal (para não bloquear o form inicial)
-
   itens: z.array(itemAbastecimentoSchema)
     .min(1, { error: "Adicione pelo menos um item" })
 });
@@ -407,7 +405,7 @@ export function RegistrarAbastecimento({
         <ModalConfirmacaoFoto
           titulo="Envie a foto da nota fiscal"
           dadosJornada={formDataParaModal}
-          apiEndpoint="/abastecimento"
+          apiEndpoint="/abastecimentos"
           apiMethod="POST"
           kmParaConfirmar={null}
           jornadaId={null}

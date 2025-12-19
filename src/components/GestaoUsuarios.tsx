@@ -30,12 +30,13 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   const [modalQrOpen, setModalQrOpen] = useState(false);
   const [tokenQr, setTokenQr] = useState<string | null>(null);
   const [nomeQr, setNomeQr] = useState('');
+  const [roleQr, setRoleQr] = useState(''); // <--- NOVO ESTADO
   const [fotoQr, setFotoQr] = useState<string | null | undefined>(null);
 
   const { data: usuarios = [], isLoading } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
-      const response = await api.get('/user');
+      const response = await api.get('/users');
       return response.data;
     },
     staleTime: 1000 * 60 * 5,
@@ -43,7 +44,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/user/${id}`);
+      await api.delete(`/users/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -82,6 +83,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
         setTokenQr(response.data.loginToken);
         setNomeQr(user.nome);
         setFotoQr(user.fotoUrl);
+        setRoleQr(user.role); // <--- ATUALIZA O ESTADO
         setModalQrOpen(true);
         return `QR Code gerado para ${user.nome}`;
       },
@@ -318,6 +320,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
           token={tokenQr}
           nomeUsuario={nomeQr}
           fotoUrl={fotoQr}
+          role={roleQr} // <--- PASSADO COMO PROP
           onClose={() => { setModalQrOpen(false); setTokenQr(null); setFotoQr(null); }}
         />
       )}

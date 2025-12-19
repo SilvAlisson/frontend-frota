@@ -7,18 +7,15 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { parseDecimal, formatKmVisual } from '../utils';
 import { toast } from 'sonner';
-// Importe o tipo Jornada global se possível, senão ajuste a interface local:
 import type { Jornada } from '../types';
 
 interface JornadaCardProps {
-  // Usamos o tipo Jornada global aqui para garantir compatibilidade
-  jornada: Jornada; // Alterei o nome da prop para ser mais genérico
+  jornada: Jornada;
   onJornadaFinalizada: () => void;
 }
 
-// O componente principal agora se chama JornadaCard, resolvendo o erro de importação.
 export function JornadaCard({
-  jornada, // Renomeado jornadaParaFinalizar para jornada para simplificar
+  jornada,
   onJornadaFinalizada
 }: JornadaCardProps) {
 
@@ -87,7 +84,6 @@ export function JornadaCard({
     setModalAberto(false);
   };
 
-  // Fallback seguro para nome do encarregado
   const nomeEncarregado = jornada.encarregado?.nome || 'Não informado';
 
   return (
@@ -156,7 +152,7 @@ export function JornadaCard({
           titulo="Comprovante Final"
           kmParaConfirmar={dadosValidacao.kmFim}
           jornadaId={jornada.id}
-          apiEndpoint={`/jornada/finalizar/:jornadaId`}
+          apiEndpoint="/jornadas/finalizar"
           apiMethod="PUT"
           dadosJornada={{
             kmFim: dadosValidacao.kmFim,

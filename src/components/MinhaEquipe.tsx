@@ -18,6 +18,7 @@ export function MinhaEquipe({ usuarios, jornadasAbertas }: MinhaEquipeProps) {
   const [modalQrOpen, setModalQrOpen] = useState(false);
   const [tokenQr, setTokenQr] = useState<string | null>(null);
   const [nomeQr, setNomeQr] = useState('');
+  const [roleQr, setRoleQr] = useState(''); // <--- NOVO ESTADO
   const [fotoQr, setFotoQr] = useState<string | null | undefined>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
@@ -35,6 +36,7 @@ export function MinhaEquipe({ usuarios, jornadasAbertas }: MinhaEquipeProps) {
         setTokenQr(response.data.loginToken);
         setNomeQr(user.nome);
         setFotoQr(user.fotoUrl);
+        setRoleQr(user.role); // <--- ATUALIZA ESTADO
         setModalQrOpen(true);
         setLoadingId(null);
         return `QR Code gerado para ${user.nome.split(' ')[0]}`;
@@ -116,7 +118,7 @@ export function MinhaEquipe({ usuarios, jornadasAbertas }: MinhaEquipeProps) {
                 <Button
                   variant="secondary"
                   className="text-xs py-2 px-4 h-9 w-full sm:w-auto shadow-sm"
-                  onClick={() => handleGerarQrCode(op)} // Passa o objeto usuário inteiro
+                  onClick={() => handleGerarQrCode(op)}
                   disabled={loadingId === op.id}
                   isLoading={loadingId === op.id}
                   icon={<IconeQrCode />}
@@ -140,7 +142,8 @@ export function MinhaEquipe({ usuarios, jornadasAbertas }: MinhaEquipeProps) {
         <ModalQrCode
           token={tokenQr}
           nomeUsuario={nomeQr}
-          fotoUrl={fotoQr} // Passa a foto para o modal
+          fotoUrl={fotoQr}
+          role={roleQr}
           onClose={() => { setModalQrOpen(false); setTokenQr(null); setFotoQr(null); }}
         />
       )}

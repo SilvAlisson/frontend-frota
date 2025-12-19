@@ -78,7 +78,7 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
     if (!window.confirm(`Tem certeza que quer REMOVER permanentemente este registro?`)) return;
 
     setDeletingId(id);
-    const promise = api.delete(`/ordem-servico/${id}`);
+    const promise = api.delete(`/ordens-servico/${id}`);
 
     toast.promise(promise, {
       loading: 'Removendo OS...',
@@ -102,7 +102,7 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
         const dadosFormatados = historico.map(os => {
           const itensFormatados = os.itens.map(item => item.produto.nome).join(', ');
           const custoNum = Number(os.custoTotal) || 0;
-          
+
           return {
             'Data': formatDate(os.data),
             'Placa': os.veiculo?.placa || 'N/A',
@@ -138,7 +138,7 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
       {editingOS && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl animate-in zoom-in-95 duration-200">
-            <FormEditarManutencao 
+            <FormEditarManutencao
               osParaEditar={editingOS}
               veiculos={veiculos}
               produtos={produtos}
@@ -156,7 +156,7 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
       {/* HEADER DE COMANDO (Glass Panel) */}
       <div className="glass-panel p-1 rounded-xl sticky top-0 z-10 mb-6">
         <div className="flex flex-wrap gap-4 p-3 bg-white/50 rounded-lg items-end justify-between">
-          
+
           <div className="flex flex-wrap gap-3 w-full lg:w-auto items-end">
             <div className="w-full sm:w-32">
               <label className={labelStyle}>De</label>
@@ -169,9 +169,9 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
             <div className="w-full sm:w-56">
               <label className={labelStyle}>Veículo</label>
               <div className="relative">
-                <select 
-                  className={inputStyle} 
-                  value={veiculoIdFiltro} 
+                <select
+                  className={inputStyle}
+                  value={veiculoIdFiltro}
                   onChange={(e) => setVeiculoIdFiltro(e.target.value)}
                 >
                   <option value="">Todos os veículos</option>
@@ -231,10 +231,10 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
         {!loading && historico.map((os) => {
           // Configuração visual baseada no tipo (borda lateral colorida)
           const visual = tipoConfig[os.tipo] || { border: 'border-l-gray-400', badge: 'bg-gray-100', label: os.tipo };
-          
+
           return (
-            <div 
-              key={os.id} 
+            <div
+              key={os.id}
               className={`
                 group bg-white p-4 rounded-r-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 
                 border-l-[4px] ${visual.border} rounded-l-md
@@ -242,7 +242,7 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
               `}
             >
               <div className="flex flex-col sm:flex-row justify-between items-start gap-4">
-                
+
                 {/* Coluna Esquerda: Data e Veículo */}
                 <div className="flex items-start gap-4 min-w-[200px]">
                   {/* Bloco de Data Compacto */}
@@ -263,7 +263,7 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded border uppercase mb-1 inline-block ${visual.badge}`}>
                       {visual.label}
                     </span>
-                    
+
                     {/* Identificação do Veículo */}
                     <div className="flex flex-col">
                       {os.veiculo ? (
@@ -302,7 +302,7 @@ export function HistoricoManutencoes({ userRole, veiculos, produtos, fornecedore
                       </li>
                     ))}
                   </ul>
-                  
+
                   {os.observacoes && (
                     <p className="text-xs text-gray-400 mt-2 italic border-l-2 border-gray-100 pl-2">
                       "{os.observacoes}"

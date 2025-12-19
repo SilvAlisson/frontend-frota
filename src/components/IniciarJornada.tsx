@@ -72,7 +72,6 @@ export function IniciarJornada({
     }
 
     // --- LÓGICA DE CONFIRMAÇÃO DE VEÍCULO EM USO ---
-    // Se o veículo já estiver em uso, pedimos confirmação extra
     const jornadaConflitante = jornadasAtivas.find(j => j.veiculo?.id === veiculoId);
 
     if (jornadaConflitante) {
@@ -84,9 +83,8 @@ export function IniciarJornada({
 
       if (!confirmar) {
         setLoading(false);
-        return; // Usuário cancelou, não faz nada
+        return;
       }
-      // Se confirmou, o código segue abaixo para abrir o modal de foto
     }
 
     // Preparar para Modal de Foto
@@ -155,7 +153,6 @@ export function IniciarJornada({
             </div>
           </div>
 
-          {/* Aviso de Indisponibilidade VISUAL */}
           {avisoVeiculo && (
             <div className="mt-3 flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-100 text-amber-800 text-xs font-medium animate-in slide-in-from-top-1">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0 text-amber-500">
@@ -225,7 +222,7 @@ export function IniciarJornada({
           titulo="Foto do Painel (Saída)"
           kmParaConfirmar={parseDecimal(kmInicio)}
           dadosJornada={formDataParaModal}
-          apiEndpoint="/jornada/iniciar"
+          apiEndpoint="/jornadas/iniciar"
           apiMethod="POST"
           jornadaId={null}
           onClose={() => setModalAberto(false)}

@@ -52,7 +52,7 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
             if (dataFim) params.dataFim = dataFim;
             if (veiculoId) params.veiculoId = veiculoId;
 
-            const response = await api.get('/jornada/historico', { params });
+            const response = await api.get('/jornadas/historico', { params });
             setHistorico(response.data);
         } catch (err) {
             console.error("Erro ao buscar histórico de jornadas:", err);
@@ -70,7 +70,7 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
         if (!window.confirm("ATENÇÃO: Tem certeza que deseja excluir este registro histórico?")) return;
 
         setDeletingId(id);
-        const promise = api.delete(`/jornada/${id}`);
+        const promise = api.delete(`/jornadas/${id}`);
 
         toast.promise(promise, {
             loading: 'Removendo registro...',
