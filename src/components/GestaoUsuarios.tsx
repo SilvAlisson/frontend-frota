@@ -31,10 +31,12 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   const [tokenQr, setTokenQr] = useState<string | null>(null);
   const [nomeQr, setNomeQr] = useState('');
   const [fotoQr, setFotoQr] = useState<string | null | undefined>(null);
+  const [roleQr, setRoleQr] = useState<string>(''); // Novo estado para corrigir o erro TypeScript
 
   const { data: usuarios = [], isLoading } = useQuery<User[]>({
     queryKey: ['users'],
     queryFn: async () => {
+      // CORREÇÃO: Alterado de /user para /users (Plural)
       const response = await api.get('/users');
       return response.data;
     },
@@ -43,7 +45,8 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/user/${id}`);
+      // CORREÇÃO: Alterado de /user para /users (Plural)
+      await api.delete(`/users/${id}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
@@ -82,6 +85,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
         setTokenQr(response.data.loginToken);
         setNomeQr(user.nome);
         setFotoQr(user.fotoUrl);
+        setRoleQr(user.role); // Armazena a role para passar ao Modal
         setModalQrOpen(true);
         return `QR Code gerado para ${user.nome}`;
       },
@@ -318,7 +322,13 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
           token={tokenQr}
           nomeUsuario={nomeQr}
           fotoUrl={fotoQr}
-          onClose={() => { setModalQrOpen(false); setTokenQr(null); setFotoQr(null); }}
+          role={roleQr}
+          onClose={() => {
+            setModalQrOpen(false);
+            setTokenQr(null);
+            setFotoQr(null);
+            setRoleQr('');
+          }}
         />
       )}
 

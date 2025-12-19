@@ -140,7 +140,7 @@ export function MinhaEquipe({ usuarios, jornadasAbertas }: MinhaEquipeProps) {
         <ModalQrCode
           token={tokenQr}
           nomeUsuario={nomeQr}
-          fotoUrl={fotoQr} // Passa a foto para o modal
+          fotoUrl={fotoQr}
           onClose={() => { setModalQrOpen(false); setTokenQr(null); setFotoQr(null); }}
         />
       )}
