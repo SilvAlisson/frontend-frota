@@ -6,7 +6,6 @@ import { api } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 
-// Lista sincronizada com o backend
 const tiposDeProduto = ["COMBUSTIVEL", "ADITIVO", "LAVAGEM", "PECA", "SERVICO", "OUTRO"] as const;
 
 const produtoSchema = z.object({
@@ -53,7 +52,8 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormCadastrarPro
   const onSubmit = async (data: ProdutoForm) => {
     setSuccessMsg('');
     try {
-      await api.post('/produto', {
+      // CORREÇÃO: Rota no plural (/produtos)
+      await api.post('/produtos', {
         nome: data.nome,
         tipo: data.tipo,
         unidadeMedida: data.unidadeMedida,
@@ -81,6 +81,11 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormCadastrarPro
       <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
 
         <div className="text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 mb-3 text-blue-600">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+            </svg>
+          </div>
           <h4 className="text-xl font-bold text-gray-900">Novo Item de Estoque</h4>
           <p className="text-sm text-gray-500 mt-1">Registre combustíveis, peças ou serviços.</p>
         </div>
@@ -98,7 +103,7 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormCadastrarPro
             <label className="block mb-1.5 text-sm font-medium text-text-secondary">Tipo</label>
             <div className="relative">
               <select
-                className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none"
+                className="w-full px-4 py-2 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-100 appearance-none cursor-pointer"
                 {...register('tipo')}
                 disabled={isSubmitting}
               >
@@ -134,11 +139,11 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormCadastrarPro
           </div>
         )}
 
-        <div className="flex gap-3 pt-2">
+        <div className="flex gap-3 pt-4 border-t border-gray-100 mt-2">
           <Button type="button" variant="secondary" className="flex-1" disabled={isSubmitting} onClick={onCancelar}>
             Cancelar
           </Button>
-          <Button type="submit" variant="primary" className="flex-1" disabled={isSubmitting} isLoading={isSubmitting}>
+          <Button type="submit" variant="primary" className="flex-[2]" disabled={isSubmitting} isLoading={isSubmitting}>
             {isSubmitting ? 'Registrando...' : 'Cadastrar'}
           </Button>
         </div>

@@ -29,9 +29,7 @@ const fornecedorSchema = z.object({
 });
 
 // --- TIPAGEM ---
-// Input: Permite undefined/optional nos campos com default
 type FornecedorInput = z.input<typeof fornecedorSchema>;
-// Output: Garante os dados transformados e com defaults aplicados
 type FornecedorOutput = z.output<typeof fornecedorSchema>;
 
 interface FormCadastrarFornecedorProps {
@@ -59,14 +57,14 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormCadastrar
   const onSubmit = async (data: FornecedorOutput) => {
     const payload = {
       nome: DOMPurify.sanitize(data.nome),
-      // Garante que string vazia vire null para o banco
       cnpj: data.cnpj && data.cnpj.trim() !== ''
         ? DOMPurify.sanitize(data.cnpj)
         : null,
       tipo: data.tipo,
     };
 
-    const promise = api.post('/fornecedor', payload);
+    // CORREÇÃO: Rota no plural (/fornecedores) para bater com o backend
+    const promise = api.post('/fornecedores', payload);
 
     toast.promise(promise, {
       loading: 'Cadastrando parceiro...',

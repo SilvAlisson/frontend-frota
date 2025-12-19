@@ -77,10 +77,11 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
     const fetchUsuario = async () => {
       setLoadingData(true);
       try {
-        const { data: user } = await api.get(`/user/${userId}`);
+        // CORREÇÃO: Rota no plural (/users)
+        const { data: user } = await api.get(`/users/${userId}`);
         const roleValida = ROLES.includes(user.role as any) ? (user.role as typeof ROLES[number]) : 'ENCARREGADO';
 
-        setFotoAtualUrl(user.fotoUrl || null); // Carrega foto existente
+        setFotoAtualUrl(user.fotoUrl || null);
 
         reset({
           nome: user.nome || '',
@@ -160,7 +161,8 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
       dataToUpdate.password = data.password;
     }
 
-    const promise = api.put(`/user/${userId}`, dataToUpdate);
+    // CORREÇÃO: Rota no plural (/users)
+    const promise = api.put(`/users/${userId}`, dataToUpdate);
 
     toast.promise(promise, {
       loading: 'Salvando alterações...',

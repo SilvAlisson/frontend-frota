@@ -21,6 +21,7 @@ export type StatusVeiculo = 'ATIVO' | 'EM_MANUTENCAO' | 'INATIVO';
 export interface Veiculo {
   id: string;
   placa: string;
+  marca: string | null;
   modelo: string;
   ano: number;
   tipoVeiculo: string | null;
@@ -31,7 +32,7 @@ export interface Veiculo {
 
   vencimentoCiv?: string | null;
   vencimentoCipp?: string | null;
-  ultimoKm?: number; // Campo calculado que vem do backend em getById
+  ultimoKm?: number;
 }
 
 export type TipoProduto = 'COMBUSTIVEL' | 'ADITIVO' | 'LAVAGEM' | 'PECA' | 'SERVICO' | 'OUTRO';

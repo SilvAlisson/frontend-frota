@@ -15,7 +15,7 @@ import type { Veiculo, Produto, Fornecedor } from '../../types';
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
-// Interface forte para o payload (Evita 'any')
+// Interface forte para o payload
 interface PayloadOrdemServico {
   tipo: string;
   veiculoId: string | null;
@@ -79,7 +79,6 @@ const Stepper = ({ current, steps }: { current: number, steps: string[] }) => (
           <span className={`text-[10px] mt-2 font-bold uppercase tracking-wider ${isActive ? 'text-primary' : 'text-gray-400'}`}>
             {label}
           </span>
-          {/* Linha de Conexão */}
           {index !== steps.length - 1 && (
             <div className={`absolute top-4 left-1/2 w-full h-[2px] -z-10 transition-colors duration-500 ${isCompleted ? 'bg-green-500' : 'bg-gray-100'}`} />
           )}
@@ -100,7 +99,6 @@ export function FormRegistrarManutencao({
   const [modalAberto, setModalAberto] = useState(false);
   const [modalServicosOpen, setModalServicosOpen] = useState(false);
 
-  // OTIMIZAÇÃO: Tipagem forte
   const [formDataParaModal, setFormDataParaModal] = useState<PayloadOrdemServico | null>(null);
 
   const [ultimoKmRegistrado, setUltimoKmRegistrado] = useState<number>(0);
@@ -109,7 +107,6 @@ export function FormRegistrarManutencao({
 
   useEffect(() => { setListaProdutos(produtos); }, [produtos]);
 
-  // OTIMIZAÇÃO: useMemo para evitar filtros desnecessários a cada render
   const produtosManutencao = useMemo(() =>
     listaProdutos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)),
     [listaProdutos]);
@@ -144,18 +141,16 @@ export function FormRegistrarManutencao({
 
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
 
-  // OTIMIZAÇÃO: Função de troca de aba sem useEffect (Render único)
   const handleTrocaAba = (novaAba: TipoManutencao) => {
     setAbaAtiva(novaAba);
     setValue('tipo', novaAba);
-    setValue('fornecedorId', ''); // Opcional: limpa fornecedor pois a lista mudou
+    setValue('fornecedorId', '');
   };
 
   const alvoSelecionado = watch('alvo');
   const veiculoIdSelecionado = watch('veiculoId');
   const itensObservados = watch('itens');
 
-  // OTIMIZAÇÃO: useEffect com Cleanup para evitar Race Condition
   useEffect(() => {
     let isMounted = true;
 
@@ -166,8 +161,9 @@ export function FormRegistrarManutencao({
 
     const fetchInfoVeiculo = async () => {
       try {
-        setUltimoKmRegistrado(0); // Feedback visual imediato
-        const { data } = await api.get<Veiculo>(`/veiculo/${veiculoIdSelecionado}`);
+        setUltimoKmRegistrado(0);
+        // CORREÇÃO: Rota no plural (/veiculos)
+        const { data } = await api.get<Veiculo>(`/veiculos/${veiculoIdSelecionado}`);
         if (isMounted) {
           setUltimoKmRegistrado(data.ultimoKm || 0);
         }
@@ -184,15 +180,12 @@ export function FormRegistrarManutencao({
     setValue("kmAtual", formatKmVisual(e.target.value));
   };
 
-  // --- LÓGICA DE NAVEGAÇÃO ENTRE PASSOS ---
   const nextStep = async () => {
     let isValid = false;
 
     if (step === 1) {
-      // Valida apenas campos do contexto inicial
       isValid = await trigger(['alvo', 'veiculoId', 'fornecedorId', 'data', 'kmAtual', 'numeroCA', 'tipo']);
     } else if (step === 2) {
-      // Valida se há itens e se estão preenchidos
       isValid = await trigger('itens');
     }
 
@@ -240,7 +233,6 @@ export function FormRegistrarManutencao({
     setModalAberto(false);
     setFormDataParaModal(null);
 
-    // Reset completo
     reset({
       alvo: 'VEICULO',
       veiculoId: '',
@@ -253,7 +245,7 @@ export function FormRegistrarManutencao({
       itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: 0 }]
     });
     setUltimoKmRegistrado(0);
-    setStep(1); // Volta para o passo 1
+    setStep(1);
 
     if (onSuccess) onSuccess();
   };
@@ -486,7 +478,8 @@ export function FormRegistrarManutencao({
         <ModalConfirmacaoFoto
           titulo={`Comprovante - ${formDataParaModal.tipo}`}
           dadosJornada={formDataParaModal}
-          apiEndpoint="/ordem-servico"
+          // CORREÇÃO: Rota no plural (/ordens-servico) para POST
+          apiEndpoint="/ordens-servico"
           apiMethod="POST"
           kmParaConfirmar={null}
           jornadaId={null}

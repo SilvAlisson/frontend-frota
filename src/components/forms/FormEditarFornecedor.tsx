@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod'; // Import V4
+import { z } from 'zod';
 import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
@@ -23,13 +23,10 @@ const fornecedorSchema = z.object({
     })
   ]).optional().nullable(),
 
-  // O .default() gera a diferença entre Input e Output que causava o erro
   tipo: z.enum(tiposFornecedor, { error: "Selecione um tipo válido" })
     .default('OUTROS'),
 });
 
-// --- CORREÇÃO DE TIPOS ---
-// Definimos explicitamente o que entra e o que sai
 type FornecedorInput = z.input<typeof fornecedorSchema>;
 type FornecedorOutput = z.output<typeof fornecedorSchema>;
 
@@ -42,8 +39,6 @@ interface Props {
 export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Props) {
   const [loadingData, setLoadingData] = useState(true);
 
-  // CORREÇÃO AQUI: Passamos os 3 genéricos para o useForm
-  // <Input, Contexto, Output>
   const {
     register,
     handleSubmit,
@@ -61,13 +56,13 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
 
     const fetchDados = async () => {
       try {
-        const { data } = await api.get(`/fornecedor/${fornecedorId}`);
+        // CORREÇÃO: Rota no plural
+        const { data } = await api.get(`/fornecedores/${fornecedorId}`);
 
         const tipoValido = tiposFornecedor.includes(data.tipo)
           ? data.tipo
           : 'OUTROS';
 
-        // O reset aceita o tipo de Input, então tudo certo aqui
         reset({
           nome: data.nome || '',
           cnpj: data.cnpj || '',
@@ -86,7 +81,6 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
   }, [fornecedorId, reset, onCancelar]);
 
   // --- SUBMISSÃO ---
-  // O data agora é tipado corretamente como FornecedorOutput (sem undefined no tipo)
   const onSubmit = async (data: FornecedorOutput) => {
     const payload = {
       nome: DOMPurify.sanitize(data.nome),
@@ -96,7 +90,8 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
       tipo: data.tipo,
     };
 
-    const promise = api.put(`/fornecedor/${fornecedorId}`, payload);
+    // CORREÇÃO: Rota no plural
+    const promise = api.put(`/fornecedores/${fornecedorId}`, payload);
 
     toast.promise(promise, {
       loading: 'Atualizando cadastro...',
