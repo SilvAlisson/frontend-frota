@@ -55,7 +55,7 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
     // --- CARREGAR DADOS ---
     const fetchServicos = async () => {
         try {
-            const response = await api.get<Produto[]>('/produto');
+            const response = await api.get<Produto[]>('/produtos');
             // Filtra apenas o que é relevante para manutenção (tira combustível)
             const filtrados = response.data
                 .filter(p => ['SERVICO', 'PECA', 'LAVAGEM', 'OUTRO'].includes(p.tipo))

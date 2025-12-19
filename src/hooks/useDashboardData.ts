@@ -20,14 +20,13 @@ export function useDashboardData() {
         queryFn: async () => {
             if (!user) throw new Error("Usuário não autenticado");
 
-            // BLINDAGEM: Usamos allSettled para que o erro de uma única requisição
-            // (ex: falha ao carregar fornecedores) não derrube todo o painel.
+            // CORREÇÃO: URLs ajustadas para o plural conforme definido no backend
             const results = await Promise.allSettled([
-                api.get<User[]>('/user'),
+                api.get<User[]>('/users'),
                 api.get<Veiculo[]>('/veiculos'),
-                api.get<Produto[]>('/produto'),
-                api.get<Fornecedor[]>('/fornecedor'),
-                api.get<Jornada[]>('/jornada/abertas')
+                api.get<Produto[]>('/produtos'),
+                api.get<Fornecedor[]>('/fornecedores'),
+                api.get<Jornada[]>('/jornadas/abertas')
             ]);
 
             // Função auxiliar para extrair dados com segurança
@@ -51,7 +50,6 @@ export function useDashboardData() {
         },
 
         enabled: !!user,
-
         staleTime: 1000 * 60 * 2,
         refetchInterval: 1000 * 60,
         refetchOnWindowFocus: true,

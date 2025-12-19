@@ -22,7 +22,7 @@ export function GestaoFornecedores() {
   const fetchFornecedores = async () => {
     setLoading(true);
     try {
-      const response = await api.get<Fornecedor[]>('/fornecedor');
+      const response = await api.get<Fornecedor[]>('/fornecedores');
       setFornecedores(response.data);
     } catch (err) {
       console.error(err);

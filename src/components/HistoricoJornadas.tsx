@@ -52,7 +52,7 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
             if (dataFim) params.dataFim = dataFim;
             if (veiculoId) params.veiculoId = veiculoId;
 
-            const response = await api.get('/jornada/historico', { params });
+            const response = await api.get('/jornadas/historico', { params });
             setHistorico(response.data);
         } catch (err) {
             console.error("Erro ao buscar histórico de jornadas:", err);

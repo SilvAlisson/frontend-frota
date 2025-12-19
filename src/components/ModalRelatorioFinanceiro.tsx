@@ -34,7 +34,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
         // Dispara requisições paralelas
         const [resAbast, resManut] = await Promise.all([
           api.get<Abastecimento[]>('/abastecimentos/recentes', { params: { dataInicio, dataFim, limit: 'all' } }),
-          api.get<OrdemServico[]>('/ordens-servico/recentes', { params: { dataInicio, dataFim, limit: 'all' } })
+          api.get<OrdemServico[]>('/ordens-servicos/recentes', { params: { dataInicio, dataFim, limit: 'all' } })
         ]);
 
         setDadosRaw({
