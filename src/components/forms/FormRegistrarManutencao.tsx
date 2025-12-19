@@ -66,12 +66,12 @@ const Stepper = ({ current, steps }: { current: number, steps: string[] }) => (
       const stepNum = index + 1;
       const isActive = stepNum === current;
       const isCompleted = stepNum < current;
-      
+
       return (
         <div key={stepNum} className="flex flex-col items-center relative z-10 w-1/3">
           <div className={`
             w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 border-2
-            ${isActive ? 'bg-primary text-white border-primary shadow-lg shadow-primary/30 scale-110' : 
+            ${isActive ? 'bg-primary text-white border-primary shadow-lg shadow-primary/30 scale-110' :
               isCompleted ? 'bg-green-500 text-white border-green-500' : 'bg-white text-gray-400 border-gray-200'}
           `}>
             {isCompleted ? '✓' : stepNum}
@@ -99,10 +99,10 @@ export function FormRegistrarManutencao({
   const [step, setStep] = useState(1);
   const [modalAberto, setModalAberto] = useState(false);
   const [modalServicosOpen, setModalServicosOpen] = useState(false);
-  
+
   // OTIMIZAÇÃO: Tipagem forte
   const [formDataParaModal, setFormDataParaModal] = useState<PayloadOrdemServico | null>(null);
-  
+
   const [ultimoKmRegistrado, setUltimoKmRegistrado] = useState<number>(0);
   const [abaAtiva, setAbaAtiva] = useState<TipoManutencao>('CORRETIVA');
   const [listaProdutos, setListaProdutos] = useState<Produto[]>(produtos);
@@ -110,16 +110,16 @@ export function FormRegistrarManutencao({
   useEffect(() => { setListaProdutos(produtos); }, [produtos]);
 
   // OTIMIZAÇÃO: useMemo para evitar filtros desnecessários a cada render
-  const produtosManutencao = useMemo(() => 
-    listaProdutos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)), 
-  [listaProdutos]);
-  
-  const fornecedoresFiltrados = useMemo(() => 
+  const produtosManutencao = useMemo(() =>
+    listaProdutos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)),
+    [listaProdutos]);
+
+  const fornecedoresFiltrados = useMemo(() =>
     fornecedores.filter(f => {
       if (abaAtiva === 'CORRETIVA') return !['POSTO', 'LAVA_JATO'].includes(f.tipo);
       return true;
-    }), 
-  [fornecedores, abaAtiva]);
+    }),
+    [fornecedores, abaAtiva]);
 
   const {
     register,
@@ -158,7 +158,7 @@ export function FormRegistrarManutencao({
   // OTIMIZAÇÃO: useEffect com Cleanup para evitar Race Condition
   useEffect(() => {
     let isMounted = true;
-    
+
     if (alvoSelecionado !== 'VEICULO' || !veiculoIdSelecionado) {
       setUltimoKmRegistrado(0);
       return;
@@ -171,8 +171,8 @@ export function FormRegistrarManutencao({
         if (isMounted) {
           setUltimoKmRegistrado(data.ultimoKm || 0);
         }
-      } catch (err) { 
-        console.error("Erro ao buscar KM:", err); 
+      } catch (err) {
+        console.error("Erro ao buscar KM:", err);
       }
     };
     fetchInfoVeiculo();
@@ -187,7 +187,7 @@ export function FormRegistrarManutencao({
   // --- LÓGICA DE NAVEGAÇÃO ENTRE PASSOS ---
   const nextStep = async () => {
     let isValid = false;
-    
+
     if (step === 1) {
       // Valida apenas campos do contexto inicial
       isValid = await trigger(['alvo', 'veiculoId', 'fornecedorId', 'data', 'kmAtual', 'numeroCA', 'tipo']);
@@ -195,7 +195,7 @@ export function FormRegistrarManutencao({
       // Valida se há itens e se estão preenchidos
       isValid = await trigger('itens');
     }
-    
+
     if (isValid) setStep(s => s + 1);
   };
 
@@ -239,7 +239,7 @@ export function FormRegistrarManutencao({
     toast.success('Ordem de Serviço registrada!');
     setModalAberto(false);
     setFormDataParaModal(null);
-    
+
     // Reset completo
     reset({
       alvo: 'VEICULO',
@@ -254,7 +254,7 @@ export function FormRegistrarManutencao({
     });
     setUltimoKmRegistrado(0);
     setStep(1); // Volta para o passo 1
-    
+
     if (onSuccess) onSuccess();
   };
 
@@ -265,24 +265,22 @@ export function FormRegistrarManutencao({
   return (
     <>
       <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-card border border-gray-100 w-full animate-in fade-in duration-500">
-        
+
         {/* TABS DE TIPO */}
         <div className="flex mb-8 bg-gray-50 p-1 rounded-xl">
           <button
             type="button"
             onClick={() => handleTrocaAba('CORRETIVA')}
-            className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
-              abaAtiva === 'CORRETIVA' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
-            }`}
+            className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${abaAtiva === 'CORRETIVA' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
+              }`}
           >
             Corretiva
           </button>
           <button
             type="button"
             onClick={() => handleTrocaAba('PREVENTIVA')}
-            className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${
-              abaAtiva === 'PREVENTIVA' ? 'bg-white text-primary shadow-sm' : 'text-gray-400 hover:text-gray-600'
-            }`}
+            className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${abaAtiva === 'PREVENTIVA' ? 'bg-white text-primary shadow-sm' : 'text-gray-400 hover:text-gray-600'
+              }`}
           >
             Preventiva
           </button>
@@ -291,29 +289,29 @@ export function FormRegistrarManutencao({
         <Stepper current={step} steps={['Contexto', 'Serviços', 'Revisão']} />
 
         <form onSubmit={handleSubmit(onValidSubmit)} className="space-y-6">
-          
+
           {/* --- PASSO 1: CONTEXTO --- */}
           {step === 1 && (
             <div className="space-y-5 animate-in slide-in-from-right-8 duration-300">
-              
+
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded transition-colors">
-                  <input 
-                    type="radio" 
-                    value="VEICULO" 
-                    {...register('alvo')} 
-                    className="accent-primary" 
-                    onClick={() => setValue('alvo', 'VEICULO')} 
+                  <input
+                    type="radio"
+                    value="VEICULO"
+                    {...register('alvo')}
+                    className="accent-primary"
+                    onClick={() => setValue('alvo', 'VEICULO')}
                   />
                   <span className="text-sm font-medium text-gray-700">Veículo</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded transition-colors">
-                  <input 
-                    type="radio" 
-                    value="OUTROS" 
-                    {...register('alvo')} 
-                    className="accent-primary" 
-                    onClick={() => setValue('alvo', 'OUTROS')} 
+                  <input
+                    type="radio"
+                    value="OUTROS"
+                    {...register('alvo')}
+                    className="accent-primary"
+                    onClick={() => setValue('alvo', 'OUTROS')}
                   />
                   <span className="text-sm font-medium text-gray-700">Equipamento/Caixa</span>
                 </label>
@@ -397,7 +395,7 @@ export function FormRegistrarManutencao({
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
                         </button>
                       )}
-                      
+
                       <div className="grid grid-cols-12 gap-2 items-center">
                         <div className="col-span-6">
                           <label className="text-[9px] font-bold text-gray-400 uppercase">Item</label>
@@ -431,7 +429,7 @@ export function FormRegistrarManutencao({
               >
                 + Adicionar Outro Item
               </button>
-              
+
               <div className="flex justify-end items-center gap-2 pt-2">
                 <span className="text-xs text-gray-400 uppercase font-bold">Subtotal Estimado:</span>
                 <span className="text-lg font-mono font-bold text-gray-900">R$ {totalGeral.toFixed(2)}</span>
@@ -469,7 +467,7 @@ export function FormRegistrarManutencao({
                 Voltar
               </Button>
             )}
-            
+
             {step < 3 ? (
               <Button type="button" variant="primary" onClick={nextStep} className="flex-[2]">
                 Próximo
