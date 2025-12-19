@@ -19,6 +19,7 @@ export function MinhaEquipe({ usuarios, jornadasAbertas }: MinhaEquipeProps) {
   const [tokenQr, setTokenQr] = useState<string | null>(null);
   const [nomeQr, setNomeQr] = useState('');
   const [fotoQr, setFotoQr] = useState<string | null | undefined>(null);
+  const [roleQr, setRoleQr] = useState<string>(''); // Novo estado para TypeScript
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   // Filtra apenas operadores
@@ -35,6 +36,7 @@ export function MinhaEquipe({ usuarios, jornadasAbertas }: MinhaEquipeProps) {
         setTokenQr(response.data.loginToken);
         setNomeQr(user.nome);
         setFotoQr(user.fotoUrl);
+        setRoleQr(user.role); // Armazena a role
         setModalQrOpen(true);
         setLoadingId(null);
         return `QR Code gerado para ${user.nome.split(' ')[0]}`;
@@ -141,7 +143,13 @@ export function MinhaEquipe({ usuarios, jornadasAbertas }: MinhaEquipeProps) {
           token={tokenQr}
           nomeUsuario={nomeQr}
           fotoUrl={fotoQr}
-          onClose={() => { setModalQrOpen(false); setTokenQr(null); setFotoQr(null); }}
+          role={roleQr} // CORREÇÃO: Propriedade role adicionada
+          onClose={() => {
+            setModalQrOpen(false);
+            setTokenQr(null);
+            setFotoQr(null);
+            setRoleQr('');
+          }}
         />
       )}
     </div>
