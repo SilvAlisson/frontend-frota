@@ -30,8 +30,8 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   const [modalQrOpen, setModalQrOpen] = useState(false);
   const [tokenQr, setTokenQr] = useState<string | null>(null);
   const [nomeQr, setNomeQr] = useState('');
-  const [roleQr, setRoleQr] = useState(''); // <--- NOVO ESTADO
   const [fotoQr, setFotoQr] = useState<string | null | undefined>(null);
+  const [roleQr, setRoleQr] = useState<string>(''); // Novo estado para corrigir o erro TypeScript
 
   const { data: usuarios = [], isLoading } = useQuery<User[]>({
     queryKey: ['users'],
@@ -83,7 +83,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
         setTokenQr(response.data.loginToken);
         setNomeQr(user.nome);
         setFotoQr(user.fotoUrl);
-        setRoleQr(user.role); // <--- ATUALIZA O ESTADO
+        setRoleQr(user.role); // Armazena a role para passar ao Modal
         setModalQrOpen(true);
         return `QR Code gerado para ${user.nome}`;
       },
@@ -320,8 +320,13 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
           token={tokenQr}
           nomeUsuario={nomeQr}
           fotoUrl={fotoQr}
-          role={roleQr} // <--- PASSADO COMO PROP
-          onClose={() => { setModalQrOpen(false); setTokenQr(null); setFotoQr(null); }}
+          role={roleQr}
+          onClose={() => {
+            setModalQrOpen(false);
+            setTokenQr(null);
+            setFotoQr(null);
+            setRoleQr('');
+          }}
         />
       )}
 

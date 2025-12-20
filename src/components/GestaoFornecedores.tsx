@@ -22,7 +22,7 @@ export function GestaoFornecedores() {
   const fetchFornecedores = async () => {
     setLoading(true);
     try {
-      const response = await api.get<Fornecedor[]>('/fornecedor');
+      const response = await api.get<Fornecedor[]>('/fornecedores');
       setFornecedores(response.data);
     } catch (err) {
       console.error(err);
@@ -40,7 +40,7 @@ export function GestaoFornecedores() {
     if (!window.confirm("Tem certeza que deseja remover este parceiro?")) return;
 
     setDeletingId(fornecedorId);
-    const promise = api.delete(`/fornecedor/${fornecedorId}`);
+    const promise = api.delete(`/fornecedores/${fornecedorId}`);
 
     toast.promise(promise, {
       loading: 'Removendo...',

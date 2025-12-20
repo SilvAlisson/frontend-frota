@@ -70,7 +70,7 @@ export function FormEditarManutencao({
 
   const {
     register, control, handleSubmit, watch, setValue,
-    formState: { errors, isSubmitting }
+    formState: { errors, isSubmitting } // CORREÇÃO: Agora usamos 'errors'
   } = useForm<ManutencaoFormInput>({
     resolver: zodResolver(manutencaoSchema),
     defaultValues: {
@@ -80,8 +80,7 @@ export function FormEditarManutencao({
       kmAtual: osParaEditar.kmAtual ? formatKmVisual(String(osParaEditar.kmAtual)) : '',
       numeroCA: caExistente,
       fornecedorId: osParaEditar.fornecedorId,
-      // Garante formato YYYY-MM-DD sem problemas de fuso horário simples
-      data: osParaEditar.data ? new Date(osParaEditar.data).toISOString().split('T')[0] : '',
+      data: new Date(osParaEditar.data).toISOString().slice(0, 10),
       observacoes: obsLimpa,
       fotoComprovanteUrl: osParaEditar.fotoComprovanteUrl,
       itens: osParaEditar.itens.map((i: any) => ({
@@ -118,7 +117,6 @@ export function FormEditarManutencao({
     };
 
     try {
-      // CORREÇÃO: Rota no plural (/ordens-servico)
       await api.put(`/ordens-servico/${osParaEditar.id}`, payload);
       toast.success("Manutenção atualizada com sucesso!");
       onSuccess();
@@ -160,6 +158,7 @@ export function FormEditarManutencao({
                 <select {...register("veiculoId")} className="w-full px-3 py-2 bg-white border rounded-md focus:ring-2 focus:ring-primary outline-none text-sm">
                   {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa}</option>)}
                 </select>
+                {/* CORREÇÃO: Exibindo erro */}
                 {errors.veiculoId && <span className="text-xs text-red-500">{errors.veiculoId.message}</span>}
               </div>
               <div>
@@ -170,14 +169,14 @@ export function FormEditarManutencao({
                     register("kmAtual").onChange(e);
                     handleKmChange(e);
                   }}
-                  error={errors.kmAtual?.message}
+                  error={errors.kmAtual?.message} // CORREÇÃO: Passando erro
                 />
               </div>
             </div>
           ) : (
             <div className="md:col-span-2">
               <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">CA</label>
-              <Input {...register("numeroCA")} error={errors.numeroCA?.message} />
+              <Input {...register("numeroCA")} error={errors.numeroCA?.message} /> {/* CORREÇÃO */}
             </div>
           )}
 
@@ -186,12 +185,13 @@ export function FormEditarManutencao({
             <select {...register("fornecedorId")} className="w-full px-3 py-2 bg-white border rounded-md focus:ring-2 focus:ring-primary outline-none text-sm">
               {fornecedoresFiltrados.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
             </select>
+            {/* CORREÇÃO: Exibindo erro */}
             {errors.fornecedorId && <span className="text-xs text-red-500">{errors.fornecedorId.message}</span>}
           </div>
 
           <div className="md:col-span-2">
             <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">Data</label>
-            <Input type="date" {...register("data")} error={errors.data?.message} />
+            <Input type="date" {...register("data")} error={errors.data?.message} /> {/* CORREÇÃO */}
           </div>
         </div>
 
@@ -203,6 +203,7 @@ export function FormEditarManutencao({
           </div>
 
           {fields.map((field, index) => {
+            // CORREÇÃO: Capturar erros específicos do item
             const itemError = errors.itens?.[index];
 
             return (
@@ -245,6 +246,7 @@ export function FormEditarManutencao({
             <span className="text-sm font-bold text-gray-700">Total: R$ {totalGeral.toFixed(2)}</span>
           </div>
 
+          {/* CORREÇÃO: Erro geral de itens */}
           {errors.itens && <p className="text-xs text-red-500 mt-2 text-right">{errors.itens.root?.message}</p>}
         </div>
 

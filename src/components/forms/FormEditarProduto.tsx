@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 
 const tiposDeProduto = ["COMBUSTIVEL", "ADITIVO", "SERVICO", "OUTRO"] as const;
 
+// --- 1. SCHEMA ZOD V4 (Otimizado) ---
 const produtoSchema = z.object({
   nome: z.string({ error: "Nome do item é obrigatório" })
     .trim()
@@ -58,9 +59,9 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
     const fetchProduto = async () => {
       setLoadingData(true);
       try {
-        // CORREÇÃO: Rota no plural (/produtos)
         const { data } = await api.get(`/produtos/${produtoId}`);
 
+        // Validação defensiva do tipo vindo do backend
         const tipoValido = tiposDeProduto.includes(data.tipo as any)
           ? (data.tipo as typeof tiposDeProduto[number])
           : 'OUTRO';
@@ -74,7 +75,7 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
       } catch (err) {
         console.error("Erro ao carregar produto:", err);
         toast.error("Não foi possível carregar os dados do produto.");
-        onCancelar();
+        onCancelar(); // Fecha o modal se falhar
       } finally {
         setLoadingData(false);
       }
@@ -83,10 +84,9 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
     fetchProduto();
   }, [produtoId, reset, onCancelar]);
 
-  // --- SUBMISSÃO ---
+  // --- 2. SUBMISSÃO COM TOAST PROMISE ---
   const onSubmit = async (data: ProdutoFormValues) => {
-    // CORREÇÃO: Rota no plural (/produtos)
-    const promise = api.put(`/produtos/${produtoId}`, data);
+    const promise = api.put(`/produto/${produtoId}`, data);
 
     toast.promise(promise, {
       loading: 'Atualizando item...',

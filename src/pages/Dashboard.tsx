@@ -81,9 +81,9 @@ export function Dashboard() {
                 {user.role}
               </span>
             </div>
-            
+
             <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
-            
+
             <Button
               variant="ghost"
               onClick={logout}

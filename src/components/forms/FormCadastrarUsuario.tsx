@@ -24,8 +24,9 @@ const usuarioSchema = z.object({
     .min(3, { error: "Nome muito curto (mín. 3 letras)" })
     .transform(val => val.trim()),
 
-  email: z.string({ error: "Email obrigatório" })
-    .email({ message: "Email inválido" })
+  // V4: z.email() agora é top-level (substitui z.string().email())
+  // Isso já valida que é string, que não é vazio e o formato do email.
+  email: z.email({ error: "Email inválido ou obrigatório" })
     .toLowerCase(),
 
   password: z.string({ error: "Senha é obrigatória" })
@@ -38,6 +39,7 @@ const usuarioSchema = z.object({
   }),
 
   // Campos condicionais (RH)
+  // .or(z.literal('')) permite lidar com inputs vazios do HTML que o react-hook-form envia
   cargoId: z.string().optional().or(z.literal('')),
   cnhNumero: z.string().optional().or(z.literal('')),
   cnhCategoria: z.string().optional().or(z.literal('')),
@@ -61,7 +63,6 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
   const { data: cargos = [], isLoading: isLoadingCargos } = useQuery<Cargo[]>({
     queryKey: ['cargos-select'],
     queryFn: async () => {
-      // Esta rota já estava correta (/cargos - Plural)
       const response = await api.get('/cargos');
       return response.data;
     },
@@ -130,7 +131,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
       password: data.password,
       matricula: data.matricula ? DOMPurify.sanitize(data.matricula) : null,
       role: data.role,
-      fotoUrl: finalFotoUrl,
+      fotoUrl: finalFotoUrl, // Novo campo
 
       // Envia null se não for operador ou se o campo estiver vazio
       cargoId: isOperador && data.cargoId ? data.cargoId : null,
@@ -140,7 +141,6 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
       dataAdmissao: data.dataAdmissao ? new Date(data.dataAdmissao).toISOString() : null,
     };
 
-    // CORREÇÃO CRÍTICA: Rota '/users/register' (plural "users")
     const promise = api.post('/users/register', payload);
 
     toast.promise(promise, {

@@ -20,20 +20,22 @@ export function useDashboardData() {
         queryFn: async () => {
             if (!user) throw new Error("Usuário não autenticado");
 
-            // CORREÇÃO: Todas as rotas atualizadas para o plural
+            // CORREÇÃO: URLs ajustadas para o plural conforme definido no backend
             const results = await Promise.allSettled([
-                api.get<User[]>('/users'),                // Antes: /user
+                api.get<User[]>('/users'),
                 api.get<Veiculo[]>('/veiculos'),
-                api.get<Produto[]>('/produtos'),          // Antes: /produto
-                api.get<Fornecedor[]>('/fornecedores'),   // Antes: /fornecedor
-                api.get<Jornada[]>('/jornadas/abertas')   // Antes: /jornada/abertas
+                api.get<Produto[]>('/produtos'),
+                api.get<Fornecedor[]>('/fornecedores'),
+                api.get<Jornada[]>('/jornadas/abertas')
             ]);
 
+            // Função auxiliar para extrair dados com segurança
             const unwrap = <T>(result: PromiseSettledResult<{ data: T }>, context: string): T => {
                 if (result.status === 'fulfilled') {
                     return result.value.data;
                 } else {
                     console.warn(`[Dashboard] Falha parcial ao carregar ${context}:`, result.reason);
+                    // Retorna array vazio para a interface não quebrar com undefined
                     return [] as any;
                 }
             };
@@ -50,5 +52,6 @@ export function useDashboardData() {
         enabled: !!user,
         staleTime: 1000 * 60 * 2,
         refetchInterval: 1000 * 60,
+        refetchOnWindowFocus: true,
     });
 }

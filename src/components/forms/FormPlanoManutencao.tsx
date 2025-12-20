@@ -66,7 +66,6 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
   const fetchPlanos = async () => {
     setLoadingList(true);
     try {
-      // CORREÇÃO: Rota no plural
       const response = await api.get<PlanoManutencao[]>('/planos-manutencao');
       setPlanos(response.data);
     } catch (err) {
@@ -83,7 +82,6 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
 
   // --- CRIAR PLANO ---
   const onSubmit = async (data: PlanoFormInput) => {
-    // CORREÇÃO: Rota no plural
     const promise = api.post('/planos-manutencao', data);
 
     toast.promise(promise, {
@@ -105,7 +103,6 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
     if (!window.confirm("Deseja realmente remover este plano de manutenção?")) return;
 
     setDeletingId(id);
-    // CORREÇÃO: Rota no plural
     const promise = api.delete(`/planos-manutencao/${id}`);
 
     toast.promise(promise, {
@@ -118,6 +115,7 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
       error: (err) => {
         console.error(err);
         setDeletingId(null);
+        // Recarrega para garantir consistência
         fetchPlanos();
         return err.response?.data?.error || 'Erro ao remover plano.';
       }

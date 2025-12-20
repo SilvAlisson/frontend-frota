@@ -171,8 +171,8 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                 key={aba}
                 onClick={() => setAbaAtiva(aba as any)}
                 className={`pb-3 text-sm font-bold border-b-2 transition-colors whitespace-nowrap flex-shrink-0 ${abaAtiva === aba
-                    ? 'border-primary text-primary'
-                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
               >
                 {aba === 'GERAL' && 'Visão Macro'}

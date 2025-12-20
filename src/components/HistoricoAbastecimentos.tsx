@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
+import { FormEditarAbastecimento } from './forms/FormEditarAbastecimento';
 
 interface ItemAbastecimento {
   quantidade: number;
@@ -43,6 +44,7 @@ interface HistoricoAbastecimentosProps {
 // Ícones Minimalistas
 function IconeFoto() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>; }
 function IconeLixo() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.54 0c-.34.055-.68.11-.1022.166m11.54 0c.376.09.74.19 1.097.302l-1.148 3.896M12 18V9" /></svg>; }
+function IconeEditar() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>; }
 
 // Estilos de Input Reutilizáveis
 const inputStyle = "w-full appearance-none bg-white border border-gray-200 text-gray-700 py-2 px-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium text-sm shadow-sm hover:border-gray-300 font-sans";
@@ -54,9 +56,15 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // Estado para controlar qual item está sendo editado
+  const [editingId, setEditingId] = useState<string | null>(null);
+
   const [dataInicioFiltro, setDataInicioFiltro] = useState(filtroInicial?.dataInicio || '');
   const [dataFimFiltro, setDataFimFiltro] = useState('');
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState(filtroInicial?.veiculoId || '');
+
+  // Permissão: Admin e Encarregado podem editar
+  const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
 
   useEffect(() => {
     if (filtroInicial?.veiculoId) setVeiculoIdFiltro(filtroInicial.veiculoId);
@@ -88,7 +96,7 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
     if (!window.confirm(`Tem certeza que quer REMOVER este registro?`)) return;
 
     setDeletingId(id);
-    const promise = api.delete(`/abastecimentos/${id}`);
+    const promise = api.delete(`/abastecimentos/${id}`); // Garantir plural se a rota for plural
 
     toast.promise(promise, {
       loading: 'Removendo...',
@@ -288,6 +296,17 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
                     </a>
                   )}
 
+                  {/* BOTÃO EDITAR (Para Admin e Encarregado) */}
+                  {canEdit && (
+                    <Button
+                      variant="ghost"
+                      className="!p-1.5 h-8 w-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                      onClick={() => setEditingId(ab.id)}
+                      title="Editar"
+                      icon={<IconeEditar />}
+                    />
+                  )}
+
                   {userRole === 'ADMIN' && (
                     <Button
                       variant="ghost"
@@ -328,6 +347,22 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
           );
         })}
       </div>
+
+      {/* MODAL DE EDIÇÃO */}
+      {editingId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-6 animate-in zoom-in-95 duration-200">
+            <FormEditarAbastecimento
+              abastecimentoId={editingId}
+              onSuccess={() => {
+                setEditingId(null);
+                fetchHistorico();
+              }}
+              onCancel={() => setEditingId(null)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

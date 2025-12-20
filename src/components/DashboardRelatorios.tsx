@@ -107,7 +107,7 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
         const params: Record<string, string | number> = { ano, mes };
         if (veiculoIdFiltro) params.veiculoId = veiculoIdFiltro;
 
-        const response = await api.get('/relatorio/sumario', { params });
+        const response = await api.get('/relatorios/sumario', { params });
         setKpis(response.data.kpis as KpiData);
 
       } catch (err) {
@@ -176,7 +176,7 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
       {/* HEADER DE CONTROLE (Glassmorphism) */}
       <div className="bg-white/80 backdrop-blur-md p-1 rounded-xl border border-gray-200 shadow-sm sticky top-0 z-20">
         <div className="flex flex-wrap gap-3 p-3 bg-gray-50/50 rounded-lg items-end justify-between">
-          
+
           <div className="flex flex-wrap gap-3 w-full lg:w-auto items-end">
             {/* Filtro Mês */}
             <div className="w-full sm:w-40">
@@ -247,7 +247,7 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
 
       {/* --- BENTO GRID: LAYOUT INTELIGENTE --- */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        
+
         {/* DESTAQUE: Custo Total (Ocupa 2 colunas em telas grandes) */}
         <div className="lg:col-span-2">
           <KpiCard

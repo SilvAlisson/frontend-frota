@@ -42,6 +42,8 @@ const abastecimentoSchema = z.object({
 
   justificativa: z.string().optional(),
 
+  // Foto validada apenas no Modal (para não bloquear o form inicial)
+
   itens: z.array(itemAbastecimentoSchema)
     .min(1, { error: "Adicione pelo menos um item" })
 });

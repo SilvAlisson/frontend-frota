@@ -62,7 +62,7 @@ export function GestaoProdutos() {
   const fetchProdutos = async () => {
     setLoading(true);
     try {
-      const response = await api.get('/produto');
+      const response = await api.get('/produtos');
       setProdutos(response.data);
     } catch (err) {
       console.error(err);
@@ -80,7 +80,7 @@ export function GestaoProdutos() {
     if (!window.confirm("Tem certeza que quer REMOVER este produto?")) return;
 
     setDeletingId(produtoId);
-    const promise = api.delete(`/produto/${produtoId}`);
+    const promise = api.delete(`/produtos/${produtoId}`);
 
     toast.promise(promise, {
       loading: 'Removendo item...',

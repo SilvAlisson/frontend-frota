@@ -40,7 +40,7 @@ export function PainelAlertas({ }: PainelAlertasProps) {
       setLoading(true);
       setError('');
       try {
-        const response = await api.get('/alertas');
+        const response = await api.get('/relatorios/alertas');
         setAlertas(response.data);
       } catch (err) {
         console.error("Erro ao buscar alertas:", err);
