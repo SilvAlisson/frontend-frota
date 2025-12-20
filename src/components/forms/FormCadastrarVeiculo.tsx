@@ -1,21 +1,24 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod'; // CORREÇÃO: Importação nomeada para melhor tree-shaking
+import { z } from 'zod';
 import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { toast } from 'sonner';
 
-// --- ATUALIZAÇÃO 1: Novos Tipos de Equipamento ---
+// --- CONFIGURAÇÃO: Tipos de Equipamento e Combustível ---
 const tiposDeVeiculo = ["POLIGUINDASTE", "VACUO", "MUNCK", "UTILITARIO", "OUTRO"] as const;
 const tiposDeCombustivel = ["DIESEL_S10", "GASOLINA_COMUM", "ETANOL", "GNV"] as const;
 
-// --- 1. SCHEMA ZOD V4 ---
+// --- 1. SCHEMA ZOD V4 (Corrigido para usar 'error' em vez de 'invalid_type_error') ---
 const veiculoSchema = z.object({
   placa: z.string({ error: "A placa é obrigatória" })
     .length(7, { message: "A placa deve ter exatamente 7 caracteres" })
     .transform(val => val.trim().toUpperCase()),
+
+  marca: z.string({ error: "A marca é obrigatória" })
+    .min(2, { message: "Informe a marca (ex: VW, Volvo)" }),
 
   modelo: z.string({ error: "O modelo é obrigatório" })
     .min(2, { message: "Modelo muito curto" }),
@@ -23,6 +26,10 @@ const veiculoSchema = z.object({
   ano: z.coerce.number({ error: "Ano inválido" })
     .min(1900, { message: "Ano inválido (mínimo 1900)" })
     .max(new Date().getFullYear() + 1, { message: "Ano não pode ser futuro" }),
+
+  // CORREÇÃO AQUI: Substituído 'invalid_type_error' por 'error' para compatibilidade
+  kmAtual: z.coerce.number({ error: "KM deve ser um número válido" })
+    .min(0, { message: "O KM não pode ser negativo" }),
 
   tipoVeiculo: z.enum(tiposDeVeiculo, {
     error: "Selecione o tipo do veículo"
@@ -54,15 +61,17 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
     register,
     handleSubmit,
     reset,
-    watch, // Importado para monitorar o tipo
+    watch,
     formState: { errors, isSubmitting }
   } = useForm<VeiculoFormValues>({
     resolver: zodResolver(veiculoSchema),
     defaultValues: {
       placa: '',
+      marca: '',
       modelo: '',
       ano: new Date().getFullYear(),
-      tipoVeiculo: 'POLIGUINDASTE', // Default ajustado para um dos novos tipos
+      kmAtual: 0, // Inicia zerado, usuário deve preencher
+      tipoVeiculo: 'POLIGUINDASTE',
       tipoCombustivel: 'DIESEL_S10',
       capacidadeTanque: 0,
       vencimentoCiv: '',
@@ -71,17 +80,19 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
     mode: 'onBlur'
   });
 
-  // --- ATUALIZAÇÃO 2: Monitorar Tipo para Lógica Condicional ---
+  // Monitorar Tipo para Lógica Condicional (Tanque de Vácuo)
   const tipoVeiculoSelecionado = watch('tipoVeiculo');
   const isVacuo = tipoVeiculoSelecionado === 'VACUO';
 
   const onSubmit = async (data: VeiculoFormValues) => {
 
-    // Tratamento dos dados antes do envio
+    // Tratamento e Higienização dos dados
     const payload = {
       placa: DOMPurify.sanitize(data.placa),
+      marca: DOMPurify.sanitize(data.marca),
       modelo: DOMPurify.sanitize(data.modelo),
       ano: data.ano,
+      kmAtual: data.kmAtual, // Envia o Marco Zero para o backend criar o histórico
       tipoVeiculo: data.tipoVeiculo,
       tipoCombustivel: data.tipoCombustivel,
 
@@ -95,11 +106,11 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
     const promise = api.post('/veiculos', payload);
 
     toast.promise(promise, {
-      loading: 'Cadastrando equipamento na frota...',
+      loading: 'Cadastrando equipamento e gerando histórico inicial...',
       success: (response) => {
         reset();
         setTimeout(onSuccess, 800);
-        return `Equipamento ${response.data.placa} cadastrado com sucesso!`;
+        return `Equipamento ${response.data.placa} cadastrado! Marco zero: ${data.kmAtual}km.`;
       },
       error: (err) => {
         console.error("Erro ao cadastrar:", err);
@@ -115,21 +126,20 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
         {/* HEADER VISUAL */}
         <div className="text-center relative">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-gradient-to-r from-transparent via-green-200 to-transparent rounded-full" />
-
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-green-50 text-green-600 mb-4 shadow-sm ring-4 ring-white">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
               <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
             </svg>
           </div>
-
           <h4 className="text-2xl font-bold text-gray-900 tracking-tight">
             Novo Equipamento
           </h4>
           <p className="text-sm text-text-secondary mt-1 max-w-xs mx-auto leading-relaxed">
-            Cadastre Poliguindastes, Caminhões Vácuo e Muncks.
+            Cadastre o veículo e defina o KM inicial para controle de frota.
           </p>
         </div>
 
+        {/* GRUPO 1: Identificação Básica */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 px-1">
           <Input
             label="Placa"
@@ -142,14 +152,35 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
             autoFocus
           />
           <Input
+            label="Marca"
+            placeholder="Ex: Volkswagen, Mercedes"
+            {...register('marca')}
+            error={errors.marca?.message}
+            disabled={isSubmitting}
+          />
+        </div>
+
+        {/* GRUPO 2: Modelo e Ano */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 px-1 mt-2">
+          <Input
             label="Modelo"
-            placeholder="Ex: VW Constellation 24.280"
+            placeholder="Ex: Constellation 24.280"
             {...register('modelo')}
             error={errors.modelo?.message}
             disabled={isSubmitting}
           />
+          <Input
+            label="Ano de Fabricação"
+            type="number"
+            placeholder="2024"
+            {...register('ano')}
+            error={errors.ano?.message}
+            disabled={isSubmitting}
+          />
+        </div>
 
-          {/* Dropdown de Tipos (Atualizado) */}
+        {/* GRUPO 3: Detalhes Técnicos e KM INICIAL */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 px-1 mt-2">
           <div>
             <label className="block mb-1.5 text-sm font-medium text-text-secondary">Tipo de Equipamento</label>
             <div className="relative group">
@@ -170,16 +201,23 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
             {errors.tipoVeiculo && <p className="mt-1 text-xs text-error animate-pulse">{errors.tipoVeiculo.message}</p>}
           </div>
 
-          <Input
-            label="Ano de Fabricação"
-            type="number"
-            placeholder="2024"
-            {...register('ano')}
-            error={errors.ano?.message}
-            disabled={isSubmitting}
-          />
+          <div className="bg-yellow-50/50 p-3 rounded-lg border border-yellow-100">
+            <Input
+              label="Hodômetro Atual (Marco Zero)"
+              type="number"
+              placeholder="Ex: 105200"
+              {...register('kmAtual')}
+              error={errors.kmAtual?.message}
+              disabled={isSubmitting}
+              className="bg-white border-yellow-200 focus:border-yellow-500"
+            />
+            <p className="text-[10px] text-yellow-700 mt-1.5 font-medium flex items-center gap-1">
+              ⚠️ Importante: Insira o valor exato do painel.
+            </p>
+          </div>
         </div>
 
+        {/* GRUPO 4: Combustível e Tanque */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 px-1 mt-2">
           <div>
             <label className="block mb-1.5 text-sm font-medium text-text-secondary">Combustível</label>
@@ -198,7 +236,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormCadastrarVei
             {errors.tipoCombustivel && <p className="mt-1 text-xs text-error animate-pulse">{errors.tipoCombustivel.message}</p>}
           </div>
 
-          {/* ATUALIZAÇÃO 3: Input de Tanque Condicional (Só aparece para Vácuo) */}
+          {/* Input Condicional: Tanque */}
           {isVacuo && (
             <div className="animate-in fade-in slide-in-from-top-2">
               <Input

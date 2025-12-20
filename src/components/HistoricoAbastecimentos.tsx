@@ -17,7 +17,7 @@ interface Abastecimento {
   id: string;
   dataHora: string;
   kmOdometro: number;
-  custoTotal: number | string; 
+  custoTotal: number | string;
   fotoNotaFiscalUrl: string | null;
   veiculo: {
     placa: string;
@@ -55,7 +55,7 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
   const [historico, setHistorico] = useState<Abastecimento[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  
+
   // Estado para controlar qual item está sendo editado
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -117,15 +117,15 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
     const num = Number(value) || 0;
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   };
-  
+
   // Formatador de Data/Hora Clean
   const formatDateTime = (dateStr: string) => {
     const date = new Date(dateStr);
     return {
-        day: date.getDate().toString().padStart(2, '0'),
-        month: date.toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase(),
-        year: date.getFullYear(),
-        time: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+      day: date.getDate().toString().padStart(2, '0'),
+      month: date.toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase(),
+      year: date.getFullYear(),
+      time: date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
     };
   };
 
@@ -173,7 +173,7 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
       {/* HEADER DE FILTROS (Glass Panel) */}
       <div className="glass-panel p-1 rounded-xl sticky top-0 z-10 mb-6">
         <div className="flex flex-wrap gap-4 p-3 bg-white/50 rounded-lg items-end justify-between">
-          
+
           <div className="flex flex-wrap gap-3 w-full lg:w-auto items-end">
             <div className="w-full sm:w-32">
               <label className={labelStyle}>De</label>
@@ -186,9 +186,9 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
             <div className="w-full sm:w-56">
               <label className={labelStyle}>Veículo</label>
               <div className="relative">
-                <select 
-                  className={inputStyle} 
-                  value={veiculoIdFiltro} 
+                <select
+                  className={inputStyle}
+                  value={veiculoIdFiltro}
                   onChange={(e) => setVeiculoIdFiltro(e.target.value)}
                 >
                   <option value="">Todos os veículos</option>
@@ -247,10 +247,10 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
 
         {!loading && historico.map((ab) => {
           const dateInfo = formatDateTime(ab.dataHora);
-          
+
           return (
-            <div 
-              key={ab.id} 
+            <div
+              key={ab.id}
               className={`
                 group bg-white p-4 rounded-r-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 
                 border-l-[4px] border-l-primary rounded-l-md

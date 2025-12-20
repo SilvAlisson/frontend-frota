@@ -156,7 +156,7 @@ export function GestaoVeiculos() {
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {veiculos.map((veiculo) => (
                 <div key={veiculo.id} className="group bg-white p-5 rounded-xl shadow-sm border border-gray-200 hover:shadow-float hover:border-primary/30 transition-all duration-300 flex flex-col relative">
-                  
+
                   {/* Etiqueta de Tipo (Canto Superior Direito) */}
                   <div className="absolute top-4 right-4">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 border border-gray-100 px-2 py-0.5 rounded-full bg-gray-50">
@@ -180,7 +180,7 @@ export function GestaoVeiculos() {
                         <span className="text-[10px] text-gray-400 font-medium">ID DA FROTA</span>
                       </div>
                     </div>
-                    
+
                     <div className="pl-1">
                       <p className="text-sm font-medium text-gray-700 truncate" title={veiculo.modelo}>
                         {veiculo.modelo}

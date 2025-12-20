@@ -128,9 +128,9 @@ export function AdminDashboard({
         <div className="space-y-0.5">
           <MenuButton active={viewAtiva === 'nova_os'} onClick={() => handleNavegacao('OPERACIONAL', 'nova_os')} icon={Icons.Operacao} label="Nova Manutenção" />
           <MenuButton active={viewAtiva === 'novo_abastecimento'} onClick={() => handleNavegacao('OPERACIONAL', 'novo_abastecimento')} icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg>} label="Novo Abastecimento" />
-          
+
           <div className="h-4"></div> {/* Spacer */}
-          
+
           <p className="px-3 text-[10px] font-bold text-gray-400 mb-1 font-sans">HISTÓRICOS</p>
           <MenuButton active={viewAtiva === 'hist_manutencao'} onClick={() => handleNavegacao('OPERACIONAL', 'hist_manutencao')} label="Manutenções (OS)" small />
           <MenuButton active={viewAtiva === 'hist_abastecimento'} onClick={() => handleNavegacao('OPERACIONAL', 'hist_abastecimento')} label="Abastecimentos" small />
@@ -174,22 +174,22 @@ export function AdminDashboard({
       {/* SIDEBAR DESKTOP */}
       <aside className="hidden md:flex w-64 bg-surface border-r border-gray-200 flex-col py-6 px-4 shrink-0 h-full overflow-y-auto">
         <div className="mb-8 px-2 flex items-center gap-2">
-           {/* LOGO DA EMPRESA */}
-           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/30">KL</div>
-           <span className="font-bold text-gray-900 tracking-tight font-sans">Frota Inteligente</span>
+          {/* LOGO DA EMPRESA */}
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/30">KL</div>
+          <span className="font-bold text-gray-900 tracking-tight font-sans">Frota Inteligente</span>
         </div>
         <MenuLinks />
       </aside>
 
       {/* HEADER MOBILE */}
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-surface border-b border-gray-200 z-40 flex items-center justify-between px-4">
-         <div className="flex items-center gap-2">
-           <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm">KL</div>
-           <span className="font-bold text-gray-900 font-sans">Frota</span>
-         </div>
-         <button onClick={() => setMenuMobileAberto(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
-            <MenuIcon />
-         </button>
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm">KL</div>
+          <span className="font-bold text-gray-900 font-sans">Frota</span>
+        </div>
+        <button onClick={() => setMenuMobileAberto(true)} className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg">
+          <MenuIcon />
+        </button>
       </div>
 
       {/* SIDEBAR MOBILE (DRAWER) */}
@@ -198,10 +198,10 @@ export function AdminDashboard({
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity" onClick={() => setMenuMobileAberto(false)} />
           <aside className="absolute inset-y-0 left-0 w-[80%] max-w-xs bg-surface shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-left duration-300">
             <div className="flex justify-between items-center mb-8">
-                <span className="font-bold text-lg text-gray-900 font-sans">Menu</span>
-                <button onClick={() => setMenuMobileAberto(false)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
-                    <CloseIcon />
-                </button>
+              <span className="font-bold text-lg text-gray-900 font-sans">Menu</span>
+              <button onClick={() => setMenuMobileAberto(false)} className="p-2 text-gray-500 hover:bg-gray-100 rounded-full">
+                <CloseIcon />
+              </button>
             </div>
             <MenuLinks />
           </aside>
@@ -211,7 +211,7 @@ export function AdminDashboard({
       {/* ÁREA DE CONTEÚDO SCROLLÁVEL */}
       <main className="flex-1 overflow-y-auto bg-background p-4 sm:p-8 pt-20 md:pt-8 w-full">
         <div className="max-w-[1600px] mx-auto min-h-full pb-10">
-           {renderContent()}
+          {renderContent()}
         </div>
       </main>
 
@@ -233,8 +233,8 @@ function MenuButton({ active, onClick, icon, label, small, highlight }: any) {
       onClick={onClick}
       className={`
         w-full flex items-center gap-3 px-3 py-2 rounded-lg text-left transition-all duration-200 group font-sans
-        ${active 
-          ? 'bg-primary text-white shadow-md shadow-primary/20 font-medium' 
+        ${active
+          ? 'bg-primary text-white shadow-md shadow-primary/20 font-medium'
           : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'}
         ${small ? 'text-xs pl-9' : 'text-sm'}
         ${highlight && !active ? 'text-blue-700 bg-blue-50/50 hover:bg-blue-50 font-medium' : ''}

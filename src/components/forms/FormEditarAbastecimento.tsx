@@ -88,7 +88,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
   const itensWatch = useWatch({ control, name: "itens" });
 
-  const totalGeral = itensWatch?.reduce((acc, item) => 
+  const totalGeral = itensWatch?.reduce((acc, item) =>
     acc + (Number(item.quantidade || 0) * Number(item.valorPorUnidade || 0)), 0
   ) || 0;
 
@@ -100,12 +100,12 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         // Tenta pegar o ID direto (se o backend mandar) ou busca pelo objeto relacionado
         operadorId: (abastecimento as any).operadorId || usuarios.find(u => u.nome === abastecimento.operador?.nome)?.id || '',
         fornecedorId: (abastecimento as any).fornecedorId || fornecedores.find(f => f.nome === abastecimento.fornecedor?.nome)?.id || '',
-        
+
         kmOdometro: abastecimento.kmOdometro,
         dataHora: new Date(abastecimento.dataHora).toISOString().slice(0, 16),
         placaCartaoUsado: abastecimento.placaCartaoUsado || '',
         justificativa: abastecimento.justificativa || '',
-        
+
         itens: abastecimento.itens.map(i => ({
           produtoId: (i as any).produtoId || i.produto.id,
           quantidade: i.quantidade,
@@ -188,27 +188,27 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         </div>
 
         <div>
-          <Input 
-            label="KM Odômetro" 
-            type="number" 
-            {...register('kmOdometro')} 
-            error={errors.kmOdometro?.message} 
+          <Input
+            label="KM Odômetro"
+            type="number"
+            {...register('kmOdometro')}
+            error={errors.kmOdometro?.message}
           />
         </div>
 
         <div>
           <label className={labelStyle}>Data/Hora</label>
-          <Input 
-            type="datetime-local" 
-            {...register('dataHora')} 
-            error={errors.dataHora?.message} 
+          <Input
+            type="datetime-local"
+            {...register('dataHora')}
+            error={errors.dataHora?.message}
           />
         </div>
 
         <div>
-          <Input 
-            label="Final Cartão" 
-            {...register('placaCartaoUsado')} 
+          <Input
+            label="Final Cartão"
+            {...register('placaCartaoUsado')}
             maxLength={4}
             placeholder="Ex: 1234"
           />
@@ -217,41 +217,41 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
 
       <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 shadow-sm">
         <div className="flex justify-between items-center mb-3 border-b border-gray-200 pb-2">
-            <label className="text-xs font-bold text-gray-500 uppercase">Itens do Abastecimento</label>
-            <span className="text-sm font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-100">
-              Total: R$ {totalGeral.toFixed(2)}
-            </span>
+          <label className="text-xs font-bold text-gray-500 uppercase">Itens do Abastecimento</label>
+          <span className="text-sm font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-100">
+            Total: R$ {totalGeral.toFixed(2)}
+          </span>
         </div>
-        
+
         {fields.map((field, index) => (
           <div key={field.id} className="grid grid-cols-12 gap-2 mb-3 items-end bg-white p-2 rounded-lg border border-gray-100">
             <div className="col-span-5">
-                <label className="block text-[10px] text-gray-400 font-bold mb-1">Produto</label>
-                <select className={selectStyle + " py-2 text-xs"} {...register(`itens.${index}.produtoId`)}>
-                    {produtosCombustivel.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                </select>
+              <label className="block text-[10px] text-gray-400 font-bold mb-1">Produto</label>
+              <select className={selectStyle + " py-2 text-xs"} {...register(`itens.${index}.produtoId`)}>
+                {produtosCombustivel.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+              </select>
             </div>
             <div className="col-span-3">
-                <label className="block text-[10px] text-gray-400 font-bold mb-1">Qtd</label>
-                <Input placeholder="0" type="number" step="any" {...register(`itens.${index}.quantidade`)} className="!py-2 text-xs" />
+              <label className="block text-[10px] text-gray-400 font-bold mb-1">Qtd</label>
+              <Input placeholder="0" type="number" step="any" {...register(`itens.${index}.quantidade`)} className="!py-2 text-xs" />
             </div>
             <div className="col-span-3">
-                <label className="block text-[10px] text-gray-400 font-bold mb-1">Valor Un.</label>
-                <Input placeholder="R$ 0,00" type="number" step="0.01" {...register(`itens.${index}.valorPorUnidade`)} className="!py-2 text-xs" />
+              <label className="block text-[10px] text-gray-400 font-bold mb-1">Valor Un.</label>
+              <Input placeholder="R$ 0,00" type="number" step="0.01" {...register(`itens.${index}.valorPorUnidade`)} className="!py-2 text-xs" />
             </div>
             <div className="col-span-1 flex justify-center pb-1">
-                {fields.length > 1 && (
-                    <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors" title="Remover item">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                    </button>
-                )}
+              {fields.length > 1 && (
+                <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-600 hover:bg-red-50 p-1.5 rounded transition-colors" title="Remover item">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+              )}
             </div>
           </div>
         ))}
-        <Button 
-          type="button" 
-          variant="secondary" 
-          onClick={() => append({ produtoId: '', quantidade: 0, valorPorUnidade: 0 })} 
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={() => append({ produtoId: '', quantidade: 0, valorPorUnidade: 0 })}
           className="text-xs w-full mt-1 border-dashed border-gray-300 hover:border-primary/50"
         >
           + Adicionar Item

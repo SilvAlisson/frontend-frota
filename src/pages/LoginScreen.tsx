@@ -73,10 +73,10 @@ export function LoginScreen() {
 
   return (
     <div className="min-h-screen grid lg:grid-cols-2 bg-white overflow-hidden">
-      
+
       {/* LADO ESQUERDO: Formulário Clean */}
       <div className="flex flex-col justify-center items-center px-8 sm:px-12 lg:px-24 xl:px-32 relative animate-in fade-in slide-in-from-left-4 duration-700">
-        
+
         <div className="w-full max-w-sm space-y-8">
           {/* Logo e Cabeçalho */}
           <div className="space-y-2">
@@ -116,7 +116,7 @@ export function LoginScreen() {
                   autoFocus
                   className="bg-gray-50 border-gray-200 focus:bg-white transition-all h-12"
                 />
-                
+
                 <div className="space-y-1">
                   <Input
                     label="Senha"
@@ -164,12 +164,12 @@ export function LoginScreen() {
       {/* LADO DIREITO: Imagem e Atmosfera (Só aparece em telas grandes) */}
       <div className="hidden lg:block relative bg-gray-900 h-full overflow-hidden">
         {/* Imagem de Fundo (Logística/Frota) */}
-        <img 
-          src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop" 
-          alt="Frota Logística" 
+        <img
+          src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop"
+          alt="Frota Logística"
           className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay"
         />
-        
+
         {/* Gradiente de Marca "Deep Ocean" */}
         <div className="absolute inset-0 bg-gradient-to-t from-primary-900/90 via-primary-800/50 to-primary-900/40"></div>
 

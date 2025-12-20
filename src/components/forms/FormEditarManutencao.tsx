@@ -28,15 +28,15 @@ const manutencaoSchema = z.object({
     valorPorUnidade: z.coerce.number().min(0, "Valor inválido"),
   })).min(1, "Adicione pelo menos um item")
 })
-// Refinamentos (superRefine) para validação condicional
-.superRefine((data, ctx) => {
-  if (data.alvo === 'VEICULO' && !data.veiculoId) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Selecione o veículo", path: ["veiculoId"] });
-  }
-  if (data.alvo === 'OUTROS' && !data.numeroCA) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe o nº do CA", path: ["numeroCA"] });
-  }
-});
+  // Refinamentos (superRefine) para validação condicional
+  .superRefine((data, ctx) => {
+    if (data.alvo === 'VEICULO' && !data.veiculoId) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Selecione o veículo", path: ["veiculoId"] });
+    }
+    if (data.alvo === 'OUTROS' && !data.numeroCA) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe o nº do CA", path: ["numeroCA"] });
+    }
+  });
 
 type ManutencaoFormInput = z.input<typeof manutencaoSchema>;
 
@@ -49,8 +49,8 @@ interface FormEditarManutencaoProps {
   onCancel: () => void;
 }
 
-export function FormEditarManutencao({ 
-  osParaEditar, veiculos, produtos, fornecedores, onSuccess, onCancel 
+export function FormEditarManutencao({
+  osParaEditar, veiculos, produtos, fornecedores, onSuccess, onCancel
 }: FormEditarManutencaoProps) {
 
   const caMatch = osParaEditar.observacoes?.match(/\[CA: (.+?)\]/);
@@ -126,7 +126,7 @@ export function FormEditarManutencao({
     }
   };
 
-  const totalGeral = (itensObservados || []).reduce((acc, item) => 
+  const totalGeral = (itensObservados || []).reduce((acc, item) =>
     acc + ((Number(item?.quantidade) || 0) * (Number(item?.valorPorUnidade) || 0)), 0
   );
 
@@ -143,111 +143,111 @@ export function FormEditarManutencao({
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-        
+
         <div className="flex p-1 bg-gray-50 rounded-lg border border-gray-200 mb-2">
           <button type="button" onClick={() => setValue('alvo', 'VEICULO')} className={`flex-1 py-1.5 text-xs font-bold rounded transition-all ${alvoSelecionado === 'VEICULO' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400'}`}>Veículo</button>
           <button type="button" onClick={() => setValue('alvo', 'OUTROS')} className={`flex-1 py-1.5 text-xs font-bold rounded transition-all ${alvoSelecionado === 'OUTROS' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400'}`}>Caixa / Equip.</button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          
+
           {alvoSelecionado === 'VEICULO' ? (
-             <div className="md:col-span-2 grid grid-cols-2 gap-4">
-               <div>
-                 <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">Veículo</label>
-                 <select {...register("veiculoId")} className="w-full px-3 py-2 bg-white border rounded-md focus:ring-2 focus:ring-primary outline-none text-sm">
-                    {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa}</option>)}
-                 </select>
-                 {/* CORREÇÃO: Exibindo erro */}
-                 {errors.veiculoId && <span className="text-xs text-red-500">{errors.veiculoId.message}</span>}
-               </div>
-               <div>
-                 <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">KM</label>
-                 <Input 
-                   {...register("kmAtual")} 
-                   onChange={(e) => {
-                     register("kmAtual").onChange(e);
-                     handleKmChange(e);
-                   }}
-                   error={errors.kmAtual?.message} // CORREÇÃO: Passando erro
-                 />
-               </div>
-             </div>
+            <div className="md:col-span-2 grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">Veículo</label>
+                <select {...register("veiculoId")} className="w-full px-3 py-2 bg-white border rounded-md focus:ring-2 focus:ring-primary outline-none text-sm">
+                  {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa}</option>)}
+                </select>
+                {/* CORREÇÃO: Exibindo erro */}
+                {errors.veiculoId && <span className="text-xs text-red-500">{errors.veiculoId.message}</span>}
+              </div>
+              <div>
+                <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">KM</label>
+                <Input
+                  {...register("kmAtual")}
+                  onChange={(e) => {
+                    register("kmAtual").onChange(e);
+                    handleKmChange(e);
+                  }}
+                  error={errors.kmAtual?.message} // CORREÇÃO: Passando erro
+                />
+              </div>
+            </div>
           ) : (
-             <div className="md:col-span-2">
-               <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">CA</label>
-               <Input {...register("numeroCA")} error={errors.numeroCA?.message} /> {/* CORREÇÃO */}
-             </div>
+            <div className="md:col-span-2">
+              <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">CA</label>
+              <Input {...register("numeroCA")} error={errors.numeroCA?.message} /> {/* CORREÇÃO */}
+            </div>
           )}
 
           <div className="md:col-span-2">
-             <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">Fornecedor</label>
-             <select {...register("fornecedorId")} className="w-full px-3 py-2 bg-white border rounded-md focus:ring-2 focus:ring-primary outline-none text-sm">
-                {fornecedoresFiltrados.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-             </select>
-             {/* CORREÇÃO: Exibindo erro */}
-             {errors.fornecedorId && <span className="text-xs text-red-500">{errors.fornecedorId.message}</span>}
+            <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">Fornecedor</label>
+            <select {...register("fornecedorId")} className="w-full px-3 py-2 bg-white border rounded-md focus:ring-2 focus:ring-primary outline-none text-sm">
+              {fornecedoresFiltrados.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+            </select>
+            {/* CORREÇÃO: Exibindo erro */}
+            {errors.fornecedorId && <span className="text-xs text-red-500">{errors.fornecedorId.message}</span>}
           </div>
 
           <div className="md:col-span-2">
-             <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">Data</label>
-             <Input type="date" {...register("data")} error={errors.data?.message} /> {/* CORREÇÃO */}
+            <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">Data</label>
+            <Input type="date" {...register("data")} error={errors.data?.message} /> {/* CORREÇÃO */}
           </div>
         </div>
 
         {/* Itens */}
         <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-           <div className="flex justify-between items-center mb-2">
-             <h4 className="text-xs font-bold uppercase text-gray-500">Itens</h4>
-             <span className="text-[10px] bg-white px-2 py-0.5 rounded border text-gray-400">{fields.length} itens</span>
-           </div>
-           
-           {fields.map((field, index) => {
-             // CORREÇÃO: Capturar erros específicos do item
-             const itemError = errors.itens?.[index];
-             
-             return (
-               <div key={field.id} className="grid grid-cols-12 gap-2 mb-2 items-center">
-                  <div className="col-span-6">
-                    <select 
-                      {...register(`itens.${index}.produtoId`)} 
-                      className={`w-full p-2 text-sm border rounded bg-white ${itemError?.produtoId ? 'border-red-300' : ''}`}
-                    >
-                       {produtosManutencao.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                    </select>
-                  </div>
-                  <div className="col-span-2">
-                    <input 
-                      type="number" 
-                      step="0.01" 
-                      {...register(`itens.${index}.quantidade`)} 
-                      className={`w-full p-2 text-sm border rounded text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${itemError?.quantidade ? 'border-red-300' : ''}`} 
-                      placeholder="Qtd" 
-                    />
-                  </div>
-                  <div className="col-span-3">
-                    <input 
-                      type="number" 
-                      step="0.01" 
-                      {...register(`itens.${index}.valorPorUnidade`)} 
-                      className={`w-full p-2 text-sm border rounded text-right outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${itemError?.valorPorUnidade ? 'border-red-300' : ''}`} 
-                      placeholder="R$" 
-                    />
-                  </div>
-                  <div className="col-span-1 text-right">
-                    <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-600 font-bold text-lg">×</button>
-                  </div>
-               </div>
-             );
-           })}
-           
-           <div className="flex justify-between mt-3 pt-2 border-t border-gray-200">
-             <button type="button" onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })} className="text-xs text-blue-600 font-bold hover:underline">+ Adicionar Item</button>
-             <span className="text-sm font-bold text-gray-700">Total: R$ {totalGeral.toFixed(2)}</span>
-           </div>
-           
-           {/* CORREÇÃO: Erro geral de itens */}
-           {errors.itens && <p className="text-xs text-red-500 mt-2 text-right">{errors.itens.root?.message}</p>}
+          <div className="flex justify-between items-center mb-2">
+            <h4 className="text-xs font-bold uppercase text-gray-500">Itens</h4>
+            <span className="text-[10px] bg-white px-2 py-0.5 rounded border text-gray-400">{fields.length} itens</span>
+          </div>
+
+          {fields.map((field, index) => {
+            // CORREÇÃO: Capturar erros específicos do item
+            const itemError = errors.itens?.[index];
+
+            return (
+              <div key={field.id} className="grid grid-cols-12 gap-2 mb-2 items-center">
+                <div className="col-span-6">
+                  <select
+                    {...register(`itens.${index}.produtoId`)}
+                    className={`w-full p-2 text-sm border rounded bg-white ${itemError?.produtoId ? 'border-red-300' : ''}`}
+                  >
+                    {produtosManutencao.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                  </select>
+                </div>
+                <div className="col-span-2">
+                  <input
+                    type="number"
+                    step="0.01"
+                    {...register(`itens.${index}.quantidade`)}
+                    className={`w-full p-2 text-sm border rounded text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${itemError?.quantidade ? 'border-red-300' : ''}`}
+                    placeholder="Qtd"
+                  />
+                </div>
+                <div className="col-span-3">
+                  <input
+                    type="number"
+                    step="0.01"
+                    {...register(`itens.${index}.valorPorUnidade`)}
+                    className={`w-full p-2 text-sm border rounded text-right outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${itemError?.valorPorUnidade ? 'border-red-300' : ''}`}
+                    placeholder="R$"
+                  />
+                </div>
+                <div className="col-span-1 text-right">
+                  <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-600 font-bold text-lg">×</button>
+                </div>
+              </div>
+            );
+          })}
+
+          <div className="flex justify-between mt-3 pt-2 border-t border-gray-200">
+            <button type="button" onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })} className="text-xs text-blue-600 font-bold hover:underline">+ Adicionar Item</button>
+            <span className="text-sm font-bold text-gray-700">Total: R$ {totalGeral.toFixed(2)}</span>
+          </div>
+
+          {/* CORREÇÃO: Erro geral de itens */}
+          {errors.itens && <p className="text-xs text-red-500 mt-2 text-right">{errors.itens.root?.message}</p>}
         </div>
 
         <Input label="Observações" {...register("observacoes")} />

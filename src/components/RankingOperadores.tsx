@@ -17,32 +17,32 @@ interface OperadorRanking {
 
 // Configuração visual do Pódio (Design Industrial)
 const podiumConfig = [
-  { 
-    pos: 1, 
+  {
+    pos: 1,
     label: 'Campeão de Eficiência',
-    bg: 'bg-gradient-to-b from-yellow-50 to-white', 
-    border: 'border-yellow-200', 
+    bg: 'bg-gradient-to-b from-yellow-50 to-white',
+    border: 'border-yellow-200',
     text: 'text-yellow-800',
     badge: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    icon: '👑' 
+    icon: '👑'
   },
-  { 
-    pos: 2, 
+  {
+    pos: 2,
     label: 'Excelente Desempenho',
-    bg: 'bg-gradient-to-b from-slate-50 to-white', 
-    border: 'border-slate-200', 
+    bg: 'bg-gradient-to-b from-slate-50 to-white',
+    border: 'border-slate-200',
     text: 'text-slate-700',
     badge: 'bg-slate-100 text-slate-800 border-slate-200',
-    icon: '🥈' 
+    icon: '🥈'
   },
-  { 
-    pos: 3, 
+  {
+    pos: 3,
     label: 'Alta Performance',
-    bg: 'bg-gradient-to-b from-orange-50 to-white', 
-    border: 'border-orange-200', 
+    bg: 'bg-gradient-to-b from-orange-50 to-white',
+    border: 'border-orange-200',
     text: 'text-orange-800',
     badge: 'bg-orange-100 text-orange-800 border-orange-200',
-    icon: '🥉' 
+    icon: '🥉'
   }
 ];
 
@@ -117,7 +117,7 @@ export function RankingOperadores({ }: RankingProps) {
 
   const maxKml = ranking.length > 0 ? Math.max(...ranking.map(r => r.kml)) : 1;
   const top3 = ranking.slice(0, 3);
-  
+
   // Estilos de Input (Consistente com Dashboard)
   const selectStyle = "w-full appearance-none bg-white border border-gray-200 text-gray-700 py-2 px-3 pr-8 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-medium cursor-pointer text-sm shadow-sm hover:border-gray-300 font-sans";
   const labelStyle = "block text-[10px] font-bold text-gray-400 mb-1 uppercase tracking-wider pl-1 font-sans";
@@ -180,8 +180,8 @@ export function RankingOperadores({ }: RankingProps) {
           {top3.map((op, index) => {
             const config = podiumConfig[index];
             return (
-              <div 
-                key={op.id} 
+              <div
+                key={op.id}
                 className={`
                   relative rounded-xl p-6 border shadow-sm transition-all hover:shadow-md hover:-translate-y-1
                   flex flex-col items-center text-center group
@@ -189,7 +189,7 @@ export function RankingOperadores({ }: RankingProps) {
                 `}
               >
                 <div className="absolute top-4 right-4 text-2xl filter grayscale group-hover:grayscale-0 transition-all">{config.icon}</div>
-                
+
                 {/* Avatar */}
                 <div className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mb-3 shadow-sm bg-white border-2 ${config.border} text-gray-500`}>
                   {op.nome.charAt(0)}
@@ -198,7 +198,7 @@ export function RankingOperadores({ }: RankingProps) {
                 <div className={`text-[10px] uppercase font-bold tracking-widest mb-2 px-2 py-0.5 rounded-full border ${config.badge}`}>
                   {config.label}
                 </div>
-                
+
                 <h3 className={`text-lg font-bold truncate w-full ${config.text}`}>
                   {op.nome}
                 </h3>
@@ -252,7 +252,7 @@ export function RankingOperadores({ }: RankingProps) {
                 {ranking.map((op, index) => {
                   const percentual = (op.kml / maxKml) * 100;
                   const isTop3 = index < 3;
-                  
+
                   return (
                     <tr key={op.id} className="hover:bg-gray-50 transition-colors group">
                       <td className="px-6 py-3 text-center">
@@ -278,8 +278,8 @@ export function RankingOperadores({ }: RankingProps) {
                           <span className="font-mono font-bold text-gray-900 text-sm">{formatKML(op.kml)}</span>
                           {/* Barra de Progresso Ultra-fina */}
                           <div className="w-24 h-1 bg-gray-100 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full rounded-full ${index === 0 ? 'bg-primary' : 'bg-primary/60'}`} 
+                            <div
+                              className={`h-full rounded-full ${index === 0 ? 'bg-primary' : 'bg-primary/60'}`}
                               style={{ width: `${percentual}%` }}
                             ></div>
                           </div>
