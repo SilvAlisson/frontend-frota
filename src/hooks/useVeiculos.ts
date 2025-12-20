@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../lib/api'; // Certifique-se de que o caminho está correto
+import { api } from '../services/api';
 import { toast } from 'sonner';
 
 export interface Veiculo {
