@@ -160,7 +160,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
       dataToUpdate.password = data.password;
     }
 
-    const promise = api.put(`/user/${userId}`, dataToUpdate);
+    const promise = api.put(`/users/${userId}`, dataToUpdate);
 
     toast.promise(promise, {
       loading: 'Salvando alterações...',
