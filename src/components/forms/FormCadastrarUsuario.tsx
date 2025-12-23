@@ -141,7 +141,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormCadastrarUsu
       dataAdmissao: data.dataAdmissao ? new Date(data.dataAdmissao).toISOString() : null,
     };
 
-    const promise = api.post('/users/register', payload);
+    const promise = api.post('/users', payload);
 
     toast.promise(promise, {
       loading: 'Criando credenciais...',

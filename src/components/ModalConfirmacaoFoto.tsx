@@ -21,6 +21,67 @@ interface ModalProps {
   onSuccess: (data: any) => void;
 }
 
+// --- FUNÇÃO DE COMPRESSÃO (CORREÇÃO DE MEMÓRIA) ---
+const comprimirImagem = (arquivo: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(arquivo);
+    
+    reader.onload = (event) => {
+      const img = new Image();
+      img.src = event.target?.result as string;
+      
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1200; // Reduz para HD (suficiente e leve)
+        const MAX_HEIGHT = 1600; 
+        
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+            reject(new Error("Erro ao processar imagem"));
+            return;
+        }
+        
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Converte para JPG com qualidade 70% (Economiza ~80% de RAM/Dados)
+        canvas.toBlob((blob) => {
+          if (blob) {
+            const novoArquivo = new File([blob], arquivo.name.replace(/\.[^/.]+$/, ".jpg"), {
+              type: 'image/jpeg',
+              lastModified: Date.now(),
+            });
+            resolve(novoArquivo);
+          } else {
+            reject(new Error("Erro na compressão"));
+          }
+        }, 'image/jpeg', 0.7);
+      };
+      
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
 export function ModalConfirmacaoFoto({
   titulo,
   kmParaConfirmar,
@@ -34,7 +95,27 @@ export function ModalConfirmacaoFoto({
 
   const [foto, setFoto] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
-  // Removido estados de erro/progresso manuais em favor do Sonner
+  const [processandoFoto, setProcessandoFoto] = useState(false); // Novo estado
+
+  // Manipulador de arquivo atualizado
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const arquivoOriginal = e.target.files[0];
+      
+      try {
+        setProcessandoFoto(true);
+        // Comprime ANTES de salvar no estado
+        const imagemComprimida = await comprimirImagem(arquivoOriginal);
+        setFoto(imagemComprimida);
+      } catch (error) {
+        console.error("Erro ao processar imagem:", error);
+        toast.error("Erro ao processar a foto. Tente novamente.");
+        setFoto(null);
+      } finally {
+        setProcessandoFoto(false);
+      }
+    }
+  };
 
   const handleSubmit = async () => {
     if (!foto) {
@@ -47,7 +128,7 @@ export function ModalConfirmacaoFoto({
     const fluxoCompleto = async () => {
       // 1. Upload Supabase
       const fileType = apiEndpoint.split('/')[1] || 'geral';
-      const fileExt = foto.name.split('.').pop();
+      const fileExt = 'jpg'; // Forçamos jpg
       const fileName = `${fileType}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
       const filePath = `public/${fileName}`;
 
@@ -158,11 +239,16 @@ export function ModalConfirmacaoFoto({
                 accept="image/*"
                 capture="environment"
                 className={hiddenInput}
-                onChange={(e) => setFoto(e.target.files ? e.target.files[0] : null)}
-                disabled={loading}
+                onChange={handleFileChange} 
+                disabled={loading || processandoFoto}
               />
 
-              {foto ? (
+              {processandoFoto ? (
+                <div className="flex flex-col items-center justify-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mb-2"></div>
+                  <p className="text-sm text-primary font-medium">Processando imagem...</p>
+                </div>
+              ) : foto ? (
                 <div className="text-center animate-in fade-in zoom-in duration-300">
                   <div className="w-16 h-16 mx-auto bg-primary text-white rounded-full flex items-center justify-center mb-2 shadow-lg">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-8 h-8">
@@ -204,7 +290,7 @@ export function ModalConfirmacaoFoto({
               variant="primary"
               className="flex-[2] h-12 shadow-lg shadow-primary/20"
               onClick={handleSubmit}
-              disabled={loading || !foto}
+              disabled={loading || !foto || processandoFoto}
               isLoading={loading}
             >
               {loading ? 'Enviando...' : 'Confirmar Envio'}
