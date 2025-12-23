@@ -1,5 +1,4 @@
-import { JornadaGestaoItem } from './JornadaGestaoItem';
-import { toast } from 'sonner';
+import { CardJornada } from './CardJornada';
 
 interface GestaoJornadasProps {
   jornadasAbertas: any[];
@@ -10,12 +9,6 @@ export function GestaoJornadas({
   jornadasAbertas,
   onJornadaFinalizadaManualmente
 }: GestaoJornadasProps) {
-
-  // Wrapper para adicionar feedback extra se necessário
-  const handleFinalizar = (id: string) => {
-    toast.success("Jornada processada.");
-    onJornadaFinalizadaManualmente(id);
-  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -58,13 +51,11 @@ export function GestaoJornadas({
       ) : (
         <div className="grid gap-4">
           {jornadasAbertas.map(jornada => (
-            <JornadaGestaoItem
+            <CardJornada
               key={jornada.id}
               jornada={jornada}
-              token="" // Prop mantida apenas para compatibilidade se o componente filho exigir, mas ignorada
-              onFinalizada={handleFinalizar}
-              // Se o seu JornadaGestaoItem (Turno 13) suportar onExcluida, conecte aqui:
-              onExcluida={handleFinalizar}
+              mode="GESTOR"
+              onUpdate={() => onJornadaFinalizadaManualmente(jornada.id)} // Recarrega a lista ao salvar/excluir
             />
           ))}
         </div>
