@@ -6,6 +6,7 @@ export interface User {
   email: string;
   matricula: string | null;
   role: UserRole;
+  cargo: UserRole;
   fotoUrl?: string | null;
   loginToken?: string | null;
 
