@@ -35,20 +35,26 @@ export function LoginScreen() {
     resolver: zodResolver(loginSchema)
   });
 
+  // --- FUNÇÃO DE REDIRECIONAMENTO BLINDADA ---
+  // Centraliza a lógica para que ADMIN vá para /admin e os demais (OPERADOR, RH, ENCARREGADO) para /
+  const redirecionarPorRole = (role: string) => {
+    if (role === 'ADMIN') {
+      navigate('/admin', { replace: true });
+    } else {
+      navigate('/', { replace: true });
+    }
+  };
+
   // 1. BLINDAGEM: Redirecionar se já logado (Persistência)
-  // Garante que o Admin não veja a tela de login e o Operador/RH vá para seu Dashboard raiz
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.role === 'ADMIN') {
-        navigate('/admin', { replace: true });
-      } else {
-        navigate('/', { replace: true });
-      }
+      redirecionarPorRole(user.role);
     }
-  }, [isAuthenticated, user, navigate]);
+  }, [isAuthenticated, user]);
 
   // 2. LÓGICA MAGIC TOKEN (QR CODE)
   useEffect(() => {
+    // Só tenta o login por token se ainda não estiver autenticado e houver um token
     if (magicToken && !loginAttempted.current && !isAuthenticated) {
       loginAttempted.current = true;
 
@@ -61,12 +67,8 @@ export function LoginScreen() {
           login(response.data);
           toast.success(`Bem-vindo, ${userData.nome.split(' ')[0]}!`);
 
-          // Redirecionamento Blindado por Role
-          if (userData.role === 'ADMIN') {
-            navigate('/admin', { replace: true });
-          } else {
-            navigate('/', { replace: true });
-          }
+          // Redirecionamento após login via QR Code
+          redirecionarPorRole(userData.role);
         } catch (err) {
           console.error("Erro token:", err);
           toast.error('Código de acesso inválido ou expirado.');
@@ -88,12 +90,8 @@ export function LoginScreen() {
       login(response.data);
       toast.success('Bem-vindo de volta!');
 
-      // Redirecionamento Blindado por Role
-      if (userData.role === 'ADMIN') {
-        navigate('/admin', { replace: true });
-      } else {
-        navigate('/', { replace: true });
-      }
+      // Redirecionamento após login manual
+      redirecionarPorRole(userData.role);
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Credenciais inválidas.';
       toast.error(msg);
@@ -130,7 +128,7 @@ export function LoginScreen() {
             <div className="py-12 flex flex-col items-center justify-center space-y-4 bg-gray-50/50 rounded-2xl border border-dashed border-gray-200">
               <div className="animate-spin rounded-full h-10 w-10 border-4 border-primary/20 border-t-primary"></div>
               <div className="text-center">
-                <p className="font-bold text-gray-900">Autenticando...</p>
+                <p className="font-bold text-gray-900">Autenticando via QR Code...</p>
                 <p className="text-xs text-gray-500">Validando token de segurança</p>
               </div>
             </div>
