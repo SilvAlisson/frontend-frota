@@ -8,7 +8,7 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 60000, // 20 segundos de timeout para evitar hangs
+  timeout: 30000,
 });
 
 // --- Interceptor de Requisição ---
@@ -16,20 +16,16 @@ api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('authToken');
 
-    // Lista de rotas que NÃO devem enviar o Authorization header,
-    // pois são rotas de autenticação (login, token de acesso, etc.).
+    // Lista de rotas que NÃO devem enviar o Authorization header
     const isAuthRoute =
       config.url?.includes('/auth/login') ||
       config.url?.includes('/auth/login-token') ||
       config.url?.includes('/auth/register');
 
-    // Anexar o token APENAS se ele existir E NÃO for uma rota de autenticação.
+    // Anexar o token APENAS se ele existir E NÃO for uma rota de autenticação
     if (token && !isAuthRoute) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-
-    // IMPORTANTE: Para requisições de login (sem token), garantimos que o header não seja enviado, 
-    // mesmo que um token antigo exista no localStorage.
 
     return config;
   },
@@ -45,23 +41,30 @@ api.interceptors.response.use(
 
     // 1. Tratamento de Sessão Expirada (401)
     if (error.response?.status === 401) {
-      const isLoginPage = window.location.pathname === '/login';
+      //  Verifica se contém '/login' para cobrir casos como '/login?redirect=...'
+      const isLoginPage = window.location.pathname.includes('/login');
 
-      // Só limpa e redireciona se já não estivermos no login (evita loops)
       if (!isLoginPage) {
+        // Limpa os dados
         localStorage.removeItem('authToken');
         localStorage.removeItem('authUser');
 
-        window.location.href = '/login';
+        //  Avisa o usuário ANTES de redirecionar
+        toast.error("Sessão expirada. Por favor, faça login novamente.");
+
+        // Pequeno delay para o usuário ler a mensagem
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1500);
       }
     }
 
-    // 2. Tratamento de Erro de Rede (Servidor offline ou sem internet)
+    // 2. Tratamento de Erro de Rede
     if (error.code === "ERR_NETWORK") {
       toast.error("Sem conexão com o servidor. Verifique sua internet.");
     }
 
-    // 3. Erros de Servidor (500)
+    // 3. Erros de Servidor (500+)
     if (error.response?.status && error.response.status >= 500) {
       toast.error("Erro interno do servidor. Tente novamente mais tarde.");
     }

@@ -1,27 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
+import type { Veiculo } from '../types'; // Importando a tipagem oficial
 
-export interface Veiculo {
-    id: string;
-    placa: string;
-    modelo: string;
-    marca: string;
-    tipoVeiculo: 'MOTO' | 'CARRO_LEVE' | 'CAMINHONETE' | 'CAMINHAO_TOCO' | 'CAMINHAO_TRUCK' | 'CARRETA' | 'VAN' | 'ONIBUS' | 'MAQUINA';
-    tipoCombustivel: 'GASOLINA_COMUM' | 'GASOLINA_ADITIVADA' | 'ETANOL' | 'DIESEL_S10' | 'DIESEL_S500' | 'GNV' | 'FLEX' | 'ELETRICO';
+// DTO para criação: Baseado na interface oficial, mas ajustando campos específicos
+// Omitimos 'id' e 'ultimoKm' (gerados/gerenciados pelo back) e adicionamos 'kmCadastro'
+export type CreateVeiculoDTO = Omit<Veiculo, 'id' | 'ultimoKm' | 'status'> & {
     kmAtual: number;
-    status: 'ATIVO' | 'MANUTENCAO' | 'INATIVO';
-}
+    status?: Veiculo['status'];
+};
 
-// DTOs para envio
-type CreateVeiculoDTO = Omit<Veiculo, 'id' | 'kmAtual'> & { kmCadastro: number };
-type UpdateVeiculoDTO = Partial<CreateVeiculoDTO> & { id: string };
+// DTO para atualização
+export type UpdateVeiculoDTO = Partial<Omit<Veiculo, 'id'>> & { id: string };
 
 // --- LISTAR (GET) ---
 export function useVeiculos() {
     return useQuery({
         queryKey: ['veiculos'],
         queryFn: async () => {
+            // O TypeScript agora sabe que o retorno segue a interface completa do types.ts
             const { data } = await api.get<Veiculo[]>('/veiculos');
             return data;
         },
@@ -43,6 +40,7 @@ export function useCreateVeiculo() {
             queryClient.invalidateQueries({ queryKey: ['veiculos'] }); // Atualiza a lista
         },
         onError: (error: any) => {
+            console.error("Erro ao cadastrar:", error);
             toast.error(error.response?.data?.error || 'Erro ao cadastrar veículo');
         },
     });
@@ -62,6 +60,7 @@ export function useUpdateVeiculo() {
             queryClient.invalidateQueries({ queryKey: ['veiculos'] });
         },
         onError: (error: any) => {
+            console.error("Erro ao atualizar:", error);
             toast.error(error.response?.data?.error || 'Erro ao atualizar veículo');
         },
     });
@@ -80,6 +79,7 @@ export function useDeleteVeiculo() {
             queryClient.invalidateQueries({ queryKey: ['veiculos'] });
         },
         onError: (error: any) => {
+            console.error("Erro ao remover:", error);
             toast.error(error.response?.data?.error || 'Erro ao remover veículo');
         },
     });

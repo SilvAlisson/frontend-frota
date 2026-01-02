@@ -34,7 +34,8 @@ export function DashboardRH({ user }: DashboardRHProps) {
   return (
     <div className="space-y-6">
       {/* MENU PREMIUM */}
-      <div className="bg-white shadow-sm rounded-2xl p-2 border border-gray-100 overflow-x-auto custom-scrollbar">
+      {/* [PADRONIZAÇÃO] bg-white -> bg-white (para menus flutuantes), border-gray-100 -> border-border */}
+      <div className="bg-white shadow-sm rounded-2xl p-2 border border-border overflow-x-auto custom-scrollbar">
         <div className="flex space-x-1 min-w-max">
           {abas.map((aba) => {
             const isActive = abaAtiva === aba.id;
@@ -45,8 +46,10 @@ export function DashboardRH({ user }: DashboardRHProps) {
                 className={`
                   relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ease-out
                   ${isActive
+                    // [PADRONIZAÇÃO] Cores do tema
                     ? 'text-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
-                    : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'}
+                    // [PADRONIZAÇÃO] hover:bg-gray-50 -> hover:bg-background
+                    : 'text-gray-500 hover:bg-background hover:text-gray-800'}
                 `}
               >
                 <span className={`transition-transform duration-300 ${isActive ? 'scale-110' : ''}`}>
@@ -63,7 +66,8 @@ export function DashboardRH({ user }: DashboardRHProps) {
       </div>
 
       {/* CONTEÚDO COM ANIMAÇÃO */}
-      <div className="bg-white shadow-card rounded-2xl p-6 border border-gray-100 min-h-[500px] animate-in fade-in slide-in-from-bottom-2 duration-500">
+      {/* [PADRONIZAÇÃO] border-gray-100 -> border-border */}
+      <div className="bg-white shadow-card rounded-2xl p-6 border border-border min-h-[500px] animate-in fade-in slide-in-from-bottom-2 duration-500">
         {abaAtiva === 'alertas' && <PainelAlertas />}
         {abaAtiva === 'usuarios' && <GestaoUsuarios adminUserId={user.id} />}
         {abaAtiva === 'cargos' && <GestaoCargos />}

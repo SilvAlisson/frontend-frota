@@ -44,9 +44,9 @@ const getTypeConfig = (tipo: string) => {
     default:
       return {
         icon: <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" /></svg>,
-        bg: 'bg-gray-50',
+        bg: 'bg-background',
         text: 'text-gray-500',
-        border: 'border-gray-100'
+        border: 'border-border'
       };
   }
 };
@@ -148,7 +148,8 @@ export function GestaoProdutos() {
             <div className="flex gap-2 w-full sm:w-auto">
               <Button
                 variant="secondary"
-                className="shadow-sm bg-white border border-gray-200 h-9 text-xs"
+                // [PADRONIZAÇÃO] border-gray-200 -> border-border
+                className="shadow-sm bg-white border border-border h-9 text-xs"
                 onClick={handleExportar}
                 disabled={produtos.length === 0}
                 icon={
@@ -178,13 +179,14 @@ export function GestaoProdutos() {
 
       {/* FORMULÁRIOS */}
       {modo === 'adicionando' && (
-        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-float border border-gray-100 max-w-xl mx-auto transform transition-all animate-in zoom-in-95 duration-200">
+        // [PADRONIZAÇÃO] border-gray-100 -> border-border, shadow-float -> shadow-card
+        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-card border border-border max-w-xl mx-auto transform transition-all animate-in zoom-in-95 duration-200">
           <FormCadastrarProduto onSuccess={handleSucesso} onCancelar={handleCancelarForm} />
         </div>
       )}
 
       {modo === 'editando' && produtoIdSelecionado && (
-        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-float border border-gray-100 max-w-xl mx-auto transform transition-all animate-in zoom-in-95 duration-200">
+        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-card border border-border max-w-xl mx-auto transform transition-all animate-in zoom-in-95 duration-200">
           <FormEditarProduto
             produtoId={produtoIdSelecionado}
             onSuccess={handleSucesso}
@@ -199,7 +201,8 @@ export function GestaoProdutos() {
           {loading ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-40 bg-white rounded-xl border border-gray-100 animate-pulse"></div>
+                // [PADRONIZAÇÃO] border-gray-100 -> border-border
+                <div key={i} className="h-40 bg-white rounded-xl border border-border animate-pulse"></div>
               ))}
             </div>
           ) : (
@@ -207,7 +210,8 @@ export function GestaoProdutos() {
               {produtos.map((produto) => {
                 const style = getTypeConfig(produto.tipo);
                 return (
-                  <div key={produto.id} className="group bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-primary/20 transition-all duration-200 flex flex-col relative overflow-hidden">
+                  // [PADRONIZAÇÃO] border-gray-100 -> border-border
+                  <div key={produto.id} className="group bg-white p-5 rounded-xl shadow-sm border border-border hover:shadow-md hover:border-primary/20 transition-all duration-200 flex flex-col relative overflow-hidden">
 
                     <div className="flex justify-between items-start mb-3">
                       <div className={`h-12 w-12 rounded-xl ${style.bg} ${style.text} flex items-center justify-center shadow-sm border ${style.border} transition-transform group-hover:scale-105`}>
@@ -218,7 +222,8 @@ export function GestaoProdutos() {
                       <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                         <button
                           onClick={() => { setProdutoIdSelecionado(produto.id); setModo('editando'); }}
-                          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                          // [PADRONIZAÇÃO] hover:text-primary
+                          className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-md transition-colors"
                           title="Editar"
                         >
                           <IconeEditar />
@@ -243,7 +248,8 @@ export function GestaoProdutos() {
                         {produto.tipo}
                       </span>
 
-                      <span className="text-gray-500 font-mono bg-gray-50 px-2 py-1 rounded border border-gray-100">
+                      {/* [PADRONIZAÇÃO] bg-gray-50 -> bg-background, border-gray-100 -> border-border */}
+                      <span className="text-gray-500 font-mono bg-background px-2 py-1 rounded border border-border">
                         {produto.unidadeMedida}
                       </span>
                     </div>
@@ -254,8 +260,10 @@ export function GestaoProdutos() {
           )}
 
           {!loading && produtos.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200 text-center">
-              <div className="p-4 bg-gray-50 rounded-full mb-4">
+            // [PADRONIZAÇÃO] border-gray-200 -> border-border
+            <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border-2 border-dashed border-border text-center">
+              {/* [PADRONIZAÇÃO] bg-gray-50 -> bg-background */}
+              <div className="p-4 bg-background rounded-full mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-gray-400">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5m8.25 3v6.75m0 0l-3-3m3 3l3-3M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
                 </svg>

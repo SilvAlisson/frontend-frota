@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useState, useEffect, useMemo } from 'react';
+import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
 import { api } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -12,33 +12,39 @@ import type { Veiculo, Produto, Fornecedor } from '../../types';
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
+// --- SCHEMA ---
 const manutencaoSchema = z.object({
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
   alvo: z.enum(ALVOS_MANUTENCAO),
+  // Veículo e KM são strings no input (máscara), tratados no submit
   veiculoId: z.string().optional().nullable(),
   kmAtual: z.string().optional().nullable(),
   numeroCA: z.string().optional(),
-  fornecedorId: z.string({ error: "Selecione o fornecedor" }).min(1, "Selecione o fornecedor"),
+
+  fornecedorId: z.string().min(1, "Selecione o fornecedor"),
   data: z.string().min(1, "Data inválida"),
   observacoes: z.string().optional(),
   fotoComprovanteUrl: z.string().optional().nullable(),
+
   itens: z.array(z.object({
     produtoId: z.string().min(1, "Selecione o item"),
+    // Coerce converte string do input para number
     quantidade: z.coerce.number().min(0.01, "Qtd inválida"),
     valorPorUnidade: z.coerce.number().min(0, "Valor inválido"),
   })).min(1, "Adicione pelo menos um item")
-})
-  // Refinamentos (superRefine) para validação condicional
-  .superRefine((data, ctx) => {
-    if (data.alvo === 'VEICULO' && !data.veiculoId) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Selecione o veículo", path: ["veiculoId"] });
-    }
-    if (data.alvo === 'OUTROS' && !data.numeroCA) {
-      ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe o nº do CA", path: ["numeroCA"] });
-    }
-  });
+}).superRefine((data, ctx) => {
+  // Validação Condicional
+  if (data.alvo === 'VEICULO' && !data.veiculoId) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Selecione o veículo", path: ["veiculoId"] });
+  }
+  if (data.alvo === 'OUTROS' && !data.numeroCA) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe o nº do CA", path: ["numeroCA"] });
+  }
+});
 
+// Tipagem Segura
 type ManutencaoFormInput = z.input<typeof manutencaoSchema>;
+type ManutencaoFormOutput = z.output<typeof manutencaoSchema>;
 
 interface FormEditarManutencaoProps {
   osParaEditar: any;
@@ -53,25 +59,27 @@ export function FormEditarManutencao({
   osParaEditar, veiculos, produtos, fornecedores, onSuccess, onCancel
 }: FormEditarManutencaoProps) {
 
+  // Extração de CA (Lógica legada mantida)
   const caMatch = osParaEditar.observacoes?.match(/\[CA: (.+?)\]/);
   const caExistente = caMatch ? caMatch[1] : '';
   const obsLimpa = osParaEditar.observacoes?.replace(/\[CA: .+?\] /, '') || '';
 
   const [abaAtiva, setAbaAtiva] = useState<TipoManutencao>(osParaEditar.tipo || 'CORRETIVA');
 
-  const fornecedoresFiltrados = fornecedores.filter(f => {
-    if (abaAtiva === 'CORRETIVA') {
-      return !['POSTO', 'LAVA_JATO'].includes(f.tipo);
-    }
+  // Filtros Otimizados
+  const fornecedoresFiltrados = useMemo(() => fornecedores.filter(f => {
+    if (abaAtiva === 'CORRETIVA') return !['POSTO', 'LAVA_JATO'].includes(f.tipo);
     return true;
-  });
+  }), [fornecedores, abaAtiva]);
 
-  const produtosManutencao = produtos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo));
+  const produtosManutencao = useMemo(() =>
+    produtos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)),
+    [produtos]);
 
   const {
     register, control, handleSubmit, watch, setValue,
-    formState: { errors, isSubmitting } // CORREÇÃO: Agora usamos 'errors'
-  } = useForm<ManutencaoFormInput>({
+    formState: { errors, isSubmitting }
+  } = useForm<ManutencaoFormInput, any, ManutencaoFormOutput>({ // [CORREÇÃO: Tipagem]
     resolver: zodResolver(manutencaoSchema),
     defaultValues: {
       tipo: osParaEditar.tipo,
@@ -88,22 +96,27 @@ export function FormEditarManutencao({
         quantidade: Number(i.quantidade),
         valorPorUnidade: Number(i.valorPorUnidade)
       }))
-    }
+    },
+    mode: 'onBlur' // [CORREÇÃO: UX]
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
-  const alvoSelecionado = watch('alvo');
-  const itensObservados = watch('itens');
 
-  useEffect(() => {
-    setValue('tipo', abaAtiva);
-  }, [abaAtiva, setValue]);
+  const alvoSelecionado = watch('alvo');
+  const itensWatch = useWatch({ control, name: 'itens' });
+
+  // Sincroniza Aba com Form
+  useEffect(() => { setValue('tipo', abaAtiva); }, [abaAtiva, setValue]);
 
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue("kmAtual", formatKmVisual(e.target.value));
   };
 
-  const onSubmit = async (data: ManutencaoFormInput) => {
+  const totalGeral = itensWatch?.reduce((acc, item) =>
+    acc + ((Number(item?.quantidade) || 0) * (Number(item?.valorPorUnidade) || 0)), 0
+  ) || 0;
+
+  const onSubmit = async (data: ManutencaoFormOutput) => {
     let obsFinal = data.observacoes || '';
     if (data.alvo === 'OUTROS' && data.numeroCA) {
       obsFinal = `[CA: ${data.numeroCA}] ${obsFinal}`;
@@ -111,6 +124,7 @@ export function FormEditarManutencao({
 
     const payload = {
       ...data,
+      // parseDecimal converte a string formatada "1.000" para number 1000
       kmAtual: data.kmAtual ? parseDecimal(data.kmAtual) : null,
       observacoes: obsFinal,
       data: new Date(data.data).toISOString(),
@@ -118,7 +132,7 @@ export function FormEditarManutencao({
 
     try {
       await api.put(`/ordens-servico/${osParaEditar.id}`, payload);
-      toast.success("Manutenção atualizada com sucesso!");
+      toast.success("Manutenção atualizada!");
       onSuccess();
     } catch (error) {
       console.error(error);
@@ -126,136 +140,203 @@ export function FormEditarManutencao({
     }
   };
 
-  const totalGeral = (itensObservados || []).reduce((acc, item) =>
-    acc + ((Number(item?.quantidade) || 0) * (Number(item?.valorPorUnidade) || 0)), 0
-  );
+  // Estilos
+  const labelStyle = "block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1";
+  const selectStyle = "w-full h-10 px-3 bg-white border border-border rounded-input text-sm text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer placeholder:text-gray-400 disabled:bg-gray-50";
 
   return (
-    <div className="bg-white p-6 rounded-card shadow-lg border border-primary/20 relative animate-in fade-in zoom-in-95">
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-bold text-gray-800">Editar Manutenção</h3>
-        <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">✕</button>
+    <div className="bg-white rounded-xl shadow-lg border border-border overflow-hidden flex flex-col h-full max-h-[85vh]">
+
+      {/* HEADER */}
+      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
+        <div>
+          <h3 className="text-lg font-bold text-gray-900">Editar Manutenção</h3>
+          <p className="text-xs text-gray-500">Ajuste de peças, valores ou datas.</p>
+        </div>
+        <div className="w-10 h-10 bg-white rounded-lg border border-border flex items-center justify-center text-primary shadow-sm">
+          🔧
+        </div>
       </div>
 
-      <div className="flex mb-6 border-b border-gray-200">
-        <button type="button" onClick={() => setAbaAtiva('CORRETIVA')} className={`flex-1 pb-2 text-xs font-bold uppercase tracking-wide transition-colors ${abaAtiva === 'CORRETIVA' ? 'text-red-600 border-b-2 border-red-600' : 'text-gray-400 hover:text-gray-600'}`}>Corretiva</button>
-        <button type="button" onClick={() => setAbaAtiva('PREVENTIVA')} className={`flex-1 pb-2 text-xs font-bold uppercase tracking-wide transition-colors ${abaAtiva === 'PREVENTIVA' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-400 hover:text-gray-600'}`}>Preventiva</button>
+      {/* TABS DE TIPO */}
+      <div className="flex border-b border-border shrink-0">
+        {['CORRETIVA', 'PREVENTIVA'].map(tipo => (
+          <button
+            key={tipo}
+            type="button"
+            onClick={() => setAbaAtiva(tipo as TipoManutencao)}
+            disabled={isSubmitting} // [CORREÇÃO] Bloqueio
+            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 ${abaAtiva === tipo ? 'text-primary border-b-2 border-primary bg-primary/5' : 'text-gray-400 hover:text-gray-600 hover:bg-background'}`}
+          >
+            {tipo}
+          </button>
+        ))}
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      {/* FORMULÁRIO */}
+      <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-6 space-y-6">
 
-        <div className="flex p-1 bg-gray-50 rounded-lg border border-gray-200 mb-2">
-          <button type="button" onClick={() => setValue('alvo', 'VEICULO')} className={`flex-1 py-1.5 text-xs font-bold rounded transition-all ${alvoSelecionado === 'VEICULO' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400'}`}>Veículo</button>
-          <button type="button" onClick={() => setValue('alvo', 'OUTROS')} className={`flex-1 py-1.5 text-xs font-bold rounded transition-all ${alvoSelecionado === 'OUTROS' ? 'bg-white shadow-sm text-gray-800' : 'text-gray-400'}`}>Caixa / Equip.</button>
+        {/* SELEÇÃO DE ALVO */}
+        <div className="bg-background p-1 rounded-lg flex border border-border">
+          {ALVOS_MANUTENCAO.map(alvo => (
+            <button
+              key={alvo}
+              type="button"
+              onClick={() => setValue('alvo', alvo)}
+              disabled={isSubmitting} // [CORREÇÃO] Bloqueio
+              className={`flex-1 py-2 text-xs font-bold rounded-md transition-all shadow-sm disabled:opacity-50 ${alvoSelecionado === alvo ? 'bg-white text-gray-800 shadow' : 'bg-transparent text-gray-400 shadow-none'}`}
+            >
+              {alvo === 'VEICULO' ? 'Veículo da Frota' : 'Outro Equipamento'}
+            </button>
+          ))}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {alvoSelecionado === 'VEICULO' ? (
-            <div className="md:col-span-2 grid grid-cols-2 gap-4">
+            <>
               <div>
-                <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">Veículo</label>
-                <select {...register("veiculoId")} className="w-full px-3 py-2 bg-white border rounded-md focus:ring-2 focus:ring-primary outline-none text-sm">
-                  {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa}</option>)}
-                </select>
-                {/* CORREÇÃO: Exibindo erro */}
-                {errors.veiculoId && <span className="text-xs text-red-500">{errors.veiculoId.message}</span>}
+                <label className={labelStyle}>Veículo</label>
+                <div className="relative">
+                  <select {...register("veiculoId")} className={selectStyle} disabled={isSubmitting}>
+                    {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa}</option>)}
+                  </select>
+                  <div className="pointer-events-none absolute right-3 top-2.5 text-gray-400 text-xs">▼</div>
+                </div>
+                {errors.veiculoId && <span className="text-xs text-red-500 mt-1">{errors.veiculoId.message}</span>}
               </div>
               <div>
-                <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">KM</label>
                 <Input
+                  label="KM no Momento"
                   {...register("kmAtual")}
-                  onChange={(e) => {
-                    register("kmAtual").onChange(e);
-                    handleKmChange(e);
-                  }}
-                  error={errors.kmAtual?.message} // CORREÇÃO: Passando erro
+                  onChange={(e) => { register("kmAtual").onChange(e); handleKmChange(e); }}
+                  error={errors.kmAtual?.message}
+                  disabled={isSubmitting}
                 />
               </div>
-            </div>
+            </>
           ) : (
             <div className="md:col-span-2">
-              <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">CA</label>
-              <Input {...register("numeroCA")} error={errors.numeroCA?.message} /> {/* CORREÇÃO */}
+              <Input
+                label="Identificação (CA/Série)"
+                {...register("numeroCA")}
+                error={errors.numeroCA?.message}
+                disabled={isSubmitting}
+              />
             </div>
           )}
 
-          <div className="md:col-span-2">
-            <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">Fornecedor</label>
-            <select {...register("fornecedorId")} className="w-full px-3 py-2 bg-white border rounded-md focus:ring-2 focus:ring-primary outline-none text-sm">
-              {fornecedoresFiltrados.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-            </select>
-            {/* CORREÇÃO: Exibindo erro */}
-            {errors.fornecedorId && <span className="text-xs text-red-500">{errors.fornecedorId.message}</span>}
+          <div>
+            <label className={labelStyle}>Fornecedor</label>
+            <div className="relative">
+              <select {...register("fornecedorId")} className={selectStyle} disabled={isSubmitting}>
+                {fornecedoresFiltrados.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
+              </select>
+              <div className="pointer-events-none absolute right-3 top-2.5 text-gray-400 text-xs">▼</div>
+            </div>
+            {errors.fornecedorId && <span className="text-xs text-red-500 mt-1">{errors.fornecedorId.message}</span>}
           </div>
 
-          <div className="md:col-span-2">
-            <label className="block mb-1 text-xs font-bold text-gray-500 uppercase">Data</label>
-            <Input type="date" {...register("data")} error={errors.data?.message} /> {/* CORREÇÃO */}
+          <div>
+            <Input
+              label="Data do Serviço"
+              type="date"
+              {...register("data")}
+              error={errors.data?.message}
+              disabled={isSubmitting}
+            />
           </div>
         </div>
 
-        {/* Itens */}
-        <div className="bg-gray-50 p-4 rounded-lg border border-gray-100">
-          <div className="flex justify-between items-center mb-2">
-            <h4 className="text-xs font-bold uppercase text-gray-500">Itens</h4>
-            <span className="text-[10px] bg-white px-2 py-0.5 rounded border text-gray-400">{fields.length} itens</span>
+        {/* SEÇÃO DE ITENS */}
+        <div className="border-t border-border pt-6">
+          <div className="flex justify-between items-center mb-4">
+            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest">Peças e Serviços</h4>
+            <span className="bg-background text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-border">
+              Total: {totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </span>
           </div>
 
-          {fields.map((field, index) => {
-            // CORREÇÃO: Capturar erros específicos do item
-            const itemError = errors.itens?.[index];
+          <div className="space-y-3">
+            {fields.map((field, index) => {
+              const errItem = errors.itens?.[index];
+              return (
+                <div key={field.id} className="bg-background p-3 rounded-xl border border-border relative group transition-all hover:border-primary/30 hover:shadow-sm">
 
-            return (
-              <div key={field.id} className="grid grid-cols-12 gap-2 mb-2 items-center">
-                <div className="col-span-6">
-                  <select
-                    {...register(`itens.${index}.produtoId`)}
-                    className={`w-full p-2 text-sm border rounded bg-white ${itemError?.produtoId ? 'border-red-300' : ''}`}
+                  <button
+                    type="button"
+                    onClick={() => remove(index)}
+                    disabled={isSubmitting}
+                    className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full w-6 h-6 border border-border shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 z-10 disabled:hidden"
                   >
-                    {produtosManutencao.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                  </select>
-                </div>
-                <div className="col-span-2">
-                  <input
-                    type="number"
-                    step="0.01"
-                    {...register(`itens.${index}.quantidade`)}
-                    className={`w-full p-2 text-sm border rounded text-center outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${itemError?.quantidade ? 'border-red-300' : ''}`}
-                    placeholder="Qtd"
-                  />
-                </div>
-                <div className="col-span-3">
-                  <input
-                    type="number"
-                    step="0.01"
-                    {...register(`itens.${index}.valorPorUnidade`)}
-                    className={`w-full p-2 text-sm border rounded text-right outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${itemError?.valorPorUnidade ? 'border-red-300' : ''}`}
-                    placeholder="R$"
-                  />
-                </div>
-                <div className="col-span-1 text-right">
-                  <button type="button" onClick={() => remove(index)} className="text-red-400 hover:text-red-600 font-bold text-lg">×</button>
-                </div>
-              </div>
-            );
-          })}
+                    &times;
+                  </button>
 
-          <div className="flex justify-between mt-3 pt-2 border-t border-gray-200">
-            <button type="button" onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })} className="text-xs text-blue-600 font-bold hover:underline">+ Adicionar Item</button>
-            <span className="text-sm font-bold text-gray-700">Total: R$ {totalGeral.toFixed(2)}</span>
+                  <div className="grid grid-cols-12 gap-3">
+                    <div className="col-span-12 sm:col-span-6">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Item</label>
+                      <select
+                        {...register(`itens.${index}.produtoId`)}
+                        disabled={isSubmitting}
+                        className={`w-full text-xs p-2.5 bg-white rounded-lg border outline-none focus:border-primary transition-all disabled:bg-gray-50 ${errItem?.produtoId ? 'border-red-300' : 'border-border'}`}
+                      >
+                        {produtosManutencao.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
+                      </select>
+                    </div>
+                    <div className="col-span-4 sm:col-span-2">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block text-center">Qtd</label>
+                      <input
+                        type="number" step="0.1"
+                        {...register(`itens.${index}.quantidade`)}
+                        disabled={isSubmitting}
+                        className="w-full text-xs p-2.5 text-center bg-white rounded-lg border border-border outline-none focus:border-primary disabled:bg-gray-50"
+                      />
+                    </div>
+                    <div className="col-span-8 sm:col-span-4">
+                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block text-right">Valor Unit.</label>
+                      <input
+                        type="number" step="0.01"
+                        {...register(`itens.${index}.valorPorUnidade`)}
+                        disabled={isSubmitting}
+                        className="w-full text-xs p-2.5 text-right bg-white rounded-lg border border-border outline-none focus:border-primary font-mono disabled:bg-gray-50"
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
-          {/* CORREÇÃO: Erro geral de itens */}
+          <button
+            type="button"
+            onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })}
+            disabled={isSubmitting}
+            className="w-full mt-3 py-3 border-2 border-dashed border-border rounded-xl text-xs font-bold text-gray-400 hover:text-primary hover:border-primary hover:bg-primary/5 transition-all disabled:opacity-50"
+          >
+            + Adicionar Outro Item
+          </button>
           {errors.itens && <p className="text-xs text-red-500 mt-2 text-right">{errors.itens.root?.message}</p>}
         </div>
 
-        <Input label="Observações" {...register("observacoes")} />
-
-        <div className="flex gap-3 pt-2">
-          <Button type="button" variant="secondary" className="flex-1" onClick={onCancel}>Cancelar</Button>
-          <Button type="submit" className="flex-1" isLoading={isSubmitting}>Salvar Alterações</Button>
+        {/* OBSERVAÇÕES */}
+        <div>
+          <label className={labelStyle}>Observações Adicionais</label>
+          <textarea
+            {...register("observacoes")}
+            rows={3}
+            disabled={isSubmitting}
+            className="w-full px-3 py-3 text-sm bg-white border border-border rounded-input outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 resize-none transition-all placeholder:text-gray-300 disabled:bg-gray-50"
+            placeholder="Detalhes sobre o serviço realizado..."
+          />
         </div>
+
+        {/* BOTÕES */}
+        <div className="flex gap-3 pt-4 border-t border-border">
+          <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>
+          <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting} className="flex-1 shadow-lg shadow-primary/20">
+            Salvar Alterações
+          </Button>
+        </div>
+
       </form>
     </div>
   );

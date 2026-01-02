@@ -1,29 +1,53 @@
-import { useEffect, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import { api } from '../services/api';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
+import { Printer, RefreshCw, X, Copy } from 'lucide-react';
+import type { User } from '../types';
 
 interface ModalQrCodeProps {
-  token: string;
-  nomeUsuario: string;
-  fotoUrl?: string | null;
-  role: string;
+  user: User;
   onClose: () => void;
+  onUpdate?: () => void;
 }
 
-export function ModalQrCode({ token, nomeUsuario, fotoUrl, role, onClose }: ModalQrCodeProps) {
-  const loginUrl = `${window.location.origin}/login?magicToken=${token}`;
+export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
+  const [tokenAtual, setTokenAtual] = useState<string | null>(
+    (user as any).loginToken || null
+  );
+
+  const [loading, setLoading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  const loginUrl = tokenAtual ? `${window.location.origin}/login?magicToken=${tokenAtual}` : '';
+
   useEffect(() => {
-    const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
+    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
   }, [onClose]);
 
+  const handleGerarNovo = async () => {
+    if (tokenAtual && !window.confirm("ATENÇÃO: O usuário já possui um QR Code. Gerar um novo invalidará o crachá impresso anteriormente. Continuar?")) {
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { data } = await api.post(`/auth/user/${user.id}/generate-token`);
+      setTokenAtual(data.loginToken);
+      toast.success("Novo QR Code gerado!");
+      if (onUpdate) onUpdate();
+    } catch (error) {
+      toast.error("Erro ao gerar QR Code.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCopyLink = async () => {
+    if (!loginUrl) return;
     try {
       await navigator.clipboard.writeText(loginUrl);
       toast.success("Link copiado!");
@@ -41,26 +65,16 @@ export function ModalQrCode({ token, nomeUsuario, fotoUrl, role, onClose }: Moda
       printWindow.document.write(`
         <html>
           <head>
-            <title>Crachá - ${nomeUsuario}</title>
+            <title>Crachá - ${user.nome}</title>
             <script src="https://cdn.tailwindcss.com"></script>
             <style>
               @page { size: portrait; margin: 0; }
-              body { 
-                display: flex; 
-                align-items: center; 
-                justify-content: center; 
-                height: 100vh; 
-                background: #fff; 
-                -webkit-print-color-adjust: exact; 
-                print-color-adjust: exact;
-              }
+              body { display: flex; align-items: center; justify-content: center; height: 100vh; background: #fff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; font-family: sans-serif; }
             </style>
           </head>
           <body>
             ${printContent.outerHTML}
-            <script>
-              setTimeout(() => { window.print(); window.close(); }, 500);
-            </script>
+            <script>setTimeout(() => { window.print(); window.close(); }, 500);</script>
           </body>
         </html>
       `);
@@ -68,111 +82,112 @@ export function ModalQrCode({ token, nomeUsuario, fotoUrl, role, onClose }: Moda
     }
   };
 
-  // Lógica para definir o texto do cargo
   const getTituloCracha = (roleUser: string) => {
-    if (roleUser === 'ENCARREGADO') return 'Encarregado Operacional';
-    // Padrão para OPERADOR e outros
-    return 'Operador de Equipamentos';
+    const map: Record<string, string> = {
+      'ENCARREGADO': 'Encarregado',
+      'ADMIN': 'Administrador',
+      'OPERADOR': 'Operador',
+      'RH': 'Recursos Humanos',
+      'COORDENADOR': 'Coordenador'
+    };
+    return map[roleUser] || 'Colaborador';
   };
 
   return (
-    <div
-      className="fixed inset-0 z-[99] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300 print:bg-white"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-[99] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
       <div className="flex flex-col items-center gap-6" onClick={(e) => e.stopPropagation()}>
 
-        {/* --- ÁREA DO CRACHÁ (VERTICAL) --- */}
-        <div
-          ref={cardRef}
-          className="w-[320px] h-[520px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-200 relative flex flex-col print:shadow-none print:border print:border-gray-300"
-        >
-          {/* Fundo Decorativo Superior */}
-          <div className="h-[140px] bg-slate-900 relative w-full">
-            <div className="absolute inset-0 opacity-20">
-              <div className="absolute right-[-20px] top-[-20px] w-32 h-32 rounded-full bg-blue-500 blur-2xl"></div>
-              <div className="absolute left-10 bottom-[-10px] w-20 h-20 rounded-full bg-white blur-2xl"></div>
+        {/* --- ÁREA DO CRACHÁ (VISUAL SEGURO) --- */}
+        <div ref={cardRef} className="w-[320px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-200 relative flex flex-col">
+
+          <div className="h-[140px] bg-gray-900 relative w-full overflow-hidden shrink-0">
+            <div className="absolute inset-0 opacity-40 z-0">
+              <div className="absolute right-[-30px] top-[-30px] w-40 h-40 rounded-full bg-emerald-500 blur-3xl"></div>
+              <div className="absolute left-[-20px] bottom-[-20px] w-32 h-32 rounded-full bg-blue-600 blur-3xl"></div>
             </div>
 
-            {/* Logo Centralizada no Topo */}
-            <div className="absolute top-4 left-0 right-0 flex justify-center">
-              <div className="flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/10">
+            <div className="absolute top-6 left-0 right-0 flex justify-center z-10">
+              <div className="px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-sm">
                 <span className="text-[10px] font-bold text-white tracking-widest uppercase">Frota Inteligente</span>
               </div>
             </div>
           </div>
 
-          {/* Conteúdo Central (Foto + Dados) */}
-          <div className="flex-1 flex flex-col items-center -mt-16 px-6 relative z-10">
-
-            {/* FOTO / AVATAR (Círculo Grande) */}
-            <div className="w-32 h-32 rounded-full bg-white p-1.5 shadow-lg mb-3">
-              <div className="w-full h-full rounded-full bg-gradient-to-br from-slate-200 to-slate-300 flex items-center justify-center text-4xl font-bold text-slate-500 border border-slate-100 overflow-hidden relative">
-                {fotoUrl ? (
-                  <img src={fotoUrl} alt={nomeUsuario} className="w-full h-full object-cover" />
+          <div className="flex-1 flex flex-col items-center -mt-16 px-6 pb-8 relative z-10">
+            <div className="w-32 h-32 rounded-full bg-white p-1.5 shadow-xl mb-5">
+              <div className="w-full h-full rounded-full bg-gray-100 flex items-center justify-center text-4xl font-bold text-gray-400 border border-gray-200 overflow-hidden">
+                {user.fotoUrl ? (
+                  <img src={user.fotoUrl} alt={user.nome} className="w-full h-full object-cover" />
                 ) : (
-                  <span>{nomeUsuario.charAt(0).toUpperCase()}</span>
+                  <span>{user.nome ? user.nome.charAt(0).toUpperCase() : 'U'}</span>
                 )}
               </div>
             </div>
 
-            {/* Nome e Cargo */}
-            <h2 className="text-2xl font-extrabold text-slate-900 text-center leading-tight mb-1">
-              {nomeUsuario.split(' ')[0]}
-              <span className="block text-lg font-semibold text-slate-500">
-                {nomeUsuario.split(' ').slice(1).join(' ')}
-              </span>
-            </h2>
+            <div className="text-center w-full mb-6">
+              <h2 className="text-2xl font-extrabold text-gray-900 leading-none mb-1.5 break-words">
+                {user.nome ? user.nome.split(' ')[0] : 'Usuário'}
+              </h2>
+              {user.nome && user.nome.split(' ').length > 1 && (
+                <p className="text-lg font-medium text-gray-500 leading-tight">
+                  {user.nome.split(' ').slice(1).join(' ')}
+                </p>
+              )}
 
-            {/* Título do Cargo Dinâmico */}
-            <div className="bg-blue-50 text-blue-700 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-blue-100 mb-6">
-              {getTituloCracha(role)}
+              <div className="mt-3 inline-block">
+                <span className="bg-emerald-50 text-emerald-700 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-emerald-100">
+                  {getTituloCracha(user.role)}
+                </span>
+              </div>
             </div>
 
-            {/* QR Code */}
-            <div className="bg-white p-2 border-2 border-dashed border-slate-200 rounded-xl">
-              <QRCodeSVG
-                value={loginUrl}
-                size={140}
-                bgColor={"#ffffff"}
-                fgColor={"#0f172a"}
-                level={"M"}
-              />
+            <div className="bg-white p-4 border-2 border-dashed border-gray-200 rounded-2xl shadow-sm w-full flex justify-center">
+              {tokenAtual ? (
+                <QRCodeSVG value={loginUrl} size={140} level="M" className="mx-auto" />
+              ) : (
+                <div className="w-[140px] h-[140px] flex items-center justify-center text-center text-xs text-gray-400 bg-gray-50 rounded-lg">
+                  Sem QR Code<br />Gerado
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Rodapé do Crachá */}
-          <div className="py-3 bg-slate-50 border-t border-slate-100 text-center">
-            <p className="text-[10px] text-slate-400 font-medium uppercase">Acesso Permanente</p>
+          <div className="py-3 bg-gray-50 border-t border-gray-100 text-center">
+            <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Acesso Pessoal e Intransferível</p>
           </div>
         </div>
 
-        {/* --- BOTÕES DE AÇÃO (Não impressos) --- */}
-        <div className="flex flex-col gap-3 w-full max-w-[320px] print:hidden">
-          <Button
-            onClick={handlePrint}
-            className="w-full bg-white text-slate-900 hover:bg-slate-50 shadow-lg font-bold h-12"
-            icon={<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5"><path strokeLinecap="round" strokeLinejoin="round" d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z" /></svg>}
-          >
-            Imprimir Crachá
-          </Button>
+        {/* --- BOTÕES DE AÇÃO --- */}
+        <div className="flex flex-col gap-3 w-full max-w-[320px]">
+          {tokenAtual ? (
+            <>
+              <Button onClick={handlePrint} className="w-full h-12 shadow-xl bg-emerald-600 hover:bg-emerald-700 border-transparent" icon={<Printer className="w-5 h-5" />}>
+                Imprimir Crachá
+              </Button>
+              <div className="grid grid-cols-2 gap-3">
+                <Button onClick={handleCopyLink} variant="secondary" className="bg-gray-800 text-gray-200 hover:bg-gray-700 hover:text-white border-gray-700" icon={<Copy className="w-4 h-4" />}>
+                  Copiar Link
+                </Button>
+                <Button onClick={handleGerarNovo} variant="ghost" className="text-gray-300 hover:text-white hover:bg-white/10" isLoading={loading} icon={<RefreshCw className="w-4 h-4" />}>
+                  Novo Código
+                </Button>
+              </div>
+            </>
+          ) : (
+            <Button onClick={handleGerarNovo} className="w-full h-12 shadow-xl bg-emerald-600 hover:bg-emerald-700" isLoading={loading}>
+              Gerar Primeiro QR Code
+            </Button>
+          )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <Button
-              variant="secondary"
-              onClick={handleCopyLink}
-              className="bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700 hover:text-white"
-            >
-              Copiar Link
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={onClose}
-              className="bg-transparent text-white border-white/20 hover:bg-white/10"
-            >
-              Fechar
-            </Button>
-          </div>
+          {/* [CORREÇÃO AQUI]: Adicionado bg-transparent explicitamente para evitar fundo branco */}
+          <Button
+            variant="secondary"
+            onClick={onClose}
+            className="bg-transparent text-white/70 border-white/20 hover:bg-white/10 hover:text-white"
+            icon={<X className="w-4 h-4" />}
+          >
+            Fechar
+          </Button>
         </div>
 
       </div>

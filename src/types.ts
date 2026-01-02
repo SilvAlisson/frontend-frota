@@ -7,6 +7,7 @@ export interface User {
   matricula: string | null;
   role: UserRole;
   fotoUrl?: string | null;
+  loginToken?: string | null;
 
   // RH Fields
   cnhNumero?: string | null;
@@ -194,9 +195,14 @@ export interface PlanoManutencao {
 }
 
 export interface Alerta {
-  tipo: 'DOCUMENTO' | 'MANUTENCAO';
-  nivel: 'VENCIDO' | 'ATENCAO';
+  tipo: 'MANUTENCAO' | 'DOCUMENTO';
+  nivel: 'VENCIDO' | 'ATENCAO' | 'PROJETADO';
   mensagem: string;
+}
+
+export interface DadosEvolucaoKm {
+  data: string;
+  km: number;
 }
 
 export interface OperadorRanking {

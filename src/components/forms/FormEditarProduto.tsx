@@ -1,31 +1,37 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
 import { api } from '../../services/api';
+import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { toast } from 'sonner';
 
-const tiposDeProduto = ["COMBUSTIVEL", "ADITIVO", "SERVICO", "OUTRO"] as const;
+const tipos = ["PECA", "SERVICO", "COMBUSTIVEL", "ADITIVO", "LUBRIFICANTE", "PNEU", "OUTROS"] as const;
 
-// --- 1. SCHEMA ZOD V4 (Otimizado) ---
+// --- SCHEMA (Sincronizado com o Cadastro) ---
 const produtoSchema = z.object({
-  nome: z.string({ error: "Nome do item é obrigatório" })
+  nome: z.string({ error: "Nome obrigatório" })
     .trim()
-    .min(2, { message: "Nome muito curto (mínimo 2 letras)" })
+    .min(2, { message: "Mínimo 2 letras" })
     .transform((val) => val.toUpperCase()),
 
-  tipo: z.enum(tiposDeProduto, {
-    error: "Selecione um tipo válido",
-  }),
+  tipo: z.enum(tipos).default('PECA'), // Usando a lista completa de tipos
 
-  unidadeMedida: z.string({ error: "Unidade de medida é obrigatória" })
+  unidadeMedida: z.string({ error: "Unidade obrigatória" })
     .trim()
-    .min(1, { message: "Informe a unidade (ex: Litro, Un)" }),
+    .min(1, { message: "Ex: UN, L" })
+    .transform(val => val.trim().toUpperCase()),
+
+  // Novos campos de estoque
+  estoqueMinimo: z.coerce.number().min(0, "Mínimo inválido").default(0),
+  estoqueAtual: z.coerce.number().min(0, "Estoque inválido").default(0),
+  valorReferencia: z.coerce.number().min(0, "Valor inválido").optional(),
 });
 
-type ProdutoFormValues = z.input<typeof produtoSchema>;
+type ProdutoFormInput = z.input<typeof produtoSchema>;
+type ProdutoFormOutput = z.output<typeof produtoSchema>;
 
 interface FormEditarProdutoProps {
   produtoId: string;
@@ -34,7 +40,6 @@ interface FormEditarProdutoProps {
 }
 
 export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEditarProdutoProps) {
-
   const [loadingData, setLoadingData] = useState(true);
 
   const {
@@ -42,17 +47,20 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
     handleSubmit,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm<ProdutoFormValues>({
+  } = useForm<ProdutoFormInput, any, ProdutoFormOutput>({ // [CORREÇÃO: Tipagem]
     resolver: zodResolver(produtoSchema),
     defaultValues: {
       nome: '',
-      tipo: 'COMBUSTIVEL',
-      unidadeMedida: ''
+      tipo: 'PECA',
+      unidadeMedida: '',
+      estoqueMinimo: 0,
+      estoqueAtual: 0,
+      valorReferencia: 0
     },
-    mode: 'onBlur'
+    mode: 'onBlur' // [CORREÇÃO: UX]
   });
 
-  // --- CARREGAMENTO DE DADOS ---
+  // --- CARREGAMENTO ---
   useEffect(() => {
     if (!produtoId) return;
 
@@ -61,21 +69,21 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
       try {
         const { data } = await api.get(`/produtos/${produtoId}`);
 
-        // Validação defensiva do tipo vindo do backend
-        const tipoValido = tiposDeProduto.includes(data.tipo as any)
-          ? (data.tipo as typeof tiposDeProduto[number])
-          : 'OUTRO';
+        // Verifica se o tipo existe na lista nova, senão 'OUTROS'
+        const tipoValido = tipos.includes(data.tipo) ? data.tipo : 'OUTROS';
 
         reset({
           nome: data.nome || '',
           tipo: tipoValido,
-          unidadeMedida: data.unidadeMedida || 'Litro',
+          unidadeMedida: data.unidadeMedida || 'UN',
+          estoqueMinimo: data.estoqueMinimo || 0,
+          estoqueAtual: data.estoqueAtual || 0,
+          valorReferencia: data.valorReferencia || 0
         });
-
       } catch (err) {
-        console.error("Erro ao carregar produto:", err);
-        toast.error("Não foi possível carregar os dados do produto.");
-        onCancelar(); // Fecha o modal se falhar
+        console.error(err);
+        toast.error("Erro ao carregar produto.");
+        onCancelar();
       } finally {
         setLoadingData(false);
       }
@@ -84,112 +92,143 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
     fetchProduto();
   }, [produtoId, reset, onCancelar]);
 
-  // --- 2. SUBMISSÃO COM TOAST PROMISE ---
-  const onSubmit = async (data: ProdutoFormValues) => {
-    const promise = api.put(`/produto/${produtoId}`, data);
+  // --- SUBMISSÃO ---
+  const onSubmit = async (data: ProdutoFormOutput) => {
+    const payload = {
+      ...data,
+      nome: DOMPurify.sanitize(data.nome),
+      unidadeMedida: DOMPurify.sanitize(data.unidadeMedida)
+    };
+
+    // [ATENÇÃO] Usando a rota no plural para manter padrão REST
+    const promise = api.put(`/produtos/${produtoId}`, payload);
 
     toast.promise(promise, {
-      loading: 'Atualizando item...',
+      loading: 'Atualizando...',
       success: () => {
-        setTimeout(onSuccess, 800);
-        return 'Produto atualizado com sucesso!';
+        setTimeout(onSuccess, 500);
+        return 'Item atualizado!';
       },
       error: (err) => {
-        console.error("Erro ao atualizar:", err);
-        return err.response?.data?.error || 'Falha na atualização. Tente novamente.';
+        return err.response?.data?.error || 'Erro ao atualizar.';
       }
     });
   };
 
+  // --- ESTILOS ---
+  const labelStyle = "block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1";
+  const selectStyle = "w-full h-10 px-3 bg-white border border-border rounded-input text-sm text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer placeholder:text-gray-400 disabled:bg-gray-50";
+
   if (loadingData) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 space-y-3">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-orange-100 border-t-orange-600"></div>
-        <p className="text-sm text-gray-500 font-medium animate-pulse">Buscando informações...</p>
+      <div className="bg-white rounded-xl shadow-lg border border-border p-12 flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-border border-t-primary"></div>
+        <p className="text-sm text-gray-400 font-medium mt-4 animate-pulse">Carregando item...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-md mx-auto p-1">
-      <form className="space-y-8" onSubmit={handleSubmit(onSubmit)}>
+    <div className="bg-white rounded-xl shadow-lg border border-border overflow-hidden">
 
-        {/* HEADER VISUAL */}
-        <div className="text-center relative">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-gradient-to-r from-transparent via-orange-200 to-transparent rounded-full" />
-
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-orange-50 text-orange-600 mb-4 shadow-sm ring-4 ring-white">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
-            </svg>
-          </div>
-
-          <h4 className="text-2xl font-bold text-gray-900 tracking-tight">
-            Editar Item
-          </h4>
-          <p className="text-sm text-text-secondary mt-1 max-w-xs mx-auto leading-relaxed">
-            Atualize as especificações do item de estoque.
-          </p>
+      {/* HEADER */}
+      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-bold text-gray-900">Editar Item</h3>
+          <p className="text-xs text-gray-500">Atualize dados do catálogo.</p>
         </div>
+        <div className="p-2 bg-white rounded-lg border border-border shadow-sm text-primary">
+          <span className="text-xl">📦</span>
+        </div>
+      </div>
 
-        <div className="space-y-5 px-1">
+      <form className="p-6 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+
+        {/* NOME DO ITEM */}
+        <div>
+          <label className={labelStyle}>Descrição do Item / Serviço</label>
           <Input
-            label="Nome do Produto / Serviço"
-            placeholder="Ex: DIESEL S10"
             {...register('nome')}
+            placeholder="Ex: FILTRO DE ÓLEO MOTOR"
             error={errors.nome?.message}
             disabled={isSubmitting}
-            autoFocus
             className="uppercase font-medium"
+            autoFocus
           />
+        </div>
 
+        {/* GRID TIPO E UNIDADE */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
-            <label className="block mb-1.5 text-sm font-medium text-text-secondary">Categoria</label>
-            <div className="relative group">
-              <select
-                className="w-full px-4 py-2.5 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:bg-gray-100 appearance-none transition-all shadow-sm cursor-pointer hover:border-gray-400"
-                {...register('tipo')}
-                disabled={isSubmitting}
-              >
-                {tiposDeProduto.map(t => (
-                  <option key={t} value={t}>{t}</option>
+            <label className={labelStyle}>Categoria</label>
+            <div className="relative">
+              <select {...register('tipo')} className={selectStyle} disabled={isSubmitting}>
+                {tipos.map(t => (
+                  <option key={t} value={t}>{t.replace('_', ' ')}</option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 group-hover:text-orange-600 transition-colors">
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
             </div>
-            {errors.tipo && <p className="mt-1 text-xs text-error animate-pulse">{errors.tipo.message}</p>}
           </div>
 
-          <Input
-            label="Unidade de Medida"
-            placeholder="Ex: Litro"
-            {...register('unidadeMedida')}
-            error={errors.unidadeMedida?.message}
-            disabled={isSubmitting}
-          />
+          <div>
+            <label className={labelStyle}>Unidade (UN, L, KG)</label>
+            <Input
+              {...register('unidadeMedida')}
+              placeholder="Ex: UN"
+              error={errors.unidadeMedida?.message}
+              disabled={isSubmitting}
+              className="uppercase text-center font-bold"
+              maxLength={4}
+            />
+          </div>
+
+          {/* [CORREÇÃO: Campos de Estoque Adicionados] */}
+          <div>
+            <label className={labelStyle}>Estoque Mínimo (Alerta)</label>
+            <Input
+              type="number"
+              {...register('estoqueMinimo')}
+              placeholder="5"
+              error={errors.estoqueMinimo?.message}
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <div>
+            <label className={labelStyle}>Estoque Atual</label>
+            <Input
+              type="number"
+              {...register('estoqueAtual')}
+              placeholder="0"
+              error={errors.estoqueAtual?.message}
+              disabled={isSubmitting}
+            />
+          </div>
         </div>
 
-        <div className="flex gap-3 pt-6 border-t border-gray-100 mt-6">
+        {/* FOOTER */}
+        <div className="flex gap-3 pt-4 border-t border-border">
           <Button
             type="button"
-            variant="secondary"
-            className="flex-1"
-            disabled={isSubmitting}
+            variant="ghost"
+            className="flex-1 text-gray-500"
             onClick={onCancelar}
+            disabled={isSubmitting}
           >
             Cancelar
           </Button>
-
           <Button
             type="submit"
             variant="primary"
-            className="flex-[2] shadow-lg shadow-orange-500/20 hover:shadow-orange-500/30 transition-all bg-orange-600 hover:bg-orange-700 focus:ring-orange-500 text-white"
-            disabled={isSubmitting}
+            className="flex-[2] shadow-lg shadow-primary/20"
             isLoading={isSubmitting}
+            disabled={isSubmitting}
+            icon={<span>💾</span>}
           >
-            {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
+            Salvar Alterações
           </Button>
         </div>
       </form>

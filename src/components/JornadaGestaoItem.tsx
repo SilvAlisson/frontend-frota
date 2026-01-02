@@ -62,7 +62,7 @@ export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: Jornada
         onFinalizada(jornada.id);
         return 'Jornada encerrada com sucesso.';
       },
-      error: (err) => { // CORREÇÃO APLICADA: 'err' é logado
+      error: (err) => {
         console.error("Falha ao finalizar jornada:", err);
         setLoading(false);
         return err.response?.data?.error || 'Falha ao finalizar.';
@@ -83,7 +83,7 @@ export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: Jornada
         else onFinalizada(jornada.id);
         return 'Jornada excluída.';
       },
-      error: (err) => { // CORREÇÃO APLICADA: 'err' é logado
+      error: (err) => {
         console.error("Falha na exclusão:", err);
         setDeleting(false);
         return 'Erro ao excluir. Verifique permissões.';
@@ -92,7 +92,8 @@ export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: Jornada
   };
 
   return (
-    <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md hover:border-primary/20 transition-all duration-300 relative group animate-in fade-in slide-in-from-bottom-2">
+    // [PADRONIZAÇÃO] border-gray-100 -> border-border
+    <div className="bg-white p-5 rounded-xl shadow-sm border border-border hover:shadow-md hover:border-primary/20 transition-all duration-300 relative group animate-in fade-in slide-in-from-bottom-2">
 
       {/* Botão Excluir */}
       <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -114,7 +115,8 @@ export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: Jornada
         {/* Lado Esquerdo: Motorista & Veículo */}
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            <div className="h-10 w-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-lg shadow-sm border border-white">
+            {/* [PADRONIZAÇÃO] Cores do Avatar ajustadas para o tema (Primary) */}
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg shadow-sm border border-primary/20">
               {jornada.operador.nome.charAt(0)}
             </div>
             <div>
@@ -126,7 +128,8 @@ export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: Jornada
           </div>
 
           <div className="mt-3 flex items-center gap-2">
-            <span className="bg-gray-100 text-gray-700 px-2 py-1 rounded text-sm font-mono border border-gray-200">
+            {/* [PADRONIZAÇÃO] bg-gray-100 -> bg-background, border-gray-200 -> border-border */}
+            <span className="bg-background text-gray-700 px-2 py-1 rounded-md text-sm font-mono border border-border">
               {jornada.veiculo.placa}
             </span>
             <span className="text-xs text-gray-400 uppercase font-bold tracking-wide">
@@ -136,7 +139,8 @@ export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: Jornada
         </div>
 
         {/* Lado Direito: Dados da Viagem */}
-        <div className="flex flex-col items-end justify-center bg-gray-50/50 p-3 rounded-lg border border-gray-100 min-w-[140px]">
+        {/* [PADRONIZAÇÃO] bg-gray-50/50 -> bg-background, border-gray-100 -> border-border */}
+        <div className="flex flex-col items-end justify-center bg-background p-3 rounded-lg border border-border min-w-[140px]">
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Início</span>
           <span className="text-sm font-bold text-gray-800">
             {new Date(jornada.dataInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
@@ -145,17 +149,20 @@ export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: Jornada
             {new Date(jornada.dataInicio).toLocaleDateString('pt-BR')}
           </span>
 
-          <div className="w-full h-px bg-gray-200 my-2"></div>
+          {/* [PADRONIZAÇÃO] bg-gray-200 -> bg-border */}
+          <div className="w-full h-px bg-border my-2"></div>
 
           <div className="w-full flex justify-between items-center">
             <span className="text-[10px] text-gray-400 uppercase font-bold">KM</span>
+            {/* [PADRONIZAÇÃO] text-primary */}
             <span className="text-sm font-bold text-primary">{jornada.kmInicio}</span>
           </div>
         </div>
       </div>
 
       {/* Ação: Finalizar */}
-      <form onSubmit={handleSubmit} className="pt-4 border-t border-dashed border-gray-200">
+      {/* [PADRONIZAÇÃO] border-gray-200 -> border-border */}
+      <form onSubmit={handleSubmit} className="pt-4 border-t border-dashed border-border">
         <div className="flex flex-col sm:flex-row items-end gap-3">
           <div className="w-full">
             <label className="block text-[10px] font-bold text-gray-400 uppercase mb-1.5 pl-1" htmlFor={`kmFim-${jornada.id}`}>

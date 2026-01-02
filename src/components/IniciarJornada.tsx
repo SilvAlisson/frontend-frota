@@ -14,8 +14,9 @@ interface IniciarJornadaProps {
   jornadasAtivas: Jornada[];
 }
 
-const selectStyle = "w-full px-4 py-3 text-text bg-white border border-gray-300 rounded-input focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-gray-50 appearance-none transition-all cursor-pointer shadow-sm hover:border-gray-400";
-const labelStyle = "block mb-1.5 text-sm font-bold text-text-secondary";
+// [PADRONIZAÇÃO] Estilo alinhado com Input.tsx e outros formulários (h-11, rounded-input, border-border)
+const selectStyle = "w-full h-11 px-3 bg-white border border-border rounded-input text-sm text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer font-medium disabled:bg-gray-50 placeholder:text-gray-400 shadow-sm";
+const labelStyle = "block mb-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider ml-1";
 
 export function IniciarJornada({
   usuarios,
@@ -72,7 +73,6 @@ export function IniciarJornada({
     }
 
     // --- LÓGICA DE CONFIRMAÇÃO DE VEÍCULO EM USO ---
-    // Se o veículo já estiver em uso, pedimos confirmação extra
     const jornadaConflitante = jornadasAtivas.find(j => j.veiculo?.id === veiculoId);
 
     if (jornadaConflitante) {
@@ -84,9 +84,8 @@ export function IniciarJornada({
 
       if (!confirmar) {
         setLoading(false);
-        return; // Usuário cancelou, não faz nada
+        return;
       }
-      // Se confirmou, o código segue abaixo para abrir o modal de foto
     }
 
     // Preparar para Modal de Foto
@@ -128,7 +127,7 @@ export function IniciarJornada({
           <h3 className="text-xl font-bold text-gray-900">
             Iniciar Jornada
           </h3>
-          <p className="text-sm text-text-secondary mt-1 px-4 leading-relaxed">
+          <p className="text-sm text-gray-500 mt-1 px-4 leading-relaxed">
             Identifique o veículo e o responsável para liberar a saída.
           </p>
         </div>
@@ -157,7 +156,7 @@ export function IniciarJornada({
 
           {/* Aviso de Indisponibilidade VISUAL */}
           {avisoVeiculo && (
-            <div className="mt-3 flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-100 text-amber-800 text-xs font-medium animate-in slide-in-from-top-1">
+            <div className="mt-3 flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium animate-in slide-in-from-top-1">
               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0 text-amber-500">
                 <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
               </svg>
@@ -210,6 +209,8 @@ export function IniciarJornada({
 
         <Button
           type="submit"
+          variant="primary"
+          // [PADRONIZAÇÃO] shadow-lg shadow-primary/20
           className="w-full py-3.5 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
           isLoading={loading}
           disabled={loading || !veiculoId || !encarregadoId || !kmInicio}

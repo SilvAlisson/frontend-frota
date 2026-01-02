@@ -15,7 +15,7 @@ import type { Veiculo, Produto, Fornecedor } from '../../types';
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
-// Interface forte para o payload (Evita 'any')
+// Interface forte para o payload
 interface PayloadOrdemServico {
   tipo: string;
   veiculoId: string | null;
@@ -38,6 +38,7 @@ const manutencaoSchema = z.object({
   observacoes: z.string().optional(),
   itens: z.array(z.object({
     produtoId: z.string({ error: "Item obrigatório" }).min(1, "Selecione o serviço/peça"),
+    // Coerce converte string do input para number
     quantidade: z.coerce.number().min(0.01, "Qtd inválida"),
     valorPorUnidade: z.coerce.number().min(0, "Valor inválido"),
   })).min(1, "Adicione pelo menos um item à OS")
@@ -50,7 +51,9 @@ const manutencaoSchema = z.object({
   }
 });
 
+// Tipagem Segura (Input vs Output)
 type ManutencaoFormInput = z.input<typeof manutencaoSchema>;
+type ManutencaoFormOutput = z.output<typeof manutencaoSchema>;
 
 interface FormRegistrarManutencaoProps {
   veiculos: Veiculo[];
@@ -99,17 +102,16 @@ export function FormRegistrarManutencao({
   const [step, setStep] = useState(1);
   const [modalAberto, setModalAberto] = useState(false);
   const [modalServicosOpen, setModalServicosOpen] = useState(false);
-
-  // OTIMIZAÇÃO: Tipagem forte
   const [formDataParaModal, setFormDataParaModal] = useState<PayloadOrdemServico | null>(null);
 
+  // Estados Lógicos
   const [ultimoKmRegistrado, setUltimoKmRegistrado] = useState<number>(0);
   const [abaAtiva, setAbaAtiva] = useState<TipoManutencao>('CORRETIVA');
   const [listaProdutos, setListaProdutos] = useState<Produto[]>(produtos);
 
   useEffect(() => { setListaProdutos(produtos); }, [produtos]);
 
-  // OTIMIZAÇÃO: useMemo para evitar filtros desnecessários a cada render
+  // Filtros Otimizados
   const produtosManutencao = useMemo(() =>
     listaProdutos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)),
     [listaProdutos]);
@@ -121,6 +123,7 @@ export function FormRegistrarManutencao({
     }),
     [fornecedores, abaAtiva]);
 
+  // [CORREÇÃO] Tipagem completa do useForm <Input, Context, Output>
   const {
     register,
     control,
@@ -130,7 +133,7 @@ export function FormRegistrarManutencao({
     trigger,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm<ManutencaoFormInput>({
+  } = useForm<ManutencaoFormInput, any, ManutencaoFormOutput>({
     resolver: zodResolver(manutencaoSchema),
     defaultValues: {
       alvo: 'VEICULO',
@@ -144,39 +147,33 @@ export function FormRegistrarManutencao({
 
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
 
-  // OTIMIZAÇÃO: Função de troca de aba sem useEffect (Render único)
   const handleTrocaAba = (novaAba: TipoManutencao) => {
     setAbaAtiva(novaAba);
     setValue('tipo', novaAba);
-    setValue('fornecedorId', ''); // Opcional: limpa fornecedor pois a lista mudou
+    setValue('fornecedorId', '');
   };
 
   const alvoSelecionado = watch('alvo');
   const veiculoIdSelecionado = watch('veiculoId');
   const itensObservados = watch('itens');
 
-  // OTIMIZAÇÃO: useEffect com Cleanup para evitar Race Condition
+  // Busca de KM Segura
   useEffect(() => {
     let isMounted = true;
-
     if (alvoSelecionado !== 'VEICULO' || !veiculoIdSelecionado) {
       setUltimoKmRegistrado(0);
       return;
     }
-
     const fetchInfoVeiculo = async () => {
       try {
-        setUltimoKmRegistrado(0); // Feedback visual imediato
+        setUltimoKmRegistrado(0);
         const { data } = await api.get<Veiculo>(`/veiculos/${veiculoIdSelecionado}`);
-        if (isMounted) {
-          setUltimoKmRegistrado(data.ultimoKm || 0);
-        }
+        if (isMounted) setUltimoKmRegistrado(data.ultimoKm || 0);
       } catch (err) {
         console.error("Erro ao buscar KM:", err);
       }
     };
     fetchInfoVeiculo();
-
     return () => { isMounted = false; };
   }, [veiculoIdSelecionado, alvoSelecionado]);
 
@@ -184,24 +181,18 @@ export function FormRegistrarManutencao({
     setValue("kmAtual", formatKmVisual(e.target.value));
   };
 
-  // --- LÓGICA DE NAVEGAÇÃO ENTRE PASSOS ---
+  // Navegação
   const nextStep = async () => {
     let isValid = false;
-
-    if (step === 1) {
-      // Valida apenas campos do contexto inicial
-      isValid = await trigger(['alvo', 'veiculoId', 'fornecedorId', 'data', 'kmAtual', 'numeroCA', 'tipo']);
-    } else if (step === 2) {
-      // Valida se há itens e se estão preenchidos
-      isValid = await trigger('itens');
-    }
-
+    if (step === 1) isValid = await trigger(['alvo', 'veiculoId', 'fornecedorId', 'data', 'kmAtual', 'numeroCA', 'tipo']);
+    else if (step === 2) isValid = await trigger('itens');
     if (isValid) setStep(s => s + 1);
   };
 
   const prevStep = () => setStep(s => s - 1);
 
-  const onValidSubmit = async (data: ManutencaoFormInput) => {
+  // Submit (Recebe 'data' já tipado e convertido pelo Zod)
+  const onValidSubmit = async (data: ManutencaoFormOutput) => {
     let kmInputFloat = null;
     if (data.alvo === 'VEICULO' && data.kmAtual) {
       kmInputFloat = parseDecimal(data.kmAtual);
@@ -215,19 +206,18 @@ export function FormRegistrarManutencao({
       obsFinal = `[CA: ${data.numeroCA}] ${obsFinal}`;
     }
 
-    const dataISOComMeioDia = new Date(data.data + 'T12:00:00').toISOString();
-
+    // Payload final
     const payloadFinal: PayloadOrdemServico = {
       tipo: data.tipo,
       veiculoId: data.alvo === 'VEICULO' ? (data.veiculoId || null) : null,
       fornecedorId: data.fornecedorId,
       kmAtual: kmInputFloat,
-      data: dataISOComMeioDia,
+      data: new Date(data.data + 'T12:00:00').toISOString(),
       observacoes: obsFinal,
       itens: data.itens.map(item => ({
         produtoId: item.produtoId,
-        quantidade: Number(item.quantidade),
-        valorPorUnidade: Number(item.valorPorUnidade)
+        quantidade: item.quantidade, // Já é number graças ao Zod Output
+        valorPorUnidade: item.valorPorUnidade // Já é number
       }))
     };
 
@@ -239,8 +229,6 @@ export function FormRegistrarManutencao({
     toast.success('Ordem de Serviço registrada!');
     setModalAberto(false);
     setFormDataParaModal(null);
-
-    // Reset completo
     reset({
       alvo: 'VEICULO',
       veiculoId: '',
@@ -253,8 +241,7 @@ export function FormRegistrarManutencao({
       itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: 0 }]
     });
     setUltimoKmRegistrado(0);
-    setStep(1); // Volta para o passo 1
-
+    setStep(1);
     if (onSuccess) onSuccess();
   };
 
@@ -262,28 +249,27 @@ export function FormRegistrarManutencao({
     return acc + ((Number(item.quantidade) || 0) * (Number(item.valorPorUnidade) || 0));
   }, 0), [itensObservados]);
 
+  // Estilos
+  const labelStyle = "block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1";
+  const selectStyle = "w-full h-11 px-3 bg-white border border-border rounded-input text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none text-gray-900 font-medium disabled:bg-gray-50 disabled:text-gray-400";
+
   return (
     <>
-      <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-card border border-gray-100 w-full animate-in fade-in duration-500">
+      <div className="bg-white p-4 sm:p-6 rounded-2xl shadow-card border border-border w-full animate-in fade-in duration-500">
 
         {/* TABS DE TIPO */}
-        <div className="flex mb-8 bg-gray-50 p-1 rounded-xl">
-          <button
-            type="button"
-            onClick={() => handleTrocaAba('CORRETIVA')}
-            className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${abaAtiva === 'CORRETIVA' ? 'bg-white text-red-600 shadow-sm' : 'text-gray-400 hover:text-gray-600'
-              }`}
-          >
-            Corretiva
-          </button>
-          <button
-            type="button"
-            onClick={() => handleTrocaAba('PREVENTIVA')}
-            className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all ${abaAtiva === 'PREVENTIVA' ? 'bg-white text-primary shadow-sm' : 'text-gray-400 hover:text-gray-600'
-              }`}
-          >
-            Preventiva
-          </button>
+        <div className="flex mb-8 bg-background p-1 rounded-xl border border-border">
+          {['CORRETIVA', 'PREVENTIVA'].map(tipo => (
+            <button
+              key={tipo}
+              type="button"
+              disabled={isSubmitting} // [SEGURANÇA] Bloqueio
+              onClick={() => handleTrocaAba(tipo as TipoManutencao)}
+              className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all disabled:opacity-50 ${abaAtiva === tipo ? 'bg-white text-primary shadow-sm' : 'text-gray-400 hover:text-gray-600'}`}
+            >
+              {tipo}
+            </button>
+          ))}
         </div>
 
         <Stepper current={step} steps={['Contexto', 'Serviços', 'Revisão']} />
@@ -295,73 +281,61 @@ export function FormRegistrarManutencao({
             <div className="space-y-5 animate-in slide-in-from-right-8 duration-300">
 
               <div className="flex gap-4">
-                <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded transition-colors">
-                  <input
-                    type="radio"
-                    value="VEICULO"
-                    {...register('alvo')}
-                    className="accent-primary"
-                    onClick={() => setValue('alvo', 'VEICULO')}
-                  />
-                  <span className="text-sm font-medium text-gray-700">Veículo</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded transition-colors">
-                  <input
-                    type="radio"
-                    value="OUTROS"
-                    {...register('alvo')}
-                    className="accent-primary"
-                    onClick={() => setValue('alvo', 'OUTROS')}
-                  />
-                  <span className="text-sm font-medium text-gray-700">Equipamento/Caixa</span>
-                </label>
+                {['VEICULO', 'OUTROS'].map(alvo => (
+                  <label key={alvo} className={`flex items-center gap-2 cursor-pointer p-2 hover:bg-gray-50 rounded transition-colors flex-1 ${isSubmitting ? 'opacity-50' : ''}`}>
+                    <input
+                      type="radio"
+                      value={alvo}
+                      {...register('alvo')}
+                      disabled={isSubmitting}
+                      onClick={() => !isSubmitting && setValue('alvo', alvo as any)}
+                      className="accent-primary"
+                    />
+                    <span className="text-sm font-medium text-gray-700">{alvo === 'VEICULO' ? 'Veículo' : 'Equipamento/Caixa'}</span>
+                  </label>
+                ))}
               </div>
 
               {alvoSelecionado === 'VEICULO' ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Veículo</label>
-                    <select
-                      {...register("veiculoId")}
-                      className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none appearance-none font-medium text-gray-700 text-sm"
-                    >
+                    <label className={labelStyle}>Veículo</label>
+                    <select {...register("veiculoId")} className={selectStyle} disabled={isSubmitting}>
                       <option value="">Selecione...</option>
                       {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>)}
                     </select>
                     {errors.veiculoId && <span className="text-xs text-red-500 mt-1 block">{errors.veiculoId.message}</span>}
                   </div>
                   <div>
-                    <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">KM Atual</label>
+                    <label className={labelStyle}>KM Atual</label>
                     <Input
                       {...register("kmAtual")}
                       onChange={(e) => { register("kmAtual").onChange(e); handleKmChange(e); }}
                       placeholder={ultimoKmRegistrado > 0 ? `Ref: ${ultimoKmRegistrado}` : "0"}
                       error={errors.kmAtual?.message}
+                      disabled={isSubmitting}
                     />
                   </div>
                 </div>
               ) : (
                 <div>
-                  <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Identificação (CA)</label>
-                  <Input {...register("numeroCA")} placeholder="Nº do CA ou Série" error={errors.numeroCA?.message} autoFocus />
+                  <label className={labelStyle}>Identificação (CA)</label>
+                  <Input {...register("numeroCA")} placeholder="Nº do CA ou Série" error={errors.numeroCA?.message} autoFocus disabled={isSubmitting} />
                 </div>
               )}
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Oficina / Fornecedor</label>
-                  <select
-                    {...register("fornecedorId")}
-                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none appearance-none font-medium text-gray-700 text-sm"
-                  >
+                  <label className={labelStyle}>Oficina / Fornecedor</label>
+                  <select {...register("fornecedorId")} className={selectStyle} disabled={isSubmitting}>
                     <option value="">Selecione...</option>
                     {fornecedoresFiltrados.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
                   </select>
                   {errors.fornecedorId && <span className="text-xs text-red-500 mt-1 block">{errors.fornecedorId.message}</span>}
                 </div>
                 <div>
-                  <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Data</label>
-                  <Input type="date" {...register("data")} error={errors.data?.message} />
+                  <label className={labelStyle}>Data</label>
+                  <Input type="date" {...register("data")} error={errors.data?.message} disabled={isSubmitting} />
                 </div>
               </div>
             </div>
@@ -375,22 +349,24 @@ export function FormRegistrarManutencao({
                 <button
                   type="button"
                   onClick={() => setModalServicosOpen(true)}
-                  className="text-xs text-primary font-bold hover:underline"
+                  disabled={isSubmitting}
+                  className="text-xs text-primary font-bold hover:underline disabled:opacity-50"
                 >
                   + Novo Item no Catálogo
                 </button>
               </div>
 
-              <div className="bg-gray-50 rounded-xl p-2 space-y-2 max-h-[350px] overflow-y-auto">
+              <div className="bg-gray-50 rounded-xl p-2 space-y-2 max-h-[350px] overflow-y-auto custom-scrollbar">
                 {fields.map((field, index) => {
                   const errItem = errors.itens?.[index];
                   return (
-                    <div key={field.id} className="bg-white p-3 rounded-lg border border-gray-100 shadow-sm relative group">
+                    <div key={field.id} className="bg-white p-3 rounded-lg border border-border shadow-sm relative group">
                       {fields.length > 1 && (
                         <button
                           type="button"
                           onClick={() => remove(index)}
-                          className="absolute -top-2 -right-2 bg-red-100 text-red-500 p-1 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10"
+                          disabled={isSubmitting}
+                          className="absolute -top-2 -right-2 bg-red-100 text-red-500 p-1 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-opacity z-10 disabled:hidden"
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
                         </button>
@@ -401,7 +377,8 @@ export function FormRegistrarManutencao({
                           <label className="text-[9px] font-bold text-gray-400 uppercase">Item</label>
                           <select
                             {...register(`itens.${index}.produtoId`)}
-                            className={`w-full text-xs p-2 bg-gray-50 border rounded focus:ring-1 focus:ring-primary outline-none ${errItem?.produtoId ? 'border-red-300' : 'border-gray-200'}`}
+                            disabled={isSubmitting}
+                            className={`w-full text-xs p-2 bg-gray-50 border rounded focus:ring-1 focus:ring-primary outline-none disabled:opacity-50 ${errItem?.produtoId ? 'border-red-300' : 'border-border'}`}
                           >
                             <option value="">Selecione...</option>
                             {produtosManutencao.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
@@ -409,14 +386,25 @@ export function FormRegistrarManutencao({
                         </div>
                         <div className="col-span-2">
                           <label className="text-[9px] font-bold text-gray-400 uppercase text-center block">Qtd</label>
-                          <input type="number" step="0.1" {...register(`itens.${index}.quantidade`)} className="w-full text-xs p-2 text-center border border-gray-200 rounded focus:ring-1 focus:ring-primary outline-none" />
+                          <input
+                            type="number" step="0.1"
+                            {...register(`itens.${index}.quantidade`)}
+                            disabled={isSubmitting}
+                            className="w-full text-xs p-2 text-center border border-border rounded focus:ring-1 focus:ring-primary outline-none disabled:bg-gray-100"
+                          />
                         </div>
                         <div className="col-span-4">
                           <label className="text-[9px] font-bold text-gray-400 uppercase text-right block">Valor (Unit)</label>
-                          <input type="number" step="0.01" {...register(`itens.${index}.valorPorUnidade`)} className="w-full text-xs p-2 text-right border border-gray-200 rounded focus:ring-1 focus:ring-primary outline-none font-mono" placeholder="0.00" />
+                          <input
+                            type="number" step="0.01"
+                            {...register(`itens.${index}.valorPorUnidade`)}
+                            disabled={isSubmitting}
+                            className="w-full text-xs p-2 text-right border border-border rounded focus:ring-1 focus:ring-primary outline-none font-mono disabled:bg-gray-100"
+                            placeholder="0.00"
+                          />
                         </div>
                       </div>
-                      {(errItem?.produtoId || errItem?.quantidade || errItem?.valorPorUnidade) && <span className="text-[9px] text-red-500 block mt-1 text-center">Preencha todos os campos do item</span>}
+                      {(errItem?.produtoId || errItem?.quantidade || errItem?.valorPorUnidade) && <span className="text-[9px] text-red-500 block mt-1 text-center">Preencha todos os campos</span>}
                     </div>
                   );
                 })}
@@ -425,7 +413,8 @@ export function FormRegistrarManutencao({
               <button
                 type="button"
                 onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })}
-                className="w-full py-3 border-2 border-dashed border-gray-200 rounded-xl text-gray-400 text-sm font-bold hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2"
+                disabled={isSubmitting}
+                className="w-full py-3 border-2 border-dashed border-border rounded-xl text-gray-400 text-sm font-bold hover:border-primary hover:text-primary transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
               >
                 + Adicionar Outro Item
               </button>
@@ -450,10 +439,11 @@ export function FormRegistrarManutencao({
               </div>
 
               <div>
-                <label className="block mb-1.5 text-xs font-bold text-gray-500 uppercase">Observações Gerais</label>
+                <label className={labelStyle}>Observações Gerais</label>
                 <textarea
                   {...register("observacoes")}
-                  className="w-full px-4 py-3 text-sm bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none min-h-[100px]"
+                  disabled={isSubmitting}
+                  className="w-full px-4 py-3 text-sm bg-white border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none min-h-[100px] disabled:bg-gray-50"
                   placeholder="Descreva detalhes adicionais, problemas encontrados..."
                 />
               </div>
@@ -461,19 +451,19 @@ export function FormRegistrarManutencao({
           )}
 
           {/* NAVEGAÇÃO */}
-          <div className="flex gap-3 pt-4 border-t border-gray-100">
+          <div className="flex gap-3 pt-4 border-t border-border">
             {step > 1 && (
-              <Button type="button" variant="secondary" onClick={prevStep} className="flex-1">
+              <Button type="button" variant="secondary" onClick={prevStep} className="flex-1" disabled={isSubmitting}>
                 Voltar
               </Button>
             )}
 
             {step < 3 ? (
-              <Button type="button" variant="primary" onClick={nextStep} className="flex-[2]">
+              <Button type="button" variant="primary" onClick={nextStep} className="flex-[2]" disabled={isSubmitting}>
                 Próximo
               </Button>
             ) : (
-              <Button type="submit" variant="success" isLoading={isSubmitting} className="flex-[2] shadow-lg shadow-green-500/20">
+              <Button type="submit" variant="success" isLoading={isSubmitting} className="flex-[2] shadow-lg shadow-green-500/20" disabled={isSubmitting}>
                 Finalizar OS
               </Button>
             )}
