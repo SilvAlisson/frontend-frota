@@ -9,6 +9,7 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { toast } from 'sonner';
 import { Truck, Mail, Lock, ArrowRight } from 'lucide-react';
+import type { UserRole } from '../types';
 
 // --- SCHEMA DE VALIDAÇÃO ---
 const loginSchema = z.object({
@@ -35,26 +36,26 @@ export function LoginScreen() {
     resolver: zodResolver(loginSchema)
   });
 
-  // --- FUNÇÃO DE REDIRECIONAMENTO BLINDADA ---
-  // Centraliza a lógica para que ADMIN vá para /admin e os demais (OPERADOR, RH, ENCARREGADO) para /
-  const redirecionarPorRole = (role: string) => {
+  // --- FUNÇÃO DE REDIRECIONAMENTO BLINDADA (A MENTE DO SISTEMA) ---
+  const redirecionarPorRole = (role: UserRole) => {
     if (role === 'ADMIN') {
       navigate('/admin', { replace: true });
     } else {
+      // OPERADOR, RH, ENCARREGADO e COORDENADOR caem na raiz (/)
+      // O Router.tsx distribuirá para o Dashboard correto.
       navigate('/', { replace: true });
     }
   };
 
-  // 1. BLINDAGEM: Redirecionar se já logado (Persistência)
+  // 1. BLINDAGEM DE PERSISTÊNCIA: Se já logado, redireciona para o lugar certo imediatamente
   useEffect(() => {
     if (isAuthenticated && user) {
       redirecionarPorRole(user.role);
     }
   }, [isAuthenticated, user]);
 
-  // 2. LÓGICA MAGIC TOKEN (QR CODE)
+  // 2. LÓGICA MAGIC TOKEN (QR CODE) - BLINDADA
   useEffect(() => {
-    // Só tenta o login por token se ainda não estiver autenticado e houver um token
     if (magicToken && !loginAttempted.current && !isAuthenticated) {
       loginAttempted.current = true;
 
@@ -64,11 +65,15 @@ export function LoginScreen() {
           const response = await api.post('/auth/login-token', { loginToken: magicToken });
           const userData = response.data.user;
 
+          // 1. Salva a sessão no Contexto/LocalStorage
           login(response.data);
+
+          // 2. Feedback visual
           toast.success(`Bem-vindo, ${userData.nome.split(' ')[0]}!`);
 
-          // Redirecionamento após login via QR Code
+          // 3. REDIRECIONAMENTO IMEDIATO BASEADO NA ROLE RECEBIDA
           redirecionarPorRole(userData.role);
+
         } catch (err) {
           console.error("Erro token:", err);
           toast.error('Código de acesso inválido ou expirado.');
@@ -81,7 +86,7 @@ export function LoginScreen() {
     }
   }, [magicToken, login, navigate, isAuthenticated]);
 
-  // 3. LOGIN MANUAL POR CREDENCIAIS
+  // 3. LOGIN MANUAL POR CREDENCIAIS - BLINDADO
   const onSubmit = async (data: LoginFormValues) => {
     try {
       const response = await api.post('/auth/login', data);
@@ -90,8 +95,9 @@ export function LoginScreen() {
       login(response.data);
       toast.success('Bem-vindo de volta!');
 
-      // Redirecionamento após login manual
+      // REDIRECIONAMENTO IMEDIATO BASEADO NA ROLE RECEBIDA
       redirecionarPorRole(userData.role);
+
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Credenciais inválidas.';
       toast.error(msg);
@@ -100,8 +106,6 @@ export function LoginScreen() {
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-slate-900 font-sans">
-
-      {/* BACKGROUND DECORATIVO */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-primary/40 z-10" />
         <img
@@ -111,11 +115,8 @@ export function LoginScreen() {
         />
       </div>
 
-      {/* CARD DE LOGIN (Glassmorphism) */}
       <div className="relative z-20 w-full max-w-md p-6 animate-in fade-in zoom-in-95 duration-700">
         <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl p-8 border border-white/20">
-
-          {/* Cabeçalho */}
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-primary text-white rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-primary/30">
               <Truck className="w-8 h-8" />
@@ -144,19 +145,7 @@ export function LoginScreen() {
                 className="h-11 bg-white border-gray-200 focus:border-primary rounded-input"
                 disabled={isSubmitting}
               />
-
               <div className="space-y-1">
-                <div className="flex justify-between items-center ml-1">
-                  <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Senha</label>
-                  <button
-                    type="button"
-                    onClick={() => toast.info('Entre em contato com o suporte para redefinir.')}
-                    className="text-xs text-primary hover:underline font-medium"
-                    tabIndex={-1}
-                  >
-                    Esqueceu a senha?
-                  </button>
-                </div>
                 <Input
                   type="password"
                   placeholder="••••••••"
@@ -167,7 +156,6 @@ export function LoginScreen() {
                   disabled={isSubmitting}
                 />
               </div>
-
               <Button
                 type="submit"
                 variant="primary"
@@ -186,7 +174,6 @@ export function LoginScreen() {
               KLIN ENGENHARIA &copy; {new Date().getFullYear()}
             </p>
           </div>
-
         </div>
       </div>
     </div>
