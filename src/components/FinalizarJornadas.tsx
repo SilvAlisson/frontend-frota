@@ -7,10 +7,9 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { parseDecimal, formatKmVisual } from '../utils';
 import { toast } from 'sonner';
-import type { Jornada } from '../types'; // Importando o tipo global
+import type { Jornada } from '../types';
 
 interface FinalizarJornadaProps {
-  // Usamos o tipo Jornada global aqui. Isso resolve o erro de compatibilidade.
   jornadaParaFinalizar: Jornada;
   onJornadaFinalizada: () => void;
 }
@@ -32,7 +31,7 @@ export function FinalizarJornada({
 
     if (kmFim <= 0) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom", // [CORREÇÃO] String literal ao invés de ZodIssueCode
         message: "KM inválido",
         path: ["kmFimInput"]
       });
@@ -41,14 +40,15 @@ export function FinalizarJornada({
 
     if (kmFim < jornadaParaFinalizar.kmInicio) {
       ctx.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom", // [CORREÇÃO] String literal ao invés de ZodIssueCode
         message: `Deve ser maior que ${jornadaParaFinalizar.kmInicio.toLocaleString('pt-BR')}`,
         path: ["kmFimInput"]
       });
     }
   });
 
-  type FinalizarFormValues = z.input<typeof finalizarSchema>;
+  type FinalizarFormInput = z.input<typeof finalizarSchema>;
+  type FinalizarFormOutput = z.output<typeof finalizarSchema>;
 
   const {
     register,
@@ -57,7 +57,7 @@ export function FinalizarJornada({
     setValue,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm<FinalizarFormValues>({
+  } = useForm<FinalizarFormInput, any, FinalizarFormOutput>({
     resolver: zodResolver(finalizarSchema),
     defaultValues: {
       kmFimInput: ''
@@ -72,14 +72,14 @@ export function FinalizarJornada({
     ? kmFimAtual - jornadaParaFinalizar.kmInicio
     : 0;
 
-  // Fallback seguro para o nome do encarregado (caso venha undefined do backend)
+  // Fallback seguro
   const nomeEncarregado = jornadaParaFinalizar.encarregado?.nome || 'Sistema/Admin';
 
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue("kmFimInput", formatKmVisual(e.target.value), { shouldValidate: true });
   };
 
-  const onSubmit = (data: FinalizarFormValues) => {
+  const onSubmit = (data: FinalizarFormOutput) => {
     const kmFimFloat = parseDecimal(data.kmFimInput);
     setDadosValidacao({ kmFim: kmFimFloat });
     setModalAberto(true);
@@ -100,20 +100,20 @@ export function FinalizarJornada({
           <h3 className="text-xl font-bold text-primary">
             Finalizar Jornada
           </h3>
-          <p className="text-xs text-text-secondary mt-1">
+          <p className="text-xs text-gray-500 mt-1">
             Confirme o odômetro final para fechar o turno.
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+          <div className="bg-background p-3 rounded-lg border border-border text-center">
             <span className="text-[10px] text-gray-400 font-bold uppercase block mb-1">KM Inicial</span>
             <span className="text-sm font-bold text-gray-700">
               {jornadaParaFinalizar.kmInicio.toLocaleString('pt-BR')}
             </span>
           </div>
 
-          <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 text-center">
+          <div className="bg-background p-3 rounded-lg border border-border text-center">
             <span className="text-[10px] text-gray-400 font-bold uppercase block mb-1">Percorrido</span>
             <span className={`text-sm font-bold ${distanciaPercorrida > 0 ? 'text-primary' : 'text-gray-400'}`}>
               {distanciaPercorrida > 0 ? `+ ${distanciaPercorrida.toLocaleString('pt-BR')} km` : '--'}
@@ -136,6 +136,7 @@ export function FinalizarJornada({
             error={errors.kmFimInput?.message}
             className="text-lg font-bold tracking-wide"
             autoFocus
+            disabled={isSubmitting}
           />
 
           <div className="mt-2 flex justify-between items-center text-xs text-gray-400 px-1">
@@ -148,6 +149,7 @@ export function FinalizarJornada({
           variant="primary"
           className="w-full py-3 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
           disabled={isSubmitting || !kmFimInput}
+          isLoading={isSubmitting}
         >
           Confirmar Encerramento
         </Button>
@@ -158,7 +160,7 @@ export function FinalizarJornada({
           titulo="Comprovante Final"
           kmParaConfirmar={dadosValidacao.kmFim}
           jornadaId={jornadaParaFinalizar.id}
-          apiEndpoint={`/jornadas/finalizar/:jornadaId`}
+          apiEndpoint={`/jornadas/finalizar/${jornadaParaFinalizar.id}`}
           apiMethod="PUT"
           dadosJornada={{
             kmFim: dadosValidacao.kmFim,

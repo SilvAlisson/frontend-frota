@@ -63,7 +63,8 @@ export function GestaoCargos() {
         <div className="space-y-8 animate-in fade-in duration-500">
 
             {/* CABEÇALHO */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 pb-4">
+            {/* [PADRONIZAÇÃO] border-gray-100 -> border-border */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-4">
                 <div>
                     <h3 className="text-xl font-bold text-gray-900 tracking-tight">
                         Cargos & Requisitos
@@ -91,7 +92,8 @@ export function GestaoCargos() {
 
             {/* FORMULÁRIO DE CADASTRO */}
             {modo === 'adicionando' && (
-                <div className="bg-white p-8 rounded-2xl shadow-card border border-gray-100 max-w-2xl mx-auto transform transition-all animate-in zoom-in-95 duration-300">
+                // [PADRONIZAÇÃO] shadow-card, border-border
+                <div className="bg-white p-8 rounded-2xl shadow-card border border-border max-w-2xl mx-auto transform transition-all animate-in zoom-in-95 duration-300">
                     <FormCadastrarCargo onSuccess={handleSucesso} onCancelar={() => setModo('listando')} />
                 </div>
             )}
@@ -101,13 +103,15 @@ export function GestaoCargos() {
                 <>
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 opacity-60">
-                            <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-primary mb-4"></div>
+                            {/* [PADRONIZAÇÃO] border-gray-200 -> border-border, border-t-primary */}
+                            <div className="animate-spin rounded-full h-10 w-10 border-4 border-border border-t-primary mb-4"></div>
                             <p className="text-primary font-medium animate-pulse">Sincronizando cargos...</p>
                         </div>
                     ) : (
                         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                             {cargos.map(cargo => (
-                                <div key={cargo.id} className="group bg-white p-5 rounded-2xl shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 flex flex-col h-full">
+                                // [PADRONIZAÇÃO] border-gray-100 -> border-border
+                                <div key={cargo.id} className="group bg-white p-5 rounded-2xl shadow-sm border border-border hover:shadow-md transition-all duration-300 flex flex-col h-full">
 
                                     {/* Topo do Card */}
                                     <div className="flex justify-between items-start mb-3">
@@ -131,7 +135,8 @@ export function GestaoCargos() {
                                     </div>
 
                                     {/* Lista de Requisitos */}
-                                    <div className="flex-1 bg-gray-50/50 rounded-xl p-3 border border-gray-100/50 mt-2">
+                                    {/* [PADRONIZAÇÃO] bg-gray-50/50 -> bg-background, border-gray-100/50 -> border-border */}
+                                    <div className="flex-1 bg-background rounded-xl p-3 border border-border mt-2">
                                         <p className="text-[10px] font-bold text-gray-400 uppercase mb-2 pl-1 tracking-wider">
                                             Requisitos Obrigatórios
                                         </p>
@@ -139,7 +144,8 @@ export function GestaoCargos() {
                                         {cargo.requisitos && cargo.requisitos.length > 0 ? (
                                             <ul className="space-y-2">
                                                 {cargo.requisitos.map(req => (
-                                                    <li key={req.id} className="flex justify-between items-center text-xs bg-white px-3 py-2 rounded-lg border border-gray-100 shadow-sm">
+                                                    // [PADRONIZAÇÃO] border-gray-100 -> border-border
+                                                    <li key={req.id} className="flex justify-between items-center text-xs bg-white px-3 py-2 rounded-lg border border-border shadow-sm">
                                                         <span className="font-medium text-gray-700 truncate max-w-[60%]" title={req.nome}>
                                                             {req.nome}
                                                         </span>
@@ -150,14 +156,16 @@ export function GestaoCargos() {
                                                 ))}
                                             </ul>
                                         ) : (
-                                            <div className="text-center py-4 text-gray-400 text-xs italic bg-white/50 rounded-lg border border-dashed border-gray-200">
+                                            // [PADRONIZAÇÃO] border-gray-200 -> border-border
+                                            <div className="text-center py-4 text-gray-400 text-xs italic bg-white/50 rounded-lg border border-dashed border-border">
                                                 Nenhum requisito cadastrado.
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Rodapé do Card */}
-                                    <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+                                    {/* [PADRONIZAÇÃO] border-gray-100 -> border-border */}
+                                    <div className="mt-4 pt-3 border-t border-border flex justify-between items-center">
                                         <span className="text-xs text-gray-400 font-medium">Colaboradores ativos</span>
                                         <div className="flex items-center gap-1.5 bg-green-50 text-green-700 px-2.5 py-1 rounded-full text-xs font-bold border border-green-100">
                                             <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
@@ -169,8 +177,9 @@ export function GestaoCargos() {
 
                             {/* Empty State */}
                             {cargos.length === 0 && (
-                                <div className="col-span-full flex flex-col items-center justify-center py-16 bg-white rounded-2xl border-2 border-dashed border-gray-200 text-center">
-                                    <div className="p-4 bg-gray-50 rounded-full mb-4">
+                                // [PADRONIZAÇÃO] border-gray-200 -> border-border, bg-gray-50 -> bg-background
+                                <div className="col-span-full flex flex-col items-center justify-center py-16 bg-white rounded-2xl border-2 border-dashed border-border text-center">
+                                    <div className="p-4 bg-background rounded-full mb-4">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-gray-400">
                                             <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 9.776c.112-.017.227-.026.344-.026h15.812c.117 0 .232.009.344.026m-16.5 0a2.25 2.25 0 0 0-1.883 2.542l.857 6a2.25 2.25 0 0 0 2.227 1.932H19.05a2.25 2.25 0 0 0 2.227-1.932l.857-6a2.25 2.25 0 0 0-1.883-2.542m-16.5 0V6A2.25 2.25 0 0 1 6 3.75h3.879a1.5 1.5 0 0 1 1.06.44l2.122 2.12a1.5 1.5 0 0 0 1.06.44H18A2.25 2.25 0 0 1 20.25 9v.776" />
                                         </svg>
@@ -182,7 +191,8 @@ export function GestaoCargos() {
                                     <Button
                                         variant="ghost"
                                         onClick={() => setModo('adicionando')}
-                                        className="mt-4 text-primary hover:bg-primary/5"
+                                        // [PADRONIZAÇÃO] hover:bg-primary/10
+                                        className="mt-4 text-primary hover:bg-primary/10"
                                     >
                                         Criar Primeiro Cargo
                                     </Button>

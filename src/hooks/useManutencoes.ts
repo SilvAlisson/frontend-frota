@@ -33,7 +33,7 @@ export function useManutencoes(filtros?: FiltrosManutencao) {
             if (filtros?.veiculoId) params.append('veiculoId', filtros.veiculoId);
             if (filtros?.limit) params.append('limit', String(filtros.limit));
 
-            const { data } = await api.get(`/manutencoes/recentes?${params.toString()}`);
+            const { data } = await api.get(`/ordens-servico/recentes?${params.toString()}`);
             return data;
         },
     });
@@ -45,15 +45,23 @@ export function useRegistrarManutencao() {
 
     return useMutation({
         mutationFn: async (dados: CreateManutencaoDTO) => {
-            const { data } = await api.post('/manutencoes', dados);
+            const { data } = await api.post('/ordens-servico', dados);
             return data;
         },
         onSuccess: () => {
             toast.success('OS de Manutenção aberta!');
+
+            // Atualiza a lista de manutenções
             queryClient.invalidateQueries({ queryKey: ['manutencoes'] });
-            queryClient.invalidateQueries({ queryKey: ['veiculos'] }); // Atualiza status do veículo
+
+            // Atualiza a lista de veículos (pois o status muda para EM_MANUTENCAO)
+            queryClient.invalidateQueries({ queryKey: ['veiculos'] });
+
+            // Atualiza dashboard se houver KPIs lá
+            queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
         },
         onError: (error: any) => {
+            console.error("Erro ao registrar OS:", error);
             toast.error(error.response?.data?.error || 'Erro ao registrar manutenção');
         },
     });

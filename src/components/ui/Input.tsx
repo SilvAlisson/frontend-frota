@@ -10,11 +10,12 @@ function cn(...inputs: ClassValue[]) {
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
-  containerClassName?: string; // Para estilizar o wrapper se necessário
+  icon?: React.ReactNode;
+  containerClassName?: string;
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className, containerClassName, id, ...rest }, ref) => {
+  ({ label, error, icon, className, containerClassName, id, ...rest }, ref) => {
 
     // Gera um ID único para acessibilidade se não for fornecido
     const generatedId = React.useId();
@@ -26,29 +27,39 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block mb-1.5 text-sm font-bold text-text-secondary tracking-wide select-none"
+            className="block mb-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider select-none ml-1"
           >
             {label}
           </label>
         )}
 
         <div className="relative">
+          {/* [ADICIONADO] Renderização do Ícone */}
+          {icon && (
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none [&>svg]:w-5 [&>svg]:h-5">
+              {icon}
+            </div>
+          )}
+
           <input
             ref={ref}
             id={inputId}
             className={cn(
               // --- Estilos Base ---
-              "w-full px-4 py-2.5 text-sm text-text bg-white border rounded-input transition-all duration-200",
+              "w-full py-2.5 text-sm text-gray-900 bg-white border rounded-lg transition-all duration-200",
               "placeholder:text-gray-400",
-              "focus:outline-none focus:ring-2 focus:ring-offset-0",
+              "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
               "disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed",
-              "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-primary", // Suporte básico a type='file'
+              "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-primary",
+
+              // --- Ajuste de Padding se tiver ícone ---
+              icon ? "pl-10 pr-4" : "px-4",
 
               // --- Estado Normal ---
-              !error && "border-gray-300 hover:border-primary/50 focus:border-primary focus:ring-primary/20",
+              !error && "border-gray-200 hover:border-gray-300",
 
               // --- Estado de Erro ---
-              error && "border-red-300 text-red-900 focus:border-red-500 focus:ring-red-100 pr-10", // pr-10 para ícone de erro se quiser adicionar dentro
+              error && "border-red-300 text-red-900 focus:border-red-500 focus:ring-red-100 pr-10",
 
               // --- Classes Injetadas (Sobrescrita) ---
               className
@@ -60,7 +71,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         {/* Mensagem de Erro com Animação e Ícone */}
         {error && (
-          <p className="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1 animate-in slide-in-from-top-1 fade-in duration-200">
+          <p className="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1 animate-in slide-in-from-top-1 fade-in duration-200 ml-1">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 flex-shrink-0">
               <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
             </svg>

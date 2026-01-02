@@ -71,14 +71,16 @@ export function GestaoFornecedores() {
   const getIconColor = (tipo?: string) => {
     if (tipo === 'POSTO') return 'bg-amber-50 text-amber-600 border-amber-100';
     if (tipo === 'LAVA_JATO') return 'bg-blue-50 text-blue-600 border-blue-100';
-    return 'bg-gray-50 text-gray-500 border-gray-100'; // Padrão/Oficina
+    // [PADRONIZAÇÃO] Default alinhado com o tema
+    return 'bg-background text-gray-500 border-border';
   };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
 
       {/* CABEÇALHO */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 pb-4">
+      {/* [PADRONIZAÇÃO] border-gray-100 -> border-border */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-4">
         <div>
           <h3 className="text-xl font-bold text-gray-900 tracking-tight">
             Parceiros & Fornecedores
@@ -106,13 +108,14 @@ export function GestaoFornecedores() {
 
       {/* FORMULÁRIOS */}
       {modo === 'adicionando' && (
-        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-float border border-gray-100 max-w-xl mx-auto animate-in zoom-in-95 duration-200">
+        // [PADRONIZAÇÃO] shadow-card, border-border
+        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-card border border-border max-w-xl mx-auto animate-in zoom-in-95 duration-200">
           <FormCadastrarFornecedor onSuccess={handleSucesso} onCancelar={handleCancelarForm} />
         </div>
       )}
 
       {modo === 'editando' && fornecedorIdSelecionado && (
-        <div className="bg-white p-6 sm:p-8 rounded-xl shadow-float border border-gray-100 max-w-xl mx-auto animate-in zoom-in-95 duration-200">
+        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-card border border-border max-w-xl mx-auto animate-in zoom-in-95 duration-200">
           <FormEditarFornecedor
             fornecedorId={fornecedorIdSelecionado}
             onSuccess={handleSucesso}
@@ -127,13 +130,15 @@ export function GestaoFornecedores() {
           {loading ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-40 bg-white rounded-xl border border-gray-100 animate-pulse"></div>
+                // [PADRONIZAÇÃO] border-gray-100 -> border-border, rounded-xl -> rounded-2xl
+                <div key={i} className="h-40 bg-white rounded-2xl border border-border animate-pulse"></div>
               ))}
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {fornecedores.map((f) => (
-                <div key={f.id} className="group bg-white p-5 rounded-xl shadow-sm border border-gray-200 hover:shadow-float hover:border-primary/30 transition-all duration-300 flex flex-col relative">
+                // [PADRONIZAÇÃO] border-gray-200 -> border-border, rounded-xl -> rounded-2xl
+                <div key={f.id} className="group bg-white p-5 rounded-2xl shadow-sm border border-border hover:shadow-md hover:border-primary/30 transition-all duration-300 flex flex-col relative">
 
                   {/* Topo: Ícone e Ações */}
                   <div className="flex justify-between items-start mb-4">
@@ -144,7 +149,8 @@ export function GestaoFornecedores() {
                     <div className="flex gap-1">
                       <button
                         onClick={() => { setFornecedorIdSelecionado(f.id); setModo('editando'); }}
-                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                        // [PADRONIZAÇÃO] hover:text-primary
+                        className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
                         title="Editar"
                       >
                         <IconeEditar />
@@ -166,17 +172,20 @@ export function GestaoFornecedores() {
                       {f.nome}
                     </h4>
                     {f.tipo && (
-                      <span className="inline-block text-[10px] uppercase font-bold tracking-wider text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
+                      // [PADRONIZAÇÃO] bg-gray-100 -> bg-background, border-gray-200 -> border-border
+                      <span className="inline-block text-[10px] uppercase font-bold tracking-wider text-gray-500 bg-background px-1.5 py-0.5 rounded border border-border">
                         {f.tipo.replace('_', ' ')}
                       </span>
                     )}
                   </div>
 
                   {/* Rodapé: CNPJ */}
-                  <div className="mt-auto pt-3 border-t border-gray-50 flex items-center gap-2">
+                  {/* [PADRONIZAÇÃO] border-gray-50 -> border-background */}
+                  <div className="mt-auto pt-3 border-t border-background flex items-center gap-2">
                     <span className="text-[10px] font-bold text-gray-400 uppercase">CNPJ</span>
                     {f.cnpj ? (
-                      <span className="text-xs font-mono text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                      // [PADRONIZAÇÃO] bg-gray-50 -> bg-background, border-gray-100 -> border-border
+                      <span className="text-xs font-mono text-gray-600 bg-background px-1.5 py-0.5 rounded border border-border">
                         {f.cnpj}
                       </span>
                     ) : (
@@ -190,8 +199,10 @@ export function GestaoFornecedores() {
           )}
 
           {!loading && fornecedores.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border-2 border-dashed border-gray-200 text-center">
-              <div className="p-4 bg-gray-50 rounded-full mb-4">
+            // [PADRONIZAÇÃO] border-gray-200 -> border-border
+            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border-2 border-dashed border-border text-center">
+              {/* [PADRONIZAÇÃO] bg-gray-50 -> bg-background */}
+              <div className="p-4 bg-background rounded-full mb-4">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-gray-400">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72m-13.5 8.65h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
                 </svg>

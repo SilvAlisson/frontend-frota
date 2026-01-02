@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod'; // Import V4
+import { z } from 'zod';
 import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
@@ -10,26 +10,23 @@ import { toast } from 'sonner';
 
 const tiposFornecedor = ["POSTO", "OFICINA", "LAVA_JATO", "SEGURADORA", "OUTROS"] as const;
 
-// --- SCHEMA ZOD V4 ---
+// --- SCHEMA ---
 const fornecedorSchema = z.object({
   nome: z.string({ error: 'O Nome é obrigatório.' })
-    .min(2, { error: 'O nome deve ter pelo menos 2 caracteres.' })
+    .min(2, { message: 'Mínimo de 2 caracteres.' })
     .transform(val => val.trim().toUpperCase()),
 
   cnpj: z.union([
     z.literal(''),
     z.string().regex(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/, {
-      error: "Formato inválido: 00.000.000/0000-00"
+      message: "Formato: 00.000.000/0000-00"
     })
   ]).optional().nullable(),
 
-  // O .default() gera a diferença entre Input e Output que causava o erro
   tipo: z.enum(tiposFornecedor, { error: "Selecione um tipo válido" })
     .default('OUTROS'),
 });
 
-// --- CORREÇÃO DE TIPOS ---
-// Definimos explicitamente o que entra e o que sai
 type FornecedorInput = z.input<typeof fornecedorSchema>;
 type FornecedorOutput = z.output<typeof fornecedorSchema>;
 
@@ -42,8 +39,6 @@ interface Props {
 export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Props) {
   const [loadingData, setLoadingData] = useState(true);
 
-  // CORREÇÃO AQUI: Passamos os 3 genéricos para o useForm
-  // <Input, Contexto, Output>
   const {
     register,
     handleSubmit,
@@ -62,12 +57,8 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
     const fetchDados = async () => {
       try {
         const { data } = await api.get(`/fornecedores/${fornecedorId}`);
+        const tipoValido = tiposFornecedor.includes(data.tipo) ? data.tipo : 'OUTROS';
 
-        const tipoValido = tiposFornecedor.includes(data.tipo)
-          ? data.tipo
-          : 'OUTROS';
-
-        // O reset aceita o tipo de Input, então tudo certo aqui
         reset({
           nome: data.nome || '',
           cnpj: data.cnpj || '',
@@ -75,7 +66,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
         });
       } catch (error) {
         console.error(error);
-        toast.error('Erro ao carregar dados do fornecedor.');
+        toast.error('Erro ao carregar dados.');
         onCancelar();
       } finally {
         setLoadingData(false);
@@ -86,13 +77,10 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
   }, [fornecedorId, reset, onCancelar]);
 
   // --- SUBMISSÃO ---
-  // O data agora é tipado corretamente como FornecedorOutput (sem undefined no tipo)
   const onSubmit = async (data: FornecedorOutput) => {
     const payload = {
       nome: DOMPurify.sanitize(data.nome),
-      cnpj: data.cnpj && data.cnpj.trim() !== ''
-        ? DOMPurify.sanitize(data.cnpj)
-        : null,
+      cnpj: data.cnpj && data.cnpj.trim() !== '' ? DOMPurify.sanitize(data.cnpj) : null,
       tipo: data.tipo,
     };
 
@@ -101,105 +89,114 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
     toast.promise(promise, {
       loading: 'Atualizando cadastro...',
       success: () => {
-        setTimeout(onSuccess, 800);
-        return 'Fornecedor atualizado com sucesso!';
+        setTimeout(onSuccess, 500);
+        return 'Parceiro atualizado!';
       },
       error: (err) => {
-        console.error("Erro API:", err);
-        return err.response?.data?.error || 'Falha ao atualizar. Verifique os dados.';
+        console.error(err);
+        return err.response?.data?.error || 'Falha ao atualizar.';
       }
     });
   };
 
+  // --- ESTILOS ---
+  const labelStyle = "block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1";
+  const selectStyle = "w-full h-10 px-3 bg-white border border-border rounded-input text-sm text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer placeholder:text-gray-400 disabled:bg-gray-50";
+
   if (loadingData) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 space-y-4">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-100 border-t-blue-600"></div>
-        <p className="text-sm text-gray-500 font-medium animate-pulse">Sincronizando dados...</p>
+      <div className="bg-white rounded-xl shadow-lg border border-border p-12 flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-primary"></div>
+        <p className="text-sm text-gray-400 font-medium mt-4 animate-pulse">Buscando informações...</p>
       </div>
     );
   }
 
   return (
-    <form className="space-y-8" onSubmit={handleSubmit(onSubmit)}>
+    <div className="bg-white rounded-xl shadow-lg border border-border overflow-hidden">
 
-      <div className="text-center relative">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-16 h-1 bg-gradient-to-r from-transparent via-blue-200 to-transparent rounded-full" />
-        <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 mb-4 shadow-sm ring-4 ring-white">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+      {/* HEADER */}
+      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-bold text-gray-900">Editar Parceiro</h3>
+          <p className="text-xs text-gray-500">Atualize os dados cadastrais.</p>
+        </div>
+        <div className="p-2 bg-white rounded-lg border border-border shadow-sm text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72L4.318 3.44A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72m-13.5 8.65h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .415.336.75.75.75Z" />
           </svg>
         </div>
-        <h4 className="text-2xl font-bold text-gray-900 tracking-tight">Editar Fornecedor</h4>
-        <p className="text-sm text-text-secondary mt-1 max-w-xs mx-auto leading-relaxed">
-          Atualize as informações cadastrais do parceiro.
-        </p>
       </div>
 
-      <div className="space-y-5 px-1">
-        <Input
-          label="Nome do Fornecedor"
-          placeholder="Nome do estabelecimento"
-          {...register('nome')}
-          error={errors.nome?.message}
-          disabled={isSubmitting}
-          className="uppercase font-medium"
-        />
+      <form className="p-6 space-y-5" onSubmit={handleSubmit(onSubmit)}>
 
-        {/* SELECT DE TIPO */}
+        {/* Nome */}
         <div>
-          <label className="block mb-1.5 text-sm font-bold text-gray-500">Categoria</label>
-          <div className="relative group">
-            <select
-              className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-input appearance-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-shadow cursor-pointer hover:border-gray-400"
-              {...register('tipo')}
-              disabled={isSubmitting}
-            >
-              <option value="POSTO">Posto de Combustível</option>
-              <option value="OFICINA">Oficina Mecânica</option>
-              <option value="LAVA_JATO">Lava Jato</option>
-              <option value="SEGURADORA">Seguradora</option>
-              <option value="OUTROS">Outros Serviços</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-          </div>
-          {errors.tipo && <p className="text-xs text-red-500 mt-1 animate-pulse">{errors.tipo.message}</p>}
+          <label className={labelStyle}>Razão Social / Nome</label>
+          <Input
+            {...register('nome')}
+            placeholder="Ex: AUTO CENTER LTDA"
+            error={errors.nome?.message}
+            disabled={isSubmitting}
+            className="uppercase font-medium"
+          />
         </div>
 
-        <Input
-          label="CNPJ (Opcional)"
-          placeholder="00.000.000/0000-00"
-          {...register('cnpj')}
-          error={errors.cnpj?.message}
-          disabled={isSubmitting}
-        />
-        <p className="text-[10px] text-gray-400 pl-1 -mt-3">
-          Se preenchido, use o formato: 00.000.000/0000-00
-        </p>
-      </div>
+        {/* Categoria e CNPJ */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label className={labelStyle}>Categoria</label>
+            <div className="relative">
+              <select {...register('tipo')} className={selectStyle} disabled={isSubmitting}>
+                {tiposFornecedor.map(t => (
+                  <option key={t} value={t}>{t.replace('_', ' ')}</option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+            {errors.tipo && <p className="text-xs text-red-500 mt-1 ml-1">{errors.tipo.message}</p>}
+          </div>
 
-      <div className="flex gap-3 pt-6 border-t border-gray-100 mt-6">
-        <Button
-          type="button"
-          variant="secondary"
-          className="flex-1"
-          onClick={onCancelar}
-          disabled={isSubmitting}
-        >
-          Cancelar
-        </Button>
-        <Button
-          type="submit"
-          variant="primary"
-          className="flex-[2] shadow-lg shadow-blue-500/20 hover:shadow-blue-500/30 transition-all bg-blue-600 hover:bg-blue-700 focus:ring-blue-500 text-white"
-          isLoading={isSubmitting}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
-        </Button>
-      </div>
-    </form>
+          <div>
+            <label className={labelStyle}>CNPJ (Opcional)</label>
+            <Input
+              {...register('cnpj')}
+              placeholder="00.000.000/0000-00"
+              error={errors.cnpj?.message}
+              disabled={isSubmitting}
+            />
+            {/* [CORREÇÃO] Texto de ajuda restaurado */}
+            <p className="text-[10px] text-gray-400 pl-1 mt-1">
+              Formato sugerido: 00.000.000/0000-00
+            </p>
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <div className="flex gap-3 pt-6 border-t border-border mt-2">
+          <Button
+            type="button"
+            variant="ghost"
+            className="flex-1 text-gray-500"
+            onClick={onCancelar}
+            disabled={isSubmitting}
+          >
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            className="flex-[2] shadow-lg shadow-primary/20"
+            isLoading={isSubmitting}
+            disabled={isSubmitting}
+            icon={<span>💾</span>}
+          >
+            Salvar Alterações
+          </Button>
+        </div>
+      </form>
+    </div>
   );
 }

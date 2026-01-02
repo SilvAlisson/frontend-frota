@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -8,203 +8,247 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { toast } from 'sonner';
+import { Truck, Mail, Lock, QrCode, ArrowRight } from 'lucide-react';
 
-// --- SCHEMA ZOD ---
+// --- SCHEMA DE VALIDAÇÃO (Email/Senha) ---
 const loginSchema = z.object({
-  email: z.string().min(1, "Email obrigatório").email("Formato inválido"),
+  email: z.string().min(1, "Email obrigatório").email("Formato de email inválido"),
   password: z.string().min(1, "Digite sua senha")
 });
 
 type LoginFormValues = z.input<typeof loginSchema>;
 
 export function LoginScreen() {
-  const { login } = useAuth();
+  const { login, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const magicToken = searchParams.get('magicToken');
 
-  const loginAttempted = useRef(false);
-  const [isMagicLoggingIn, setIsMagicLoggingIn] = useState(!!magicToken);
+  // Estado para alternar entre "Email" e "QR Code"
+  const [mode, setMode] = useState<'CREDENTIALS' | 'QR'>('CREDENTIALS');
+  const [qrTokenManual, setQrTokenManual] = useState('');
+  const [loading, setLoading] = useState(false);
 
+  // Hook Form para Email/Senha
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting }
+    formState: { errors }
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema)
   });
 
-  // --- LÓGICA DE MAGIC TOKEN (QR CODE) ---
+  // 1. Redirecionar se já logado
   useEffect(() => {
-    if (magicToken && !loginAttempted.current) {
-      loginAttempted.current = true;
-
-      const realizarLoginPorToken = async () => {
-        setIsMagicLoggingIn(true);
-        try {
-          const response = await api.post('/auth/login-token', { loginToken: magicToken });
-          login(response.data);
-          toast.success(`Bem-vindo, ${response.data.user.nome.split(' ')[0]}!`);
-          navigate('/', { replace: true });
-        } catch (err) {
-          console.error("Erro token:", err);
-          toast.error('Código de acesso inválido ou expirado.');
-          navigate('/login', { replace: true });
-          setIsMagicLoggingIn(false);
-        }
-      };
-
-      realizarLoginPorToken();
+    if (isAuthenticated) {
+      navigate('/admin', { replace: true });
     }
-  }, [magicToken, login, navigate]);
+  }, [isAuthenticated, navigate]);
 
-  // --- LOGIN MANUAL ---
-  const onSubmit = async (data: LoginFormValues) => {
+  // 2. Lógica Magic Token (URL)
+  useEffect(() => {
+    const magicToken = searchParams.get('magicToken');
+    if (magicToken) {
+      handleTokenLogin(magicToken);
+    }
+  }, [searchParams]);
+
+  // --- FUNÇÕES DE LOGIN ---
+
+  // Login por Token (QR Code ou Link)
+  const handleTokenLogin = async (token: string) => {
+    setLoading(true);
     try {
-      const response = await api.post('/auth/login', data);
+      const response = await api.post('/auth/login-token', { loginToken: token });
       login(response.data);
-      toast.success('Acesso autorizado.');
-      navigate('/', { replace: true });
-    } catch (err: any) {
-      const msg = err.response?.data?.error || 'Erro de conexão com o servidor.';
-      toast.error(msg);
+      toast.success(`Bem-vindo, ${response.data.user.nome.split(' ')[0]}!`);
+      navigate('/admin');
+    } catch (err) {
+      console.error("Erro token:", err);
+      toast.error('Token inválido ou expirado.');
+    } finally {
+      setLoading(false);
     }
   };
 
+  // Login por Credenciais (Formulário)
+  const onSubmitCredentials = async (data: LoginFormValues) => {
+    setLoading(true);
+    try {
+      const response = await api.post('/auth/login', data);
+      login(response.data);
+      toast.success('Bem-vindo de volta!');
+      navigate('/admin');
+    } catch (err: any) {
+      const msg = err.response?.data?.error || 'Credenciais inválidas.';
+      toast.error(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Login Manual por QR (Input de texto)
+  const handleManualQrSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!qrTokenManual.trim()) return toast.warning('Digite o código do token.');
+    handleTokenLogin(qrTokenManual);
+  };
+
   return (
-    <div className="min-h-screen grid lg:grid-cols-2 bg-white overflow-hidden">
+    <div className="min-h-screen w-full flex bg-white font-sans">
 
-      {/* LADO ESQUERDO: Formulário Clean */}
-      <div className="flex flex-col justify-center items-center px-8 sm:px-12 lg:px-24 xl:px-32 relative animate-in fade-in slide-in-from-left-4 duration-700">
+      {/* --- LADO ESQUERDO: IMAGEM FROTA --- */}
+      <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 overflow-hidden">
+        {/* Imagem de Fundo */}
+        <img
+          src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=2070&auto=format&fit=crop"
+          alt="Frota de Caminhões"
+          className="absolute inset-0 w-full h-full object-cover opacity-60"
+        />
 
-        <div className="w-full max-w-sm space-y-8">
-          {/* Logo e Cabeçalho */}
-          <div className="space-y-2">
-            <div className="h-12 w-12 bg-primary rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-primary/30 mb-6">
-              KL
+        {/* Overlay Gradiente */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent"></div>
+
+        {/* Conteúdo Sobre a Imagem */}
+        <div className="relative z-10 flex flex-col justify-end p-16 h-full text-white">
+          <div className="mb-6">
+            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-primary/30 text-white">
+              <Truck className="w-8 h-8" />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-gray-900">
-              Gestão de Frota
-            </h1>
-            <p className="text-gray-500">
-              Entre com suas credenciais para acessar o painel de controle.
+            <h1 className="text-4xl font-bold tracking-tight mb-2">Gestão Inteligente <br />de Frota e Logística</h1>
+            <p className="text-slate-300 text-lg max-w-md leading-relaxed">
+              Controle abastecimentos, manutenções e jornadas em tempo real. Simplifique a operação da sua transportadora.
             </p>
           </div>
 
-          {/* Estado de Carregamento (Magic Link) */}
-          {isMagicLoggingIn ? (
-            <div className="py-12 flex flex-col items-center justify-center space-y-4 bg-gray-50 rounded-2xl border border-gray-100">
-              <div className="relative">
-                <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
-              </div>
-              <div className="text-center">
-                <p className="font-bold text-gray-900">Autenticando...</p>
-                <p className="text-sm text-gray-500">Validando token de segurança</p>
-              </div>
-            </div>
-          ) : (
-            /* Formulário Principal */
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-              <div className="space-y-4">
-                <Input
-                  label="Email Corporativo"
-                  type="email"
-                  placeholder="nome@empresa.com.br"
-                  {...register('email')}
-                  error={errors.email?.message}
-                  disabled={isSubmitting}
-                  autoFocus
-                  className="bg-gray-50 border-gray-200 focus:bg-white transition-all h-12"
-                />
+          {/* Indicadores Decorativos */}
+          <div className="flex gap-2">
+            <div className="h-1.5 w-12 bg-primary rounded-full"></div>
+            <div className="h-1.5 w-12 bg-white/20 rounded-full"></div>
+            <div className="h-1.5 w-12 bg-white/20 rounded-full"></div>
+          </div>
+        </div>
+      </div>
 
-                <div className="space-y-1">
-                  <Input
-                    label="Senha"
-                    type="password"
-                    placeholder="••••••••"
-                    {...register('password')}
-                    error={errors.password?.message}
-                    disabled={isSubmitting}
-                    className="bg-gray-50 border-gray-200 focus:bg-white transition-all h-12"
-                  />
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => toast.info("Procure o gestor da frota para resetar sua senha.")}
-                      className="text-xs font-medium text-primary hover:text-blue-700 transition-colors"
-                      disabled={isSubmitting}
-                    >
-                      Esqueceu a senha?
-                    </button>
-                  </div>
+      {/* --- LADO DIREITO: FORMULÁRIO --- */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50">
+        <div className="w-full max-w-md space-y-8 bg-white p-10 rounded-3xl shadow-xl border border-gray-100">
+
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Acesse sua conta</h2>
+            <p className="text-sm text-gray-500 mt-1">Bem-vindo ao painel Klin Frota</p>
+          </div>
+
+          {/* Abas de Navegação (Senha vs QR) */}
+          <div className="grid grid-cols-2 gap-1 p-1.5 bg-gray-100 rounded-xl border border-gray-200">
+            <button
+              onClick={() => setMode('CREDENTIALS')}
+              className={`py-2.5 text-sm font-semibold rounded-lg transition-all ${mode === 'CREDENTIALS'
+                ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
+                }`}
+            >
+              Email e Senha
+            </button>
+            <button
+              onClick={() => setMode('QR')}
+              className={`py-2.5 text-sm font-semibold rounded-lg transition-all flex items-center justify-center gap-2 ${mode === 'QR'
+                ? 'bg-white text-gray-900 shadow-sm ring-1 ring-gray-200'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200/50'
+                }`}
+            >
+              <QrCode className="w-4 h-4" />
+              Token ID
+            </button>
+          </div>
+
+          {/* FORMULÁRIO 1: E-MAIL E SENHA */}
+          {mode === 'CREDENTIALS' && (
+            <form onSubmit={handleSubmit(onSubmitCredentials)} className="space-y-5 animate-in fade-in slide-in-from-left-4 duration-300">
+              <Input
+                label="E-mail corporativo"
+                type="email"
+                placeholder="seunome@klin.com.br"
+                {...register('email')}
+                error={errors.email?.message}
+                icon={<Mail className="w-5 h-5 text-gray-400" />}
+                className="bg-gray-50 border-gray-200 focus:bg-white h-11"
+                disabled={loading}
+              />
+
+              <div className="space-y-1">
+                <Input
+                  label="Senha"
+                  type="password"
+                  placeholder="••••••••"
+                  {...register('password')}
+                  error={errors.password?.message}
+                  icon={<Lock className="w-5 h-5 text-gray-400" />}
+                  className="bg-gray-50 border-gray-200 focus:bg-white h-11"
+                  disabled={loading}
+                />
+                <div className="flex justify-end">
+                  <button type="button" className="text-xs font-medium text-primary hover:text-primary/80 hover:underline transition-colors" tabIndex={-1}>
+                    Esqueceu a senha?
+                  </button>
                 </div>
               </div>
 
               <Button
                 type="submit"
-                variant="primary"
-                isLoading={isSubmitting}
-                disabled={isSubmitting}
-                className="w-full h-12 text-base font-bold shadow-lg shadow-primary/25 hover:shadow-primary/40 transition-all transform hover:-translate-y-0.5"
+                className="w-full h-12 text-base font-bold shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-transform"
+                isLoading={loading}
               >
-                {isSubmitting ? 'Verificando...' : 'Acessar Sistema'}
+                Entrar no Sistema <ArrowRight className="ml-2 w-4 h-4" />
               </Button>
             </form>
           )}
 
-          {/* Rodapé */}
-          <div className="pt-8 border-t border-gray-100 text-center">
-            <p className="text-xs text-gray-400 font-mono">
-              KLIN Frota v2.0 • Sistema Seguro
-            </p>
+          {/* FORMULÁRIO 2: TOKEN QR CODE */}
+          {mode === 'QR' && (
+            <form onSubmit={handleManualQrSubmit} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="text-center py-6 px-6 bg-blue-50/50 rounded-2xl border border-blue-100 dashed">
+                <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 text-blue-600">
+                  <QrCode className="w-6 h-6" />
+                </div>
+                <p className="text-sm text-blue-800 font-medium">
+                  Use o app para escanear
+                </p>
+                <p className="text-xs text-blue-600 mt-1">
+                  Ou digite o código do seu crachá abaixo para liberar o acesso.
+                </p>
+              </div>
+
+              <Input
+                label="Código do Crachá (Token)"
+                placeholder="Cole o token aqui..."
+                value={qrTokenManual}
+                onChange={(e) => setQrTokenManual(e.target.value)}
+                icon={<Lock className="w-5 h-5 text-gray-400" />}
+                className="font-mono text-sm bg-gray-50 border-gray-200 focus:bg-white h-11"
+                disabled={loading}
+              />
+
+              <Button
+                type="submit"
+                className="w-full h-12 text-base font-bold shadow-lg shadow-primary/20 hover:-translate-y-0.5 transition-transform"
+                isLoading={loading}
+              >
+                Validar Token
+              </Button>
+            </form>
+          )}
+
+          <div className="relative py-2">
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-200" /></div>
+            <div className="relative flex justify-center text-[10px] uppercase tracking-wider font-bold"><span className="bg-white px-2 text-gray-400">Ambiente Seguro</span></div>
           </div>
+
+          <div className="flex justify-center items-center gap-2 opacity-60 hover:opacity-100 transition-opacity">
+            <span className="font-bold text-gray-400 text-xs">KLIN Engenharia © {new Date().getFullYear()}</span>
+          </div>
+
         </div>
       </div>
-
-      {/* LADO DIREITO: Imagem e Atmosfera (Só aparece em telas grandes) */}
-      <div className="hidden lg:block relative bg-gray-900 h-full overflow-hidden">
-        {/* Imagem de Fundo (Logística/Frota) */}
-        <img
-          src="https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?q=80&w=2070&auto=format&fit=crop"
-          alt="Frota Logística"
-          className="absolute inset-0 w-full h-full object-cover opacity-60 mix-blend-overlay"
-        />
-
-        {/* Gradiente de Marca "Deep Ocean" */}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary-900/90 via-primary-800/50 to-primary-900/40"></div>
-
-        {/* Elementos Flutuantes (Decoração Abstrata) */}
-        <div className="absolute top-0 right-0 p-12 opacity-20">
-          <svg width="404" height="404" fill="none" viewBox="0 0 404 404" aria-hidden="true">
-            <defs>
-              <pattern id="de316486-4a29-4312-bdfc-fbce2132a2c1" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-                <rect x="0" y="0" width="4" height="4" className="text-white" fill="currentColor" />
-              </pattern>
-            </defs>
-            <rect width="404" height="404" fill="url(#de316486-4a29-4312-bdfc-fbce2132a2c1)" />
-          </svg>
-        </div>
-
-        {/* Conteúdo sobre a Imagem */}
-        <div className="absolute bottom-0 left-0 p-12 w-full">
-          <div className="glass-panel bg-white/10 backdrop-blur-md border-white/10 p-8 rounded-2xl max-w-lg animate-in fade-in slide-in-from-bottom-8 duration-1000">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="flex h-3 w-3 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-              </span>
-              <span className="text-green-300 text-xs font-mono font-bold uppercase tracking-widest">Sistema Operacional</span>
-            </div>
-            <h2 className="text-3xl font-bold text-white mb-2 leading-tight">
-              Inteligência Logística para sua Frota.
-            </h2>
-            <p className="text-blue-100 text-sm leading-relaxed">
-              Monitore custos, gerencie manutenções preventivas e acompanhe o desempenho dos seus motoristas em tempo real.
-            </p>
-          </div>
-        </div>
-      </div>
-
     </div>
   );
 }
