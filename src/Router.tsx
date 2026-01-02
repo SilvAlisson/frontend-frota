@@ -4,15 +4,13 @@ import { api } from './services/api';
 import { useAuth } from './contexts/AuthContext';
 import { useVeiculos } from './hooks/useVeiculos';
 
-// Imports de Dashboards Específicos
+// Imports de Dashboards e Componentes
 import { LoginScreen } from './pages/LoginScreen';
 import { AdminLayout } from './layouts/AdminLayout';
 import { DashboardOperador } from './components/DashboardOperador';
 import { DashboardEncarregado } from './components/DashboardEncarregado';
 import { DashboardRH } from './components/DashboardRH';
 import { DashboardRelatorios } from './components/DashboardRelatorios';
-
-// Outros componentes necessários
 import { VeiculoDetalhes } from './pages/VeiculoDetalhes';
 import { PainelAlertas } from './components/PainelAlertas';
 import { GestaoVeiculos } from './components/GestaoVeiculos';
@@ -26,7 +24,6 @@ import { HistoricoAbastecimentos } from './components/HistoricoAbastecimentos';
 import { HistoricoJornadas } from './components/HistoricoJornadas';
 import { FormRegistrarManutencao } from './components/forms/FormRegistrarManutencao';
 import { RegistrarAbastecimento } from './components/RegistrarAbastecimento';
-import { FormPlanoManutencao } from './components/forms/FormPlanoManutencao';
 
 const LoadingScreen = () => (
   <div className="flex flex-col items-center justify-center h-screen bg-gray-50">
@@ -37,33 +34,37 @@ const LoadingScreen = () => (
 
 // --- WRAPPERS DE ROTA PROTEGIDA ---
 
-function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, loading } = useAuth();
+function PrivateRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) {
+  const { isAuthenticated, loading, user } = useAuth();
+
   if (loading) return <LoadingScreen />;
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />;
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
 }
 
 /**
- * MENTE DO SISTEMA: RootDashboardRouter
- * Decide qual componente montar na raiz (/) sem trocar a URL.
- * Blinda contra erros 403 pois Operadores/RH nunca montam o AdminLayout.
+ * RootDashboardRouter: Decide o que exibir na URL "/"
  */
 function RootDashboardRouter() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const { data: veiculos } = useVeiculos();
-  const { refetch: refetchJornadas } = useQuery({
-    queryKey: ['jornadas', 'ativas'],
-    queryFn: async () => (await api.get('/jornadas/ativas')).data,
-    enabled: false
-  });
 
-  // Queries para alimentar os dashboards operacionais
+  // Queries reativadas para suprir as props faltantes
   const { data: usuarios } = useQuery({ queryKey: ['users'], queryFn: async () => (await api.get('/users')).data, enabled: !!user });
   const { data: produtos } = useQuery({ queryKey: ['produtos'], queryFn: async () => (await api.get('/produtos')).data, enabled: !!user });
   const { data: fornecedores } = useQuery({ queryKey: ['fornecedores'], queryFn: async () => (await api.get('/fornecedores')).data, enabled: !!user });
-  const { data: jornadasAtivas } = useQuery({ queryKey: ['jornadas', 'ativas'], queryFn: async () => (await api.get('/jornadas/ativas')).data, enabled: !!user });
+  const { data: jornadasAtivas, refetch: refetchJornadas } = useQuery({
+    queryKey: ['jornadas', 'ativas'],
+    queryFn: async () => (await api.get('/jornadas/ativas')).data,
+    enabled: !!user
+  });
 
-  if (!user) return <LoadingScreen />;
+  if (loading || !user) return <LoadingScreen />;
 
   const containerStyle = "p-4 md:p-8 max-w-[1600px] mx-auto";
 
@@ -75,8 +76,8 @@ function RootDashboardRouter() {
             user={user}
             usuarios={usuarios || []}
             veiculos={veiculos || []}
-            produtos={produtos || []}
-            fornecedores={fornecedores || []}
+            produtos={produtos || []} // Adicionado para corrigir erro TS2739
+            fornecedores={fornecedores || []} // Adicionado para corrigir erro TS2739
             jornadasAtivas={jornadasAtivas || []}
             onJornadaIniciada={() => refetchJornadas()}
             onJornadaFinalizada={() => refetchJornadas()}
@@ -90,19 +91,15 @@ function RootDashboardRouter() {
             user={user}
             veiculos={veiculos || []}
             usuarios={usuarios || []}
-            produtos={produtos || []}
-            fornecedores={fornecedores || []}
+            produtos={produtos || []} // Adicionado para corrigir erro TS2739
+            fornecedores={fornecedores || []} // Adicionado para corrigir erro TS2739
             jornadasAbertas={jornadasAtivas || []}
             onJornadaFinalizada={() => refetchJornadas()}
           />
         </div>
       );
     case 'RH':
-      return (
-        <div className={containerStyle}>
-          <DashboardRH user={user} />
-        </div>
-      );
+      return <div className={containerStyle}><DashboardRH user={user} /></div>;
     case 'ADMIN':
     case 'COORDENADOR':
       return <Navigate to="/admin" replace />;
@@ -119,40 +116,31 @@ export function Router() {
     <Routes>
       <Route path="/login" element={<LoginScreen />} />
 
-      {/* ROTA RAIZ BLINDADA: Distribui para o componente correto sem passar pelo AdminLayout */}
-      <Route path="/" element={<PrivateRoute><RootDashboardRouter /></PrivateRoute>} />
-
-      {/* ROTA ADMIN: Só ADMIN e COORDENADOR (Encarregado tem acesso parcial para gerir frotas) */}
-      <Route path="/admin" element={
+      <Route path="/" element={
         <PrivateRoute>
-          {user?.role === 'ADMIN' || user?.role === 'COORDENADOR' || user?.role === 'ENCARREGADO'
-            ? <AdminLayout />
-            : <Navigate to="/" replace /> /* OPERADOR e RH são expulsos para a raiz se tentarem entrar aqui */}
+          <RootDashboardRouter />
+        </PrivateRoute>
+      } />
+
+      <Route path="/admin" element={
+        <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'ENCARREGADO']}>
+          <AdminLayout />
         </PrivateRoute>
       }>
         <Route index element={<DashboardRelatorios veiculos={[]} />} />
         <Route path="alertas" element={<PainelAlertas />} />
         <Route path="ranking" element={<RankingOperadores />} />
 
-        {/* Sub-rotas com blindagem de dependências */}
         <Route path="manutencoes">
           <Route index element={<HistoricoManutencoes userRole={user?.role || ''} veiculos={[]} produtos={[]} fornecedores={[]} />} />
-          <Route path="nova" element={
-            <div className="max-w-4xl mx-auto space-y-6">
-              <h2 className="text-2xl font-bold text-gray-800">Nova Manutenção</h2>
-              <FormRegistrarManutencao veiculos={[]} produtos={[]} fornecedores={[]} />
-            </div>
-          } />
+          <Route path="nova" element={<FormRegistrarManutencao veiculos={[]} produtos={[]} fornecedores={[]} />} />
         </Route>
 
         <Route path="abastecimentos">
           <Route index element={<HistoricoAbastecimentos userRole={user?.role || ''} veiculos={[]} />} />
           <Route path="novo" element={
             <RegistrarAbastecimento
-              usuarios={[]}
-              veiculos={[]}
-              produtos={[]}
-              fornecedores={[]}
+              usuarios={[]} veiculos={[]} produtos={[]} fornecedores={[]}
               onClose={() => navigate('/admin/abastecimentos')}
               onSuccess={() => navigate('/admin/abastecimentos')}
             />
@@ -166,8 +154,11 @@ export function Router() {
           <Route path=":id" element={<VeiculoDetalhes />} />
         </Route>
 
-        {/* Cadastros restritos (Bloqueados para Encarregado se desejar, mas mantidos por padrão) */}
-        <Route path="usuarios" element={<GestaoUsuarios adminUserId={user?.id || ''} />} />
+        <Route path="usuarios" element={
+          <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR']}>
+            <GestaoUsuarios adminUserId={user?.id || ''} />
+          </PrivateRoute>
+        } />
         <Route path="produtos" element={<GestaoProdutos />} />
         <Route path="fornecedores" element={<GestaoFornecedores />} />
         <Route path="cargos" element={<GestaoCargos />} />

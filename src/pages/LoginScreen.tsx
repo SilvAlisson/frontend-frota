@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +11,6 @@ import { toast } from 'sonner';
 import { Truck, Mail, Lock, ArrowRight } from 'lucide-react';
 import type { UserRole } from '../types';
 
-// --- SCHEMA DE VALIDAÇÃO ---
 const loginSchema = z.object({
   email: z.string().min(1, "Email obrigatório").email("Formato de email inválido"),
   password: z.string().min(1, "Digite sua senha")
@@ -20,7 +19,7 @@ const loginSchema = z.object({
 type LoginFormValues = z.input<typeof loginSchema>;
 
 export function LoginScreen() {
-  const { login, isAuthenticated, user } = useAuth();
+  const { login, isAuthenticated, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const magicToken = searchParams.get('magicToken');
@@ -36,73 +35,69 @@ export function LoginScreen() {
     resolver: zodResolver(loginSchema)
   });
 
-  // --- FUNÇÃO DE REDIRECIONAMENTO BLINDADA (A MENTE DO SISTEMA) ---
-  const redirecionarPorRole = (role: UserRole) => {
-    if (role === 'ADMIN') {
+  // --- REDIRECIONAMENTO CENTRALIZADO E MEMOIZADO ---
+  const redirecionarPorRole = useCallback((role: UserRole) => {
+    // Blindagem: Se a role for ADMIN ou COORDENADOR, vai para /admin
+    // Caso contrário (OPERADOR, RH, ENCARREGADO), vai para a raiz onde o RootDashboardRouter decide
+    if (role === 'ADMIN' || role === 'COORDENADOR') {
       navigate('/admin', { replace: true });
     } else {
-      // OPERADOR, RH, ENCARREGADO e COORDENADOR caem na raiz (/)
-      // O Router.tsx distribuirá para o Dashboard correto.
       navigate('/', { replace: true });
     }
-  };
+  }, [navigate]);
 
-  // 1. BLINDAGEM DE PERSISTÊNCIA: Se já logado, redireciona para o lugar certo imediatamente
+  // 1. BLINDAGEM DE PERSISTÊNCIA & FLUXO PÓS-LOGIN
+  // Este Effect é o único responsável por tirar o usuário da tela de login se ele estiver autenticado
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (!authLoading && isAuthenticated && user?.role) {
       redirecionarPorRole(user.role);
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, authLoading, redirecionarPorRole]);
 
-  // 2. LÓGICA MAGIC TOKEN (QR CODE) - BLINDADA
+  // 2. LÓGICA MAGIC TOKEN (QR CODE)
   useEffect(() => {
-    if (magicToken && !loginAttempted.current && !isAuthenticated) {
+    if (magicToken && !loginAttempted.current && !isAuthenticated && !authLoading) {
       loginAttempted.current = true;
 
       const realizarLoginPorToken = async () => {
         setIsMagicLoggingIn(true);
         try {
           const response = await api.post('/auth/login-token', { loginToken: magicToken });
-          const userData = response.data.user;
 
-          // 1. Salva a sessão no Contexto/LocalStorage
+          // 1. Atualiza o Contexto. 
+          // O useEffect de blindagem acima cuidará do redirecionamento assim que o estado propagar.
           login(response.data);
 
-          // 2. Feedback visual
-          toast.success(`Bem-vindo, ${userData.nome.split(' ')[0]}!`);
-
-          // 3. REDIRECIONAMENTO IMEDIATO BASEADO NA ROLE RECEBIDA
-          redirecionarPorRole(userData.role);
-
+          toast.success(`Bem-vindo, ${response.data.user.nome.split(' ')[0]}!`);
         } catch (err) {
           console.error("Erro token:", err);
           toast.error('Código de acesso inválido ou expirado.');
           setIsMagicLoggingIn(false);
+          // Limpa a URL para evitar loops de erro
           navigate('/login', { replace: true });
         }
       };
 
       realizarLoginPorToken();
     }
-  }, [magicToken, login, navigate, isAuthenticated]);
+  }, [magicToken, login, navigate, isAuthenticated, authLoading]);
 
-  // 3. LOGIN MANUAL POR CREDENCIAIS - BLINDADO
+  // 3. LOGIN MANUAL
   const onSubmit = async (data: LoginFormValues) => {
     try {
       const response = await api.post('/auth/login', data);
-      const userData = response.data.user;
 
+      // Apenas faz o login. A blindagem do useEffect redireciona.
       login(response.data);
       toast.success('Bem-vindo de volta!');
-
-      // REDIRECIONAMENTO IMEDIATO BASEADO NA ROLE RECEBIDA
-      redirecionarPorRole(userData.role);
-
     } catch (err: any) {
       const msg = err.response?.data?.error || 'Credenciais inválidas.';
       toast.error(msg);
     }
   };
+
+  // Se o AuthContext ainda está lendo o localStorage, não renderiza nada para evitar "flicker"
+  if (authLoading && !isMagicLoggingIn) return null;
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-slate-900 font-sans">
