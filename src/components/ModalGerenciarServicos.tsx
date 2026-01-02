@@ -220,8 +220,8 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
                                         <div key={item.id} className="group flex items-center justify-between p-3 bg-white rounded-lg border border-border hover:border-primary/30 hover:shadow-sm transition-all">
                                             <div className="flex items-center gap-3 overflow-hidden">
                                                 <div className={`p-2 rounded-lg shrink-0 ${item.tipo === 'SERVICO' ? 'bg-primary/10 text-primary' :
-                                                        item.tipo === 'PECA' ? 'bg-orange-50 text-orange-600' :
-                                                            'bg-background text-gray-600'
+                                                    item.tipo === 'PECA' ? 'bg-orange-50 text-orange-600' :
+                                                        'bg-background text-gray-600'
                                                     }`}>
                                                     {item.tipo === 'SERVICO' && <Settings className="w-4 h-4" />}
                                                     {item.tipo === 'PECA' && <Package className="w-4 h-4" />}

@@ -10,7 +10,7 @@ function cn(...inputs: ClassValue[]) {
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
-  icon?: React.ReactNode; // [ADICIONADO] Propriedade icon opcional
+  icon?: React.ReactNode;
   containerClassName?: string;
 }
 

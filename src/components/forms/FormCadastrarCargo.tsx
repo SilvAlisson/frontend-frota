@@ -179,8 +179,8 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                                                     disabled={isSubmitting}
                                                     // [CORREÇÃO 4] Classe condicional para erro
                                                     className={`w-full text-xs p-2.5 text-center bg-white rounded-input border outline-none focus:ring-2 transition-all disabled:bg-gray-50 ${errorValidade
-                                                            ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                                                            : 'border-border focus:border-primary focus:ring-primary/20'
+                                                        ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                                                        : 'border-border focus:border-primary focus:ring-primary/20'
                                                         }`}
                                                 />
                                                 <span className="absolute right-2 top-2.5 text-[9px] text-gray-400 font-bold pointer-events-none">MÊS</span>
@@ -197,8 +197,8 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                                                 {...register(`requisitos.${index}.diasAntecedenciaAlerta`)}
                                                 disabled={isSubmitting}
                                                 className={`w-full text-xs p-2.5 text-center bg-white rounded-input border outline-none focus:ring-2 transition-all disabled:bg-gray-50 ${errorAlerta
-                                                        ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
-                                                        : 'border-border focus:border-primary focus:ring-primary/20'
+                                                    ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
+                                                    : 'border-border focus:border-primary focus:ring-primary/20'
                                                     }`}
                                             />
                                             {/* [CORREÇÃO 4] Exibe o erro abaixo do input */}

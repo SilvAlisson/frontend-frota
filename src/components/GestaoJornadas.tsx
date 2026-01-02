@@ -64,7 +64,7 @@ export function GestaoJornadas({
             <JornadaGestaoItem
               key={jornada.id}
               jornada={jornada}
-              token="" // Prop mantida apenas para compatibilidade
+              token=""
               onFinalizada={handleFinalizar}
               onExcluida={handleFinalizar}
             />
