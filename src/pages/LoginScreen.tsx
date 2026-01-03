@@ -90,6 +90,10 @@ export function LoginScreen() {
         newParams.delete('magicToken');
         setSearchParams(newParams, { replace: true });
 
+        // [CORREÇÃO APLICADA AQUI]
+        // Remove o estado de carregamento para permitir o redirecionamento
+        setIsMagicLoggingIn(false);
+
       } catch (err: any) {
         if (err.name === 'CanceledError') return; // Requisição cancelada, ignora
 
