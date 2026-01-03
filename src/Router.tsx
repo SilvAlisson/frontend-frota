@@ -50,7 +50,6 @@ function PrivateRoute({ children, allowedRoles }: { children: React.ReactNode, a
 }
 
 // --- LAYOUT E DATA LOADER PARA ADMIN ---
-// Garante que o cache de veículos esteja quente para as rotas administrativas
 function AdminDataLayout() {
   const { isLoading: loadingVeiculos } = useVeiculos();
 
@@ -72,9 +71,11 @@ function RootDashboardRouter() {
   const { data: usuarios } = useQuery({ queryKey: ['users'], queryFn: async () => (await api.get('/users')).data, enabled: !!user });
   const { data: produtos } = useQuery({ queryKey: ['produtos'], queryFn: async () => (await api.get('/produtos')).data, enabled: !!user });
   const { data: fornecedores } = useQuery({ queryKey: ['fornecedores'], queryFn: async () => (await api.get('/fornecedores')).data, enabled: !!user });
+
   const { data: jornadasAtivas, refetch: refetchJornadas } = useQuery({
     queryKey: ['jornadas', 'ativas'],
-    queryFn: async () => (await api.get('/jornadas/ativas')).data,
+    // [CORREÇÃO]: Rota ajustada de '/jornadas/ativas' para '/jornadas/abertas' conforme backend
+    queryFn: async () => (await api.get('/jornadas/abertas')).data,
     enabled: !!user
   });
 
@@ -89,7 +90,6 @@ function RootDashboardRouter() {
           <DashboardOperador
             user={user}
             usuarios={usuarios || []}
-            // AQUI está o uso da variável 'veiculos' que resolve o aviso:
             veiculos={veiculos || []}
             produtos={produtos || []}
             fornecedores={fornecedores || []}
@@ -104,7 +104,6 @@ function RootDashboardRouter() {
         <div className={containerStyle}>
           <DashboardEncarregado
             user={user}
-            // AQUI também usamos:
             veiculos={veiculos || []}
             usuarios={usuarios || []}
             produtos={produtos || []}
@@ -130,7 +129,6 @@ export function Router() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  // Hook auxiliar para buscar dados para as rotas de Admin que exigem props
   const { data: veiculos } = useVeiculos();
   const veiculosSafe = veiculos || [];
 
@@ -151,7 +149,6 @@ export function Router() {
           <AdminDataLayout />
         </PrivateRoute>
       }>
-        {/* Passamos veiculosSafe para evitar erro de prop vazia */}
         <Route index element={<DashboardRelatorios veiculos={veiculosSafe} />} />
 
         <Route path="alertas" element={<PainelAlertas />} />
