@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
 import { Printer, RefreshCw, X, Copy } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query'; // [IMPORTANTE] Para corrigir o cache
 import type { User } from '../types';
 
 interface ModalQrCodeProps {
@@ -13,6 +14,9 @@ interface ModalQrCodeProps {
 }
 
 export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
+  // [CORREÇÃO 1] Hook para invalidar o cache e persistir o token gerado
+  const queryClient = useQueryClient();
+
   const [tokenAtual, setTokenAtual] = useState<string | null>(
     (user as any).loginToken || null
   );
@@ -36,10 +40,19 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
     setLoading(true);
     try {
       const { data } = await api.post(`/auth/user/${user.id}/generate-token`);
+
+      // 1. Atualiza visualmente agora
       setTokenAtual(data.loginToken);
-      toast.success("Novo QR Code gerado!");
+
+      // 2. [CORREÇÃO CRÍTICA] Atualiza a lista de usuários no cache
+      // Isso garante que se der F5 ou reabrir o modal, o token continua lá
+      await queryClient.invalidateQueries({ queryKey: ['users'] });
+
+      toast.success("Novo QR Code gerado e salvo!");
       if (onUpdate) onUpdate();
+
     } catch (error) {
+      console.error(error);
       toast.error("Erro ao gerar QR Code.");
     } finally {
       setLoading(false);
@@ -97,15 +110,13 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
     <div className="fixed inset-0 z-[99] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-300">
       <div className="flex flex-col items-center gap-6" onClick={(e) => e.stopPropagation()}>
 
-        {/* --- ÁREA DO CRACHÁ (VISUAL SEGURO) --- */}
+        {/* --- ÁREA DO CRACHÁ --- */}
         <div ref={cardRef} className="w-[320px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-200 relative flex flex-col">
-
           <div className="h-[140px] bg-gray-900 relative w-full overflow-hidden shrink-0">
             <div className="absolute inset-0 opacity-40 z-0">
               <div className="absolute right-[-30px] top-[-30px] w-40 h-40 rounded-full bg-emerald-500 blur-3xl"></div>
               <div className="absolute left-[-20px] bottom-[-20px] w-32 h-32 rounded-full bg-blue-600 blur-3xl"></div>
             </div>
-
             <div className="absolute top-6 left-0 right-0 flex justify-center z-10">
               <div className="px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-sm">
                 <span className="text-[10px] font-bold text-white tracking-widest uppercase">Frota Inteligente</span>
@@ -133,7 +144,6 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                   {user.nome.split(' ').slice(1).join(' ')}
                 </p>
               )}
-
               <div className="mt-3 inline-block">
                 <span className="bg-emerald-50 text-emerald-700 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-emerald-100">
                   {getTituloCracha(user.role)}
@@ -151,13 +161,12 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               )}
             </div>
           </div>
-
           <div className="py-3 bg-gray-50 border-t border-gray-100 text-center">
             <p className="text-[9px] text-gray-400 font-bold uppercase tracking-widest">Acesso Pessoal e Intransferível</p>
           </div>
         </div>
 
-        {/* --- BOTÕES DE AÇÃO --- */}
+        {/* --- BOTÕES --- */}
         <div className="flex flex-col gap-3 w-full max-w-[320px]">
           {tokenAtual ? (
             <>
@@ -165,7 +174,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                 Imprimir Crachá
               </Button>
               <div className="grid grid-cols-2 gap-3">
-                <Button onClick={handleCopyLink} variant="secondary" className="bg-gray-800 text-gray-200 hover:bg-gray-700 hover:text-white border-gray-700" icon={<Copy className="w-4 h-4" />}>
+                <Button onClick={handleCopyLink} variant="secondary" className="bg-gray-800 text-gray-200 hover:bg-gray-700 border-gray-700" icon={<Copy className="w-4 h-4" />}>
                   Copiar Link
                 </Button>
                 <Button onClick={handleGerarNovo} variant="ghost" className="text-gray-300 hover:text-white hover:bg-white/10" isLoading={loading} icon={<RefreshCw className="w-4 h-4" />}>
@@ -179,7 +188,6 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             </Button>
           )}
 
-          {/* [CORREÇÃO AQUI]: Adicionado bg-transparent explicitamente para evitar fundo branco */}
           <Button
             variant="secondary"
             onClick={onClose}
@@ -189,7 +197,6 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             Fechar
           </Button>
         </div>
-
       </div>
     </div>
   );
