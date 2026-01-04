@@ -24,6 +24,7 @@ import { HistoricoAbastecimentos } from './components/HistoricoAbastecimentos';
 import { HistoricoJornadas } from './components/HistoricoJornadas';
 import { FormRegistrarManutencao } from './components/forms/FormRegistrarManutencao';
 import { RegistrarAbastecimento } from './components/RegistrarAbastecimento';
+import { FormPlanoManutencao } from './components/forms/FormPlanoManutencao';
 
 const LoadingScreen = () => (
   <div className="flex flex-col items-center justify-center h-screen bg-slate-50">
@@ -74,7 +75,6 @@ function RootDashboardRouter() {
 
   const { data: jornadasAtivas, refetch: refetchJornadas } = useQuery({
     queryKey: ['jornadas', 'ativas'],
-    // [CORREÇÃO]: Rota ajustada de '/jornadas/ativas' para '/jornadas/abertas' conforme backend
     queryFn: async () => (await api.get('/jornadas/abertas')).data,
     enabled: !!user
   });
@@ -195,6 +195,10 @@ export function Router() {
 
         <Route path="produtos" element={<GestaoProdutos />} />
         <Route path="fornecedores" element={<GestaoFornecedores />} />
+
+        {/*  Planos Preventivos */}
+        <Route path="planos" element={<FormPlanoManutencao veiculos={veiculosSafe} />} />
+
         <Route path="cargos" element={<GestaoCargos />} />
       </Route>
 
