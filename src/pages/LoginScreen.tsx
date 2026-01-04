@@ -45,7 +45,6 @@ export function LoginScreen() {
   // --- 1. ROTEAMENTO INTELIGENTE (MEMOIZADO) ---
   const handleRedirect = useCallback((role: UserRole) => {
     // Adiciona um pequeno delay para garantir que o contexto propagou
-    // e evita "flicker" de tela
     const target = (role === 'ADMIN' || role === 'COORDENADOR') ? '/admin' : '/';
     navigate(target, { replace: true });
   }, [navigate]);
@@ -64,9 +63,9 @@ export function LoginScreen() {
 
     const processMagicLogin = async () => {
       try {
-        // [SEGURANÇA CRÍTICA]
-        // Se já existe alguém logado, fazemos logout FORÇADO antes de tentar o novo token.
-        // Isso previne que o Operador entre na sessão do Admin anterior.
+        // [SEGURANÇA CRÍTICA - BLINDAGEM DE SESSÃO]
+        // Se já existe alguém logado no momento que abriu a página, fazemos logout.
+        // Nota: Usamos o valor de isAuthenticated capturado no closure inicial.
         if (isAuthenticated) {
           console.log("Sessão anterior detectada. Realizando logout de segurança...");
           logout();
@@ -85,13 +84,12 @@ export function LoginScreen() {
         toast.success(`Crachá reconhecido! Bem-vindo, ${data.user.nome.split(' ')[0]}.`);
 
         // [UX] Limpa a URL para remover o token sensível visualmente
-        // e impedir que um F5 tente re-autenticar com o mesmo token
         const newParams = new URLSearchParams(searchParams);
         newParams.delete('magicToken');
         setSearchParams(newParams, { replace: true });
 
-        // [CORREÇÃO APLICADA AQUI]
-        // Remove o estado de carregamento para permitir o redirecionamento
+        // [CORREÇÃO APLICADA]
+        // Liberta a UI do loading para permitir que o useEffect de redirecionamento (abaixo) funcione
         setIsMagicLoggingIn(false);
 
       } catch (err: any) {
@@ -112,16 +110,21 @@ export function LoginScreen() {
     processMagicLogin();
 
     return () => abortController.abort();
-  }, [magicToken, isAuthenticated, logout, login, navigate, searchParams, setSearchParams]);
+
+    // [CORREÇÃO CRÍTICA]: 
+    // Removemos 'isAuthenticated' e 'logout' das dependências.
+    // Isso impede que o 'logout()' disparado dentro da função reinicie o useEffect e crie um loop infinito.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [magicToken, login, navigate, searchParams, setSearchParams]);
 
   // --- 3. BLINDAGEM DE REDIRECIONAMENTO ---
-  // Este efeito observa o sucesso do login (seja manual ou QR) e redireciona
+  // Este efeito observa o sucesso do login e redireciona
   useEffect(() => {
     // Só redireciona se:
-    // a) O Auth Context terminou de carregar (localstorage lido)
+    // a) O Auth Context terminou de carregar
     // b) O usuário está autenticado
     // c) Temos a role do usuário
-    // d) [IMPORTANTE] NÃO estamos processando um token mágico (espera terminar)
+    // d) [IMPORTANTE] O processo de login mágico JÁ TERMINOU (isMagicLoggingIn === false)
     if (!authLoading && isAuthenticated && user?.role && !isMagicLoggingIn) {
       handleRedirect(user.role);
     }
@@ -141,8 +144,6 @@ export function LoginScreen() {
   };
 
   // --- 5. RENDERIZAÇÃO CONDICIONAL (LOADING STATE) ---
-
-  // Se está carregando sessão inicial OU processando QR Code
   if (authLoading || isMagicLoggingIn) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-slate-900 text-white space-y-6 animate-in fade-in duration-500">
@@ -165,7 +166,6 @@ export function LoginScreen() {
   // Tela de Login Normal
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-slate-900 font-sans">
-      {/* Background Decorativo */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900/95 via-slate-900/90 to-primary/40 z-10" />
         <img
