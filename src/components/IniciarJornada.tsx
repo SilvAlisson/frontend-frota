@@ -170,7 +170,7 @@ export function IniciarJornada({
 
         {/* Encarregado */}
         <div>
-          <label className={labelStyle}>Encarregado (Autorização)</label>
+          <label className={labelStyle}>Encarregado</label>
           <div className="relative group">
             <select
               className={selectStyle}
@@ -178,7 +178,7 @@ export function IniciarJornada({
               onChange={(e) => setEncarregadoId(e.target.value)}
               disabled={loading}
             >
-              <option value="">Selecione quem autorizou...</option>
+              <option value="">Selecione o Encarregado do dia...</option>
               {usuarios
                 .filter(u => u.role === 'ENCARREGADO' || u.role === 'ADMIN')
                 .map(u => (

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { IniciarJornada } from './IniciarJornada';
 import { JornadaCard } from './JornadaCard';
 import { RegistrarAbastecimento } from './RegistrarAbastecimento';
+import { Fuel, Truck } from 'lucide-react';
 import type { User, Veiculo, Jornada, Produto, Fornecedor } from '../types';
 
 interface DashboardOperadorProps {
@@ -36,28 +37,25 @@ export function DashboardOperador({
     const veiculoEmUsoId = tenhoJornadaAtiva ? minhasJornadas[0].veiculo.id : undefined;
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-8 animate-in fade-in duration-500 pb-20">
 
-            {/* HEADER CENTRALIZADO COM IDENTIDADE VISUAL */}
-            {/* [PADRONIZAÇÃO] border-gray-100 -> border-border */}
+            {/* --- HEADER CENTRALIZADO (ESTILO APP MOBILE) --- */}
             <div className="bg-white p-8 rounded-3xl border border-border shadow-sm flex flex-col items-center text-center relative overflow-hidden">
-                {/* [PADRONIZAÇÃO] from-primary/10 -> from-primary/5 */}
-                <div className="absolute top-0 left-0 w-full h-24 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
+                {/* Efeito de fundo sutil */}
+                <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
 
                 <div className="relative z-10 mb-4">
-                    {/* [PADRONIZAÇÃO] border-gray-100 -> border-border */}
-                    <div className="h-24 w-24 rounded-full bg-white p-1.5 shadow-lg border border-border overflow-hidden">
+                    <div className="h-24 w-24 rounded-full bg-white p-1.5 shadow-lg border border-border overflow-hidden mx-auto">
                         {user.fotoUrl ? (
                             <img src={user.fotoUrl} alt={user.nome} className="w-full h-full rounded-full object-cover" />
                         ) : (
-                            // [PADRONIZAÇÃO] bg-primary text-white (mantido, pois é a cor da marca)
                             <div className="w-full h-full rounded-full bg-primary text-white flex items-center justify-center text-4xl font-bold shadow-inner">
                                 {user.nome.charAt(0).toUpperCase()}
                             </div>
                         )}
                     </div>
-                    {/* Indicador de status em tempo real */}
-                    <div className={`absolute bottom-1 right-1 w-6 h-6 border-4 border-white rounded-full ${tenhoJornadaAtiva ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></div>
+                    {/* Indicador de Status */}
+                    <div className={`absolute bottom-1 right-[calc(50%-45px)] w-6 h-6 border-4 border-white rounded-full shadow-sm ${tenhoJornadaAtiva ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} title={tenhoJornadaAtiva ? "Em Jornada" : "Inativo"}></div>
                 </div>
 
                 <div className="relative z-10">
@@ -71,46 +69,58 @@ export function DashboardOperador({
                     </p>
                 </div>
 
-                {/* BOTÃO DE AÇÃO RÁPIDA: ABASTECER */}
-                <div className="mt-6 relative z-10">
+                {/* BOTÕES DE AÇÃO RÁPIDA */}
+                <div className="mt-8 flex gap-3 relative z-10 justify-center flex-wrap">
                     <button
                         onClick={() => setModalAbastecimentoOpen(true)}
-                        // [PADRONIZAÇÃO] border-gray-200 -> border-border
-                        className="flex items-center gap-2 bg-white border border-border text-gray-700 px-5 py-2.5 rounded-xl shadow-sm hover:shadow-md hover:border-primary/30 hover:text-primary transition-all font-bold text-sm"
+                        className="flex items-center gap-2 bg-white border border-border text-gray-700 px-5 py-3 rounded-xl shadow-sm hover:shadow-md hover:border-orange-200 hover:text-orange-600 transition-all font-bold text-sm group"
                     >
-                        <div className="p-1.5 bg-orange-50 text-orange-600 rounded-lg">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15M12 9l-3 3m0 0 3 3m-3-3h12.75" />
-                            </svg>
+                        <div className="p-1.5 bg-orange-50 text-orange-600 rounded-lg group-hover:bg-orange-100 transition-colors">
+                            <Fuel className="w-5 h-5" />
                         </div>
                         Registrar Abastecimento
                     </button>
                 </div>
             </div>
 
-            {/* ÁREA OPERACIONAL */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            {/* --- ÁREA OPERACIONAL --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-5xl mx-auto">
                 {!tenhoJornadaAtiva ? (
-                    <div className="lg:col-span-12 xl:col-span-6 mx-auto w-full max-w-xl">
-                        {/* [PADRONIZAÇÃO] border-gray-100 -> border-border */}
-                        <div className="bg-white shadow-card rounded-3xl p-8 border border-border transition-all hover:shadow-card-hover">
-                            <IniciarJornada
-                                usuarios={usuarios}
-                                veiculos={veiculos}
-                                operadorLogadoId={user.id}
-                                onJornadaIniciada={onJornadaIniciada}
-                                jornadasAtivas={jornadasAtivas}
-                            />
+                    // 1. ESTADO: SEM JORNADA (MOSTRAR SELETOR)
+                    <div className="lg:col-span-12 xl:col-span-8 xl:col-start-3 w-full">
+                        <div className="bg-white shadow-card rounded-3xl p-1 border border-border overflow-hidden transition-all hover:shadow-card-hover">
+                            <div className="p-8">
+                                <div className="flex items-center gap-3 mb-6">
+                                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                                        <Truck className="w-6 h-6" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-gray-900">Iniciar Nova Jornada</h3>
+                                        <p className="text-sm text-gray-500">Selecione o veículo para começar</p>
+                                    </div>
+                                </div>
+
+                                <IniciarJornada
+                                    usuarios={usuarios}
+                                    veiculos={veiculos}
+                                    operadorLogadoId={user.id}
+                                    onJornadaIniciada={onJornadaIniciada}
+                                    jornadasAtivas={jornadasAtivas}
+                                />
+                            </div>
                         </div>
                     </div>
                 ) : (
-                    <div className="lg:col-span-12 xl:col-span-8 mx-auto w-full max-w-2xl space-y-6">
-                        <div className="flex items-center justify-center gap-3 mb-2">
-                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                            <h3 className="text-lg font-bold text-gray-800 uppercase tracking-wider">
-                                Jornada Ativa
-                            </h3>
+                    // 2. ESTADO: JORNADA ATIVA (MOSTRAR CARD DA JORNADA)
+                    <div className="lg:col-span-12 xl:col-span-8 xl:col-start-3 w-full space-y-6">
+                        <div className="flex items-center justify-center gap-2 text-sm font-bold text-green-600 uppercase tracking-widest bg-green-50 py-2 px-4 rounded-full w-fit mx-auto border border-green-100">
+                            <span className="relative flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
+                            </span>
+                            Veículo em Operação
                         </div>
+
                         <div className="space-y-5">
                             {minhasJornadas.map((jornada) => (
                                 <JornadaCard
@@ -124,14 +134,14 @@ export function DashboardOperador({
                 )}
             </div>
 
-            {/* MODAL DE ABASTECIMENTO */}
+            {/* --- MODAL DE ABASTECIMENTO --- */}
             {modalAbastecimentoOpen && (
                 <div
                     className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300"
                     onClick={() => setModalAbastecimentoOpen(false)}
                 >
                     <div
-                        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl animate-in zoom-in-95 duration-300"
+                        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl animate-in zoom-in-95 duration-300 shadow-2xl bg-white"
                         onClick={e => e.stopPropagation()}
                     >
                         <RegistrarAbastecimento
