@@ -4,6 +4,8 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { toast } from 'sonner';
 import { parseDecimal } from '../utils';
+// 1. Novos ícones padronizados
+import { Edit, Trash2 } from 'lucide-react';
 
 interface Jornada {
   id: string;
@@ -19,13 +21,11 @@ interface JornadaItemProps {
   jornada: Jornada;
   onFinalizada: (jornadaId: string) => void;
   onExcluida?: (jornadaId: string) => void;
+  // 2. Nova propriedade obrigatória para permitir a edição
+  onEditar: (jornada: Jornada) => void;
 }
 
-function IconeLixo() {
-  return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.54 0c-.34.055-.68.11-.1022.166m11.54 0c.376.09.74.19 1.097.302l-1.148 3.896M12 18V9" /></svg>;
-}
-
-export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: JornadaItemProps) {
+export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida, onEditar }: JornadaItemProps) {
 
   const [kmFim, setKmFim] = useState('');
   const [loading, setLoading] = useState(false);
@@ -92,20 +92,32 @@ export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: Jornada
   };
 
   return (
-    // [PADRONIZAÇÃO] border-gray-100 -> border-border
     <div className="bg-white p-5 rounded-xl shadow-sm border border-border hover:shadow-md hover:border-primary/20 transition-all duration-300 relative group animate-in fade-in slide-in-from-bottom-2">
 
-      {/* Botão Excluir */}
-      <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+      {/* 3. GRUPO DE AÇÕES (EDITAR + EXCLUIR) */}
+      <div className="absolute top-4 right-4 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1 bg-white/80 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-gray-100">
+        
+        {/* Botão Editar (Correção) */}
         <Button
           type="button"
           variant="ghost"
-          className="!p-1.5 h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-lg"
+          className="!p-1.5 h-8 w-8 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg"
+          onClick={() => onEditar(jornada)}
+          disabled={loading || deleting}
+          title="Corrigir dados (KM/Veículo)"
+          icon={<Edit className="w-4 h-4" />}
+        />
+
+        {/* Botão Excluir */}
+        <Button
+          type="button"
+          variant="ghost"
+          className="!p-1.5 h-8 w-8 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg"
           onClick={handleDelete}
           disabled={loading || deleting}
           isLoading={deleting}
-          title="Excluir Jornada (Correção)"
-          icon={<IconeLixo />}
+          title="Excluir Jornada"
+          icon={<Trash2 className="w-4 h-4" />}
         />
       </div>
 
@@ -115,7 +127,6 @@ export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: Jornada
         {/* Lado Esquerdo: Motorista & Veículo */}
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
-            {/* [PADRONIZAÇÃO] Cores do Avatar ajustadas para o tema (Primary) */}
             <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg shadow-sm border border-primary/20">
               {jornada.operador.nome.charAt(0)}
             </div>
@@ -128,7 +139,6 @@ export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: Jornada
           </div>
 
           <div className="mt-3 flex items-center gap-2">
-            {/* [PADRONIZAÇÃO] bg-gray-100 -> bg-background, border-gray-200 -> border-border */}
             <span className="bg-background text-gray-700 px-2 py-1 rounded-md text-sm font-mono border border-border">
               {jornada.veiculo.placa}
             </span>
@@ -139,7 +149,6 @@ export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: Jornada
         </div>
 
         {/* Lado Direito: Dados da Viagem */}
-        {/* [PADRONIZAÇÃO] bg-gray-50/50 -> bg-background, border-gray-100 -> border-border */}
         <div className="flex flex-col items-end justify-center bg-background p-3 rounded-lg border border-border min-w-[140px]">
           <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Início</span>
           <span className="text-sm font-bold text-gray-800">
@@ -149,19 +158,16 @@ export function JornadaGestaoItem({ jornada, onFinalizada, onExcluida }: Jornada
             {new Date(jornada.dataInicio).toLocaleDateString('pt-BR')}
           </span>
 
-          {/* [PADRONIZAÇÃO] bg-gray-200 -> bg-border */}
           <div className="w-full h-px bg-border my-2"></div>
 
           <div className="w-full flex justify-between items-center">
             <span className="text-[10px] text-gray-400 uppercase font-bold">KM</span>
-            {/* [PADRONIZAÇÃO] text-primary */}
             <span className="text-sm font-bold text-primary">{jornada.kmInicio}</span>
           </div>
         </div>
       </div>
 
       {/* Ação: Finalizar */}
-      {/* [PADRONIZAÇÃO] border-gray-200 -> border-border */}
       <form onSubmit={handleSubmit} className="pt-4 border-t border-dashed border-border">
         <div className="flex flex-col sm:flex-row items-end gap-3">
           <div className="w-full">

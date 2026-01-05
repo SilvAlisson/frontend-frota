@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
+// 1. Imports de ícones atualizados
+import { Edit, Trash2 } from 'lucide-react';
 import type { Jornada, Veiculo } from '../types';
 
 // Componentes UI
@@ -9,9 +11,6 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { ListaResponsiva } from './ui/ListaResponsiva';
 import { TableStyles } from '../styles/table';
-
-// --- Ícones Locais ---
-function IconeLixo() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.54 0c-.34.055-.68.11-.1022.166m11.54 0c.376.09.74.19 1.097.302l-1.148 3.896M12 18V9" /></svg>; }
 
 // Interface local para garantir tipagem
 interface JornadaHistorico extends Jornada {
@@ -32,6 +31,10 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
     const [dataInicio, setDataInicio] = useState('');
     const [dataFim, setDataFim] = useState('');
     const [veiculoId, setVeiculoId] = useState('');
+
+    // 2. Definição de Permissões
+    const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
+    const canDelete = userRole === 'ADMIN';
 
     const fetchHistorico = async () => {
         setLoading(true);
@@ -76,13 +79,17 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
         });
     };
 
+    // 3. Handler provisório de edição
+    const handleEdit = (jornada: JornadaHistorico) => {
+        alert(`Editar jornada de ${jornada.operador.nome} (ID: ${jornada.id}).\n\nNesta ação abriremos o modal para corrigir KM ou Datas.`);
+    };
+
     const handleExportar = () => {
         if (historico.length === 0) return;
 
         const exportPromise = new Promise((resolve, reject) => {
             try {
                 const dados = historico.map(j => {
-                    // [RESTAURADO] Cálculo seguro de KM (Código 1)
                     const kmAndados = (j.kmFim && j.kmInicio)
                         ? j.kmFim - j.kmInicio
                         : (j.kmPercorrido || 0);
@@ -119,9 +126,7 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
             <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4 border-b border-gray-100 pb-6">
                 <div>
                     <div className="flex items-center gap-3">
-                        {/* [RESTAURADO] Título Original */}
                         <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Histórico de Viagens</h2>
-                        {/* [RESTAURADO] Badge de contagem */}
                         <span className="text-xs font-bold bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full border border-gray-200">
                             {historico.length}
                         </span>
@@ -178,11 +183,11 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
                             <th className={TableStyles.th}>Veículo</th>
                             <th className={TableStyles.th}>Motorista</th>
                             <th className={TableStyles.th}>Distância</th>
-                            {userRole === 'ADMIN' && <th className={`${TableStyles.th} text-right`}>Ações</th>}
+                            {/* Coluna Ações só aparece se tiver permissão */}
+                            {(canEdit || canDelete) && <th className={`${TableStyles.th} text-right`}>Ações</th>}
                         </>
                     }
                     renderDesktop={(j) => {
-                        // Cálculo seguro para display
                         const kmPercorrido = (j.kmFim && j.kmInicio) ? j.kmFim - j.kmInicio : (j.kmPercorrido || 0);
 
                         return (
@@ -212,18 +217,40 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
                                         <span className="text-[10px] text-gray-400">KM {j.kmInicio} → {j.kmFim || '...'}</span>
                                     </div>
                                 </td>
-                                {userRole === 'ADMIN' && (
+                                
+                                {/* Botões de Ação Desktop */}
+                                {(canEdit || canDelete) && (
                                     <td className={`${TableStyles.td} text-right`}>
-                                        <Button variant="ghost" className="h-8 w-8 !p-0 text-gray-400 hover:text-red-600" onClick={() => handleDelete(j.id)} disabled={deletingId === j.id}>
-                                            <IconeLixo />
-                                        </Button>
+                                        <div className="flex justify-end gap-2">
+                                            {canEdit && (
+                                                <Button
+                                                    variant="ghost"
+                                                    className="h-8 w-8 !p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
+                                                    onClick={() => handleEdit(j)}
+                                                    title="Editar registro"
+                                                >
+                                                    <Edit className="w-4 h-4" />
+                                                </Button>
+                                            )}
+                                            {canDelete && (
+                                                <Button
+                                                    variant="ghost"
+                                                    className="h-8 w-8 !p-0 text-gray-400 hover:text-red-600 hover:bg-red-50"
+                                                    onClick={() => handleDelete(j.id)}
+                                                    disabled={deletingId === j.id}
+                                                    title="Excluir registro"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            )}
+                                        </div>
                                     </td>
                                 )}
                             </>
                         );
                     }}
 
-                    // --- MOBILE (Cards Melhorados) ---
+                    // --- MOBILE ---
                     renderMobile={(j) => {
                         const kmPercorrido = (j.kmFim && j.kmInicio) ? j.kmFim - j.kmInicio : (j.kmPercorrido || 0);
 
@@ -255,9 +282,27 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
                                     </div>
                                 </div>
 
-                                {userRole === 'ADMIN' && (
-                                    <div className="flex justify-end pt-2 border-t border-dashed border-gray-100">
-                                        <Button variant="ghost" className="text-xs h-7 px-2 text-red-600 hover:bg-red-50" onClick={() => handleDelete(j.id)}>Excluir Registro</Button>
+                                {/* Botões de Ação Mobile */}
+                                {(canEdit || canDelete) && (
+                                    <div className="flex justify-end gap-3 pt-2 border-t border-dashed border-gray-100">
+                                        {canEdit && (
+                                            <Button
+                                                variant="ghost"
+                                                className="text-xs h-8 px-3 text-blue-600 hover:bg-blue-50 gap-1.5"
+                                                onClick={() => handleEdit(j)}
+                                            >
+                                                <Edit className="w-3 h-3" /> Editar
+                                            </Button>
+                                        )}
+                                        {canDelete && (
+                                            <Button
+                                                variant="ghost"
+                                                className="text-xs h-8 px-3 text-red-600 hover:bg-red-50 gap-1.5"
+                                                onClick={() => handleDelete(j.id)}
+                                            >
+                                                <Trash2 className="w-3 h-3" /> Excluir
+                                            </Button>
+                                        )}
                                     </div>
                                 )}
                             </div>

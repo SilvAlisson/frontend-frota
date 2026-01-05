@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { IniciarJornada } from './IniciarJornada';
 import { JornadaCard } from './JornadaCard';
 import { RegistrarAbastecimento } from './RegistrarAbastecimento';
-import { Fuel, Truck } from 'lucide-react';
+// 1. Novos ícones importados: LogOut e History
+import { Fuel, Truck, LogOut, History } from 'lucide-react';
+// 2. Import do hook de autenticação
+import { useAuth } from '../contexts/AuthContext';
 import type { User, Veiculo, Jornada, Produto, Fornecedor } from '../types';
 
 interface DashboardOperadorProps {
@@ -27,6 +30,8 @@ export function DashboardOperador({
     onJornadaFinalizada
 }: DashboardOperadorProps) {
 
+    // 3. Obtendo a função de logout do contexto
+    const { logout } = useAuth();
     const [modalAbastecimentoOpen, setModalAbastecimentoOpen] = useState(false);
 
     // Filtra jornadas para encontrar a do operador logado
@@ -41,6 +46,16 @@ export function DashboardOperador({
 
             {/* --- HEADER CENTRALIZADO (ESTILO APP MOBILE) --- */}
             <div className="bg-white p-8 rounded-3xl border border-border shadow-sm flex flex-col items-center text-center relative overflow-hidden">
+                
+                {/* 4. BOTÃO DE LOGOUT (Posicionado no canto superior direito) */}
+                <button 
+                    onClick={logout}
+                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors z-20"
+                    title="Sair da conta"
+                >
+                    <LogOut className="w-6 h-6" />
+                </button>
+
                 {/* Efeito de fundo sutil */}
                 <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
 
@@ -71,6 +86,7 @@ export function DashboardOperador({
 
                 {/* BOTÕES DE AÇÃO RÁPIDA */}
                 <div className="mt-8 flex gap-3 relative z-10 justify-center flex-wrap">
+                    {/* Botão Abastecer */}
                     <button
                         onClick={() => setModalAbastecimentoOpen(true)}
                         className="flex items-center gap-2 bg-white border border-border text-gray-700 px-5 py-3 rounded-xl shadow-sm hover:shadow-md hover:border-orange-200 hover:text-orange-600 transition-all font-bold text-sm group"
@@ -79,6 +95,17 @@ export function DashboardOperador({
                             <Fuel className="w-5 h-5" />
                         </div>
                         Registrar Abastecimento
+                    </button>
+
+                    {/* 5. NOVO BOTÃO: MEU HISTÓRICO */}
+                    <button
+                        className="flex items-center gap-2 bg-white border border-border text-gray-700 px-5 py-3 rounded-xl shadow-sm hover:shadow-md hover:border-blue-200 hover:text-blue-600 transition-all font-bold text-sm group"
+                        onClick={() => alert("Em breve: Visualização do histórico pessoal")}
+                    >
+                        <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition-colors">
+                            <History className="w-5 h-5" />
+                        </div>
+                        Meu Histórico
                     </button>
                 </div>
             </div>

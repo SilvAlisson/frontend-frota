@@ -9,6 +9,9 @@ import { FormRegistrarManutencao } from './forms/FormRegistrarManutencao';
 import { HistoricoManutencoes } from './HistoricoManutencoes';
 import { MinhaEquipe } from './MinhaEquipe';
 import { HistoricoJornadas } from './HistoricoJornadas';
+// 1. Novos imports necessários
+import { useAuth } from '../contexts/AuthContext';
+import { LogOut } from 'lucide-react';
 import type { User } from '../types';
 
 interface DashboardEncarregadoProps {
@@ -37,6 +40,8 @@ export function DashboardEncarregado({
     onJornadaFinalizada
 }: DashboardEncarregadoProps) {
 
+    // 2. Hook de logout
+    const { logout } = useAuth();
     const [abaEncarregado, setAbaEncarregado] = useState<AbaEncarregado>('alertas');
 
     const handleDrillDown = (tipo: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => {
@@ -69,7 +74,8 @@ export function DashboardEncarregado({
             case 'dashboard': return <DashboardRelatorios veiculos={veiculos} onDrillDown={handleDrillDown} />;
             case 'ranking': return <RankingOperadores />;
             case 'jornadas': return <GestaoJornadas jornadasAbertas={jornadasAbertas} onJornadaFinalizadaManualmente={onJornadaFinalizada} />;
-            case 'hist_jornada': return <HistoricoJornadas veiculos={veiculos} />;
+            // 3. Importante: Passando userRole para permitir funcionalidades extras (se existirem)
+            case 'hist_jornada': return <HistoricoJornadas veiculos={veiculos} userRole={user.role} />;
             case 'abastecimento': return (
                 <RegistrarAbastecimento
                     usuarios={usuarios}
@@ -95,7 +101,32 @@ export function DashboardEncarregado({
 
     return (
         <div className="space-y-6">
-            {/* [PADRONIZAÇÃO] border-gray-100 -> border-border */}
+
+            {/* 4. NOVO HEADER DO ENCARREGADO (COM LOGOUT) */}
+            <div className="flex justify-between items-center bg-white p-6 rounded-2xl border border-border shadow-sm">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xl ring-2 ring-primary/20">
+                        {user.nome.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                        <h2 className="text-xl font-bold text-gray-900 tracking-tight">Painel do Encarregado</h2>
+                        <p className="text-sm text-gray-500 font-medium flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                            Online como {user.nome}
+                        </p>
+                    </div>
+                </div>
+
+                <button
+                    onClick={logout}
+                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 hover:border-red-200 border border-transparent rounded-xl transition-all font-bold group"
+                >
+                    <LogOut className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+                    Sair
+                </button>
+            </div>
+
+            {/* BARRA DE NAVEGAÇÃO (ABAS) */}
             <div className="bg-white shadow-sm rounded-2xl p-2 border border-border overflow-x-auto custom-scrollbar">
                 <div className="flex space-x-1 min-w-max">
                     {abas.map((aba) => {
@@ -107,9 +138,7 @@ export function DashboardEncarregado({
                                 className={`
                   relative flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ease-out
                   ${isActive
-                                        // [PADRONIZAÇÃO] Cores e bordas do tema
                                         ? 'text-primary bg-primary/5 shadow-sm ring-1 ring-primary/20'
-                                        // [PADRONIZAÇÃO] hover:bg-gray-50 -> hover:bg-background
                                         : 'text-gray-500 hover:bg-background hover:text-gray-800'}
                 `}
                             >
@@ -126,7 +155,7 @@ export function DashboardEncarregado({
                 </div>
             </div>
 
-            {/* [PADRONIZAÇÃO] border-gray-100 -> border-border */}
+            {/* CONTEÚDO PRINCIPAL */}
             <div className="bg-white shadow-card rounded-2xl p-6 border border-border min-h-[600px] animate-in fade-in slide-in-from-bottom-2 duration-500">
                 {renderAbaEncarregado()}
             </div>
