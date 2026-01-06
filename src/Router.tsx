@@ -68,8 +68,19 @@ function RootDashboardRouter() {
   // 1. Buscamos os veículos aqui para passar aos Dashboards Operacionais
   const { data: veiculos } = useVeiculos();
 
+  // 🔒 BLINDAGEM DE SEGURANÇA (FRONTEND)
+  // Define quem tem permissão para listar usuários. 
+  // Isso deve espelhar a regra do backend (user.routes.ts) para evitar requisições inúteis (403).
+  const isGestor = ['ADMIN', 'COORDENADOR', 'ENCARREGADO', 'RH'].includes(user?.role || '');
+
   // Queries essenciais para os Dashboards
-  const { data: usuarios } = useQuery({ queryKey: ['users'], queryFn: async () => (await api.get('/users')).data, enabled: !!user });
+  const { data: usuarios } = useQuery({ 
+    queryKey: ['users'], 
+    queryFn: async () => (await api.get('/users')).data, 
+    // AQUI ESTÁ A CORREÇÃO: Só busca se o usuário for um Gestor
+    enabled: !!user && isGestor 
+  });
+
   const { data: produtos } = useQuery({ queryKey: ['produtos'], queryFn: async () => (await api.get('/produtos')).data, enabled: !!user });
   const { data: fornecedores } = useQuery({ queryKey: ['fornecedores'], queryFn: async () => (await api.get('/fornecedores')).data, enabled: !!user });
 
@@ -89,7 +100,7 @@ function RootDashboardRouter() {
         <div className={containerStyle}>
           <DashboardOperador
             user={user}
-            usuarios={usuarios || []}
+            usuarios={usuarios || []} // Passa lista vazia sem problemas
             veiculos={veiculos || []}
             produtos={produtos || []}
             fornecedores={fornecedores || []}
@@ -196,7 +207,7 @@ export function Router() {
         <Route path="produtos" element={<GestaoProdutos />} />
         <Route path="fornecedores" element={<GestaoFornecedores />} />
 
-        {/*  Planos Preventivos */}
+        {/* Planos Preventivos */}
         <Route path="planos" element={<FormPlanoManutencao veiculos={veiculosSafe} />} />
 
         <Route path="cargos" element={<GestaoCargos />} />
