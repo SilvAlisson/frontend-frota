@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import { JornadaGestaoItem } from './JornadaGestaoItem';
 import { toast } from 'sonner';
+import { FormEditarJornada } from './forms/FormEditarJornada'; // 1. Import do Formulário
 
 interface GestaoJornadasProps {
   jornadasAbertas: any[];
@@ -10,6 +12,9 @@ export function GestaoJornadas({
   jornadasAbertas,
   onJornadaFinalizadaManualmente
 }: GestaoJornadasProps) {
+  
+  // 2. Estado para controlar qual jornada está sendo editada
+  const [jornadaEditandoId, setJornadaEditandoId] = useState<string | null>(null);
 
   // Wrapper para adicionar feedback extra se necessário
   const handleFinalizar = (id: string) => {
@@ -17,10 +22,15 @@ export function GestaoJornadas({
     onJornadaFinalizadaManualmente(id);
   };
 
-  // 1. NOVO: Handler provisório para a edição
+  // 3. ATUALIZADO: Abre o modal definindo o ID
   const handleEditar = (jornada: any) => {
-    // Futuramente aqui abriremos o Modal com FormEditarJornada
-    alert(`[EM DESENVOLVIMENTO]\n\nAbrir modal de edição para corrigir KM Inicial ou Veículo da jornada de: ${jornada.operador.nome}`);
+    setJornadaEditandoId(jornada.id);
+  };
+
+  // 4. NOVO: Recarrega a página ao salvar com sucesso para atualizar dados
+  const handleSuccessEdit = () => {
+    setJornadaEditandoId(null);
+    window.location.reload();
   };
 
   return (
@@ -70,12 +80,25 @@ export function GestaoJornadas({
               token=""
               onFinalizada={handleFinalizar}
               onExcluida={handleFinalizar}
-              // 2. IMPORTANTE: Passando a função onEditar para o componente filho
               onEditar={handleEditar}
             />
           ))}
         </div>
       )}
+
+      {/* 5. MODAL DE EDIÇÃO */}
+      {jornadaEditandoId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
+            {/* Container sem estilo extra para não conflitar com o card do formulário */}
+            <div className="w-full max-w-2xl animate-in zoom-in-95">
+                <FormEditarJornada 
+                    jornadaId={jornadaEditandoId}
+                    onSuccess={handleSuccessEdit}
+                    onCancelar={() => setJornadaEditandoId(null)}
+                />
+            </div>
+        </div>
+       )}
     </div>
   );
 }

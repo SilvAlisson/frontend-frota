@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { IniciarJornada } from './IniciarJornada';
 import { JornadaCard } from './JornadaCard';
 import { RegistrarAbastecimento } from './RegistrarAbastecimento';
-// 1. Novos ícones importados: LogOut e History
-import { Fuel, Truck, LogOut, History } from 'lucide-react';
-// 2. Import do hook de autenticação
+// 1. Import do Componente de Histórico
+import { HistoricoJornadas } from './HistoricoJornadas';
+import { Fuel, Truck, LogOut, History, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import type { User, Veiculo, Jornada, Produto, Fornecedor } from '../types';
 
@@ -30,24 +30,24 @@ export function DashboardOperador({
     onJornadaFinalizada
 }: DashboardOperadorProps) {
 
-    // 3. Obtendo a função de logout do contexto
     const { logout } = useAuth();
     const [modalAbastecimentoOpen, setModalAbastecimentoOpen] = useState(false);
+    // 2. Novo estado para o modal de histórico
+    const [modalHistoricoOpen, setModalHistoricoOpen] = useState(false);
 
     // Filtra jornadas para encontrar a do operador logado
     const minhasJornadas = jornadasAtivas.filter(j => j.operador.id === user.id);
     const tenhoJornadaAtiva = minhasJornadas.length > 0;
 
-    // Inteligência: Pega o ID do veículo em uso para facilitar o abastecimento
     const veiculoEmUsoId = tenhoJornadaAtiva ? minhasJornadas[0].veiculo.id : undefined;
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">
 
-            {/* --- HEADER CENTRALIZADO (ESTILO APP MOBILE) --- */}
+            {/* --- HEADER CENTRALIZADO --- */}
             <div className="bg-white p-8 rounded-3xl border border-border shadow-sm flex flex-col items-center text-center relative overflow-hidden">
                 
-                {/* 4. BOTÃO DE LOGOUT (Posicionado no canto superior direito) */}
+                {/* Botão de Logout */}
                 <button 
                     onClick={logout}
                     className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors z-20"
@@ -56,7 +56,6 @@ export function DashboardOperador({
                     <LogOut className="w-6 h-6" />
                 </button>
 
-                {/* Efeito de fundo sutil */}
                 <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
 
                 <div className="relative z-10 mb-4">
@@ -86,7 +85,6 @@ export function DashboardOperador({
 
                 {/* BOTÕES DE AÇÃO RÁPIDA */}
                 <div className="mt-8 flex gap-3 relative z-10 justify-center flex-wrap">
-                    {/* Botão Abastecer */}
                     <button
                         onClick={() => setModalAbastecimentoOpen(true)}
                         className="flex items-center gap-2 bg-white border border-border text-gray-700 px-5 py-3 rounded-xl shadow-sm hover:shadow-md hover:border-orange-200 hover:text-orange-600 transition-all font-bold text-sm group"
@@ -97,10 +95,10 @@ export function DashboardOperador({
                         Registrar Abastecimento
                     </button>
 
-                    {/* 5. NOVO BOTÃO: MEU HISTÓRICO */}
+                    {/* 3. Botão Meu Histórico (Agora funcional) */}
                     <button
                         className="flex items-center gap-2 bg-white border border-border text-gray-700 px-5 py-3 rounded-xl shadow-sm hover:shadow-md hover:border-blue-200 hover:text-blue-600 transition-all font-bold text-sm group"
-                        onClick={() => alert("Em breve: Visualização do histórico pessoal")}
+                        onClick={() => setModalHistoricoOpen(true)}
                     >
                         <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition-colors">
                             <History className="w-5 h-5" />
@@ -113,7 +111,6 @@ export function DashboardOperador({
             {/* --- ÁREA OPERACIONAL --- */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-5xl mx-auto">
                 {!tenhoJornadaAtiva ? (
-                    // 1. ESTADO: SEM JORNADA (MOSTRAR SELETOR)
                     <div className="lg:col-span-12 xl:col-span-8 xl:col-start-3 w-full">
                         <div className="bg-white shadow-card rounded-3xl p-1 border border-border overflow-hidden transition-all hover:shadow-card-hover">
                             <div className="p-8">
@@ -138,7 +135,6 @@ export function DashboardOperador({
                         </div>
                     </div>
                 ) : (
-                    // 2. ESTADO: JORNADA ATIVA (MOSTRAR CARD DA JORNADA)
                     <div className="lg:col-span-12 xl:col-span-8 xl:col-start-3 w-full space-y-6">
                         <div className="flex items-center justify-center gap-2 text-sm font-bold text-green-600 uppercase tracking-widest bg-green-50 py-2 px-4 rounded-full w-fit mx-auto border border-green-100">
                             <span className="relative flex h-3 w-3">
@@ -179,6 +175,32 @@ export function DashboardOperador({
                             usuarioLogado={user}
                             veiculoPreSelecionadoId={veiculoEmUsoId}
                             onClose={() => setModalAbastecimentoOpen(false)}
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* --- 4. MODAL DE HISTÓRICO DO OPERADOR --- */}
+            {modalHistoricoOpen && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300"
+                    onClick={() => setModalHistoricoOpen(false)}
+                >
+                    <div
+                        className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl animate-in zoom-in-95 duration-300 shadow-2xl bg-white p-6 relative"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button 
+                            onClick={() => setModalHistoricoOpen(false)}
+                            className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors z-10"
+                        >
+                            <X className="w-5 h-5 text-gray-500" />
+                        </button>
+                        
+                        {/* Reutiliza o componente de Histórico filtrado para o usuário */}
+                        <HistoricoJornadas 
+                            veiculos={veiculos} 
+                            userRole={user.role} // Passa OPERADOR para ativar o modo "meu-historico"
                         />
                     </div>
                 </div>
