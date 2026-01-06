@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Camera, X } from 'lucide-react'; // <--- ADICIONADO Camera e X
 import type { Jornada, Veiculo } from '../types';
 
 // Componentes UI
@@ -10,11 +10,14 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { ListaResponsiva } from './ui/ListaResponsiva';
 import { TableStyles } from '../styles/table';
-// 1. Import do Formulário de Edição
 import { FormEditarJornada } from './forms/FormEditarJornada';
 
 interface JornadaHistorico extends Jornada {
   kmPercorrido?: number;
+  // Certifique-se que sua API retorna estes campos.
+  // Se o nome for diferente (ex: foto_inicio), ajuste aqui e no código abaixo.
+  fotoInicio?: string; 
+  fotoFim?: string;
 }
 
 interface HistoricoJornadasProps {
@@ -26,9 +29,10 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
   const [historico, setHistorico] = useState<JornadaHistorico[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-
-  // 2. Estado para controlar o modal de edição
   const [editingId, setEditingId] = useState<string | null>(null);
+
+  // NOVO: Estado para visualizar a foto
+  const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
 
   // Filtros
   const [dataInicio, setDataInicio] = useState('');
@@ -82,15 +86,13 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
     });
   };
 
-  // 3. Handler real de edição
   const handleEdit = (jornada: JornadaHistorico) => {
     setEditingId(jornada.id);
   };
 
-  // 4. Sucesso na edição
   const handleSuccessEdit = () => {
     setEditingId(null);
-    fetchHistorico(); // Recarrega a lista para mostrar os dados atualizados
+    fetchHistorico();
   };
 
   const handleExportar = () => {
@@ -140,7 +142,7 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
               {historico.length}
             </span>
           </div>
-          <p className="text-sm text-gray-500 mt-1">Consulte rotas, quilometragem e horários.</p>
+          <p className="text-sm text-gray-500 mt-1">Consulte rotas, quilometragem e fotos dos odômetros.</p>
         </div>
 
         <div className="flex flex-wrap items-end gap-2 w-full xl:w-auto">
@@ -192,7 +194,7 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
               <th className={TableStyles.th}>Veículo</th>
               <th className={TableStyles.th}>Motorista</th>
               <th className={TableStyles.th}>Distância</th>
-              {/* Coluna Ações só aparece se tiver permissão */}
+              <th className={`${TableStyles.th} text-center`}>Fotos</th> {/* NOVA COLUNA */}
               {(canEdit || canDelete) && <th className={`${TableStyles.th} text-right`}>Ações</th>}
             </>
           }
@@ -226,8 +228,34 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
                     <span className="text-[10px] text-gray-400">KM {j.kmInicio} → {j.kmFim || '...'}</span>
                   </div>
                 </td>
+                
+                {/* --- NOVA COLUNA DE FOTOS --- */}
+                <td className={`${TableStyles.td} text-center`}>
+                  <div className="flex justify-center gap-2">
+                    {j.fotoInicio && (
+                      <button 
+                        onClick={() => setViewingPhoto(j.fotoInicio!)}
+                        className="p-1.5 rounded-full bg-gray-100 hover:bg-primary/10 text-gray-500 hover:text-primary transition-colors"
+                        title="Ver Odômetro Início"
+                      >
+                        <Camera className="w-4 h-4" />
+                        <span className="sr-only">Início</span>
+                      </button>
+                    )}
+                    {j.fotoFim && (
+                      <button 
+                         onClick={() => setViewingPhoto(j.fotoFim!)}
+                         className="p-1.5 rounded-full bg-gray-100 hover:bg-primary/10 text-gray-500 hover:text-primary transition-colors"
+                         title="Ver Odômetro Fim"
+                      >
+                        <Camera className="w-4 h-4" />
+                        <span className="sr-only">Fim</span>
+                      </button>
+                    )}
+                    {!j.fotoInicio && !j.fotoFim && <span className="text-gray-300">-</span>}
+                  </div>
+                </td>
 
-                {/* Botões de Ação Desktop */}
                 {(canEdit || canDelete) && (
                   <td className={`${TableStyles.td} text-right`}>
                     <div className="flex justify-end gap-2">
@@ -291,36 +319,58 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
                   </div>
                 </div>
 
-                {/* Botões de Ação Mobile */}
-                {(canEdit || canDelete) && (
-                  <div className="flex justify-end gap-3 pt-2 border-t border-dashed border-gray-100">
-                    {canEdit && (
-                      <Button
-                        variant="ghost"
-                        className="text-xs h-8 px-3 text-blue-600 hover:bg-blue-50 gap-1.5"
-                        onClick={() => handleEdit(j)}
-                      >
-                        <Edit className="w-3 h-3" /> Editar
-                      </Button>
-                    )}
-                    {canDelete && (
-                      <Button
-                        variant="ghost"
-                        className="text-xs h-8 px-3 text-red-600 hover:bg-red-50 gap-1.5"
-                        onClick={() => handleDelete(j.id)}
-                      >
-                        <Trash2 className="w-3 h-3" /> Excluir
-                      </Button>
-                    )}
+                {/* BOTÕES DE AÇÃO MOBILE (FOTOS + EDITAR/EXCLUIR) */}
+                <div className="flex justify-between items-center pt-2 border-t border-dashed border-gray-100">
+                  {/* Botões de Foto Mobile */}
+                  <div className="flex gap-2">
+                     {j.fotoInicio && (
+                        <button 
+                          onClick={() => setViewingPhoto(j.fotoInicio!)}
+                          className="flex items-center gap-1 text-xs px-2 py-1 bg-white border border-gray-200 rounded text-gray-600 hover:text-primary hover:border-primary transition-all"
+                        >
+                          <Camera className="w-3 h-3" /> Início
+                        </button>
+                     )}
+                     {j.fotoFim && (
+                        <button 
+                          onClick={() => setViewingPhoto(j.fotoFim!)}
+                          className="flex items-center gap-1 text-xs px-2 py-1 bg-white border border-gray-200 rounded text-gray-600 hover:text-primary hover:border-primary transition-all"
+                        >
+                          <Camera className="w-3 h-3" /> Fim
+                        </button>
+                     )}
                   </div>
-                )}
+
+                  {(canEdit || canDelete) && (
+                    <div className="flex gap-2">
+                      {canEdit && (
+                        <Button
+                          variant="ghost"
+                          className="text-xs h-8 px-2 text-blue-600 hover:bg-blue-50 gap-1"
+                          onClick={() => handleEdit(j)}
+                        >
+                          <Edit className="w-3 h-3" />
+                        </Button>
+                      )}
+                      {canDelete && (
+                        <Button
+                          variant="ghost"
+                          className="text-xs h-8 px-2 text-red-600 hover:bg-red-50 gap-1"
+                          onClick={() => handleDelete(j.id)}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           }}
         />
       )}
 
-      {/* 5. MODAL DE EDIÇÃO */}
+      {/* MODAL DE EDIÇÃO */}
       {editingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
           <div className="w-full max-w-2xl animate-in zoom-in-95">
@@ -332,6 +382,33 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
           </div>
         </div>
       )}
+
+      {/* --- NOVO: MODAL DE VISUALIZAÇÃO DE FOTO --- */}
+      {viewingPhoto && (
+        <div 
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in"
+          onClick={() => setViewingPhoto(null)}
+        >
+          <div className="relative max-w-4xl w-full h-full flex flex-col items-center justify-center">
+             <button 
+               onClick={() => setViewingPhoto(null)}
+               className="absolute top-4 right-4 text-white hover:text-red-400 bg-white/10 rounded-full p-2 transition-all"
+             >
+               <X className="w-8 h-8" />
+             </button>
+             <img 
+               src={viewingPhoto} 
+               alt="Odômetro" 
+               className="max-w-full max-h-[85vh] object-contain rounded-lg border-2 border-white/20 shadow-2xl animate-in zoom-in-95"
+               onClick={(e) => e.stopPropagation()} // Impede fechar ao clicar na imagem
+             />
+             <p className="text-white mt-4 text-sm font-medium bg-black/50 px-4 py-2 rounded-full">
+               Clique fora ou no X para fechar
+             </p>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
