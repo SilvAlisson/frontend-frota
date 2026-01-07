@@ -15,32 +15,34 @@ export function useDashboardData() {
     const { user } = useAuth();
 
     return useQuery<DashboardData>({
+        // A query key inclui o role, forçando recarregamento se o nível de acesso mudar
         queryKey: ['dashboard-data', user?.role],
 
         queryFn: async () => {
             if (!user) throw new Error("Usuário não autenticado");
 
-            // Se for Operador, busca na rota expressa '/users/encarregados' (apenas chefes).
-            // Se for Admin/RH, busca na rota completa '/users'.
+            // ✅ LÓGICA DE ROTA INTELIGENTE:
+            // Operador -> Rota leve e permitida (/users/encarregados)
+            // Admin/Outros -> Rota completa (/users)
             const endpointUsuarios = user.role === 'OPERADOR' 
                 ? '/users/encarregados' 
                 : '/users';
 
             const results = await Promise.allSettled([
-                api.get<User[]>(endpointUsuarios), // Rota dinâmica aplicada aqui
+                api.get<User[]>(endpointUsuarios), // Rota dinâmica aqui
                 api.get<Veiculo[]>('/veiculos'),
                 api.get<Produto[]>('/produtos'),
                 api.get<Fornecedor[]>('/fornecedores'),
                 api.get<Jornada[]>('/jornadas/abertas')
             ]);
 
-            // Função auxiliar para extrair dados com segurança
+            // Função auxiliar para extrair dados com segurança e logar erros específicos
             const unwrap = <T>(result: PromiseSettledResult<{ data: T }>, context: string): T => {
                 if (result.status === 'fulfilled') {
                     return result.value.data;
                 } else {
-                    console.warn(`[Dashboard] Falha parcial ao carregar ${context}:`, result.reason);
-                    // Retorna array vazio para a interface não quebrar com undefined
+                    console.warn(`[Dashboard] Falha ao carregar ${context}:`, result.reason);
+                    // Retorna array vazio para evitar que a tela quebre
                     return [] as any;
                 }
             };
@@ -55,8 +57,8 @@ export function useDashboardData() {
         },
 
         enabled: !!user,
-        staleTime: 1000 * 60 * 2,
-        refetchInterval: 1000 * 60,
+        staleTime: 1000 * 60 * 2, 
+        refetchInterval: 1000 * 60, 
         refetchOnWindowFocus: true,
     });
 }
