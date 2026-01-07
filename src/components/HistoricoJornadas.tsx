@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
-import { Edit, Trash2, Camera, X } from 'lucide-react'; // <--- ADICIONADO Camera e X
+import { Edit, Trash2, Camera, X, ImageOff } from 'lucide-react'; // <--- ADICIONADO ImageOff
 import type { Jornada, Veiculo } from '../types';
 
 // Componentes UI
@@ -12,12 +12,10 @@ import { ListaResponsiva } from './ui/ListaResponsiva';
 import { TableStyles } from '../styles/table';
 import { FormEditarJornada } from './forms/FormEditarJornada';
 
+// Interface flexível para aceitar variações do backend
 interface JornadaHistorico extends Jornada {
   kmPercorrido?: number;
-  // Certifique-se que sua API retorna estes campos.
-  // Se o nome for diferente (ex: foto_inicio), ajuste aqui e no código abaixo.
-  fotoInicio?: string; 
-  fotoFim?: string;
+  [key: string]: any; // Permite acessar propriedades dinâmicas como 'foto_inicio' ou 'fotoInicioUrl'
 }
 
 interface HistoricoJornadasProps {
@@ -30,8 +28,8 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-
-  // NOVO: Estado para visualizar a foto
+  
+  // Estado para visualizar a foto
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
 
   // Filtros
@@ -42,6 +40,16 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
   // Permissões
   const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
   const canDelete = userRole === 'ADMIN';
+
+  // --- HELPER CRUCIAL: Resolve a URL da foto independente do nome que o backend mande ---
+  const getFotoUrl = (jornada: JornadaHistorico, tipo: 'inicio' | 'fim'): string | null => {
+    if (tipo === 'inicio') {
+      // Tenta todas as variações possíveis
+      return jornada.fotoInicioUrl || jornada.fotoInicio || jornada.foto_inicio || null;
+    }
+    // Tenta todas as variações para o fim
+    return jornada.fotoFimUrl || jornada.fotoFim || jornada.foto_fim || null;
+  };
 
   const fetchHistorico = async () => {
     setLoading(true);
@@ -194,12 +202,16 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
               <th className={TableStyles.th}>Veículo</th>
               <th className={TableStyles.th}>Motorista</th>
               <th className={TableStyles.th}>Distância</th>
-              <th className={`${TableStyles.th} text-center`}>Fotos</th> {/* NOVA COLUNA */}
+              <th className={`${TableStyles.th} text-center`}>Fotos</th>
               {(canEdit || canDelete) && <th className={`${TableStyles.th} text-right`}>Ações</th>}
             </>
           }
           renderDesktop={(j) => {
             const kmPercorrido = (j.kmFim && j.kmInicio) ? j.kmFim - j.kmInicio : (j.kmPercorrido || 0);
+            
+            // Usamos o Helper para garantir que a foto venha, independente do nome da variável
+            const imgInicio = getFotoUrl(j, 'inicio');
+            const imgFim = getFotoUrl(j, 'fim');
 
             return (
               <>
@@ -229,30 +241,38 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
                   </div>
                 </td>
                 
-                {/* --- NOVA COLUNA DE FOTOS --- */}
+                {/* --- COLUNA DE FOTOS INTELIGENTE --- */}
                 <td className={`${TableStyles.td} text-center`}>
                   <div className="flex justify-center gap-2">
-                    {j.fotoInicio && (
+                    {/* Foto Inicio */}
+                    {imgInicio ? (
                       <button 
-                        onClick={() => setViewingPhoto(j.fotoInicio!)}
-                        className="p-1.5 rounded-full bg-gray-100 hover:bg-primary/10 text-gray-500 hover:text-primary transition-colors"
+                        onClick={() => setViewingPhoto(imgInicio)}
+                        className="p-1.5 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100 transition-colors"
                         title="Ver Odômetro Início"
                       >
                         <Camera className="w-4 h-4" />
-                        <span className="sr-only">Início</span>
                       </button>
+                    ) : (
+                      <span className="p-1.5 opacity-30 cursor-not-allowed" title="Sem foto">
+                        <ImageOff className="w-4 h-4 text-gray-400" />
+                      </span>
                     )}
-                    {j.fotoFim && (
+
+                    {/* Foto Fim */}
+                    {imgFim ? (
                       <button 
-                         onClick={() => setViewingPhoto(j.fotoFim!)}
-                         className="p-1.5 rounded-full bg-gray-100 hover:bg-primary/10 text-gray-500 hover:text-primary transition-colors"
+                         onClick={() => setViewingPhoto(imgFim)}
+                         className="p-1.5 rounded-full bg-green-50 text-green-600 hover:bg-green-100 border border-green-100 transition-colors"
                          title="Ver Odômetro Fim"
                       >
                         <Camera className="w-4 h-4" />
-                        <span className="sr-only">Fim</span>
                       </button>
+                    ) : (
+                      <span className="p-1.5 opacity-30 cursor-not-allowed" title="Sem foto">
+                         <ImageOff className="w-4 h-4 text-gray-400" />
+                      </span>
                     )}
-                    {!j.fotoInicio && !j.fotoFim && <span className="text-gray-300">-</span>}
                   </div>
                 </td>
 
@@ -290,6 +310,8 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
           // --- MOBILE ---
           renderMobile={(j) => {
             const kmPercorrido = (j.kmFim && j.kmInicio) ? j.kmFim - j.kmInicio : (j.kmPercorrido || 0);
+            const imgInicio = getFotoUrl(j, 'inicio');
+            const imgFim = getFotoUrl(j, 'fim');
 
             return (
               <div className="p-4">
@@ -321,20 +343,19 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
 
                 {/* BOTÕES DE AÇÃO MOBILE (FOTOS + EDITAR/EXCLUIR) */}
                 <div className="flex justify-between items-center pt-2 border-t border-dashed border-gray-100">
-                  {/* Botões de Foto Mobile */}
                   <div className="flex gap-2">
-                     {j.fotoInicio && (
+                     {imgInicio && (
                         <button 
-                          onClick={() => setViewingPhoto(j.fotoInicio!)}
-                          className="flex items-center gap-1 text-xs px-2 py-1 bg-white border border-gray-200 rounded text-gray-600 hover:text-primary hover:border-primary transition-all"
+                          onClick={() => setViewingPhoto(imgInicio)}
+                          className="flex items-center gap-1 text-xs px-2 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded hover:bg-blue-100 transition-all"
                         >
                           <Camera className="w-3 h-3" /> Início
                         </button>
                      )}
-                     {j.fotoFim && (
+                     {imgFim && (
                         <button 
-                          onClick={() => setViewingPhoto(j.fotoFim!)}
-                          className="flex items-center gap-1 text-xs px-2 py-1 bg-white border border-gray-200 rounded text-gray-600 hover:text-primary hover:border-primary transition-all"
+                          onClick={() => setViewingPhoto(imgFim)}
+                          className="flex items-center gap-1 text-xs px-2 py-1 bg-green-50 text-green-700 border border-green-100 rounded hover:bg-green-100 transition-all"
                         >
                           <Camera className="w-3 h-3" /> Fim
                         </button>
@@ -383,27 +404,28 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
         </div>
       )}
 
-      {/* --- NOVO: MODAL DE VISUALIZAÇÃO DE FOTO --- */}
+      {/* MODAL DE VISUALIZAÇÃO DE FOTO */}
       {viewingPhoto && (
         <div 
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 animate-in fade-in"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 animate-in fade-in"
           onClick={() => setViewingPhoto(null)}
         >
-          <div className="relative max-w-4xl w-full h-full flex flex-col items-center justify-center">
+          <div className="relative w-full h-full flex flex-col items-center justify-center">
              <button 
                onClick={() => setViewingPhoto(null)}
-               className="absolute top-4 right-4 text-white hover:text-red-400 bg-white/10 rounded-full p-2 transition-all"
+               className="absolute top-6 right-6 text-white hover:text-red-400 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all z-50"
              >
                <X className="w-8 h-8" />
              </button>
+             
              <img 
                src={viewingPhoto} 
-               alt="Odômetro" 
-               className="max-w-full max-h-[85vh] object-contain rounded-lg border-2 border-white/20 shadow-2xl animate-in zoom-in-95"
-               onClick={(e) => e.stopPropagation()} // Impede fechar ao clicar na imagem
+               alt="Odômetro Ampliado" 
+               className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl animate-in zoom-in-95"
+               onClick={(e) => e.stopPropagation()} 
              />
-             <p className="text-white mt-4 text-sm font-medium bg-black/50 px-4 py-2 rounded-full">
-               Clique fora ou no X para fechar
+             <p className="text-white/60 mt-4 text-sm font-medium">
+               Clique fora para fechar
              </p>
           </div>
         </div>
