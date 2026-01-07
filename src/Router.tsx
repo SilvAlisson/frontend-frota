@@ -69,17 +69,26 @@ function RootDashboardRouter() {
   const { data: veiculos } = useVeiculos();
 
   // 🔒 BLINDAGEM DE SEGURANÇA (FRONTEND)
-  // Define quem tem permissão para listar usuários. 
-  // Isso deve espelhar a regra do backend (user.routes.ts) para evitar requisições inúteis (403).
   const isGestor = ['ADMIN', 'COORDENADOR', 'ENCARREGADO', 'RH'].includes(user?.role || '');
+  const isOperador = user?.role === 'OPERADOR';
 
-  // Queries essenciais para os Dashboards
-  const { data: usuarios } = useQuery({ 
+  // --- QUERY 1: Buscar TODOS os usuários (Apenas para Gestores) ---
+  const { data: todosUsuarios } = useQuery({ 
     queryKey: ['users'], 
     queryFn: async () => (await api.get('/users')).data, 
-    // AQUI ESTÁ A CORREÇÃO: Só busca se o usuário for um Gestor
     enabled: !!user && isGestor 
   });
+
+  // --- QUERY 2: Buscar APENAS ENCARREGADOS (Apenas para Operadores) ---
+  // Esta rota (/users/encarregados) é permitida para OPERADOR no backend (user.routes.ts)
+  const { data: listaEncarregados } = useQuery({
+    queryKey: ['users', 'encarregados'],
+    queryFn: async () => (await api.get('/users/encarregados')).data,
+    enabled: !!user && isOperador
+  });
+
+  // Define qual lista usar baseada no perfil
+  const usuariosDisponiveis = isGestor ? (todosUsuarios || []) : (listaEncarregados || []);
 
   const { data: produtos } = useQuery({ queryKey: ['produtos'], queryFn: async () => (await api.get('/produtos')).data, enabled: !!user });
   const { data: fornecedores } = useQuery({ queryKey: ['fornecedores'], queryFn: async () => (await api.get('/fornecedores')).data, enabled: !!user });
@@ -100,7 +109,7 @@ function RootDashboardRouter() {
         <div className={containerStyle}>
           <DashboardOperador
             user={user}
-            usuarios={usuarios || []} // Passa lista vazia sem problemas
+            usuarios={usuariosDisponiveis} // <--- CORREÇÃO AQUI: Agora recebe a lista correta
             veiculos={veiculos || []}
             produtos={produtos || []}
             fornecedores={fornecedores || []}
@@ -116,7 +125,7 @@ function RootDashboardRouter() {
           <DashboardEncarregado
             user={user}
             veiculos={veiculos || []}
-            usuarios={usuarios || []}
+            usuarios={usuariosDisponiveis}
             produtos={produtos || []}
             fornecedores={fornecedores || []}
             jornadasAbertas={jornadasAtivas || []}
