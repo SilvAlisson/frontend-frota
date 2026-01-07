@@ -20,9 +20,14 @@ export function useDashboardData() {
         queryFn: async () => {
             if (!user) throw new Error("Usuário não autenticado");
 
-            // CORREÇÃO: URLs ajustadas para o plural conforme definido no backend
+            // Se for Operador, busca na rota expressa '/users/encarregados' (apenas chefes).
+            // Se for Admin/RH, busca na rota completa '/users'.
+            const endpointUsuarios = user.role === 'OPERADOR' 
+                ? '/users/encarregados' 
+                : '/users';
+
             const results = await Promise.allSettled([
-                api.get<User[]>('/users'),
+                api.get<User[]>(endpointUsuarios), // Rota dinâmica aplicada aqui
                 api.get<Veiculo[]>('/veiculos'),
                 api.get<Produto[]>('/produtos'),
                 api.get<Fornecedor[]>('/fornecedores'),
