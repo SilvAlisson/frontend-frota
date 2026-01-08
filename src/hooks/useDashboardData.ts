@@ -15,7 +15,7 @@ export function useDashboardData() {
     const { user } = useAuth();
 
     return useQuery<DashboardData>({
-        // A query key inclui o role para forçar recarregamento se o nível de acesso mudar
+        // A chave inclui o role para garantir que, se o usuário mudar de nível, o React refaça a busca
         queryKey: ['dashboard-data', user?.role],
 
         queryFn: async () => {
@@ -23,32 +23,34 @@ export function useDashboardData() {
 
             const isOperador = user.role === 'OPERADOR';
 
-            // ✅ SELEÇÃO DE ROTAS PADRONIZADA
-            // Usamos as rotas "/operacao" para TODOS os perfis.
-            // Elas são otimizadas para dropdowns, trazem o 'ultimoKm' e evitam erros 403.
-            
-            const endpointUsuarios = isOperador 
-                ? '/users/encarregados' 
-                : '/users';
+            console.log(`[Dashboard] Carregando dados. Perfil Operador? ${isOperador}`);
 
+            // ✅ SELEÇÃO DE ROTAS INTELIGENTE (CORREÇÃO 100%)
+            // Se for Operador, usa as rotas "/operacao" (permitidas e leves).
+            // Se for Admin/Gestor, usa as rotas padrão (com todos os detalhes).
+            const endpoints = {
+                usuarios: isOperador ? '/users/encarregados' : '/users',
+                veiculos: isOperador ? '/veiculos/operacao' : '/veiculos',
+                produtos: isOperador ? '/produtos/operacao' : '/produtos',
+                fornecedores: isOperador ? '/fornecedores/operacao' : '/fornecedores',
+                jornadas: '/jornadas/abertas'
+            };
+
+            // Usamos allSettled para que uma falha em um endpoint não quebre todo o dashboard
             const results = await Promise.allSettled([
-                api.get<User[]>(endpointUsuarios),
-                
-                // ALTERADO: Agora todos usam a rota leve/operacional
-                api.get<Veiculo[]>('/veiculos/operacao'),       
-                api.get<Produto[]>('/produtos/operacao'),       
-                api.get<Fornecedor[]>('/fornecedores/operacao'), 
-                
-                api.get<Jornada[]>('/jornadas/abertas')
+                api.get<User[]>(endpoints.usuarios),
+                api.get<Veiculo[]>(endpoints.veiculos),
+                api.get<Produto[]>(endpoints.produtos),
+                api.get<Fornecedor[]>(endpoints.fornecedores),
+                api.get<Jornada[]>(endpoints.jornadas)
             ]);
 
-            // Função auxiliar para extrair dados com segurança e logar erros
+            // Função auxiliar para extrair dados com segurança
             const unwrap = <T>(result: PromiseSettledResult<{ data: T }>, context: string): T => {
                 if (result.status === 'fulfilled') {
                     return result.value.data;
                 } else {
                     console.warn(`[Dashboard] Falha ao carregar ${context}:`, result.reason);
-                    // Retorna array vazio para evitar que a tela quebre (Tela branca)
                     return [] as any;
                 }
             };
@@ -63,8 +65,8 @@ export function useDashboardData() {
         },
 
         enabled: !!user,
-        staleTime: 1000 * 60 * 2, // Cache de 2 minutos
-        refetchInterval: 1000 * 60, // Atualiza a cada 1 minuto
+        staleTime: 1000 * 60 * 2, // 2 minutos
+        refetchInterval: 1000 * 60, // 1 minuto
         refetchOnWindowFocus: true,
     });
 }
