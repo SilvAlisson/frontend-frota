@@ -23,22 +23,23 @@ export function useDashboardData() {
 
             const isOperador = user.role === 'OPERADOR';
 
-            // ✅ SELEÇÃO DE ROTAS INTELIGENTE
-            // Agora o frontend sabe usar as rotas "/operacao" que criamos no backend
-            const endpoints = {
-                usuarios: isOperador ? '/users/encarregados' : '/users',
-                veiculos: isOperador ? '/veiculos/operacao' : '/veiculos',       // <--- NOVO
-                produtos: isOperador ? '/produtos/operacao' : '/produtos',       // <--- NOVO
-                fornecedores: isOperador ? '/fornecedores/operacao' : '/fornecedores', // <--- NOVO
-                jornadas: '/jornadas/abertas'
-            };
+            // ✅ SELEÇÃO DE ROTAS PADRONIZADA
+            // Usamos as rotas "/operacao" para TODOS os perfis.
+            // Elas são otimizadas para dropdowns, trazem o 'ultimoKm' e evitam erros 403.
+            
+            const endpointUsuarios = isOperador 
+                ? '/users/encarregados' 
+                : '/users';
 
             const results = await Promise.allSettled([
-                api.get<User[]>(endpoints.usuarios),
-                api.get<Veiculo[]>(endpoints.veiculos),
-                api.get<Produto[]>(endpoints.produtos),
-                api.get<Fornecedor[]>(endpoints.fornecedores),
-                api.get<Jornada[]>(endpoints.jornadas)
+                api.get<User[]>(endpointUsuarios),
+                
+                // ALTERADO: Agora todos usam a rota leve/operacional
+                api.get<Veiculo[]>('/veiculos/operacao'),       
+                api.get<Produto[]>('/produtos/operacao'),       
+                api.get<Fornecedor[]>('/fornecedores/operacao'), 
+                
+                api.get<Jornada[]>('/jornadas/abertas')
             ]);
 
             // Função auxiliar para extrair dados com segurança e logar erros
