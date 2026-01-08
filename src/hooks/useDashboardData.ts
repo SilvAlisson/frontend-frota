@@ -26,14 +26,14 @@ export function useDashboardData() {
             console.log(`[Dashboard] Carregando dados. Perfil Operador? ${isOperador}`);
 
             // ✅ SELEÇÃO DE ROTAS INTELIGENTE (CORREÇÃO 100%)
-            // Se for Operador, usa as rotas "/operacao" (permitidas e leves).
-            // Se for Admin/Gestor, usa as rotas padrão (com todos os detalhes).
+            // Agora todas as entidades seguem a regra: Operador -> Rota Leve | Admin -> Rota Completa
             const endpoints = {
                 usuarios: isOperador ? '/users/encarregados' : '/users',
                 veiculos: isOperador ? '/veiculos/operacao' : '/veiculos',
                 produtos: isOperador ? '/produtos/operacao' : '/produtos',
                 fornecedores: isOperador ? '/fornecedores/operacao' : '/fornecedores',
-                jornadas: '/jornadas/abertas'
+                // AQUI ESTAVA O DETALHE: O Operador deve ver apenas as SUAS jornadas
+                jornadas: isOperador ? '/jornadas/minhas-abertas-operador' : '/jornadas/abertas'
             };
 
             // Usamos allSettled para que uma falha em um endpoint não quebre todo o dashboard

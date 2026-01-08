@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
+import { useAuth } from '../contexts/AuthContext';
 
 export interface AbastecimentoItem {
     produtoId: string;
-    quantidade: number; // Litros
-    valorPorUnidade: number; // Preço do litro
+    quantidade: number; 
+    valorPorUnidade: number; 
 }
 
 export interface CreateAbastecimentoDTO {
@@ -13,14 +14,13 @@ export interface CreateAbastecimentoDTO {
     operadorId: string;
     fornecedorId: string;
     kmOdometro: number;
-    dataHora: string; // ISO Date
+    dataHora: string;
     placaCartaoUsado?: string;
     observacoes?: string;
     fotoNotaFiscalUrl?: string;
     itens: AbastecimentoItem[];
 }
 
-// Interface para Filtros da Listagem
 interface FiltrosHistorico {
     veiculoId?: string;
     dataInicio?: string;
@@ -30,9 +30,12 @@ interface FiltrosHistorico {
 
 // --- LISTAR RECENTES (GET) ---
 export function useAbastecimentos(filtros?: FiltrosHistorico) {
+    const { user } = useAuth();
+
     return useQuery({
-        // A chave do cache inclui os filtros. Se o filtro mudar, o React Query busca novos dados automaticamente.
-        queryKey: ['abastecimentos', filtros],
+        // Adiciona user.role para segregar cache de Admin vs Operador
+        queryKey: ['abastecimentos', filtros, user?.role], 
+        
         queryFn: async () => {
             const params = new URLSearchParams();
             if (filtros?.veiculoId) params.append('veiculoId', filtros.veiculoId);
@@ -43,6 +46,7 @@ export function useAbastecimentos(filtros?: FiltrosHistorico) {
             const { data } = await api.get(`/abastecimentos/recentes?${params.toString()}`);
             return data;
         },
+        enabled: !!user, // Previne erro 403 por token vazio
     });
 }
 
@@ -57,11 +61,9 @@ export function useRegistrarAbastecimento() {
         },
         onSuccess: () => {
             toast.success('Abastecimento registrado!');
-            // Invalida listas de abastecimento e também a lista de veículos (pois o KM e Status podem ter mudado)
             queryClient.invalidateQueries({ queryKey: ['abastecimentos'] });
             queryClient.invalidateQueries({ queryKey: ['veiculos'] });
-            queryClient.invalidateQueries({ queryKey: ['relatorio-dashboard'] });
-
+            queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
         },
         onError: (error: any) => {
             toast.error(error.response?.data?.error || 'Erro ao registrar abastecimento');
