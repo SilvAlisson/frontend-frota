@@ -40,7 +40,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
             descricao: '',
             requisitos: [{ nome: '', validadeMeses: 12, diasAntecedenciaAlerta: 30 }]
         },
-        mode: 'onBlur' // [CORREÇÃO 3: UX] Restaura validação apenas ao sair do campo
+        mode: 'onBlur' // Restaura validação apenas ao sair do campo
     });
 
     const { fields, append, remove } = useFieldArray({
@@ -104,7 +104,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                             error={errors.nome?.message}
                             className="uppercase font-bold tracking-wide"
                             autoFocus
-                            disabled={isSubmitting} // [CORREÇÃO 1] Bloqueio
+                            disabled={isSubmitting} //  Bloqueio
                         />
                     </div>
 
@@ -113,7 +113,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                         <textarea
                             {...register('descricao')}
                             rows={3}
-                            disabled={isSubmitting} // [CORREÇÃO 1] Bloqueio
+                            disabled={isSubmitting} //  Bloqueio
                             className={`${manualInputStyle} resize-none`}
                             placeholder="Descreva brevemente as responsabilidades e escopo..."
                         />
@@ -130,7 +130,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                         <button
                             type="button"
                             onClick={() => append({ nome: '', validadeMeses: 12, diasAntecedenciaAlerta: 30 })}
-                            disabled={isSubmitting} // [CORREÇÃO 1]
+                            disabled={isSubmitting} // 
                             className="text-xs text-primary font-bold hover:underline bg-primary/5 px-2 py-1.5 rounded-lg transition-colors hover:bg-primary/10 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             + Adicionar Curso
@@ -148,7 +148,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                                     <button
                                         type="button"
                                         onClick={() => remove(index)}
-                                        disabled={isSubmitting} // [CORREÇÃO 1]
+                                        disabled={isSubmitting} // 
                                         className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full w-6 h-6 border border-border shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 z-10 disabled:hidden"
                                         title="Remover item"
                                     >
@@ -165,7 +165,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                                                 error={errors.requisitos?.[index]?.nome?.message}
                                                 containerClassName="!mb-0"
                                                 className="bg-white py-2"
-                                                disabled={isSubmitting} // [CORREÇÃO 1]
+                                                disabled={isSubmitting} //
                                             />
                                         </div>
 
@@ -177,7 +177,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                                                     type="number"
                                                     {...register(`requisitos.${index}.validadeMeses`)}
                                                     disabled={isSubmitting}
-                                                    // [CORREÇÃO 4] Classe condicional para erro
+                                                    // Classe condicional para erro
                                                     className={`w-full text-xs p-2.5 text-center bg-white rounded-input border outline-none focus:ring-2 transition-all disabled:bg-gray-50 ${errorValidade
                                                         ? 'border-red-300 focus:border-red-500 focus:ring-red-100'
                                                         : 'border-border focus:border-primary focus:ring-primary/20'
@@ -185,7 +185,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                                                 />
                                                 <span className="absolute right-2 top-2.5 text-[9px] text-gray-400 font-bold pointer-events-none">MÊS</span>
                                             </div>
-                                            {/* [CORREÇÃO 4] Exibe o erro abaixo do input */}
+                                            {/* Exibe o erro abaixo do input */}
                                             {errorValidade && <span className="text-[10px] text-red-500 block text-center mt-1 font-medium">{errorValidade}</span>}
                                         </div>
 
@@ -201,7 +201,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                                                     : 'border-border focus:border-primary focus:ring-primary/20'
                                                     }`}
                                             />
-                                            {/* [CORREÇÃO 4] Exibe o erro abaixo do input */}
+                                            {/* Exibe o erro abaixo do input */}
                                             {errorAlerta && <span className="text-[10px] text-red-500 block text-center mt-1 font-medium">{errorAlerta}</span>}
                                         </div>
                                     </div>
