@@ -189,8 +189,8 @@ export function RankingOperadores() {
             renderMobile={(op, idx) => (
               <div className="flex items-center gap-4 p-4">
                 <div className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full font-bold text-sm border ${idx < 3
-                    ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
-                    : 'bg-gray-50 text-gray-500 border-gray-100'
+                  ? 'bg-yellow-50 text-yellow-700 border-yellow-200'
+                  : 'bg-gray-50 text-gray-500 border-gray-100'
                   }`}>
                   {idx + 1}º
                 </div>

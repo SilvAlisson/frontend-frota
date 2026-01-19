@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,25 +7,27 @@ import { api } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { toast } from 'sonner';
+import type { Produto } from '../../types'; // Importando o tipo Produto
 
 const tipos = ["POSTO", "OFICINA", "LAVA_JATO", "SEGURADORA", "OUTROS"] as const;
 
-// --- SCHEMA ROBUSTO ---
+// --- SCHEMA ATUALIZADO ---
 const fornecedorSchema = z.object({
   nome: z.string()
     .min(2, "Nome obrigatório (mín. 2 caracteres)")
     .transform(val => val.trim().toUpperCase()),
 
-  // Validação de formato (Opcional, mas se preenchido deve ser válido)
   cnpj: z.union([
     z.literal(''),
     z.string().regex(/^\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}$/, "Formato inválido: 00.000.000/0000-00")
   ]).optional().nullable(),
 
   tipo: z.enum(tipos).default('OUTROS'),
+
+  // NOVO: Array de IDs dos produtos selecionados
+  produtosIds: z.array(z.string()).default([]),
 });
 
-// Tipagem separada para Input (Formulário) e Output (Dados processados pelo Zod)
 type FormInput = z.input<typeof fornecedorSchema>;
 type FormOutput = z.output<typeof fornecedorSchema>;
 
@@ -34,28 +37,56 @@ interface FormProps {
 }
 
 export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormProps) {
+  // Estado para armazenar o catálogo de serviços
+  const [produtosDisponiveis, setProdutosDisponiveis] = useState<Produto[]>([]);
+  const [loadingProdutos, setLoadingProdutos] = useState(true);
+
   const {
     register,
     handleSubmit,
     reset,
+    setValue,
+    watch,
     formState: { errors, isSubmitting }
-  } = useForm<FormInput, any, FormOutput>({ // [CORREÇÃO 2: Tipagem] Genéricos explícitos evitam o 'as any'
+  } = useForm<FormInput, any, FormOutput>({
     resolver: zodResolver(fornecedorSchema),
     defaultValues: {
       nome: '',
       cnpj: '',
-      tipo: 'OUTROS'
+      tipo: 'OUTROS',
+      produtosIds: [] // Começa vazio
     },
-    mode: 'onBlur' // [CORREÇÃO 1: UX] Validação apenas ao sair do campo
+    mode: 'onBlur'
   });
 
+  // Observa quais IDs estão selecionados para atualizar a cor dos botões
+  const selectedIds = watch('produtosIds') || [];
+
+  // 1. Buscar lista de produtos ao abrir
+  useEffect(() => {
+    api.get('/produtos')
+      .then(res => setProdutosDisponiveis(res.data))
+      .catch(err => console.error("Erro ao carregar produtos", err))
+      .finally(() => setLoadingProdutos(false));
+  }, []);
+
+  // Função para marcar/desmarcar serviço
+  const toggleProduto = (id: string) => {
+    const current = selectedIds;
+    if (current.includes(id)) {
+      setValue('produtosIds', current.filter(item => item !== id));
+    } else {
+      setValue('produtosIds', [...current, id]);
+    }
+  };
+
   const onSubmit = async (data: FormOutput) => {
-    // Sanitização e tratamento de dados vazios
     const payload = {
       nome: DOMPurify.sanitize(data.nome),
       tipo: data.tipo,
-      // Lógica para enviar null caso o CNPJ esteja vazio ou só com espaços
       cnpj: data.cnpj && data.cnpj.trim() !== '' ? DOMPurify.sanitize(data.cnpj) : null,
+      // Envia a lista de serviços para o backend conectar
+      produtosIds: data.produtosIds
     };
 
     const promise = api.post('/fornecedores', payload);
@@ -65,7 +96,6 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormProps) {
       success: (response) => {
         reset();
         setTimeout(onSuccess, 500);
-        // Usa o nome retornado pelo backend para feedback personalizado
         return `Parceiro "${response.data.nome}" cadastrado!`;
       },
       error: (err) => {
@@ -75,7 +105,6 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormProps) {
     });
   };
 
-  // Estilos Auxiliares
   const labelStyle = "block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1";
   const selectStyle = "w-full h-10 px-3 bg-white border border-border rounded-input text-sm text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer placeholder:text-gray-400 disabled:bg-gray-50";
 
@@ -130,6 +159,48 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormProps) {
             />
             <p className="text-[10px] text-gray-400 mt-1 ml-1">Formato: XX.XXX.XXX/XXXX-XX</p>
           </div>
+        </div>
+
+        {/* --- SEÇÃO DE SERVIÇOS OFERECIDOS (CARDÁPIO) --- */}
+        <div className="pt-2">
+          <label className={labelStyle}>
+            Serviços Disponíveis
+            <span className="ml-2 text-[10px] font-normal text-gray-400 normal-case">(Clique para marcar o que este local oferece)</span>
+          </label>
+
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 max-h-48 overflow-y-auto mt-2">
+            {loadingProdutos ? (
+              <p className="text-xs text-gray-400 animate-pulse">Carregando catálogo...</p>
+            ) : produtosDisponiveis.length === 0 ? (
+              <p className="text-xs text-red-400">Nenhum produto cadastrado no sistema. Cadastre produtos primeiro.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+                {produtosDisponiveis.map(prod => {
+                  const isSelected = selectedIds.includes(prod.id);
+                  return (
+                    <button
+                      key={prod.id}
+                      type="button"
+                      onClick={() => toggleProduto(prod.id)}
+                      disabled={isSubmitting}
+                      className={`
+                        text-xs px-3 py-1.5 rounded-full border transition-all font-medium flex items-center gap-1
+                        ${isSelected
+                          ? 'bg-blue-600 border-blue-600 text-white shadow-md hover:bg-blue-700'
+                          : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-500'}
+                      `}
+                    >
+                      {isSelected && <span>✓</span>}
+                      {prod.nome}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          <p className="text-[10px] text-gray-400 mt-2 ml-1">
+            * Isso filtrará automaticamente os formulários de manutenção para evitar erros.
+          </p>
         </div>
 
         <div className="pt-4 border-t border-border flex justify-end gap-3">

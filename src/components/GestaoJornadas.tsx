@@ -1,5 +1,17 @@
-import { JornadaGestaoItem } from './JornadaGestaoItem';
+import { useState } from 'react';
 import { toast } from 'sonner';
+import { Route, Search } from 'lucide-react';
+
+// --- DESIGN SYSTEM ---
+import { PageHeader } from './ui/PageHeader';
+import { Input } from './ui/Input';
+import { Card } from './ui/Card';
+import { Modal } from './ui/Modal';
+import { Badge } from './ui/Badge';
+
+// --- COMPONENTES & FORMS ---
+import { JornadaGestaoItem } from './JornadaGestaoItem';
+import { FormEditarJornada } from './forms/FormEditarJornada';
 
 interface GestaoJornadasProps {
   jornadasAbertas: any[];
@@ -11,66 +23,107 @@ export function GestaoJornadas({
   onJornadaFinalizadaManualmente
 }: GestaoJornadasProps) {
 
-  // Wrapper para adicionar feedback extra se necessário
+  // Estados
+  const [jornadaEditandoId, setJornadaEditandoId] = useState<string | null>(null);
+  const [busca, setBusca] = useState('');
+
+  // Filtragem (busca simples no cliente)
+  const jornadasFiltradas = jornadasAbertas.filter(j =>
+    j.veiculo?.placa?.toLowerCase().includes(busca.toLowerCase()) ||
+    j.motorista?.nome?.toLowerCase().includes(busca.toLowerCase())
+  );
+
+  // Handlers
   const handleFinalizar = (id: string) => {
     toast.success("Jornada processada.");
     onJornadaFinalizadaManualmente(id);
   };
 
+  const handleSuccessEdit = () => {
+    setJornadaEditandoId(null);
+    window.location.reload(); // Refresh simples para atualizar dados
+  };
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 pb-10">
 
-      {/* CABEÇALHO COM CONTADOR */}
-      {/* [PADRONIZAÇÃO] border-gray-100 -> border-border */}
-      <div className="flex items-center justify-between border-b border-border pb-4">
-        <div>
-          <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-            </span>
-            Monitoramento em Tempo Real
-          </h3>
-          <p className="text-sm text-text-secondary mt-1">
-            Gerencie os veículos que estão em circulação agora.
-          </p>
-        </div>
-
-        {jornadasAbertas.length > 0 && (
-          <span className="bg-green-50 text-green-700 text-xs font-bold px-3 py-1.5 rounded-full border border-green-100 shadow-sm">
-            {jornadasAbertas.length} Ativas
-          </span>
-        )}
-      </div>
-
-      {/* LISTA OU EMPTY STATE */}
-      {jornadasAbertas.length === 0 ? (
-        // [PADRONIZAÇÃO] border-gray-200 -> border-border
-        <div className="flex flex-col items-center justify-center py-16 bg-white rounded-2xl border-2 border-dashed border-border text-center">
-          {/* [PADRONIZAÇÃO] Cores ajustadas para primary */}
-          <div className="p-4 bg-primary/5 rounded-full mb-4 ring-8 ring-primary/5">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-primary">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-            </svg>
+      {/* 1. HEADER */}
+      <PageHeader
+        title="Monitoramento em Tempo Real"
+        subtitle="Acompanhe e gerencie os veículos que estão em circulação agora."
+        extraAction={
+          <div className="flex items-center gap-3 w-full sm:w-auto">
+            {jornadasAbertas.length > 0 && (
+              <Badge variant="success" className="h-9 px-3 text-xs">
+                <span className="relative flex h-2 w-2 mr-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                {jornadasAbertas.length} Ativas
+              </Badge>
+            )}
+            <div className="w-full sm:w-64">
+              <Input
+                placeholder="Buscar placa ou motorista..."
+                icon={<Search className="w-4 h-4 text-gray-400" />}
+                value={busca}
+                onChange={e => setBusca(e.target.value)}
+              />
+            </div>
           </div>
-          <h4 className="text-lg font-medium text-gray-900">Nenhum veículo em rota</h4>
-          <p className="text-gray-500 text-sm mt-1 max-w-xs">
+        }
+      />
+
+      {/* 2. CONTEÚDO (LISTA DE CARDS) */}
+      {jornadasAbertas.length === 0 ? (
+        // Empty State Padronizado
+        <Card className="flex flex-col items-center justify-center py-16 text-center border-dashed border-2 bg-gray-50/50 shadow-none">
+          <div className="p-4 bg-white rounded-full mb-4 ring-1 ring-gray-200 shadow-sm">
+            <Route className="w-8 h-8 text-gray-400" />
+          </div>
+          <h4 className="text-lg font-bold text-gray-900">Nenhum veículo em rota</h4>
+          <p className="text-gray-500 text-sm mt-1 max-w-xs mx-auto">
             Todas as jornadas foram finalizadas ou ainda não foram iniciadas hoje.
           </p>
-        </div>
+        </Card>
       ) : (
-        <div className="grid gap-4">
-          {jornadasAbertas.map(jornada => (
-            <JornadaGestaoItem
-              key={jornada.id}
-              jornada={jornada}
-              token=""
-              onFinalizada={handleFinalizar}
-              onExcluida={handleFinalizar}
-            />
-          ))}
+        <div className="grid grid-cols-1 gap-4">
+          {jornadasFiltradas.length > 0 ? (
+            jornadasFiltradas.map(jornada => (
+              // Usamos o componente existente, mas vamos garantir que ele seja responsivo
+              <JornadaGestaoItem
+                key={jornada.id}
+                jornada={jornada}
+                token="" // Se não for usado, pode remover do componente filho depois
+                onFinalizada={handleFinalizar}
+                onExcluida={handleFinalizar}
+                onEditar={(j) => setJornadaEditandoId(j.id)}
+              />
+            ))
+          ) : (
+            <div className="text-center py-10 text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+              Nenhuma jornada encontrada para "{busca}"
+            </div>
+          )}
         </div>
       )}
+
+      {/* 3. MODAL DE EDIÇÃO */}
+      <Modal
+        isOpen={!!jornadaEditandoId}
+        onClose={() => setJornadaEditandoId(null)}
+        title="Editar Jornada"
+        className="max-w-2xl"
+      >
+        {jornadaEditandoId && (
+          <FormEditarJornada
+            jornadaId={jornadaEditandoId}
+            onSuccess={handleSuccessEdit}
+            onCancelar={() => setJornadaEditandoId(null)}
+          />
+        )}
+      </Modal>
+
     </div>
   );
 }

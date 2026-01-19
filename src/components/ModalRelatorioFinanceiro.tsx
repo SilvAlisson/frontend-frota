@@ -90,7 +90,8 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
       if (a.veiculoId && veiculoStats[a.veiculoId]) {
         veiculoStats[a.veiculoId].custoComb += Number(a.custoTotal);
 
-        const litros = a.itens.reduce((acc, item) =>
+        // [CORREÇÃO AQUI] Adicionado (a.itens || []) para evitar erro se itens for undefined
+        const litros = (a.itens || []).reduce((acc, item) =>
           item.produto.tipo === 'COMBUSTIVEL' ? acc + Number(item.quantidade) : acc, 0);
 
         veiculoStats[a.veiculoId].litros += litros;

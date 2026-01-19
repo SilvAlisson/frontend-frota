@@ -1,11 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
+import { useAuth } from '../contexts/AuthContext'; // Importe o Auth
 
 // --- Tipagem (Baseada no seu Prisma Schema) ---
 export interface Jornada {
     id: string;
-    dataInicio: string; // Vem como string ISO do backend
+    dataInicio: string;
     kmInicio: number;
     veiculo: {
         id: string;
@@ -26,7 +27,7 @@ interface IniciarJornadaParams {
 }
 
 interface FinalizarJornadaParams {
-    id: string; // ID da jornada
+    id: string;
     kmFim: number;
     observacoes?: string;
     fotoFimUrl?: string;
@@ -36,12 +37,23 @@ interface FinalizarJornadaParams {
 
 // 1. Listar Jornadas Abertas (GET)
 export function useJornadasAbertas() {
+    const { user } = useAuth(); // Pegamos o usuário
+
     return useQuery({
-        queryKey: ['jornadas-abertas'],
+        // Adicionamos o role na chave para forçar atualização se o usuário mudar
+        queryKey: ['jornadas-abertas', user?.role],
+
         queryFn: async () => {
-            const response = await api.get<Jornada[]>('/jornadas/abertas');
+            // ✅ SELEÇÃO DE ROTA INTELIGENTE
+            // Operador vê apenas as suas. Admin/Gestor vê todas.
+            const endpoint = user?.role === 'OPERADOR'
+                ? '/jornadas/minhas-abertas-operador'
+                : '/jornadas/abertas';
+
+            const response = await api.get<Jornada[]>(endpoint);
             return response.data;
         },
+        enabled: !!user, // Só busca se estiver logado
     });
 }
 
@@ -56,13 +68,10 @@ export function useIniciarJornada() {
         },
         onSuccess: () => {
             toast.success('Jornada iniciada com sucesso!');
-            // Mágica: Marca a lista como "velha" para recarregar automaticamente
             queryClient.invalidateQueries({ queryKey: ['jornadas-abertas'] });
-            // Se tiver um hook de 'historico', invalida também
-            queryClient.invalidateQueries({ queryKey: ['historico-jornadas'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard-data'] }); // Atualiza o painel principal
         },
         onError: (error: any) => {
-            // Pega a mensagem de erro tratada do backend (ex: "Jornada Dupla")
             const msg = error.response?.data?.error || 'Erro ao iniciar jornada';
             toast.error(msg);
         },
@@ -81,7 +90,7 @@ export function useFinalizarJornada() {
         onSuccess: () => {
             toast.success('Jornada finalizada!');
             queryClient.invalidateQueries({ queryKey: ['jornadas-abertas'] });
-            queryClient.invalidateQueries({ queryKey: ['historico-jornadas'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
         },
         onError: (error: any) => {
             const msg = error.response?.data?.error || 'Erro ao finalizar jornada';

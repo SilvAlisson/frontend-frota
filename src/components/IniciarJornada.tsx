@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { parseDecimal, formatKmVisual } from '../utils';
 import { toast } from 'sonner';
+import { Gauge } from 'lucide-react'; // Ícone para o KM
 import type { User, Veiculo, Jornada } from '../types';
 
 interface IniciarJornadaProps {
@@ -14,7 +15,6 @@ interface IniciarJornadaProps {
   jornadasAtivas: Jornada[];
 }
 
-// [PADRONIZAÇÃO] Estilo alinhado com Input.tsx e outros formulários (h-11, rounded-input, border-border)
 const selectStyle = "w-full h-11 px-3 bg-white border border-border rounded-input text-sm text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer font-medium disabled:bg-gray-50 placeholder:text-gray-400 shadow-sm";
 const labelStyle = "block mb-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider ml-1";
 
@@ -35,6 +35,13 @@ export function IniciarJornada({
   const [modalAberto, setModalAberto] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
 
+  // ✅ [UX] Calcula o último KM do veículo selecionado para referência visual
+  const ultimoKmReferencia = useMemo(() => {
+    if (!veiculoId) return 0;
+    const v = veiculos.find(veic => veic.id === veiculoId);
+    return v?.ultimoKm || 0;
+  }, [veiculoId, veiculos]);
+
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setKmInicio(formatKmVisual(e.target.value));
   };
@@ -45,7 +52,7 @@ export function IniciarJornada({
 
     if (!veiculoIdSelecionado) return;
 
-    // Busca se existe jornada ativa para este veículo (de QUALQUER motorista)
+    // Busca se existe jornada ativa para este veículo
     const jornadaExistente = jornadasAtivas.find(j => j.veiculo?.id === veiculoIdSelecionado);
 
     if (jornadaExistente) {
@@ -72,7 +79,12 @@ export function IniciarJornada({
       return;
     }
 
-    // --- LÓGICA DE CONFIRMAÇÃO DE VEÍCULO EM USO ---
+    // ✅ [UX] Validação de coerência: Avisa se o KM inserido for MENOR que o anterior
+    if (ultimoKmReferencia > 0 && kmInicioFloat < ultimoKmReferencia) {
+      // Não bloqueamos (pois o painel pode ter sido trocado), mas avisamos forte.
+      toast.warning(`Atenção: O KM informado (${kmInicioFloat}) é MENOR que o último registrado (${ultimoKmReferencia}). Verifique o painel.`);
+    }
+
     const jornadaConflitante = jornadasAtivas.find(j => j.veiculo?.id === veiculoId);
 
     if (jornadaConflitante) {
@@ -88,7 +100,6 @@ export function IniciarJornada({
       }
     }
 
-    // Preparar para Modal de Foto
     const dadosForm = {
       veiculoId,
       operadorId: operadorLogadoId,
@@ -104,8 +115,6 @@ export function IniciarJornada({
   const handleModalSuccess = (novaJornada: any) => {
     toast.success('Jornada iniciada com sucesso! Boa viagem.');
     onJornadaIniciada(novaJornada);
-
-    // Reset
     setModalAberto(false);
     setFormDataParaModal(null);
     setVeiculoId('');
@@ -124,9 +133,7 @@ export function IniciarJornada({
               <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
             </svg>
           </div>
-          <h3 className="text-xl font-bold text-gray-900">
-            Iniciar Jornada
-          </h3>
+          <h3 className="text-xl font-bold text-gray-900">Iniciar Jornada</h3>
           <p className="text-sm text-gray-500 mt-1 px-4 leading-relaxed">
             Identifique o veículo e o responsável para liberar a saída.
           </p>
@@ -154,12 +161,8 @@ export function IniciarJornada({
             </div>
           </div>
 
-          {/* Aviso de Indisponibilidade VISUAL */}
           {avisoVeiculo && (
             <div className="mt-3 flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium animate-in slide-in-from-top-1">
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-5 h-5 flex-shrink-0 text-amber-500">
-                <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495ZM10 5a.75.75 0 0 1 .75.75v3.5a.75.75 0 0 1-1.5 0v-3.5A.75.75 0 0 1 10 5Zm0 9a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-              </svg>
               <div className="flex-1">
                 <p className="font-bold mb-0.5">Veículo em uso</p>
                 {avisoVeiculo.replace('ATENÇÃO: ', '')}
@@ -178,7 +181,7 @@ export function IniciarJornada({
               onChange={(e) => setEncarregadoId(e.target.value)}
               disabled={loading}
             >
-              <option value="">Selecione o Encarregado do dia...</option>
+              <option value="">Selecione o Encarregado...</option>
               {usuarios
                 .filter(u => u.role === 'ENCARREGADO' || u.role === 'ADMIN')
                 .map(u => (
@@ -187,30 +190,42 @@ export function IniciarJornada({
                   </option>
                 ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 group-hover:text-primary transition-colors">
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
             </div>
           </div>
         </div>
 
-        {/* KM Inicial */}
+        {/* KM Inicial (Com Feedback Visual do Último KM) */}
         <div>
-          <Input
-            label="KM Inicial (Painel)"
-            type="text"
-            inputMode="numeric"
-            placeholder="Ex: 50.420"
-            value={kmInicio}
-            onChange={handleKmChange}
-            disabled={loading}
-            className="text-lg tracking-wide font-medium"
-          />
+          <div className="relative">
+            <Input
+              label="KM Inicial (Painel)"
+              type="text"
+              inputMode="numeric"
+              placeholder={ultimoKmReferencia > 0 ? `Ref: ${ultimoKmReferencia}` : "Ex: 50.420"}
+              value={kmInicio}
+              onChange={handleKmChange}
+              disabled={loading}
+              className="text-lg tracking-wide font-medium pr-10"
+            />
+            <div className="pointer-events-none absolute bottom-3 right-0 flex items-center px-3 text-gray-400">
+              <Gauge className="w-5 h-5" />
+            </div>
+          </div>
+
+          {/* ✅ FEEDBACK VISUAL DO ÚLTIMO KM (AQUI ESTÁ A MÁGICA) */}
+          {ultimoKmReferencia > 0 && (
+            <p className="text-[10px] text-primary font-bold mt-1.5 flex items-center gap-1 bg-primary/5 p-1 rounded w-fit px-2 ml-1 animate-in fade-in slide-in-from-left-2">
+              <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
+              Anterior: {ultimoKmReferencia.toLocaleString()} KM
+            </p>
+          )}
         </div>
 
         <Button
           type="submit"
           variant="primary"
-          // [PADRONIZAÇÃO] shadow-lg shadow-primary/20
           className="w-full py-3.5 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
           isLoading={loading}
           disabled={loading || !veiculoId || !encarregadoId || !kmInicio}

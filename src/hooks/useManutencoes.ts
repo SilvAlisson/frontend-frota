@@ -1,9 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
+import { useAuth } from '../contexts/AuthContext';
 
 export interface ManutencaoItem {
-    produtoId: string; // Peça ou Serviço
+    produtoId: string;
     quantidade: number;
     valorPorUnidade: number;
 }
@@ -13,7 +14,7 @@ export interface CreateManutencaoDTO {
     fornecedorId: string;
     tipo: 'PREVENTIVA' | 'CORRETIVA';
     kmAtual: number;
-    data: string; // ISO Date
+    data: string;
     observacoes?: string;
     fotoComprovanteUrl?: string;
     itens: ManutencaoItem[];
@@ -26,8 +27,11 @@ interface FiltrosManutencao {
 
 // --- LISTAR ---
 export function useManutencoes(filtros?: FiltrosManutencao) {
+    const { user } = useAuth();
+
     return useQuery({
-        queryKey: ['manutencoes', filtros],
+        queryKey: ['manutencoes', filtros, user?.role],
+
         queryFn: async () => {
             const params = new URLSearchParams();
             if (filtros?.veiculoId) params.append('veiculoId', filtros.veiculoId);
@@ -36,6 +40,7 @@ export function useManutencoes(filtros?: FiltrosManutencao) {
             const { data } = await api.get(`/ordens-servico/recentes?${params.toString()}`);
             return data;
         },
+        enabled: !!user, // Previne chamadas sem autenticação
     });
 }
 
@@ -50,14 +55,8 @@ export function useRegistrarManutencao() {
         },
         onSuccess: () => {
             toast.success('OS de Manutenção aberta!');
-
-            // Atualiza a lista de manutenções
             queryClient.invalidateQueries({ queryKey: ['manutencoes'] });
-
-            // Atualiza a lista de veículos (pois o status muda para EM_MANUTENCAO)
             queryClient.invalidateQueries({ queryKey: ['veiculos'] });
-
-            // Atualiza dashboard se houver KPIs lá
             queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
         },
         onError: (error: any) => {

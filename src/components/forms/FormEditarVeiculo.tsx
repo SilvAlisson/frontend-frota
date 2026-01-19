@@ -6,17 +6,15 @@ import { api } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { toast } from 'sonner';
-import type { Veiculo } from '../../types';
+// Importando as funções utilitárias que criamos hoje
+import { formatKmVisual, parseDecimal } from '../../utils';
+import { Wrench, AlertTriangle, Gauge } from 'lucide-react'; // Ícones
 
-// --- CONSTANTES ---
 const tiposDeVeiculo = ["POLIGUINDASTE", "VACUO", "MUNCK", "UTILITARIO", "LEVE", "OUTRO"] as const;
-
-// [CORREÇÃO CRÍTICA] A lista deve ser IDÊNTICA ao enum do Backend (Schema Zod e Prisma)
 const tiposDeCombustivel = ["DIESEL_S10", "GASOLINA_COMUM", "ETANOL", "GNV"] as const;
-
 const statusVeiculo = ["ATIVO", "EM_MANUTENCAO", "INATIVO"] as const;
 
-// --- SCHEMA ---
+// --- SCHEMA ATUALIZADO ---
 const veiculoSchema = z.object({
   placa: z.string({ error: "Placa obrigatória" })
     .length(7, { message: "Placa deve ter 7 caracteres" })
@@ -30,21 +28,17 @@ const veiculoSchema = z.object({
     .max(new Date().getFullYear() + 1, "Ano não pode ser futuro"),
 
   tipoVeiculo: z.enum(tiposDeVeiculo).nullable().optional(),
-
-  // [CORREÇÃO] Enum estrito para evitar erro 400 no backend
   tipoCombustivel: z.enum(tiposDeCombustivel).default('DIESEL_S10'),
-
   capacidadeTanque: z.coerce.number().positive("Deve ser maior que 0").optional().nullable(),
-
-  // [REMOVIDO] mediaEstimada removida pois o Backend não salva este campo na rota PUT
-
   status: z.enum(statusVeiculo).default('ATIVO'),
+
+  // ✅ NOVO CAMPO: Edição Manual do Odômetro (String para máscara)
+  ultimoKm: z.string().min(1, "KM é obrigatório"),
 
   vencimentoCiv: z.string().optional().or(z.literal('')),
   vencimentoCipp: z.string().optional().or(z.literal('')),
 });
 
-// Tipagem Segura
 type VeiculoFormInput = z.input<typeof veiculoSchema>;
 type VeiculoFormOutput = z.output<typeof veiculoSchema>;
 
@@ -61,10 +55,10 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
     register,
     handleSubmit,
     reset,
+    setValue,
     formState: { errors, isSubmitting }
-  } = useForm<VeiculoFormInput, any, VeiculoFormOutput>({
+  } = useForm<VeiculoFormInput, any, VeiculoFormOutput>({ // ✅ CORREÇÃO: Adicionado o 3º genérico (Output)
     resolver: zodResolver(veiculoSchema),
-    defaultValues: { status: 'ATIVO' },
     mode: 'onBlur'
   });
 
@@ -74,15 +68,10 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
     const fetchVeiculo = async () => {
       setLoadingData(true);
       try {
-        const { data: veiculo } = await api.get<Veiculo>(`/veiculos/${veiculoId}`);
+        const { data: veiculo } = await api.get(`/veiculos/${veiculoId}`);
 
-        // Tratamento seguro para Enums (caso o banco tenha valor antigo ou fora da lista)
         const tipoVeiculoSafe = tiposDeVeiculo.includes(veiculo.tipoVeiculo as any) ? veiculo.tipoVeiculo : 'OUTRO';
-
-        // [CORREÇÃO] Fallback seguro se o banco tiver valor antigo incompatível
-        const tipoCombustivelSafe = tiposDeCombustivel.includes(veiculo.tipoCombustivel as any)
-          ? veiculo.tipoCombustivel
-          : 'DIESEL_S10';
+        const tipoCombustivelSafe = tiposDeCombustivel.includes(veiculo.tipoCombustivel as any) ? veiculo.tipoCombustivel : 'DIESEL_S10';
 
         reset({
           placa: veiculo.placa,
@@ -93,6 +82,10 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
           tipoCombustivel: (tipoCombustivelSafe as any),
           capacidadeTanque: veiculo.capacidadeTanque || 0,
           status: veiculo.status || 'ATIVO',
+
+          // ✅ Formata o KM vindo do banco (ex: 325178 -> 325.178)
+          ultimoKm: formatKmVisual(veiculo.ultimoKm),
+
           vencimentoCiv: veiculo.vencimentoCiv ? new Date(veiculo.vencimentoCiv).toISOString().split('T')[0] : '',
           vencimentoCipp: veiculo.vencimentoCipp ? new Date(veiculo.vencimentoCipp).toISOString().split('T')[0] : ''
         });
@@ -107,6 +100,11 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
     fetchVeiculo();
   }, [veiculoId, reset, onCancelar]);
 
+  // Handler para formatar KM enquanto digita
+  const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValue("ultimoKm", formatKmVisual(e.target.value));
+  };
+
   // --- SUBMISSÃO ---
   const onSubmit = async (data: VeiculoFormOutput) => {
     const formatarDataIsoSegura = (dateStr: string | null | undefined) => {
@@ -119,17 +117,18 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
       vencimentoCiv: formatarDataIsoSegura(data.vencimentoCiv),
       vencimentoCipp: formatarDataIsoSegura(data.vencimentoCipp),
       capacidadeTanque: data.capacidadeTanque || null,
-      tipoVeiculo: data.tipoVeiculo || null
-      // mediaEstimada removida do payload
+      tipoVeiculo: data.tipoVeiculo || null,
+
+      // ✅ Converte de volta para número puro antes de salvar
+      ultimoKm: parseDecimal(data.ultimoKm)
     };
 
     try {
       await api.put(`/veiculos/${veiculoId}`, payload);
-      toast.success('Veículo atualizado!');
+      toast.success('Veículo e Odômetro atualizados!');
       onSuccess();
     } catch (e: any) {
       console.error(e);
-      // Mensagem de erro mais detalhada caso venha do Zod Backend
       const msg = e.response?.data?.error || 'Falha ao salvar as alterações.';
       toast.error(msg);
     }
@@ -149,20 +148,20 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-border overflow-hidden">
+    <div className="bg-white rounded-xl shadow-lg border border-border overflow-hidden flex flex-col max-h-[90vh]">
 
       {/* HEADER */}
-      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center">
+      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
         <div>
           <h3 className="text-lg font-bold text-gray-900">Editar Veículo</h3>
           <p className="text-xs text-gray-500">Atualize especificações e status.</p>
         </div>
         <div className="p-2 bg-white rounded-lg border border-border shadow-sm text-primary">
-          <span className="text-xl">🚛</span>
+          <Wrench className="w-5 h-5" />
         </div>
       </div>
 
-      <form className="p-6 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+      <form className="p-6 space-y-6 overflow-y-auto custom-scrollbar flex-1" onSubmit={handleSubmit(onSubmit)}>
 
         {/* IDENTIFICAÇÃO */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -215,13 +214,42 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
           </div>
         </div>
 
+        {/* --- ÁREA DE CORREÇÃO DE ODÔMETRO (NOVO) --- */}
+        <div className="bg-amber-50 p-5 rounded-xl border border-amber-200 shadow-inner">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="bg-amber-100 p-1.5 rounded-lg">
+              <AlertTriangle className="w-4 h-4 text-amber-600" />
+            </div>
+            <label className="text-xs font-bold text-amber-800 uppercase tracking-wider">
+              Correção Manual de Odômetro
+            </label>
+          </div>
+
+          <div className="relative">
+            <Input
+              {...register('ultimoKm')}
+              onChange={(e) => { register('ultimoKm').onChange(e); handleKmChange(e); }}
+              className="bg-white border-amber-300 focus:border-amber-500 focus:ring-amber-500/20 font-mono text-xl font-black text-gray-800 tracking-wider h-12 pr-10"
+              placeholder="0"
+              disabled={isSubmitting}
+              error={errors.ultimoKm?.message}
+            />
+            <Gauge className="absolute right-3 top-3.5 w-5 h-5 text-amber-400 pointer-events-none" />
+          </div>
+
+          <p className="text-[10px] text-amber-700 mt-2 leading-relaxed opacity-90 pl-1 border-l-2 border-amber-300">
+            ⚠️ <strong>Atenção:</strong> Altere este valor para corrigir erros de digitação (ex: 300.000 vs 30.000).
+            Isso redefinirá o ponto de partida para os próximos lançamentos deste veículo.
+          </p>
+        </div>
+        {/* ----------------------------------------------- */}
+
         {/* DADOS TÉCNICOS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
             <label className={labelStyle}>Combustível</label>
             <div className="relative">
               <select className={selectStyle} {...register('tipoCombustivel')} disabled={isSubmitting}>
-                {/* [CORREÇÃO] Labels amigáveis para o usuário */}
                 <option value="DIESEL_S10">Diesel S10</option>
                 <option value="GASOLINA_COMUM">Gasolina Comum</option>
                 <option value="ETANOL">Etanol</option>
@@ -281,10 +309,10 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
         </div>
 
         {/* FOOTER */}
-        <div className="flex gap-3 pt-4 border-t border-border">
+        <div className="flex gap-3 pt-4 border-t border-border mt-auto">
           <Button
             type="button"
-            variant="secondary"
+            variant="ghost"
             className="flex-1"
             onClick={onCancelar}
             disabled={isSubmitting}

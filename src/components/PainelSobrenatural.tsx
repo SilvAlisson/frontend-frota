@@ -19,7 +19,9 @@ export function PainelSobrenatural({ jornadas }: PainelSobrenaturalProps) {
 
         // Agrupa por "Invocador" (O Motorista original da jornada)
         const rankingInvocadores = jornadasFantasmas.reduce((acc, j) => {
-            const nome = j.operador.nome;
+            // [CORREÇÃO] Fallback temático caso o operador tenha sido deletado
+            const nome = j.operador?.nome || 'Invocador Oculto';
+
             if (!acc[nome]) acc[nome] = { count: 0, km: 0 };
             acc[nome].count += 1;
             acc[nome].km += ((j.kmFim || 0) - j.kmInicio);
@@ -86,11 +88,11 @@ export function PainelSobrenatural({ jornadas }: PainelSobrenaturalProps) {
                                 <div key={invocador.nome} className="flex items-center justify-between p-3 rounded-lg bg-gradient-to-r from-purple-900/40 to-transparent border border-purple-500/10 hover:border-purple-500/30 transition-all">
                                     <div className="flex items-center gap-3">
                                         <div className={`
-                      w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-lg
-                      ${index === 0 ? 'bg-yellow-400 text-yellow-900 ring-2 ring-yellow-400/50' :
+                                            w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shadow-lg
+                                            ${index === 0 ? 'bg-yellow-400 text-yellow-900 ring-2 ring-yellow-400/50' :
                                                 index === 1 ? 'bg-gray-300 text-gray-800' :
                                                     'bg-orange-700 text-orange-100'}
-                    `}>
+                                        `}>
                                             {index + 1}º
                                         </div>
                                         <span className="font-medium text-purple-50">{invocador.nome}</span>
@@ -114,7 +116,8 @@ export function PainelSobrenatural({ jornadas }: PainelSobrenaturalProps) {
                                 </p>
                                 <div className="mt-4 flex items-center gap-3 text-sm text-purple-200">
                                     <span className="bg-purple-500/20 px-2 py-1 rounded text-xs font-mono border border-purple-500/30">
-                                        {stats.ultimoFantasma.veiculo.placa}
+                                        {/* [CORREÇÃO] Fallback seguro para o veículo */}
+                                        {stats.ultimoFantasma.veiculo?.placa || 'Carruagem Fantasma'}
                                     </span>
                                     <span>
                                         foi assumido em {new Date(stats.ultimoFantasma.dataInicio).toLocaleDateString()}

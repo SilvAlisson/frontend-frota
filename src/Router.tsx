@@ -18,12 +18,13 @@ import { GestaoUsuarios } from './components/GestaoUsuarios';
 import { GestaoProdutos } from './components/GestaoProdutos';
 import { GestaoFornecedores } from './components/GestaoFornecedores';
 import { GestaoCargos } from './components/GestaoCargos';
+import { GestaoDocumentos } from './components/GestaoDocumentos'; // <--- NOVO IMPORT
 import { RankingOperadores } from './components/RankingOperadores';
 import { HistoricoManutencoes } from './components/HistoricoManutencoes';
 import { HistoricoAbastecimentos } from './components/HistoricoAbastecimentos';
 import { HistoricoJornadas } from './components/HistoricoJornadas';
 import { FormRegistrarManutencao } from './components/forms/FormRegistrarManutencao';
-import { RegistrarAbastecimento } from './components/RegistrarAbastecimento';
+import { FormRegistrarAbastecimento } from './components/forms/FormRegistrarAbastecimento';
 import { FormPlanoManutencao } from './components/forms/FormPlanoManutencao';
 
 const LoadingScreen = () => (
@@ -169,12 +170,12 @@ export function Router() {
         <Route path="abastecimentos">
           <Route index element={<HistoricoAbastecimentos userRole={user?.role || ''} veiculos={veiculosSafe} />} />
           <Route path="novo" element={
-            <RegistrarAbastecimento
+            <FormRegistrarAbastecimento
               usuarios={[]}
               veiculos={veiculosSafe}
               produtos={[]}
               fornecedores={[]}
-              onClose={() => navigate('/admin/abastecimentos')}
+              onCancelar={() => navigate('/admin/abastecimentos')}
               onSuccess={() => navigate('/admin/abastecimentos')}
             />
           } />
@@ -196,7 +197,10 @@ export function Router() {
         <Route path="produtos" element={<GestaoProdutos />} />
         <Route path="fornecedores" element={<GestaoFornecedores />} />
 
-        {/*  Planos Preventivos */}
+        {/* Documentos Legais */}
+        <Route path="documentos" element={<GestaoDocumentos />} />
+
+        {/* Planos Preventivos */}
         <Route path="planos" element={<FormPlanoManutencao veiculos={veiculosSafe} />} />
 
         <Route path="cargos" element={<GestaoCargos />} />

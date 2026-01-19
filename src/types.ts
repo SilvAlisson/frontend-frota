@@ -1,5 +1,8 @@
 export type UserRole = 'ADMIN' | 'ENCARREGADO' | 'OPERADOR' | 'RH' | 'COORDENADOR';
 
+// [OPCIONAL] Tipagem forte para CNH evita erros de digitação ("B" vs "b")
+export type CategoriaCNH = 'A' | 'B' | 'C' | 'D' | 'E' | 'AB' | 'AC' | 'AD' | 'AE';
+
 export interface User {
   id: string;
   nome: string;
@@ -12,7 +15,7 @@ export interface User {
 
   // RH Fields
   cnhNumero?: string | null;
-  cnhCategoria?: string | null;
+  cnhCategoria?: CategoriaCNH | string | null; // Aceita string para compatibilidade, mas prefira o tipo
   cnhValidade?: string | null;
   dataAdmissao?: string | null;
 }
@@ -53,6 +56,14 @@ export interface Fornecedor {
   nome: string;
   cnpj: string | null;
   tipo: TipoFornecedor;
+
+  // NOVO: Relacionamento para filtragem inteligente
+  // Permite saber quais produtos este fornecedor oferece
+  produtosOferecidos?: {
+    id: string;
+    nome: string;
+    tipo?: TipoProduto;
+  }[];
 }
 
 // =========================================
@@ -70,13 +81,14 @@ export interface Jornada {
   fotoFimUrl?: string | null;
   observacoes?: string | null;
 
-  // Relacionamentos
-  veiculo: {
+  // [CORREÇÃO] Relacionamentos opcionais (?)
+  // Evita crash se a query não incluir o join
+  veiculo?: {
     id: string;
     placa: string;
     modelo: string;
   };
-  operador: {
+  operador?: {
     id: string;
     nome: string;
   };
@@ -112,23 +124,24 @@ export interface Abastecimento {
   observacoes?: string | null;
   fotoNotaFiscalUrl: string | null;
 
-  veiculo: {
+  // Relacionamentos opcionais
+  veiculo?: {
     id: string;
     placa: string;
     modelo: string;
   };
-  operador: {
+  operador?: {
     nome: string;
   };
-  fornecedor: {
+  fornecedor?: {
     nome: string;
   };
-  itens: ItemAbastecimento[];
+  itens?: ItemAbastecimento[];
 }
 
 // --- MANUTENÇÃO (Ordem de Serviço) ---
 export type TipoManutencao = 'PREVENTIVA' | 'CORRETIVA' | 'LAVAGEM';
-export type StatusOS = 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA'; // NOVO: Workflow de OS
+export type StatusOS = 'PENDENTE' | 'EM_ANDAMENTO' | 'CONCLUIDA' | 'CANCELADA';
 
 export interface ItemManutencao {
   id?: string;
@@ -138,7 +151,7 @@ export interface ItemManutencao {
   produto: {
     id: string;
     nome: string;
-    tipo?: string;
+    tipo?: TipoProduto; // [CORREÇÃO] Uso do Enum aqui
   };
 }
 
@@ -160,24 +173,49 @@ export interface OrdemServico {
   fotoComprovanteUrl?: string | null;
 
   // Veículo pode ser null (ex: conserto de peça avulsa)
-  veiculo: {
+  // E opcional (?) caso não venha no join
+  veiculo?: {
     id: string;
     placa: string;
     modelo: string;
   } | null;
 
-  encarregado: {
+  encarregado?: {
     nome: string;
   };
-  fornecedor: {
+  fornecedor?: {
     nome: string;
   };
-  itens: ItemManutencao[];
+  itens?: ItemManutencao[];
 }
 
 // =========================================
 // GESTÃO E RELATÓRIOS
 // =========================================
+
+export interface DocumentoLegal {
+  id: string;
+  titulo: string;
+  descricao?: string | null;
+  arquivoUrl: string;
+  categoria: string;
+  tipoVeiculo?: string | null;
+  veiculoId?: string | null; // <--- NOVO: ID para documentos específicos de placa
+  dataValidade?: string | null;
+  createdAt?: string;
+  updatedAt: string;
+}
+
+// DTO para Criação (Usado nos Hooks)
+export interface CreateDocumentoDTO {
+  titulo: string;
+  descricao?: string;
+  arquivoUrl: string;
+  categoria: string;
+  dataValidade?: Date;
+  tipoVeiculo?: string;
+  veiculoId?: string; // <--- NOVO: ID para envio no cadastro
+}
 
 export type TipoIntervaloManutencao = 'KM' | 'TEMPO';
 
@@ -186,10 +224,13 @@ export interface PlanoManutencao {
   descricao: string;
   tipoIntervalo: TipoIntervaloManutencao;
   valorIntervalo: number;
+
   kmProximaManutencao?: number | null;
   dataProximaManutencao?: string | null;
-  veiculo: {
-    id: string;
+
+  veiculoId: string;
+
+  veiculo?: {
     placa: string;
     modelo: string;
   };

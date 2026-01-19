@@ -1,139 +1,159 @@
 @import "tailwindcss";
 
-/* 1. IMPORTAÇÃO DE TIPOGRAFIA */
-/* Inter: Interface Geral (Legibilidade) */
-/* JetBrains Mono: Dados Críticos (Placas, Valores, Datas) */
+/* 1. TIPOGRAFIA */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @theme {
-  /* --- 2. PALETA OFICIAL KLIN (Identidade Visual) --- */
-
-  /* Cores Base da Marca (Hex Codes Oficiais) */
+  /* --- PALETA KLIN (Identidade Visual) --- */
   --color-klin-primary: #126A91;
-  /* Azul Petróleo (CTA, Destaques) */
+  /* Azul Petróleo */
   --color-klin-dark: #0E4A5C;
-  /* Azul Escuro (Menu, Footer, Hover) */
+  /* Azul Profundo */
   --color-klin-medium: #155A76;
-  /* Azul Médio (Bordas, Elementos Secundários) */
+  /* Azul Médio */
   --color-klin-green: #378F81;
-  /* Verde Institucional (Sustentabilidade/Sucesso) */
+  /* Verde Sucesso */
+  --color-klin-surface: #F2F4F3;
+  /* Branco Gelo */
 
-  /* Mapeamento Semântico (Como o Tailwind vai entender) */
+  /* --- SISTEMA SEMÂNTICO (Mapeamento) --- */
+  /* Principal */
   --color-primary: var(--color-klin-primary);
-  --color-primary-foreground: #ffffff;
+  --color-primary-foreground: #FFFFFF;
   --color-primary-hover: var(--color-klin-dark);
+  --color-primary-soft: #E0F2F7;
 
-  --color-secondary: var(--color-klin-dark);
-  --color-tertiary: var(--color-klin-medium);
+  /* Secundário */
+  --color-secondary: #FFFFFF;
+  --color-secondary-foreground: var(--color-klin-dark);
+  --color-secondary-hover: #F8FAFC;
 
-  /* Cores de Status (Alinhadas à Marca) */
-  --color-status-success: var(--color-klin-green);
-  /* Verde Klin para sucesso */
-  --color-status-warning: oklch(0.75 0.16 80);
-  /* Âmbar (Mantido para Alertas) */
-  --color-status-error: oklch(0.55 0.22 25);
-  /* Vermelho Técnico */
-  --color-status-neutral: #94A3B8;
-  /* Cinza Neutro */
+  /* Status */
+  --color-success: var(--color-klin-green);
+  --color-success-foreground: #FFFFFF;
 
-  /* Estrutura Visual (Ergonomia Visual) */
-  --color-background: #F2F4F3;
-  /* Branco Gelo (Oficial) - Menos cansativo que branco puro */
+  --color-error: #EF4444;
+  --color-error-foreground: #FFFFFF;
+
+  --color-warning: #F59E0B;
+  --color-warning-foreground: #FFFFFF;
+
+  /* Superfícies e Texto */
+  --color-background: var(--color-klin-surface);
   --color-surface: #FFFFFF;
-  /* Branco Puro (Apenas para Cards e Tabelas) */
-  --color-surface-dim: #E2E8F0;
-  /* Cinza claro para áreas desabilitadas */
-  --color-border: #D6DBD9;
-  /* Cinza divisório (Oficial) */
+  --color-surface-hover: #F9FAFB;
 
-  /* Tipografia */
+  --color-border: #E2E8F0;
+  --color-input: #E2E8F0;
+  --color-ring: var(--color-klin-primary);
+
+  /* Texto */
+  --color-text-main: #1E293B;
+  /* Slate-800 */
+  --color-text-secondary: #64748B;
+  /* Slate-500 */
+  --color-text-muted: #94A3B8;
+  /* Slate-400 */
+
+  /* Fontes */
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
-  /* Sombras "Clean Industrial" */
+  /* Raios de Borda */
+  --radius-lg: 0.75rem;
+  /* 12px */
+  --radius-md: 0.5rem;
+  /* 8px */
+  --radius-sm: 0.25rem;
+  /* 4px */
+
+  /* Sombras (Identidade Visual Klin) */
   --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
+  /* Sombra flutuante com tom azulado da marca - Toque Premium */
   --shadow-float: 0 10px 15px -3px rgb(14 74 92 / 0.15), 0 4px 6px -4px rgb(14 74 92 / 0.1);
-  /* Sombra azulada sutil */
-
-  /* Raios de Borda (Modernidade) */
-  --radius-card: 0.75rem;
-  /* 12px - Suave */
-  --radius-input: 0.5rem;
-  /* 8px */
-  --radius-button: 0.5rem;
-  /* 8px */
+  --shadow-button: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
-/* 3. UTILITÁRIOS CUSTOMIZADOS */
+/* --- 2. ESTILOS BASE E RESET --- */
+@layer base {
+  body {
+    @apply bg-background text-text-main antialiased font-sans;
+    /* Features da fonte Inter para visual técnico e legibilidade */
+    font-feature-settings: "cv02", "cv03", "cv04";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
 
-/* Painel de Vidro (Para Modais ou Menus Flutuantes) */
-@utility glass-panel {
-  @apply bg-white/90 backdrop-blur-md border border-white/20 shadow-lg;
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Foco Global Acessível */
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+
+  /* Cursores interativos */
+  button,
+  [role='button'],
+  select,
+  a {
+    cursor: pointer;
+  }
+
+  /* Scrollbar Personalizada (Identidade) */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #CBD5E1;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-klin-medium);
+    /* Hover na cor da marca */
+  }
 }
 
-/* Texto de Dados (Para Tabelas e Cards) */
-@utility text-data {
-  @apply font-mono tracking-tight text-slate-700 font-medium;
-}
+/* --- 3. UTILITÁRIOS VISUAIS --- */
+@layer utilities {
 
-/* Gradiente da Marca (Para detalhes sutis) */
-@utility bg-brand-gradient {
-  background-image: linear-gradient(135deg, var(--color-klin-dark) 0%, var(--color-klin-primary) 100%);
-}
+  /* Vidro Fosco */
+  .glass {
+    @apply bg-white/90 backdrop-blur-md border border-white/20 shadow-lg;
+  }
 
-/* --- 4. COMPORTAMENTO GLOBAL (UX) --- */
+  /* Texto Técnico (para placas, IDs, valores) */
+  .text-data {
+    @apply font-mono tracking-tight text-text-secondary font-medium;
+  }
 
-body {
-  background-color: var(--color-background);
-  color: #2E2E2E;
-  /* Cinza Técnico (Oficial) - Melhor contraste de leitura */
-  font-feature-settings: "cv02", "cv03", "cv04";
-  /* Recursos premium da Inter */
-  -webkit-font-smoothing: antialiased;
-}
+  /* Gradiente Oficial */
+  .bg-gradient-brand {
+    background-image: linear-gradient(135deg, var(--color-klin-dark), var(--color-klin-primary));
+  }
 
-html {
-  scroll-behavior: smooth;
-}
+  /* Animações Nativas */
+  .animate-enter {
+    animation: enter 0.3s ease-out;
+  }
 
-/* Interatividade */
-button,
-[type='button'],
-[type='submit'],
-[type='reset'],
-a,
-select,
-[role='button'] {
-  cursor: pointer;
-}
+  @keyframes enter {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
 
-/* Estados Desabilitados */
-button:disabled,
-input:disabled,
-select:disabled,
-textarea:disabled {
-  cursor: not-allowed;
-  opacity: 0.7;
-  background-color: var(--color-surface-dim);
-  border-color: var(--color-border);
-}
-
-/* Scrollbar Personalizada (Combinando com a Marca) */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--color-klin-medium);
-  /* Hover Azul Médio */
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }
