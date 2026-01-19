@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { FormCadastrarDocumento } from './forms/FormCadastrarDocumento';
 import { formatDateDisplay } from '../utils/dateUtils';
 import { Button } from './ui/Button';
-import { FileText, Wrench, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { FileText, Wrench, ShieldCheck, AlertTriangle, FileWarning } from 'lucide-react'; // [NOVO] FileWarning para AST
 
 interface GestaoDocumentosProps {
     veiculoId?: string; // Recebe o ID do veículo atual (opcional)
@@ -43,13 +43,16 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
 
     // Lógica visual de status (Licença Ambiental vs Outros)
     const getStatusInfo = (dataValidade?: string | null, categoria?: string) => {
-        // CASO ESPECIAL: Licença Ambiental
-        if (categoria === 'LICENCA_AMBIENTAL') {
-            return {
-                color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-                text: 'Vigente (Permanente)',
-                icon: <ShieldCheck className="w-3 h-3 mr-1" />
-            };
+        // CASO ESPECIAL: Licença Ambiental e AST (Consideradas vigentes se não tiverem validade)
+        if (categoria === 'LICENCA_AMBIENTAL' || categoria === 'AST') {
+            // Se tiver data, valida a data. Se não tiver, é permanente.
+            if (!dataValidade) {
+                return {
+                    color: 'bg-emerald-100 text-emerald-700 border-emerald-200',
+                    text: 'Vigente (Permanente)',
+                    icon: <ShieldCheck className="w-3 h-3 mr-1" />
+                };
+            }
         }
 
         if (!dataValidade) return { color: 'bg-gray-100 text-gray-600', text: 'Sem data', icon: null };
@@ -76,9 +79,10 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
         };
     };
 
-    // --- CATEGORIAS ATUALIZADAS ---
+    // --- CATEGORIAS ATUALIZADAS (Com AST) ---
     const categorias = [
         { id: 'TODOS', label: 'Todos' },
+        { id: 'AST', label: '⚠️ AST Segurança' }, // [NOVO] Adicionado com destaque
         { id: 'LICENCA_AMBIENTAL', label: 'Licença Amb.' },
         { id: 'ATRP', label: 'ATRP' },
         { id: 'CRLV', label: 'CRLV' },
@@ -123,7 +127,7 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
                                 className={`px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap ${filtroCategoria === cat.id
                                     ? 'bg-primary text-white shadow-md'
                                     : 'bg-white text-gray-500 border hover:bg-gray-50'
-                                    }`}
+                                    } ${cat.id === 'AST' && filtroCategoria !== 'AST' ? 'border-yellow-400 text-yellow-700 bg-yellow-50' : ''}`}
                             >
                                 {cat.label}
                             </button>
@@ -167,9 +171,10 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
                             {/* --- DOCUMENTOS PADRÃO (PDFs) --- */}
                             {documentos?.map(doc => {
                                 const status = getStatusInfo(doc.dataValidade, doc.categoria);
+                                const isAst = doc.categoria === 'AST';
 
                                 return (
-                                    <div key={doc.id} className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow relative group">
+                                    <div key={doc.id} className={`bg-white p-4 rounded-xl border shadow-sm hover:shadow-md transition-shadow relative group ${isAst ? 'border-yellow-200 bg-yellow-50/30' : 'border-gray-200'}`}>
 
                                         {/* Botão Deletar (Só para Admin/Gestor) */}
                                         {!somenteLeitura && (
@@ -183,15 +188,15 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
                                         )}
 
                                         <div className="flex items-start gap-3">
-                                            <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500 text-xl">
-                                                <FileText className="w-5 h-5" />
+                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center text-xl ${isAst ? 'bg-yellow-100 text-yellow-600' : 'bg-gray-50 text-gray-500'}`}>
+                                                {isAst ? <FileWarning className="w-5 h-5" /> : <FileText className="w-5 h-5" />}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <h4 className="font-bold text-gray-800 truncate" title={doc.titulo}>{doc.titulo}</h4>
                                                 <p className="text-xs text-gray-500 mb-2 truncate">{doc.descricao || 'Sem descrição'}</p>
 
                                                 <div className="flex flex-wrap gap-2">
-                                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-600">
+                                                    <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold ${isAst ? 'bg-yellow-200 text-yellow-800' : 'bg-gray-100 text-gray-600'}`}>
                                                         {doc.categoria.replace('_', ' ')}
                                                     </span>
 
