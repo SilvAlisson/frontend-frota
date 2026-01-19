@@ -6,7 +6,7 @@ import { useAuth } from '../contexts/AuthContext'; // Importe o Auth
 // --- Tipagem (Baseada no seu Prisma Schema) ---
 export interface Jornada {
     id: string;
-    dataInicio: string; 
+    dataInicio: string;
     kmInicio: number;
     veiculo: {
         id: string;
@@ -41,13 +41,13 @@ export function useJornadasAbertas() {
 
     return useQuery({
         // Adicionamos o role na chave para forçar atualização se o usuário mudar
-        queryKey: ['jornadas-abertas', user?.role], 
-        
+        queryKey: ['jornadas-abertas', user?.role],
+
         queryFn: async () => {
             // ✅ SELEÇÃO DE ROTA INTELIGENTE
             // Operador vê apenas as suas. Admin/Gestor vê todas.
-            const endpoint = user?.role === 'OPERADOR' 
-                ? '/jornadas/minhas-abertas-operador' 
+            const endpoint = user?.role === 'OPERADOR'
+                ? '/jornadas/minhas-abertas-operador'
                 : '/jornadas/abertas';
 
             const response = await api.get<Jornada[]>(endpoint);

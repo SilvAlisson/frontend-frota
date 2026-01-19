@@ -3,7 +3,7 @@ import { PainelAlertas } from './PainelAlertas';
 import { DashboardRelatorios } from './DashboardRelatorios';
 import { RankingOperadores } from './RankingOperadores';
 import { GestaoJornadas } from './GestaoJornadas';
-import { RegistrarAbastecimento } from './RegistrarAbastecimento';
+import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
 import { HistoricoAbastecimentos } from './HistoricoAbastecimentos';
 import { FormRegistrarManutencao } from './forms/FormRegistrarManutencao';
 import { HistoricoManutencoes } from './HistoricoManutencoes';
@@ -77,12 +77,12 @@ export function DashboardEncarregado({
             // 3. Importante: Passando userRole para permitir funcionalidades extras (se existirem)
             case 'hist_jornada': return <HistoricoJornadas veiculos={veiculos} userRole={user.role} />;
             case 'abastecimento': return (
-                <RegistrarAbastecimento
+                <FormRegistrarAbastecimento
                     usuarios={usuarios}
                     veiculos={veiculos}
                     produtos={produtos}
                     fornecedores={fornecedores}
-                    onClose={() => setAbaEncarregado('hist_abastecimento')}
+                    onCancelar={() => setAbaEncarregado('hist_abastecimento')}
                 />
             );
             case 'hist_abastecimento': return <HistoricoAbastecimentos userRole={user.role} veiculos={veiculos} />;

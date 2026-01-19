@@ -5,8 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 
 export interface AbastecimentoItem {
     produtoId: string;
-    quantidade: number; 
-    valorPorUnidade: number; 
+    quantidade: number;
+    valorPorUnidade: number;
 }
 
 export interface CreateAbastecimentoDTO {
@@ -34,8 +34,8 @@ export function useAbastecimentos(filtros?: FiltrosHistorico) {
 
     return useQuery({
         // Adiciona user.role para segregar cache de Admin vs Operador
-        queryKey: ['abastecimentos', filtros, user?.role], 
-        
+        queryKey: ['abastecimentos', filtros, user?.role],
+
         queryFn: async () => {
             const params = new URLSearchParams();
             if (filtros?.veiculoId) params.append('veiculoId', filtros.veiculoId);

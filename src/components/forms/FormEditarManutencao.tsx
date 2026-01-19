@@ -3,37 +3,42 @@ import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
+import { toast } from 'sonner';
+import { Trash2, Plus, AlertTriangle, Wrench, Truck, Gauge, Calendar, DollarSign, Check } from 'lucide-react'; // ✅ Check adicionado
+
+// --- DESIGN SYSTEM ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { toast } from 'sonner';
+import { Select } from '../ui/Select';
+import { Badge } from '../ui/Badge';
+
+// --- UTILS ---
 import { parseDecimal, formatKmVisual } from '../../utils';
 import type { Veiculo, Produto, Fornecedor } from '../../types';
 
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
-// --- SCHEMA ---
+// --- SCHEMA ZOD V4 ---
 const manutencaoSchema = z.object({
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
   alvo: z.enum(ALVOS_MANUTENCAO),
-  // Veículo e KM são strings no input (máscara), tratados no submit
-  veiculoId: z.string().optional().nullable(),
-  kmAtual: z.string().optional().nullable(),
-  numeroCA: z.string().optional(),
 
-  fornecedorId: z.string().min(1, "Selecione o fornecedor"),
+  veiculoId: z.string().nullish(),
+  kmAtual: z.string().nullish(),
+  numeroCA: z.string().nullish(),
+
+  fornecedorId: z.string().min(1, "Obrigatório"),
   data: z.string().min(1, "Data inválida"),
-  observacoes: z.string().optional(),
-  fotoComprovanteUrl: z.string().optional().nullable(),
+  observacoes: z.string().nullish(),
+  fotoComprovanteUrl: z.string().nullish(),
 
   itens: z.array(z.object({
     produtoId: z.string().min(1, "Selecione o item"),
-    // Coerce converte string do input para number
     quantidade: z.coerce.number().min(0.01, "Qtd inválida"),
     valorPorUnidade: z.coerce.number().min(0, "Valor inválido"),
   })).min(1, "Adicione pelo menos um item")
 }).superRefine((data, ctx) => {
-  // Validação Condicional
   if (data.alvo === 'VEICULO' && !data.veiculoId) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Selecione o veículo", path: ["veiculoId"] });
   }
@@ -42,7 +47,6 @@ const manutencaoSchema = z.object({
   }
 });
 
-// Tipagem Segura
 type ManutencaoFormInput = z.input<typeof manutencaoSchema>;
 type ManutencaoFormOutput = z.output<typeof manutencaoSchema>;
 
@@ -52,34 +56,25 @@ interface FormEditarManutencaoProps {
   produtos: Produto[];
   fornecedores: Fornecedor[];
   onSuccess: () => void;
-  onCancel: () => void;
+  onClose: () => void; // Padronizado com onClose
 }
 
 export function FormEditarManutencao({
-  osParaEditar, veiculos, produtos, fornecedores, onSuccess, onCancel
+  osParaEditar, veiculos, produtos, fornecedores, onSuccess, onClose
 }: FormEditarManutencaoProps) {
 
-  // Extração de CA (Lógica legada mantida)
+  // Lógica de CA existente
   const caMatch = osParaEditar.observacoes?.match(/\[CA: (.+?)\]/);
   const caExistente = caMatch ? caMatch[1] : '';
   const obsLimpa = osParaEditar.observacoes?.replace(/\[CA: .+?\] /, '') || '';
 
   const [abaAtiva, setAbaAtiva] = useState<TipoManutencao>(osParaEditar.tipo || 'CORRETIVA');
 
-  // Filtros Otimizados
-  const fornecedoresFiltrados = useMemo(() => fornecedores.filter(f => {
-    if (abaAtiva === 'CORRETIVA') return !['POSTO', 'LAVA_JATO'].includes(f.tipo);
-    return true;
-  }), [fornecedores, abaAtiva]);
-
-  const produtosManutencao = useMemo(() =>
-    produtos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)),
-    [produtos]);
-
+  // --- FORM ---
   const {
     register, control, handleSubmit, watch, setValue,
     formState: { errors, isSubmitting }
-  } = useForm<ManutencaoFormInput, any, ManutencaoFormOutput>({ // [CORREÇÃO: Tipagem]
+  } = useForm<ManutencaoFormInput, any, ManutencaoFormOutput>({
     resolver: zodResolver(manutencaoSchema),
     defaultValues: {
       tipo: osParaEditar.tipo,
@@ -96,26 +91,55 @@ export function FormEditarManutencao({
         quantidade: Number(i.quantidade),
         valorPorUnidade: Number(i.valorPorUnidade)
       }))
-    },
-    mode: 'onBlur' // [CORREÇÃO: UX]
+    }
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
 
   const alvoSelecionado = watch('alvo');
+  const fornecedorIdSelecionado = watch('fornecedorId');
   const itensWatch = useWatch({ control, name: 'itens' });
 
-  // Sincroniza Aba com Form
+  // Sincroniza Aba
   useEffect(() => { setValue('tipo', abaAtiva); }, [abaAtiva, setValue]);
 
-  const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue("kmAtual", formatKmVisual(e.target.value));
-  };
+  // --- FILTROS ---
+  const produtosManutencao = useMemo(() => {
+    let lista = produtos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo));
 
-  const totalGeral = itensWatch?.reduce((acc, item) =>
+    if (fornecedorIdSelecionado) {
+      const fornecedor = fornecedores.find(f => f.id === fornecedorIdSelecionado);
+      if (fornecedor?.produtosOferecidos?.length) {
+        const ids = fornecedor.produtosOferecidos.map(p => p.id);
+        lista = lista.filter(p => ids.includes(p.id));
+      }
+    }
+    return lista.sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [produtos, fornecedorIdSelecionado, fornecedores]);
+
+  const fornecedoresOpcoes = useMemo(() =>
+    fornecedores
+      .filter(f => abaAtiva === 'CORRETIVA' ? !['POSTO', 'LAVA_JATO'].includes(f.tipo) : true)
+      .map(f => ({ value: f.id, label: f.nome })),
+    [fornecedores, abaAtiva]
+  );
+
+  const veiculosOpcoes = useMemo(() =>
+    veiculos.map(v => ({ value: v.id, label: v.placa })),
+    [veiculos]
+  );
+
+  const produtosOpcoes = useMemo(() =>
+    produtosManutencao.map(p => ({ value: p.id, label: p.nome })),
+    [produtosManutencao]
+  );
+
+  // --- CÁLCULOS ---
+  const totalGeral = (itensWatch || []).reduce((acc, item) =>
     acc + ((Number(item?.quantidade) || 0) * (Number(item?.valorPorUnidade) || 0)), 0
-  ) || 0;
+  );
 
+  // --- SUBMIT ---
   const onSubmit = async (data: ManutencaoFormOutput) => {
     let obsFinal = data.observacoes || '';
     if (data.alvo === 'OUTROS' && data.numeroCA) {
@@ -124,10 +148,10 @@ export function FormEditarManutencao({
 
     const payload = {
       ...data,
-      // parseDecimal converte a string formatada "1.000" para number 1000
-      kmAtual: data.kmAtual ? parseDecimal(data.kmAtual) : null,
+      veiculoId: data.alvo === 'VEICULO' ? data.veiculoId : null,
+      kmAtual: (data.alvo === 'VEICULO' && data.kmAtual) ? parseDecimal(data.kmAtual) : null,
       observacoes: obsFinal,
-      data: new Date(data.data).toISOString(),
+      data: new Date(data.data).toISOString(), // Ajuste de fuso se necessário
     };
 
     try {
@@ -140,203 +164,220 @@ export function FormEditarManutencao({
     }
   };
 
-  // Estilos
-  const labelStyle = "block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1";
-  const selectStyle = "w-full h-10 px-3 bg-white border border-border rounded-input text-sm text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer placeholder:text-gray-400 disabled:bg-gray-50";
+  const isLocked = isSubmitting;
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-border overflow-hidden flex flex-col h-full max-h-[85vh]">
+    <div className="flex flex-col h-full bg-white">
 
       {/* HEADER */}
-      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
-        <div>
-          <h3 className="text-lg font-bold text-gray-900">Editar Manutenção</h3>
-          <p className="text-xs text-gray-500">Ajuste de peças, valores ou datas.</p>
+      <div className="px-6 pt-6 pb-2 border-b border-gray-100 shrink-0">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Editar Manutenção</h3>
+            <p className="text-xs text-gray-500">Ajuste os detalhes da Ordem de Serviço.</p>
+          </div>
+          <Badge variant={abaAtiva === 'PREVENTIVA' ? 'success' : 'warning'}>{abaAtiva}</Badge>
         </div>
-        <div className="w-10 h-10 bg-white rounded-lg border border-border flex items-center justify-center text-primary shadow-sm">
-          🔧
-        </div>
-      </div>
 
-      {/* TABS DE TIPO */}
-      <div className="flex border-b border-border shrink-0">
-        {['CORRETIVA', 'PREVENTIVA'].map(tipo => (
-          <button
-            key={tipo}
-            type="button"
-            onClick={() => setAbaAtiva(tipo as TipoManutencao)}
-            disabled={isSubmitting} // [CORREÇÃO] Bloqueio
-            className={`flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-all disabled:opacity-50 ${abaAtiva === tipo ? 'text-primary border-b-2 border-primary bg-primary/5' : 'text-gray-400 hover:text-gray-600 hover:bg-background'}`}
-          >
-            {tipo}
-          </button>
-        ))}
-      </div>
-
-      {/* FORMULÁRIO */}
-      <form onSubmit={handleSubmit(onSubmit)} className="flex-1 overflow-y-auto p-6 space-y-6">
-
-        {/* SELEÇÃO DE ALVO */}
-        <div className="bg-background p-1 rounded-lg flex border border-border">
-          {ALVOS_MANUTENCAO.map(alvo => (
+        {/* TABS DE TIPO */}
+        <div className="flex gap-2 mb-2">
+          {['CORRETIVA', 'PREVENTIVA'].map(tipo => (
             <button
-              key={alvo}
+              key={tipo}
               type="button"
-              onClick={() => setValue('alvo', alvo)}
-              disabled={isSubmitting} // [CORREÇÃO] Bloqueio
-              className={`flex-1 py-2 text-xs font-bold rounded-md transition-all shadow-sm disabled:opacity-50 ${alvoSelecionado === alvo ? 'bg-white text-gray-800 shadow' : 'bg-transparent text-gray-400 shadow-none'}`}
+              onClick={() => setAbaAtiva(tipo as TipoManutencao)}
+              disabled={isLocked}
+              className={`
+                flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all
+                ${abaAtiva === tipo
+                  ? 'bg-primary/10 text-primary border border-primary/20'
+                  : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}
+              `}
             >
-              {alvo === 'VEICULO' ? 'Veículo da Frota' : 'Outro Equipamento'}
+              {tipo}
             </button>
           ))}
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {alvoSelecionado === 'VEICULO' ? (
-            <>
-              <div>
-                <label className={labelStyle}>Veículo</label>
-                <div className="relative">
-                  <select {...register("veiculoId")} className={selectStyle} disabled={isSubmitting}>
-                    {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa}</option>)}
-                  </select>
-                  <div className="pointer-events-none absolute right-3 top-2.5 text-gray-400 text-xs">▼</div>
-                </div>
-                {errors.veiculoId && <span className="text-xs text-red-500 mt-1">{errors.veiculoId.message}</span>}
-              </div>
-              <div>
-                <Input
-                  label="KM no Momento"
-                  {...register("kmAtual")}
-                  onChange={(e) => { register("kmAtual").onChange(e); handleKmChange(e); }}
-                  error={errors.kmAtual?.message}
-                  disabled={isSubmitting}
+      <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
+        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 custom-scrollbar">
+
+          {/* 1. SELEÇÃO DE ALVO */}
+          <div className="flex gap-4">
+            {ALVOS_MANUTENCAO.map(alvo => (
+              <label key={alvo} className={`flex items-center gap-2 cursor-pointer p-3 border rounded-xl w-full transition-all ${alvoSelecionado === alvo ? 'border-primary bg-primary/5' : 'border-gray-200 hover:bg-gray-50'}`}>
+                <input
+                  type="radio"
+                  value={alvo}
+                  {...register('alvo')}
+                  className="accent-primary w-4 h-4"
+                  disabled={isLocked}
                 />
-              </div>
-            </>
-          ) : (
-            <div className="md:col-span-2">
-              <Input
-                label="Identificação (CA/Série)"
-                {...register("numeroCA")}
-                error={errors.numeroCA?.message}
-                disabled={isSubmitting}
-              />
-            </div>
-          )}
-
-          <div>
-            <label className={labelStyle}>Fornecedor</label>
-            <div className="relative">
-              <select {...register("fornecedorId")} className={selectStyle} disabled={isSubmitting}>
-                {fornecedoresFiltrados.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-              </select>
-              <div className="pointer-events-none absolute right-3 top-2.5 text-gray-400 text-xs">▼</div>
-            </div>
-            {errors.fornecedorId && <span className="text-xs text-red-500 mt-1">{errors.fornecedorId.message}</span>}
+                <span className="text-sm font-bold text-gray-700">
+                  {alvo === 'VEICULO' ? 'Veículo' : 'Outro Equipamento'}
+                </span>
+              </label>
+            ))}
           </div>
 
-          <div>
+          {/* 2. DADOS PRINCIPAIS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {alvoSelecionado === 'VEICULO' ? (
+              <>
+                <Select
+                  label="Veículo"
+                  options={veiculosOpcoes}
+                  icon={<Truck className="w-4 h-4" />}
+                  {...register("veiculoId")}
+                  error={errors.veiculoId?.message}
+                  disabled={isLocked}
+                />
+                <Input
+                  label="KM no Momento"
+                  icon={<Gauge className="w-4 h-4" />}
+                  {...register("kmAtual")}
+                  onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
+                  error={errors.kmAtual?.message}
+                  disabled={isLocked}
+                />
+              </>
+            ) : (
+              <div className="md:col-span-2">
+                <Input
+                  label="Identificação (CA/Série)"
+                  {...register("numeroCA")}
+                  error={errors.numeroCA?.message}
+                  disabled={isLocked}
+                />
+              </div>
+            )}
+
+            <Select
+              label="Fornecedor"
+              options={fornecedoresOpcoes}
+              icon={<Wrench className="w-4 h-4" />}
+              {...register("fornecedorId")}
+              error={errors.fornecedorId?.message}
+              disabled={isLocked}
+            />
+
             <Input
               label="Data do Serviço"
               type="date"
+              icon={<Calendar className="w-4 h-4" />}
               {...register("data")}
               error={errors.data?.message}
-              disabled={isSubmitting}
+              disabled={isLocked}
             />
           </div>
-        </div>
 
-        {/* SEÇÃO DE ITENS */}
-        <div className="border-t border-border pt-6">
-          <div className="flex justify-between items-center mb-4">
-            <h4 className="text-xs font-bold text-gray-700 uppercase tracking-widest">Peças e Serviços</h4>
-            <span className="bg-background text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full border border-border">
-              Total: {totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </span>
-          </div>
+          {/* 3. ITENS E SERVIÇOS */}
+          <div className="space-y-4 pt-4 border-t border-gray-100">
+            <div className="flex justify-between items-center">
+              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Itens da OS</h4>
+              {/* Aviso se filtro estiver ativo */}
+              {fornecedorIdSelecionado && produtosManutencao.length < produtos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)).length && (
+                <div className="text-[10px] text-blue-600 bg-blue-50 px-2 py-1 rounded flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" /> Filtro Ativo
+                </div>
+              )}
+            </div>
 
-          <div className="space-y-3">
-            {fields.map((field, index) => {
-              const errItem = errors.itens?.[index];
-              return (
-                <div key={field.id} className="bg-background p-3 rounded-xl border border-border relative group transition-all hover:border-primary/30 hover:shadow-sm">
-
+            <div className="space-y-3">
+              {fields.map((field, index) => (
+                <div key={field.id} className="bg-gray-50/50 p-3 rounded-xl border border-gray-100 relative group hover:border-primary/20 transition-colors">
                   <button
                     type="button"
                     onClick={() => remove(index)}
-                    disabled={isSubmitting}
-                    className="absolute -top-2 -right-2 bg-white text-red-500 rounded-full w-6 h-6 border border-border shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 z-10 disabled:hidden"
+                    disabled={isLocked}
+                    className="absolute -top-2 -right-2 bg-white border border-gray-200 text-gray-400 hover:text-red-500 p-1 rounded-full shadow-sm z-10 transition-colors opacity-0 group-hover:opacity-100"
                   >
-                    &times;
+                    <Trash2 className="w-3 h-3" />
                   </button>
 
                   <div className="grid grid-cols-12 gap-3">
                     <div className="col-span-12 sm:col-span-6">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block">Item</label>
-                      <select
+                      <Select
+                        label="Item"
+                        options={produtosOpcoes}
                         {...register(`itens.${index}.produtoId`)}
-                        disabled={isSubmitting}
-                        className={`w-full text-xs p-2.5 bg-white rounded-lg border outline-none focus:border-primary transition-all disabled:bg-gray-50 ${errItem?.produtoId ? 'border-red-300' : 'border-border'}`}
-                      >
-                        {produtosManutencao.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                      </select>
+                        className="bg-white h-9 text-xs"
+                        disabled={isLocked}
+                      />
                     </div>
                     <div className="col-span-4 sm:col-span-2">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block text-center">Qtd</label>
-                      <input
-                        type="number" step="0.1"
+                      <Input
+                        label="Qtd"
+                        type="number"
+                        step="0.1"
                         {...register(`itens.${index}.quantidade`)}
-                        disabled={isSubmitting}
-                        className="w-full text-xs p-2.5 text-center bg-white rounded-lg border border-border outline-none focus:border-primary disabled:bg-gray-50"
+                        className="bg-white h-9 text-xs text-center"
+                        disabled={isLocked}
                       />
                     </div>
                     <div className="col-span-8 sm:col-span-4">
-                      <label className="text-[10px] font-bold text-gray-400 uppercase mb-1 block text-right">Valor Unit.</label>
-                      <input
-                        type="number" step="0.01"
+                      <Input
+                        label="Valor Unit"
+                        type="number"
+                        step="0.01"
+                        icon={<DollarSign className="w-3 h-3 text-gray-400" />}
                         {...register(`itens.${index}.valorPorUnidade`)}
-                        disabled={isSubmitting}
-                        className="w-full text-xs p-2.5 text-right bg-white rounded-lg border border-border outline-none focus:border-primary font-mono disabled:bg-gray-50"
+                        className="bg-white h-9 text-xs text-right font-bold"
+                        disabled={isLocked}
                       />
                     </div>
                   </div>
                 </div>
-              );
-            })}
+              ))}
+            </div>
+
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })}
+              className="w-full border-dashed border border-gray-200 text-xs text-primary hover:bg-primary/5"
+              disabled={isLocked}
+            >
+              <Plus className="w-3 h-3 mr-1" /> Adicionar Item
+            </Button>
+
+            {errors.itens && <p className="text-xs text-red-500 text-right">{errors.itens.root?.message}</p>}
           </div>
 
-          <button
-            type="button"
-            onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })}
-            disabled={isSubmitting}
-            className="w-full mt-3 py-3 border-2 border-dashed border-border rounded-xl text-xs font-bold text-gray-400 hover:text-primary hover:border-primary hover:bg-primary/5 transition-all disabled:opacity-50"
-          >
-            + Adicionar Outro Item
-          </button>
-          {errors.itens && <p className="text-xs text-red-500 mt-2 text-right">{errors.itens.root?.message}</p>}
+          {/* 4. OBSERVAÇÕES */}
+          <div className="pt-2">
+            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">
+              Observações
+            </label>
+            <textarea
+              {...register("observacoes")}
+              className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none min-h-[80px] transition-all"
+              placeholder="Detalhes adicionais..."
+              disabled={isLocked}
+            />
+          </div>
+
         </div>
 
-        {/* OBSERVAÇÕES */}
-        <div>
-          <label className={labelStyle}>Observações Adicionais</label>
-          <textarea
-            {...register("observacoes")}
-            rows={3}
-            disabled={isSubmitting}
-            className="w-full px-3 py-3 text-sm bg-white border border-border rounded-input outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 resize-none transition-all placeholder:text-gray-300 disabled:bg-gray-50"
-            placeholder="Detalhes sobre o serviço realizado..."
-          />
-        </div>
+        {/* FOOTER */}
+        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex gap-3 justify-between items-center shrink-0">
+          <div className="text-left">
+            <span className="text-[10px] text-gray-400 font-bold uppercase block">Total</span>
+            <span className="text-xl font-mono font-black text-gray-900">
+              {totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </span>
+          </div>
 
-        {/* BOTÕES */}
-        <div className="flex gap-3 pt-4 border-t border-border">
-          <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting}>Cancelar</Button>
-          <Button type="submit" variant="primary" isLoading={isSubmitting} disabled={isSubmitting} className="flex-1 shadow-lg shadow-primary/20">
-            Salvar Alterações
-          </Button>
+          <div className="flex gap-3">
+            <Button type="button" variant="ghost" onClick={onClose} disabled={isLocked}>
+              Cancelar
+            </Button>
+            <Button type="submit" isLoading={isLocked} disabled={isLocked} icon={<Check className="w-4 h-4" />}>
+              Salvar
+            </Button>
+          </div>
         </div>
-
       </form>
     </div>
   );

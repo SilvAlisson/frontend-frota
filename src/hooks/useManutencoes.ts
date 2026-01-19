@@ -31,7 +31,7 @@ export function useManutencoes(filtros?: FiltrosManutencao) {
 
     return useQuery({
         queryKey: ['manutencoes', filtros, user?.role],
-        
+
         queryFn: async () => {
             const params = new URLSearchParams();
             if (filtros?.veiculoId) params.append('veiculoId', filtros.veiculoId);

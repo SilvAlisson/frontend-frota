@@ -17,15 +17,15 @@ export function useVeiculos() {
 
     return useQuery({
         // 3. Adicionar o role na chave para recarregar se o usuário mudar
-        queryKey: ['veiculos', user?.role], 
-        
+        queryKey: ['veiculos', user?.role],
+
         queryFn: async () => {
             // 4. Lógica de Seleção de Rota
             // Se for Operador, usa a rota específica de operação. Caso contrário, usa a geral.
-            const endpoint = user?.role === 'OPERADOR' 
-                ? '/veiculos/operacao' 
+            const endpoint = user?.role === 'OPERADOR'
+                ? '/veiculos/operacao'
                 : '/veiculos';
-            
+
             const { data } = await api.get<Veiculo[]>(endpoint);
             return data;
         },

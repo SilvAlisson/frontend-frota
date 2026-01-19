@@ -81,8 +81,8 @@ export function IniciarJornada({
 
     // ✅ [UX] Validação de coerência: Avisa se o KM inserido for MENOR que o anterior
     if (ultimoKmReferencia > 0 && kmInicioFloat < ultimoKmReferencia) {
-        // Não bloqueamos (pois o painel pode ter sido trocado), mas avisamos forte.
-        toast.warning(`Atenção: O KM informado (${kmInicioFloat}) é MENOR que o último registrado (${ultimoKmReferencia}). Verifique o painel.`);
+      // Não bloqueamos (pois o painel pode ter sido trocado), mas avisamos forte.
+      toast.warning(`Atenção: O KM informado (${kmInicioFloat}) é MENOR que o último registrado (${ultimoKmReferencia}). Verifique o painel.`);
     }
 
     const jornadaConflitante = jornadasAtivas.find(j => j.veiculo?.id === veiculoId);
@@ -210,10 +210,10 @@ export function IniciarJornada({
               className="text-lg tracking-wide font-medium pr-10"
             />
             <div className="pointer-events-none absolute bottom-3 right-0 flex items-center px-3 text-gray-400">
-                <Gauge className="w-5 h-5" />
+              <Gauge className="w-5 h-5" />
             </div>
           </div>
-          
+
           {/* ✅ FEEDBACK VISUAL DO ÚLTIMO KM (AQUI ESTÁ A MÁGICA) */}
           {ultimoKmReferencia > 0 && (
             <p className="text-[10px] text-primary font-bold mt-1.5 flex items-center gap-1 bg-primary/5 p-1 rounded w-fit px-2 ml-1 animate-in fade-in slide-in-from-left-2">

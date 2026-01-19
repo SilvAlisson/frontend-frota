@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { IniciarJornada } from './IniciarJornada';
 import { JornadaCard } from './JornadaCard';
-import { RegistrarAbastecimento } from './RegistrarAbastecimento';
+import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
 // 1. Import do Componente de Histórico
 import { HistoricoJornadas } from './HistoricoJornadas';
-import { Fuel, Truck, LogOut, History, X } from 'lucide-react';
+// Import do Componente de Gestão de Documentos
+import { GestaoDocumentos } from './GestaoDocumentos';
+import { Fuel, Truck, LogOut, History, X, FileText } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import type { User, Veiculo, Jornada, Produto, Fornecedor } from '../types';
 
@@ -34,21 +36,26 @@ export function DashboardOperador({
     const [modalAbastecimentoOpen, setModalAbastecimentoOpen] = useState(false);
     // 2. Novo estado para o modal de histórico
     const [modalHistoricoOpen, setModalHistoricoOpen] = useState(false);
+    // 3. Novo estado para o modal de documentos
+    const [modalDocumentosOpen, setModalDocumentosOpen] = useState(false);
 
     // Filtra jornadas para encontrar a do operador logado
-    const minhasJornadas = jornadasAtivas.filter(j => j.operador.id === user.id);
+    // CORREÇÃO 1: Adicionado ?. antes de .id no operador
+    const minhasJornadas = jornadasAtivas.filter(j => j.operador?.id === user.id);
+
     const tenhoJornadaAtiva = minhasJornadas.length > 0;
 
-    const veiculoEmUsoId = tenhoJornadaAtiva ? minhasJornadas[0].veiculo.id : undefined;
+    // CORREÇÃO 2: Adicionado ?. antes de .id no veiculo
+    const veiculoEmUsoId = tenhoJornadaAtiva ? minhasJornadas[0].veiculo?.id : undefined;
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 pb-20">
 
             {/* --- HEADER CENTRALIZADO --- */}
             <div className="bg-white p-8 rounded-3xl border border-border shadow-sm flex flex-col items-center text-center relative overflow-hidden">
-                
+
                 {/* Botão de Logout */}
-                <button 
+                <button
                     onClick={logout}
                     className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors z-20"
                     title="Sair da conta"
@@ -95,12 +102,23 @@ export function DashboardOperador({
                         Registrar Abastecimento
                     </button>
 
-                    {/* 3. Botão Meu Histórico (Agora funcional) */}
+                    {/* Botão Meus Documentos */}
                     <button
+                        onClick={() => setModalDocumentosOpen(true)}
                         className="flex items-center gap-2 bg-white border border-border text-gray-700 px-5 py-3 rounded-xl shadow-sm hover:shadow-md hover:border-blue-200 hover:text-blue-600 transition-all font-bold text-sm group"
-                        onClick={() => setModalHistoricoOpen(true)}
                     >
                         <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition-colors">
+                            <FileText className="w-5 h-5" />
+                        </div>
+                        Meus Documentos
+                    </button>
+
+                    {/* Botão Meu Histórico */}
+                    <button
+                        className="flex items-center gap-2 bg-white border border-border text-gray-700 px-5 py-3 rounded-xl shadow-sm hover:shadow-md hover:border-purple-200 hover:text-purple-600 transition-all font-bold text-sm group"
+                        onClick={() => setModalHistoricoOpen(true)}
+                    >
+                        <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg group-hover:bg-purple-100 transition-colors">
                             <History className="w-5 h-5" />
                         </div>
                         Meu Histórico
@@ -167,20 +185,20 @@ export function DashboardOperador({
                         className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl animate-in zoom-in-95 duration-300 shadow-2xl bg-white"
                         onClick={e => e.stopPropagation()}
                     >
-                        <RegistrarAbastecimento
+                        <FormRegistrarAbastecimento
                             usuarios={usuarios}
                             veiculos={veiculos}
                             produtos={produtos}
                             fornecedores={fornecedores}
                             usuarioLogado={user}
                             veiculoPreSelecionadoId={veiculoEmUsoId}
-                            onClose={() => setModalAbastecimentoOpen(false)}
+                            onCancelar={() => setModalAbastecimentoOpen(false)}
                         />
                     </div>
                 </div>
             )}
 
-            {/* --- 4. MODAL DE HISTÓRICO DO OPERADOR --- */}
+            {/* --- MODAL DE HISTÓRICO DO OPERADOR --- */}
             {modalHistoricoOpen && (
                 <div
                     className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300"
@@ -190,18 +208,47 @@ export function DashboardOperador({
                         className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl animate-in zoom-in-95 duration-300 shadow-2xl bg-white p-6 relative"
                         onClick={e => e.stopPropagation()}
                     >
-                        <button 
+                        <button
                             onClick={() => setModalHistoricoOpen(false)}
                             className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors z-10"
                         >
                             <X className="w-5 h-5 text-gray-500" />
                         </button>
-                        
-                        {/* Reutiliza o componente de Histórico filtrado para o usuário */}
-                        <HistoricoJornadas 
-                            veiculos={veiculos} 
+
+                        <HistoricoJornadas
+                            veiculos={veiculos}
                             userRole={user.role} // Passa OPERADOR para ativar o modo "meu-historico"
                         />
+                    </div>
+                </div>
+            )}
+
+            {/* --- 4. MODAL DOCUMENTOS (NOVO E CONECTADO) --- */}
+            {modalDocumentosOpen && (
+                <div
+                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300"
+                    onClick={() => setModalDocumentosOpen(false)}
+                >
+                    <div
+                        className="w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl animate-in zoom-in-95 duration-300 shadow-2xl bg-white overflow-hidden"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <div className="p-4 border-b flex justify-between items-center bg-gray-50">
+                            <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
+                                <FileText className="w-5 h-5 text-primary" />
+                                Documentos do Veículo
+                            </h3>
+                            <button
+                                onClick={() => setModalDocumentosOpen(false)}
+                                className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
+                            {/* Passamos o veiculoId do operador para filtrar os documentos */}
+                            <GestaoDocumentos veiculoId={veiculoEmUsoId} somenteLeitura={true} />
+                        </div>
                     </div>
                 </div>
             )}

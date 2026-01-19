@@ -7,6 +7,7 @@ import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { toast } from 'sonner';
+import type { Produto } from '../../types'; // Importando o tipo
 
 const tiposFornecedor = ["POSTO", "OFICINA", "LAVA_JATO", "SEGURADORA", "OUTROS"] as const;
 
@@ -25,6 +26,9 @@ const fornecedorSchema = z.object({
 
   tipo: z.enum(tiposFornecedor, { error: "Selecione um tipo válido" })
     .default('OUTROS'),
+
+  // Array de IDs para controlar a seleção
+  produtosIds: z.array(z.string()).default([]),
 });
 
 type FornecedorInput = z.input<typeof fornecedorSchema>;
@@ -38,32 +42,53 @@ interface Props {
 
 export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Props) {
   const [loadingData, setLoadingData] = useState(true);
+  const [produtosDisponiveis, setProdutosDisponiveis] = useState<Produto[]>([]);
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isSubmitting }
   } = useForm<FornecedorInput, any, FornecedorOutput>({
     resolver: zodResolver(fornecedorSchema),
-    defaultValues: { nome: '', cnpj: '', tipo: 'OUTROS' },
+    defaultValues: { nome: '', cnpj: '', tipo: 'OUTROS', produtosIds: [] },
     mode: 'onBlur'
   });
 
-  // --- CARREGAMENTO INICIAL ---
+  const selectedIds = watch('produtosIds') || [];
+
+  // --- CARREGAMENTO INICIAL (DADOS + PRODUTOS) ---
   useEffect(() => {
     if (!fornecedorId) return;
 
-    const fetchDados = async () => {
+    const carregarTudo = async () => {
       try {
-        const { data } = await api.get(`/fornecedores/${fornecedorId}`);
+        // Busca produtos e detalhes do fornecedor em paralelo para ser mais rápido
+        const [resProdutos, resFornecedor] = await Promise.all([
+          api.get('/produtos'),
+          api.get(`/fornecedores/${fornecedorId}`)
+        ]);
+
+        setProdutosDisponiveis(resProdutos.data);
+
+        const data = resFornecedor.data;
         const tipoValido = tiposFornecedor.includes(data.tipo) ? data.tipo : 'OUTROS';
+
+        // Extrai apenas os IDs dos produtos que este fornecedor já tem
+        // O backend retorna: produtosOferecidos: [{id: '...', nome: '...'}, ...]
+        const idsExistentes = data.produtosOferecidos
+          ? data.produtosOferecidos.map((p: any) => p.id)
+          : [];
 
         reset({
           nome: data.nome || '',
           cnpj: data.cnpj || '',
-          tipo: tipoValido
+          tipo: tipoValido,
+          produtosIds: idsExistentes // Preenche o formulário com o que já existe
         });
+
       } catch (error) {
         console.error(error);
         toast.error('Erro ao carregar dados.');
@@ -73,8 +98,18 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
       }
     };
 
-    fetchDados();
+    carregarTudo();
   }, [fornecedorId, reset, onCancelar]);
+
+  // Função auxiliar para alternar seleção
+  const toggleProduto = (id: string) => {
+    const current = selectedIds;
+    if (current.includes(id)) {
+      setValue('produtosIds', current.filter(item => item !== id));
+    } else {
+      setValue('produtosIds', [...current, id]);
+    }
+  };
 
   // --- SUBMISSÃO ---
   const onSubmit = async (data: FornecedorOutput) => {
@@ -82,6 +117,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
       nome: DOMPurify.sanitize(data.nome),
       cnpj: data.cnpj && data.cnpj.trim() !== '' ? DOMPurify.sanitize(data.cnpj) : null,
       tipo: data.tipo,
+      produtosIds: data.produtosIds // Envia a lista atualizada
     };
 
     const promise = api.put(`/fornecedores/${fornecedorId}`, payload);
@@ -119,7 +155,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
       <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center">
         <div>
           <h3 className="text-lg font-bold text-gray-900">Editar Parceiro</h3>
-          <p className="text-xs text-gray-500">Atualize os dados cadastrais.</p>
+          <p className="text-xs text-gray-500">Atualize os dados e serviços.</p>
         </div>
         <div className="p-2 bg-white rounded-lg border border-border shadow-sm text-primary">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
@@ -167,10 +203,41 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
               error={errors.cnpj?.message}
               disabled={isSubmitting}
             />
-            {/* [CORREÇÃO] Texto de ajuda restaurado */}
             <p className="text-[10px] text-gray-400 pl-1 mt-1">
               Formato sugerido: 00.000.000/0000-00
             </p>
+          </div>
+        </div>
+
+        {/* --- SELEÇÃO DE SERVIÇOS (CARDÁPIO) --- */}
+        <div className="pt-2">
+          <label className={labelStyle}>
+            Serviços Oferecidos
+          </label>
+
+          <div className="bg-gray-50 p-4 rounded-lg border border-gray-100 max-h-48 overflow-y-auto mt-2">
+            <div className="flex flex-wrap gap-2">
+              {produtosDisponiveis.map(prod => {
+                const isSelected = selectedIds.includes(prod.id);
+                return (
+                  <button
+                    key={prod.id}
+                    type="button"
+                    onClick={() => toggleProduto(prod.id)}
+                    disabled={isSubmitting}
+                    className={`
+                        text-xs px-3 py-1.5 rounded-full border transition-all font-medium flex items-center gap-1
+                        ${isSelected
+                        ? 'bg-blue-600 border-blue-600 text-white shadow-md hover:bg-blue-700'
+                        : 'bg-white border-gray-200 text-gray-600 hover:border-blue-300 hover:text-blue-500'}
+                      `}
+                  >
+                    {isSelected && <span>✓</span>}
+                    {prod.nome}
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
 

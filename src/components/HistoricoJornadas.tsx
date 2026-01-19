@@ -2,20 +2,28 @@ import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
-import { Edit, Trash2, Camera, X, ImageOff } from 'lucide-react'; // <--- ADICIONADO ImageOff
+import { Edit, Trash2, Camera, X, ImageOff, Download, Filter, Calendar } from 'lucide-react';
 import type { Jornada, Veiculo } from '../types';
 
-// Componentes UI
+// --- DESIGN SYSTEM KLIN ---
+import { PageHeader } from './ui/PageHeader';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { Select } from './ui/Select';
 import { ListaResponsiva } from './ui/ListaResponsiva';
+import { Card } from './ui/Card';
+import { Badge } from './ui/Badge';
+import { Modal } from './ui/Modal';
 import { TableStyles } from '../styles/table';
 import { FormEditarJornada } from './forms/FormEditarJornada';
 
-// Interface flexível para aceitar variações do backend
+// --- COMPONENTES & FORMS ---
+import { FormEditarJornada } from './forms/FormEditarJornada';
+import { BotaoLimparFantasmas } from './BotaoLimparFantasmas';
+
 interface JornadaHistorico extends Jornada {
-  kmPercorrido?: number;
-  [key: string]: any; // Permite acessar propriedades dinâmicas como 'foto_inicio' ou 'fotoInicioUrl'
+    kmPercorrido?: number;
+    [key: string]: any;
 }
 
 interface HistoricoJornadasProps {
@@ -24,75 +32,93 @@ interface HistoricoJornadasProps {
 }
 
 export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: HistoricoJornadasProps) {
-  const [historico, setHistorico] = useState<JornadaHistorico[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  
-  // Estado para visualizar a foto
-  const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
 
-  // Filtros
-  const [dataInicio, setDataInicio] = useState('');
-  const [dataFim, setDataFim] = useState('');
-  const [veiculoId, setVeiculoId] = useState('');
+    // --- ESTADOS ---
+    const [historico, setHistorico] = useState<JornadaHistorico[]>([]);
+    const [loading, setLoading] = useState(true);
 
-  // Permissões
-  const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
-  const canDelete = userRole === 'ADMIN';
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
 
-  // --- HELPER CRUCIAL: Resolve a URL da foto independente do nome que o backend mande ---
-  const getFotoUrl = (jornada: JornadaHistorico, tipo: 'inicio' | 'fim'): string | null => {
-    if (tipo === 'inicio') {
-      // Tenta todas as variações possíveis
-      return jornada.fotoInicioUrl || jornada.fotoInicio || jornada.foto_inicio || null;
-    }
-    // Tenta todas as variações para o fim
-    return jornada.fotoFimUrl || jornada.fotoFim || jornada.foto_fim || null;
-  };
-
-  const fetchHistorico = async () => {
-    setLoading(true);
-    try {
-      const params: any = {};
-      if (dataInicio) params.dataInicio = dataInicio;
-      if (dataFim) params.dataFim = dataFim;
-      if (veiculoId) params.veiculoId = veiculoId;
-
-      const response = await api.get('/jornadas/historico', { params });
-      setHistorico(response.data);
-    } catch (err) {
-      console.error("Erro ao buscar histórico de jornadas:", err);
-      toast.error('Não foi possível carregar o histórico.');
-    } finally {
-      setTimeout(() => setLoading(false), 300);
-    }
-  };
-
-  useEffect(() => {
-    fetchHistorico();
-  }, [dataInicio, dataFim, veiculoId]);
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm("ATENÇÃO: Tem certeza que deseja excluir este registro histórico?")) return;
-
-    setDeletingId(id);
-    const promise = api.delete(`/jornadas/${id}`);
-
-    toast.promise(promise, {
-      loading: 'Removendo registro...',
-      success: () => {
-        setHistorico(prev => prev.filter(item => item.id !== id));
-        setDeletingId(null);
-        return 'Registro excluído com sucesso.';
-      },
-      error: (err) => {
-        console.error("Erro ao excluir:", err);
-        setDeletingId(null);
-        return 'Erro ao excluir jornada.';
-      }
+    // Filtros
+    const [filtros, setFiltros] = useState({
+        dataInicio: '',
+        dataFim: '',
+        veiculoId: ''
     });
-  };
+
+    const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
+    const canDelete = userRole === 'ADMIN';
+
+    // --- FETCHING ---
+    const fetchHistorico = async () => {
+        setLoading(true);
+        try {
+            const params: any = {};
+            if (filtros.dataInicio) params.dataInicio = filtros.dataInicio;
+            if (filtros.dataFim) params.dataFim = filtros.dataFim;
+            if (filtros.veiculoId) params.veiculoId = filtros.veiculoId;
+
+            const response = await api.get('/jornadas/historico', { params });
+            setHistorico(response.data);
+        } catch (err) {
+            console.error(err);
+            toast.error('Não foi possível carregar o histórico.');
+        } finally {
+            setTimeout(() => setLoading(false), 300);
+        }
+    };
+
+    useEffect(() => { fetchHistorico(); }, [filtros]);
+
+    // --- ACTIONS (Com Toast Promise mantido) ---
+    const handleDelete = async (id: string) => {
+        if (!window.confirm("ATENÇÃO: Tem certeza que deseja excluir este registro histórico?")) return;
+
+        const promise = api.delete(`/jornadas/${id}`);
+
+        toast.promise(promise, {
+            loading: 'Removendo registro...',
+            success: () => {
+                setHistorico(prev => prev.filter(item => item.id !== id));
+                return 'Registro excluído com sucesso.';
+            },
+            error: (err) => {
+                console.error("Erro ao excluir:", err);
+                return 'Erro ao excluir jornada.';
+            }
+        });
+    };
+
+    const handleSuccessEdit = () => {
+        setEditingId(null);
+        fetchHistorico();
+    };
+
+    const handleExportar = () => {
+        if (historico.length === 0) return;
+
+        const exportPromise = new Promise((resolve, reject) => {
+            try {
+                const dados = historico.map(j => {
+                    const kmAndados = (j.kmFim && j.kmInicio) ? j.kmFim - j.kmInicio : (j.kmPercorrido || 0);
+                    return {
+                        'Saída': new Date(j.dataInicio).toLocaleString('pt-BR'),
+                        'Chegada': j.dataFim ? new Date(j.dataFim).toLocaleString('pt-BR') : 'Em andamento',
+                        'Veículo': j.veiculo ? `${j.veiculo.placa} - ${j.veiculo.modelo}` : 'Veículo Excluído',
+                        'Motorista': j.operador?.nome || 'Motorista Excluído',
+                        'KM Inicial': j.kmInicio,
+                        'KM Final': j.kmFim || '-',
+                        'Percorrido': kmAndados,
+                        'Obs': j.observacoes || ''
+                    };
+                });
+                exportarParaExcel(dados, "Historico_Jornadas.xlsx");
+                resolve(true);
+            } catch (err) {
+                reject(err);
+            }
+        });
 
   const handleEdit = (jornada: JornadaHistorico) => {
     setEditingId(jornada.id);
@@ -124,283 +150,313 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
             'Observações': j.observacoes || ''
           };
         });
-        exportarParaExcel(dados, "Historico_Jornadas.xlsx");
-        resolve(true);
-      } catch (err) {
-        reject(err);
-      }
-    });
+    };
 
-    toast.promise(exportPromise, {
-      loading: 'Exportando dados...',
-      success: 'Histórico exportado com sucesso!',
-      error: 'Erro ao exportar arquivo.'
-    });
-  };
+    // --- HELPERS ---
+    const getFotoUrl = (jornada: JornadaHistorico, tipo: 'inicio' | 'fim'): string | null => {
+        if (tipo === 'inicio') return jornada.fotoInicioUrl || jornada.fotoInicio || jornada.foto_inicio || null;
+        return jornada.fotoFimUrl || jornada.fotoFim || jornada.foto_fim || null;
+    };
 
-  return (
-    <div className="space-y-6 pb-10">
+    const veiculosOptions = [
+        { value: "", label: "Todos os veículos" },
+        ...veiculos.map(v => ({ value: v.id, label: v.placa }))
+    ];
 
-      {/* HEADER DE COMANDO */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4 border-b border-gray-100 pb-6">
-        <div>
-          <div className="flex items-center gap-3">
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Histórico de Viagens</h2>
-            <span className="text-xs font-bold bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full border border-gray-200">
-              {historico.length}
-            </span>
-          </div>
-          <p className="text-sm text-gray-500 mt-1">Consulte rotas, quilometragem e fotos dos odômetros.</p>
-        </div>
+    return (
+        <div className="space-y-6 pb-10">
 
-        <div className="flex flex-wrap items-end gap-2 w-full xl:w-auto">
-          {/* Filtros */}
-          <div className="w-full sm:w-32">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1 mb-1 block">De</span>
-            <Input type="date" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} className="bg-white" />
-          </div>
+            {/* 1. HEADER & FILTROS */}
+            <PageHeader
+                title="Histórico de Viagens"
+                subtitle="Consulte rotas, quilometragem e fotos dos odômetros."
+                // Mantivemos o badge de contador aqui no título via prop ou composição, se o PageHeader suportar, senão no extraAction
+                extraAction={
+                    <div className="flex flex-col sm:flex-row gap-2 w-full xl:w-auto items-end">
+                        <div className="flex items-center mr-2">
+                            <Badge variant="neutral" className="h-9 px-3">
+                                {historico.length} Registros
+                            </Badge>
+                        </div>
 
-          <div className="w-full sm:w-32">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1 mb-1 block">Até</span>
-            <Input type="date" value={dataFim} onChange={(e) => setDataFim(e.target.value)} className="bg-white" />
-          </div>
+                        <div className="w-full sm:w-32">
+                            <Input
+                                type="date"
+                                label="Início"
+                                value={filtros.dataInicio}
+                                onChange={e => setFiltros(prev => ({ ...prev, dataInicio: e.target.value }))}
+                            />
+                        </div>
+                        <div className="w-full sm:w-32">
+                            <Input
+                                type="date"
+                                label="Fim"
+                                value={filtros.dataFim}
+                                onChange={e => setFiltros(prev => ({ ...prev, dataFim: e.target.value }))}
+                            />
+                        </div>
+                        <div className="w-full sm:w-48">
+                            <Select
+                                label="Veículo"
+                                options={veiculosOptions}
+                                value={filtros.veiculoId}
+                                onChange={e => setFiltros(prev => ({ ...prev, veiculoId: e.target.value }))}
+                                icon={<Filter className="w-4 h-4" />}
+                            />
+                        </div>
 
-          <div className="w-full sm:w-56">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider pl-1 mb-1 block">Veículo</span>
-            <select
-              className="w-full h-10 px-3 bg-white border border-gray-200 rounded-lg text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all"
-              value={veiculoId}
-              onChange={(e) => setVeiculoId(e.target.value)}
-            >
-              <option value="">Todos os Veículos</option>
-              {veiculos.map(v => (
-                <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>
-              ))}
-            </select>
-          </div>
+                        {/* Botão Admin Limpar Fantasmas */}
+                        {userRole === 'ADMIN' && filtros.veiculoId && (
+                            <div className="pb-0.5">
+                                <BotaoLimparFantasmas
+                                    veiculoId={filtros.veiculoId}
+                                    onSuccess={fetchHistorico}
+                                    className="h-9"
+                                />
+                            </div>
+                        )}
 
-          <Button variant="success" onClick={handleExportar} disabled={historico.length === 0} className="w-full sm:w-auto h-10">
-            Exportar Excel
-          </Button>
-        </div>
-      </div>
-
-      {/* LISTAGEM RESPONSIVA */}
-      {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => <div key={i} className="h-24 bg-gray-50 rounded-xl animate-pulse border border-gray-100" />)}
-        </div>
-      ) : (
-        <ListaResponsiva
-          itens={historico}
-          emptyMessage="Nenhuma viagem encontrada neste período."
-
-          // --- DESKTOP ---
-          desktopHeader={
-            <>
-              <th className={TableStyles.th}>Data / Status</th>
-              <th className={TableStyles.th}>Veículo</th>
-              <th className={TableStyles.th}>Motorista</th>
-              <th className={TableStyles.th}>Distância</th>
-              <th className={`${TableStyles.th} text-center`}>Fotos</th>
-              {(canEdit || canDelete) && <th className={`${TableStyles.th} text-right`}>Ações</th>}
-            </>
-          }
-          renderDesktop={(j) => {
-            const kmPercorrido = (j.kmFim && j.kmInicio) ? j.kmFim - j.kmInicio : (j.kmPercorrido || 0);
-            
-            // Usamos o Helper para garantir que a foto venha, independente do nome da variável
-            const imgInicio = getFotoUrl(j, 'inicio');
-            const imgFim = getFotoUrl(j, 'fim');
-
-            return (
-              <>
-                <td className={TableStyles.td}>
-                  <div className="flex flex-col gap-1">
-                    <span className="font-bold text-gray-900">{new Date(j.dataInicio).toLocaleDateString('pt-BR')}</span>
-                    {j.dataFim ? (
-                      <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded w-fit border border-green-200">FINALIZADA</span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded w-fit border border-blue-200 animate-pulse">EM ROTA</span>
-                    )}
-                  </div>
-                </td>
-                <td className={TableStyles.td}>
-                  <div className="flex flex-col">
-                    <span className="font-mono font-bold text-primary">{j.veiculo.placa}</span>
-                    <span className="text-xs text-gray-500">{j.veiculo.modelo}</span>
-                  </div>
-                </td>
-                <td className={TableStyles.td}>
-                  <span className="font-medium text-gray-700">{j.operador.nome}</span>
-                </td>
-                <td className={TableStyles.td}>
-                  <div className="flex flex-col">
-                    <span className="font-mono font-bold text-gray-900">{kmPercorrido > 0 ? `${kmPercorrido} km` : '--'}</span>
-                    <span className="text-[10px] text-gray-400">KM {j.kmInicio} → {j.kmFim || '...'}</span>
-                  </div>
-                </td>
-                
-                {/* --- COLUNA DE FOTOS INTELIGENTE --- */}
-                <td className={`${TableStyles.td} text-center`}>
-                  <div className="flex justify-center gap-2">
-                    {/* Foto Inicio */}
-                    {imgInicio ? (
-                      <button 
-                        onClick={() => setViewingPhoto(imgInicio)}
-                        className="p-1.5 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100 transition-colors"
-                        title="Ver Odômetro Início"
-                      >
-                        <Camera className="w-4 h-4" />
-                      </button>
-                    ) : (
-                      <span className="p-1.5 opacity-30 cursor-not-allowed" title="Sem foto">
-                        <ImageOff className="w-4 h-4 text-gray-400" />
-                      </span>
-                    )}
-
-                    {/* Foto Fim */}
-                    {imgFim ? (
-                      <button 
-                         onClick={() => setViewingPhoto(imgFim)}
-                         className="p-1.5 rounded-full bg-green-50 text-green-600 hover:bg-green-100 border border-green-100 transition-colors"
-                         title="Ver Odômetro Fim"
-                      >
-                        <Camera className="w-4 h-4" />
-                      </button>
-                    ) : (
-                      <span className="p-1.5 opacity-30 cursor-not-allowed" title="Sem foto">
-                         <ImageOff className="w-4 h-4 text-gray-400" />
-                      </span>
-                    )}
-                  </div>
-                </td>
-
-                {(canEdit || canDelete) && (
-                  <td className={`${TableStyles.td} text-right`}>
-                    <div className="flex justify-end gap-2">
-                      {canEdit && (
-                        <Button
-                          variant="ghost"
-                          className="h-8 w-8 !p-0 text-gray-400 hover:text-blue-600 hover:bg-blue-50"
-                          onClick={() => handleEdit(j)}
-                          title="Editar registro"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                      )}
-                      {canDelete && (
-                        <Button
-                          variant="ghost"
-                          className="h-8 w-8 !p-0 text-gray-400 hover:text-red-600 hover:bg-red-50"
-                          onClick={() => handleDelete(j.id)}
-                          disabled={deletingId === j.id}
-                          title="Excluir registro"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
+                        <div className="pb-0.5">
+                            <Button
+                                variant="secondary"
+                                onClick={handleExportar}
+                                icon={<Download className="w-4 h-4" />}
+                                disabled={historico.length === 0}
+                            >
+                                Excel
+                            </Button>
+                        </div>
                     </div>
-                  </td>
-                )}
-              </>
-            );
-          }}
-
-          // --- MOBILE ---
-          renderMobile={(j) => {
-            const kmPercorrido = (j.kmFim && j.kmInicio) ? j.kmFim - j.kmInicio : (j.kmPercorrido || 0);
-            const imgInicio = getFotoUrl(j, 'inicio');
-            const imgFim = getFotoUrl(j, 'fim');
-
-            return (
-              <div className="p-4">
-                <div className="flex justify-between items-start mb-3">
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-gray-900">{new Date(j.dataInicio).toLocaleDateString('pt-BR')}</span>
-                    <span className="text-xs text-gray-500">{new Date(j.dataInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="block font-mono font-bold text-gray-900 text-lg">{kmPercorrido > 0 ? `${kmPercorrido} km` : '--'}</span>
-                    {j.dataFim ? (
-                      <span className="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-0.5 rounded border border-green-200">FINALIZADA</span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 animate-pulse">EM ROTA</span>
-                    )}
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 p-3 rounded-lg border border-gray-100 mb-3 flex justify-between items-center">
-                  <div>
-                    <span className="block font-bold text-sm text-primary">{j.veiculo.placa}</span>
-                    <span className="block text-xs text-gray-500">{j.veiculo.modelo}</span>
-                  </div>
-                  <div className="text-right">
-                    <span className="block text-xs font-medium text-gray-700">{j.operador.nome}</span>
-                    <span className="block text-[10px] text-gray-400 font-mono">KM {j.kmInicio} → {j.kmFim || '...'}</span>
-                  </div>
-                </div>
-
-                {/* BOTÕES DE AÇÃO MOBILE (FOTOS + EDITAR/EXCLUIR) */}
-                <div className="flex justify-between items-center pt-2 border-t border-dashed border-gray-100">
-                  <div className="flex gap-2">
-                     {imgInicio && (
-                        <button 
-                          onClick={() => setViewingPhoto(imgInicio)}
-                          className="flex items-center gap-1 text-xs px-2 py-1 bg-blue-50 text-blue-700 border border-blue-100 rounded hover:bg-blue-100 transition-all"
-                        >
-                          <Camera className="w-3 h-3" /> Início
-                        </button>
-                     )}
-                     {imgFim && (
-                        <button 
-                          onClick={() => setViewingPhoto(imgFim)}
-                          className="flex items-center gap-1 text-xs px-2 py-1 bg-green-50 text-green-700 border border-green-100 rounded hover:bg-green-100 transition-all"
-                        >
-                          <Camera className="w-3 h-3" /> Fim
-                        </button>
-                     )}
-                  </div>
-
-                  {(canEdit || canDelete) && (
-                    <div className="flex gap-2">
-                      {canEdit && (
-                        <Button
-                          variant="ghost"
-                          className="text-xs h-8 px-2 text-blue-600 hover:bg-blue-50 gap-1"
-                          onClick={() => handleEdit(j)}
-                        >
-                          <Edit className="w-3 h-3" />
-                        </Button>
-                      )}
-                      {canDelete && (
-                        <Button
-                          variant="ghost"
-                          className="text-xs h-8 px-2 text-red-600 hover:bg-red-50 gap-1"
-                          onClick={() => handleDelete(j.id)}
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </Button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          }}
-        />
-      )}
-
-      {/* MODAL DE EDIÇÃO */}
-      {editingId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="w-full max-w-2xl animate-in zoom-in-95">
-            <FormEditarJornada
-              jornadaId={editingId}
-              onSuccess={handleSuccessEdit}
-              onCancelar={() => setEditingId(null)}
+                }
             />
-          </div>
+
+            {/* 2. TABELA (UX Preservada) */}
+            <Card noPadding>
+                {loading ? (
+                    <div className="p-6 space-y-4">
+                        {[1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-50 rounded-lg animate-pulse" />)}
+                    </div>
+                ) : (
+                    <ListaResponsiva
+                        itens={historico}
+                        emptyMessage="Nenhuma viagem encontrada neste período."
+
+                        // --- DESKTOP ---
+                        desktopHeader={
+                            <>
+                                <th className={TableStyles.th}>Data / Status</th>
+                                <th className={TableStyles.th}>Veículo</th>
+                                <th className={TableStyles.th}>Motorista</th>
+                                <th className={TableStyles.th}>Distância</th>
+                                <th className={`${TableStyles.th} text-center`}>Fotos</th>
+                                {(canEdit || canDelete) && <th className={`${TableStyles.th} text-right`}>Ações</th>}
+                            </>
+                        }
+                        renderDesktop={(j) => {
+                            const kmPercorrido = (j.kmFim && j.kmInicio) ? j.kmFim - j.kmInicio : (j.kmPercorrido || 0);
+                            const imgInicio = getFotoUrl(j, 'inicio');
+                            const imgFim = getFotoUrl(j, 'fim');
+
+                            return (
+                                <>
+                                    <td className={TableStyles.td}>
+                                        <div className="flex flex-col gap-1 items-start">
+                                            <span className="font-bold text-gray-900 text-sm flex items-center gap-2">
+                                                <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                                                {new Date(j.dataInicio).toLocaleDateString('pt-BR')}
+                                            </span>
+                                            {j.dataFim ? (
+                                                <Badge variant="success" className="text-[10px] h-5 px-1.5">FINALIZADA</Badge>
+                                            ) : (
+                                                <Badge variant="info" className="text-[10px] h-5 px-1.5 animate-pulse">EM ROTA</Badge>
+                                            )}
+                                        </div>
+                                    </td>
+                                    <td className={TableStyles.td}>
+                                        <div className="flex flex-col">
+                                            <span className="font-mono font-bold text-primary text-sm">{j.veiculo?.placa || '---'}</span>
+                                            <span className="text-xs text-gray-500">{j.veiculo?.modelo || 'Veículo Excluído'}</span>
+                                        </div>
+                                    </td>
+                                    <td className={TableStyles.td}>
+                                        <span className="font-medium text-gray-700 text-sm">{j.operador?.nome || 'Motorista Excluído'}</span>
+                                    </td>
+                                    <td className={TableStyles.td}>
+                                        <div className="flex flex-col">
+                                            <span className="font-mono font-bold text-gray-900 text-sm">
+                                                {kmPercorrido > 0 ? `${kmPercorrido} km` : '--'}
+                                            </span>
+                                            <span className="text-[10px] text-gray-400 font-mono">
+                                                {j.kmInicio} → {j.kmFim || '...'}
+                                            </span>
+                                        </div>
+                                    </td>
+
+                                    {/* UX: Botões de Foto Coloridos (Restaurados) */}
+                                    <td className={`${TableStyles.td} text-center`}>
+                                        <div className="flex justify-center gap-2">
+                                            <button
+                                                onClick={() => imgInicio && setViewingPhoto(imgInicio)}
+                                                disabled={!imgInicio}
+                                                className={`p-1.5 rounded-full border transition-colors ${imgInicio ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100' : 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'}`}
+                                                title="Foto Início"
+                                            >
+                                                {imgInicio ? <Camera className="w-4 h-4" /> : <ImageOff className="w-4 h-4" />}
+                                            </button>
+
+                                            <button
+                                                onClick={() => imgFim && setViewingPhoto(imgFim)}
+                                                disabled={!imgFim}
+                                                className={`p-1.5 rounded-full border transition-colors ${imgFim ? 'bg-green-50 text-green-600 border-green-200 hover:bg-green-100' : 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed'}`}
+                                                title="Foto Fim"
+                                            >
+                                                {imgFim ? <Camera className="w-4 h-4" /> : <ImageOff className="w-4 h-4" />}
+                                            </button>
+                                        </div>
+                                    </td>
+
+                                    {/* UX: Ações em 1 Clique (Restaurado) */}
+                                    {(canEdit || canDelete) && (
+                                        <td className={`${TableStyles.td} text-right`}>
+                                            <div className="flex justify-end gap-1">
+                                                {canEdit && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        className="h-8 w-8 !p-0 text-gray-400 hover:text-blue-600"
+                                                        onClick={() => setEditingId(j.id)}
+                                                        title="Editar"
+                                                    >
+                                                        <Edit className="w-4 h-4" />
+                                                    </Button>
+                                                )}
+                                                {canDelete && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        className="h-8 w-8 !p-0 text-gray-400 hover:text-red-600"
+                                                        onClick={() => handleDelete(j.id)}
+                                                        title="Excluir"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        </td>
+                                    )}
+                                </>
+                            );
+                        }}
+
+                        // --- MOBILE ---
+                        renderMobile={(j) => {
+                            const kmPercorrido = (j.kmFim && j.kmInicio) ? j.kmFim - j.kmInicio : (j.kmPercorrido || 0);
+                            const imgInicio = getFotoUrl(j, 'inicio');
+                            const imgFim = getFotoUrl(j, 'fim');
+
+                            return (
+                                <div className="p-4 space-y-3">
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex gap-3">
+                                            <div className="bg-gray-50 p-2 rounded-lg border border-gray-100 flex flex-col items-center justify-center w-12 h-12 shrink-0">
+                                                <span className="text-sm font-bold text-gray-700">{new Date(j.dataInicio).getDate()}</span>
+                                                <span className="text-[9px] font-bold uppercase text-gray-400">
+                                                    {new Date(j.dataInicio).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
+                                                </span>
+                                            </div>
+                                            <div>
+                                                <span className="font-mono font-bold text-gray-900 block">{j.veiculo?.placa || 'N/A'}</span>
+                                                <span className="text-xs text-gray-500">{j.operador?.nome || 'Motorista Excluído'}</span>
+                                            </div>
+                                        </div>
+                                        <div className="text-right flex flex-col items-end gap-1">
+                                            <span className="font-mono font-bold text-gray-900 text-lg">
+                                                {kmPercorrido > 0 ? `${kmPercorrido} km` : '--'}
+                                            </span>
+                                            {j.dataFim ? (
+                                                <Badge variant="success" className="text-[10px] h-5 px-1.5">FINALIZADA</Badge>
+                                            ) : (
+                                                <Badge variant="info" className="text-[10px] h-5 px-1.5 animate-pulse">EM ROTA</Badge>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div className="flex justify-between items-center border-t border-dashed border-gray-100 pt-3">
+                                        <div className="flex gap-2">
+                                            {imgInicio && (
+                                                <Button variant="ghost" className="h-7 px-2 text-xs text-blue-600 bg-blue-50" onClick={() => setViewingPhoto(imgInicio)}>
+                                                    <Camera className="w-3 h-3 mr-1" /> Início
+                                                </Button>
+                                            )}
+                                            {imgFim && (
+                                                <Button variant="ghost" className="h-7 px-2 text-xs text-green-600 bg-green-50" onClick={() => setViewingPhoto(imgFim)}>
+                                                    <Camera className="w-3 h-3 mr-1" /> Fim
+                                                </Button>
+                                            )}
+                                        </div>
+                                        <div className="flex gap-1">
+                                            {canEdit && (
+                                                <Button variant="ghost" className="h-8 w-8 !p-0 text-gray-400" onClick={() => setEditingId(j.id)}>
+                                                    <Edit className="w-4 h-4" />
+                                                </Button>
+                                            )}
+                                            {canDelete && (
+                                                <Button variant="ghost" className="h-8 w-8 !p-0 text-red-400 hover:bg-red-50" onClick={() => handleDelete(j.id)}>
+                                                    <Trash2 className="w-4 h-4" />
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        }}
+                    />
+                )}
+            </Card>
+
+            {/* 3. MODAIS */}
+
+            {/* Edição */}
+            <Modal
+                isOpen={!!editingId}
+                onClose={() => setEditingId(null)}
+                title="Editar Jornada"
+                className="max-w-2xl"
+            >
+                {editingId && (
+                    <FormEditarJornada
+                        jornadaId={editingId}
+                        onSuccess={handleSuccessEdit}
+                        onCancelar={() => setEditingId(null)}
+                    />
+                )}
+            </Modal>
+
+            {/* UX: Lightbox Imersivo (Restaurado) */}
+            {viewingPhoto && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+                    onClick={() => setViewingPhoto(null)}
+                >
+                    <div className="relative w-full h-full flex flex-col items-center justify-center">
+                        <button
+                            onClick={() => setViewingPhoto(null)}
+                            className="absolute top-6 right-6 text-white hover:text-red-400 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all z-50"
+                        >
+                            <X className="w-8 h-8" />
+                        </button>
+
+                        <img
+                            src={viewingPhoto}
+                            alt="Odômetro Ampliado"
+                            className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl animate-in zoom-in-95"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                        <p className="text-white/60 mt-4 text-sm font-medium">
+                            Clique fora para fechar
+                        </p>
+                    </div>
+                </div>
+            )}
+
         </div>
       )}
 

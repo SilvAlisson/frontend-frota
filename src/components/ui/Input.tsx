@@ -2,7 +2,7 @@ import React, { forwardRef } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { clsx, type ClassValue } from 'clsx';
 
-// Utilitário para mesclar classes com segurança
+// Utilitário local (pode ser movido para src/utils.ts no futuro)
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -17,13 +17,12 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, icon, className, containerClassName, id, ...rest }, ref) => {
 
-    // Gera um ID único para acessibilidade se não for fornecido
     const generatedId = React.useId();
     const inputId = id || generatedId;
 
     return (
       <div className={cn("w-full", containerClassName)}>
-        {/* Label Acessível */}
+        {/* Label com tipografia Klin (Inter/JetBrains) */}
         {label && (
           <label
             htmlFor={inputId}
@@ -34,7 +33,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         )}
 
         <div className="relative">
-          {/* [ADICIONADO] Renderização do Ícone */}
+          {/* Ícone à Esquerda */}
           {icon && (
             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none [&>svg]:w-5 [&>svg]:h-5">
               {icon}
@@ -45,23 +44,26 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              // --- Estilos Base ---
+              // --- Geometria (Idêntica ao Select.tsx e Button.tsx) ---
               "w-full py-2.5 text-sm text-gray-900 bg-white border rounded-lg transition-all duration-200",
+
+              // --- Tipografia e Placeholder ---
               "placeholder:text-gray-400",
-              "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
-              "disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed",
               "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-primary",
 
-              // --- Ajuste de Padding se tiver ícone ---
+              // --- Estados Interativos (Foco com cor da marca) ---
+              "focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary",
+
+              // --- Estado Desabilitado ---
+              "disabled:bg-gray-50 disabled:text-gray-400 disabled:cursor-not-allowed",
+
+              // --- Padding Condicional (Se tem ícone) ---
               icon ? "pl-10 pr-4" : "px-4",
 
-              // --- Estado Normal ---
+              // --- Cores de Borda (Normal vs Erro) ---
               !error && "border-gray-200 hover:border-gray-300",
-
-              // --- Estado de Erro ---
               error && "border-red-300 text-red-900 focus:border-red-500 focus:ring-red-100 pr-10",
 
-              // --- Classes Injetadas (Sobrescrita) ---
               className
             )}
             aria-invalid={!!error}
@@ -69,7 +71,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           />
         </div>
 
-        {/* Mensagem de Erro com Animação e Ícone */}
+        {/* Mensagem de Erro Animada */}
         {error && (
           <p className="mt-1.5 text-xs text-red-500 font-medium flex items-center gap-1 animate-in slide-in-from-top-1 fade-in duration-200 ml-1">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 flex-shrink-0">

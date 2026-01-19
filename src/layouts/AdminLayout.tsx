@@ -64,6 +64,10 @@ export function AdminLayout() {
                 <MenuSection title="Cadastros">
                     <MenuButton active={isActive('/admin/veiculos')} onClick={() => goTo('/admin/veiculos')} icon="🚛" label="Veículos" />
                     <MenuButton active={isActive('/admin/usuarios')} onClick={() => goTo('/admin/usuarios')} icon="👥" label="Equipe" />
+
+                    {/* NOVO BOTÃO: Documentos Legais */}
+                    <MenuButton active={isActive('/admin/documentos')} onClick={() => goTo('/admin/documentos')} icon="📂" label="Documentos Legais" />
+
                     <MenuButton active={isActive('/admin/cargos')} onClick={() => goTo('/admin/cargos')} icon="👔" label="Cargos" />
                     <MenuButton active={isActive('/admin/produtos')} onClick={() => goTo('/admin/produtos')} icon="📦" label="Produtos/Serviços" />
                     <MenuButton active={isActive('/admin/fornecedores')} onClick={() => goTo('/admin/fornecedores')} icon="🤝" label="Fornecedores" />

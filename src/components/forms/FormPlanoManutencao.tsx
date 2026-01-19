@@ -235,9 +235,10 @@ export function FormPlanoManutencao({ veiculos }: FormPlanoManutencaoProps) {
                   <div>
                     <h5 className="font-bold text-gray-800">{plano.descricao}</h5>
                     <p className="text-xs text-gray-500 font-medium mt-0.5 flex items-center gap-1.5">
-                      <span className="bg-background px-1.5 py-0.5 rounded text-gray-700 border border-border">{plano.veiculo.placa}</span>
+                      {/* CORREÇÃO AQUI: Adicionado ?. e fallback */}
+                      <span className="bg-background px-1.5 py-0.5 rounded text-gray-700 border border-border">{plano.veiculo?.placa || 'N/A'}</span>
                       <span className="text-gray-300">•</span>
-                      <span>{plano.veiculo.modelo}</span>
+                      <span>{plano.veiculo?.modelo || 'Veículo Removido'}</span>
                     </p>
                   </div>
 

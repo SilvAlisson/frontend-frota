@@ -27,7 +27,6 @@ const editSchema = z.object({
   itens: z.array(itemSchema).min(1, "Adicione itens"),
 });
 
-// [CORREÇÃO 1] Tipagem separada para garantir segurança no TS
 type EditFormInput = z.input<typeof editSchema>;
 type EditFormOutput = z.output<typeof editSchema>;
 
@@ -44,7 +43,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const { data: abastecimento, isLoading: loadingAbs } = useQuery<Abastecimento>({
     queryKey: ['abastecimento', abastecimentoId],
     queryFn: async () => (await api.get(`/abastecimentos/${abastecimentoId}`)).data,
-    retry: 1 // Evita tentar infinitamente se der 404
+    retry: 1
   });
 
   const { data: usuarios = [] } = useQuery<User[]>({
@@ -77,10 +76,9 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const motoristas = usuarios.filter(u => ['OPERADOR', 'ENCARREGADO'].includes(u.role));
 
   // 2. Form Setup
-  // [CORREÇÃO 1] Uso dos genéricos Input, any, Output
   const { register, control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<EditFormInput, any, EditFormOutput>({
     resolver: zodResolver(editSchema),
-    mode: 'onBlur' // [CORREÇÃO 2] UX
+    mode: 'onBlur'
   });
 
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
@@ -90,7 +88,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
     acc + (Number(item.quantidade || 0) * Number(item.valorPorUnidade || 0)), 0
   ) || 0;
 
-  // 3. Populate Form (Lógica mantida do Código 1)
+  // 3. Populate Form
   useEffect(() => {
     if (abastecimento) {
       reset({
@@ -101,11 +99,12 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         dataHora: new Date(abastecimento.dataHora).toISOString().slice(0, 16),
         placaCartaoUsado: abastecimento.placaCartaoUsado || '',
         justificativa: abastecimento.justificativa || '',
-        itens: abastecimento.itens.map(i => ({
-          produtoId: (i as any).produtoId || i.produto.id,
+        // [CORREÇÃO AQUI]: Adicionado ?. e || []
+        itens: abastecimento.itens?.map(i => ({
+          produtoId: (i as any).produtoId || i.produto?.id,
           quantidade: i.quantidade,
-          valorPorUnidade: (i as any).valorPorUnidade || ((i.produto as any).valorAtual || 0)
-        }))
+          valorPorUnidade: (i as any).valorPorUnidade || ((i.produto as any)?.valorAtual || 0)
+        })) || []
       });
     }
   }, [abastecimento, usuarios, fornecedores, reset]);
@@ -126,7 +125,6 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
     onSuccess: () => {
       toast.success("Registro atualizado com sucesso!");
       queryClient.invalidateQueries({ queryKey: ['abastecimentos'] });
-      // Invalida também o histórico individual para garantir dados frescos se reabrir
       queryClient.invalidateQueries({ queryKey: ['abastecimento', abastecimentoId] });
       onSuccess();
     },
@@ -160,7 +158,6 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         </div>
       </div>
 
-      {/* [CORREÇÃO 1] handleSubmit agora passa os dados tipados corretamente */}
       <form onSubmit={handleSubmit((data) => updateMutation.mutate(data))} className="p-6 space-y-6">
 
         {/* GRUPO 1: CONTEXTO */}

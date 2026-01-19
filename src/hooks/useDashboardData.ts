@@ -17,26 +17,24 @@ export function useDashboardData() {
     return useQuery<DashboardData>({
         // A chave inclui o role para garantir que, se o usuário mudar de nível, o React refaça a busca
         queryKey: ['dashboard-data', user?.role],
-
         queryFn: async () => {
             if (!user) throw new Error("Usuário não autenticado");
 
             const isOperador = user.role === 'OPERADOR';
 
-            console.log(`[Dashboard] Carregando dados. Perfil Operador? ${isOperador}`);
+            // LOG DE AUDITORIA 1: Início
+            console.group("🔍 AUDITORIA DASHBOARD (Role: " + user.role + ")");
+            console.log("1. Iniciando requisições...");
 
-            // ✅ SELEÇÃO DE ROTAS INTELIGENTE (CORREÇÃO 100%)
-            // Agora todas as entidades seguem a regra: Operador -> Rota Leve | Admin -> Rota Completa
             const endpoints = {
-                usuarios: isOperador ? '/users/encarregados' : '/users',
+                usuarios: '/users',
                 veiculos: isOperador ? '/veiculos/operacao' : '/veiculos',
                 produtos: isOperador ? '/produtos/operacao' : '/produtos',
-                fornecedores: isOperador ? '/fornecedores/operacao' : '/fornecedores',
-                // AQUI ESTAVA O DETALHE: O Operador deve ver apenas as SUAS jornadas
+                fornecedores: '/fornecedores',
                 jornadas: isOperador ? '/jornadas/minhas-abertas-operador' : '/jornadas/abertas'
             };
 
-            // Usamos allSettled para que uma falha em um endpoint não quebre todo o dashboard
+            // Usamos allSettled para garantir que descobrimos QUAL falha
             const results = await Promise.allSettled([
                 api.get<User[]>(endpoints.usuarios),
                 api.get<Veiculo[]>(endpoints.veiculos),
@@ -45,28 +43,30 @@ export function useDashboardData() {
                 api.get<Jornada[]>(endpoints.jornadas)
             ]);
 
-            // Função auxiliar para extrair dados com segurança
-            const unwrap = <T>(result: PromiseSettledResult<{ data: T }>, context: string): T => {
-                if (result.status === 'fulfilled') {
-                    return result.value.data;
+            // LOG DE AUDITORIA 2: Análise Individual
+            const logResult = (nome: string, res: any) => {
+                if (res.status === 'fulfilled') {
+                    const qtd = Array.isArray(res.value.data) ? res.value.data.length : 'N/A';
+                    console.log(`✅ ${nome}: Sucesso (Itens: ${qtd})`);
+                    return res.value.data;
                 } else {
-                    console.warn(`[Dashboard] Falha ao carregar ${context}:`, result.reason);
-                    return [] as any;
+                    console.error(`❌ ${nome}: FALHOU!`, res.reason);
+                    return []; // Retorna vazio para não quebrar a tela, mas avisa no console
                 }
             };
 
-            return {
-                usuarios: unwrap(results[0], 'usuários'),
-                veiculos: unwrap(results[1], 'veículos'),
-                produtos: unwrap(results[2], 'produtos'),
-                fornecedores: unwrap(results[3], 'fornecedores'),
-                jornadasAtivas: unwrap(results[4], 'jornadas'),
+            const dataFinal = {
+                usuarios: logResult('Usuários', results[0]),
+                veiculos: logResult('Veículos', results[1]),
+                produtos: logResult('Produtos', results[2]),
+                fornecedores: logResult('Fornecedores', results[3]),
+                jornadasAtivas: logResult('Jornadas', results[4]),
             };
-        },
 
+            console.groupEnd();
+            return dataFinal;
+        },
         enabled: !!user,
-        staleTime: 1000 * 60 * 2, // 2 minutos
-        refetchInterval: 1000 * 60, // 1 minuto
-        refetchOnWindowFocus: true,
+        staleTime: 1000 * 60 * 2,
     });
 }

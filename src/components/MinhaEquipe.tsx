@@ -48,7 +48,8 @@ export function MinhaEquipe({ usuarios, jornadasAbertas, onUpdate }: MinhaEquipe
       {/* Lista de Cards */}
       <div className="grid gap-4">
         {operadores.map(op => {
-          const jornadaAtiva = jornadasAbertas.find(j => j.operador.id === op.id);
+          // [CORREÇÃO 1] Uso de Optional Chaining (?.id) caso o operador venha nulo na jornada
+          const jornadaAtiva = jornadasAbertas.find(j => j.operador?.id === op.id);
 
           return (
             <div
@@ -86,7 +87,8 @@ export function MinhaEquipe({ usuarios, jornadasAbertas, onUpdate }: MinhaEquipe
                       Em Rota
                     </span>
                     <span className="text-[10px] text-muted-foreground mt-1.5 font-mono bg-background px-2 py-0.5 rounded border border-border">
-                      {jornadaAtiva.veiculo.placa}
+                      {/* [CORREÇÃO 2] Fallback seguro se o veículo não vier preenchido */}
+                      {jornadaAtiva.veiculo?.placa || 'Veículo N/D'}
                     </span>
                   </div>
                 ) : (
@@ -121,7 +123,7 @@ export function MinhaEquipe({ usuarios, jornadasAbertas, onUpdate }: MinhaEquipe
         )}
       </div>
 
-      {/*  Modal agora recebe o objeto user inteiro */}
+      {/* Modal agora recebe o objeto user inteiro */}
       {usuarioParaQr && (
         <ModalQrCode
           user={usuarioParaQr}
