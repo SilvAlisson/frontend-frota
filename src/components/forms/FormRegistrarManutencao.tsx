@@ -31,7 +31,7 @@ type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 const manutencaoSchema = z.object({
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
   alvo: z.enum(ALVOS_MANUTENCAO),
-
+  
   // Campos Opcionais
   veiculoId: z.string().optional().nullable(),
   kmAtual: z.string().optional().nullable(),
@@ -41,7 +41,7 @@ const manutencaoSchema = z.object({
   // Campos Obrigatórios com Mensagem Customizada
   fornecedorId: z.string().min(1, "Selecione o fornecedor"),
   data: z.string().min(1, "Data é obrigatória"),
-
+  
   itens: z.array(z.object({
     produtoId: z.string().min(1, "Selecione o serviço/peça"),
     quantidade: z.coerce.number().min(0.01, "Qtd inválida"),
@@ -106,7 +106,7 @@ export function FormRegistrarManutencao({
   const [modalAberto, setModalAberto] = useState(false);
   const [modalServicosOpen, setModalServicosOpen] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<PayloadOrdemServico | null>(null);
-
+  
   const [ultimoKmRegistrado, setUltimoKmRegistrado] = useState<number>(0);
   const [listaProdutos, setListaProdutos] = useState<Produto[]>(produtos);
 
@@ -147,7 +147,7 @@ export function FormRegistrarManutencao({
   // --- MEMOS ---
   const produtosDisponiveis = useMemo(() => {
     let lista = listaProdutos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo));
-
+    
     if (fornecedorIdSelecionado) {
       const fornecedor = fornecedores.find(f => f.id === fornecedorIdSelecionado);
       if (fornecedor?.produtosOferecidos?.length) {
@@ -158,19 +158,19 @@ export function FormRegistrarManutencao({
     return lista.sort((a, b) => a.nome.localeCompare(b.nome));
   }, [listaProdutos, fornecedorIdSelecionado, fornecedores]);
 
-  const fornecedoresOpcoes = useMemo(() =>
+  const fornecedoresOpcoes = useMemo(() => 
     fornecedores
       .filter(f => !['POSTO', 'LAVA_JATO'].includes(f.tipo))
       .map(f => ({ value: f.id, label: f.nome })),
     [fornecedores]
   );
 
-  const veiculosOpcoes = useMemo(() =>
+  const veiculosOpcoes = useMemo(() => 
     veiculos.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` })),
     [veiculos]
   );
 
-  const produtosOpcoes = useMemo(() =>
+  const produtosOpcoes = useMemo(() => 
     produtosDisponiveis.map(p => ({ value: p.id, label: p.nome })),
     [produtosDisponiveis]
   );
@@ -197,13 +197,13 @@ export function FormRegistrarManutencao({
     let isValid = false;
     if (step === 1) isValid = await trigger(['alvo', 'veiculoId', 'fornecedorId', 'data', 'kmAtual', 'numeroCA', 'tipo']);
     else if (step === 2) isValid = await trigger('itens');
-
+    
     if (isValid) setStep(s => s + 1);
   };
 
   const onSubmit = async (data: ManutencaoFormOutput) => {
     let kmInputFloat = null;
-
+    
     if (data.alvo === 'VEICULO' && data.kmAtual) {
       kmInputFloat = parseDecimal(data.kmAtual);
       if (kmInputFloat < ultimoKmRegistrado && ultimoKmRegistrado > 0) {
@@ -238,16 +238,16 @@ export function FormRegistrarManutencao({
     toast.success('Ordem de Serviço registrada com sucesso!');
     setModalAberto(false);
     reset({
-      alvo: 'VEICULO', veiculoId: '', fornecedorId: '', kmAtual: '',
+      alvo: 'VEICULO', veiculoId: '', fornecedorId: '', kmAtual: '', 
       numeroCA: '', data: new Date().toISOString().slice(0, 10),
-      tipo: 'CORRETIVA', observacoes: '',
+      tipo: 'CORRETIVA', observacoes: '', 
       itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: 0 }]
     });
     setStep(1);
     if (onSuccess) onSuccess();
   };
 
-  const totalGeral = (itensObservados || []).reduce((acc, item) =>
+  const totalGeral = (itensObservados || []).reduce((acc, item) => 
     acc + ((Number(item.quantidade) || 0) * (Number(item.valorPorUnidade) || 0)), 0
   );
 
@@ -255,7 +255,7 @@ export function FormRegistrarManutencao({
 
   return (
     <div className="flex flex-col h-full bg-white">
-
+      
       {/* HEADER */}
       <div className="px-6 pt-6 pb-2 shrink-0">
         <div className="flex items-center justify-between mb-4">
@@ -277,7 +277,7 @@ export function FormRegistrarManutencao({
           {/* PASSO 1 */}
           {step === 1 && (
             <div className="space-y-5 animate-in slide-in-from-right-8 duration-300">
-
+              
               <div className="grid grid-cols-2 gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100">
                 {['CORRETIVA', 'PREVENTIVA'].map((t) => (
                   <button
@@ -286,8 +286,8 @@ export function FormRegistrarManutencao({
                     onClick={() => setValue('tipo', t as TipoManutencao)}
                     className={`
                       py-2 text-xs font-bold rounded-lg transition-all
-                      ${tipoManutencao === t
-                        ? 'bg-white text-primary shadow-sm border border-gray-200'
+                      ${tipoManutencao === t 
+                        ? 'bg-white text-primary shadow-sm border border-gray-200' 
                         : 'text-gray-400 hover:text-gray-600'}
                     `}
                   >
@@ -341,7 +341,7 @@ export function FormRegistrarManutencao({
                   </div>
                 </div>
               ) : (
-                <Input
+                <Input 
                   label="Identificação (CA / Série)"
                   {...register("numeroCA")}
                   placeholder="Ex: CA-1234"
@@ -374,7 +374,7 @@ export function FormRegistrarManutencao({
           {/* PASSO 2 */}
           {step === 2 && (
             <div className="space-y-4 animate-in slide-in-from-right-8 duration-300">
-
+              
               <div className="flex justify-between items-center px-1">
                 <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Peças e Serviços</h4>
                 <button
@@ -397,8 +397,8 @@ export function FormRegistrarManutencao({
                 {fields.map((field, index) => (
                   <div key={field.id} className="bg-gray-50/50 p-3 rounded-xl border border-gray-100 group hover:border-primary/20 transition-colors relative">
                     {fields.length > 1 && (
-                      <button
-                        type="button"
+                      <button 
+                        type="button" 
                         onClick={() => remove(index)}
                         className="absolute -top-2 -right-2 bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 p-1 rounded-full shadow-sm z-10 transition-colors"
                       >
@@ -457,7 +457,7 @@ export function FormRegistrarManutencao({
           {/* PASSO 3 */}
           {step === 3 && (
             <div className="space-y-6 animate-in slide-in-from-right-8 duration-300 py-2">
-
+              
               <div className="bg-white p-6 rounded-2xl border border-border shadow-sm text-center">
                 <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Total Estimado</p>
                 <div className="text-4xl font-mono font-black text-gray-900 tracking-tight">
@@ -488,10 +488,10 @@ export function FormRegistrarManutencao({
         {/* FOOTER */}
         <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex gap-3 shrink-0">
           {step > 1 ? (
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => setStep(s => s - 1)}
+            <Button 
+              type="button" 
+              variant="secondary" 
+              onClick={() => setStep(s => s - 1)} 
               className="flex-1"
               icon={<ChevronLeft className="w-4 h-4" />}
               disabled={isLocked}
@@ -499,10 +499,10 @@ export function FormRegistrarManutencao({
               Voltar
             </Button>
           ) : (
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={onClose}
+            <Button 
+              type="button" 
+              variant="ghost" 
+              onClick={onClose} 
               className="flex-1"
               disabled={isLocked}
             >
@@ -511,9 +511,9 @@ export function FormRegistrarManutencao({
           )}
 
           {step < 3 ? (
-            <Button
-              type="button"
-              onClick={nextStep}
+            <Button 
+              type="button" 
+              onClick={nextStep} 
               className="flex-[2] shadow-lg shadow-primary/20"
               icon={<ChevronRight className="w-4 h-4" />}
               disabled={isLocked}
@@ -521,8 +521,8 @@ export function FormRegistrarManutencao({
               Próximo
             </Button>
           ) : (
-            <Button
-              type="submit"
+            <Button 
+              type="submit" 
               isLoading={isSubmitting}
               className="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20"
               icon={<Check className="w-4 h-4" />}

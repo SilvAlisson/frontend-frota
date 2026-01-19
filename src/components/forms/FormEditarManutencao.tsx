@@ -23,7 +23,7 @@ type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 const manutencaoSchema = z.object({
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
   alvo: z.enum(ALVOS_MANUTENCAO),
-
+  
   veiculoId: z.string().nullish(),
   kmAtual: z.string().nullish(),
   numeroCA: z.string().nullish(),
@@ -106,7 +106,7 @@ export function FormEditarManutencao({
   // --- FILTROS ---
   const produtosManutencao = useMemo(() => {
     let lista = produtos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo));
-
+    
     if (fornecedorIdSelecionado) {
       const fornecedor = fornecedores.find(f => f.id === fornecedorIdSelecionado);
       if (fornecedor?.produtosOferecidos?.length) {
@@ -117,19 +117,19 @@ export function FormEditarManutencao({
     return lista.sort((a, b) => a.nome.localeCompare(b.nome));
   }, [produtos, fornecedorIdSelecionado, fornecedores]);
 
-  const fornecedoresOpcoes = useMemo(() =>
+  const fornecedoresOpcoes = useMemo(() => 
     fornecedores
       .filter(f => abaAtiva === 'CORRETIVA' ? !['POSTO', 'LAVA_JATO'].includes(f.tipo) : true)
       .map(f => ({ value: f.id, label: f.nome })),
     [fornecedores, abaAtiva]
   );
 
-  const veiculosOpcoes = useMemo(() =>
+  const veiculosOpcoes = useMemo(() => 
     veiculos.map(v => ({ value: v.id, label: v.placa })),
     [veiculos]
   );
 
-  const produtosOpcoes = useMemo(() =>
+  const produtosOpcoes = useMemo(() => 
     produtosManutencao.map(p => ({ value: p.id, label: p.nome })),
     [produtosManutencao]
   );
@@ -168,7 +168,7 @@ export function FormEditarManutencao({
 
   return (
     <div className="flex flex-col h-full bg-white">
-
+      
       {/* HEADER */}
       <div className="px-6 pt-6 pb-2 border-b border-gray-100 shrink-0">
         <div className="flex justify-between items-center mb-4">
@@ -189,8 +189,8 @@ export function FormEditarManutencao({
               disabled={isLocked}
               className={`
                 flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all
-                ${abaAtiva === tipo
-                  ? 'bg-primary/10 text-primary border border-primary/20'
+                ${abaAtiva === tipo 
+                  ? 'bg-primary/10 text-primary border border-primary/20' 
                   : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}
               `}
             >
@@ -228,14 +228,14 @@ export function FormEditarManutencao({
                 <Select
                   label="Veículo"
                   options={veiculosOpcoes}
-                  icon={<Truck className="w-4 h-4" />}
+                  icon={<Truck className="w-4 h-4"/>}
                   {...register("veiculoId")}
                   error={errors.veiculoId?.message}
                   disabled={isLocked}
                 />
                 <Input
                   label="KM no Momento"
-                  icon={<Gauge className="w-4 h-4" />}
+                  icon={<Gauge className="w-4 h-4"/>}
                   {...register("kmAtual")}
                   onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
                   error={errors.kmAtual?.message}
@@ -256,7 +256,7 @@ export function FormEditarManutencao({
             <Select
               label="Fornecedor"
               options={fornecedoresOpcoes}
-              icon={<Wrench className="w-4 h-4" />}
+              icon={<Wrench className="w-4 h-4"/>}
               {...register("fornecedorId")}
               error={errors.fornecedorId?.message}
               disabled={isLocked}
@@ -265,7 +265,7 @@ export function FormEditarManutencao({
             <Input
               label="Data do Serviço"
               type="date"
-              icon={<Calendar className="w-4 h-4" />}
+              icon={<Calendar className="w-4 h-4"/>}
               {...register("data")}
               error={errors.data?.message}
               disabled={isLocked}
@@ -321,7 +321,7 @@ export function FormEditarManutencao({
                         label="Valor Unit"
                         type="number"
                         step="0.01"
-                        icon={<DollarSign className="w-3 h-3 text-gray-400" />}
+                        icon={<DollarSign className="w-3 h-3 text-gray-400"/>}
                         {...register(`itens.${index}.valorPorUnidade`)}
                         className="bg-white h-9 text-xs text-right font-bold"
                         disabled={isLocked}
@@ -341,7 +341,7 @@ export function FormEditarManutencao({
             >
               <Plus className="w-3 h-3 mr-1" /> Adicionar Item
             </Button>
-
+            
             {errors.itens && <p className="text-xs text-red-500 text-right">{errors.itens.root?.message}</p>}
           </div>
 
@@ -368,12 +368,12 @@ export function FormEditarManutencao({
               {totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </span>
           </div>
-
+          
           <div className="flex gap-3">
             <Button type="button" variant="ghost" onClick={onClose} disabled={isLocked}>
               Cancelar
             </Button>
-            <Button type="submit" isLoading={isLocked} disabled={isLocked} icon={<Check className="w-4 h-4" />}>
+            <Button type="submit" isLoading={isLocked} disabled={isLocked} icon={<Check className="w-4 h-4"/>}>
               Salvar
             </Button>
           </div>

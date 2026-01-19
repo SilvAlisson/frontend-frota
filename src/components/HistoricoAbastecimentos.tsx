@@ -32,7 +32,7 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
   // Estados de Dados
   const [historico, setHistorico] = useState<Abastecimento[]>([]);
   const [loading, setLoading] = useState(true);
-
+  
   // Estados de Interação
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -137,11 +137,11 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
     // Tenta deduzir o tipo principal pelos itens
     const itemCombustivel = ab.itens?.find(i => i.produto.tipo === 'COMBUSTIVEL');
     const nome = itemCombustivel ? itemCombustivel.produto.nome : 'Outros';
-
+    
     // Mapeamento simples de cor por nome
     const nomeUpper = nome.toUpperCase();
     let variant: "neutral" | "warning" | "success" | "info" = "neutral";
-
+    
     if (nomeUpper.includes('DIESEL')) variant = "neutral"; // Diesel geralmente preto/cinza
     if (nomeUpper.includes('GASOLINA')) variant = "warning"; // Inflamável
     if (nomeUpper.includes('ETANOL')) variant = "success"; // Verde
@@ -160,47 +160,47 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
     <div className="space-y-6 pb-10">
 
       {/* 1. HEADER E FILTROS */}
-      <PageHeader
+      <PageHeader 
         title="Histórico de Abastecimentos"
         subtitle="Monitore custos, consumo e médias de combustível."
         extraAction={
           <div className="flex flex-col sm:flex-row gap-2 w-full xl:w-auto">
-            <div className="w-full sm:w-32">
-              <Input
-                type="date"
-                label="De"
-                value={dataInicioFiltro}
-                onChange={(e) => setDataInicioFiltro(e.target.value)}
-              />
-            </div>
-            <div className="w-full sm:w-32">
-              <Input
-                type="date"
-                label="Até"
-                value={dataFimFiltro}
-                onChange={(e) => setDataFimFiltro(e.target.value)}
-              />
-            </div>
-            <div className="w-full sm:w-56">
-              <Select
-                label="Veículo"
-                options={veiculosOptions}
-                value={veiculoIdFiltro}
-                onChange={(e) => setVeiculoIdFiltro(e.target.value)}
-                icon={<Truck className="w-4 h-4" />}
-              />
-            </div>
-            <div className="flex items-end pb-0.5">
-              <Button
-                variant="success"
-                onClick={handleExportar}
-                disabled={historico.length === 0}
-                icon={<FileDown className="w-4 h-4" />}
-                className="w-full sm:w-auto"
-              >
-                Exportar
-              </Button>
-            </div>
+             <div className="w-full sm:w-32">
+               <Input 
+                 type="date" 
+                 label="De" 
+                 value={dataInicioFiltro} 
+                 onChange={(e) => setDataInicioFiltro(e.target.value)} 
+               />
+             </div>
+             <div className="w-full sm:w-32">
+               <Input 
+                 type="date" 
+                 label="Até" 
+                 value={dataFimFiltro} 
+                 onChange={(e) => setDataFimFiltro(e.target.value)} 
+               />
+             </div>
+             <div className="w-full sm:w-56">
+               <Select 
+                 label="Veículo"
+                 options={veiculosOptions}
+                 value={veiculoIdFiltro}
+                 onChange={(e) => setVeiculoIdFiltro(e.target.value)}
+                 icon={<Truck className="w-4 h-4" />}
+               />
+             </div>
+             <div className="flex items-end pb-0.5">
+               <Button 
+                 variant="success" 
+                 onClick={handleExportar} 
+                 disabled={historico.length === 0}
+                 icon={<FileDown className="w-4 h-4" />}
+                 className="w-full sm:w-auto"
+               >
+                 Exportar
+               </Button>
+             </div>
           </div>
         }
       />
@@ -231,11 +231,11 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
                 <td className={TableStyles.td}>
                   <div className="flex flex-col gap-1">
                     <span className="font-bold text-gray-900 flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                      {new Date(ab.dataHora).toLocaleDateString('pt-BR')}
+                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                        {new Date(ab.dataHora).toLocaleDateString('pt-BR')}
                     </span>
                     <span className="text-xs text-gray-500 ml-5">
-                      {new Date(ab.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        {new Date(ab.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
                 </td>
@@ -244,37 +244,37 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
                     <span className="font-mono font-bold text-primary">{ab.veiculo?.placa || 'Sem placa'}</span>
                     <span className="text-xs text-gray-500 font-medium">{ab.operador?.nome || 'Sem operador'}</span>
                     <div className="flex items-center gap-1 mt-0.5 text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded w-fit border border-gray-100">
-                      <Gauge className="w-3 h-3" /> {ab.kmOdometro.toLocaleString('pt-BR')} km
+                        <Gauge className="w-3 h-3" /> {ab.kmOdometro.toLocaleString('pt-BR')} km
                     </div>
                   </div>
                 </td>
                 <td className={TableStyles.td}>
                   <div className="flex flex-col gap-2 items-start">
                     {getCombustivelBadge(ab)}
-
+                    
                     {ab.fotoNotaFiscalUrl && (
-                      <a
-                        href={ab.fotoNotaFiscalUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium hover:underline"
-                      >
-                        <Receipt className="w-3 h-3" /> Ver Nota Fiscal
-                      </a>
+                        <a 
+                            href={ab.fotoNotaFiscalUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer" 
+                            className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                        >
+                            <Receipt className="w-3 h-3" /> Ver Nota Fiscal
+                        </a>
                     )}
                   </div>
                 </td>
                 <td className={TableStyles.td}>
                   <div className="flex flex-col">
-                    <span className="font-mono font-bold text-gray-900">{formatCurrency(ab.custoTotal)}</span>
-                    <span className="text-xs text-gray-500 flex items-center gap-1">
-                      <Droplets className="w-3 h-3" />
-                      {(ab.itens || []).map(i => `${i.quantidade}${i.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'un'}`).join(' + ')}
-                    </span>
+                      <span className="font-mono font-bold text-gray-900">{formatCurrency(ab.custoTotal)}</span>
+                      <span className="text-xs text-gray-500 flex items-center gap-1">
+                          <Droplets className="w-3 h-3" />
+                          {(ab.itens || []).map(i => `${i.quantidade}${i.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'un'}`).join(' + ')}
+                      </span>
                   </div>
                 </td>
                 <td className={`${TableStyles.td} text-right`}>
-                  <DropdownAcoes
+                  <DropdownAcoes 
                     onEditar={canEdit ? () => setEditingId(ab.id) : undefined}
                     onExcluir={userRole === 'ADMIN' ? () => setDeletingId(ab.id) : undefined}
                   />
@@ -292,7 +292,7 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
                       <span className="text-sm font-bold leading-none">{new Date(ab.dataHora).getDate()}</span>
                       <span className="text-[9px] uppercase font-bold">{new Date(ab.dataHora).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</span>
                     </div>
-
+                    
                     {/* Infos Principais */}
                     <div className="flex flex-col">
                       <span className="font-mono font-bold text-gray-900">{ab.veiculo?.placa || 'Sem Placa'}</span>
@@ -300,7 +300,7 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
                     </div>
                   </div>
 
-                  <DropdownAcoes
+                  <DropdownAcoes 
                     onEditar={canEdit ? () => setEditingId(ab.id) : undefined}
                     onExcluir={userRole === 'ADMIN' ? () => setDeletingId(ab.id) : undefined}
                   />
@@ -308,20 +308,20 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
 
                 {/* Detalhes Mobile */}
                 <div className="grid grid-cols-2 gap-2 border-t border-dashed border-gray-100 pt-3">
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-gray-400 uppercase font-bold">Valor</span>
-                    <span className="font-mono font-bold text-gray-900">{formatCurrency(ab.custoTotal)}</span>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <span className="text-[10px] text-gray-400 uppercase font-bold">Combustível</span>
-                    {getCombustivelBadge(ab)}
-                  </div>
+                    <div className="flex flex-col">
+                        <span className="text-[10px] text-gray-400 uppercase font-bold">Valor</span>
+                        <span className="font-mono font-bold text-gray-900">{formatCurrency(ab.custoTotal)}</span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                        <span className="text-[10px] text-gray-400 uppercase font-bold">Combustível</span>
+                        {getCombustivelBadge(ab)}
+                    </div>
                 </div>
-
+                
                 {ab.fotoNotaFiscalUrl && (
-                  <a href={ab.fotoNotaFiscalUrl} target="_blank" className="bg-blue-50 text-blue-600 text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors">
-                    <Receipt className="w-4 h-4" /> Visualizar Nota Fiscal
-                  </a>
+                    <a href={ab.fotoNotaFiscalUrl} target="_blank" className="bg-blue-50 text-blue-600 text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors">
+                        <Receipt className="w-4 h-4" /> Visualizar Nota Fiscal
+                    </a>
                 )}
               </div>
             )}
@@ -332,8 +332,8 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
       {/* --- MODAIS --- */}
 
       {/* Edição */}
-      <Modal
-        isOpen={!!editingId}
+      <Modal 
+        isOpen={!!editingId} 
         onClose={() => setEditingId(null)}
         title="Editar Abastecimento"
         className="max-w-2xl"
@@ -351,7 +351,7 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
       </Modal>
 
       {/* Confirmação de Exclusão */}
-      <ConfirmModal
+      <ConfirmModal 
         isOpen={!!deletingId}
         onCancel={() => setDeletingId(null)}
         onConfirm={handleDelete}
