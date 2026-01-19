@@ -15,6 +15,7 @@ import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
 import { TableStyles } from '../styles/table';
+import { FormEditarJornada } from './forms/FormEditarJornada';
 
 // --- COMPONENTES & FORMS ---
 import { FormEditarJornada } from './forms/FormEditarJornada';
@@ -26,8 +27,8 @@ interface JornadaHistorico extends Jornada {
 }
 
 interface HistoricoJornadasProps {
-    veiculos: Veiculo[];
-    userRole?: string;
+  veiculos: Veiculo[];
+  userRole?: string;
 }
 
 export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: HistoricoJornadasProps) {
@@ -119,10 +120,35 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
             }
         });
 
-        toast.promise(exportPromise, {
-            loading: 'Exportando dados...',
-            success: 'Histórico exportado com sucesso!',
-            error: 'Erro ao exportar arquivo.'
+  const handleEdit = (jornada: JornadaHistorico) => {
+    setEditingId(jornada.id);
+  };
+
+  const handleSuccessEdit = () => {
+    setEditingId(null);
+    fetchHistorico();
+  };
+
+  const handleExportar = () => {
+    if (historico.length === 0) return;
+
+    const exportPromise = new Promise((resolve, reject) => {
+      try {
+        const dados = historico.map(j => {
+          const kmAndados = (j.kmFim && j.kmInicio)
+            ? j.kmFim - j.kmInicio
+            : (j.kmPercorrido || 0);
+
+          return {
+            'Saída': new Date(j.dataInicio).toLocaleString('pt-BR'),
+            'Chegada': j.dataFim ? new Date(j.dataFim).toLocaleString('pt-BR') : 'Em andamento',
+            'Veículo': `${j.veiculo.placa} - ${j.veiculo.modelo}`,
+            'Motorista': j.operador.nome,
+            'KM Inicial': j.kmInicio,
+            'KM Final': j.kmFim || '-',
+            'Percorrido (KM)': kmAndados,
+            'Observações': j.observacoes || ''
+          };
         });
     };
 
@@ -432,5 +458,35 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
             )}
 
         </div>
-    );
+      )}
+
+      {/* MODAL DE VISUALIZAÇÃO DE FOTO */}
+      {viewingPhoto && (
+        <div 
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/95 backdrop-blur-sm p-4 animate-in fade-in"
+          onClick={() => setViewingPhoto(null)}
+        >
+          <div className="relative w-full h-full flex flex-col items-center justify-center">
+             <button 
+               onClick={() => setViewingPhoto(null)}
+               className="absolute top-6 right-6 text-white hover:text-red-400 bg-white/10 hover:bg-white/20 rounded-full p-2 transition-all z-50"
+             >
+               <X className="w-8 h-8" />
+             </button>
+             
+             <img 
+               src={viewingPhoto} 
+               alt="Odômetro Ampliado" 
+               className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl animate-in zoom-in-95"
+               onClick={(e) => e.stopPropagation()} 
+             />
+             <p className="text-white/60 mt-4 text-sm font-medium">
+               Clique fora para fechar
+             </p>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
 }

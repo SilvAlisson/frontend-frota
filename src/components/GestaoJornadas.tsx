@@ -22,6 +22,9 @@ export function GestaoJornadas({
   jornadasAbertas,
   onJornadaFinalizadaManualmente
 }: GestaoJornadasProps) {
+  
+  // 2. Estado para controlar qual jornada está sendo editada
+  const [jornadaEditandoId, setJornadaEditandoId] = useState<string | null>(null);
 
   // Estados
   const [jornadaEditandoId, setJornadaEditandoId] = useState<string | null>(null);

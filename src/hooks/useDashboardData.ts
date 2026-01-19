@@ -15,6 +15,7 @@ export function useDashboardData() {
     const { user } = useAuth();
 
     return useQuery<DashboardData>({
+        // A chave inclui o role para garantir que, se o usuário mudar de nível, o React refaça a busca
         queryKey: ['dashboard-data', user?.role],
         queryFn: async () => {
             if (!user) throw new Error("Usuário não autenticado");
