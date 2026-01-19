@@ -2,10 +2,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
-// ✅ CORREÇÃO: Adicionado FileText, removido Clock
-import {
-  Calendar, Filter, Download, ExternalLink,
-  CheckCircle2, AlertCircle, PlayCircle, FileText
+import { 
+  Calendar, Filter, Download, ExternalLink, 
+  CheckCircle2, AlertCircle, PlayCircle, FileText 
 } from 'lucide-react';
 import type { OrdemServico, Veiculo, Produto, Fornecedor } from '../types';
 
@@ -40,11 +39,11 @@ export function HistoricoManutencoes({
   fornecedores,
   filtroInicial
 }: HistoricoManutencoesProps) {
-
+  
   // --- ESTADOS ---
   const [historico, setHistorico] = useState<OrdemServico[]>([]);
   const [loading, setLoading] = useState(true);
-
+  
   const [editingOS, setEditingOS] = useState<OrdemServico | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -110,7 +109,7 @@ export function HistoricoManutencoes({
   };
 
   // --- HELPERS VISUAIS ---
-
+  
   const getBadgeTipo = (tipo: string) => {
     const map: Record<string, "warning" | "info" | "success" | "neutral"> = {
       'CORRETIVA': 'warning',
@@ -122,17 +121,17 @@ export function HistoricoManutencoes({
 
   const getBadgeStatus = (status?: string) => {
     const s = status?.toUpperCase() || 'CONCLUIDA';
-
+    
     switch (s) {
       case 'AGENDADA':
-        return <Badge variant="neutral" className="gap-1"><Calendar className="w-3 h-3" /> Agendada</Badge>;
+        return <Badge variant="neutral" className="gap-1"><Calendar className="w-3 h-3"/> Agendada</Badge>;
       case 'EM_ANDAMENTO':
-        return <Badge variant="warning" className="gap-1"><PlayCircle className="w-3 h-3" /> Em Andamento</Badge>;
+        return <Badge variant="warning" className="gap-1"><PlayCircle className="w-3 h-3"/> Em Andamento</Badge>;
       case 'CONCLUIDA':
       case 'CONCLUÍDA':
-        return <Badge variant="success" className="gap-1"><CheckCircle2 className="w-3 h-3" /> Concluída</Badge>;
+        return <Badge variant="success" className="gap-1"><CheckCircle2 className="w-3 h-3"/> Concluída</Badge>;
       case 'CANCELADA':
-        return <Badge variant="danger" className="gap-1"><AlertCircle className="w-3 h-3" /> Cancelada</Badge>;
+        return <Badge variant="danger" className="gap-1"><AlertCircle className="w-3 h-3"/> Cancelada</Badge>;
       default:
         return <Badge variant="neutral">{s}</Badge>;
     }
@@ -145,42 +144,42 @@ export function HistoricoManutencoes({
 
   return (
     <div className="space-y-6 pb-10">
-
+      
       {/* 1. HEADER & FILTROS */}
-      <PageHeader
+      <PageHeader 
         title="Histórico de Manutenções"
         subtitle="Gerencie preventivas, corretivas e custos de oficina."
         extraAction={
           <div className="flex flex-col sm:flex-row gap-2 w-full xl:w-auto items-end">
             <div className="w-full sm:w-32">
-              <Input
-                type="date"
-                label="Início"
-                value={filtros.dataInicio}
+              <Input 
+                type="date" 
+                label="Início" 
+                value={filtros.dataInicio} 
                 onChange={e => setFiltros(prev => ({ ...prev, dataInicio: e.target.value }))}
               />
             </div>
             <div className="w-full sm:w-32">
-              <Input
-                type="date"
-                label="Fim"
-                value={filtros.dataFim}
+              <Input 
+                type="date" 
+                label="Fim" 
+                value={filtros.dataFim} 
                 onChange={e => setFiltros(prev => ({ ...prev, dataFim: e.target.value }))}
               />
             </div>
             <div className="w-full sm:w-48">
-              <Select
-                label="Veículo"
-                options={veiculosOptions}
+              <Select 
+                label="Veículo" 
+                options={veiculosOptions} 
                 value={filtros.veiculoId}
                 onChange={e => setFiltros(prev => ({ ...prev, veiculoId: e.target.value }))}
-                icon={<Filter className="w-4 h-4" />}
+                icon={<Filter className="w-4 h-4"/>}
               />
             </div>
             <div className="pb-0.5">
-              <Button
-                variant="secondary"
-                onClick={handleExportar}
+              <Button 
+                variant="secondary" 
+                onClick={handleExportar} 
                 icon={<Download className="w-4 h-4" />}
                 disabled={historico.length === 0}
               >
@@ -247,12 +246,12 @@ export function HistoricoManutencoes({
                   </span>
                 </td>
                 <td className={`${TableStyles.td} text-right`}>
-                  <DropdownAcoes
+                  <DropdownAcoes 
                     onEditar={canEdit ? () => setEditingOS(os) : undefined}
                     onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
                     customActions={os.fotoComprovanteUrl ? [{
                       label: "Ver Nota Fiscal",
-                      icon: <ExternalLink className="w-4 h-4" />,
+                      icon: <ExternalLink className="w-4 h-4"/>,
                       onClick: () => window.open(os.fotoComprovanteUrl || '', '_blank')
                     }] : []}
                   />
@@ -294,20 +293,20 @@ export function HistoricoManutencoes({
 
                 {/* Ações Mobile */}
                 <div className="flex gap-2 pt-1">
-                  {os.fotoComprovanteUrl && (
-                    <Button
-                      variant="secondary"
-                      className="flex-1 text-xs h-9"
-                      icon={<FileText className="w-3 h-3" />}
+                   {os.fotoComprovanteUrl && (
+                    <Button 
+                      variant="secondary" 
+                      className="flex-1 text-xs h-9" 
+                      icon={<FileText className="w-3 h-3"/>}
                       onClick={() => window.open(os.fotoComprovanteUrl || '', '_blank')}
                     >
                       Comprovante
                     </Button>
                   )}
                   <div className="flex-1">
-                    <DropdownAcoes
-                      onEditar={canEdit ? () => setEditingOS(os) : undefined}
-                      onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
+                    <DropdownAcoes 
+                        onEditar={canEdit ? () => setEditingOS(os) : undefined}
+                        onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
                     />
                   </div>
                 </div>
@@ -318,10 +317,10 @@ export function HistoricoManutencoes({
       </Card>
 
       {/* 3. MODAIS */}
-
+      
       {/* Edição */}
-      <Modal
-        isOpen={!!editingOS}
+      <Modal 
+        isOpen={!!editingOS} 
         onClose={() => setEditingOS(null)}
         title="Editar Manutenção"
         className="max-w-3xl"
@@ -339,7 +338,7 @@ export function HistoricoManutencoes({
       </Modal>
 
       {/* Exclusão */}
-      <ConfirmModal
+      <ConfirmModal 
         isOpen={!!deletingId}
         onCancel={() => setDeletingId(null)}
         onConfirm={handleDelete}

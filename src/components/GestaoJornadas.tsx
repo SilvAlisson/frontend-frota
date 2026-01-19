@@ -22,16 +22,13 @@ export function GestaoJornadas({
   jornadasAbertas,
   onJornadaFinalizadaManualmente
 }: GestaoJornadasProps) {
-  
-  // 2. Estado para controlar qual jornada está sendo editada
-  const [jornadaEditandoId, setJornadaEditandoId] = useState<string | null>(null);
 
   // Estados
   const [jornadaEditandoId, setJornadaEditandoId] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
 
   // Filtragem (busca simples no cliente)
-  const jornadasFiltradas = jornadasAbertas.filter(j =>
+  const jornadasFiltradas = jornadasAbertas.filter(j => 
     j.veiculo?.placa?.toLowerCase().includes(busca.toLowerCase()) ||
     j.motorista?.nome?.toLowerCase().includes(busca.toLowerCase())
   );
@@ -51,7 +48,7 @@ export function GestaoJornadas({
     <div className="space-y-6 pb-10">
 
       {/* 1. HEADER */}
-      <PageHeader
+      <PageHeader 
         title="Monitoramento em Tempo Real"
         subtitle="Acompanhe e gerencie os veículos que estão em circulação agora."
         extraAction={
@@ -66,9 +63,9 @@ export function GestaoJornadas({
               </Badge>
             )}
             <div className="w-full sm:w-64">
-              <Input
-                placeholder="Buscar placa ou motorista..."
-                icon={<Search className="w-4 h-4 text-gray-400" />}
+              <Input 
+                placeholder="Buscar placa ou motorista..." 
+                icon={<Search className="w-4 h-4 text-gray-400"/>}
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
               />
@@ -112,8 +109,8 @@ export function GestaoJornadas({
       )}
 
       {/* 3. MODAL DE EDIÇÃO */}
-      <Modal
-        isOpen={!!jornadaEditandoId}
+      <Modal 
+        isOpen={!!jornadaEditandoId} 
         onClose={() => setJornadaEditandoId(null)}
         title="Editar Jornada"
         className="max-w-2xl"

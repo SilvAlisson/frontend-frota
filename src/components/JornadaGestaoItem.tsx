@@ -22,18 +22,18 @@ interface Jornada {
 }
 
 interface JornadaGestaoItemProps {
-  token?: string;
+  token?: string; // Mantido por compatibilidade
   jornada: Jornada;
   onFinalizada: (jornadaId: string) => void;
   onExcluida?: (jornadaId: string) => void;
   onEditar: (jornada: Jornada) => void;
 }
 
-export function JornadaGestaoItem({
-  jornada,
-  onFinalizada,
-  onExcluida,
-  onEditar
+export function JornadaGestaoItem({ 
+  jornada, 
+  onFinalizada, 
+  onExcluida, 
+  onEditar 
 }: JornadaGestaoItemProps) {
 
   const [kmFim, setKmFim] = useState('');
@@ -94,12 +94,12 @@ export function JornadaGestaoItem({
 
   // Formatadores
   const dataInicio = new Date(jornada.dataInicio);
-
+  
   return (
     <>
       <Card noPadding className="overflow-visible group transition-all hover:border-primary/30 hover:shadow-md">
         <div className="p-5">
-
+          
           {/* HEADER: Motorista e Status */}
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-3">
@@ -117,7 +117,7 @@ export function JornadaGestaoItem({
             </div>
 
             {/* Ações (Editar/Excluir) */}
-            <DropdownAcoes
+            <DropdownAcoes 
               onEditar={() => onEditar(jornada)}
               onExcluir={() => setDeletingId(jornada.id)}
             />
@@ -125,7 +125,7 @@ export function JornadaGestaoItem({
 
           {/* INFO GRID: Veículo e Horário */}
           <div className="grid grid-cols-2 gap-3 mb-5">
-
+            
             {/* Veículo */}
             <div className="bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex flex-col">
               <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
@@ -167,8 +167,8 @@ export function JornadaGestaoItem({
                   className="h-10"
                 />
               </div>
-              <Button
-                type="submit"
+              <Button 
+                type="submit" 
                 isLoading={loading}
                 disabled={loading || !kmFim}
                 className="h-10 px-6 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20"
@@ -183,7 +183,7 @@ export function JornadaGestaoItem({
       </Card>
 
       {/* CONFIRMAÇÃO DE EXCLUSÃO */}
-      <ConfirmModal
+      <ConfirmModal 
         isOpen={!!deletingId}
         onCancel={() => setDeletingId(null)}
         onConfirm={handleDelete}
