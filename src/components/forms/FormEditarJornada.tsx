@@ -139,6 +139,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
         }
       }
 
+      // ✅ REMOVIDO: atualizarOdometroVeiculo (Backend agora decide automaticamente)
       const payload = {
         dataInicio: dataInicioISO,
         kmInicio: kmInicioNum,
@@ -146,8 +147,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
         kmFim: kmFimNum,
         veiculoId: data.veiculoId,
         operadorId: data.operadorId,
-        observacoes: data.observacoes,
-        atualizarOdometroVeiculo: true
+        observacoes: data.observacoes
       };
 
       await api.put(`/jornadas/${jornadaId}`, payload);
