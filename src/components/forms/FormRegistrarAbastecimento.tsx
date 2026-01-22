@@ -157,9 +157,9 @@ export function FormRegistrarAbastecimento({
     // Validação Inteligente de KM
     const kmInputFloat = parseKmInteligente(data.kmAtual, ultimoKm);
 
+    // ✅ CORREÇÃO: Apenas AVISO para permitir retroativo (sem return)
     if (kmInputFloat < ultimoKm) {
-      toast.error(`KM Inválido: O valor (${kmInputFloat.toLocaleString()}) é menor que o último registro (${ultimoKm.toLocaleString()} KM).`);
-      return;
+      toast.warning(`Nota: O valor (${kmInputFloat.toLocaleString()}) é menor que o atual (${ultimoKm.toLocaleString()}). Registrando como retroativo...`);
     }
 
     const payloadFinal: AbastecimentoPayload = {
