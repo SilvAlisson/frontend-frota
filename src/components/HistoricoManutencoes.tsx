@@ -65,7 +65,8 @@ export function HistoricoManutencoes({
       if (filtros.dataInicio) params.dataInicio = filtros.dataInicio;
       if (filtros.dataFim) params.dataFim = filtros.dataFim;
 
-      const response = await api.get<OrdemServico[]>('/ordens-servico/recentes', { params });
+      // ✅ CORREÇÃO: Rota atualizada para bater com o backend (/api/manutencoes)
+      const response = await api.get<OrdemServico[]>('/manutencoes/recentes', { params });
       setHistorico(response.data);
     } catch (err) {
       console.error(err);
@@ -81,7 +82,8 @@ export function HistoricoManutencoes({
   const handleDelete = async () => {
     if (!deletingId) return;
     try {
-      await api.delete(`/ordens-servico/${deletingId}`);
+      // ✅ CORREÇÃO: Rota atualizada para bater com o backend
+      await api.delete(`/manutencoes/${deletingId}`);
       setHistorico(prev => prev.filter(os => os.id !== deletingId));
       toast.success('Registro removido.');
     } catch (error) {
