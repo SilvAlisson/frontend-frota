@@ -57,7 +57,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
     reset,
     setValue,
     formState: { errors, isSubmitting }
-  } = useForm<VeiculoFormInput, any, VeiculoFormOutput>({ // ✅ CORREÇÃO: Adicionado o 3º genérico (Output)
+  } = useForm<VeiculoFormInput, any, VeiculoFormOutput>({ 
     resolver: zodResolver(veiculoSchema),
     mode: 'onBlur'
   });
@@ -119,8 +119,10 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
       capacidadeTanque: data.capacidadeTanque || null,
       tipoVeiculo: data.tipoVeiculo || null,
 
-      // ✅ Converte de volta para número puro antes de salvar
-      ultimoKm: parseDecimal(data.ultimoKm)
+      // ✅ CORREÇÃO CRÍTICA AQUI:
+      // O backend espera "kmAtual" para atualizar o odômetro.
+      // Antes estava enviando "ultimoKm", que o backend ignorava.
+      kmAtual: parseDecimal(data.ultimoKm) 
     };
 
     try {
