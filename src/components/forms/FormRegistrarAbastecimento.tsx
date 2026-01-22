@@ -19,7 +19,7 @@ import { formatKmVisual, parseKmInteligente } from '../../utils';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import type { Veiculo, Fornecedor, Produto, User as UserType } from '../../types';
 
-// --- SCHEMA ZOD ---
+// --- SCHEMA ZOD ATUALIZADO (Unitário é o foco) ---
 const abastecimentoSchema = z.object({
   veiculoId: z.string().min(1, "Selecione o veículo"),
   operadorId: z.string().min(1, "Selecione o motorista"),
@@ -29,13 +29,13 @@ const abastecimentoSchema = z.object({
   itens: z.array(z.object({
     produtoId: z.string().min(1, "Selecione o produto"),
     quantidade: z.coerce.number().min(0.01, "Qtd inválida"),
-    valorTotal: z.coerce.number().min(0.01, "Valor inválido"),
+    valorUnitario: z.coerce.number().min(0.01, "Valor inválido"), // ✅ Agora pedimos Unitário
   })).min(1, "Adicione pelo menos um item")
 });
 
 type FormInput = z.input<typeof abastecimentoSchema>;
 
-// Interface de Payload
+// Interface de Payload para API
 interface AbastecimentoPayload {
   veiculoId: string;
   operadorId: string;
@@ -72,8 +72,6 @@ export function FormRegistrarAbastecimento({
   onSuccess
 }: FormRegistrarAbastecimentoProps) {
 
-  // Fallback de dados (Cache)
-  // isLoadingDados é usado para desabilitar inputs enquanto carrega
   const { data: dadosCache, isLoading: isLoadingDados } = useDashboardData();
 
   const veiculos = propsVeiculos?.length ? propsVeiculos : (dadosCache?.veiculos || []);
@@ -109,8 +107,8 @@ export function FormRegistrarAbastecimento({
     defaultValues: {
       veiculoId: veiculoPreSelecionadoId || '',
       operadorId: (usuarioLogado?.role === 'OPERADOR' ? usuarioLogado.id : ''),
-      dataHora: new Date().toISOString().slice(0, 16), // Formato input datetime-local
-      itens: [{ produtoId: '', quantidade: 0, valorTotal: 0 }]
+      dataHora: new Date().toISOString().slice(0, 16),
+      itens: [{ produtoId: '', quantidade: 0, valorUnitario: 0 }] // ✅ Default Unitário
     }
   });
 
@@ -119,7 +117,7 @@ export function FormRegistrarAbastecimento({
   const veiculoIdSelecionado = watch('veiculoId');
   const itensObservados = watch('itens') || [];
 
-  // Automação: Sugere combustível ao trocar veículo
+  // Automação: Sugere combustível
   useEffect(() => {
     if (veiculoIdSelecionado) {
       const v = veiculos.find(v => v.id === veiculoIdSelecionado);
@@ -132,18 +130,21 @@ export function FormRegistrarAbastecimento({
         const itemAtualId = itensObservados[0]?.produtoId;
         if (combustivelPadrao && (!itemAtualId || itemAtualId !== combustivelPadrao.id)) {
           setValue('itens.0.produtoId', combustivelPadrao.id);
-          setValue('itens.0.valorTotal', 0);
         }
       }
     }
   }, [veiculoIdSelecionado, veiculos, produtos, setValue]);
 
-  // Cálculo Total
+  // ✅ Cálculo Total Atualizado (Qtd * Unitário)
   const totalGeral = useMemo(() =>
-    itensObservados.reduce((acc, item) => acc + (Number(item?.valorTotal) || 0), 0)
-    , [itensObservados]);
+    itensObservados.reduce((acc, item) => {
+      const qtd = Number(item?.quantidade) || 0;
+      const unit = Number(item?.valorUnitario) || 0;
+      return acc + (qtd * unit);
+    }, 0)
+  , [itensObservados]);
 
-  // Navegação de Passos
+  // Navegação
   const nextStep = async () => {
     const fieldsByStep: Record<number, (keyof FormInput)[]> = {
       1: ['veiculoId', 'operadorId', 'kmAtual', 'dataHora'],
@@ -154,10 +155,8 @@ export function FormRegistrarAbastecimento({
   };
 
   const onSubmit = async (data: FormInput) => {
-    // Validação Inteligente de KM
     const kmInputFloat = parseKmInteligente(data.kmAtual, ultimoKm);
 
-    // ✅ CORREÇÃO: Apenas AVISO para permitir retroativo (sem return)
     if (kmInputFloat < ultimoKm) {
       toast.warning(`Nota: O valor (${kmInputFloat.toLocaleString()}) é menor que o atual (${ultimoKm.toLocaleString()}). Registrando como retroativo...`);
     }
@@ -170,12 +169,15 @@ export function FormRegistrarAbastecimento({
       dataHora: new Date(data.dataHora).toISOString(),
       itens: data.itens.map(i => {
         const qtd = Number(i.quantidade);
-        const total = Number(i.valorTotal);
+        const unit = Number(i.valorUnitario);
+        // ✅ O sistema calcula o total para enviar (embora o backend recalcule, é bom manter consistência)
+        const total = Number((qtd * unit).toFixed(2)); 
+        
         return {
           produtoId: i.produtoId,
           quantidade: qtd,
           valorTotal: total,
-          valorPorUnidade: qtd > 0 ? (total / qtd) : 0
+          valorPorUnidade: unit // ✅ Envia o unitário correto
         };
       })
     };
@@ -279,7 +281,7 @@ export function FormRegistrarAbastecimento({
                   <Button
                     type="button"
                     variant="ghost"
-                    onClick={() => append({ produtoId: '', quantidade: 0, valorTotal: 0 })}
+                    onClick={() => append({ produtoId: '', quantidade: 0, valorUnitario: 0 })}
                     className="h-7 text-xs px-2 text-primary hover:bg-primary/5"
                     disabled={isLocked}
                   >
@@ -290,8 +292,8 @@ export function FormRegistrarAbastecimento({
                 <div className="space-y-3">
                   {fields.map((field, index) => {
                     const qtd = Number(watch(`itens.${index}.quantidade`)) || 0;
-                    const total = Number(watch(`itens.${index}.valorTotal`)) || 0;
-                    const unitario = (qtd > 0) ? (total / qtd).toFixed(3) : "0.000";
+                    const unit = Number(watch(`itens.${index}.valorUnitario`)) || 0;
+                    const totalItem = (qtd * unit).toFixed(2); // Cálculo automático
 
                     return (
                       <div key={field.id} className="bg-gray-50/50 p-3 rounded-xl border border-gray-100 group hover:border-primary/20 transition-colors relative">
@@ -307,6 +309,7 @@ export function FormRegistrarAbastecimento({
                         )}
 
                         <div className="grid grid-cols-12 gap-3">
+                          {/* Produto ocupa largura total no mobile */}
                           <div className="col-span-12 sm:col-span-6">
                             <Select
                               label="Produto"
@@ -317,33 +320,36 @@ export function FormRegistrarAbastecimento({
                             />
                           </div>
 
+                          {/* Quantidade */}
                           <div className="col-span-6 sm:col-span-3">
                             <Input
                               label="Qtd (L)"
                               type="number"
                               step="0.001"
-                              icon={<Droplets className="w-3 h-3 text-blue-400" />} // USANDO DROPLETS AQUI
+                              icon={<Droplets className="w-3 h-3 text-blue-400" />}
                               {...register(`itens.${index}.quantidade`)}
                               className="bg-white h-9 text-xs text-center"
                               disabled={isLocked}
                             />
                           </div>
 
+                          {/* Valor Unitário (Mudança Principal) */}
                           <div className="col-span-6 sm:col-span-3">
                             <Input
-                              label="Total R$"
+                              label="Unitário R$"
                               type="number"
-                              step="0.01"
-                              {...register(`itens.${index}.valorTotal`)}
-                              className="bg-white h-9 text-xs text-right font-bold text-primary"
+                              step="0.001"
+                              {...register(`itens.${index}.valorUnitario`)}
+                              className="bg-white h-9 text-xs text-right font-bold text-gray-700"
                               disabled={isLocked}
                             />
                           </div>
                         </div>
 
+                        {/* Exibição do Total Calculado */}
                         <div className="mt-2 flex justify-end px-1">
-                          <span className="text-[10px] text-gray-400 bg-white px-2 py-0.5 rounded border border-gray-100 font-mono">
-                            Unit: R$ {unitario}
+                          <span className="text-xs text-primary font-bold bg-white px-3 py-1 rounded-md border border-primary/20 shadow-sm">
+                            Total Item: R$ {totalItem}
                           </span>
                         </div>
                       </div>
@@ -437,14 +443,14 @@ export function FormRegistrarAbastecimento({
           titulo="Comprovante de Abastecimento"
           dadosJornada={payload}
           kmParaConfirmar={payload.kmOdometro}
-          jornadaId={payload.veiculoId} // Contexto para o upload (Veículo)
+          jornadaId={payload.veiculoId}
           apiEndpoint="/abastecimentos"
           apiMethod="POST"
           onClose={() => setModalConfirmacao(false)}
           onSuccess={() => {
             toast.success("Abastecimento registrado com sucesso!");
             onSuccess?.();
-            onCancelar(); // Fecha o modal principal
+            onCancelar();
           }}
         />
       )}
