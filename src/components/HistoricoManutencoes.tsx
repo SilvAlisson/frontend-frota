@@ -3,9 +3,9 @@ import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import { 
-  Calendar, Filter, Download, ExternalLink, 
-  CheckCircle2, AlertCircle, PlayCircle, FileText 
-} from 'lucide-react';
+  Calendar, Filter, Download,
+  CheckCircle2, AlertCircle, PlayCircle, FileText, FileX 
+} from 'lucide-react'; // [ATUALIZADO] Importei FileX
 import type { OrdemServico, Veiculo, Produto, Fornecedor } from '../types';
 
 // --- DESIGN SYSTEM ---
@@ -65,7 +65,6 @@ export function HistoricoManutencoes({
       if (filtros.dataInicio) params.dataInicio = filtros.dataInicio;
       if (filtros.dataFim) params.dataFim = filtros.dataFim;
 
-      // ✅ CORREÇÃO: Rota atualizada para bater com o backend (/api/manutencoes)
       const response = await api.get<OrdemServico[]>('/manutencoes/recentes', { params });
       setHistorico(response.data);
     } catch (err) {
@@ -82,7 +81,6 @@ export function HistoricoManutencoes({
   const handleDelete = async () => {
     if (!deletingId) return;
     try {
-      // ✅ CORREÇÃO: Rota atualizada para bater com o backend
       await api.delete(`/manutencoes/${deletingId}`);
       setHistorico(prev => prev.filter(os => os.id !== deletingId));
       toast.success('Registro removido.');
@@ -105,7 +103,8 @@ export function HistoricoManutencoes({
       'Status': os.status || 'CONCLUÍDA',
       'Fornecedor': os.fornecedor?.nome || 'N/A',
       'Itens': (os.itens || []).map(i => `${i.produto.nome} (${i.quantidade})`).join(', '),
-      'Valor Total': Number(os.custoTotal).toFixed(2).replace('.', ',')
+      'Valor Total': Number(os.custoTotal).toFixed(2).replace('.', ','),
+      'Link Comprovante': os.fotoComprovanteUrl || 'Sem comprovante'
     }));
     exportarParaExcel(dados, "Historico_Manutencoes.xlsx");
   };
@@ -211,6 +210,8 @@ export function HistoricoManutencoes({
                 <th className={TableStyles.th}>Veículo</th>
                 <th className={TableStyles.th}>Fornecedor / Serviços</th>
                 <th className={TableStyles.th}>Custo Total</th>
+                {/* [ATUALIZADO] Nova coluna Prova */}
+                <th className={`${TableStyles.th} text-center`}>Prova</th>
                 <th className={`${TableStyles.th} text-right`}>Ações</th>
               </>
             }
@@ -247,15 +248,28 @@ export function HistoricoManutencoes({
                     {Number(os.custoTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </span>
                 </td>
+                
+                {/* [ATUALIZADO] Lógica Visual da Coluna Prova */}
+                <td className={`${TableStyles.td} text-center`}>
+                  {os.fotoComprovanteUrl ? (
+                    <button
+                      onClick={() => window.open(os.fotoComprovanteUrl || '', '_blank')}
+                      className="inline-flex items-center justify-center p-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 hover:scale-105 transition-all"
+                      title="Ver Nota Fiscal / Comprovante"
+                    >
+                      <FileText className="w-5 h-5" />
+                    </button>
+                  ) : (
+                    <span className="inline-flex items-center justify-center p-2 rounded-full bg-gray-50 text-gray-300" title="Sem comprovante anexado">
+                      <FileX className="w-5 h-5" />
+                    </span>
+                  )}
+                </td>
+
                 <td className={`${TableStyles.td} text-right`}>
                   <DropdownAcoes 
                     onEditar={canEdit ? () => setEditingOS(os) : undefined}
                     onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
-                    customActions={os.fotoComprovanteUrl ? [{
-                      label: "Ver Nota Fiscal",
-                      icon: <ExternalLink className="w-4 h-4"/>,
-                      onClick: () => window.open(os.fotoComprovanteUrl || '', '_blank')
-                    }] : []}
                   />
                 </td>
               </>
@@ -293,16 +307,25 @@ export function HistoricoManutencoes({
                   </span>
                 </div>
 
-                {/* Ações Mobile */}
+                {/* [ATUALIZADO] Ações Mobile com Botão de Nota Explícito */}
                 <div className="flex gap-2 pt-1">
-                   {os.fotoComprovanteUrl && (
+                   {os.fotoComprovanteUrl ? (
                     <Button 
                       variant="secondary" 
-                      className="flex-1 text-xs h-9" 
+                      className="flex-1 text-xs h-9 text-blue-700 bg-blue-50 border-blue-200 hover:bg-blue-100" 
                       icon={<FileText className="w-3 h-3"/>}
                       onClick={() => window.open(os.fotoComprovanteUrl || '', '_blank')}
                     >
-                      Comprovante
+                      Ver Nota
+                    </Button>
+                  ) : (
+                    <Button 
+                      variant="ghost" 
+                      className="flex-1 text-xs h-9 text-gray-400 bg-gray-50 cursor-not-allowed border border-gray-100" 
+                      icon={<FileX className="w-3 h-3"/>}
+                      disabled
+                    >
+                      Sem Nota
                     </Button>
                   )}
                   <div className="flex-1">
