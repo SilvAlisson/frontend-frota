@@ -144,10 +144,21 @@ export function FormRegistrarManutencao({
   const fornecedorIdSelecionado = watch('fornecedorId');
   const itensObservados = watch('itens');
 
-  // --- MEMOS ---
+  // --- MEMOS (ATUALIZADOS) ---
+  
   const produtosDisponiveis = useMemo(() => {
-    let lista = listaProdutos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo));
+    // 1. Bloqueia itens de abastecimento
+    const tiposBloqueados = ['COMBUSTIVEL', 'ADITIVO'];
+
+    // 2. Se for CORRETIVA, opcionalmente esconde LAVAGEM para limpar a lista
+    // Mas se for PREVENTIVA, a LAVAGEM aparece (pois não está na lista acima)
+    if (tipoManutencao === 'CORRETIVA') {
+      tiposBloqueados.push('LAVAGEM');
+    }
+
+    let lista = listaProdutos.filter(p => !tiposBloqueados.includes(p.tipo));
     
+    // Filtro por fornecedor
     if (fornecedorIdSelecionado) {
       const fornecedor = fornecedores.find(f => f.id === fornecedorIdSelecionado);
       if (fornecedor?.produtosOferecidos?.length) {
@@ -156,13 +167,23 @@ export function FormRegistrarManutencao({
       }
     }
     return lista.sort((a, b) => a.nome.localeCompare(b.nome));
-  }, [listaProdutos, fornecedorIdSelecionado, fornecedores]);
+  }, [listaProdutos, fornecedorIdSelecionado, fornecedores, tipoManutencao]); // Add tipoManutencao
 
   const fornecedoresOpcoes = useMemo(() => 
     fornecedores
-      .filter(f => !['POSTO', 'LAVA_JATO'].includes(f.tipo))
+      .filter(f => {
+        // Sempre mostra Oficinas e Mecânicas
+        if (['OFICINA', 'MECANICA', 'OUTRO'].includes(f.tipo)) return true;
+
+        // LAVA JATO e POSTO só aparecem na PREVENTIVA
+        if (['LAVA_JATO', 'POSTO'].includes(f.tipo)) {
+          return tipoManutencao === 'PREVENTIVA';
+        }
+
+        return false;
+      })
       .map(f => ({ value: f.id, label: f.nome })),
-    [fornecedores]
+    [fornecedores, tipoManutencao] // Add tipoManutencao
   );
 
   const veiculosOpcoes = useMemo(() => 
