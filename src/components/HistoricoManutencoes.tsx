@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import { 
   Calendar, Filter, Download,
   CheckCircle2, AlertCircle, PlayCircle, FileText, FileX 
-} from 'lucide-react'; // [ATUALIZADO] Importei FileX
+} from 'lucide-react';
 import type { OrdemServico, Veiculo, Produto, Fornecedor } from '../types';
 
 // --- DESIGN SYSTEM ---

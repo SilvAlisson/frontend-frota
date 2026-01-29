@@ -37,7 +37,7 @@ export function useManutencoes(filtros?: FiltrosManutencao) {
             if (filtros?.veiculoId) params.append('veiculoId', filtros.veiculoId);
             if (filtros?.limit) params.append('limit', String(filtros.limit));
 
-            const { data } = await api.get(`/ordens-servico/recentes?${params.toString()}`);
+            const { data } = await api.get(`/manutencoes/recentes?${params.toString()}`);
             return data;
         },
         enabled: !!user, // Previne chamadas sem autenticação
@@ -50,11 +50,12 @@ export function useRegistrarManutencao() {
 
     return useMutation({
         mutationFn: async (dados: CreateManutencaoDTO) => {
-            const { data } = await api.post('/ordens-servico', dados);
+            const { data } = await api.post('/manutencoes', dados);
             return data;
         },
         onSuccess: () => {
             toast.success('OS de Manutenção aberta!');
+            // Atualiza as listas relacionadas automaticamente
             queryClient.invalidateQueries({ queryKey: ['manutencoes'] });
             queryClient.invalidateQueries({ queryKey: ['veiculos'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
