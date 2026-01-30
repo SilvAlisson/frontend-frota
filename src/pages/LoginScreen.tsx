@@ -31,7 +31,7 @@ export function LoginScreen() {
   // Lógica do Login Mágico (URL)
   const magicToken = searchParams.get('magicToken');
   const [isMagicLoggingIn, setIsMagicLoggingIn] = useState(!!magicToken);
-  const loginTokenProcessed = useRef(false); // A nossa correção do Loop Infinito
+  const loginTokenProcessed = useRef(false);
 
   // Hook Form
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormValues>({
@@ -44,10 +44,10 @@ export function LoginScreen() {
     navigate(target, { replace: true });
   }, [navigate]);
 
-  // --- 2. LÓGICA DE LOGIN VIA URL (FIXED) ---
+  // --- 2. LÓGICA DE LOGIN VIA URL ---
   useEffect(() => {
     if (!magicToken) return;
-    if (loginTokenProcessed.current) return; // Bloqueia duplicação
+    if (loginTokenProcessed.current) return;
 
     loginTokenProcessed.current = true;
     setIsMagicLoggingIn(true);
@@ -80,7 +80,7 @@ export function LoginScreen() {
     processMagicLogin();
   }, [magicToken, navigate, isAuthenticated, login, logout]);
 
-  // --- 3. BLINDAGEM (Redireciona se já logado) ---
+  // --- 3. BLINDAGEM ---
   useEffect(() => {
     if (!authLoading && isAuthenticated && user?.role && !isMagicLoggingIn) {
       handleRedirect(user.role);
@@ -103,9 +103,6 @@ export function LoginScreen() {
     e.preventDefault();
     if (!qrManualToken.trim()) return toast.warning('Digite o token.');
 
-    // Simula o loading visual usando o estado do modo QR, ou poderíamos criar um state local
-    // Aqui vou reusar isMagicLoggingIn momentaneamente para feedback visual full-screen ou local
-    // Vamos usar um toast de loading para ser mais elegante no modo manual
     const toastId = toast.loading('Validando token...');
 
     try {
@@ -122,72 +119,77 @@ export function LoginScreen() {
   // --- UI: FULL SCREEN LOADER (Apenas para URL Magic Link) ---
   if (isMagicLoggingIn || authLoading) {
     return (
-      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-slate-900 text-white space-y-6 animate-in fade-in duration-500">
+      <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background text-text-main space-y-6 animate-enter">
         <div className="relative">
-          <div className="w-16 h-16 border-4 border-slate-700 rounded-full"></div>
-          <div className="absolute top-0 left-0 w-16 h-16 border-4 border-emerald-500 rounded-full border-t-transparent animate-spin"></div>
+          <div className="w-16 h-16 border-4 border-border rounded-full"></div>
+          <div className="absolute top-0 left-0 w-16 h-16 border-4 border-primary rounded-full border-t-transparent animate-spin"></div>
         </div>
         <div className="text-center space-y-2">
           <h2 className="text-xl font-bold tracking-tight">Acessando Sistema...</h2>
-          <p className="text-sm text-slate-400">Validando credenciais seguras</p>
+          <p className="text-sm text-text-secondary">Validando credenciais seguras</p>
         </div>
       </div>
     );
   }
 
-  // --- UI: TELA DE LOGIN BONITA ---
+  // --- UI: TELA DE LOGIN ---
   return (
-    <div className="min-h-screen flex bg-white font-sans">
+    <div className="min-h-screen flex bg-background font-sans">
 
       {/* --- LADO ESQUERDO: IMAGEM FROTA --- */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-slate-900 overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 relative bg-primary overflow-hidden">
         <img
           src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?q=80&w=2070&auto=format&fit=crop"
           alt="Frota de Caminhões"
-          className="absolute inset-0 w-full h-full object-cover opacity-60"
+          className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent"></div>
+        {/* Gradiente usando a cor da marca */}
+        <div className="absolute inset-0 bg-gradient-to-t from-primary via-primary/90 to-primary/60"></div>
 
         <div className="relative z-10 flex flex-col justify-end p-16 h-full text-white">
-          <div className="mb-6">
-            <div className="w-16 h-16 bg-emerald-600 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-emerald-900/30">
+          <div className="mb-6 animate-enter">
+            <div className="w-16 h-16 bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl flex items-center justify-center mb-6 shadow-float">
               <Truck className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-4xl font-bold tracking-tight mb-2">Gestão Inteligente <br />de Frota e Logística</h1>
-            <p className="text-slate-300 text-lg max-w-md">
+            <p className="text-primary-foreground/80 text-lg max-w-md">
               Controle abastecimentos, manutenções e jornadas em tempo real.
             </p>
           </div>
 
           <div className="flex gap-2">
-            <div className="h-1 w-12 bg-emerald-500 rounded-full"></div>
-            <div className="h-1 w-12 bg-white/20 rounded-full"></div>
-            <div className="h-1 w-12 bg-white/20 rounded-full"></div>
+            <div className="h-1 w-12 bg-white rounded-full"></div>
+            <div className="h-1 w-12 bg-white/30 rounded-full"></div>
+            <div className="h-1 w-12 bg-white/30 rounded-full"></div>
           </div>
         </div>
       </div>
 
       {/* --- LADO DIREITO: FORMULÁRIO --- */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-gray-50">
-        <div className="w-full max-w-md space-y-8 bg-white p-10 rounded-3xl shadow-xl border border-gray-100">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-surface">
+        <div className="w-full max-w-md space-y-8 bg-background p-10 rounded-3xl shadow-float border border-border">
 
           <div className="text-center">
-            <h2 className="text-2xl font-bold text-gray-900">Acesse sua conta</h2>
-            <p className="text-sm text-gray-500 mt-1">Bem-vindo ao painel Klin Frota</p>
+            <h2 className="text-2xl font-bold text-text-main">Acesse sua conta</h2>
+            <p className="text-sm text-text-secondary mt-1">Bem-vindo ao painel Klin Frota</p>
           </div>
 
           {/* Abas de Navegação */}
-          <div className="grid grid-cols-2 gap-1 p-1 bg-gray-100 rounded-xl">
+          <div className="grid grid-cols-2 gap-1 p-1 bg-surface border border-border rounded-xl">
             <button
               onClick={() => setMode('CREDENTIALS')}
-              className={`py-2 text-sm font-medium rounded-lg transition-all ${mode === 'CREDENTIALS' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              className={`py-2 text-sm font-medium rounded-lg transition-all ${mode === 'CREDENTIALS' 
+                ? 'bg-background text-primary shadow-sm border border-border' 
+                : 'text-text-muted hover:text-text-main'
                 }`}
             >
               Email e Senha
             </button>
             <button
               onClick={() => setMode('QR')}
-              className={`py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${mode === 'QR' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+              className={`py-2 text-sm font-medium rounded-lg transition-all flex items-center justify-center gap-2 ${mode === 'QR' 
+                ? 'bg-background text-primary shadow-sm border border-border' 
+                : 'text-text-muted hover:text-text-main'
                 }`}
             >
               <QrCode className="w-4 h-4" />
@@ -195,17 +197,16 @@ export function LoginScreen() {
             </button>
           </div>
 
-          {/* FORMULÁRIO 1: E-MAIL E SENHA (Com React Hook Form) */}
+          {/* FORMULÁRIO 1: E-MAIL E SENHA */}
           {mode === 'CREDENTIALS' && (
-            <form onSubmit={handleSubmit(onCredentialsSubmit)} className="space-y-5 animate-in fade-in slide-in-from-left-4 duration-300">
+            <form onSubmit={handleSubmit(onCredentialsSubmit)} className="space-y-5 animate-enter">
               <Input
                 label="E-mail corporativo"
                 type="email"
                 placeholder="seunome@klin.com.br"
                 {...register('email')}
                 error={errors.email?.message}
-                icon={<Mail className="w-5 h-5 text-gray-400" />}
-                className="bg-gray-50 border-gray-200 focus:bg-white"
+                icon={<Mail className="w-5 h-5" />}
                 disabled={isSubmitting}
               />
 
@@ -216,19 +217,18 @@ export function LoginScreen() {
                   placeholder="••••••••"
                   {...register('password')}
                   error={errors.password?.message}
-                  icon={<Lock className="w-5 h-5 text-gray-400" />}
-                  className="bg-gray-50 border-gray-200 focus:bg-white"
+                  icon={<Lock className="w-5 h-5" />}
                   disabled={isSubmitting}
                 />
                 <div className="flex justify-end">
-                  <a href="#" className="text-xs font-medium text-emerald-600 hover:underline">Esqueceu a senha?</a>
+                  <a href="#" className="text-xs font-medium text-primary hover:underline">Esqueceu a senha?</a>
                 </div>
               </div>
 
               <Button
                 type="submit"
                 variant="primary"
-                className="w-full h-12 text-base shadow-lg shadow-emerald-500/20"
+                className="w-full h-12 text-base shadow-button hover:shadow-float"
                 isLoading={isSubmitting}
                 disabled={isSubmitting}
               >
@@ -239,11 +239,11 @@ export function LoginScreen() {
             </form>
           )}
 
-          {/* FORMULÁRIO 2: TOKEN QR CODE (Manual) */}
+          {/* FORMULÁRIO 2: TOKEN QR CODE */}
           {mode === 'QR' && (
-            <form onSubmit={onManualQrSubmit} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="text-center py-4 px-6 bg-blue-50 rounded-xl border border-blue-100">
-                <p className="text-sm text-blue-700">
+            <form onSubmit={onManualQrSubmit} className="space-y-6 animate-enter">
+              <div className="text-center py-4 px-6 bg-primary/5 rounded-xl border border-primary/10">
+                <p className="text-sm text-primary font-medium">
                   Para acessar via QR Code, aponte a câmera do celular ou digite o código do seu crachá abaixo.
                 </p>
               </div>
@@ -253,23 +253,23 @@ export function LoginScreen() {
                 placeholder="Cole o token aqui..."
                 value={qrManualToken}
                 onChange={(e) => setQrManualToken(e.target.value)}
-                icon={<QrCode className="w-5 h-5 text-gray-400" />}
-                className="font-mono text-xs bg-gray-50 border-gray-200 focus:bg-white"
+                icon={<QrCode className="w-5 h-5" />}
+                className="font-mono text-xs"
               />
 
-              <Button type="submit" className="w-full h-12 text-base shadow-lg shadow-primary/20">
+              <Button type="submit" className="w-full h-12 text-base shadow-button hover:shadow-float">
                 Validar Token
               </Button>
             </form>
           )}
 
           <div className="relative">
-            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-gray-200" /></div>
-            <div className="relative flex justify-center text-xs uppercase"><span className="bg-white px-2 text-gray-400">Sistema de Gestão de Frota</span></div>
+            <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-border" /></div>
+            <div className="relative flex justify-center text-xs uppercase"><span className="bg-background px-2 text-text-muted">Sistema de Gestão de Frota</span></div>
           </div>
 
-          <div className="flex justify-center gap-4 opacity-50 grayscale hover:grayscale-0 transition-all">
-            <span className="font-bold text-gray-400 text-sm">KLIN ENGENHARIA E GESTÃO AMBIENTAL © {new Date().getFullYear()}</span>
+          <div className="flex justify-center gap-4 opacity-50 transition-all hover:opacity-100">
+            <span className="font-bold text-text-muted text-sm">KLIN ENGENHARIA © {new Date().getFullYear()}</span>
           </div>
 
         </div>

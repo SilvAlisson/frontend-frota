@@ -60,22 +60,22 @@ export function GestaoVeiculos() {
     }
   };
 
-  // Helper para Badges de Status
+  // Helper para Badges de Status (Semântico)
   const getStatusBadge = (status: string) => {
-    const map: Record<string, "success" | "warning" | "neutral"> = {
+    const map: Record<string, "success" | "warning" | "neutral" | "danger"> = {
       'ATIVO': 'success',
       'EM_MANUTENCAO': 'warning',
-      'INATIVO': 'neutral'
+      'INATIVO': 'neutral',
+      'QUEBRADO': 'danger'
     };
-    // Se o status não estiver no mapa, usa 'neutral'
     const variant = map[status] || 'neutral';
     return <Badge variant={variant}>{status.replace(/_/g, ' ')}</Badge>;
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+    <div className="space-y-6 animate-enter pb-10">
 
-      {/* 1. HEADER (Limpo e Funcional) */}
+      {/* 1. HEADER */}
       <PageHeader
         title="Frota"
         subtitle="Gerencie os equipamentos, status e prontuário dos veículos."
@@ -87,17 +87,17 @@ export function GestaoVeiculos() {
               placeholder="Buscar placa ou modelo..."
               value={busca}
               onChange={e => setBusca(e.target.value)}
-              icon={<Search className="w-4 h-4 text-gray-400" />}
+              icon={<Search className="w-4 h-4 text-text-muted" />}
             />
           </div>
         }
       />
 
-      {/* 2. LISTAGEM (Dentro de um Card sem padding para estilo "Edge-to-Edge") */}
+      {/* 2. LISTAGEM */}
       <Card noPadding>
         {isLoading ? (
           <div className="p-6 space-y-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-50 rounded-lg animate-pulse" />)}
+            {[1, 2, 3].map(i => <div key={i} className="h-12 bg-surface-hover rounded-lg animate-pulse" />)}
           </div>
         ) : (
           <ListaResponsiva
@@ -129,11 +129,11 @@ export function GestaoVeiculos() {
                 </td>
                 <td className={TableStyles.td}>
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold text-gray-900">{v.modelo}</span>
-                    <span className="text-xs text-gray-500 font-medium">{v.ano} • {v.tipoVeiculo || 'N/A'}</span>
+                    <span className="text-sm font-bold text-text-main">{v.modelo}</span>
+                    <span className="text-xs text-text-secondary font-medium">{v.ano} • {v.tipoVeiculo || 'N/A'}</span>
                   </div>
                 </td>
-                <td className={`${TableStyles.td} text-gray-600 text-xs uppercase tracking-wide`}>
+                <td className={`${TableStyles.td} text-text-muted text-xs uppercase tracking-wide`}>
                   {v.tipoCombustivel.replace(/_/g, ' ')}
                 </td>
                 <td className={TableStyles.td}>
@@ -157,11 +157,10 @@ export function GestaoVeiculos() {
                     <span className="font-mono font-bold text-lg text-primary">{v.placa}</span>
                     {getStatusBadge(v.status)}
                   </div>
-                  <h3 className="font-bold text-gray-900">{v.modelo}</h3>
-                  <p className="text-xs text-gray-500">{v.tipoVeiculo} • {v.ano}</p>
+                  <h3 className="font-bold text-text-main">{v.modelo}</h3>
+                  <p className="text-xs text-text-secondary">{v.tipoVeiculo} • {v.ano}</p>
                 </div>
 
-                {/* Menu Mobile */}
                 <div onClick={e => e.stopPropagation()}>
                   <DropdownAcoes
                     onVerDetalhes={() => navigate(`/admin/veiculos/${v.id}`)}
@@ -175,9 +174,8 @@ export function GestaoVeiculos() {
         )}
       </Card>
 
-      {/* --- MODAIS (Longe da lógica principal) --- */}
+      {/* --- MODAIS --- */}
 
-      {/* 1. Modal de Cadastro */}
       <Modal
         isOpen={isCadastroOpen}
         onClose={() => setIsCadastroOpen(false)}
@@ -190,7 +188,6 @@ export function GestaoVeiculos() {
         />
       </Modal>
 
-      {/* 2. Modal de Edição */}
       <Modal
         isOpen={!!veiculoParaEditar}
         onClose={() => setVeiculoParaEditar(null)}
@@ -206,7 +203,6 @@ export function GestaoVeiculos() {
         )}
       </Modal>
 
-      {/* 3. Modal de Confirmação de Exclusão */}
       <ConfirmModal
         isOpen={!!veiculoParaExcluir}
         onCancel={() => setVeiculoParaExcluir(null)}
@@ -215,7 +211,7 @@ export function GestaoVeiculos() {
         description={
           <span>
             Tem certeza que deseja remover este veículo? <br />
-            <span className="font-bold text-red-600 block mt-1">Isso apagará todo o histórico de manutenções e jornadas associado.</span>
+            <span className="font-bold text-error block mt-1">Isso apagará todo o histórico associado.</span>
           </span>
         }
         confirmLabel="Sim, excluir veículo"

@@ -8,6 +8,7 @@ import { Flag, Gauge, Route, Ghost, CheckCircle2 } from 'lucide-react';
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { Card } from './ui/Card'; // Importando o Card novo
 import { parseDecimal, formatKmVisual, isJornadaFantasma } from '../utils';
 import type { Jornada } from '../types';
 
@@ -94,18 +95,24 @@ export function JornadaCard({
   // --- RENDERIZAÇÃO: JORNADA JÁ FINALIZADA ---
   if (isFinalizada) {
     return (
-      <div className={`p-8 rounded-xl border flex flex-col items-center justify-center text-center transition-all ${isFantasma ? 'bg-purple-50 border-purple-100' : 'bg-green-50 border-green-100'
+      <Card className={`p-8 flex flex-col items-center justify-center text-center transition-all ${
+        isFantasma 
+          ? 'bg-ghost-500/5 border-ghost-500/20' 
+          : 'bg-success/5 border-success/20'
+      }`}>
+        <div className={`p-3 rounded-full mb-3 ${
+          isFantasma 
+            ? 'bg-ghost-500/10 text-ghost-500' 
+            : 'bg-success/10 text-success'
         }`}>
-        <div className={`p-3 rounded-full mb-3 ${isFantasma ? 'bg-purple-100 text-purple-600' : 'bg-green-100 text-green-600'
-          }`}>
           {isFantasma ? <Ghost className="w-8 h-8" /> : <CheckCircle2 className="w-8 h-8" />}
         </div>
 
-        <h3 className={`text-lg font-bold ${isFantasma ? 'text-purple-800' : 'text-green-800'}`}>
+        <h3 className={`text-lg font-bold ${isFantasma ? 'text-ghost-500' : 'text-success'}`}>
           {isFantasma ? 'Jornada Assombrada' : 'Jornada Finalizada'}
         </h3>
 
-        <p className="text-sm text-gray-500 mt-2 max-w-[250px]">
+        <p className="text-sm text-text-secondary mt-2 max-w-[250px]">
           {isFantasma
             ? 'Encerrada automaticamente pelo sistema por inatividade prolongada.'
             : `Encerrada com sucesso em ${new Date(jornada.dataFim!).toLocaleString('pt-BR')}`
@@ -115,11 +122,11 @@ export function JornadaCard({
         <Button
           variant="ghost"
           onClick={onJornadaFinalizada}
-          className="mt-6 text-xs h-8 text-gray-400 hover:text-gray-600"
+          className="mt-6 text-xs h-8 text-text-muted hover:text-text-main"
         >
           Voltar para lista
         </Button>
-      </div>
+      </Card>
     );
   }
 
@@ -128,35 +135,35 @@ export function JornadaCard({
     <>
       <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
 
-        {/* CABEÇALHO (Igual ao IniciarJornada) */}
+        {/* CABEÇALHO */}
         <div className="text-center mb-4">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-3 ring-4 ring-primary/5">
-            <Flag className="w-7 h-7 text-primary ml-1" /> {/* ml-1 para compensar visualmente a bandeira */}
+            <Flag className="w-7 h-7 text-primary ml-1" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900">
+          <h3 className="text-xl font-bold text-text-main">
             Finalizar Jornada
           </h3>
-          <p className="text-sm text-gray-500 mt-1 px-4 leading-relaxed">
+          <p className="text-sm text-text-secondary mt-1 px-4 leading-relaxed">
             Confirme o odômetro final para fechar o turno.
           </p>
         </div>
 
         {/* CARDS DE INFORMAÇÃO */}
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center flex flex-col items-center justify-center">
-            <span className="text-[10px] text-gray-400 font-bold uppercase mb-1 flex items-center gap-1">
+          <div className="bg-background p-3 rounded-xl border border-border text-center flex flex-col items-center justify-center">
+            <span className="text-[10px] text-text-muted font-bold uppercase mb-1 flex items-center gap-1">
               <Gauge className="w-3 h-3" /> KM Inicial
             </span>
-            <span className="text-sm font-bold text-gray-700 font-mono">
+            <span className="text-sm font-bold text-text-main font-mono">
               {jornada.kmInicio.toLocaleString('pt-BR')}
             </span>
           </div>
 
-          <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 text-center flex flex-col items-center justify-center">
-            <span className="text-[10px] text-gray-400 font-bold uppercase mb-1 flex items-center gap-1">
+          <div className="bg-background p-3 rounded-xl border border-border text-center flex flex-col items-center justify-center">
+            <span className="text-[10px] text-text-muted font-bold uppercase mb-1 flex items-center gap-1">
               <Route className="w-3 h-3" /> Percorrido
             </span>
-            <span className={`text-sm font-bold font-mono ${distanciaPercorrida > 0 ? 'text-primary' : 'text-gray-400'}`}>
+            <span className={`text-sm font-bold font-mono ${distanciaPercorrida > 0 ? 'text-primary' : 'text-text-muted'}`}>
               {distanciaPercorrida > 0 ? `+ ${distanciaPercorrida.toLocaleString('pt-BR')} km` : '--'}
             </span>
           </div>
@@ -180,8 +187,8 @@ export function JornadaCard({
             autoFocus
           />
 
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-gray-400 px-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-text-muted px-1">
+            <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
             <span>Responsável: <strong>{nomeEncarregado}</strong></span>
           </div>
         </div>
@@ -189,7 +196,7 @@ export function JornadaCard({
         <Button
           type="submit"
           variant="primary"
-          className="w-full py-3.5 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+          className="w-full py-3.5 text-base shadow-button hover:shadow-float"
           disabled={isSubmitting || !kmFimInput}
         >
           Confirmar Encerramento
@@ -202,7 +209,6 @@ export function JornadaCard({
           titulo="Comprovante Final"
           kmParaConfirmar={dadosValidacao.kmFim}
           jornadaId={jornada.id}
-          // [CORREÇÃO] Passando a URL completa interpolada
           apiEndpoint={`/jornadas/finalizar/${jornada.id}`}
           apiMethod="PUT"
           dadosJornada={{

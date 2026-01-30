@@ -5,6 +5,7 @@ import type { User, UserRole } from '../types';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { ListaResponsiva } from './ui/ListaResponsiva';
+import { Badge } from './ui/Badge'; // Importando Badge oficial
 import { FormCadastrarUsuario } from './forms/FormCadastrarUsuario';
 import { FormEditarUsuario } from './forms/FormEditarUsuario';
 import { ModalQrCode } from './ModalQrCode';
@@ -12,12 +13,10 @@ import { ModalTreinamentosUsuario } from './ModalTreinamentosUsuario';
 import { exportarParaExcel } from '../utils';
 import { TableStyles } from '../styles/table';
 import { toast } from 'sonner';
-
-// --- Ícones ---
-function IconeTreinamento() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M4.26 10.147a60.436 60.436 0 0 0-.491 6.347A48.627 48.627 0 0 1 12 20.904a48.627 48.627 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.57 50.57 0 0 0-2.658-.813A59.905 59.905 0 0 1 12 3.493a59.902 59.902 0 0 1 10.499 5.216 50.59 50.59 0 0 0-2.658.814m-15.482 0A50.697 50.697 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5" /></svg>; }
-function IconeLixo() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.54 0c-.34.055-.68.11-.1022.166m11.54 0c.376.09.74.19 1.097.302l-1.148 3.896M12 18V9" /></svg>; }
-function IconeEditar() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>; }
-function IconeQrCode() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.5A.75.75 0 0 1 4.5 3.75h4.5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-.75.75h-4.5a.75.75 0 0 1-.75-.75v-4.5ZM3.75 15A.75.75 0 0 1 4.5 14.25h4.5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-.75.75h-4.5a.75.75 0 0 1-.75-.75v-4.5Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M17.25 11.25v3M11.25 17.25h3" /></svg>; }
+import { 
+  Trash2, Edit2, QrCode, GraduationCap, 
+  Search, Download, Plus,
+} from 'lucide-react'; // Ícones Lucide
 
 interface GestaoUsuariosProps {
   adminUserId: string;
@@ -33,8 +32,6 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
   // Estados dos Modais Específicos
   const [usuarioParaTreinamento, setUsuarioParaTreinamento] = useState<User | null>(null);
-
-  // [CORREÇÃO] Estado para armazenar o objeto usuário completo para o ModalQrCode
   const [usuarioParaQr, setUsuarioParaQr] = useState<User | null>(null);
 
   // 1. Data Fetching
@@ -80,7 +77,6 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
     deleteMutation.mutate(id);
   };
 
-  // [CORREÇÃO] Apenas abre o modal, sem gerar token nem pedir confirmação ainda
   const handleAbrirQrModal = (user: User) => {
     setUsuarioParaQr(user);
   };
@@ -114,12 +110,12 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
     return (
       <div className="animate-in slide-in-from-right duration-300">
         <div
-          className="mb-4 flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-primary transition-colors"
+          className="mb-4 flex items-center gap-2 text-sm text-text-secondary cursor-pointer hover:text-primary transition-colors"
           onClick={() => setIsCadastroOpen(false)}
         >
           <span>← Voltar para a lista</span>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-border max-w-2xl mx-auto">
+        <div className="bg-surface p-6 rounded-xl shadow-card border border-border max-w-2xl mx-auto">
           <FormCadastrarUsuario
             onSuccess={() => { setIsCadastroOpen(false); refetch(); }}
             onCancelar={() => setIsCadastroOpen(false)}
@@ -133,12 +129,12 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
     return (
       <div className="animate-in slide-in-from-right duration-300">
         <div
-          className="mb-4 flex items-center gap-2 text-sm text-gray-500 cursor-pointer hover:text-primary transition-colors"
+          className="mb-4 flex items-center gap-2 text-sm text-text-secondary cursor-pointer hover:text-primary transition-colors"
           onClick={() => setUsuarioParaEditar(null)}
         >
           <span>← Voltar para a lista</span>
         </div>
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-border max-w-2xl mx-auto">
+        <div className="bg-surface p-6 rounded-xl shadow-card border border-border max-w-2xl mx-auto">
           <FormEditarUsuario
             userId={usuarioParaEditar.id}
             onSuccess={() => { setUsuarioParaEditar(null); refetch(); }}
@@ -151,13 +147,13 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
   // --- RENDERIZAÇÃO DA LISTA ---
   return (
-    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+    <div className="space-y-6 animate-enter pb-10">
 
       {/* HEADER DA PÁGINA */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border pb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Equipe</h1>
-          <p className="text-gray-500 text-sm">Gerencie colaboradores, motoristas e acessos.</p>
+          <h1 className="text-2xl font-bold text-text-main tracking-tight">Equipe</h1>
+          <p className="text-text-secondary text-sm">Gerencie colaboradores, motoristas e acessos.</p>
         </div>
 
         <div className="flex w-full md:w-auto gap-3">
@@ -166,16 +162,17 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
               placeholder="Buscar nome, email ou matrícula..."
               value={busca}
               onChange={e => setBusca(e.target.value)}
-              className="bg-white"
+              className="bg-surface"
+              icon={<Search className="w-4 h-4 text-text-muted" />}
             />
           </div>
 
-          <Button variant="secondary" onClick={handleExportar} className="whitespace-nowrap hidden sm:flex">
+          <Button variant="secondary" onClick={handleExportar} className="whitespace-nowrap hidden sm:flex" icon={<Download className="w-4 h-4" />}>
             Excel
           </Button>
 
-          <Button onClick={() => setIsCadastroOpen(true)} className="whitespace-nowrap">
-            + Novo Colaborador
+          <Button onClick={() => setIsCadastroOpen(true)} className="whitespace-nowrap" icon={<Plus className="w-4 h-4" />}>
+            Novo Colaborador
           </Button>
         </div>
       </div>
@@ -183,7 +180,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
       {/* LISTAGEM RESPONSIVA */}
       {isLoading ? (
         <div className="space-y-3">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-background rounded-xl animate-pulse border border-border" />)}
+          {[1, 2, 3, 4].map(i => <div key={i} className="h-20 bg-surface-hover rounded-xl animate-pulse border border-border" />)}
         </div>
       ) : (
         <ListaResponsiva
@@ -204,36 +201,36 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
               <td className={TableStyles.td}>
                 <div className="flex items-center gap-3">
                   <Avatar nome={u.nome} url={u.fotoUrl} />
-                  <span className="font-bold text-gray-900 text-sm">{u.nome}</span>
+                  <span className="font-bold text-text-main text-sm">{u.nome}</span>
                 </div>
               </td>
               <td className={TableStyles.td}>
                 <div className="flex flex-col items-start gap-1">
                   <BadgeRole role={u.role} />
-                  {u.matricula && <span className="text-xs text-gray-400 font-mono">MAT: {u.matricula}</span>}
+                  {u.matricula && <span className="text-xs text-text-muted font-mono">MAT: {u.matricula}</span>}
                 </div>
               </td>
-              <td className={`${TableStyles.td} text-sm text-gray-600`}>
+              <td className={`${TableStyles.td} text-sm text-text-secondary`}>
                 {u.email}
               </td>
               <td className={`${TableStyles.td} text-right`}>
                 <div className="flex justify-end gap-1">
-                  <Button variant="ghost" className="h-8 w-8 !p-0 text-gray-400 hover:text-indigo-600" onClick={() => setUsuarioParaTreinamento(u)} title="Treinamentos">
-                    <IconeTreinamento />
+                  <Button variant="ghost" className="h-8 w-8 !p-0 text-text-muted hover:text-primary" onClick={() => setUsuarioParaTreinamento(u)} title="Treinamentos">
+                    <GraduationCap className="w-4 h-4" />
                   </Button>
 
                   {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') && (
-                    <Button variant="ghost" className="h-8 w-8 !p-0 text-gray-400 hover:text-green-600" onClick={() => handleAbrirQrModal(u)} title="QR Code">
-                      <IconeQrCode />
+                    <Button variant="ghost" className="h-8 w-8 !p-0 text-text-muted hover:text-success" onClick={() => handleAbrirQrModal(u)} title="QR Code">
+                      <QrCode className="w-4 h-4" />
                     </Button>
                   )}
 
-                  <Button variant="ghost" className="h-8 w-8 !p-0 text-gray-400 hover:text-blue-600" onClick={() => setUsuarioParaEditar(u)} title="Editar">
-                    <IconeEditar />
+                  <Button variant="ghost" className="h-8 w-8 !p-0 text-text-muted hover:text-primary" onClick={() => setUsuarioParaEditar(u)} title="Editar">
+                    <Edit2 className="w-4 h-4" />
                   </Button>
 
-                  <Button variant="ghost" className="h-8 w-8 !p-0 text-gray-400 hover:text-red-600" onClick={() => handleDelete(u.id)} disabled={deleteMutation.isPending || u.id === adminUserId} title="Excluir">
-                    <IconeLixo />
+                  <Button variant="ghost" className="h-8 w-8 !p-0 text-text-muted hover:text-error" onClick={() => handleDelete(u.id)} disabled={deleteMutation.isPending || u.id === adminUserId} title="Excluir">
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
               </td>
@@ -247,22 +244,22 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                 <div className="flex items-start gap-3">
                   <Avatar nome={u.nome} url={u.fotoUrl} size="lg" />
                   <div>
-                    <h3 className="font-bold text-gray-900">{u.nome}</h3>
-                    <p className="text-xs text-gray-500 mb-1">{u.email}</p>
+                    <h3 className="font-bold text-text-main">{u.nome}</h3>
+                    <p className="text-xs text-text-secondary mb-1">{u.email}</p>
                     <BadgeRole role={u.role} />
                   </div>
                 </div>
               </div>
 
               <div className="flex justify-end gap-2 border-t border-dashed border-border pt-3">
-                <Button variant="ghost" className="text-xs h-7 px-2" onClick={() => setUsuarioParaTreinamento(u)}>Treinos</Button>
-                <Button variant="ghost" className="text-xs h-7 px-2" onClick={() => setUsuarioParaEditar(u)}>Editar</Button>
+                <Button variant="ghost" className="text-xs h-8 px-2.5 bg-surface border border-border" onClick={() => setUsuarioParaTreinamento(u)}>Treinos</Button>
+                <Button variant="ghost" className="text-xs h-8 px-2.5 bg-surface border border-border" onClick={() => setUsuarioParaEditar(u)}>Editar</Button>
 
                 {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') && (
-                  <Button variant="ghost" className="text-xs h-7 px-2" onClick={() => handleAbrirQrModal(u)}>QR</Button>
+                  <Button variant="ghost" className="text-xs h-8 px-2.5 bg-surface border border-border text-success hover:text-success" onClick={() => handleAbrirQrModal(u)}>QR</Button>
                 )}
 
-                <Button variant="ghost" className="text-xs h-7 px-2 text-red-600 hover:bg-red-50" onClick={() => handleDelete(u.id)}>Excluir</Button>
+                <Button variant="ghost" className="text-xs h-8 px-2.5 bg-error/5 text-error hover:bg-error/10 border border-error/20" onClick={() => handleDelete(u.id)}>Excluir</Button>
               </div>
             </div>
           )}
@@ -270,12 +267,11 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
       )}
 
       {/* --- MODAIS DE APOIO --- */}
-      {/* [CORREÇÃO] Passamos o objeto usuario completo para o modal */}
       {usuarioParaQr && (
         <ModalQrCode
           user={usuarioParaQr}
           onClose={() => setUsuarioParaQr(null)}
-          onUpdate={() => refetch()} // Recarrega a lista para obter o token se ele foi gerado
+          onUpdate={() => refetch()}
         />
       )}
 
@@ -298,24 +294,27 @@ function Avatar({ nome, url, size = 'md' }: { nome: string, url?: string | null,
   if (url) return <img src={url} alt={nome} className={`${dims} rounded-full object-cover border border-border shadow-sm`} />;
 
   return (
-    <div className={`${dims} rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold border border-primary/20`}>
+    <div className={`${dims} rounded-full bg-surface-hover text-text-secondary flex items-center justify-center font-bold border border-border`}>
       {initials}
     </div>
   );
 }
 
+// Wrapper para usar o Badge oficial com mapeamento de roles
 function BadgeRole({ role }: { role: UserRole }) {
-  const styles = {
-    'ADMIN': 'bg-purple-50 text-purple-700 border-purple-100',
-    'ENCARREGADO': 'bg-blue-50 text-blue-700 border-blue-100',
-    'OPERADOR': 'bg-green-50 text-green-700 border-green-100',
-    'RH': 'bg-pink-50 text-pink-700 border-pink-100',
-    'COORDENADOR': 'bg-orange-50 text-orange-700 border-orange-100'
+  const map: Record<string, "success" | "warning" | "neutral" | "danger" | "info"> = {
+    'ADMIN': 'danger', // Roxo não tem badge nativa, usando Danger ou Info
+    'ENCARREGADO': 'info',
+    'OPERADOR': 'success',
+    'RH': 'warning',
+    'COORDENADOR': 'warning'
   };
 
+  const variant = map[role] || 'neutral';
+  
   return (
-    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ${styles[role] || 'bg-background text-gray-600 border-border'}`}>
+    <Badge variant={variant}>
       {role}
-    </span>
+    </Badge>
   );
 }

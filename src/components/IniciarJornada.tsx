@@ -4,7 +4,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { parseDecimal, formatKmVisual } from '../utils';
 import { toast } from 'sonner';
-import { Gauge } from 'lucide-react'; // Ícone para o KM
+import { Gauge, Play, AlertTriangle } from 'lucide-react';
 import type { User, Veiculo, Jornada } from '../types';
 
 interface IniciarJornadaProps {
@@ -14,9 +14,6 @@ interface IniciarJornadaProps {
   onJornadaIniciada: (novaJornada: any) => void;
   jornadasAtivas: Jornada[];
 }
-
-const selectStyle = "w-full h-11 px-3 bg-white border border-border rounded-input text-sm text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer font-medium disabled:bg-gray-50 placeholder:text-gray-400 shadow-sm";
-const labelStyle = "block mb-1.5 text-xs font-bold text-gray-500 uppercase tracking-wider ml-1";
 
 export function IniciarJornada({
   usuarios,
@@ -35,7 +32,7 @@ export function IniciarJornada({
   const [modalAberto, setModalAberto] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
 
-  // ✅ [UX] Calcula o último KM do veículo selecionado para referência visual
+  // Calcula o último KM do veículo selecionado
   const ultimoKmReferencia = useMemo(() => {
     if (!veiculoId) return 0;
     const v = veiculos.find(veic => veic.id === veiculoId);
@@ -79,9 +76,8 @@ export function IniciarJornada({
       return;
     }
 
-    // ✅ [UX] Validação de coerência: Avisa se o KM inserido for MENOR que o anterior
+    // Validação de coerência: Avisa se o KM inserido for MENOR que o anterior
     if (ultimoKmReferencia > 0 && kmInicioFloat < ultimoKmReferencia) {
-      // Não bloqueamos (pois o painel pode ter sido trocado), mas avisamos forte.
       toast.warning(`Atenção: O KM informado (${kmInicioFloat}) é MENOR que o último registrado (${ultimoKmReferencia}). Verifique o painel.`);
     }
 
@@ -128,23 +124,21 @@ export function IniciarJornada({
       <form className="space-y-6" onSubmit={handleSubmit}>
 
         <div className="text-center mb-4">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-3 ring-4 ring-primary/5">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7 text-primary">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z" />
-            </svg>
+          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-3 ring-4 ring-primary/5 shadow-inner">
+            <Play className="w-6 h-6 text-primary ml-1" />
           </div>
-          <h3 className="text-xl font-bold text-gray-900">Iniciar Jornada</h3>
-          <p className="text-sm text-gray-500 mt-1 px-4 leading-relaxed">
+          <h3 className="text-xl font-bold text-text-main">Iniciar Jornada</h3>
+          <p className="text-sm text-text-secondary mt-1 px-4 leading-relaxed">
             Identifique o veículo e o responsável para liberar a saída.
           </p>
         </div>
 
         {/* Veículo */}
         <div>
-          <label className={labelStyle}>Veículo</label>
+          <label className="block mb-1.5 text-xs font-bold text-text-muted uppercase tracking-wider ml-1">Veículo</label>
           <div className="relative group">
             <select
-              className={selectStyle}
+              className="w-full h-11 px-3 bg-surface border border-input rounded-input text-sm text-text-main focus:border-ring focus:ring-2 focus:ring-ring/20 outline-none transition-all appearance-none cursor-pointer font-medium disabled:bg-surface-hover shadow-sm"
               value={veiculoId}
               onChange={(e) => handleVeiculoChange(e.target.value)}
               disabled={loading}
@@ -156,13 +150,15 @@ export function IniciarJornada({
                 </option>
               ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 group-hover:text-primary transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+            {/* Ícone Chevron */}
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted group-hover:text-primary transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
             </div>
           </div>
 
           {avisoVeiculo && (
-            <div className="mt-3 flex items-start gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium animate-in slide-in-from-top-1">
+            <div className="mt-3 flex items-start gap-3 p-3 rounded-lg bg-warning-500/10 border border-warning-500/20 text-warning-700 text-xs font-medium animate-in slide-in-from-top-1">
+              <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
               <div className="flex-1">
                 <p className="font-bold mb-0.5">Veículo em uso</p>
                 {avisoVeiculo.replace('ATENÇÃO: ', '')}
@@ -173,10 +169,10 @@ export function IniciarJornada({
 
         {/* Encarregado */}
         <div>
-          <label className={labelStyle}>Encarregado</label>
+          <label className="block mb-1.5 text-xs font-bold text-text-muted uppercase tracking-wider ml-1">Encarregado</label>
           <div className="relative group">
             <select
-              className={selectStyle}
+              className="w-full h-11 px-3 bg-surface border border-input rounded-input text-sm text-text-main focus:border-ring focus:ring-2 focus:ring-ring/20 outline-none transition-all appearance-none cursor-pointer font-medium disabled:bg-surface-hover shadow-sm"
               value={encarregadoId}
               onChange={(e) => setEncarregadoId(e.target.value)}
               disabled={loading}
@@ -190,13 +186,13 @@ export function IniciarJornada({
                   </option>
                 ))}
             </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted group-hover:text-primary transition-colors">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
             </div>
           </div>
         </div>
 
-        {/* KM Inicial (Com Feedback Visual do Último KM) */}
+        {/* KM Inicial */}
         <div>
           <div className="relative">
             <Input
@@ -209,14 +205,14 @@ export function IniciarJornada({
               disabled={loading}
               className="text-lg tracking-wide font-medium pr-10"
             />
-            <div className="pointer-events-none absolute bottom-3 right-0 flex items-center px-3 text-gray-400">
+            <div className="pointer-events-none absolute bottom-3 right-0 flex items-center px-3 text-text-muted">
               <Gauge className="w-5 h-5" />
             </div>
           </div>
 
-          {/* ✅ FEEDBACK VISUAL DO ÚLTIMO KM (AQUI ESTÁ A MÁGICA) */}
+          {/* Feedback Visual do Último KM */}
           {ultimoKmReferencia > 0 && (
-            <p className="text-[10px] text-primary font-bold mt-1.5 flex items-center gap-1 bg-primary/5 p-1 rounded w-fit px-2 ml-1 animate-in fade-in slide-in-from-left-2">
+            <p className="text-[10px] text-primary font-bold mt-1.5 flex items-center gap-1 bg-primary/5 p-1 rounded w-fit px-2 ml-1 animate-in fade-in slide-in-from-left-2 border border-primary/10">
               <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
               Anterior: {ultimoKmReferencia.toLocaleString()} KM
             </p>
@@ -226,7 +222,7 @@ export function IniciarJornada({
         <Button
           type="submit"
           variant="primary"
-          className="w-full py-3.5 text-base shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+          className="w-full py-3.5 text-base shadow-button hover:shadow-float"
           isLoading={loading}
           disabled={loading || !veiculoId || !encarregadoId || !kmInicio}
         >

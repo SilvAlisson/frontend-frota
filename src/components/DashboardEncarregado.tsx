@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Truck, Key, Droplets, Users, Bell, History, Info } from 'lucide-react';
+import { Truck, Key, Droplets, Users, Bell, History, Info, LogOut } from 'lucide-react';
 import { PainelAlertas } from './PainelAlertas';
 import { GestaoJornadas } from './GestaoJornadas';
 import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
@@ -8,6 +8,8 @@ import { MinhaEquipe } from './MinhaEquipe';
 import { IniciarJornada } from './IniciarJornada';
 import { PageHeader } from './ui/PageHeader';
 import { Card } from './ui/Card';
+import { Button } from './ui/Button'; // Importando Button
+import { useAuth } from '../contexts/AuthContext'; // Importando Auth
 import type { User } from '../types';
 
 interface DashboardEncarregadoProps {
@@ -37,6 +39,7 @@ export function DashboardEncarregado({
     jornadasAbertas,
     onJornadaFinalizada
 }: DashboardEncarregadoProps) {
+    const { logout } = useAuth(); // Hook de logout
     const [abaAtiva, setAbaAtiva] = useState<AbaEncarregado>('jornadas');
 
     // Filtro inteligente: Encarregado só vê veículos leves na aba "Meu Carro"
@@ -110,6 +113,17 @@ export function DashboardEncarregado({
             <PageHeader 
                 title={`Olá, ${user.nome.split(' ')[0]}`}
                 subtitle="Painel de Controle Operacional"
+                // ADICIONADO: Botão de Sair no topo
+                extraAction={
+                    <Button 
+                        variant="ghost" 
+                        onClick={logout} 
+                        className="text-error hover:bg-error/10 hover:text-error border border-transparent hover:border-error/20"
+                        icon={<LogOut className="w-4 h-4" />}
+                    >
+                        Sair
+                    </Button>
+                }
             />
 
             {/* Navegação por Abas (Design System) */}

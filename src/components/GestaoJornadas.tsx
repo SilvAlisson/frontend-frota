@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { Route, Search, RefreshCw } from 'lucide-react';
+import { Route, Search, RefreshCw, Truck } from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
 import { Input } from './ui/Input';
 import { Card } from './ui/Card';
 import { Modal } from './ui/Modal';
+import { Button } from './ui/Button'; // Importando Button
 
 // --- COMPONENTES & FORMS ---
 import { JornadaGestaoItem } from './JornadaGestaoItem';
@@ -21,7 +22,6 @@ export function GestaoJornadas({
   onJornadaFinalizadaManualmente
 }: GestaoJornadasProps) {
 
-  // Estados
   const [jornadaEditandoId, setJornadaEditandoId] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
 
@@ -32,7 +32,6 @@ export function GestaoJornadas({
     j.veiculo?.modelo?.toLowerCase().includes(busca.toLowerCase())
   );
 
-  // Handlers
   const handleFinalizar = (id: string) => {
     toast.success("Jornada processada.");
     onJornadaFinalizadaManualmente(id);
@@ -40,57 +39,61 @@ export function GestaoJornadas({
 
   const handleSuccessEdit = () => {
     setJornadaEditandoId(null);
-    window.location.reload(); // Refresh simples para atualizar dados
+    window.location.reload(); 
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 animate-enter">
 
-      {/* 1. PAINEL DE CONTROLE (STICKY SEARCH) */}
-      {/* O top-[145px] é ajustado para colar logo abaixo das abas do DashboardEncarregado */}
-      <div className="bg-white p-4 rounded-xl border border-border shadow-sm sticky top-[145px] z-10 transition-all">
+      {/* 1. PAINEL DE CONTROLE (STICKY) */}
+      <div className="bg-surface p-4 rounded-xl border border-border shadow-float sticky top-[145px] z-10 transition-all">
         <div className="flex justify-between items-end mb-3">
             <div>
-                <h3 className="text-gray-900 font-bold text-lg leading-none">Monitoramento</h3>
-                <p className="text-gray-500 text-xs mt-1">Frota em circulação</p>
+                <h3 className="text-text-main font-bold text-lg leading-none flex items-center gap-2">
+                  <Truck className="w-5 h-5 text-primary" />
+                  Monitoramento
+                </h3>
+                <p className="text-text-secondary text-xs mt-1">Frota em circulação</p>
             </div>
             <div className="text-right">
-                <span className="block text-3xl font-black text-gray-900 leading-none tracking-tight">
+                <span className="block text-3xl font-black text-text-main leading-none tracking-tight">
                     {jornadasAbertas.length}
                 </span>
-                <span className="text-[10px] font-bold text-green-600 uppercase tracking-wider bg-green-50 px-2 py-0.5 rounded-full border border-green-100">
+                <span className="text-[10px] font-bold text-success uppercase tracking-wider bg-success/10 px-2 py-0.5 rounded-full border border-success/20">
                     Veículos Ativos
                 </span>
             </div>
         </div>
 
-        <div className="relative">
-            <Input 
-                placeholder="🔍 Buscar placa ou motorista..." 
-                value={busca}
-                onChange={e => setBusca(e.target.value)}
-                className="bg-gray-50 border-gray-200 focus:bg-white transition-all h-11 text-base shadow-sm"
-            />
-            {/* Botão de Refresh manual para garantir dados frescos no campo */}
-            <button 
+        <div className="relative flex gap-2">
+            <div className="flex-1">
+              <Input 
+                  placeholder="🔍 Buscar placa ou motorista..." 
+                  value={busca}
+                  onChange={e => setBusca(e.target.value)}
+                  className="bg-background border-border focus:bg-surface transition-all h-11 text-base shadow-inner"
+              />
+            </div>
+            <Button 
+                variant="secondary"
                 onClick={() => window.location.reload()}
-                className="absolute right-2 top-2 p-1.5 text-gray-400 hover:text-primary active:scale-95 transition-transform bg-white/50 rounded-lg"
+                className="h-11 w-11 p-0 flex items-center justify-center bg-surface hover:bg-surface-hover border border-border text-text-secondary hover:text-primary"
                 title="Atualizar dados"
             >
-                <RefreshCw className="w-4 h-4" />
-            </button>
+                <RefreshCw className="w-5 h-5" />
+            </Button>
         </div>
       </div>
 
       {/* 2. LISTA DE VEÍCULOS (CARDS) */}
       {jornadasAbertas.length === 0 ? (
-        // Empty State Otimizado
-        <Card className="flex flex-col items-center justify-center py-16 text-center border-dashed border-2 bg-gray-50/50 shadow-none mx-1">
-          <div className="p-4 bg-white rounded-full mb-3 ring-1 ring-gray-200 shadow-sm">
-            <Route className="w-8 h-8 text-gray-300" />
+        // Empty State
+        <Card className="flex flex-col items-center justify-center py-16 text-center border-dashed border-2 bg-surface/50 shadow-none mx-1">
+          <div className="p-4 bg-surface rounded-full mb-3 ring-1 ring-border shadow-sm">
+            <Route className="w-8 h-8 text-text-muted" />
           </div>
-          <h4 className="text-base font-bold text-gray-900">Pátio Cheio</h4>
-          <p className="text-gray-500 text-xs mt-1 max-w-[200px] mx-auto leading-relaxed">
+          <h4 className="text-base font-bold text-text-main">Pátio Cheio</h4>
+          <p className="text-text-secondary text-xs mt-1 max-w-[200px] mx-auto leading-relaxed">
             Nenhum veículo iniciou jornada ainda. Tudo tranquilo por aqui.
           </p>
         </Card>
@@ -108,9 +111,9 @@ export function GestaoJornadas({
               />
             ))
           ) : (
-            <div className="text-center py-10 text-gray-500 bg-white rounded-xl border border-dashed border-gray-200 shadow-sm mx-1">
-              <Search className="w-8 h-8 mx-auto mb-3 text-gray-300" />
-              <p className="text-sm">Sem resultados para "<span className="font-bold text-gray-700">{busca}</span>"</p>
+            <div className="text-center py-10 text-text-muted bg-surface rounded-xl border border-dashed border-border shadow-sm mx-1">
+              <Search className="w-8 h-8 mx-auto mb-3 text-text-muted/50" />
+              <p className="text-sm">Sem resultados para "<span className="font-bold text-text-main">{busca}</span>"</p>
             </div>
           )}
         </div>
@@ -121,7 +124,7 @@ export function GestaoJornadas({
         isOpen={!!jornadaEditandoId} 
         onClose={() => setJornadaEditandoId(null)}
         title="Corrigir Jornada"
-        className="max-w-md w-full mx-4" // Melhor ajuste mobile (margem lateral)
+        className="max-w-md w-full mx-4"
       >
         {jornadaEditandoId && (
           <FormEditarJornada

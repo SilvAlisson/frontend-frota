@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { Fuel, Truck, History, FileText, Info } from 'lucide-react';
+import { Fuel, Truck, History, FileText, Info, LogOut } from 'lucide-react';
 import { IniciarJornada } from './IniciarJornada';
 import { JornadaCard } from './JornadaCard';
 import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
 import { HistoricoJornadas } from './HistoricoJornadas';
 import { GestaoDocumentos } from './GestaoDocumentos';
-// CORREÇÃO: Imports da pasta UI correta
 import { PageHeader } from './ui/PageHeader';
 import { Modal } from './ui/Modal';
 import { Card } from './ui/Card';
+import { Button } from './ui/Button'; // Importando Button
+import { useAuth } from '../contexts/AuthContext';
 import type { User, Veiculo, Jornada, Produto, Fornecedor } from '../types';
 
 interface DashboardOperadorProps {
@@ -32,6 +33,7 @@ export function DashboardOperador({
     onJornadaIniciada,
     onJornadaFinalizada
 }: DashboardOperadorProps) {
+    const { logout } = useAuth(); // Hook de logout
     const [modalAbastecimentoOpen, setModalAbastecimentoOpen] = useState(false);
     const [modalHistoricoOpen, setModalHistoricoOpen] = useState(false);
     const [modalDocumentosOpen, setModalDocumentosOpen] = useState(false);
@@ -47,6 +49,17 @@ export function DashboardOperador({
             <PageHeader 
                 title={`Olá, ${user.nome.split(' ')[0]}!`}
                 subtitle={tenhoJornadaAtiva ? "Você tem uma jornada em andamento." : "Selecione uma ação para começar."}
+                // ADICIONADO: Botão de Sair no topo
+                extraAction={
+                    <Button 
+                        variant="ghost" 
+                        onClick={logout} 
+                        className="text-error hover:bg-error/10 hover:text-error border border-transparent hover:border-error/20"
+                        icon={<LogOut className="w-4 h-4" />}
+                    >
+                        Sair
+                    </Button>
+                }
             />
 
             {/* --- ÁREA DE AÇÃO PRINCIPAL --- */}
