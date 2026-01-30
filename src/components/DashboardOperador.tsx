@@ -1,13 +1,14 @@
 import { useState } from 'react';
+import { Fuel, Truck, History, FileText, Info } from 'lucide-react';
 import { IniciarJornada } from './IniciarJornada';
 import { JornadaCard } from './JornadaCard';
 import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
-// 1. Import do Componente de Histórico
 import { HistoricoJornadas } from './HistoricoJornadas';
-// Import do Componente de Gestão de Documentos
 import { GestaoDocumentos } from './GestaoDocumentos';
-import { Fuel, Truck, LogOut, History, X, FileText } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+// CORREÇÃO: Imports da pasta UI correta
+import { PageHeader } from './ui/PageHeader';
+import { Modal } from './ui/Modal';
+import { Card } from './ui/Card';
 import type { User, Veiculo, Jornada, Produto, Fornecedor } from '../types';
 
 interface DashboardOperadorProps {
@@ -31,138 +32,57 @@ export function DashboardOperador({
     onJornadaIniciada,
     onJornadaFinalizada
 }: DashboardOperadorProps) {
-
-    const { logout } = useAuth();
     const [modalAbastecimentoOpen, setModalAbastecimentoOpen] = useState(false);
-    // 2. Novo estado para o modal de histórico
     const [modalHistoricoOpen, setModalHistoricoOpen] = useState(false);
-    // 3. Novo estado para o modal de documentos
     const [modalDocumentosOpen, setModalDocumentosOpen] = useState(false);
 
     // Filtra jornadas para encontrar a do operador logado
-    // CORREÇÃO 1: Adicionado ?. antes de .id no operador
     const minhasJornadas = jornadasAtivas.filter(j => j.operador?.id === user.id);
-
     const tenhoJornadaAtiva = minhasJornadas.length > 0;
-
-    // CORREÇÃO 2: Adicionado ?. antes de .id no veiculo
     const veiculoEmUsoId = tenhoJornadaAtiva ? minhasJornadas[0].veiculo?.id : undefined;
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 pb-20">
+        <div className="space-y-8 animate-enter pb-20">
+            
+            <PageHeader 
+                title={`Olá, ${user.nome.split(' ')[0]}!`}
+                subtitle={tenhoJornadaAtiva ? "Você tem uma jornada em andamento." : "Selecione uma ação para começar."}
+            />
 
-            {/* --- HEADER CENTRALIZADO --- */}
-            <div className="bg-white p-8 rounded-3xl border border-border shadow-sm flex flex-col items-center text-center relative overflow-hidden">
-
-                {/* Botão de Logout */}
-                <button
-                    onClick={logout}
-                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors z-20"
-                    title="Sair da conta"
-                >
-                    <LogOut className="w-6 h-6" />
-                </button>
-
-                <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none"></div>
-
-                <div className="relative z-10 mb-4">
-                    <div className="h-24 w-24 rounded-full bg-white p-1.5 shadow-lg border border-border overflow-hidden mx-auto">
-                        {user.fotoUrl ? (
-                            <img src={user.fotoUrl} alt={user.nome} className="w-full h-full rounded-full object-cover" />
-                        ) : (
-                            <div className="w-full h-full rounded-full bg-primary text-white flex items-center justify-center text-4xl font-bold shadow-inner">
-                                {user.nome.charAt(0).toUpperCase()}
-                            </div>
-                        )}
-                    </div>
-                    {/* Indicador de Status */}
-                    <div className={`absolute bottom-1 right-[calc(50%-45px)] w-6 h-6 border-4 border-white rounded-full shadow-sm ${tenhoJornadaAtiva ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`} title={tenhoJornadaAtiva ? "Em Jornada" : "Inativo"}></div>
-                </div>
-
-                <div className="relative z-10">
-                    <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
-                        Olá, {user.nome.split(' ')[0]}!
-                    </h2>
-                    <p className="text-gray-500 font-medium mt-1 max-w-md mx-auto">
-                        {tenhoJornadaAtiva
-                            ? 'Bom trabalho! Você está com uma jornada em andamento.'
-                            : 'Pronto para iniciar? Selecione seu veículo abaixo.'}
-                    </p>
-                </div>
-
-                {/* BOTÕES DE AÇÃO RÁPIDA */}
-                <div className="mt-8 flex gap-3 relative z-10 justify-center flex-wrap">
-                    <button
-                        onClick={() => setModalAbastecimentoOpen(true)}
-                        className="flex items-center gap-2 bg-white border border-border text-gray-700 px-5 py-3 rounded-xl shadow-sm hover:shadow-md hover:border-orange-200 hover:text-orange-600 transition-all font-bold text-sm group"
-                    >
-                        <div className="p-1.5 bg-orange-50 text-orange-600 rounded-lg group-hover:bg-orange-100 transition-colors">
-                            <Fuel className="w-5 h-5" />
-                        </div>
-                        Registrar Abastecimento
-                    </button>
-
-                    {/* Botão Meus Documentos */}
-                    <button
-                        onClick={() => setModalDocumentosOpen(true)}
-                        className="flex items-center gap-2 bg-white border border-border text-gray-700 px-5 py-3 rounded-xl shadow-sm hover:shadow-md hover:border-blue-200 hover:text-blue-600 transition-all font-bold text-sm group"
-                    >
-                        <div className="p-1.5 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-100 transition-colors">
-                            <FileText className="w-5 h-5" />
-                        </div>
-                        Meus Documentos
-                    </button>
-
-                    {/* Botão Meu Histórico */}
-                    <button
-                        className="flex items-center gap-2 bg-white border border-border text-gray-700 px-5 py-3 rounded-xl shadow-sm hover:shadow-md hover:border-purple-200 hover:text-purple-600 transition-all font-bold text-sm group"
-                        onClick={() => setModalHistoricoOpen(true)}
-                    >
-                        <div className="p-1.5 bg-purple-50 text-purple-600 rounded-lg group-hover:bg-purple-100 transition-colors">
-                            <History className="w-5 h-5" />
-                        </div>
-                        Meu Histórico
-                    </button>
-                </div>
-            </div>
-
-            {/* --- ÁREA OPERACIONAL --- */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-5xl mx-auto">
-                {!tenhoJornadaAtiva ? (
-                    <div className="lg:col-span-12 xl:col-span-8 xl:col-start-3 w-full">
-                        <div className="bg-white shadow-card rounded-3xl p-1 border border-border overflow-hidden transition-all hover:shadow-card-hover">
-                            <div className="p-8">
-                                <div className="flex items-center gap-3 mb-6">
-                                    <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                                        <Truck className="w-6 h-6" />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold text-gray-900">Iniciar Nova Jornada</h3>
-                                        <p className="text-sm text-gray-500">Selecione o veículo para começar</p>
-                                    </div>
+            {/* --- ÁREA DE AÇÃO PRINCIPAL --- */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* BLOCO 1: OPERAÇÃO ATUAL (Ocupa 2 colunas) */}
+                <div className="lg:col-span-2 space-y-6">
+                    {!tenhoJornadaAtiva ? (
+                        <Card className="border-primary/20 bg-primary/5">
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className="p-3 bg-primary text-white rounded-xl shadow-button">
+                                    <Truck className="w-6 h-6" />
                                 </div>
-
-                                <IniciarJornada
-                                    usuarios={usuarios}
-                                    veiculos={veiculos}
-                                    operadorLogadoId={user.id}
-                                    onJornadaIniciada={onJornadaIniciada}
-                                    jornadasAtivas={jornadasAtivas}
-                                />
+                                <div>
+                                    <h3 className="text-lg font-bold text-text-main">Iniciar Nova Jornada</h3>
+                                    <p className="text-sm text-text-secondary">Escolha o veículo que você vai conduzir hoje.</p>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                ) : (
-                    <div className="lg:col-span-12 xl:col-span-8 xl:col-start-3 w-full space-y-6">
-                        <div className="flex items-center justify-center gap-2 text-sm font-bold text-green-600 uppercase tracking-widest bg-green-50 py-2 px-4 rounded-full w-fit mx-auto border border-green-100">
-                            <span className="relative flex h-3 w-3">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-                            </span>
-                            Veículo em Operação
-                        </div>
+                            <IniciarJornada
+                                usuarios={usuarios}
+                                veiculos={veiculos}
+                                operadorLogadoId={user.id}
+                                onJornadaIniciada={onJornadaIniciada}
+                                jornadasAtivas={jornadasAtivas}
+                            />
+                        </Card>
+                    ) : (
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2 text-sm font-bold text-success uppercase tracking-widest bg-success/10 py-2 px-4 rounded-full w-fit border border-success/20">
+                                <span className="relative flex h-2.5 w-2.5">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success"></span>
+                                </span>
+                                Veículo em Operação
+                            </div>
 
-                        <div className="space-y-5">
                             {minhasJornadas.map((jornada) => (
                                 <JornadaCard
                                     key={jornada.id}
@@ -171,87 +91,102 @@ export function DashboardOperador({
                                 />
                             ))}
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
+
+                {/* BLOCO 2: MENU RÁPIDO (Lateral) */}
+                <div className="space-y-4">
+                    <button
+                        onClick={() => setModalAbastecimentoOpen(true)}
+                        className="w-full flex items-center gap-4 bg-surface border border-border p-4 rounded-xl shadow-card hover:shadow-float hover:border-warning-500 hover:bg-warning-500/5 transition-all group text-left"
+                    >
+                        <div className="p-3 bg-warning-500/10 text-warning-600 rounded-lg group-hover:bg-warning-500 group-hover:text-white transition-colors">
+                            <Fuel className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <span className="block font-bold text-text-main">Registrar Abastecimento</span>
+                            <span className="text-xs text-text-secondary">Lançar diesel, gasolina ou arla</span>
+                        </div>
+                    </button>
+
+                    <button
+                        onClick={() => setModalDocumentosOpen(true)}
+                        className="w-full flex items-center gap-4 bg-surface border border-border p-4 rounded-xl shadow-card hover:shadow-float hover:border-sky-500 hover:bg-sky-500/5 transition-all group text-left"
+                    >
+                        <div className="p-3 bg-sky-500/10 text-sky-600 rounded-lg group-hover:bg-sky-500 group-hover:text-white transition-colors">
+                            <FileText className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <span className="block font-bold text-text-main">Meus Documentos</span>
+                            <span className="text-xs text-text-secondary">CNH e documentos do veículo</span>
+                        </div>
+                    </button>
+
+                    <button
+                        onClick={() => setModalHistoricoOpen(true)}
+                        className="w-full flex items-center gap-4 bg-surface border border-border p-4 rounded-xl shadow-card hover:shadow-float hover:border-purple-500 hover:bg-purple-500/5 transition-all group text-left"
+                    >
+                        <div className="p-3 bg-purple-500/10 text-purple-600 rounded-lg group-hover:bg-purple-500 group-hover:text-white transition-colors">
+                            <History className="w-6 h-6" />
+                        </div>
+                        <div>
+                            <span className="block font-bold text-text-main">Meu Histórico</span>
+                            <span className="text-xs text-text-secondary">Ver minhas viagens anteriores</span>
+                        </div>
+                    </button>
+                </div>
             </div>
 
-            {/* --- MODAL DE ABASTECIMENTO --- */}
-            {modalAbastecimentoOpen && (
-                <div
-                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300"
-                    onClick={() => setModalAbastecimentoOpen(false)}
-                >
-                    <div
-                        className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-3xl animate-in zoom-in-95 duration-300 shadow-2xl bg-white"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <FormRegistrarAbastecimento
-                            usuarios={usuarios}
-                            veiculos={veiculos}
-                            produtos={produtos}
-                            fornecedores={fornecedores}
-                            usuarioLogado={user}
-                            veiculoPreSelecionadoId={veiculoEmUsoId}
-                            onCancelar={() => setModalAbastecimentoOpen(false)}
-                        />
-                    </div>
-                </div>
-            )}
+            {/* --- MODAIS --- */}
+            
+            <Modal
+                isOpen={modalAbastecimentoOpen}
+                onClose={() => setModalAbastecimentoOpen(false)}
+                title="Novo Abastecimento"
+                className="max-w-2xl"
+            >
+                <FormRegistrarAbastecimento
+                    usuarios={usuarios}
+                    veiculos={veiculos}
+                    produtos={produtos}
+                    fornecedores={fornecedores}
+                    usuarioLogado={user}
+                    veiculoPreSelecionadoId={veiculoEmUsoId}
+                    onCancelar={() => setModalAbastecimentoOpen(false)}
+                />
+            </Modal>
 
-            {/* --- MODAL DE HISTÓRICO DO OPERADOR --- */}
-            {modalHistoricoOpen && (
-                <div
-                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300"
-                    onClick={() => setModalHistoricoOpen(false)}
-                >
-                    <div
-                        className="w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl animate-in zoom-in-95 duration-300 shadow-2xl bg-white p-6 relative"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <button
-                            onClick={() => setModalHistoricoOpen(false)}
-                            className="absolute top-4 right-4 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors z-10"
-                        >
-                            <X className="w-5 h-5 text-gray-500" />
-                        </button>
+            <Modal
+                isOpen={modalHistoricoOpen}
+                onClose={() => setModalHistoricoOpen(false)}
+                title="Meu Histórico de Viagens"
+                className="max-w-5xl"
+            >
+                <HistoricoJornadas
+                    veiculos={veiculos}
+                    userRole={user.role} 
+                />
+            </Modal>
 
-                        <HistoricoJornadas
-                            veiculos={veiculos}
-                            userRole={user.role} // Passa OPERADOR para ativar o modo "meu-historico"
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* --- 4. MODAL DOCUMENTOS (NOVO E CONECTADO) --- */}
-            {modalDocumentosOpen && (
-                <div
-                    className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300"
-                    onClick={() => setModalDocumentosOpen(false)}
-                >
-                    <div
-                        className="w-full max-w-4xl max-h-[90vh] flex flex-col rounded-3xl animate-in zoom-in-95 duration-300 shadow-2xl bg-white overflow-hidden"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-                            <h3 className="font-bold text-lg text-gray-800 flex items-center gap-2">
-                                <FileText className="w-5 h-5 text-primary" />
-                                Documentos do Veículo
-                            </h3>
-                            <button
-                                onClick={() => setModalDocumentosOpen(false)}
-                                className="p-2 hover:bg-gray-200 rounded-full transition-colors text-gray-500"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
+            <Modal
+                isOpen={modalDocumentosOpen}
+                onClose={() => setModalDocumentosOpen(false)}
+                title="Documentos do Veículo"
+                className="max-w-4xl"
+            >
+                {veiculoEmUsoId ? (
+                    <GestaoDocumentos veiculoId={veiculoEmUsoId} somenteLeitura={true} />
+                ) : (
+                    <div className="flex flex-col items-center justify-center py-12 text-center">
+                        <div className="bg-background p-4 rounded-full mb-3">
+                            <Info className="w-8 h-8 text-text-muted" />
                         </div>
-                        <div className="flex-1 overflow-y-auto p-6 bg-slate-50">
-                            {/* Passamos o veiculoId do operador para filtrar os documentos */}
-                            <GestaoDocumentos veiculoId={veiculoEmUsoId} somenteLeitura={true} />
-                        </div>
+                        <h3 className="text-lg font-bold text-text-main">Nenhum veículo selecionado</h3>
+                        <p className="text-text-secondary max-w-xs mt-1">Inicie uma jornada para ver os documentos do veículo.</p>
                     </div>
-                </div>
-            )}
+                )}
+            </Modal>
+
         </div>
     );
 }

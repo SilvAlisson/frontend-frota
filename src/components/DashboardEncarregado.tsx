@@ -1,12 +1,13 @@
 import { useState } from 'react';
+import { Truck, Key, Droplets, Users, Bell, History, Info } from 'lucide-react';
 import { PainelAlertas } from './PainelAlertas';
 import { GestaoJornadas } from './GestaoJornadas';
 import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
 import { HistoricoAbastecimentos } from './HistoricoAbastecimentos';
 import { MinhaEquipe } from './MinhaEquipe';
 import { IniciarJornada } from './IniciarJornada';
-import { useAuth } from '../contexts/AuthContext';
-import { LogOut, Key, Truck, Droplets, Users, Bell, History } from 'lucide-react';
+import { PageHeader } from './ui/PageHeader';
+import { Card } from './ui/Card';
 import type { User } from '../types';
 
 interface DashboardEncarregadoProps {
@@ -19,14 +20,13 @@ interface DashboardEncarregadoProps {
     onJornadaFinalizada: () => void;
 }
 
-// Tipagem simplificada: Apenas o essencial para o dia a dia
 type AbaEncarregado =
-    | 'jornadas'           // Visão da Frota (Principal)
-    | 'minha_jornada'      // Pegar a Strada
-    | 'abastecimento'      // Lançar Diesel/Gasolina
+    | 'jornadas'         // Visão da Frota (Principal)
+    | 'minha_jornada'    // Pegar a Strada
+    | 'abastecimento'    // Lançar Diesel/Gasolina
     | 'hist_abastecimento' // Conferir lançamentos
-    | 'equipe'             // Ver motoristas
-    | 'alertas';           // Pendências
+    | 'equipe'           // Ver motoristas
+    | 'alertas';         // Pendências
 
 export function DashboardEncarregado({
     user,
@@ -37,44 +37,48 @@ export function DashboardEncarregado({
     jornadasAbertas,
     onJornadaFinalizada
 }: DashboardEncarregadoProps) {
-
-    const { logout } = useAuth();
-    // ✅ O padrão agora é ver a frota rodando (Gestão)
-    const [abaEncarregado, setAbaEncarregado] = useState<AbaEncarregado>('jornadas');
+    const [abaAtiva, setAbaAtiva] = useState<AbaEncarregado>('jornadas');
 
     // Filtro inteligente: Encarregado só vê veículos leves na aba "Meu Carro"
     const veiculosLeves = veiculos.filter(v => 
         ['UTILITARIO', 'LEVE', 'OUTRO'].includes(v.tipoVeiculo)
     );
 
-    // Menu otimizado para polegar (Mobile)
     const abas = [
-        { id: 'jornadas', label: 'Em Rota', icon: <Truck className="w-5 h-5" /> },
-        { id: 'minha_jornada', label: 'Meu Carro', icon: <Key className="w-5 h-5" /> },
-        { id: 'abastecimento', label: 'Abastecer', icon: <Droplets className="w-5 h-5" /> },
-        { id: 'hist_abastecimento', label: 'Histórico', icon: <History className="w-5 h-5" /> },
-        { id: 'equipe', label: 'Equipe', icon: <Users className="w-5 h-5" /> },
-        { id: 'alertas', label: 'Alertas', icon: <Bell className="w-5 h-5" /> },
+        { id: 'jornadas', label: 'Monitoramento', icon: Truck },
+        { id: 'minha_jornada', label: 'Meu Veículo', icon: Key },
+        { id: 'abastecimento', label: 'Abastecer', icon: Droplets },
+        { id: 'hist_abastecimento', label: 'Histórico', icon: History },
+        { id: 'equipe', label: 'Minha Equipe', icon: Users },
+        { id: 'alertas', label: 'Alertas', icon: Bell },
     ];
 
     const renderConteudo = () => {
-        switch (abaEncarregado) {
+        switch (abaAtiva) {
             case 'jornadas': 
                 return <GestaoJornadas jornadasAbertas={jornadasAbertas} onJornadaFinalizadaManualmente={onJornadaFinalizada} />;
             
             case 'minha_jornada': return (
-                <div className="max-w-lg mx-auto py-2">
-                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-6 text-center">
-                        <h4 className="text-blue-800 font-bold text-sm">Iniciar Deslocamento</h4>
-                        <p className="text-blue-600 text-xs mt-1">Liberado apenas para utilitários e leves.</p>
-                    </div>
+                <div className="max-w-2xl mx-auto">
+                    <Card className="mb-6 bg-primary/5 border-primary/20">
+                        <div className="flex items-start gap-3">
+                            <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                            <div>
+                                <h4 className="font-bold text-primary text-sm">Iniciar Deslocamento Próprio</h4>
+                                <p className="text-text-secondary text-xs mt-1">
+                                    Utilize esta opção quando você mesmo for dirigir um veículo leve (Strada, Saveiro, etc). 
+                                    Para monitorar caminhões, use a aba "Monitoramento".
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
                     <IniciarJornada 
                         usuarios={usuarios} 
                         veiculos={veiculosLeves} 
                         operadorLogadoId={user.id}
                         jornadasAtivas={jornadasAbertas}
                         onJornadaIniciada={() => {
-                            setAbaEncarregado('jornadas'); // Vai para o monitoramento após iniciar
+                            setAbaAtiva('jornadas');
                             onJornadaFinalizada();
                         }}
                     />
@@ -82,14 +86,16 @@ export function DashboardEncarregado({
             );
 
             case 'abastecimento': return (
-                <FormRegistrarAbastecimento
-                    usuarios={usuarios}
-                    veiculos={veiculos}
-                    produtos={produtos}
-                    fornecedores={fornecedores}
-                    onCancelar={() => setAbaEncarregado('jornadas')}
-                    onSuccess={() => setAbaEncarregado('hist_abastecimento')}
-                />
+                <div className="max-w-3xl mx-auto">
+                    <FormRegistrarAbastecimento
+                        usuarios={usuarios}
+                        veiculos={veiculos}
+                        produtos={produtos}
+                        fornecedores={fornecedores}
+                        onCancelar={() => setAbaAtiva('jornadas')}
+                        onSuccess={() => setAbaAtiva('hist_abastecimento')}
+                    />
+                </div>
             );
 
             case 'hist_abastecimento': return <HistoricoAbastecimentos userRole={user.role} veiculos={veiculos} />;
@@ -100,58 +106,40 @@ export function DashboardEncarregado({
     };
 
     return (
-        <div className="space-y-4 pb-24 md:pb-0"> {/* Espaço extra no final para scroll mobile */}
+        <div className="space-y-6">
+            <PageHeader 
+                title={`Olá, ${user.nome.split(' ')[0]}`}
+                subtitle="Painel de Controle Operacional"
+            />
 
-            {/* HEADER COMPACTO E FIXO */}
-            <div className="flex justify-between items-center bg-white p-4 rounded-2xl border border-border shadow-sm sticky top-0 z-30">
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg ring-2 ring-primary/20">
-                        {user.nome.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                        <h2 className="text-base font-bold text-gray-900 leading-tight">Olá, {user.nome.split(' ')[0]}</h2>
-                        <p className="text-xs text-gray-500 font-medium">Gestão Operacional</p>
-                    </div>
-                </div>
-
-                <button
-                    onClick={logout}
-                    className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors"
-                    title="Sair"
-                >
-                    <LogOut className="w-5 h-5" />
-                </button>
-            </div>
-
-            {/* MENU DE NAVEGAÇÃO HORIZONTAL (STICKY ABAIXO DO HEADER) */}
-            <div className="bg-white shadow-sm rounded-xl p-1.5 border border-border overflow-x-auto custom-scrollbar sticky top-[76px] z-20 mx-1">
-                <div className="flex space-x-1 min-w-max">
+            {/* Navegação por Abas (Design System) */}
+            <div className="border-b border-border overflow-x-auto custom-scrollbar">
+                <nav className="flex space-x-1 min-w-max pb-1">
                     {abas.map((aba) => {
-                        const isActive = abaEncarregado === aba.id;
+                        const Icon = aba.icon;
+                        const isActive = abaAtiva === aba.id;
                         return (
                             <button
                                 key={aba.id}
-                                onClick={() => setAbaEncarregado(aba.id as AbaEncarregado)}
+                                onClick={() => setAbaAtiva(aba.id as AbaEncarregado)}
                                 className={`
-                                    relative flex flex-col items-center justify-center gap-1 px-4 py-2 rounded-lg text-[10px] font-bold transition-all duration-200 min-w-[70px]
-                                    ${isActive
-                                        ? 'text-primary bg-primary/5 border border-primary/10'
-                                        : 'text-gray-400 hover:bg-gray-50 hover:text-gray-600'}
+                                    group flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-all duration-200
+                                    ${isActive 
+                                        ? 'border-primary text-primary bg-primary/5 rounded-t-lg' 
+                                        : 'border-transparent text-text-secondary hover:text-text-main hover:bg-surface-hover rounded-t-lg'
+                                    }
                                 `}
                             >
-                                {aba.icon}
-                                <span>{aba.label}</span>
-                                {isActive && (
-                                    <span className="absolute bottom-0.5 w-1 h-1 bg-primary rounded-full" />
-                                )}
+                                <Icon className={`w-4 h-4 ${isActive ? 'text-primary' : 'text-text-muted group-hover:text-text-secondary'}`} />
+                                {aba.label}
                             </button>
                         );
                     })}
-                </div>
+                </nav>
             </div>
 
-            {/* ÁREA DE CONTEÚDO */}
-            <div className="bg-white/50 min-h-[500px] animate-in fade-in duration-300">
+            {/* Conteúdo da Aba com Animação */}
+            <div className="animate-enter min-h-[400px]">
                 {renderConteudo()}
             </div>
         </div>

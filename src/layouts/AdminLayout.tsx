@@ -1,175 +1,218 @@
 import { useState } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { 
+  Menu, X, Truck, Wrench, BarChart3, Users, 
+  LogOut, LayoutDashboard, FileText,
+  Fuel, ClipboardList, AlertTriangle, Medal, Package,
+  FileBadge
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
-import { ModalRelatorioFinanceiro } from '../components/ModalRelatorioFinanceiro';
 import { useVeiculos } from '../hooks/useVeiculos';
-
-// Ícones SVG minimalistas
-const MenuIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>;
-const CloseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>;
+// CORREÇÃO 1: Importando da pasta 'ui' onde o arquivo realmente está
+import { ConfirmModal } from '../components/ui/ConfirmModal'; 
+import { ModalRelatorioFinanceiro } from '../components/ModalRelatorioFinanceiro';
 
 export function AdminLayout() {
-    const [menuMobileAberto, setMenuMobileAberto] = useState(false);
-    const [financeiroAberto, setFinanceiroAberto] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [financeiroAberto, setFinanceiroAberto] = useState(false);
+  
+  // CORREÇÃO 2: Usando 'logout' que é o nome correto no seu Contexto
+  const { logout, user } = useAuth();
+  const { data: veiculos } = useVeiculos();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-    const navigate = useNavigate();
-    const location = useLocation();
+  const handleLogout = () => {
+    logout(); 
+    navigate('/login');
+  };
 
-    const { user, logout } = useAuth();
-    const { data: veiculos } = useVeiculos();
+  // Definição Centralizada do Menu
+  const menuGroups = [
+    {
+      title: 'Visão Geral',
+      items: [
+        { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
+        { icon: AlertTriangle, label: 'Alertas', path: '/admin/alertas' },
+        { icon: Medal, label: 'Ranking', path: '/admin/ranking' },
+      ]
+    },
+    {
+      title: 'Operacional',
+      items: [
+        { icon: Wrench, label: 'Nova Manutenção', path: '/admin/manutencoes/nova', highlight: true },
+        { icon: Fuel, label: 'Novo Abastecimento', path: '/admin/abastecimentos/novo', highlight: true },
+        { icon: ClipboardList, label: 'Hist. Manutenções', path: '/admin/manutencoes' },
+        { icon: Fuel, label: 'Hist. Abastecimentos', path: '/admin/abastecimentos' },
+        { icon: Truck, label: 'Hist. Jornadas', path: '/admin/jornadas' },
+        { icon: FileText, label: 'Planos Preventivos', path: '/admin/planos' },
+      ]
+    },
+    {
+      title: 'Cadastros',
+      items: [
+        { icon: Truck, label: 'Veículos', path: '/admin/veiculos' },
+        { icon: Users, label: 'Equipe', path: '/admin/usuarios' },
+        { icon: FileBadge, label: 'Documentos Legais', path: '/admin/documentos' },
+        { icon: Package, label: 'Produtos/Serviços', path: '/admin/produtos' },
+        { icon: Users, label: 'Fornecedores', path: '/admin/fornecedores' },
+      ]
+    }
+  ];
 
-    const isActive = (path: string) => {
-        if (path === '/admin' && location.pathname === '/admin') return true;
-        return location.pathname === path;
-    };
-
-    const goTo = (path: string) => {
-        navigate(path);
-        setMenuMobileAberto(false);
-    };
-
-    const SidebarContent = () => (
-        <div className="flex flex-col h-full text-white">
-            {/* LOGO */}
-            <div className="mb-10 flex items-center gap-3 px-2">
-                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-black/20">
-                    K
-                </div>
-                <div>
-                    <span className="block font-bold text-lg tracking-wide">FROTA KLIN</span>
-                    <span className="block text-[10px] text-slate-400 uppercase tracking-widest">Gestão Inteligente</span>
-                </div>
-            </div>
-
-            {/* MENU SCROLLÁVEL */}
-            <div className="space-y-8 flex-1 overflow-y-auto custom-scrollbar">
-                <MenuSection title="Visão Geral">
-                    <MenuButton active={isActive('/admin')} onClick={() => goTo('/admin')} icon="📊" label="Dashboard" />
-                    <MenuButton active={isActive('/admin/alertas')} onClick={() => goTo('/admin/alertas')} icon="🔔" label="Alertas" />
-                    <MenuButton active={isActive('/admin/ranking')} onClick={() => goTo('/admin/ranking')} icon="🏆" label="Ranking" />
-                </MenuSection>
-
-                <MenuSection title="Operacional">
-                    <MenuButton active={isActive('/admin/manutencoes/nova')} onClick={() => goTo('/admin/manutencoes/nova')} icon="🔧" label="Nova Manutenção" highlight />
-                    <MenuButton active={isActive('/admin/abastecimentos/novo')} onClick={() => goTo('/admin/abastecimentos/novo')} icon="⛽" label="Novo Abastecimento" highlight />
-
-                    <div className="h-2"></div>
-
-                    <MenuButton active={isActive('/admin/manutencoes')} onClick={() => goTo('/admin/manutencoes')} icon="📋" label="Hist. Manutenções" small />
-                    <MenuButton active={isActive('/admin/abastecimentos')} onClick={() => goTo('/admin/abastecimentos')} icon="📋" label="Hist. Abastecimentos" small />
-                    <MenuButton active={isActive('/admin/jornadas')} onClick={() => goTo('/admin/jornadas')} icon="🚚" label="Hist. Jornadas" small />
-                    <MenuButton active={isActive('/admin/planos')} onClick={() => goTo('/admin/planos')} icon="📅" label="Planos Preventivos" small />
-                </MenuSection>
-
-                <MenuSection title="Cadastros">
-                    <MenuButton active={isActive('/admin/veiculos')} onClick={() => goTo('/admin/veiculos')} icon="🚛" label="Veículos" />
-                    <MenuButton active={isActive('/admin/usuarios')} onClick={() => goTo('/admin/usuarios')} icon="👥" label="Equipe" />
-
-                    {/* NOVO BOTÃO: Documentos Legais */}
-                    <MenuButton active={isActive('/admin/documentos')} onClick={() => goTo('/admin/documentos')} icon="📂" label="Documentos Legais" />
-
-                    <MenuButton active={isActive('/admin/cargos')} onClick={() => goTo('/admin/cargos')} icon="👔" label="Cargos" />
-                    <MenuButton active={isActive('/admin/produtos')} onClick={() => goTo('/admin/produtos')} icon="📦" label="Produtos/Serviços" />
-                    <MenuButton active={isActive('/admin/fornecedores')} onClick={() => goTo('/admin/fornecedores')} icon="🤝" label="Fornecedores" />
-                </MenuSection>
-            </div>
-
-            {/* FOOTER */}
-            <div className="mt-auto pt-4 border-t border-white/10 space-y-3">
-                <button
-                    onClick={() => setFinanceiroAberto(true)}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/30 transition-colors border border-emerald-600/30 group"
-                >
-                    <span className="text-lg">💰</span>
-                    <span className="text-sm font-bold">Relatório Financeiro</span>
-                </button>
-
-                <button
-                    onClick={logout}
-                    className="w-full flex items-center gap-3 px-2 py-1 opacity-80 hover:opacity-100 cursor-pointer transition-opacity text-left group rounded-lg hover:bg-white/5"
-                >
-                    <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-xs border border-white/20 group-hover:border-red-400 group-hover:text-red-400 transition-colors shrink-0">
-                        {user?.nome ? user.nome.charAt(0).toUpperCase() : 'U'}
-                    </div>
-                    <div className="text-sm overflow-hidden flex-1">
-                        <p className="font-medium truncate text-white">{user?.nome || 'Usuário'}</p>
-                        <p className="text-xs text-slate-400 group-hover:text-red-400 flex items-center gap-1 transition-colors">
-                            Sair do sistema
-                        </p>
-                    </div>
-                </button>
-            </div>
-        </div>
-    );
+  const NavItem = ({ item }: { item: any }) => {
+    const isActive = item.path === '/admin' 
+      ? location.pathname === '/admin'
+      : location.pathname.startsWith(item.path);
 
     return (
-        <div className="flex h-screen bg-background overflow-hidden relative font-sans">
-            {/* SIDEBAR DESKTOP */}
-            <aside className="hidden md:flex w-72 bg-slate-900 flex-col py-8 px-6 shrink-0 h-full overflow-y-auto shadow-2xl z-20">
-                <SidebarContent />
-            </aside>
-
-            {/* HEADER MOBILE */}
-            <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-white border-b border-border z-40 flex items-center justify-between px-4 shadow-sm">
-                <div className="flex items-center gap-2 text-primary font-bold">
-                    KLIN FROTA
-                </div>
-                <button onClick={() => setMenuMobileAberto(true)} className="p-2 text-slate-600 hover:bg-background rounded-lg">
-                    <MenuIcon />
-                </button>
-            </div>
-
-            {/* DRAWER MOBILE */}
-            {menuMobileAberto && (
-                <div className="fixed inset-0 z-50 md:hidden">
-                    <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm transition-opacity" onClick={() => setMenuMobileAberto(false)} />
-                    <aside className="absolute inset-y-0 left-0 w-[85%] max-w-xs bg-slate-900 shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-left duration-300">
-                        <div className="flex justify-end mb-4">
-                            <button onClick={() => setMenuMobileAberto(false)} className="text-white/70 hover:text-white"><CloseIcon /></button>
-                        </div>
-                        <SidebarContent />
-                    </aside>
-                </div>
-            )}
-
-            {/* CONTEÚDO */}
-            <main className="flex-1 overflow-y-auto bg-background p-4 sm:p-8 pt-20 md:pt-8 w-full scroll-smooth">
-                <div className="max-w-7xl mx-auto min-h-full pb-10 animate-in fade-in duration-500">
-                    <Outlet />
-                </div>
-            </main>
-
-            {/* MODAL FINANCEIRO */}
-            {financeiroAberto && veiculos && (
-                <ModalRelatorioFinanceiro onClose={() => setFinanceiroAberto(false)} veiculos={veiculos} />
-            )}
-        </div>
-    );
-}
-
-// Subcomponentes
-const MenuSection = ({ title, children }: any) => (
-    <div className="mb-6">
-        <h4 className="text-[10px] font-bold uppercase tracking-widest mb-3 px-2 text-slate-500 font-sans">
-            {title}
-        </h4>
-        <div className="space-y-1">{children}</div>
-    </div>
-);
-
-const MenuButton = ({ active, onClick, icon, label, small, highlight }: any) => (
-    <button
-        onClick={onClick}
+      <Link
+        to={item.path}
+        onClick={() => setIsSidebarOpen(false)}
         className={`
-      w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left transition-all duration-200 group
-      ${active
-                ? 'bg-primary text-white shadow-lg shadow-black/20 font-semibold translate-x-1'
-                : 'text-slate-400 hover:bg-white/5 hover:text-white'}
-      ${small ? 'text-xs pl-10 opacity-90' : 'text-sm'}
-      ${highlight && !active ? 'text-blue-400 bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20' : ''}
-    `}
-    >
-        {icon && <span className={`text-lg opacity-80 ${active ? 'scale-110' : ''}`}>{icon}</span>}
-        <span className="truncate">{label}</span>
-    </button>
-);
+          flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group text-sm font-medium
+          ${isActive 
+            ? 'bg-primary/10 text-primary font-bold shadow-sm' 
+            : 'text-text-secondary hover:bg-surface-hover hover:text-text-main'
+          }
+          ${item.highlight && !isActive ? 'border border-primary/20 bg-surface-hover' : 'border border-transparent'}
+        `}
+      >
+        <item.icon className={`w-4 h-4 transition-colors ${isActive ? 'text-primary' : 'text-text-muted group-hover:text-primary'}`} />
+        <span className="tracking-tight truncate">{item.label}</span>
+      </Link>
+    );
+  };
+
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Header da Sidebar */}
+      <div className="h-16 flex items-center px-6 border-b border-border shrink-0">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-bold shadow-button">
+            K
+          </div>
+          <div className="leading-none">
+            <span className="block font-bold text-sm text-text-main tracking-tight">FROTA <span className="text-primary">KLIN</span></span>
+            <span className="block text-[10px] text-text-muted font-medium uppercase tracking-wider mt-0.5">Gestão Inteligente</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Navegação Scrollável */}
+      <nav className="flex-1 px-4 py-6 space-y-8 overflow-y-auto custom-scrollbar">
+        {menuGroups.map((group, idx) => (
+          <div key={idx}>
+            <h4 className="px-3 text-[10px] font-bold text-text-muted uppercase tracking-wider mb-2">
+              {group.title}
+            </h4>
+            <div className="space-y-0.5">
+              {group.items.map((item) => (
+                <NavItem key={item.path} item={item} />
+              ))}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      {/* Footer da Sidebar */}
+      <div className="p-4 border-t border-border bg-surface-hover/30 shrink-0 space-y-2">
+        {/* Botão Financeiro */}
+        <button
+          onClick={() => setFinanceiroAberto(true)}
+          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 transition-colors border border-emerald-500/20 group"
+        >
+          <BarChart3 className="w-4 h-4" />
+          <span className="text-sm font-bold">Relatório Financeiro</span>
+        </button>
+
+        {/* Perfil do Usuário */}
+        <div className="pt-2 flex items-center gap-3 px-1">
+          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm border border-primary/20">
+            {user?.nome?.charAt(0) || 'U'}
+          </div>
+          <div className="overflow-hidden flex-1">
+            <p className="text-xs font-bold text-text-main truncate">{user?.nome}</p>
+            <button 
+              onClick={() => setIsLogoutModalOpen(true)}
+              className="text-[10px] text-text-muted hover:text-error flex items-center gap-1 transition-colors"
+            >
+              <LogOut className="w-3 h-3" /> Sair
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="flex h-screen bg-background font-sans text-text-main overflow-hidden">
+      
+      {/* --- SIDEBAR DESKTOP --- */}
+      <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 left-0 bg-surface border-r border-border z-30 shadow-sm">
+        <SidebarContent />
+      </aside>
+
+      {/* --- HEADER MOBILE --- */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-surface/80 backdrop-blur-md border-b border-border z-40 flex items-center justify-between px-4">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsSidebarOpen(true)}
+            className="p-2 -ml-2 text-text-secondary hover:bg-surface-hover rounded-lg active:scale-95 transition-transform"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
+          <span className="font-bold text-base text-text-main">FROTA <span className="text-primary">KLIN</span></span>
+        </div>
+        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+          {user?.nome?.charAt(0)}
+        </div>
+      </header>
+
+      {/* --- DRAWER MOBILE --- */}
+      {isSidebarOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden">
+          <div 
+            className="absolute inset-0 bg-text-main/20 backdrop-blur-sm transition-opacity animate-in fade-in" 
+            onClick={() => setIsSidebarOpen(false)}
+          />
+          <aside className="absolute inset-y-0 left-0 w-72 bg-surface shadow-2xl border-r border-border animate-in slide-in-from-left duration-300">
+             {/* Botão Fechar Mobile */}
+             <button 
+                onClick={() => setIsSidebarOpen(false)}
+                className="absolute top-4 right-4 p-1 text-text-muted hover:text-text-main"
+             >
+                <X className="w-6 h-6" />
+             </button>
+            <SidebarContent />
+          </aside>
+        </div>
+      )}
+
+      {/* --- CONTEÚDO PRINCIPAL --- */}
+      <main className="flex-1 lg:ml-64 flex flex-col h-full pt-16 lg:pt-0 transition-all duration-300">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 scroll-smooth">
+          <div className="max-w-7xl mx-auto w-full animate-enter min-h-[calc(100vh-4rem)]">
+            <Outlet />
+          </div>
+        </div>
+      </main>
+
+      {/* --- MODAIS GLOBAIS --- */}
+      <ConfirmModal
+        isOpen={isLogoutModalOpen}
+        onCancel={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleLogout}
+        title="Sair do Sistema"
+        description="Tem certeza que deseja encerrar sua sessão atual?"
+        confirmLabel="Sair"
+        variant="danger"
+      />
+
+      {financeiroAberto && veiculos && (
+        <ModalRelatorioFinanceiro onClose={() => setFinanceiroAberto(false)} veiculos={veiculos} />
+      )}
+    </div>
+  );
+}

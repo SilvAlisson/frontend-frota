@@ -18,13 +18,12 @@ import {
 } from 'lucide-react';
 import type { Veiculo, KpiData, DadosEvolucaoKm, Jornada } from '../types';
 
-// [CORREÇÃO] Interface restaurada para aceitar onDrillDown do DashboardEncarregado
 interface DashboardRelatoriosProps {
   veiculos: Veiculo[];
   onDrillDown?: (tipo: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => void;
 }
 
-// --- COMPONENTE INTERNO: CARD KPI ---
+// --- COMPONENTE INTERNO: CARD KPI MODERNIZADO ---
 interface KpiCardProps {
   titulo: string;
   valor: string;
@@ -49,23 +48,24 @@ function KpiCard({
 
   if (loading) {
     return (
-      <div className={`bg-white rounded-xl p-5 shadow-sm border border-border animate-pulse flex flex-col justify-between ${highlight ? 'h-full min-h-[140px]' : 'h-[130px]'}`}>
+      <div className={`bg-surface rounded-xl p-5 shadow-card border border-border animate-pulse flex flex-col justify-between ${highlight ? 'h-full min-h-[140px]' : 'h-[130px]'}`}>
         <div className="flex justify-between">
-          <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-          <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+          <div className="h-3 bg-border rounded w-1/3"></div>
+          <div className="h-8 w-8 bg-border rounded-full"></div>
         </div>
-        <div className="h-8 bg-gray-200 rounded w-2/3 mt-4"></div>
-        <div className="h-3 bg-gray-200 rounded w-full mt-2"></div>
+        <div className="h-8 bg-border rounded w-2/3 mt-4"></div>
+        <div className="h-3 bg-border rounded w-full mt-2"></div>
       </div>
     );
   }
 
+  // Cores semânticas do Tailwind v4
   const colorMap = {
     default: { border: 'border-l-primary', text: 'text-primary', bg: 'bg-primary/10' },
-    success: { border: 'border-l-emerald-500', text: 'text-emerald-600', bg: 'bg-emerald-50' },
-    warning: { border: 'border-l-amber-500', text: 'text-amber-600', bg: 'bg-amber-50' },
-    danger: { border: 'border-l-rose-500', text: 'text-rose-600', bg: 'bg-rose-50' },
-    info: { border: 'border-l-blue-500', text: 'text-blue-600', bg: 'bg-blue-50' }
+    success: { border: 'border-l-success', text: 'text-success', bg: 'bg-success/10' },
+    warning: { border: 'border-l-warning-500', text: 'text-warning-600', bg: 'bg-warning/10' }, // Warning precisa ser mais forte para leitura
+    danger: { border: 'border-l-error', text: 'text-error', bg: 'bg-error/10' },
+    info: { border: 'border-l-sky-500', text: 'text-sky-600', bg: 'bg-sky-50' }
   };
 
   const style = colorMap[variant] || colorMap.default;
@@ -74,35 +74,35 @@ function KpiCard({
     <div
       onClick={onClick}
       className={`
-                group relative bg-white rounded-xl p-5 shadow-sm border border-border 
-                flex flex-col justify-between cursor-pointer hover:shadow-md hover:-translate-y-1 transition-all duration-300
-                border-l-[4px] ${style.border}
-                ${highlight ? 'h-full min-h-[140px]' : 'h-full min-h-[130px]'}
-            `}
+        group relative bg-surface rounded-xl p-5 shadow-card border border-border 
+        flex flex-col justify-between cursor-pointer hover:shadow-float hover:-translate-y-1 transition-all duration-300
+        border-l-[4px] ${style.border}
+        ${highlight ? 'h-full min-h-[140px]' : 'h-full min-h-[130px]'}
+      `}
     >
       <div className="flex justify-between items-start">
-        <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest font-sans mt-1">
+        <h4 className="text-[11px] font-bold text-text-secondary uppercase tracking-widest font-sans mt-1">
           {titulo}
         </h4>
         {icon && (
-          <div className={`p-2 rounded-lg ${style.bg} ${style.text} transition-colors group-hover:scale-110`}>
+          <div className={`p-2 rounded-lg ${style.bg} ${style.text} transition-all duration-300 group-hover:scale-110 shadow-sm`}>
             {icon}
           </div>
         )}
       </div>
 
       <div className="mt-1">
-        <span className={`font-mono font-bold text-gray-900 tracking-tight leading-none ${highlight ? 'text-3xl sm:text-4xl' : 'text-2xl'}`}>
+        <span className={`font-mono font-bold text-text-main tracking-tight leading-none ${highlight ? 'text-3xl sm:text-4xl' : 'text-2xl'}`}>
           {valor}
         </span>
       </div>
 
-      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-        <p className="text-xs text-gray-500 font-medium truncate max-w-[85%]">
+      <div className="mt-3 pt-3 border-t border-border flex items-center justify-between">
+        <p className="text-xs text-text-muted font-medium truncate max-w-[85%] group-hover:text-text-secondary transition-colors">
           {descricao}
         </p>
         {onClick && (
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-gray-300 group-hover:text-primary group-hover:translate-x-1 transition-all">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-4 h-4 text-border group-hover:text-primary group-hover:translate-x-1 transition-all">
             <path fillRule="evenodd" d="M3 10a.75.75 0 01.75-.75h10.638L10.23 5.29a.75.75 0 111.04-1.08l5.5 5.25a.75.75 0 010 1.08l-5.5 5.25a.75.75 0 11-1.04-1.08l4.158-3.96H3.75A.75.75 0 013 10z" clipRule="evenodd" />
           </svg>
         )}
@@ -111,7 +111,7 @@ function KpiCard({
   );
 }
 
-const selectStyle = "h-[42px] px-3 bg-white border border-border rounded-lg text-sm text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer min-w-[120px] shadow-sm";
+const selectStyle = "h-[42px] px-3 bg-surface border border-input rounded-lg text-sm text-text-main focus:border-ring focus:ring-2 focus:ring-ring/20 outline-none transition-all cursor-pointer min-w-[120px] shadow-sm hover:border-primary/50";
 
 export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatoriosProps) {
   const navigate = useNavigate();
@@ -127,7 +127,7 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
   const [loading, setLoading] = useState(true);
   const [loadingGrafico, setLoadingGrafico] = useState(false);
 
-  // [CORREÇÃO] Lógica Híbrida: Usa onDrillDown se existir, senão usa navigate
+  // Lógica Híbrida: Usa onDrillDown se existir, senão usa navigate
   const handleNavigation = (rotaPadrao: string, tipoDrillDown: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => {
     if (onDrillDown) {
       onDrillDown(tipoDrillDown);
@@ -200,13 +200,13 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
   const anos = [new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2];
 
   return (
-    <div className="space-y-6 pb-10 animate-in fade-in duration-500">
+    <div className="space-y-6 pb-10 animate-enter">
 
       {/* HEADER */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4 border-b border-border pb-6">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Dashboard Gerencial</h2>
-          <p className="text-sm text-gray-500">Visão consolidada de custos e operações.</p>
+          <h2 className="text-2xl font-bold text-text-main tracking-tight font-sans">Dashboard Gerencial</h2>
+          <p className="text-sm text-text-secondary font-medium">Visão consolidada de custos e operações.</p>
         </div>
 
         <div className="flex flex-wrap gap-2 w-full xl:w-auto items-center">
@@ -238,7 +238,7 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
           <Button
             variant="secondary"
             onClick={handleExportar}
-            className="h-[42px] bg-white border border-border text-gray-700 hover:bg-gray-50"
+            className="h-[42px] bg-surface border border-border text-text-secondary hover:text-text-main hover:bg-surface-hover shadow-sm"
             icon={<FileSpreadsheet className="w-4 h-4" />}
           >
             Excel
@@ -246,7 +246,7 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
         </div>
       </div>
 
-      {/* KPI GRID (Agora com handleNavigation) */}
+      {/* KPI GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
         <div className="lg:col-span-2">
@@ -327,7 +327,7 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
       {veiculoIdFiltro && (
         <div className="animate-in fade-in slide-in-from-top-4 duration-500">
           {loadingGrafico ? (
-            <div className="h-72 w-full bg-white rounded-2xl border border-border flex items-center justify-center">
+            <div className="h-72 w-full bg-surface rounded-2xl border border-border flex items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : (
