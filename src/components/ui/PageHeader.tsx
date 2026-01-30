@@ -1,14 +1,14 @@
-import React from 'react';
-import { Button } from '../ui/Button';
+import type { ReactNode } from 'react';
+import { Button } from './Button';
 import { Plus } from 'lucide-react';
 
 interface PageHeaderProps {
-    title: string;
+    title: string | ReactNode;
     subtitle?: string;
     actionLabel?: string;
     onAction?: () => void;
-    actionIcon?: React.ReactNode;
-    extraAction?: React.ReactNode;
+    actionIcon?: ReactNode;
+    extraAction?: ReactNode;
 }
 
 export function PageHeader({
@@ -22,7 +22,7 @@ export function PageHeader({
     return (
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-border pb-6 animate-enter">
             <div className="space-y-1">
-                <h1 className="text-2xl font-bold text-text-main tracking-tight font-sans">
+                <h1 className="text-2xl font-bold text-text-main tracking-tight font-sans flex items-center gap-3">
                     {title}
                 </h1>
                 {subtitle && (
