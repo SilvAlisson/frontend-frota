@@ -4,11 +4,11 @@ import { Inbox } from 'lucide-react';
 interface ListaResponsivaProps<T> {
     itens: T[];
     emptyMessage?: string;
-    // Renderizadores
     renderDesktop: (item: T, index: number) => React.ReactNode;
     renderMobile: (item: T, index: number) => React.ReactNode;
-    // Cabeçalho da Tabela Desktop
     desktopHeader: React.ReactNode;
+    // Adicionamos suporte oficial à classe fantasma
+    getRowClassName?: (item: T) => string;
 }
 
 export function ListaResponsiva<T>({
@@ -16,17 +16,17 @@ export function ListaResponsiva<T>({
     emptyMessage = "Nenhum registro encontrado.",
     renderDesktop,
     renderMobile,
-    desktopHeader
+    desktopHeader,
+    getRowClassName
 }: ListaResponsivaProps<T>) {
 
-    // --- Empty State Refinado ---
     if (!itens || itens.length === 0) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 px-4 bg-white rounded-2xl border border-dashed border-gray-200 text-center animate-in fade-in duration-500">
-                <div className="bg-gray-50 p-4 rounded-full mb-3 shadow-sm">
-                    <Inbox className="w-8 h-8 text-gray-400" />
+            <div className="flex flex-col items-center justify-center py-16 px-4 bg-surface rounded-2xl border border-dashed border-border text-center animate-enter">
+                <div className="bg-background p-4 rounded-full mb-3 shadow-sm">
+                    <Inbox className="w-8 h-8 text-text-muted" />
                 </div>
-                <p className="text-gray-500 font-medium text-sm">
+                <p className="text-text-secondary font-medium text-sm">
                     {emptyMessage}
                 </p>
             </div>
@@ -35,21 +35,20 @@ export function ListaResponsiva<T>({
 
     return (
         <>
-            {/* 🖥️ VERSÃO DESKTOP (Tabela Elegante) */}
-            <div className="hidden md:block bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden animate-in fade-in duration-300">
+            {/* 🖥️ DESKTOP */}
+            <div className="hidden md:block bg-surface rounded-2xl shadow-card border border-border overflow-hidden animate-enter">
                 <div className="overflow-x-auto">
                     <table className="w-full text-sm text-left">
-                        {/* Cabeçalho */}
-                        <thead className="bg-gray-50/80 border-b border-gray-200 text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <thead className="bg-surface-hover/80 border-b border-border text-xs font-bold text-text-secondary uppercase tracking-wider backdrop-blur-sm">
                             <tr>{desktopHeader}</tr>
                         </thead>
-
-                        {/* Corpo */}
-                        <tbody className="divide-y divide-gray-100 bg-white">
+                        <tbody className="divide-y divide-border bg-surface">
                             {itens.map((item, idx) => (
                                 <tr
                                     key={idx}
-                                    className="hover:bg-gray-50/60 transition-colors duration-150 group"
+                                    className={`transition-colors duration-150 group ${
+                                        getRowClassName ? getRowClassName(item) : 'hover:bg-surface-hover'
+                                    }`}
                                 >
                                     {renderDesktop(item, idx)}
                                 </tr>
@@ -59,22 +58,31 @@ export function ListaResponsiva<T>({
                 </div>
             </div>
 
-            {/* 📱 VERSÃO MOBILE (Cards Klin) */}
-            <div className="md:hidden space-y-4 pb-4 animate-in slide-in-from-bottom-4 duration-500">
-                {itens.map((item, idx) => (
-                    <div
-                        key={idx}
-                        className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 relative overflow-hidden active:scale-[0.99] transition-transform duration-200"
-                    >
-                        {/* Faixa decorativa lateral na cor da marca (Azul Klin) */}
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
+            {/* 📱 MOBILE */}
+            <div className="md:hidden space-y-4 pb-4 animate-enter">
+                {itens.map((item, idx) => {
+                    const customClass = getRowClassName ? getRowClassName(item) : '';
+                    
+                    return (
+                        <div
+                            key={idx}
+                            className={`
+                                p-5 rounded-xl shadow-card border border-border relative overflow-hidden 
+                                active:scale-[0.99] transition-transform duration-200 bg-surface
+                                ${customClass}
+                            `}
+                        >
+                            {/* Faixa lateral padrão (Se não for fantasma, usa primary) */}
+                            {!customClass.includes('ghost-row') && (
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />
+                            )}
 
-                        {/* Conteúdo com padding leve à esquerda para separar da faixa */}
-                        <div className="pl-2">
-                            {renderMobile(item, idx)}
+                            <div className="pl-2">
+                                {renderMobile(item, idx)}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
         </>
     );

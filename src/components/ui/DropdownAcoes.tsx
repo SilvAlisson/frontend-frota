@@ -26,7 +26,6 @@ export function DropdownAcoes({
     const [isOpen, setIsOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
 
-    // Fecha ao clicar fora
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
@@ -37,7 +36,6 @@ export function DropdownAcoes({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // Fecha ao rolar a página (opcional, mas bom para UX em tabelas longas)
     useEffect(() => {
         const handleScroll = () => isOpen && setIsOpen(false);
         window.addEventListener('scroll', handleScroll, true);
@@ -45,14 +43,12 @@ export function DropdownAcoes({
     }, [isOpen]);
 
     const toggleMenu = (e: React.MouseEvent) => {
-        e.stopPropagation(); // Impede que o clique propague para a linha da tabela
+        e.stopPropagation();
         if (!disabled) setIsOpen(!isOpen);
     };
 
     return (
         <div className="relative inline-block text-left" ref={menuRef}>
-
-            {/* TRIGGER BUTTON (Os três pontinhos) */}
             <button
                 type="button"
                 onClick={toggleMenu}
@@ -62,7 +58,7 @@ export function DropdownAcoes({
                     focus:outline-none focus:ring-2 focus:ring-primary/20
                     ${isOpen
                         ? 'bg-primary/10 text-primary'
-                        : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                        : 'text-text-muted hover:bg-surface-hover hover:text-text-main'
                     }
                     ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-95'}
                 `}
@@ -70,11 +66,10 @@ export function DropdownAcoes({
                 <MoreVertical className="w-5 h-5" />
             </button>
 
-            {/* MENU FLUTUANTE */}
             {isOpen && (
                 <div
-                    className="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-xl bg-white shadow-float border border-gray-100 ring-1 ring-black/5 animate-in fade-in zoom-in-95 duration-200 ease-out overflow-hidden"
-                    onClick={(e) => e.stopPropagation()} // Impede cliques dentro do menu de fechar a linha
+                    className="absolute right-0 z-50 mt-2 w-48 origin-top-right rounded-xl bg-surface shadow-float border border-border ring-1 ring-black/5 animate-enter overflow-hidden"
+                    onClick={(e) => e.stopPropagation()}
                 >
                     <div className="p-1.5 space-y-0.5">
 
@@ -94,7 +89,6 @@ export function DropdownAcoes({
                             />
                         )}
 
-                        {/* Ações Customizadas */}
                         {customActions?.map((action, idx) => (
                             <MenuOption
                                 key={idx}
@@ -105,17 +99,16 @@ export function DropdownAcoes({
                             />
                         ))}
 
-                        {/* Separador e Excluir */}
                         {onExcluir && (
                             <>
                                 {(onVerDetalhes || onEditar || (customActions && customActions.length > 0)) && (
-                                    <div className="my-1 h-px bg-gray-100 mx-2" />
+                                    <div className="my-1 h-px bg-border mx-2" />
                                 )}
                                 <MenuOption
                                     onClick={() => { onExcluir(); setIsOpen(false); }}
                                     icon={<Trash2 className="w-4 h-4" />}
                                     label="Excluir"
-                                    className="text-red-600 hover:bg-red-50 hover:text-red-700 font-medium"
+                                    className="text-error hover:bg-error/5 hover:text-error font-medium"
                                 />
                             </>
                         )}
@@ -126,7 +119,6 @@ export function DropdownAcoes({
     );
 }
 
-// Sub-componente interno para itens do menu
 function MenuOption({ onClick, icon, label, className }: { onClick: () => void, icon?: React.ReactNode, label: string, className?: string }) {
     return (
         <button
@@ -134,7 +126,7 @@ function MenuOption({ onClick, icon, label, className }: { onClick: () => void, 
             onClick={onClick}
             className={`
                 flex w-full items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors 
-                text-gray-700 hover:bg-gray-50 hover:text-primary
+                text-text-main hover:bg-surface-hover hover:text-primary
                 ${className || ''}
             `}
         >

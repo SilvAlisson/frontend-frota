@@ -16,26 +16,22 @@ interface BadgeProps extends React.HTMLAttributes<HTMLSpanElement> {
 export function Badge({ variant = 'default', className, children, ...props }: BadgeProps) {
 
     const variants: Record<BadgeVariant, string> = {
-        default: "bg-primary/10 text-primary border-primary/20",     // Azul Marca
-        success: "bg-emerald-50 text-emerald-700 border-emerald-200", // Verde Sucesso (Mais legível que success/10)
-        warning: "bg-amber-50 text-amber-700 border-amber-200",       // Laranja Alerta
-        danger: "bg-red-50 text-red-700 border-red-200",             // Vermelho Erro
-        info: "bg-sky-50 text-sky-700 border-sky-200",             // Azul Informação
-        neutral: "bg-slate-100 text-slate-600 border-slate-200",      // Cinza Neutro
+        // Agora usamos as cores semânticas com opacidade OKLCH
+        default: "bg-primary/15 text-primary border-primary/20",
+        success: "bg-success/15 text-success-500 border-success/20", // success-500 é mais escuro para texto
+        warning: "bg-warning/15 text-warning-700 border-warning/20",
+        danger:  "bg-error/15 text-error border-error/20",
+        info:    "bg-sky-500/15 text-sky-700 border-sky-500/20", // Sky não é semântico, mantemos fixo ou criamos var
+        neutral: "bg-text-secondary/10 text-text-secondary border-text-secondary/20",
     };
 
     return (
         <span
             className={cn(
-                // Base Layout
                 "inline-flex items-center justify-center px-2.5 py-0.5",
-                // Tipografia
                 "text-[10px] font-bold uppercase tracking-wider whitespace-nowrap",
-                // Borda e Arredondamento
-                "rounded-md border",
-                // Variante de Cor
+                "rounded-md border shadow-sm backdrop-blur-sm", // Blur sutil para parecer vidro
                 variants[variant],
-                // Customização
                 className
             )}
             {...props}

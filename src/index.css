@@ -1,159 +1,166 @@
 @import "tailwindcss";
 
-/* 1. TIPOGRAFIA */
+/* 1. TIPOGRAFIA TÉCNICA E MODERNA */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @theme {
-  /* --- PALETA KLIN (Identidade Visual) --- */
-  --color-klin-primary: #126A91;
-  /* Azul Petróleo */
-  --color-klin-dark: #0E4A5C;
-  /* Azul Profundo */
-  --color-klin-medium: #155A76;
-  /* Azul Médio */
-  --color-klin-green: #378F81;
-  /* Verde Sucesso */
-  --color-klin-surface: #F2F4F3;
-  /* Branco Gelo */
+  /* --- PALETA DE CORES (OKLCH - High Dynamic Range) --- */
+  /* Por que OKLCH? Para permitir opacidade nativa (ex: bg-primary/20) e gradientes perfeitos */
+  
+  /* Azul Petróleo (Base da Marca) */
+  --color-klin-50: oklch(0.97 0.02 235);
+  --color-klin-100: oklch(0.94 0.04 235);
+  --color-klin-200: oklch(0.88 0.06 235);
+  --color-klin-300: oklch(0.80 0.09 235);
+  --color-klin-400: oklch(0.65 0.12 235);
+  --color-klin-500: oklch(0.52 0.13 235.5); /* Equivalente vibrante ao #126A91 */
+  --color-klin-600: oklch(0.45 0.13 235.5);
+  --color-klin-700: oklch(0.38 0.11 235.5); /* Equivalente ao #0E4A5C */
+  --color-klin-800: oklch(0.30 0.09 235.5);
+  --color-klin-900: oklch(0.20 0.06 235.5);
+  
+  /* Verde Sucesso (Ajustado para harmonia visual) */
+  --color-success-500: oklch(0.62 0.14 175);
+  
+  /* Roxo "Fantasma" (Para os registros automáticos) */
+  --color-ghost-500: oklch(0.65 0.20 290);
 
-  /* --- SISTEMA SEMÂNTICO (Mapeamento) --- */
-  /* Principal */
-  --color-primary: var(--color-klin-primary);
-  --color-primary-foreground: #FFFFFF;
-  --color-primary-hover: var(--color-klin-dark);
-  --color-primary-soft: #E0F2F7;
+  /* --- SISTEMA SEMÂNTICO --- */
+  /* Mapeamos as cores puras para funções do sistema */
+  
+  --color-primary: var(--color-klin-500);
+  --color-primary-foreground: oklch(1 0 0); /* Branco Puro */
+  --color-primary-hover: var(--color-klin-700);
+  --color-primary-soft: var(--color-klin-50);
 
-  /* Secundário */
-  --color-secondary: #FFFFFF;
-  --color-secondary-foreground: var(--color-klin-dark);
-  --color-secondary-hover: #F8FAFC;
-
-  /* Status */
-  --color-success: var(--color-klin-green);
-  --color-success-foreground: #FFFFFF;
-
-  --color-error: #EF4444;
-  --color-error-foreground: #FFFFFF;
-
-  --color-warning: #F59E0B;
-  --color-warning-foreground: #FFFFFF;
-
-  /* Superfícies e Texto */
-  --color-background: var(--color-klin-surface);
-  --color-surface: #FFFFFF;
-  --color-surface-hover: #F9FAFB;
-
-  --color-border: #E2E8F0;
-  --color-input: #E2E8F0;
-  --color-ring: var(--color-klin-primary);
+  --color-secondary: oklch(1 0 0);
+  --color-secondary-foreground: var(--color-klin-700);
+  
+  /* Superfícies */
+  --color-background: oklch(0.985 0.002 240); /* Cool Gray muito leve */
+  --color-surface: oklch(1 0 0);
+  --color-surface-hover: oklch(0.99 0.002 240);
+  
+  --color-border: oklch(0.89 0.01 240);
+  --color-input: oklch(0.92 0.01 240);
+  --color-ring: var(--color-klin-500);
 
   /* Texto */
-  --color-text-main: #1E293B;
-  /* Slate-800 */
-  --color-text-secondary: #64748B;
-  /* Slate-500 */
-  --color-text-muted: #94A3B8;
-  /* Slate-400 */
+  --color-text-main: oklch(0.20 0.04 240); /* Slate Profundo */
+  --color-text-secondary: oklch(0.45 0.04 240);
+  --color-text-muted: oklch(0.70 0.02 240);
+
+  /* Status */
+  --color-error: oklch(0.63 0.22 29);
+  --color-error-foreground: oklch(1 0 0);
+  
+  --color-warning: oklch(0.75 0.15 85);
+  --color-warning-foreground: oklch(1 0 0);
+
+  --color-success: var(--color-success-500);
+  --color-success-foreground: oklch(1 0 0);
+
+  /* --- SOMBRAS "TINTURADAS" (Color Mix) --- */
+  /* O segredo do design premium: Sombras não são pretas, são azul-escuras transparentes */
+  
+  --shadow-card: 
+    0 1px 3px 0 color-mix(in srgb, var(--color-klin-900) 6%, transparent), 
+    0 1px 2px -1px color-mix(in srgb, var(--color-klin-900) 4%, transparent);
+  
+  --shadow-float: 
+    0 10px 15px -3px color-mix(in srgb, var(--color-klin-900) 12%, transparent), 
+    0 4px 6px -4px color-mix(in srgb, var(--color-klin-900) 8%, transparent);
+    
+  --shadow-button: 0 1px 2px 0 color-mix(in srgb, var(--color-klin-900) 10%, transparent);
+
+  /* --- ANIMAÇÕES NATIVAS V4 --- */
+  --animate-ghost-pulse: ghost-pulse 3s infinite ease-in-out;
+  --animate-enter: enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; /* Curva Apple-like */
+  
+  @keyframes ghost-pulse {
+    0%, 100% { 
+      background-color: color-mix(in srgb, var(--color-surface) 100%, transparent);
+      border-color: var(--color-border);
+    }
+    50% { 
+      /* Pulsa para um roxo espectral muito suave */
+      background-color: color-mix(in srgb, var(--color-ghost-500) 8%, var(--color-surface)); 
+      border-color: var(--color-ghost-500);
+    }
+  }
+
+  @keyframes enter {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
 
   /* Fontes */
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
-
-  /* Raios de Borda */
+  --font-sans: "Inter", ui-sans-serif, system-ui;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  /* Raios */
   --radius-lg: 0.75rem;
-  /* 12px */
   --radius-md: 0.5rem;
-  /* 8px */
   --radius-sm: 0.25rem;
-  /* 4px */
-
-  /* Sombras (Identidade Visual Klin) */
-  --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.08), 0 1px 2px -1px rgb(0 0 0 / 0.08);
-  /* Sombra flutuante com tom azulado da marca - Toque Premium */
-  --shadow-float: 0 10px 15px -3px rgb(14 74 92 / 0.15), 0 4px 6px -4px rgb(14 74 92 / 0.1);
-  --shadow-button: 0 1px 2px 0 rgb(0 0 0 / 0.05);
 }
 
-/* --- 2. ESTILOS BASE E RESET --- */
+/* --- 2. CAMADA BASE (Reset Inteligente) --- */
 @layer base {
   body {
     @apply bg-background text-text-main antialiased font-sans;
-    /* Features da fonte Inter para visual técnico e legibilidade */
-    font-feature-settings: "cv02", "cv03", "cv04";
+    /* Features OpenType para números tabulares (importante para tabelas financeiras) */
+    font-feature-settings: "tnum", "cv02", "cv03", "cv04"; 
     -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
   }
 
-  html {
-    scroll-behavior: smooth;
-  }
-
-  /* Foco Global Acessível */
-  :focus-visible {
-    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
-  }
-
-  /* Cursores interativos */
-  button,
-  [role='button'],
-  select,
-  a {
-    cursor: pointer;
-  }
-
-  /* Scrollbar Personalizada (Identidade) */
+  /* Scrollbar Moderna e Minimalista */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
-
   ::-webkit-scrollbar-track {
     background: transparent;
   }
-
   ::-webkit-scrollbar-thumb {
-    background: #CBD5E1;
-    border-radius: 3px;
+    @apply bg-gray-300/60 rounded-full transition-colors;
   }
-
   ::-webkit-scrollbar-thumb:hover {
-    background: var(--color-klin-medium);
-    /* Hover na cor da marca */
+    @apply bg-primary/60; /* Usa a cor primária com opacidade */
+  }
+  
+  /* Remove highlight azul mobile ao clicar */
+  * {
+    -webkit-tap-highlight-color: transparent;
   }
 }
 
-/* --- 3. UTILITÁRIOS VISUAIS --- */
+/* --- 3. UTILITÁRIOS DE ELITE --- */
 @layer utilities {
-
-  /* Vidro Fosco */
+  
+  /* Vidro Fosco Real (Glassmorphism) */
   .glass {
-    @apply bg-white/90 backdrop-blur-md border border-white/20 shadow-lg;
+    @apply bg-surface/80 backdrop-blur-xl border border-white/40 shadow-float;
   }
 
-  /* Texto Técnico (para placas, IDs, valores) */
+  /* O Fantasma (Assombração do Sistema) */
+  .ghost-row {
+    @apply relative border-l-4 overflow-hidden transition-colors;
+    /* A animação agora vem da variável do tema v4 */
+    animation: var(--animate-ghost-pulse);
+    border-left-color: var(--color-ghost-500);
+  }
+
+  /* Tipografia Técnica para IDs e Placas */
   .text-data {
-    @apply font-mono tracking-tight text-text-secondary font-medium;
+    @apply font-mono tracking-tight text-text-secondary font-medium text-xs;
   }
-
-  /* Gradiente Oficial */
-  .bg-gradient-brand {
-    background-image: linear-gradient(135deg, var(--color-klin-dark), var(--color-klin-primary));
+  
+  /* Hover 3D Sutil para Cards */
+  .hover-lift {
+    @apply transition-transform duration-300 ease-out;
   }
-
-  /* Animações Nativas */
-  .animate-enter {
-    animation: enter 0.3s ease-out;
-  }
-
-  @keyframes enter {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-float);
   }
 }
