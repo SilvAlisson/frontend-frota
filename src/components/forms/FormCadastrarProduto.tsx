@@ -6,6 +6,7 @@ import { api } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { toast } from 'sonner';
+import { Package, Save } from 'lucide-react'; // Ícones Lucide
 
 const tipos = ["PECA", "SERVICO", "COMBUSTIVEL", "ADITIVO", "LUBRIFICANTE", "PNEU", "OUTROS"] as const;
 
@@ -21,15 +22,12 @@ const produtoSchema = z.object({
     .min(1, "Unidade obrigatória (ex: UN, LT)")
     .transform(val => val.trim().toUpperCase()),
 
-  // Coerce converte input (string do HTML) para number automaticamente
   estoqueMinimo: z.coerce.number().min(0, "Mínimo não pode ser negativo").default(5),
   estoqueAtual: z.coerce.number().min(0, "Estoque não pode ser negativo").default(0),
 
-  // Optional e coerce juntos precisam tratar string vazia caso venha do input
   valorReferencia: z.coerce.number().min(0).optional(),
 });
 
-// Tipagem Segura: Input (Formulário) vs Output (Dados Processados)
 type FormInput = z.input<typeof produtoSchema>;
 type FormOutput = z.output<typeof produtoSchema>;
 
@@ -39,7 +37,6 @@ interface FormProps {
 }
 
 export function FormCadastrarProduto({ onSuccess, onCancelar }: FormProps) {
-  // [CORREÇÃO 1] Uso dos 3 genéricos para resolver o conflito de tipos Input/Output
   const {
     register,
     handleSubmit,
@@ -54,7 +51,7 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormProps) {
       estoqueAtual: 0,
       valorReferencia: 0
     },
-    mode: 'onBlur' // [CORREÇÃO 2] UX consistente com os outros forms
+    mode: 'onBlur'
   });
 
   const onSubmit = async (data: FormOutput) => {
@@ -80,93 +77,97 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormProps) {
     });
   };
 
-  // Estilos
-  const labelStyle = "block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1";
-  const selectStyle = "w-full h-10 px-3 bg-white border border-border rounded-input text-sm text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer placeholder:text-gray-400 disabled:bg-gray-50";
+  // Classes utilitárias (evitando hardcode)
+  const labelStyle = "block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1";
+  const selectStyle = "w-full h-11 px-3 bg-surface border border-border rounded-xl text-sm text-text-main focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer disabled:bg-background";
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-border overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+    <div className="bg-surface rounded-xl shadow-card border border-border overflow-hidden animate-enter flex flex-col max-h-[85vh]">
 
       {/* Header */}
-      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center">
+      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
         <div>
-          <h3 className="text-lg font-bold text-gray-900">Novo Item</h3>
-          <p className="text-xs text-gray-500">Catálogo de Peças e Serviços.</p>
+          <h3 className="text-lg font-bold text-text-main">Novo Item</h3>
+          <p className="text-xs text-text-secondary">Catálogo de Peças e Serviços.</p>
         </div>
-        <div className="p-2 bg-white rounded-lg border border-border shadow-sm text-primary">
-          <span className="text-xl">📦</span>
+        <div className="p-2 bg-surface rounded-lg border border-border shadow-sm text-primary">
+          <Package className="w-5 h-5" />
         </div>
       </div>
 
-      {/* [CORREÇÃO 1] handleSubmit agora aceita onSubmit sem 'as any' */}
-      <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-5">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
+        
+        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
 
-        <div>
-          <label className={labelStyle}>Descrição do Item / Serviço</label>
-          <Input
-            {...register('nome')}
-            placeholder="Ex: FILTRO DE ÓLEO MOTOR"
-            error={errors.nome?.message}
-            className="uppercase font-medium"
-            autoFocus
-            disabled={isSubmitting}
-          />
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* Nome */}
           <div>
-            <label className={labelStyle}>Tipo / Categoria</label>
-            <div className="relative">
-              <select {...register('tipo')} className={selectStyle} disabled={isSubmitting}>
-                {tipos.map(t => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+            <Input
+              label="Descrição do Item / Serviço"
+              {...register('nome')}
+              placeholder="Ex: FILTRO DE ÓLEO MOTOR"
+              error={errors.nome?.message}
+              className="uppercase font-medium"
+              autoFocus
+              disabled={isSubmitting}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {/* Tipo */}
+            <div>
+              <label className={labelStyle}>Tipo / Categoria</label>
+              <div className="relative">
+                <select {...register('tipo')} className={selectStyle} disabled={isSubmitting}>
+                  {tipos.map(t => <option key={t} value={t}>{t.replace('_', ' ')}</option>)}
+                </select>
               </div>
             </div>
-          </div>
 
-          <div>
-            <label className={labelStyle}>Unidade (UN, L, KG)</label>
-            <Input
-              {...register('unidadeMedida')}
-              placeholder="UN"
-              className="uppercase text-center font-bold"
-              maxLength={4}
-              error={errors.unidadeMedida?.message}
-              disabled={isSubmitting}
-            />
-          </div>
+            {/* Unidade */}
+            <div>
+              <Input
+                label="Unidade (UN, L, KG)"
+                {...register('unidadeMedida')}
+                placeholder="UN"
+                className="uppercase text-center font-bold"
+                maxLength={4}
+                error={errors.unidadeMedida?.message}
+                disabled={isSubmitting}
+              />
+            </div>
 
-          <div>
-            <label className={labelStyle}>Estoque Mínimo (Alerta)</label>
-            <Input
-              type="number"
-              {...register('estoqueMinimo')}
-              placeholder="5"
-              error={errors.estoqueMinimo?.message}
-              disabled={isSubmitting}
-            />
-          </div>
+            {/* Estoque Mínimo */}
+            <div>
+              <Input
+                label="Estoque Mínimo (Alerta)"
+                type="number"
+                {...register('estoqueMinimo')}
+                placeholder="5"
+                error={errors.estoqueMinimo?.message}
+                disabled={isSubmitting}
+              />
+            </div>
 
-          <div>
-            <label className={labelStyle}>Estoque Inicial</label>
-            <Input
-              type="number"
-              {...register('estoqueAtual')}
-              placeholder="0"
-              error={errors.estoqueAtual?.message}
-              disabled={isSubmitting}
-            />
+            {/* Estoque Atual */}
+            <div>
+              <Input
+                label="Estoque Inicial"
+                type="number"
+                {...register('estoqueAtual')}
+                placeholder="0"
+                error={errors.estoqueAtual?.message}
+                disabled={isSubmitting}
+              />
+            </div>
           </div>
         </div>
 
-        <div className="pt-4 border-t border-border flex justify-end gap-3">
+        {/* Footer */}
+        <div className="p-4 bg-background border-t border-border flex justify-end gap-3 shrink-0">
           <Button
             type="button"
             variant="ghost"
             onClick={onCancelar}
-            className="text-gray-500"
             disabled={isSubmitting}
           >
             Cancelar
@@ -175,13 +176,14 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormProps) {
             type="submit"
             variant="primary"
             isLoading={isSubmitting}
-            icon={<span>💾</span>}
-            className="shadow-lg shadow-primary/20"
+            icon={<Save className="w-4 h-4" />}
+            className="shadow-button hover:shadow-float px-6"
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Salvando...' : 'Salvar Item'}
           </Button>
         </div>
+
       </form>
     </div>
   );

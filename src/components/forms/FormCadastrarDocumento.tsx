@@ -5,237 +5,267 @@ import { z } from 'zod';
 import { supabase } from '../../supabaseClient'; 
 import { useCreateDocumento } from '../../hooks/useDocumentosLegais';
 import { useVeiculos } from '../../hooks/useVeiculos'; 
+import { toast } from 'sonner';
+import { UploadCloud, FileText, Calendar, Truck, Save, AlertTriangle } from 'lucide-react';
+
+// Componentes UI
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { toast } from 'sonner';
 
-// Schema do Formulário
+// Schema
 const docSchema = z.object({
-    titulo: z.string().min(3, "Mínimo 3 caracteres"),
-    descricao: z.string().optional(),
-    categoria: z.string().min(1, "Selecione uma categoria"),
-    dataValidade: z.string().optional(), 
-    tipoVeiculo: z.string().optional(),
-    veiculoId: z.string().optional(),
+  titulo: z.string().min(3, "Mínimo 3 caracteres"),
+  descricao: z.string().optional(),
+  categoria: z.string().min(1, "Selecione uma categoria"),
+  dataValidade: z.string().optional(), 
+  tipoVeiculo: z.string().optional(),
+  veiculoId: z.string().optional(),
 });
 
 type DocFormValues = z.infer<typeof docSchema>;
 
 interface FormProps {
-    onSuccess: () => void;
-    onCancel: () => void;
+  onSuccess: () => void;
+  onCancel: () => void;
 }
 
 export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
-    const [file, setFile] = useState<File | null>(null);
-    const [uploading, setUploading] = useState(false);
+  const [file, setFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
-    const { mutate: criarDocumento, isPending } = useCreateDocumento();
-    const { data: veiculos } = useVeiculos(); 
+  const { mutate: criarDocumento, isPending } = useCreateDocumento();
+  const { data: veiculos } = useVeiculos(); 
 
-    // [NOVO] Extrai lista única de tipos de veículos da sua frota atual
-    // Isso garante que apareça "POLIGUINDASTE", "VACUO", "MUNCK" etc.
-    const tiposDisponiveis = useMemo(() => {
-        if (!veiculos) return [];
-        const tipos = veiculos
-            .map(v => v.tipoVeiculo)
-            .filter((t): t is string => !!t); // Remove nulos
-        return Array.from(new Set(tipos)).sort(); // Remove duplicatas e ordena
-    }, [veiculos]);
+  const tiposDisponiveis = useMemo(() => {
+    if (!veiculos) return [];
+    const tipos = veiculos
+      .map(v => v.tipoVeiculo)
+      .filter((t): t is string => !!t);
+    return Array.from(new Set(tipos)).sort();
+  }, [veiculos]);
 
-    const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<DocFormValues>({
-        resolver: zodResolver(docSchema),
-        defaultValues: { categoria: '' }
-    });
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<DocFormValues>({
+    resolver: zodResolver(docSchema),
+    defaultValues: { categoria: '' }
+  });
 
-    // Monitores para UX
-    const veiculoIdSelecionado = watch('veiculoId');
-    const categoriaSelecionada = watch('categoria');
+  const veiculoIdSelecionado = watch('veiculoId');
+  const categoriaSelecionada = watch('categoria');
 
-    const handleUploadAndSubmit = async (data: DocFormValues) => {
-        if (!file) {
-            toast.error("Por favor, selecione um arquivo PDF ou Imagem.");
-            return;
-        }
+  const handleUploadAndSubmit = async (data: DocFormValues) => {
+    if (!file) {
+      toast.error("Por favor, selecione um arquivo PDF ou Imagem.");
+      return;
+    }
 
-        try {
-            setUploading(true);
+    try {
+      setUploading(true);
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+      const filePath = `documentos-legais/${fileName}`;
 
-            // 1. Upload para o Supabase Storage
-            const fileExt = file.name.split('.').pop();
-            const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-            const filePath = `documentos-legais/${fileName}`;
+      const { error: uploadError } = await supabase.storage
+        .from('comprovantes')
+        .upload(filePath, file);
 
-            const { error: uploadError } = await supabase.storage
-                .from('comprovantes')
-                .upload(filePath, file);
+      if (uploadError) throw uploadError;
 
-            if (uploadError) throw uploadError;
+      const { data: { publicUrl } } = supabase.storage
+        .from('comprovantes')
+        .getPublicUrl(filePath);
 
-            // 2. Obter URL Pública
-            const { data: { publicUrl } } = supabase.storage
-                .from('comprovantes')
-                .getPublicUrl(filePath);
+      criarDocumento({
+        titulo: data.titulo,
+        descricao: data.descricao,
+        categoria: data.categoria,
+        arquivoUrl: publicUrl,
+        tipoVeiculo: data.tipoVeiculo || undefined,
+        veiculoId: data.veiculoId || undefined, 
+        dataValidade: data.dataValidade ? new Date(data.dataValidade) : undefined,
+      }, {
+        onSuccess: () => onSuccess()
+      });
 
-            // 3. Salvar no Banco
-            criarDocumento({
-                titulo: data.titulo,
-                descricao: data.descricao,
-                categoria: data.categoria, // Backend converte para uppercase (AST)
-                arquivoUrl: publicUrl,
-                tipoVeiculo: data.tipoVeiculo || undefined,
-                veiculoId: data.veiculoId || undefined, 
-                dataValidade: data.dataValidade ? new Date(data.dataValidade) : undefined,
-            }, {
-                onSuccess: () => {
-                    onSuccess();
-                }
-            });
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao fazer upload do arquivo.");
+    } finally {
+      setUploading(false);
+    }
+  };
 
-        } catch (error) {
-            console.error(error);
-            toast.error("Erro ao fazer upload do arquivo.");
-        } finally {
-            setUploading(false);
-        }
-    };
+  // Classes comuns para inputs (evitando hardcode)
+  const inputClasses = "w-full h-11 px-3 bg-surface border border-border rounded-xl text-sm focus:border-primary outline-none text-text-main placeholder:text-text-muted transition-all disabled:bg-background disabled:text-text-muted";
+  const labelClasses = "flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase mb-1.5 ml-1";
 
-    return (
-        <form onSubmit={handleSubmit(handleUploadAndSubmit)} className="space-y-4">
+  return (
+    <div className="bg-surface rounded-xl shadow-lg border border-border overflow-hidden animate-enter flex flex-col max-h-[85vh]">
+      
+      {/* HEADER */}
+      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
+        <div>
+          <h3 className="text-lg font-bold text-text-main">Novo Documento</h3>
+          <p className="text-xs text-text-secondary">Faça upload de documentos legais ou técnicos.</p>
+        </div>
+        <div className="p-2 bg-surface rounded-lg border border-border shadow-sm text-primary">
+          <FileText className="w-5 h-5" />
+        </div>
+      </div>
 
-            {/* Upload de Arquivo */}
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:bg-gray-50 transition-colors">
-                <input
-                    type="file"
-                    id="doc-upload"
-                    accept=".pdf,image/*"
-                    className="hidden"
-                    onChange={(e) => setFile(e.target.files?.[0] || null)}
-                />
-                <label htmlFor="doc-upload" className="cursor-pointer flex flex-col items-center">
-                    <span className="text-4xl mb-2">📄</span>
-                    <span className="text-sm font-medium text-gray-700">
-                        {file ? file.name : "Clique para selecionar o arquivo (PDF ou Imagem)"}
-                    </span>
-                </label>
+      <form onSubmit={handleSubmit(handleUploadAndSubmit)} className="flex flex-col flex-1 overflow-hidden">
+        
+        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
+          
+          {/* ÁREA DE UPLOAD */}
+          <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:bg-background hover:border-primary/50 transition-all cursor-pointer relative group">
+            <input
+              type="file"
+              id="doc-upload"
+              accept=".pdf,image/*"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+            />
+            <div className="flex flex-col items-center pointer-events-none">
+              <div className={`p-4 rounded-full mb-3 transition-colors ${file ? 'bg-success/10 text-success' : 'bg-primary/5 text-primary group-hover:bg-primary/10'}`}>
+                {file ? <FileText className="w-8 h-8" /> : <UploadCloud className="w-8 h-8" />}
+              </div>
+              
+              {file ? (
+                <>
+                  <span className="text-sm font-bold text-text-main break-all max-w-[250px]">{file.name}</span>
+                  <span className="text-xs text-success font-medium mt-1">Arquivo selecionado</span>
+                </>
+              ) : (
+                <>
+                  <span className="text-sm font-bold text-text-main">Clique ou arraste o arquivo aqui</span>
+                  <span className="text-xs text-text-secondary mt-1">PDF, JPG ou PNG (Máx 5MB)</span>
+                </>
+              )}
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Título</label>
-                    <Input {...register('titulo')} error={errors.titulo?.message} placeholder="Ex: AST 001 - Operação Padrão" />
-                </div>
-
-                <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Categoria</label>
-                    <select
-                        {...register('categoria')}
-                        className="w-full h-11 px-3 bg-white border border-gray-200 rounded-lg text-sm focus:border-primary outline-none"
-                    >
-                        <option value="">Selecione...</option>
-
-                        {/* [NOVO] Opção AST */}
-                        <option value="AST">⚠️ AST (Análise de Segurança)</option>
-
-                        <optgroup label="Globais (Empresa)">
-                            <option value="LICENCA_AMBIENTAL">Licença Ambiental</option>
-                            <option value="ATRP">ATRP</option>
-                            <option value="OUTROS_GLOBAIS">Outros</option>
-                        </optgroup>
-
-                        <optgroup label="Específicos do Veículo">
-                            <option value="CRLV">CRLV</option>
-                            <option value="CIV">CIV</option>
-                            <option value="CIPP">CIPP</option>
-                            <option value="LAUDO_CHAPA">Laudo de Chapa</option>
-                            <option value="TACOGRAFO">Tacógrafo</option>
-                            <option value="MANUTENCAO">Manutenção (Relatório)</option>
-                        </optgroup>
-                    </select>
-                    {errors.categoria && <p className="text-xs text-red-500 mt-1 ml-1">{errors.categoria.message}</p>}
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Validade (Opcional)</label>
-                    <Input type="date" {...register('dataValidade')} />
-                </div>
-
-                <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Tipo Veículo (Opcional)</label>
-                    <select
-                        {...register('tipoVeiculo')}
-                        disabled={!!veiculoIdSelecionado}
-                        // UX: Destaca o campo se for AST para incentivar o preenchimento
-                        className={`w-full h-11 px-3 bg-white border rounded-lg text-sm focus:border-primary outline-none disabled:bg-gray-100 disabled:text-gray-400 ${categoriaSelecionada === 'AST' ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'}`}
-                    >
-                        <option value="">Aplicar a Todos</option>
-                        
-                        {/* [NOVO] Gera opções baseadas na sua frota real */}
-                        {tiposDisponiveis.map(tipo => (
-                            <option key={tipo} value={tipo}>{tipo}</option>
-                        ))}
-
-                        {/* Fallback caso não tenha veículos cadastrados ainda */}
-                        {!tiposDisponiveis.length && (
-                            <>
-                                <option value="CAMINHAO">Caminhões</option>
-                                <option value="CARRO">Carros Leves</option>
-                            </>
-                        )}
-                    </select>
-                    
-                    {categoriaSelecionada === 'AST' && (
-                        <p className="text-[10px] text-yellow-600 mt-1 font-bold">
-                            * Selecione o tipo para restringir a AST (ex: só Vácuo).
-                        </p>
-                    )}
-                    {categoriaSelecionada !== 'AST' && (
-                        <p className="text-[10px] text-gray-400 mt-1">Deixe vazio para documentos globais.</p>
-                    )}
-                </div>
-
-                <div>
-                    <label className="text-xs font-bold text-gray-500 uppercase ml-1">Placa Específica (Opcional)</label>
-                    <select
-                        {...register('veiculoId')}
-                        onChange={(e) => {
-                            setValue('veiculoId', e.target.value);
-                            if (e.target.value) setValue('tipoVeiculo', '');
-                        }}
-                        className="w-full h-11 px-3 bg-white border border-gray-200 rounded-lg text-sm focus:border-primary outline-none"
-                    >
-                        <option value="">Nenhuma</option>
-                        {veiculos?.map(v => (
-                            <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>
-                        ))}
-                    </select>
-                </div>
+          {/* CAMPOS PRINCIPAIS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <Input 
+                label="Título do Documento" 
+                {...register('titulo')} 
+                error={errors.titulo?.message} 
+                placeholder="Ex: AST 001 - Operação Padrão" 
+                disabled={uploading || isPending}
+              />
             </div>
 
             <div>
-                <label className="text-xs font-bold text-gray-500 uppercase ml-1">Descrição</label>
-                <textarea
-                    {...register('descricao')}
-                    className="w-full p-3 border border-gray-200 rounded-lg text-sm focus:border-primary outline-none resize-none h-24"
-                    placeholder="Detalhes adicionais..."
-                />
+              <label className={labelClasses}>Categoria</label>
+              <div className="relative">
+                <select
+                  {...register('categoria')}
+                  disabled={uploading || isPending}
+                  className={inputClasses}
+                >
+                  <option value="">Selecione...</option>
+                  <option value="AST">⚠️ AST (Análise de Segurança)</option>
+                  <optgroup label="Globais (Empresa)">
+                    <option value="LICENCA_AMBIENTAL">Licença Ambiental</option>
+                    <option value="ATRP">ATRP</option>
+                    <option value="OUTROS_GLOBAIS">Outros</option>
+                  </optgroup>
+                  <optgroup label="Específicos do Veículo">
+                    <option value="CRLV">CRLV</option>
+                    <option value="CIV">CIV</option>
+                    <option value="CIPP">CIPP</option>
+                    <option value="LAUDO_CHAPA">Laudo de Chapa</option>
+                    <option value="TACOGRAFO">Tacógrafo</option>
+                    <option value="MANUTENCAO">Manutenção (Relatório)</option>
+                  </optgroup>
+                </select>
+              </div>
+              {errors.categoria && <p className="text-[10px] text-error mt-1 ml-1">{errors.categoria.message}</p>}
+            </div>
+          </div>
+
+          {/* CAMPOS CONDICIONAIS */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className={labelClasses}><Calendar className="w-3 h-3" /> Validade</label>
+              <Input type="date" {...register('dataValidade')} disabled={uploading || isPending} containerClassName="!mb-0" />
             </div>
 
-            <div className="flex gap-3 pt-4 border-t">
-                <Button type="button" variant="secondary" onClick={onCancel} className="flex-1">
-                    Cancelar
-                </Button>
-                <Button
-                    type="submit"
-                    variant="primary"
-                    isLoading={uploading || isPending}
-                    className="flex-[2]"
-                >
-                    {uploading ? 'Enviando...' : 'Salvar Documento'}
-                </Button>
+            <div>
+              <label className={labelClasses}><Truck className="w-3 h-3" /> Tipo Veículo</label>
+              <select
+                {...register('tipoVeiculo')}
+                disabled={!!veiculoIdSelecionado || uploading || isPending}
+                className={`${inputClasses} ${categoriaSelecionada === 'AST' ? 'border-warning-500/50 bg-warning-500/5' : ''}`}
+              >
+                <option value="">Aplicar a Todos</option>
+                {tiposDisponiveis.map(tipo => (
+                  <option key={tipo} value={tipo}>{tipo}</option>
+                ))}
+                {!tiposDisponiveis.length && (
+                  <>
+                    <option value="CAMINHAO">Caminhões</option>
+                    <option value="CARRO">Carros Leves</option>
+                  </>
+                )}
+              </select>
+              
+              {categoriaSelecionada === 'AST' && (
+                <p className="text-[10px] text-warning-600 mt-1 font-bold flex items-center gap-1">
+                  <AlertTriangle className="w-3 h-3" /> Restringir AST por tipo?
+                </p>
+              )}
             </div>
-        </form>
-    );
+
+            <div>
+              <label className={labelClasses}>Placa Específica</label>
+              <select
+                {...register('veiculoId')}
+                onChange={(e) => {
+                  setValue('veiculoId', e.target.value);
+                  if (e.target.value) setValue('tipoVeiculo', '');
+                }}
+                disabled={uploading || isPending}
+                className={inputClasses}
+              >
+                <option value="">Nenhuma</option>
+                {veiculos?.map(v => (
+                  <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* DESCRIÇÃO */}
+          <div>
+            <label className={labelClasses}>Descrição / Observações</label>
+            <textarea
+              {...register('descricao')}
+              disabled={uploading || isPending}
+              className={`${inputClasses} h-24 py-2 resize-none`}
+              placeholder="Detalhes adicionais sobre este documento..."
+            />
+          </div>
+        </div>
+
+        {/* FOOTER */}
+        <div className="p-4 bg-background border-t border-border flex justify-end gap-3 shrink-0">
+          <Button type="button" variant="ghost" onClick={onCancel} disabled={uploading || isPending}>
+            Cancelar
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={uploading || isPending}
+            icon={<Save className="w-4 h-4" />}
+            className="shadow-button hover:shadow-float px-6"
+          >
+            {uploading ? 'Enviando...' : 'Salvar Documento'}
+          </Button>
+        </div>
+
+      </form>
+    </div>
+  );
 }
