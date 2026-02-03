@@ -100,26 +100,26 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
 
   return (
     // Z-INDEX ALTO E POSIÇÃO FIXA: Garante que fique acima de tudo e centralizado na VIEWPORT
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 animate-in fade-in duration-200 h-screen w-screen overflow-hidden">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 h-screen w-screen overflow-hidden">
       
       {/* Backdrop Escuro (Clica fora para fechar) */}
       <div 
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+        className="absolute inset-0 bg-black/80 backdrop-blur-sm transition-opacity" 
         onClick={onClose}
       />
 
       {/* Modal Container - Compacto e Centralizado */}
-      <div className="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col animate-in zoom-in-95 duration-300 border border-gray-100 max-h-[90vh]">
+      <div className="relative bg-surface w-full max-w-sm rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col animate-in zoom-in-95 duration-200 border border-border max-h-[90vh]">
         
         {/* Header com Botão Fechar */}
-        <div className="flex justify-between items-center px-5 py-4 border-b border-gray-100 bg-gray-50/50 shrink-0">
-          <h3 className="font-bold text-gray-800 flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-primary" />
+        <div className="flex justify-between items-center px-4 py-3 border-b border-border bg-background shrink-0">
+          <h3 className="font-bold text-text-main flex items-center gap-2 text-sm uppercase tracking-wide">
+            <QrCode className="w-4 h-4 text-primary" />
             Crachá Digital
           </h3>
           <button 
             onClick={onClose}
-            className="p-2 -mr-2 text-gray-400 hover:text-gray-900 hover:bg-gray-200 rounded-full transition-colors"
+            className="p-1.5 -mr-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-full transition-colors"
             title="Fechar (ESC)"
           >
             <X className="w-5 h-5" />
@@ -127,84 +127,87 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
         </div>
 
         {/* Conteúdo com Scroll Interno (se necessário em telas muito pequenas) */}
-        <div className="p-6 flex flex-col items-center gap-6 overflow-y-auto custom-scrollbar">
+        <div className="p-6 overflow-y-auto flex-1 flex flex-col items-center justify-center bg-gray-50/50">
           
           {/* --- O CRACHÁ (Área de Impressão) --- */}
-          <div ref={cardRef} className="w-[260px] bg-white rounded-2xl overflow-hidden shadow-card border border-gray-200 relative flex flex-col select-none ring-1 ring-black/5 shrink-0 mx-auto">
+          {/* Importante: overflow-visible para a foto não cortar */}
+          <div ref={cardRef} className="w-[280px] bg-white rounded-2xl shadow-lg border border-gray-200 relative flex flex-col select-none print:shadow-none print:border overflow-visible">
+            
             {/* Topo Colorido */}
-            <div className="h-[80px] bg-primary relative w-full overflow-hidden shrink-0">
-              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-              {/* Foto sobreposta */}
-              <div className="absolute bottom-[-28px] left-0 right-0 flex justify-center">
-                <div className="w-[72px] h-[72px] rounded-full bg-white p-1 shadow-md z-10">
-                  {user.fotoUrl ? (
-                    <img src={user.fotoUrl} className="w-full h-full rounded-full object-cover bg-gray-100" alt={user.nome} />
+            <div className="h-24 bg-primary rounded-t-2xl relative overflow-hidden">
+               {/* Pattern de fundo opcional */}
+               <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle,_var(--tw-gradient-stops))] from-white to-transparent"></div>
+               <div className="absolute top-4 left-0 right-0 text-center">
+                 <span className="text-[10px] font-bold text-white/90 tracking-[0.2em] uppercase">Identificação</span>
+               </div>
+            </div>
+
+            {/* Foto do Usuário (Posicionada para sobrepor a divisão) */}
+            <div className="absolute top-12 left-1/2 -translate-x-1/2 z-20">
+               <div className="w-24 h-24 rounded-full border-4 border-white shadow-md bg-gray-100 overflow-hidden flex items-center justify-center">
+                 {user.fotoUrl ? (
+                    <img src={user.fotoUrl} className="w-full h-full object-cover" alt={user.nome} />
                   ) : (
-                    <div className="w-full h-full rounded-full bg-primary/10 flex items-center justify-center text-xl font-bold text-primary">
-                      {user.nome?.charAt(0)}
-                    </div>
+                    <span className="text-3xl font-bold text-primary opacity-50">{user.nome?.charAt(0)}</span>
                   )}
-                </div>
-              </div>
+               </div>
             </div>
 
             {/* Dados do Usuário */}
-            <div className="pt-10 pb-6 px-4 text-center">
-              <h2 className="text-lg font-bold text-gray-900 leading-tight mb-0.5 truncate">
-                {user.nome?.split(' ')[0]} {user.nome?.split(' ').length > 1 ? user.nome?.split(' ')[1] : ''}
+            <div className="pt-16 pb-8 px-6 text-center flex flex-col items-center">
+              <h2 className="text-xl font-bold text-gray-900 leading-tight mb-1">
+                {user.nome?.split(' ')[0]}
               </h2>
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-4">
+              {user.nome && user.nome.split(' ').length > 1 && (
+                 <span className="text-sm font-medium text-gray-600 block mb-1">{user.nome.split(' ').slice(1).join(' ')}</span>
+              )}
+              
+              <span className="inline-block px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold uppercase tracking-wider mb-6 border border-gray-200">
                 {getTituloCracha(user.role)}
-              </p>
+              </span>
 
-              {/* Box do QR Code */}
-              <div className="bg-white p-2 border-2 border-dashed border-gray-200 rounded-xl inline-block">
+              {/* QR Code */}
+              <div className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm mb-2">
                 {tokenAtual ? (
-                  <QRCodeSVG value={loginUrl} size={120} level="M" />
+                  <QRCodeSVG value={loginUrl} size={140} level="M" />
                 ) : (
-                  <div className="w-[120px] h-[120px] flex items-center justify-center text-xs text-gray-400 bg-gray-50 rounded-lg">
-                    Sem Token
+                  <div className="w-[140px] h-[140px] flex items-center justify-center bg-gray-50 text-gray-400 text-xs rounded">
+                    Código não gerado
                   </div>
                 )}
               </div>
+              <p className="text-[10px] text-gray-400 mt-2">Acesso Pessoal & Intransferível</p>
             </div>
             
-            {/* Rodapé do Crachá */}
-            <div className="bg-gray-50 py-1.5 text-center border-t border-gray-100">
-              <p className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">Acesso Frota v2</p>
-            </div>
-          </div>
-
-          {/* --- AÇÕES --- */}
-          <div className="w-full space-y-3">
-            {tokenAtual ? (
-              <>
-                <Button onClick={handlePrint} className="w-full shadow-button" icon={<Printer className="w-4 h-4" />}>
-                  Imprimir
-                </Button>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="secondary" onClick={handleCopyLink} icon={<Copy className="w-4 h-4" />}>
-                    Link
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    onClick={handleGerarNovo} 
-                    isLoading={loading} 
-                    icon={<RefreshCw className="w-4 h-4" />} 
-                    className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-red-100 border"
-                  >
-                    Novo
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <Button onClick={handleGerarNovo} className="w-full" isLoading={loading}>
-                Gerar Primeiro Código
-              </Button>
-            )}
+            {/* Faixa Inferior */}
+            <div className="h-3 bg-primary/10 border-t border-primary/20 w-full rounded-b-2xl"></div>
           </div>
 
         </div>
+
+        {/* Footer de Ações */}
+        <div className="p-4 border-t border-border bg-surface shrink-0 flex flex-col gap-3">
+           {tokenAtual ? (
+            <div className="flex flex-col gap-3">
+              <Button onClick={handlePrint} className="w-full h-11 text-sm shadow-md" icon={<Printer className="w-4 h-4"/>}>
+                Imprimir Crachá
+              </Button>
+              <div className="grid grid-cols-2 gap-3">
+                <Button variant="secondary" onClick={handleCopyLink} className="h-10 text-xs" icon={<Copy className="w-3.5 h-3.5"/>}>
+                   Copiar Link
+                </Button>
+                <Button variant="ghost" onClick={handleGerarNovo} isLoading={loading} className="h-10 text-xs text-red-600 hover:bg-red-50 hover:text-red-700 border border-red-100" icon={<RefreshCw className="w-3.5 h-3.5"/>}>
+                   Gerar Novo
+                </Button>
+              </div>
+            </div>
+           ) : (
+             <Button onClick={handleGerarNovo} className="w-full h-12" isLoading={loading}>
+               Gerar Primeiro Acesso
+             </Button>
+           )}
+        </div>
+
       </div>
     </div>
   );
