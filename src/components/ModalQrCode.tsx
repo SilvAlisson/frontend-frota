@@ -14,16 +14,18 @@ interface ModalQrCodeProps {
 }
 
 export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
+  // Hook para invalidar o cache e persistir o token gerado
   const queryClient = useQueryClient();
+
   const [tokenAtual, setTokenAtual] = useState<string | null>(
     (user as any).loginToken || null
   );
+
   const [loading, setLoading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   const loginUrl = tokenAtual ? `${window.location.origin}/login?magicToken=${tokenAtual}` : '';
 
-  // Fecha com a tecla ESC
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     window.addEventListener('keydown', handleEsc);
@@ -31,16 +33,23 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   }, [onClose]);
 
   const handleGerarNovo = async () => {
-    if (tokenAtual && !window.confirm("ATENÇÃO: Gerar um novo código invalidará o crachá impresso anteriormente. Continuar?")) {
+    if (tokenAtual && !window.confirm("ATENÇÃO: O usuário já possui um QR Code. Gerar um novo invalidará o crachá impresso anteriormente. Continuar?")) {
       return;
     }
+
     setLoading(true);
     try {
       const { data } = await api.post(`/auth/user/${user.id}/generate-token`);
+
+      // 1. Atualiza visualmente agora
       setTokenAtual(data.loginToken);
+
+      // 2. Atualiza a lista de usuários no cache para persistência
       await queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success("Novo QR Code gerado!");
+
+      toast.success("Novo QR Code gerado e salvo!");
       if (onUpdate) onUpdate();
+
     } catch (error) {
       console.error(error);
       toast.error("Erro ao gerar QR Code.");
@@ -53,7 +62,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
     if (!loginUrl) return;
     try {
       await navigator.clipboard.writeText(loginUrl);
-      toast.success("Link copiado para a área de transferência!");
+      toast.success("Link copiado!");
     } catch (err) {
       toast.error("Erro ao copiar.");
     }
@@ -62,6 +71,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   const handlePrint = () => {
     const printContent = cardRef.current;
     if (!printContent) return;
+
     const printWindow = window.open('', '', 'width=600,height=800');
     if (printWindow) {
       printWindow.document.write(`
@@ -71,10 +81,13 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             <script src="https://cdn.tailwindcss.com"></script>
             <style>
               @page { size: portrait; margin: 0; }
-              body { display: flex; align-items: center; justify-content: center; height: 100vh; background: #fff; font-family: sans-serif; -webkit-print-color-adjust: exact; }
+              body { display: flex; align-items: center; justify-content: center; height: 100vh; background: #fff; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; font-family: sans-serif; }
             </style>
           </head>
-          <body>${printContent.outerHTML}<script>setTimeout(() => { window.print(); window.close(); }, 500);</script></body>
+          <body>
+            ${printContent.outerHTML}
+            <script>setTimeout(() => { window.print(); window.close(); }, 500);</script>
+          </body>
         </html>
       `);
       printWindow.document.close();
@@ -83,113 +96,133 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
 
   const getTituloCracha = (roleUser: string) => {
     const map: Record<string, string> = {
-      'ENCARREGADO': 'Encarregado', 'ADMIN': 'Administrador',
-      'OPERADOR': 'Operador', 'RH': 'Recursos Humanos', 'COORDENADOR': 'Coordenador'
+      'ENCARREGADO': 'Encarregado',
+      'ADMIN': 'Administrador',
+      'OPERADOR': 'Operador',
+      'RH': 'Recursos Humanos',
+      'COORDENADOR': 'Coordenador'
     };
     return map[roleUser] || 'Colaborador';
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-      {/* Backdrop (Clica fora para fechar) */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+    <div className="fixed inset-0 z-[99] flex items-center justify-center p-4 animate-in fade-in duration-300">
+      {/* Backdrop */}
+      <div 
+        className="absolute inset-0 bg-text-main/40 backdrop-blur-sm transition-opacity" 
+        onClick={onClose}
+      />
 
-      {/* Modal Container - Compacto (max-w-sm) */}
-      <div className="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col animate-in zoom-in-95 duration-300 border border-gray-100">
-        
-        {/* Header com Botão Fechar Visível */}
-        <div className="flex justify-between items-center px-5 py-4 border-b border-gray-100 bg-gray-50/50">
-          <h3 className="font-bold text-gray-800 flex items-center gap-2">
-            <QrCode className="w-5 h-5 text-primary" />
-            Crachá Digital
-          </h3>
-          <button 
-            onClick={onClose}
-            className="p-2 -mr-2 text-gray-400 hover:text-gray-900 hover:bg-gray-200 rounded-full transition-colors"
-            title="Fechar (ESC)"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+      <div className="relative flex flex-col items-center gap-6 z-10 animate-in zoom-in-95 duration-300">
 
-        <div className="p-6 flex flex-col items-center gap-6">
-          
-          {/* --- O CRACHÁ (Área de Impressão) --- */}
-          {/* Centralizado e sem overflow */}
-          <div ref={cardRef} className="w-[260px] bg-white rounded-2xl overflow-hidden shadow-card border border-gray-200 relative flex flex-col select-none ring-1 ring-black/5">
-            {/* Topo Colorido */}
-            <div className="h-[80px] bg-primary relative w-full overflow-hidden shrink-0">
-              <div className="absolute inset-0 opacity-20 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
-              {/* Foto sobreposta */}
-              <div className="absolute bottom-[-28px] left-0 right-0 flex justify-center">
-                <div className="w-[72px] h-[72px] rounded-full bg-white p-1 shadow-md z-10">
-                  {user.fotoUrl ? (
-                    <img src={user.fotoUrl} className="w-full h-full rounded-full object-cover bg-gray-100" alt={user.nome} />
-                  ) : (
-                    <div className="w-full h-full rounded-full bg-primary/10 flex items-center justify-center text-xl font-bold text-primary">
-                      {user.nome?.charAt(0)}
-                    </div>
-                  )}
-                </div>
+        {/* --- ÁREA DO CRACHÁ (Visualização) --- */}
+        <div ref={cardRef} className="w-[320px] bg-surface rounded-3xl overflow-hidden shadow-float border border-border relative flex flex-col">
+          {/* Topo do Crachá (Usa Primary Brand Color) */}
+          <div className="h-[140px] bg-primary relative w-full overflow-hidden shrink-0">
+            <div className="absolute inset-0 opacity-20 z-0">
+              <div className="absolute right-[-30px] top-[-30px] w-40 h-40 rounded-full bg-white blur-3xl"></div>
+              <div className="absolute left-[-20px] bottom-[-20px] w-32 h-32 rounded-full bg-black blur-3xl"></div>
+            </div>
+            <div className="absolute top-6 left-0 right-0 flex justify-center z-10">
+              <div className="px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-sm">
+                <span className="text-[10px] font-bold text-white tracking-widest uppercase">Frota Inteligente</span>
               </div>
             </div>
+          </div>
 
-            {/* Dados do Usuário */}
-            <div className="pt-10 pb-6 px-4 text-center">
-              <h2 className="text-lg font-bold text-gray-900 leading-tight mb-0.5 truncate">
-                {user.nome?.split(' ')[0]} {user.nome?.split(' ').length > 1 ? user.nome?.split(' ')[1] : ''}
-              </h2>
-              <p className="text-[10px] text-gray-500 uppercase tracking-widest font-bold mb-4">
-                {getTituloCracha(user.role)}
-              </p>
-
-              {/* Box do QR Code */}
-              <div className="bg-white p-2 border-2 border-dashed border-gray-200 rounded-xl inline-block">
-                {tokenAtual ? (
-                  <QRCodeSVG value={loginUrl} size={120} level="M" />
+          <div className="flex-1 flex flex-col items-center -mt-16 px-6 pb-8 relative z-10">
+            {/* Foto do Usuário */}
+            <div className="w-32 h-32 rounded-full bg-surface p-1.5 shadow-float mb-5">
+              <div className="w-full h-full rounded-full bg-background flex items-center justify-center text-4xl font-bold text-text-muted border border-border overflow-hidden">
+                {user.fotoUrl ? (
+                  <img src={user.fotoUrl} alt={user.nome} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="w-[120px] h-[120px] flex items-center justify-center text-xs text-gray-400 bg-gray-50 rounded-lg">
-                    Sem Token
-                  </div>
+                  <span>{user.nome ? user.nome.charAt(0).toUpperCase() : 'U'}</span>
                 )}
               </div>
             </div>
-            
-            {/* Rodapé do Crachá */}
-            <div className="bg-gray-50 py-1.5 text-center border-t border-gray-100">
-              <p className="text-[7px] text-gray-400 font-bold uppercase tracking-widest">Acesso Frota v2</p>
+
+            <div className="text-center w-full mb-6">
+              <h2 className="text-2xl font-extrabold text-text-main leading-none mb-1.5 break-words">
+                {user.nome ? user.nome.split(' ')[0] : 'Usuário'}
+              </h2>
+              {user.nome && user.nome.split(' ').length > 1 && (
+                <p className="text-lg font-medium text-text-secondary leading-tight">
+                  {user.nome.split(' ').slice(1).join(' ')}
+                </p>
+              )}
+              <div className="mt-3 inline-block">
+                <span className="bg-primary/10 text-primary px-4 py-1 rounded-full text-xs font-bold uppercase tracking-wider border border-primary/20">
+                  {getTituloCracha(user.role)}
+                </span>
+              </div>
+            </div>
+
+            <div className="bg-white p-4 border-2 border-dashed border-border rounded-2xl shadow-inner w-full flex justify-center">
+              {tokenAtual ? (
+                <QRCodeSVG value={loginUrl} size={140} level="M" className="mx-auto" />
+              ) : (
+                <div className="w-[140px] h-[140px] flex flex-col items-center justify-center text-center text-xs text-text-muted bg-background rounded-lg gap-2">
+                  <QrCode className="w-8 h-8 opacity-20" />
+                  <span>Sem QR Code<br />Gerado</span>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* --- AÇÕES (Fora do Crachá) --- */}
-          <div className="w-full space-y-3">
-            {tokenAtual ? (
-              <>
-                <Button onClick={handlePrint} className="w-full shadow-button" icon={<Printer className="w-4 h-4" />}>
-                  Imprimir
-                </Button>
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="secondary" onClick={handleCopyLink} icon={<Copy className="w-4 h-4" />}>
-                    Link
-                  </Button>
-                  <Button 
-                    variant="ghost" 
-                    onClick={handleGerarNovo} 
-                    isLoading={loading} 
-                    icon={<RefreshCw className="w-4 h-4" />} 
-                    className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 border-red-100 border"
-                  >
-                    Novo
-                  </Button>
-                </div>
-              </>
-            ) : (
-              <Button onClick={handleGerarNovo} className="w-full" isLoading={loading}>
-                Gerar Primeiro Código
-              </Button>
-            )}
+          <div className="py-3 bg-background border-t border-border text-center">
+            <p className="text-[9px] text-text-muted font-bold uppercase tracking-widest">Acesso Pessoal e Intransferível</p>
           </div>
+        </div>
 
+        {/* --- BOTÕES DE AÇÃO --- */}
+        <div className="flex flex-col gap-3 w-full max-w-[320px]">
+          {tokenAtual ? (
+            <>
+              <Button 
+                onClick={handlePrint} 
+                className="w-full h-12 shadow-button hover:shadow-float text-base" 
+                icon={<Printer className="w-5 h-5" />}
+              >
+                Imprimir Crachá
+              </Button>
+              <div className="grid grid-cols-2 gap-3">
+                <Button 
+                  onClick={handleCopyLink} 
+                  variant="secondary" 
+                  className="bg-surface hover:bg-surface-hover text-text-secondary hover:text-primary border-border" 
+                  icon={<Copy className="w-4 h-4" />}
+                >
+                  Copiar Link
+                </Button>
+                <Button 
+                  onClick={handleGerarNovo} 
+                  variant="ghost" 
+                  className="text-text-secondary hover:text-primary bg-black/40 hover:bg-black/60 border border-white/10 backdrop-blur-md text-white" 
+                  isLoading={loading} 
+                  icon={<RefreshCw className="w-4 h-4" />}
+                >
+                  Novo Código
+                </Button>
+              </div>
+            </>
+          ) : (
+            <Button 
+              onClick={handleGerarNovo} 
+              className="w-full h-12 shadow-button" 
+              isLoading={loading}
+            >
+              Gerar Primeiro QR Code
+            </Button>
+          )}
+
+          <Button
+            variant="ghost"
+            onClick={onClose}
+            className="text-white hover:bg-white/10"
+            icon={<X className="w-4 h-4" />}
+          >
+            Fechar
+          </Button>
         </div>
       </div>
     </div>
