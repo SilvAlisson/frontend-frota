@@ -3,12 +3,12 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { Flag, Gauge, Route, Ghost, CheckCircle2 } from 'lucide-react';
+import { Gauge, Route, Ghost, CheckCircle2 } from 'lucide-react'; // Removi Flag
 
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
-import { Card } from './ui/Card'; // Importando o Card novo
+import { Card } from './ui/Card';
 import { parseDecimal, formatKmVisual, isJornadaFantasma } from '../utils';
 import type { Jornada } from '../types';
 
@@ -25,12 +25,10 @@ export function JornadaCard({
   const [modalAberto, setModalAberto] = useState(false);
   const [dadosValidacao, setDadosValidacao] = useState<{ kmFim: number } | null>(null);
 
-  // --- Verificações de Estado ---
   const isFinalizada = !!jornada.dataFim;
   const isFantasma = isJornadaFantasma(jornada);
   const nomeEncarregado = jornada.encarregado?.nome || 'Não informado';
 
-  // --- Schema de Validação (Zod) ---
   const finalizarSchema = z.object({
     kmFimInput: z.string({ error: "KM Final obrigatório" })
       .min(1, { message: "Informe o KM do painel" })
@@ -68,7 +66,6 @@ export function JornadaCard({
     mode: 'onChange'
   });
 
-  // --- Cálculos em Tempo Real ---
   const kmFimInput = watch('kmFimInput');
   const kmFimAtual = parseDecimal(kmFimInput);
   const distanciaPercorrida = kmFimAtual > jornada.kmInicio
@@ -92,7 +89,6 @@ export function JornadaCard({
     setModalAberto(false);
   };
 
-  // --- RENDERIZAÇÃO: JORNADA JÁ FINALIZADA ---
   if (isFinalizada) {
     return (
       <Card className={`p-8 flex flex-col items-center justify-center text-center transition-all ${
@@ -130,25 +126,22 @@ export function JornadaCard({
     );
   }
 
-  // --- RENDERIZAÇÃO: FORMULÁRIO DE FINALIZAÇÃO ---
+  // --- FORMULÁRIO (SEM A BANDEIRA GIGANTE) ---
   return (
     <>
       <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
 
-        {/* CABEÇALHO */}
-        <div className="text-center mb-4">
-          <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 mb-3 ring-4 ring-primary/5">
-            <Flag className="w-7 h-7 text-primary ml-1" />
-          </div>
+        {/* Cabeçalho Compacto */}
+        <div className="text-center mb-2">
           <h3 className="text-xl font-bold text-text-main">
             Finalizar Jornada
           </h3>
-          <p className="text-sm text-text-secondary mt-1 px-4 leading-relaxed">
+          <p className="text-xs text-text-secondary mt-1">
             Confirme o odômetro final para fechar o turno.
           </p>
         </div>
 
-        {/* CARDS DE INFORMAÇÃO */}
+        {/* Cards de Informação */}
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-background p-3 rounded-xl border border-border text-center flex flex-col items-center justify-center">
             <span className="text-[10px] text-text-muted font-bold uppercase mb-1 flex items-center gap-1">
@@ -169,7 +162,7 @@ export function JornadaCard({
           </div>
         </div>
 
-        {/* INPUT DE KM */}
+        {/* Input */}
         <div className="relative">
           <Input
             label="KM Final (Painel)"
@@ -203,7 +196,6 @@ export function JornadaCard({
         </Button>
       </form>
 
-      {/* MODAL DE FOTO */}
       {modalAberto && dadosValidacao && (
         <ModalConfirmacaoFoto
           titulo="Comprovante Final"
