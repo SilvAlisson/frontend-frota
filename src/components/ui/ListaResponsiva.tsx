@@ -9,6 +9,8 @@ interface ListaResponsivaProps<T> {
     desktopHeader: React.ReactNode;
     // Adicionamos suporte oficial à classe fantasma
     getRowClassName?: (item: T) => string;
+    // Nova prop opcional para controlar se o cursor deve ser pointer (padrão true)
+    isInteractive?: boolean;
 }
 
 export function ListaResponsiva<T>({
@@ -17,7 +19,8 @@ export function ListaResponsiva<T>({
     renderDesktop,
     renderMobile,
     desktopHeader,
-    getRowClassName
+    getRowClassName,
+    isInteractive = true // Por padrão, vamos assumir que a lista é interativa
 }: ListaResponsivaProps<T>) {
 
     if (!itens || itens.length === 0) {
@@ -33,6 +36,9 @@ export function ListaResponsiva<T>({
         );
     }
 
+    // Define a classe do cursor baseada na prop isInteractive
+    const cursorClass = isInteractive ? 'cursor-pointer' : '';
+
     return (
         <>
             {/* 🖥️ DESKTOP */}
@@ -46,7 +52,7 @@ export function ListaResponsiva<T>({
                             {itens.map((item, idx) => (
                                 <tr
                                     key={idx}
-                                    className={`transition-colors duration-150 group ${
+                                    className={`transition-colors duration-150 group ${cursorClass} ${
                                         getRowClassName ? getRowClassName(item) : 'hover:bg-surface-hover'
                                     }`}
                                 >
@@ -69,7 +75,7 @@ export function ListaResponsiva<T>({
                             className={`
                                 p-5 rounded-xl shadow-card border border-border relative overflow-hidden 
                                 active:scale-[0.99] transition-transform duration-200 bg-surface
-                                ${customClass}
+                                ${customClass} ${cursorClass}
                             `}
                         >
                             {/* Faixa lateral padrão (Se não for fantasma, usa primary) */}
