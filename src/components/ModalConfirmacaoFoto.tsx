@@ -105,7 +105,7 @@ export function ModalConfirmacaoFoto({
     if (apiEndpoint.includes('abastecimentos')) {
       return "Foto nítida da Nota Fiscal ou da Bomba de Combustível.";
     }
-    if (apiEndpoint.includes('ordens-servico') || apiEndpoint.includes('manutencoes')) {
+    if (apiEndpoint.includes('manutencoes') || apiEndpoint.includes('ordens-servico')) {
       return "Foto da Ordem de Serviço (OS), Nota Fiscal ou Peça.";
     }
     // Padrão (Jornadas)
@@ -180,7 +180,7 @@ export function ModalConfirmacaoFoto({
 
       if (apiEndpoint.includes('abastecimentos')) {
         dadosCompletos.fotoNotaFiscalUrl = fotoUrl;
-      } else if (apiEndpoint.includes('ordens-servico')) {
+      } else if (apiEndpoint.includes('manutencoes')) {
         dadosCompletos.fotoComprovanteUrl = fotoUrl;
       } else if (apiMethod === 'POST') { // Iniciar Jornada
         dadosCompletos.fotoInicioUrl = fotoUrl;
