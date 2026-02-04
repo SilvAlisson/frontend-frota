@@ -1,14 +1,17 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { api } from '../../services/api';
 import { supabase } from '../../supabaseClient';
 import DOMPurify from 'dompurify';
+import { toast } from 'sonner';
+import { User, Mail, Hash, Lock, Shield, Briefcase, FileText, Calendar, Camera } from 'lucide-react';
+
+// --- UI COMPONENTS ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { useQuery } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { Select } from '../ui/Select'; 
 
 interface Cargo {
   id: string;
@@ -31,7 +34,6 @@ const editarUsuarioSchema = z.object({
   password: z.string().optional().or(z.literal('')).refine(val => !val || val.length >= 6, { message: "Nova senha deve ter no mínimo 6 caracteres" })
 });
 
-// Tipos Seguros
 type EditarUsuarioFormInput = z.input<typeof editarUsuarioSchema>;
 type EditarUsuarioFormOutput = z.output<typeof editarUsuarioSchema>;
 
@@ -43,6 +45,7 @@ interface FormEditarUsuarioProps {
 
 export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarUsuarioProps) {
   const [loadingData, setLoadingData] = useState(true);
+  const [cargos, setCargos] = useState<Cargo[]>([]);
 
   // Estados para Foto
   const [fotoFile, setFotoFile] = useState<File | null>(null);
@@ -50,16 +53,6 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
   const [fotoAtualUrl, setFotoAtualUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: cargos = [], isLoading: isLoadingCargos } = useQuery<Cargo[]>({
-    queryKey: ['cargos-select'],
-    queryFn: async () => {
-      const response = await api.get('/cargos');
-      return response.data;
-    },
-    staleTime: 1000 * 60 * 10,
-  });
-
-  // [CORREÇÃO] Tipagem completa do useForm
   const {
     register,
     handleSubmit,
@@ -74,13 +67,43 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
 
   const roleSelecionada = watch('role');
 
+  // [CORREÇÃO] Mapeamento seguro de Roles
+  const roleOptions = useMemo(() => {
+    const labels: Record<string, string> = {
+      'OPERADOR': 'Motorista (Operador)',
+      'ENCARREGADO': 'Gestor (Encarregado)',
+      'RH': 'Recursos Humanos (RH)',
+      'COORDENADOR': 'Coordenador',
+      'ADMIN': 'Administrador'
+    };
+    
+    return ROLES.map(role => ({
+      value: role,
+      label: labels[role] || role
+    }));
+  }, []);
+
+  // Mapeamento de Cargos para o Select
+  const cargoOptions = useMemo(() => cargos.map(c => ({
+    value: c.id,
+    label: c.nome
+  })), [cargos]);
+
   // --- FETCH DADOS ---
   useEffect(() => {
     if (!userId) return;
-    const fetchUsuario = async () => {
+
+    const carregarTudo = async () => {
       setLoadingData(true);
       try {
-        const { data: user } = await api.get(`/users/${userId}`);
+        const [userData, cargosData] = await Promise.all([
+          api.get(`/users/${userId}`),
+          api.get('/cargos')
+        ]);
+
+        setCargos(cargosData.data);
+        const user = userData.data;
+        // Garante que a role vinda do banco é válida no nosso Enum
         const roleValida = ROLES.includes(user.role as any) ? (user.role as typeof ROLES[number]) : 'ENCARREGADO';
 
         setFotoAtualUrl(user.fotoUrl || null);
@@ -105,7 +128,8 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
         setLoadingData(false);
       }
     };
-    fetchUsuario();
+    
+    carregarTudo();
   }, [userId, reset, onCancelar]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,24 +201,11 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
     });
   };
 
-  const getRoleLabel = (role: typeof ROLES[number]) => {
-    switch (role) {
-      case 'OPERADOR': return 'Motorista (Operador)';
-      case 'ENCARREGADO': return 'Gestor (Encarregado)';
-      case 'RH': return 'Recursos Humanos (RH)';
-      case 'COORDENADOR': return 'Coordenador';
-      case 'ADMIN': return 'Administrador';
-      default: return role;
-    }
-  };
-
-  // --- ESTILOS PADRONIZADOS ---
-  const labelStyle = "block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1";
-  const selectStyle = "w-full h-10 px-3 bg-white border border-border rounded-input text-sm text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer placeholder:text-gray-400 disabled:bg-gray-50";
+  // [CORREÇÃO] Removida variável 'labelStyle' não utilizada
 
   if (loadingData) {
     return (
-      <div className="bg-white rounded-xl shadow-lg border border-border p-12 flex flex-col items-center justify-center">
+      <div className="bg-white rounded-xl shadow-lg border border-border p-12 flex flex-col items-center justify-center h-64">
         <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-primary"></div>
         <p className="text-sm text-gray-400 font-medium mt-4 animate-pulse">Carregando perfil...</p>
       </div>
@@ -202,123 +213,117 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-border overflow-hidden">
+    <div className="bg-surface rounded-xl shadow-card border border-border overflow-hidden animate-enter flex flex-col max-h-[85vh]">
 
       {/* HEADER */}
-      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center">
+      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
         <div>
           <h3 className="text-lg font-bold text-gray-900">Editar Colaborador</h3>
           <p className="text-xs text-gray-500">Atualize dados de acesso e perfil.</p>
         </div>
-        <div className="p-2 bg-white rounded-lg border border-border shadow-sm text-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
-          </svg>
+        <div className="p-2 bg-surface rounded-lg border border-border shadow-sm text-primary">
+          <User className="w-5 h-5" />
         </div>
       </div>
 
-      <form className="p-6 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+      <form className="flex flex-col flex-1 overflow-hidden" onSubmit={handleSubmit(onSubmit)}>
+        
+        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
 
-        {/* AVATAR */}
-        <div className="flex flex-col items-center">
-          <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
+          {/* AVATAR */}
+          <div className="flex flex-col items-center">
+            <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileSelect} disabled={isSubmitting} />
 
-          <div
-            onClick={() => fileInputRef.current?.click()}
-            className="w-24 h-24 rounded-full bg-background border-4 border-white shadow-lg cursor-pointer hover:scale-105 transition-transform relative group overflow-hidden ring-1 ring-border"
-          >
-            {previewUrl || fotoAtualUrl ? (
-              <img src={previewUrl || fotoAtualUrl!} alt="Perfil" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-300">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-10 h-10">
-                  <path fillRule="evenodd" d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z" clipRule="evenodd" />
-                </svg>
-              </div>
-            )}
-            <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <span className="text-white text-[10px] font-bold uppercase tracking-wide">Alterar</span>
-            </div>
-          </div>
-          <p className="text-xs text-primary font-medium mt-2 cursor-pointer hover:underline" onClick={() => fileInputRef.current?.click()}>
-            {previewUrl ? 'Trocar Foto' : 'Adicionar Foto'}
-          </p>
-        </div>
-
-        {/* DADOS GERAIS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div className="md:col-span-2">
-            <label className={labelStyle}>Nome Completo</label>
-            <Input {...register('nome')} error={errors.nome?.message} disabled={isSubmitting} />
-          </div>
-
-          <div>
-            <label className={labelStyle}>Email</label>
-            <Input type="email" {...register('email')} error={errors.email?.message} disabled={isSubmitting} />
-          </div>
-
-          <div>
-            <label className={labelStyle}>Matrícula</label>
-            <Input {...register('matricula')} error={errors.matricula?.message} disabled={isSubmitting} />
-          </div>
-
-          <div>
-            <label className={labelStyle}>Nova Senha (Opcional)</label>
-            <Input type="password" placeholder="******" {...register('password')} error={errors.password?.message} disabled={isSubmitting} />
-          </div>
-
-          <div>
-            <label className={labelStyle}>Função</label>
-            <div className="relative">
-              <select className={selectStyle} {...register('role')} disabled={isSubmitting}>
-                {ROLES.map((role) => <option key={role} value={role}>{getRoleLabel(role)}</option>)}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-              </div>
-            </div>
-            {errors.role && <p className="text-xs text-red-500 mt-1">{errors.role.message}</p>}
-          </div>
-        </div>
-
-        {/* SEÇÃO RH (Condicional) */}
-        <div className={`transition-all duration-300 overflow-hidden ${roleSelecionada === 'OPERADOR' ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
-          <div className="bg-blue-50/50 p-5 rounded-xl border border-blue-100 mt-2">
-            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-blue-100">
-              <div className="w-1.5 h-4 bg-primary rounded-full" />
-              <h4 className="text-xs font-bold text-blue-800 uppercase tracking-widest">Dados de Habilitação & Cargo</h4>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="md:col-span-2">
-                <label className={labelStyle}>Cargo Oficial</label>
-                <div className="relative">
-                  <select className={selectStyle} {...register('cargoId')} disabled={isSubmitting || isLoadingCargos}>
-                    <option value="">Selecione o cargo...</option>
-                    {cargos.map((cargo) => <option key={cargo.id} value={cargo.id}>{cargo.nome}</option>)}
-                  </select>
-                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg></div>
+            <div
+              onClick={() => !isSubmitting && fileInputRef.current?.click()}
+              className={`w-24 h-24 rounded-full bg-background border-4 border-white shadow-lg cursor-pointer hover:scale-105 transition-transform relative group overflow-hidden ring-1 ring-border ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+            >
+              {previewUrl || fotoAtualUrl ? (
+                <img src={previewUrl || fotoAtualUrl!} alt="Perfil" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                  <User className="w-10 h-10" />
                 </div>
+              )}
+              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+            </div>
+            <p className="text-xs text-primary font-medium mt-2 cursor-pointer hover:underline" onClick={() => !isSubmitting && fileInputRef.current?.click()}>
+              {previewUrl ? 'Trocar Foto' : 'Adicionar Foto'}
+            </p>
+          </div>
+
+          {/* DADOS GERAIS */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div className="md:col-span-2">
+              <Input label="Nome Completo" icon={<User className="w-4 h-4"/>} {...register('nome')} error={errors.nome?.message} disabled={isSubmitting} />
+            </div>
+
+            <div>
+              <Input label="Email" type="email" icon={<Mail className="w-4 h-4"/>} {...register('email')} error={errors.email?.message} disabled={isSubmitting} />
+            </div>
+
+            <div>
+              <Input label="Matrícula" icon={<Hash className="w-4 h-4"/>} {...register('matricula')} error={errors.matricula?.message} disabled={isSubmitting} />
+            </div>
+
+            <div>
+              <Input label="Nova Senha (Opcional)" type="password" placeholder="******" icon={<Lock className="w-4 h-4"/>} {...register('password')} error={errors.password?.message} disabled={isSubmitting} />
+            </div>
+
+            <div>
+              <Select 
+                label="Função" 
+                options={roleOptions} 
+                icon={<Shield className="w-4 h-4"/>}
+                {...register('role')} 
+                error={errors.role?.message} 
+                disabled={isSubmitting} 
+              />
+            </div>
+          </div>
+
+          {/* SEÇÃO RH (Condicional) */}
+          <div className={`transition-all duration-300 overflow-hidden ${roleSelecionada === 'OPERADOR' ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
+            <div className="bg-blue-50/50 p-5 rounded-xl border border-blue-100 mt-2">
+              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-blue-100">
+                <div className="w-1.5 h-4 bg-primary rounded-full" />
+                <h4 className="text-xs font-bold text-blue-800 uppercase tracking-widest">Dados de Habilitação & Cargo</h4>
               </div>
 
-              <div><Input label="Nº CNH" placeholder="Registro" {...register('cnhNumero')} disabled={isSubmitting} className="bg-white" /></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="md:col-span-2">
+                  <Select 
+                    label="Cargo Oficial" 
+                    options={cargoOptions}
+                    icon={<Briefcase className="w-4 h-4"/>}
+                    {...register('cargoId')} 
+                    disabled={isSubmitting} 
+                  />
+                </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <Input label="Cat." placeholder="AE" {...register('cnhCategoria')} disabled={isSubmitting} className="bg-white text-center uppercase" maxLength={2} />
-                <Input label="Validade" type="date" {...register('cnhValidade')} disabled={isSubmitting} className="bg-white" />
-              </div>
+                <div>
+                  <Input label="Nº CNH" placeholder="Registro" icon={<FileText className="w-4 h-4"/>} {...register('cnhNumero')} disabled={isSubmitting} className="bg-white" />
+                </div>
 
-              <div className="md:col-span-2">
-                <Input label="Data de Admissão" type="date" {...register('dataAdmissao')} disabled={isSubmitting} className="bg-white" />
+                <div className="grid grid-cols-2 gap-3">
+                  <Input label="Cat." placeholder="AE" {...register('cnhCategoria')} disabled={isSubmitting} className="bg-white text-center uppercase" maxLength={2} />
+                  <Input label="Validade" type="date" {...register('cnhValidade')} disabled={isSubmitting} className="bg-white" />
+                </div>
+
+                <div className="md:col-span-2">
+                  <Input label="Data de Admissão" type="date" icon={<Calendar className="w-4 h-4"/>} {...register('dataAdmissao')} disabled={isSubmitting} className="bg-white" />
+                </div>
               </div>
             </div>
           </div>
         </div>
 
         {/* FOOTER */}
-        <div className="flex gap-3 pt-6 border-t border-border">
-          <Button type="button" variant="secondary" className="flex-1" disabled={isSubmitting} onClick={onCancelar}>Cancelar</Button>
-          <Button type="submit" variant="primary" className="flex-[2] shadow-lg shadow-primary/20" disabled={isSubmitting} isLoading={isSubmitting}>
+        <div className="flex gap-3 p-4 border-t border-border bg-background shrink-0">
+          <Button type="button" variant="ghost" className="flex-1" disabled={isSubmitting} onClick={onCancelar}>Cancelar</Button>
+          <Button type="submit" variant="primary" className="flex-[2] shadow-button hover:shadow-float" disabled={isSubmitting} isLoading={isSubmitting}>
             Salvar Alterações
           </Button>
         </div>

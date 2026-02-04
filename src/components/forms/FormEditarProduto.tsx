@@ -1,30 +1,33 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
+import { toast } from 'sonner';
+import { Package, Save } from 'lucide-react';
+
+// --- UI COMPONENTS ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { toast } from 'sonner';
+import { Select } from '../ui/Select'; 
 
 const tipos = ["PECA", "SERVICO", "COMBUSTIVEL", "ADITIVO", "LUBRIFICANTE", "PNEU", "OUTROS"] as const;
 
-// --- SCHEMA (Sincronizado com o Cadastro) ---
+// --- SCHEMA ---
 const produtoSchema = z.object({
   nome: z.string({ error: "Nome obrigatório" })
     .trim()
     .min(2, { message: "Mínimo 2 letras" })
     .transform((val) => val.toUpperCase()),
 
-  tipo: z.enum(tipos).default('PECA'), // Usando a lista completa de tipos
+  tipo: z.enum(tipos).default('PECA'),
 
   unidadeMedida: z.string({ error: "Unidade obrigatória" })
     .trim()
     .min(1, { message: "Ex: UN, L" })
     .transform(val => val.trim().toUpperCase()),
 
-  // Novos campos de estoque
   estoqueMinimo: z.coerce.number().min(0, "Mínimo inválido").default(0),
   estoqueAtual: z.coerce.number().min(0, "Estoque inválido").default(0),
   valorReferencia: z.coerce.number().min(0, "Valor inválido").optional(),
@@ -47,7 +50,7 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
     handleSubmit,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm<ProdutoFormInput, any, ProdutoFormOutput>({ // [CORREÇÃO: Tipagem]
+  } = useForm<ProdutoFormInput, any, ProdutoFormOutput>({
     resolver: zodResolver(produtoSchema),
     defaultValues: {
       nome: '',
@@ -57,8 +60,16 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
       estoqueAtual: 0,
       valorReferencia: 0
     },
-    mode: 'onBlur' // [CORREÇÃO: UX]
+    mode: 'onBlur'
   });
+
+  // Mapeia tipos para o Select
+  const tipoOptions = useMemo(() => {
+    return tipos.map(t => ({
+      label: t.replace('_', ' '),
+      value: t
+    }));
+  }, []);
 
   // --- CARREGAMENTO ---
   useEffect(() => {
@@ -69,7 +80,6 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
       try {
         const { data } = await api.get(`/produtos/${produtoId}`);
 
-        // Verifica se o tipo existe na lista nova, senão 'OUTROS'
         const tipoValido = tipos.includes(data.tipo) ? data.tipo : 'OUTROS';
 
         reset({
@@ -100,7 +110,6 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
       unidadeMedida: DOMPurify.sanitize(data.unidadeMedida)
     };
 
-    // [ATENÇÃO] Usando a rota no plural para manter padrão REST
     const promise = api.put(`/produtos/${produtoId}`, payload);
 
     toast.promise(promise, {
@@ -115,67 +124,58 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
     });
   };
 
-  // --- ESTILOS ---
-  const labelStyle = "block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1";
-  const selectStyle = "w-full h-10 px-3 bg-white border border-border rounded-input text-sm text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer placeholder:text-gray-400 disabled:bg-gray-50";
-
   if (loadingData) {
     return (
-      <div className="bg-white rounded-xl shadow-lg border border-border p-12 flex flex-col items-center justify-center">
+      <div className="bg-surface rounded-xl shadow-lg border border-border p-12 flex flex-col items-center justify-center h-64">
         <div className="animate-spin rounded-full h-10 w-10 border-4 border-border border-t-primary"></div>
-        <p className="text-sm text-gray-400 font-medium mt-4 animate-pulse">Carregando item...</p>
+        <p className="text-sm text-text-muted font-medium mt-4 animate-pulse">Carregando item...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-border overflow-hidden">
+    <div className="bg-surface rounded-xl shadow-card border border-border overflow-hidden animate-enter flex flex-col max-h-[85vh]">
 
       {/* HEADER */}
-      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center">
+      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
         <div>
-          <h3 className="text-lg font-bold text-gray-900">Editar Item</h3>
-          <p className="text-xs text-gray-500">Atualize dados do catálogo.</p>
+          <h3 className="text-lg font-bold text-text-main">Editar Item</h3>
+          <p className="text-xs text-text-secondary">Atualize dados do catálogo.</p>
         </div>
-        <div className="p-2 bg-white rounded-lg border border-border shadow-sm text-primary">
-          <span className="text-xl">📦</span>
+        <div className="p-2 bg-surface rounded-lg border border-border shadow-sm text-primary">
+          <Package className="w-5 h-5" />
         </div>
       </div>
 
-      <form className="p-6 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+      <form className="flex flex-col flex-1 overflow-hidden" onSubmit={handleSubmit(onSubmit)}>
+        
+        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
 
-        {/* NOME DO ITEM */}
-        <div>
-          <label className={labelStyle}>Descrição do Item / Serviço</label>
-          <Input
-            {...register('nome')}
-            placeholder="Ex: FILTRO DE ÓLEO MOTOR"
-            error={errors.nome?.message}
-            disabled={isSubmitting}
-            className="uppercase font-medium"
-            autoFocus
-          />
-        </div>
-
-        {/* GRID TIPO E UNIDADE */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {/* NOME DO ITEM */}
           <div>
-            <label className={labelStyle}>Categoria</label>
-            <div className="relative">
-              <select {...register('tipo')} className={selectStyle} disabled={isSubmitting}>
-                {tipos.map(t => (
-                  <option key={t} value={t}>{t.replace('_', ' ')}</option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-              </div>
-            </div>
+            <Input
+              label="Descrição do Item / Serviço"
+              {...register('nome')}
+              placeholder="Ex: FILTRO DE ÓLEO MOTOR"
+              error={errors.nome?.message}
+              disabled={isSubmitting}
+              className="uppercase font-medium"
+              autoFocus
+            />
           </div>
 
-          <div>
-            <label className={labelStyle}>Unidade (UN, L, KG)</label>
+          {/* GRID TIPO E UNIDADE */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <Select
+              label="Categoria"
+              options={tipoOptions}
+              {...register('tipo')}
+              error={errors.tipo?.message}
+              disabled={isSubmitting}
+            />
+
             <Input
+              label="Unidade (UN, L, KG)"
               {...register('unidadeMedida')}
               placeholder="Ex: UN"
               error={errors.unidadeMedida?.message}
@@ -185,36 +185,36 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
             />
           </div>
 
-          {/* [CORREÇÃO: Campos de Estoque Adicionados] */}
-          <div>
-            <label className={labelStyle}>Estoque Mínimo (Alerta)</label>
-            <Input
-              type="number"
-              {...register('estoqueMinimo')}
-              placeholder="5"
-              error={errors.estoqueMinimo?.message}
-              disabled={isSubmitting}
-            />
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2 border-t border-border">
+             <div>
+              <Input
+                label="Estoque Mínimo (Alerta)"
+                type="number"
+                {...register('estoqueMinimo')}
+                placeholder="5"
+                error={errors.estoqueMinimo?.message}
+                disabled={isSubmitting}
+              />
+             </div>
 
-          <div>
-            <label className={labelStyle}>Estoque Atual</label>
-            <Input
-              type="number"
-              {...register('estoqueAtual')}
-              placeholder="0"
-              error={errors.estoqueAtual?.message}
-              disabled={isSubmitting}
-            />
+             <div>
+               <Input
+                 label="Estoque Atual"
+                 type="number"
+                 {...register('estoqueAtual')}
+                 placeholder="0"
+                 error={errors.estoqueAtual?.message}
+                 disabled={isSubmitting}
+               />
+             </div>
           </div>
         </div>
 
         {/* FOOTER */}
-        <div className="flex gap-3 pt-4 border-t border-border">
+        <div className="p-4 bg-background border-t border-border flex justify-end gap-3 shrink-0">
           <Button
             type="button"
             variant="ghost"
-            className="flex-1 text-gray-500"
             onClick={onCancelar}
             disabled={isSubmitting}
           >
@@ -223,14 +223,15 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
           <Button
             type="submit"
             variant="primary"
-            className="flex-[2] shadow-lg shadow-primary/20"
+            className="shadow-button hover:shadow-float px-6"
             isLoading={isSubmitting}
             disabled={isSubmitting}
-            icon={<span>💾</span>}
+            icon={<Save className="w-4 h-4" />}
           >
             Salvar Alterações
           </Button>
         </div>
+
       </form>
     </div>
   );

@@ -1,20 +1,24 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
+import { toast } from 'sonner';
+import { Wrench, AlertTriangle, Gauge, Truck, Fuel, Activity, Calendar } from 'lucide-react';
+
+// --- UI COMPONENTS ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { toast } from 'sonner';
-// Importando as funções utilitárias que criamos hoje
+import { Select } from '../ui/Select'; 
+
+// --- UTILS ---
 import { formatKmVisual, parseDecimal } from '../../utils';
-import { Wrench, AlertTriangle, Gauge } from 'lucide-react'; // Ícones
 
 const tiposDeVeiculo = ["POLIGUINDASTE", "VACUO", "MUNCK", "UTILITARIO", "LEVE", "OUTRO"] as const;
 const tiposDeCombustivel = ["DIESEL_S10", "GASOLINA_COMUM", "ETANOL", "GNV"] as const;
 const statusVeiculo = ["ATIVO", "EM_MANUTENCAO", "INATIVO"] as const;
 
-// --- SCHEMA ATUALIZADO ---
+// --- SCHEMA ---
 const veiculoSchema = z.object({
   placa: z.string({ error: "Placa obrigatória" })
     .length(7, { message: "Placa deve ter 7 caracteres" })
@@ -32,7 +36,7 @@ const veiculoSchema = z.object({
   capacidadeTanque: z.coerce.number().positive("Deve ser maior que 0").optional().nullable(),
   status: z.enum(statusVeiculo).default('ATIVO'),
 
-  // ✅ NOVO CAMPO: Edição Manual do Odômetro (String para máscara)
+  // Campo para edição manual do odômetro
   ultimoKm: z.string().min(1, "KM é obrigatório"),
 
   vencimentoCiv: z.string().optional().or(z.literal('')),
@@ -62,6 +66,15 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
     mode: 'onBlur'
   });
 
+  // Opções para Selects
+  const tipoVeiculoOptions = useMemo(() => tiposDeVeiculo.map(t => ({ label: t, value: t })), []);
+  const combustivelOptions = useMemo(() => tiposDeCombustivel.map(t => ({ label: t.replace('_', ' '), value: t })), []);
+  const statusOptions = useMemo(() => [
+    { label: '🟢 Ativo (Em Operação)', value: 'ATIVO' },
+    { label: '🔧 Em Manutenção (Oficina)', value: 'EM_MANUTENCAO' },
+    { label: '🔴 Inativo (Baixado/Vendido)', value: 'INATIVO' }
+  ], []);
+
   // --- CARREGAMENTO ---
   useEffect(() => {
     if (!veiculoId) return;
@@ -82,10 +95,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
           tipoCombustivel: (tipoCombustivelSafe as any),
           capacidadeTanque: veiculo.capacidadeTanque || 0,
           status: veiculo.status || 'ATIVO',
-
-          // ✅ Formata o KM vindo do banco (ex: 325178 -> 325.178)
           ultimoKm: formatKmVisual(veiculo.ultimoKm),
-
           vencimentoCiv: veiculo.vencimentoCiv ? new Date(veiculo.vencimentoCiv).toISOString().split('T')[0] : '',
           vencimentoCipp: veiculo.vencimentoCipp ? new Date(veiculo.vencimentoCipp).toISOString().split('T')[0] : ''
         });
@@ -100,12 +110,10 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
     fetchVeiculo();
   }, [veiculoId, reset, onCancelar]);
 
-  // Handler para formatar KM enquanto digita
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue("ultimoKm", formatKmVisual(e.target.value));
   };
 
-  // --- SUBMISSÃO ---
   const onSubmit = async (data: VeiculoFormOutput) => {
     const formatarDataIsoSegura = (dateStr: string | null | undefined) => {
       if (!dateStr) return null;
@@ -118,10 +126,6 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
       vencimentoCipp: formatarDataIsoSegura(data.vencimentoCipp),
       capacidadeTanque: data.capacidadeTanque || null,
       tipoVeiculo: data.tipoVeiculo || null,
-
-      // ✅ CORREÇÃO CRÍTICA AQUI:
-      // O backend espera "kmAtual" para atualizar o odômetro.
-      // Antes estava enviando "ultimoKm", que o backend ignorava.
       kmAtual: parseDecimal(data.ultimoKm) 
     };
 
@@ -135,10 +139,6 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
       toast.error(msg);
     }
   };
-
-  // --- ESTILOS ---
-  const labelStyle = "block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1";
-  const selectStyle = "w-full h-10 px-3 bg-white border border-border rounded-input text-sm text-gray-900 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all appearance-none cursor-pointer placeholder:text-gray-400 disabled:bg-gray-50";
 
   if (loadingData) {
     return (
@@ -156,10 +156,10 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
       <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
         <div>
           <h3 className="text-lg font-bold text-gray-900">Editar Veículo</h3>
-          <p className="text-xs text-gray-500">Atualize especificações e status.</p>
+          <p className="text-xs text-text-secondary">Atualize especificações e status.</p>
         </div>
         <div className="p-2 bg-white rounded-lg border border-border shadow-sm text-primary">
-          <Wrench className="w-5 h-5" />
+          <Truck className="w-5 h-5" />
         </div>
       </div>
 
@@ -168,8 +168,8 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
         {/* IDENTIFICAÇÃO */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
-            <label className={labelStyle}>Placa (Imutável)</label>
             <Input
+              label="Placa (Imutável)"
               {...register('placa')}
               disabled
               className="bg-gray-100 text-gray-500 cursor-not-allowed font-mono font-bold uppercase border-border"
@@ -201,22 +201,17 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
               disabled={isSubmitting}
             />
 
-            <div>
-              <label className={labelStyle}>Tipo</label>
-              <div className="relative">
-                <select className={selectStyle} {...register('tipoVeiculo')} disabled={isSubmitting}>
-                  <option value="">Selecione...</option>
-                  {tiposDeVeiculo.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"></path></svg>
-                </div>
-              </div>
-            </div>
+            <Select
+              label="Tipo"
+              options={tipoVeiculoOptions}
+              icon={<Truck className="w-4 h-4"/>}
+              {...register('tipoVeiculo')}
+              disabled={isSubmitting}
+            />
           </div>
         </div>
 
-        {/* --- ÁREA DE CORREÇÃO DE ODÔMETRO (NOVO) --- */}
+        {/* --- ÁREA DE CORREÇÃO DE ODÔMETRO --- */}
         <div className="bg-amber-50 p-5 rounded-xl border border-amber-200 shadow-inner">
           <div className="flex items-center gap-2 mb-3">
             <div className="bg-amber-100 p-1.5 rounded-lg">
@@ -248,45 +243,32 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
 
         {/* DADOS TÉCNICOS */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <div>
-            <label className={labelStyle}>Combustível</label>
-            <div className="relative">
-              <select className={selectStyle} {...register('tipoCombustivel')} disabled={isSubmitting}>
-                <option value="DIESEL_S10">Diesel S10</option>
-                <option value="GASOLINA_COMUM">Gasolina Comum</option>
-                <option value="ETANOL">Etanol</option>
-                <option value="GNV">GNV</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7"></path></svg>
-              </div>
-            </div>
-          </div>
+          <Select
+            label="Combustível"
+            options={combustivelOptions}
+            icon={<Fuel className="w-4 h-4"/>}
+            {...register('tipoCombustivel')}
+            disabled={isSubmitting}
+          />
 
-          <div className="relative">
-            <Input
-              label="Tanque (L)"
-              type="number"
-              {...register('capacidadeTanque')}
-              error={errors.capacidadeTanque?.message}
-              disabled={isSubmitting}
-            />
-          </div>
+          <Input
+            label="Tanque (L)"
+            type="number"
+            {...register('capacidadeTanque')}
+            error={errors.capacidadeTanque?.message}
+            disabled={isSubmitting}
+          />
         </div>
 
         {/* STATUS OPERACIONAL */}
         <div>
-          <label className={labelStyle}>Status Operacional</label>
-          <div className="relative">
-            <select className={selectStyle} {...register('status')} disabled={isSubmitting}>
-              <option value="ATIVO">🟢 Ativo (Em Operação)</option>
-              <option value="EM_MANUTENCAO">🔧 Em Manutenção (Oficina)</option>
-              <option value="INATIVO">🔴 Inativo (Baixado/Vendido)</option>
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-500">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path></svg>
-            </div>
-          </div>
+          <Select
+            label="Status Operacional"
+            options={statusOptions}
+            icon={<Activity className="w-4 h-4"/>}
+            {...register('status')}
+            disabled={isSubmitting}
+          />
           <p className="text-[10px] text-gray-400 mt-2 ml-1">
             * Veículos inativos não aparecem na lista de abastecimento.
           </p>
@@ -297,6 +279,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
           <Input
             label="Vencimento CIV"
             type="date"
+            icon={<Calendar className="w-4 h-4"/>}
             {...register('vencimentoCiv')}
             error={errors.vencimentoCiv?.message}
             disabled={isSubmitting}
@@ -304,6 +287,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
           <Input
             label="Vencimento CIPP"
             type="date"
+            icon={<Calendar className="w-4 h-4"/>}
             {...register('vencimentoCipp')}
             error={errors.vencimentoCipp?.message}
             disabled={isSubmitting}
@@ -327,6 +311,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
             className="flex-[2] shadow-lg shadow-primary/20"
             isLoading={isSubmitting}
             disabled={isSubmitting}
+            icon={<Wrench className="w-4 h-4"/>}
           >
             Salvar Alterações
           </Button>

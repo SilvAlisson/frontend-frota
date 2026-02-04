@@ -1,21 +1,60 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { api } from '../../services/api';
+import { supabase } from '../../supabaseClient';
+import { toast } from 'sonner';
+import { 
+  Fuel, Save, Plus, X, User as UserIcon, Truck, 
+  MapPin, Calendar, CreditCard, Image as ImageIcon, Loader2 
+} from 'lucide-react';
+
+// --- SEUS COMPONENTES DE UI ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { api } from '../../services/api';
-import { toast } from 'sonner';
-// CORREÇÃO: Renomeamos 'User' para 'UserIcon' para não conflitar com o tipo
-import { Fuel, Save, Plus, X, ChevronDown, User as UserIcon, Truck, MapPin, Calendar, CreditCard } from 'lucide-react';
+import { Select } from '../ui/Select'; 
 import type { Abastecimento, User, Veiculo, Produto, Fornecedor } from '../../types';
 
-// --- SCHEMA ---
+// --- UTILS: Compressão de Imagem (Mantida) ---
+const comprimirImagem = (arquivo: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(arquivo);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 1600;
+        let [w, h] = [img.width, img.height];
+
+        if (w > h) { if (w > MAX_WIDTH) { h *= MAX_WIDTH / w; w = MAX_WIDTH; } }
+        else { if (h > MAX_HEIGHT) { w *= MAX_HEIGHT / h; h = MAX_HEIGHT; } }
+
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, w, h);
+          canvas.toBlob((blob) => {
+            if (blob) resolve(new File([blob], arquivo.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg', lastModified: Date.now() }));
+            else reject(new Error("Erro ao comprimir"));
+          }, 'image/jpeg', 0.7);
+        } else reject(new Error("Erro canvas"));
+      };
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
+// --- SCHEMA (Mantido e estendido com foto) ---
 const itemSchema = z.object({
   produtoId: z.string().min(1, "Selecione o produto"),
   quantidade: z.coerce.number().gt(0, "Qtd inválida"),
-  valorPorUnidade: z.coerce.number().gt(0, "Valor inválido"),
+  valorPorUnidade: z.coerce.number().min(0, "Valor inválido"), // Aceita 0, mas preferencialmente > 0
 });
 
 const editSchema = z.object({
@@ -26,6 +65,7 @@ const editSchema = z.object({
   dataHora: z.string().min(1, "Data obrigatória"),
   placaCartaoUsado: z.string().optional(),
   justificativa: z.string().optional(),
+  fotoNotaFiscalUrl: z.string().optional().nullable(), // Adicionado
   itens: z.array(itemSchema).min(1, "Adicione itens"),
 });
 
@@ -40,8 +80,10 @@ interface FormEditarAbastecimentoProps {
 
 export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }: FormEditarAbastecimentoProps) {
   const queryClient = useQueryClient();
+  const [uploading, setUploading] = useState(false);
+  const [previewFoto, setPreviewFoto] = useState<string | null>(null);
 
-  // 1. Queries
+  // 1. Queries (Mantendo seus staleTime originais)
   const { data: abastecimento, isLoading: loadingAbs } = useQuery<Abastecimento>({
     queryKey: ['abastecimento', abastecimentoId],
     queryFn: async () => (await api.get(`/abastecimentos/${abastecimentoId}`)).data,
@@ -72,13 +114,18 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
     staleTime: 1000 * 60 * 30
   });
 
-  // Filtros de Negócio
-  const produtosCombustivel = produtos.filter(p => ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo));
-  const fornecedoresPosto = fornecedores.filter(f => f.tipo === 'POSTO');
-  const motoristas = usuarios.filter(u => ['OPERADOR', 'ENCARREGADO'].includes(u.role));
+  // Filtros de Negócio e Opções para Select
+  const produtosCombustivel = useMemo(() => produtos.filter(p => ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo)), [produtos]);
+  const fornecedoresPosto = useMemo(() => fornecedores.filter(f => f.tipo === 'POSTO'), [fornecedores]);
+  const motoristas = useMemo(() => usuarios.filter(u => ['OPERADOR', 'ENCARREGADO'].includes(u.role)), [usuarios]);
+
+  const veiculosOptions = useMemo(() => veiculos.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` })), [veiculos]);
+  const motoristasOptions = useMemo(() => motoristas.map(u => ({ value: u.id, label: u.nome })), [motoristas]);
+  const fornecedoresOptions = useMemo(() => fornecedoresPosto.map(f => ({ value: f.id, label: f.nome })), [fornecedoresPosto]);
+  const produtosOptions = useMemo(() => produtosCombustivel.map(p => ({ value: p.id, label: p.nome })), [produtosCombustivel]);
 
   // 2. Form Setup
-  const { register, control, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<EditFormInput, any, EditFormOutput>({
+  const { register, control, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<EditFormInput, any, EditFormOutput>({
     resolver: zodResolver(editSchema),
     mode: 'onBlur'
   });
@@ -86,31 +133,69 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
   const itensWatch = useWatch({ control, name: "itens" });
 
-  const totalGeral = itensWatch?.reduce((acc, item) =>
-    acc + (Number(item.quantidade || 0) * Number(item.valorPorUnidade || 0)), 0
+  const totalGeral = (itensWatch || []).reduce((acc, item) =>
+    acc + (Number(item?.quantidade || 0) * Number(item?.valorPorUnidade || 0)), 0
   ) || 0;
 
-  // 3. Populate Form
+  // 3. Populate Form (LÓGICA CRUCIAL MANTIDA)
   useEffect(() => {
     if (abastecimento) {
+      // Usamos (as any) para acessar propriedades que podem vir populadas (objeto) ou não (id), 
+      // garantindo compatibilidade com diferentes respostas do backend
+      const abs = abastecimento as any;
+
       reset({
-        veiculoId: abastecimento.veiculoId || (abastecimento.veiculo as any)?.id,
-        operadorId: (abastecimento as any).operadorId || usuarios.find(u => u.nome === abastecimento.operador?.nome)?.id || '',
-        fornecedorId: (abastecimento as any).fornecedorId || fornecedores.find(f => f.nome === abastecimento.fornecedor?.nome)?.id || '',
-        kmOdometro: abastecimento.kmOdometro,
-        dataHora: new Date(abastecimento.dataHora).toISOString().slice(0, 16),
-        placaCartaoUsado: abastecimento.placaCartaoUsado || '',
-        justificativa: abastecimento.justificativa || '',
-        itens: abastecimento.itens?.map(i => ({
-          produtoId: (i as any).produtoId || i.produto?.id,
+        veiculoId: abs.veiculoId || abs.veiculo?.id,
+        // Tenta pegar ID direto, senão busca pelo nome no array de usuários (fallback importante que você criou)
+        operadorId: abs.operadorId || usuarios.find(u => u.nome === abs.operador?.nome)?.id || '',
+        fornecedorId: abs.fornecedorId || fornecedores.find(f => f.nome === abs.fornecedor?.nome)?.id || '',
+        kmOdometro: Number(abs.kmOdometro),
+        dataHora: new Date(abs.dataHora).toISOString().slice(0, 16),
+        placaCartaoUsado: abs.placaCartaoUsado || '',
+        justificativa: abs.justificativa || '',
+        fotoNotaFiscalUrl: abs.fotoNotaFiscalUrl,
+        // Mapeamento cuidadoso dos itens
+        itens: abs.itens?.map((i: any) => ({
+          produtoId: i.produtoId || i.produto?.id || '',
           quantidade: i.quantidade,
-          valorPorUnidade: (i as any).valorPorUnidade || ((i.produto as any)?.valorAtual || 0)
+          valorPorUnidade: i.valorPorUnidade || ((i.produto as any)?.valorAtual || 0)
         })) || []
       });
+
+      if (abs.fotoNotaFiscalUrl) {
+        setPreviewFoto(abs.fotoNotaFiscalUrl);
+      }
     }
   }, [abastecimento, usuarios, fornecedores, reset]);
 
-  // 4. Mutation
+  // 4. Upload Handler
+  const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    const file = e.target.files[0];
+    
+    try {
+      setUploading(true);
+      const compressedFile = await comprimirImagem(file);
+      
+      const fileName = `abastecimento-${Date.now()}-${Math.random().toString(36).substring(2,9)}.jpg`;
+      const { data: uploadData, error } = await supabase.storage.from('fotos-frota').upload(`public/${fileName}`, compressedFile);
+      
+      if (error) throw error;
+      
+      const { data: publicUrl } = supabase.storage.from('fotos-frota').getPublicUrl(uploadData.path);
+      
+      setValue('fotoNotaFiscalUrl', publicUrl.publicUrl);
+      setPreviewFoto(publicUrl.publicUrl);
+      toast.success("Foto atualizada com sucesso!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao enviar foto.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // 5. Mutation
   const updateMutation = useMutation({
     mutationFn: async (data: EditFormOutput) => {
       await api.put(`/abastecimentos/${abastecimentoId}`, {
@@ -134,9 +219,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
     }
   });
 
-  // Estilos padronizados
-  const labelStyle = "flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase mb-1.5 ml-1";
-  const selectStyle = "w-full h-11 px-3 bg-surface border border-border rounded-xl text-sm text-text-main focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer disabled:bg-background appearance-none";
+  const isLocked = isSubmitting || uploading;
 
   if (loadingAbs) return (
     <div className="p-12 flex flex-col items-center justify-center space-y-3 bg-surface rounded-xl border border-border h-64">
@@ -147,12 +230,11 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
 
   return (
     <div className="bg-surface rounded-xl shadow-card border border-border overflow-hidden animate-enter flex flex-col max-h-[85vh]">
-
-      {/* HEADER */}
+      
       <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
         <div>
           <h3 className="text-lg font-bold text-text-main">Editar Abastecimento</h3>
-          <p className="text-xs text-text-secondary">Correção de lançamento de combustível.</p>
+          <p className="text-xs text-text-secondary">Ajuste os dados e comprovante.</p>
         </div>
         <div className="p-2 bg-surface rounded-lg border border-border shadow-sm text-primary">
           <Fuel className="w-5 h-5" />
@@ -160,86 +242,108 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
       </div>
 
       <form onSubmit={handleSubmit((data) => updateMutation.mutate(data))} className="flex flex-col flex-1 overflow-hidden">
-        
         <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
 
-          {/* GRUPO 1: CONTEXTO */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className={labelStyle}><Truck className="w-3 h-3"/> Veículo</label>
-              <div className="relative">
-                <select className={selectStyle} {...register('veiculoId')} disabled={isSubmitting}>
-                  {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>)}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </div>
-              {errors.veiculoId && <p className="text-[10px] text-error mt-1 ml-1">{errors.veiculoId.message}</p>}
-            </div>
-
-            <div>
-              <label className={labelStyle}><UserIcon className="w-3 h-3"/> Motorista</label>
-              <div className="relative">
-                <select className={selectStyle} {...register('operadorId')} disabled={isSubmitting}>
-                  <option value="">Selecione...</option>
-                  {motoristas.map(u => <option key={u.id} value={u.id}>{u.nome}</option>)}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </div>
-            </div>
-
-            <div>
-              <label className={labelStyle}><MapPin className="w-3 h-3"/> Fornecedor</label>
-              <div className="relative">
-                <select className={selectStyle} {...register('fornecedorId')} disabled={isSubmitting}>
-                  {fornecedoresPosto.map(f => <option key={f.id} value={f.id}>{f.nome}</option>)}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
+          <div className="flex flex-col md:flex-row gap-6">
+            
+            {/* --- COLUNA ESQUERDA: FOTO (Nova Funcionalidade) --- */}
+            <div className="w-full md:w-1/3 flex flex-col gap-2">
+              <span className="text-xs font-bold text-text-secondary uppercase ml-1">Comprovante</span>
+              <div className="relative aspect-[3/4] bg-gray-100 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden group hover:border-primary transition-colors cursor-pointer">
+                {uploading ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                    <span className="text-xs text-text-muted">Enviando...</span>
+                  </div>
+                ) : previewFoto ? (
+                  <>
+                    <img src={previewFoto} alt="Nota Fiscal" className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                       <ImageIcon className="w-8 h-8 text-white" />
+                       <span className="text-white text-xs font-bold bg-black/20 px-2 py-1 rounded">Trocar Foto</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center text-text-muted p-4">
+                    <ImageIcon className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                    <p className="text-xs">Clique para adicionar<br/>comprovante</p>
+                  </div>
+                )}
+                
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                  onChange={handleFotoChange}
+                  disabled={isLocked}
+                />
               </div>
             </div>
 
-            <div>
-              <Input
-                label="KM Odômetro"
-                type="number"
-                {...register('kmOdometro')}
-                error={errors.kmOdometro?.message}
-                disabled={isSubmitting}
+            {/* --- COLUNA DIREITA: DADOS (Com Componentes de UI) --- */}
+            <div className="w-full md:w-2/3 grid grid-cols-1 gap-5 content-start">
+              
+              <Select 
+                label="Veículo" 
+                options={veiculosOptions} 
+                icon={<Truck className="w-4 h-4"/>} 
+                {...register('veiculoId')} 
+                error={errors.veiculoId?.message} 
+                disabled={isLocked} 
               />
-            </div>
+              
+              <Select 
+                label="Motorista" 
+                options={motoristasOptions} 
+                icon={<UserIcon className="w-4 h-4"/>} 
+                {...register('operadorId')} 
+                disabled={isLocked} 
+              />
+              
+              <Select 
+                label="Fornecedor" 
+                options={fornecedoresOptions} 
+                icon={<MapPin className="w-4 h-4"/>} 
+                {...register('fornecedorId')} 
+                error={errors.fornecedorId?.message} 
+                disabled={isLocked} 
+              />
 
-            <div>
-              <label className={labelStyle}><Calendar className="w-3 h-3"/> Data e Hora</label>
+              <div className="grid grid-cols-2 gap-4">
+                <Input
+                  label="KM Odômetro"
+                  type="number"
+                  {...register('kmOdometro')}
+                  error={errors.kmOdometro?.message}
+                  disabled={isLocked}
+                />
+                <Input
+                  label="Cartão (Final)"
+                  maxLength={4}
+                  placeholder="Ex: 1234"
+                  icon={<CreditCard className="w-4 h-4"/>}
+                  {...register('placaCartaoUsado')}
+                  disabled={isLocked}
+                  containerClassName="!mb-0"
+                />
+              </div>
+
               <Input
+                label="Data e Hora"
                 type="datetime-local"
+                icon={<Calendar className="w-4 h-4"/>}
                 {...register('dataHora')}
                 error={errors.dataHora?.message}
-                disabled={isSubmitting}
-                containerClassName="!mb-0"
-              />
-            </div>
-
-            <div>
-              <label className={labelStyle}><CreditCard className="w-3 h-3"/> Cartão (Final)</label>
-              <Input
-                maxLength={4}
-                placeholder="Ex: 1234"
-                {...register('placaCartaoUsado')}
-                disabled={isSubmitting}
+                disabled={isLocked}
                 containerClassName="!mb-0"
               />
             </div>
           </div>
 
-          {/* GRUPO 2: ITENS */}
+          {/* LISTA DE ITENS */}
           <div className="bg-background rounded-xl border border-border p-4">
             <div className="flex justify-between items-center mb-3">
-              <label className="text-xs font-bold text-text-secondary uppercase tracking-widest">Produtos / Combustível</label>
+              <label className="text-xs font-bold text-text-secondary uppercase tracking-widest">Itens</label>
               <span className="bg-surface border border-border px-3 py-1 rounded-lg text-xs font-mono font-bold text-primary shadow-sm">
                 Total: R$ {totalGeral.toFixed(2)}
               </span>
@@ -248,105 +352,42 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
             <div className="space-y-3">
               {fields.map((field, index) => (
                 <div key={field.id} className="grid grid-cols-12 gap-3 items-end bg-surface p-3 rounded-xl border border-border shadow-sm relative group hover:border-primary/30 transition-all">
-
-                  {fields.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => remove(index)}
-                      disabled={isSubmitting}
-                      className="absolute -top-2 -right-2 bg-surface text-text-muted hover:text-error rounded-full w-6 h-6 border border-border shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  )}
-
+                  <button type="button" onClick={() => remove(index)} disabled={isLocked} className="absolute -top-2 -right-2 bg-surface text-text-muted hover:text-error rounded-full w-6 h-6 border border-border shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10">
+                    <X className="w-3 h-3" />
+                  </button>
                   <div className="col-span-12 sm:col-span-5">
-                    <label className="text-[10px] font-bold text-text-muted uppercase mb-1 block">Produto</label>
-                    <div className="relative">
-                        <select
-                        className="w-full text-xs h-10 px-2 bg-surface border border-border rounded-lg outline-none focus:border-primary text-text-main appearance-none"
-                        {...register(`itens.${index}.produtoId`)}
-                        disabled={isSubmitting}
-                        >
-                        {produtosCombustivel.map(p => <option key={p.id} value={p.id}>{p.nome}</option>)}
-                        </select>
-                         <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-text-muted">
-                            <ChevronDown className="w-3 h-3" />
-                        </div>
-                    </div>
+                    <Select 
+                      options={produtosOptions}
+                      {...register(`itens.${index}.produtoId`)}
+                      className="h-9 text-xs"
+                      disabled={isLocked}
+                      containerClassName="!mb-0" // Ajuste fino para tabela
+                    />
                   </div>
                   <div className="col-span-6 sm:col-span-3">
-                    <label className="text-[10px] font-bold text-text-muted uppercase mb-1 block">Litros</label>
-                    <Input
-                      type="number"
-                      step="any"
-                      {...register(`itens.${index}.quantidade`)}
-                      className="!h-10 !text-xs bg-surface"
-                      disabled={isSubmitting}
-                      containerClassName="!mb-0"
-                    />
+                    <Input label="Litros" type="number" step="any" {...register(`itens.${index}.quantidade`)} className="h-9 text-xs text-center" containerClassName="!mb-0" disabled={isLocked} />
                   </div>
                   <div className="col-span-6 sm:col-span-4">
-                    <label className="text-[10px] font-bold text-text-muted uppercase mb-1 block">Valor Unit. (R$)</label>
-                    <Input
-                      type="number"
-                      step="0.001"
-                      {...register(`itens.${index}.valorPorUnidade`)}
-                      className="!h-10 !text-xs font-mono text-right bg-surface"
-                      placeholder="0.000"
-                      disabled={isSubmitting}
-                      containerClassName="!mb-0"
-                    />
+                    <Input label="R$ Unit" type="number" step="0.001" {...register(`itens.${index}.valorPorUnidade`)} className="h-9 text-xs text-right font-mono" containerClassName="!mb-0" disabled={isLocked} />
                   </div>
                 </div>
               ))}
             </div>
-
-            <button
-              type="button"
-              onClick={() => append({ produtoId: '', quantidade: 0, valorPorUnidade: 0 })}
-              disabled={isSubmitting}
-              className="w-full mt-3 py-2 border border-dashed border-border rounded-lg text-xs text-text-muted hover:text-primary hover:border-primary/50 hover:bg-primary/5 transition-all disabled:opacity-50 flex items-center justify-center gap-1"
-            >
-              <Plus className="w-3 h-3" /> Adicionar Outro Item
+            
+            <button type="button" onClick={() => append({ produtoId: '', quantidade: 0, valorPorUnidade: 0 })} disabled={isLocked} className="w-full mt-3 py-2 border border-dashed border-border rounded-lg text-xs text-text-muted hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-1">
+              <Plus className="w-3 h-3" /> Adicionar Item
             </button>
           </div>
 
-          {/* JUSTIFICATIVA */}
-          <div>
-            <label className={labelStyle}>Justificativa da Edição (Opcional)</label>
-            <textarea
-              {...register('justificativa')}
-              disabled={isSubmitting}
-              className="w-full p-3 text-sm bg-surface border border-border rounded-xl outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none h-20 placeholder:text-text-muted transition-all disabled:bg-background text-text-main"
-              placeholder="Por que este registro está sendo alterado?"
-            />
-          </div>
+          <Input label="Justificativa (Opcional)" {...register('justificativa')} disabled={isLocked} placeholder="Motivo da alteração..." />
         </div>
 
-        {/* FOOTER */}
         <div className="flex gap-3 p-4 border-t border-border bg-background shrink-0">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onCancel}
-            className="flex-1"
-            disabled={isSubmitting}
-          >
-            Cancelar
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            isLoading={isSubmitting}
-            disabled={isSubmitting}
-            className="flex-[2] shadow-button hover:shadow-float"
-            icon={<Save className="w-4 h-4" />}
-          >
-            Salvar Alterações
+          <Button type="button" variant="ghost" onClick={onCancel} className="flex-1" disabled={isLocked}>Cancelar</Button>
+          <Button type="submit" variant="primary" isLoading={isLocked} disabled={isLocked} className="flex-[2] shadow-lg" icon={<Save className="w-4 h-4" />}>
+            Salvar
           </Button>
         </div>
-
       </form>
     </div>
   );

@@ -3,8 +3,12 @@ import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
+import { supabase } from '../../supabaseClient';
 import { toast } from 'sonner';
-import { Trash2, Plus, AlertTriangle, Wrench, Truck, Gauge, Calendar, DollarSign, Check } from 'lucide-react'; // ✅ Check adicionado
+import { 
+  Trash2, Plus, AlertTriangle, Wrench, Truck, Gauge, 
+  Calendar, DollarSign, Check, Image as ImageIcon, Loader2 
+} from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
 import { Button } from '../ui/Button';
@@ -19,7 +23,40 @@ import type { Veiculo, Produto, Fornecedor } from '../../types';
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
-// --- SCHEMA ZOD V4 ---
+// --- FUNÇÃO DE COMPRESSÃO (Mesma do Abastecimento) ---
+const comprimirImagem = (arquivo: File): Promise<File> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(arquivo);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 1200;
+        const MAX_HEIGHT = 1600;
+        let [w, h] = [img.width, img.height];
+
+        if (w > h) { if (w > MAX_WIDTH) { h *= MAX_WIDTH / w; w = MAX_WIDTH; } }
+        else { if (h > MAX_HEIGHT) { w *= MAX_HEIGHT / h; h = MAX_HEIGHT; } }
+
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, w, h);
+          canvas.toBlob((blob) => {
+            if (blob) resolve(new File([blob], arquivo.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg', lastModified: Date.now() }));
+            else reject(new Error("Erro ao comprimir"));
+          }, 'image/jpeg', 0.7);
+        } else reject(new Error("Erro canvas"));
+      };
+    };
+    reader.onerror = (err) => reject(err);
+  });
+};
+
+// --- SCHEMA ---
 const manutencaoSchema = z.object({
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
   alvo: z.enum(ALVOS_MANUTENCAO),
@@ -56,21 +93,21 @@ interface FormEditarManutencaoProps {
   produtos: Produto[];
   fornecedores: Fornecedor[];
   onSuccess: () => void;
-  onClose: () => void; // Padronizado com onClose
+  onClose: () => void;
 }
 
 export function FormEditarManutencao({
   osParaEditar, veiculos, produtos, fornecedores, onSuccess, onClose
 }: FormEditarManutencaoProps) {
 
-  // Lógica de CA existente
   const caMatch = osParaEditar.observacoes?.match(/\[CA: (.+?)\]/);
   const caExistente = caMatch ? caMatch[1] : '';
   const obsLimpa = osParaEditar.observacoes?.replace(/\[CA: .+?\] /, '') || '';
 
   const [abaAtiva, setAbaAtiva] = useState<TipoManutencao>(osParaEditar.tipo || 'CORRETIVA');
+  const [uploading, setUploading] = useState(false);
+  const [previewFoto, setPreviewFoto] = useState<string | null>(null);
 
-  // --- FORM ---
   const {
     register, control, handleSubmit, watch, setValue,
     formState: { errors, isSubmitting }
@@ -93,6 +130,13 @@ export function FormEditarManutencao({
       }))
     }
   });
+
+  // Inicializa preview da foto
+  useEffect(() => {
+    if (osParaEditar.fotoComprovanteUrl) {
+      setPreviewFoto(osParaEditar.fotoComprovanteUrl);
+    }
+  }, [osParaEditar]);
 
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
 
@@ -139,6 +183,33 @@ export function FormEditarManutencao({
     acc + ((Number(item?.quantidade) || 0) * (Number(item?.valorPorUnidade) || 0)), 0
   );
 
+  // --- UPLOAD HANDLER ---
+  const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    const file = e.target.files[0];
+    
+    try {
+      setUploading(true);
+      const compressedFile = await comprimirImagem(file);
+      
+      const fileName = `manutencao-${Date.now()}-${Math.random().toString(36).substring(2,9)}.jpg`;
+      const { data: uploadData, error } = await supabase.storage.from('fotos-frota').upload(`public/${fileName}`, compressedFile);
+      
+      if (error) throw error;
+      
+      const { data: publicUrl } = supabase.storage.from('fotos-frota').getPublicUrl(uploadData.path);
+      
+      setValue('fotoComprovanteUrl', publicUrl.publicUrl);
+      setPreviewFoto(publicUrl.publicUrl);
+      toast.success("Foto atualizada com sucesso!");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao enviar foto.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
   // --- SUBMIT ---
   const onSubmit = async (data: ManutencaoFormOutput) => {
     let obsFinal = data.observacoes || '';
@@ -151,7 +222,7 @@ export function FormEditarManutencao({
       veiculoId: data.alvo === 'VEICULO' ? data.veiculoId : null,
       kmAtual: (data.alvo === 'VEICULO' && data.kmAtual) ? parseDecimal(data.kmAtual) : null,
       observacoes: obsFinal,
-      data: new Date(data.data).toISOString(), // Ajuste de fuso se necessário
+      data: new Date(data.data).toISOString(), 
     };
 
     try {
@@ -164,17 +235,17 @@ export function FormEditarManutencao({
     }
   };
 
-  const isLocked = isSubmitting;
+  const isLocked = isSubmitting || uploading;
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-white max-h-[90vh]">
       
       {/* HEADER */}
       <div className="px-6 pt-6 pb-2 border-b border-gray-100 shrink-0">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h3 className="text-lg font-bold text-gray-900">Editar Manutenção</h3>
-            <p className="text-xs text-gray-500">Ajuste os detalhes da Ordem de Serviço.</p>
+            <p className="text-xs text-text-secondary">Ajuste os detalhes da Ordem de Serviço.</p>
           </div>
           <Badge variant={abaAtiva === 'PREVENTIVA' ? 'success' : 'warning'}>{abaAtiva}</Badge>
         </div>
@@ -221,62 +292,98 @@ export function FormEditarManutencao({
             ))}
           </div>
 
-          {/* 2. DADOS PRINCIPAIS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {alvoSelecionado === 'VEICULO' ? (
-              <>
-                <Select
-                  label="Veículo"
-                  options={veiculosOpcoes}
-                  icon={<Truck className="w-4 h-4"/>}
-                  {...register("veiculoId")}
-                  error={errors.veiculoId?.message}
-                  disabled={isLocked}
-                />
-                <Input
-                  label="KM no Momento"
-                  icon={<Gauge className="w-4 h-4"/>}
-                  {...register("kmAtual")}
-                  onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
-                  error={errors.kmAtual?.message}
-                  disabled={isLocked}
-                />
-              </>
-            ) : (
-              <div className="md:col-span-2">
-                <Input
-                  label="Identificação (CA/Série)"
-                  {...register("numeroCA")}
-                  error={errors.numeroCA?.message}
-                  disabled={isLocked}
-                />
-              </div>
-            )}
+          <div className="flex flex-col md:flex-row gap-6">
 
-            <Select
-              label="Fornecedor"
-              options={fornecedoresOpcoes}
-              icon={<Wrench className="w-4 h-4"/>}
-              {...register("fornecedorId")}
-              error={errors.fornecedorId?.message}
-              disabled={isLocked}
-            />
+            {/* --- COLUNA ESQUERDA: FOTO --- */}
+            <div className="w-full md:w-1/3 flex flex-col gap-2">
+               <span className="text-xs font-bold text-text-secondary uppercase ml-1">Comprovante</span>
+               <div className="relative aspect-[3/4] bg-gray-100 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden group hover:border-primary transition-colors cursor-pointer">
+                 {uploading ? (
+                   <div className="flex flex-col items-center gap-2">
+                     <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                     <span className="text-xs text-text-muted">Enviando...</span>
+                   </div>
+                 ) : previewFoto ? (
+                   <>
+                     <img src={previewFoto} alt="Nota Fiscal" className="w-full h-full object-cover" />
+                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                        <ImageIcon className="w-8 h-8 text-white" />
+                        <span className="text-white text-xs font-bold bg-black/20 px-2 py-1 rounded">Trocar Foto</span>
+                     </div>
+                   </>
+                 ) : (
+                   <div className="text-center text-text-muted p-4">
+                     <ImageIcon className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                     <p className="text-xs">Clique para adicionar<br/>comprovante</p>
+                   </div>
+                 )}
+                 
+                 <input 
+                   type="file" 
+                   accept="image/*" 
+                   className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                   onChange={handleFotoChange}
+                   disabled={isLocked}
+                 />
+               </div>
+            </div>
 
-            <Input
-              label="Data do Serviço"
-              type="date"
-              icon={<Calendar className="w-4 h-4"/>}
-              {...register("data")}
-              error={errors.data?.message}
-              disabled={isLocked}
-            />
+            {/* --- COLUNA DIREITA: DADOS --- */}
+            <div className="w-full md:w-2/3 grid grid-cols-1 gap-4 content-start">
+              {alvoSelecionado === 'VEICULO' ? (
+                <>
+                  <Select
+                    label="Veículo"
+                    options={veiculosOpcoes}
+                    icon={<Truck className="w-4 h-4"/>}
+                    {...register("veiculoId")}
+                    error={errors.veiculoId?.message}
+                    disabled={isLocked}
+                  />
+                  <Input
+                    label="KM no Momento"
+                    icon={<Gauge className="w-4 h-4"/>}
+                    {...register("kmAtual")}
+                    onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
+                    error={errors.kmAtual?.message}
+                    disabled={isLocked}
+                  />
+                </>
+              ) : (
+                <div className="md:col-span-2">
+                  <Input
+                    label="Identificação (CA/Série)"
+                    {...register("numeroCA")}
+                    error={errors.numeroCA?.message}
+                    disabled={isLocked}
+                  />
+                </div>
+              )}
+
+              <Select
+                label="Fornecedor"
+                options={fornecedoresOpcoes}
+                icon={<Wrench className="w-4 h-4"/>}
+                {...register("fornecedorId")}
+                error={errors.fornecedorId?.message}
+                disabled={isLocked}
+              />
+
+              <Input
+                label="Data do Serviço"
+                type="date"
+                icon={<Calendar className="w-4 h-4"/>}
+                {...register("data")}
+                error={errors.data?.message}
+                disabled={isLocked}
+              />
+            </div>
           </div>
 
           {/* 3. ITENS E SERVIÇOS */}
           <div className="space-y-4 pt-4 border-t border-gray-100">
             <div className="flex justify-between items-center">
               <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Itens da OS</h4>
-              {/* Aviso se filtro estiver ativo */}
               {fornecedorIdSelecionado && produtosManutencao.length < produtos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)).length && (
                 <div className="text-[10px] text-blue-600 bg-blue-50 px-2 py-1 rounded flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" /> Filtro Ativo
@@ -304,6 +411,7 @@ export function FormEditarManutencao({
                         {...register(`itens.${index}.produtoId`)}
                         className="bg-white h-9 text-xs"
                         disabled={isLocked}
+                        containerClassName="!mb-0"
                       />
                     </div>
                     <div className="col-span-4 sm:col-span-2">
@@ -314,6 +422,7 @@ export function FormEditarManutencao({
                         {...register(`itens.${index}.quantidade`)}
                         className="bg-white h-9 text-xs text-center"
                         disabled={isLocked}
+                        containerClassName="!mb-0"
                       />
                     </div>
                     <div className="col-span-8 sm:col-span-4">
@@ -325,6 +434,7 @@ export function FormEditarManutencao({
                         {...register(`itens.${index}.valorPorUnidade`)}
                         className="bg-white h-9 text-xs text-right font-bold"
                         disabled={isLocked}
+                        containerClassName="!mb-0"
                       />
                     </div>
                   </div>

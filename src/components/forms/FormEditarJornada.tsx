@@ -1,14 +1,15 @@
-import { useEffect, useState} from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
 import { toast } from 'sonner';
-import { Truck, User, Clock, CheckCircle2, Calendar, FileText, ChevronDown, Save } from 'lucide-react';
+import { Truck, User, Clock, CheckCircle2, Calendar, FileText, Save } from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Select } from '../ui/Select'; // Usando o componente padronizado
 
 // --- UTILS ---
 import { formatKmVisual, parseKmInteligente } from '../../utils';
@@ -56,6 +57,17 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
   });
 
   const veiculoSelecionadoId = watch('veiculoId');
+
+  // Mapeamento para o componente Select
+  const veiculosOptions = useMemo(() => veiculos.map(v => ({ 
+    value: v.id, 
+    label: `${v.placa} - ${v.modelo}` 
+  })), [veiculos]);
+
+  const operadoresOptions = useMemo(() => operadores.map(op => ({ 
+    value: op.id, 
+    label: op.nome 
+  })), [operadores]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -154,8 +166,6 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
   };
 
   const isLocked = isSubmitting || loading;
-  const labelStyle = "flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase mb-1.5 ml-1";
-  const selectStyle = "w-full h-11 px-3 bg-surface border border-border rounded-xl text-sm text-text-main focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer disabled:bg-background appearance-none";
 
   if (fetching) {
     return (
@@ -185,31 +195,23 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
 
           {/* 1. VÍNCULOS */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <div>
-              <label className={labelStyle}><Truck className="w-3 h-3"/> Veículo</label>
-              <div className="relative">
-                <select className={selectStyle} {...register('veiculoId')} disabled={isLocked}>
-                  {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>)}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </div>
-              {errors.veiculoId && <p className="text-[10px] text-error mt-1 ml-1">{errors.veiculoId.message}</p>}
-            </div>
-
-            <div>
-              <label className={labelStyle}><User className="w-3 h-3"/> Motorista</label>
-              <div className="relative">
-                <select className={selectStyle} {...register('operadorId')} disabled={isLocked}>
-                  {operadores.map(op => <option key={op.id} value={op.id}>{op.nome}</option>)}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </div>
-              {errors.operadorId && <p className="text-[10px] text-error mt-1 ml-1">{errors.operadorId.message}</p>}
-            </div>
+            <Select 
+              label="Veículo" 
+              options={veiculosOptions}
+              icon={<Truck className="w-4 h-4"/>}
+              {...register('veiculoId')}
+              error={errors.veiculoId?.message}
+              disabled={isLocked}
+            />
+            
+            <Select 
+              label="Motorista"
+              options={operadoresOptions}
+              icon={<User className="w-4 h-4"/>}
+              {...register('operadorId')}
+              error={errors.operadorId?.message}
+              disabled={isLocked}
+            />
           </div>
 
           {/* 2. DADOS DE SAÍDA (VERDE) */}

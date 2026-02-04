@@ -1,14 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
+import { toast } from 'sonner';
+import { Store, Save, Check, FileText } from 'lucide-react';
+import type { Produto } from '../../types';
+
+// --- UI COMPONENTS ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { toast } from 'sonner';
-import { Store, Save, Check, ChevronDown } from 'lucide-react';
-import type { Produto } from '../../types';
+import { Select } from '../ui/Select'; // Adicionado componente padrão
 
 const tiposFornecedor = ["POSTO", "OFICINA", "LAVA_JATO", "SEGURADORA", "OUTROS"] as const;
 
@@ -59,6 +62,14 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
 
   const selectedIds = watch('produtosIds') || [];
 
+  // Mapeia os tipos para o formato do Select
+  const tipoOptions = useMemo(() => {
+    return tiposFornecedor.map(t => ({
+      label: t.replace('_', ' '),
+      value: t
+    }));
+  }, []);
+
   // --- CARREGAMENTO INICIAL ---
   useEffect(() => {
     if (!fornecedorId) return;
@@ -73,6 +84,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
         setProdutosDisponiveis(resProdutos.data);
 
         const data = resFornecedor.data;
+        // Validação de segurança para garantir que o tipo vindo do banco é válido no Zod
         const tipoValido = tiposFornecedor.includes(data.tipo) ? data.tipo : 'OUTROS';
 
         const idsExistentes = data.produtosOferecidos
@@ -130,13 +142,11 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
     });
   };
 
-  // Estilos padronizados
   const labelStyle = "block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1";
-  const selectStyle = "w-full h-11 px-3 bg-surface border border-border rounded-xl text-sm text-text-main focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer disabled:bg-background appearance-none";
 
   if (loadingData) {
     return (
-      <div className="bg-surface rounded-xl shadow-lg border border-border p-12 flex flex-col items-center justify-center">
+      <div className="bg-surface rounded-xl shadow-lg border border-border p-12 flex flex-col items-center justify-center h-64">
         <div className="animate-spin rounded-full h-10 w-10 border-4 border-border border-t-primary"></div>
         <p className="text-sm text-text-muted font-medium mt-4 animate-pulse">Buscando informações...</p>
       </div>
@@ -170,33 +180,31 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
               error={errors.nome?.message}
               disabled={isSubmitting}
               className="uppercase font-medium"
+              icon={<Store className="w-4 h-4"/>}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             <div>
-              <label className={labelStyle}>Categoria</label>
-              <div className="relative">
-                <select {...register('tipo')} className={selectStyle} disabled={isSubmitting}>
-                  {tiposFornecedor.map(t => (
-                    <option key={t} value={t}>{t.replace('_', ' ')}</option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </div>
-              {errors.tipo && <p className="text-[10px] text-error mt-1 ml-1">{errors.tipo.message}</p>}
+              <Select
+                label="Categoria"
+                options={tipoOptions}
+                icon={<Store className="w-4 h-4"/>} // Reutilizando ícone genérico ou específico se tiver
+                {...register('tipo')}
+                error={errors.tipo?.message}
+                disabled={isSubmitting}
+              />
             </div>
 
             <div>
-              <label className={labelStyle}>CNPJ (Opcional)</label>
               <Input
+                label="CNPJ (Opcional)"
                 {...register('cnpj')}
                 placeholder="00.000.000/0000-00"
                 error={errors.cnpj?.message}
                 disabled={isSubmitting}
                 className="font-mono text-sm"
+                icon={<FileText className="w-4 h-4"/>}
               />
               <p className="text-[10px] text-text-muted pl-1 mt-1">Formato: XX.XXX.XXX/XXXX-XX</p>
             </div>
