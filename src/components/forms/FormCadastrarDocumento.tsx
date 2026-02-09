@@ -6,7 +6,7 @@ import { supabase } from '../../supabaseClient';
 import { useCreateDocumento } from '../../hooks/useDocumentosLegais';
 import { useVeiculos } from '../../hooks/useVeiculos'; 
 import { toast } from 'sonner';
-import { UploadCloud, FileText, Calendar, Truck, Save, AlertTriangle } from 'lucide-react';
+import { UploadCloud, FileText, Calendar, Truck, Save, AlertTriangle, Loader2 } from 'lucide-react';
 
 // Componentes UI
 import { Button } from '../ui/Button';
@@ -61,17 +61,18 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
     try {
       setUploading(true);
       const fileExt = file.name.split('.').pop();
+      // Nome do arquivo sanitizado
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `documentos-legais/${fileName}`;
 
-      // [CORREÇÃO CRÍTICA MOBILE]
-      // Definimos explicitamente o contentType para que o navegador (mobile)
-      // saiba que é um PDF/Imagem e não um binário genérico.
+      // [CORREÇÃO CRÍTICA PARA MOBILE]
+      // Define explicitamente o tipo do arquivo para o navegador reconhecer
       const { error: uploadError } = await supabase.storage
         .from('comprovantes')
         .upload(filePath, file, {
-          contentType: file.type, 
-          upsert: false
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type // <--- ISSO RESOLVE O PROBLEMA DE ABRIR NO CELULAR
         });
 
       if (uploadError) throw uploadError;
@@ -100,8 +101,8 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
     }
   };
 
-  // Classes comuns para inputs (evitando hardcode)
-  const inputClasses = "w-full h-11 px-3 bg-surface border border-border rounded-xl text-sm focus:border-primary outline-none text-text-main placeholder:text-text-muted transition-all disabled:bg-background disabled:text-text-muted";
+  // Classes para inputs/selects nativos padronizados
+  const inputClasses = "w-full h-11 px-3 bg-surface border border-border rounded-xl text-sm focus:border-primary outline-none text-text-main placeholder:text-text-muted transition-all disabled:bg-background disabled:text-text-muted appearance-none cursor-pointer";
   const labelClasses = "flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase mb-1.5 ml-1";
 
   return (
@@ -123,13 +124,14 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
         <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
           
           {/* ÁREA DE UPLOAD */}
-          <div className="border-2 border-dashed border-border rounded-xl p-8 text-center hover:bg-background hover:border-primary/50 transition-all cursor-pointer relative group">
+          <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer relative group ${file ? 'border-success/50 bg-success/5' : 'border-border hover:bg-background hover:border-primary/50'}`}>
             <input
               type="file"
               id="doc-upload"
               accept=".pdf,image/*"
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               onChange={(e) => setFile(e.target.files?.[0] || null)}
+              disabled={uploading || isPending}
             />
             <div className="flex flex-col items-center pointer-events-none">
               <div className={`p-4 rounded-full mb-3 transition-colors ${file ? 'bg-success/10 text-success' : 'bg-primary/5 text-primary group-hover:bg-primary/10'}`}>
@@ -139,7 +141,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
               {file ? (
                 <>
                   <span className="text-sm font-bold text-text-main break-all max-w-[250px]">{file.name}</span>
-                  <span className="text-xs text-success font-medium mt-1">Arquivo selecionado</span>
+                  <span className="text-xs text-success font-medium mt-1">Arquivo pronto para envio</span>
                 </>
               ) : (
                 <>
@@ -186,6 +188,10 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
                     <option value="MANUTENCAO">Manutenção (Relatório)</option>
                   </optgroup>
                 </select>
+                {/* Ícone Chevron Manual para manter consistência visual com Select Nativo */}
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
               </div>
               {errors.categoria && <p className="text-[10px] text-error mt-1 ml-1">{errors.categoria.message}</p>}
             </div>
@@ -200,22 +206,27 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
 
             <div>
               <label className={labelClasses}><Truck className="w-3 h-3" /> Tipo Veículo</label>
-              <select
-                {...register('tipoVeiculo')}
-                disabled={!!veiculoIdSelecionado || uploading || isPending}
-                className={`${inputClasses} ${categoriaSelecionada === 'AST' ? 'border-warning-500/50 bg-warning-500/5' : ''}`}
-              >
-                <option value="">Aplicar a Todos</option>
-                {tiposDisponiveis.map(tipo => (
-                  <option key={tipo} value={tipo}>{tipo}</option>
-                ))}
-                {!tiposDisponiveis.length && (
-                  <>
-                    <option value="CAMINHAO">Caminhões</option>
-                    <option value="CARRO">Carros Leves</option>
-                  </>
-                )}
-              </select>
+              <div className="relative">
+                <select
+                  {...register('tipoVeiculo')}
+                  disabled={!!veiculoIdSelecionado || uploading || isPending}
+                  className={`${inputClasses} ${categoriaSelecionada === 'AST' ? 'border-warning-500/50 bg-warning-500/5' : ''}`}
+                >
+                  <option value="">Aplicar a Todos</option>
+                  {tiposDisponiveis.map(tipo => (
+                    <option key={tipo} value={tipo}>{tipo}</option>
+                  ))}
+                  {!tiposDisponiveis.length && (
+                    <>
+                      <option value="CAMINHAO">Caminhões</option>
+                      <option value="CARRO">Carros Leves</option>
+                    </>
+                  )}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </div>
               
               {categoriaSelecionada === 'AST' && (
                 <p className="text-[10px] text-warning-600 mt-1 font-bold flex items-center gap-1">
@@ -226,20 +237,25 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
 
             <div>
               <label className={labelClasses}>Placa Específica</label>
-              <select
-                {...register('veiculoId')}
-                onChange={(e) => {
-                  setValue('veiculoId', e.target.value);
-                  if (e.target.value) setValue('tipoVeiculo', '');
-                }}
-                disabled={uploading || isPending}
-                className={inputClasses}
-              >
-                <option value="">Nenhuma</option>
-                {veiculos?.map(v => (
-                  <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>
-                ))}
-              </select>
+              <div className="relative">
+                <select
+                  {...register('veiculoId')}
+                  onChange={(e) => {
+                    setValue('veiculoId', e.target.value);
+                    if (e.target.value) setValue('tipoVeiculo', '');
+                  }}
+                  disabled={uploading || isPending}
+                  className={inputClasses}
+                >
+                  <option value="">Nenhuma</option>
+                  {veiculos?.map(v => (
+                    <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -264,7 +280,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
             type="submit"
             variant="primary"
             isLoading={uploading || isPending}
-            icon={<Save className="w-4 h-4" />}
+            icon={uploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4" />}
             className="shadow-button hover:shadow-float px-6"
           >
             {uploading ? 'Enviando...' : 'Salvar Documento'}

@@ -4,7 +4,7 @@ import { IniciarJornada } from './IniciarJornada';
 import { JornadaCard } from './JornadaCard';
 import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
 import { HistoricoJornadas } from './HistoricoJornadas';
-import { GestaoDocumentos } from './GestaoDocumentos';
+import { GestaoDocumentos } from './GestaoDocumentos'; // ✅ Importação corrigida
 import { PageHeader } from './ui/PageHeader';
 import { Modal } from './ui/Modal';
 import { Card } from './ui/Card';
@@ -41,6 +41,7 @@ export function DashboardOperador({
   // Filtra jornadas para encontrar a do operador logado
   const minhasJornadas = jornadasAtivas.filter(j => j.operador?.id === user.id);
   const tenhoJornadaAtiva = minhasJornadas.length > 0;
+  // Pega o veículo da primeira jornada ativa (se houver) para filtrar documentos
   const veiculoEmUsoId = tenhoJornadaAtiva ? minhasJornadas[0].veiculo?.id : undefined;
 
   return (
@@ -49,7 +50,7 @@ export function DashboardOperador({
       <PageHeader 
         title={
           <div className="flex items-center gap-3">
-            {/* Foto do Operador */}
+            {/* Avatar Simples */}
             <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center overflow-hidden shrink-0">
               {user.fotoUrl ? (
                 <img src={user.fotoUrl} alt={user.nome} className="w-full h-full object-cover" />
@@ -62,7 +63,6 @@ export function DashboardOperador({
         }
         subtitle={tenhoJornadaAtiva ? "Você tem uma jornada em andamento." : "Selecione uma ação para começar."}
         
-        // Botão de Sair no topo direito
         extraAction={
           <Button 
             variant="ghost" 
@@ -179,6 +179,7 @@ export function DashboardOperador({
           usuarioLogado={user}
           veiculoPreSelecionadoId={veiculoEmUsoId}
           onCancelar={() => setModalAbastecimentoOpen(false)}
+          onSuccess={() => setModalAbastecimentoOpen(false)}
         />
       </Modal>
 
@@ -194,6 +195,7 @@ export function DashboardOperador({
         />
       </Modal>
 
+      {/* MODAL DE DOCUMENTOS */}
       <Modal
         isOpen={modalDocumentosOpen}
         onClose={() => setModalDocumentosOpen(false)}
