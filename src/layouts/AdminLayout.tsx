@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useVeiculos } from '../hooks/useVeiculos';
-// CORREÇÃO 1: Importando da pasta 'ui' onde o arquivo realmente está
 import { ConfirmModal } from '../components/ui/ConfirmModal'; 
 import { ModalRelatorioFinanceiro } from '../components/ModalRelatorioFinanceiro';
 
@@ -17,7 +16,6 @@ export function AdminLayout() {
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [financeiroAberto, setFinanceiroAberto] = useState(false);
   
-  // CORREÇÃO 2: Usando 'logout' que é o nome correto no seu Contexto
   const { logout, user } = useAuth();
   const { data: veiculos } = useVeiculos();
   const location = useLocation();
@@ -28,7 +26,6 @@ export function AdminLayout() {
     navigate('/login');
   };
 
-  // Definição Centralizada do Menu
   const menuGroups = [
     {
       title: 'Visão Geral',
@@ -86,8 +83,7 @@ export function AdminLayout() {
   };
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      {/* Header da Sidebar */}
+    <div className="flex flex-col h-full bg-surface">
       <div className="h-16 flex items-center px-6 border-b border-border shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-bold shadow-button">
@@ -100,7 +96,6 @@ export function AdminLayout() {
         </div>
       </div>
 
-      {/* Navegação Scrollável */}
       <nav className="flex-1 px-4 py-6 space-y-8 overflow-y-auto custom-scrollbar">
         {menuGroups.map((group, idx) => (
           <div key={idx}>
@@ -116,9 +111,7 @@ export function AdminLayout() {
         ))}
       </nav>
 
-      {/* Footer da Sidebar */}
-      <div className="p-4 border-t border-border bg-surface-hover/30 shrink-0 space-y-2">
-        {/* Botão Financeiro */}
+      <div className="p-4 border-t border-border bg-surface-hover/30 shrink-0 space-y-2 safe-area-bottom">
         <button
           onClick={() => setFinanceiroAberto(true)}
           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 transition-colors border border-emerald-500/20 group"
@@ -127,9 +120,8 @@ export function AdminLayout() {
           <span className="text-sm font-bold">Relatório Financeiro</span>
         </button>
 
-        {/* Perfil do Usuário */}
         <div className="pt-2 flex items-center gap-3 px-1">
-          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm border border-primary/20">
+          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm border border-primary/20 shrink-0">
             {user?.nome?.charAt(0) || 'U'}
           </div>
           <div className="overflow-hidden flex-1">
@@ -147,15 +139,16 @@ export function AdminLayout() {
   );
 
   return (
-    <div className="flex h-screen bg-background font-sans text-text-main overflow-hidden">
+    // [MODIFICAÇÃO 1] h-[100dvh] garante que o app ocupe a altura real visível no celular, sem cortar.
+    <div className="flex h-[100dvh] bg-background font-sans text-text-main overflow-hidden w-full">
       
-      {/* --- SIDEBAR DESKTOP --- */}
-      <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 left-0 bg-surface border-r border-border z-30 shadow-sm">
+      {/* SIDEBAR DESKTOP */}
+      <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 left-0 border-r border-border z-30 shadow-sm">
         <SidebarContent />
       </aside>
 
-      {/* --- HEADER MOBILE --- */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-surface/80 backdrop-blur-md border-b border-border z-40 flex items-center justify-between px-4">
+      {/* HEADER MOBILE */}
+      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-surface/95 backdrop-blur-md border-b border-border z-40 flex items-center justify-between px-4 transition-all">
         <div className="flex items-center gap-3">
           <button 
             onClick={() => setIsSidebarOpen(true)}
@@ -165,23 +158,22 @@ export function AdminLayout() {
           </button>
           <span className="font-bold text-base text-text-main">FROTA <span className="text-primary">KLIN</span></span>
         </div>
-        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
+        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold border border-primary/20">
           {user?.nome?.charAt(0)}
         </div>
       </header>
 
-      {/* --- DRAWER MOBILE --- */}
+      {/* DRAWER MOBILE (MENU LATERAL) */}
       {isSidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div 
-            className="absolute inset-0 bg-text-main/20 backdrop-blur-sm transition-opacity animate-in fade-in" 
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity animate-in fade-in" 
             onClick={() => setIsSidebarOpen(false)}
           />
-          <aside className="absolute inset-y-0 left-0 w-72 bg-surface shadow-2xl border-r border-border animate-in slide-in-from-left duration-300">
-             {/* Botão Fechar Mobile */}
+          <aside className="absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-surface shadow-2xl border-r border-border animate-in slide-in-from-left duration-300 flex flex-col">
              <button 
                 onClick={() => setIsSidebarOpen(false)}
-                className="absolute top-4 right-4 p-1 text-text-muted hover:text-text-main"
+                className="absolute top-4 right-4 p-2 text-text-muted hover:text-text-main z-50"
              >
                 <X className="w-6 h-6" />
              </button>
@@ -190,16 +182,24 @@ export function AdminLayout() {
         </div>
       )}
 
-      {/* --- CONTEÚDO PRINCIPAL --- */}
-      <main className="flex-1 lg:ml-64 flex flex-col h-full pt-16 lg:pt-0 transition-all duration-300">
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 scroll-smooth">
-          <div className="max-w-7xl mx-auto w-full animate-enter min-h-[calc(100vh-4rem)]">
+      {/* CONTEÚDO PRINCIPAL (ÁREA DA DIREITA) */}
+      <main className="flex-1 lg:ml-64 flex flex-col h-full pt-16 lg:pt-0 transition-all duration-300 w-full">
+        
+        {/* Wrapper de Scroll Inteligente */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-background scroll-smooth w-full">
+          
+          {/* [MODIFICAÇÃO 2] Container Responsivo
+              - px-3 no mobile: Margem mínima para aproveitar a tela.
+              - max-w-7xl: Limita a largura em telas gigantes (iMac) para não esticar demais.
+              - pb-24: Garante que o último item não fique atrás de botões flutuantes ou barras do sistema.
+          */}
+          <div className="w-full max-w-7xl mx-auto px-3 py-4 sm:px-6 sm:py-6 lg:px-8 animate-enter pb-24">
             <Outlet />
           </div>
         </div>
       </main>
 
-      {/* --- MODAIS GLOBAIS --- */}
+      {/* MODAIS GLOBAIS */}
       <ConfirmModal
         isOpen={isLogoutModalOpen}
         onCancel={() => setIsLogoutModalOpen(false)}
