@@ -64,9 +64,15 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `documentos-legais/${fileName}`;
 
+      // [CORREÇÃO CRÍTICA MOBILE]
+      // Definimos explicitamente o contentType para que o navegador (mobile)
+      // saiba que é um PDF/Imagem e não um binário genérico.
       const { error: uploadError } = await supabase.storage
         .from('comprovantes')
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          contentType: file.type, 
+          upsert: false
+        });
 
       if (uploadError) throw uploadError;
 
