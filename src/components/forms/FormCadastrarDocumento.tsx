@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -27,9 +27,10 @@ type DocFormValues = z.infer<typeof docSchema>;
 interface FormProps {
   onSuccess: () => void;
   onCancel: () => void;
+  veiculoIdPreSelecionado?: string; // NOVO: Prop para receber o ID do veículo
 }
 
-export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
+export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSelecionado }: FormProps) {
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -46,8 +47,19 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
 
   const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<DocFormValues>({
     resolver: zodResolver(docSchema),
-    defaultValues: { categoria: '' }
+    defaultValues: { 
+      categoria: '',
+      veiculoId: veiculoIdPreSelecionado || '' // Já inicia com o veículo se houver
+    }
   });
+
+  // Efeito para garantir que o veículo esteja selecionado e travar campos conflitantes
+  useEffect(() => {
+    if (veiculoIdPreSelecionado) {
+      setValue('veiculoId', veiculoIdPreSelecionado);
+      setValue('tipoVeiculo', ''); // Se é um veículo específico, o "Tipo" não importa tanto para o cadastro
+    }
+  }, [veiculoIdPreSelecionado, setValue]);
 
   const veiculoIdSelecionado = watch('veiculoId');
   const categoriaSelecionada = watch('categoria');
@@ -65,14 +77,13 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `documentos-legais/${fileName}`;
 
-      // [CORREÇÃO CRÍTICA PARA MOBILE]
-      // Define explicitamente o tipo do arquivo para o navegador reconhecer
+      // Upload com a correção de Content-Type para mobile
       const { error: uploadError } = await supabase.storage
         .from('comprovantes')
         .upload(filePath, file, {
           cacheControl: '3600',
           upsert: false,
-          contentType: file.type // <--- ISSO RESOLVE O PROBLEMA DE ABRIR NO CELULAR
+          contentType: file.type
         });
 
       if (uploadError) throw uploadError;
@@ -101,7 +112,6 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
     }
   };
 
-  // Classes para inputs/selects nativos padronizados
   const inputClasses = "w-full h-11 px-3 bg-surface border border-border rounded-xl text-sm focus:border-primary outline-none text-text-main placeholder:text-text-muted transition-all disabled:bg-background disabled:text-text-muted appearance-none cursor-pointer";
   const labelClasses = "flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase mb-1.5 ml-1";
 
@@ -188,7 +198,6 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
                     <option value="MANUTENCAO">Manutenção (Relatório)</option>
                   </optgroup>
                 </select>
-                {/* Ícone Chevron Manual para manter consistência visual com Select Nativo */}
                 <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
@@ -204,7 +213,8 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
               <Input type="date" {...register('dataValidade')} disabled={uploading || isPending} containerClassName="!mb-0" />
             </div>
 
-            <div>
+            {/* Oculta visualmente ou desabilita o Tipo se já temos um veículo específico, para focar a atenção do usuário */}
+            <div className={veiculoIdPreSelecionado ? 'opacity-50 pointer-events-none' : ''}>
               <label className={labelClasses}><Truck className="w-3 h-3" /> Tipo Veículo</label>
               <div className="relative">
                 <select
@@ -244,8 +254,9 @@ export function FormCadastrarDocumento({ onSuccess, onCancel }: FormProps) {
                     setValue('veiculoId', e.target.value);
                     if (e.target.value) setValue('tipoVeiculo', '');
                   }}
-                  disabled={uploading || isPending}
-                  className={inputClasses}
+                  // Desabilita se foi passado via prop
+                  disabled={!!veiculoIdPreSelecionado || uploading || isPending}
+                  className={`${inputClasses} ${veiculoIdPreSelecionado ? 'bg-surface-hover font-bold text-primary border-primary/30' : ''}`}
                 >
                   <option value="">Nenhuma</option>
                   {veiculos?.map(v => (

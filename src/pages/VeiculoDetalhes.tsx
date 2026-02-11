@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import { GraficoKmVeiculo } from '../components/GraficoKmVeiculo';
 import { Button } from '../components/ui/Button';
 import { toast } from 'sonner';
+import { GestaoDocumentos } from '../components/GestaoDocumentos'; // [NOVO] Importação
 import {
     Wrench,
     Fuel,
@@ -212,6 +213,22 @@ export function VeiculoDetalhes() {
                     </div>
                 </div>
             </div>
+
+            {/* --- [NOVA SEÇÃO] DOCUMENTAÇÃO --- */}
+            <div className="pt-6">
+                <div className="flex items-center gap-4 mb-6">
+                    <div className="h-px bg-border flex-1"></div>
+                    <span className="text-xs font-bold text-text-muted uppercase tracking-widest flex items-center gap-2">
+                        <AlertCircle className="w-4 h-4" />
+                        Documentação & Prontuário Legal
+                    </span>
+                    <div className="h-px bg-border flex-1"></div>
+                </div>
+
+                {/* Componente de Gestão Filtrado pelo ID do Veículo */}
+                <GestaoDocumentos veiculoId={id} />
+            </div>
+
         </div>
     );
 }

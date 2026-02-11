@@ -124,7 +124,7 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl font-bold text-text-main flex items-center gap-2">
-            Biblioteca Legal
+            Biblioteca Legal {veiculoId && <span className="text-xs font-normal text-text-muted">(Veículo Específico)</span>}
             <span className="text-xs font-normal text-text-muted bg-surface-hover px-2 py-0.5 rounded-full border border-border">
               {documentos?.length || 0} arq.
             </span>
@@ -142,12 +142,13 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
         <div className="bg-surface p-6 rounded-2xl shadow-card border border-border animate-in slide-in-from-right-4">
           <div className="flex justify-between items-center mb-6 border-b border-border pb-4">
              <h3 className="text-lg font-bold text-text-main">Arquivar Novo Documento</h3>
-             {/* [CORREÇÃO] Removido size="sm" e usado className para estilo */}
+             {/* [CORREÇÃO] Botão ajustado com className, removido size="sm" */}
              <Button variant="ghost" className="h-8 text-xs px-3" onClick={() => setModoAdicionar(false)}>Voltar</Button>
           </div>
           <FormCadastrarDocumento
             onSuccess={() => setModoAdicionar(false)}
             onCancel={() => setModoAdicionar(false)}
+            veiculoIdPreSelecionado={veiculoId} // [CORREÇÃO] Passando o ID para o form
           />
         </div>
       ) : (
