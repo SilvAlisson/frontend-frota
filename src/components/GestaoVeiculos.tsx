@@ -16,6 +16,7 @@ import { DropdownAcoes } from './ui/DropdownAcoes';
 import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { TableStyles } from '../styles/table';
+import { SkeletonTable } from './skeletons/SkeletonTable'; // [NOVO]
 
 // --- FORMS ---
 import { FormCadastrarVeiculo } from './forms/FormCadastrarVeiculo';
@@ -94,12 +95,11 @@ export function GestaoVeiculos() {
       />
 
       {/* 2. LISTAGEM */}
-      <Card noPadding>
-        {isLoading ? (
-          <div className="p-6 space-y-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-12 bg-surface-hover rounded-lg animate-pulse" />)}
-          </div>
-        ) : (
+      {/* Removemos o Card wrapper aqui para o Skeleton ocupar a área corretamente */}
+      {isLoading ? (
+         <SkeletonTable />
+      ) : (
+        <Card noPadding>
           <ListaResponsiva
             itens={veiculosFiltrados}
             emptyMessage="Nenhum veículo encontrado na frota."
@@ -151,7 +151,7 @@ export function GestaoVeiculos() {
 
             // CARD MOBILE
             renderMobile={(v) => (
-              <div className="p-4 flex justify-between items-start" onClick={() => navigate(`/admin/veiculos/${v.id}`)}>
+              <div className="p-4 flex justify-between items-start cursor-pointer hover:bg-surface-hover/50 active:bg-surface-hover transition-colors" onClick={() => navigate(`/admin/veiculos/${v.id}`)}>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-bold text-lg text-primary">{v.placa}</span>
@@ -171,8 +171,8 @@ export function GestaoVeiculos() {
               </div>
             )}
           />
-        )}
-      </Card>
+        </Card>
+      )}
 
       {/* --- MODAIS --- */}
 

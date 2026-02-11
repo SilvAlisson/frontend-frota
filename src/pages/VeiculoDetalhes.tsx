@@ -4,7 +4,7 @@ import { api } from '../services/api';
 import { GraficoKmVeiculo } from '../components/GraficoKmVeiculo';
 import { Button } from '../components/ui/Button';
 import { toast } from 'sonner';
-import { GestaoDocumentos } from '../components/GestaoDocumentos'; // [NOVO] Importação
+import { GestaoDocumentos } from '../components/GestaoDocumentos';
 import {
     Wrench,
     Fuel,
