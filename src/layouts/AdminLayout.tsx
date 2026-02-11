@@ -1,15 +1,128 @@
 import { useState } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Menu, X, Truck, Wrench, BarChart3, Users, 
-  LogOut, LayoutDashboard, FileText,
-  Fuel, ClipboardList, AlertTriangle, Medal, Package,
-  FileBadge
+  Menu, X, BarChart3, LogOut, ChevronRight
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useVeiculos } from '../hooks/useVeiculos';
 import { ConfirmModal } from '../components/ui/ConfirmModal'; 
 import { ModalRelatorioFinanceiro } from '../components/ModalRelatorioFinanceiro';
+import { Button } from '../components/ui/Button';
+import { MENU_ITEMS } from '../config/navigation'; // [NOVO] Importação da configuração
+
+// --- COMPONENTES AUXILIARES ---
+
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+  user: any;
+  onLogout: () => void;
+  onOpenFinanceiro: () => void;
+}
+
+function Sidebar({ isOpen, onClose, user, onLogout, onOpenFinanceiro }: SidebarProps) {
+  const location = useLocation();
+
+  const baseClasses = "fixed inset-y-0 left-0 z-50 flex w-72 flex-col bg-surface border-r border-border transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:h-full";
+  const mobileClasses = isOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full";
+
+  return (
+    <>
+      {/* Overlay Mobile */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden animate-in fade-in"
+          onClick={onClose}
+        />
+      )}
+
+      <aside className={`${baseClasses} ${mobileClasses}`}>
+        {/* Header da Sidebar */}
+        <div className="flex h-16 items-center justify-between px-6 border-b border-border shrink-0 bg-surface/50 backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-primary text-primary-foreground flex items-center justify-center font-bold shadow-sm">
+              K
+            </div>
+            <div>
+              <span className="block font-bold text-sm text-text-main tracking-tight leading-none">FROTA <span className="text-primary">KLIN</span></span>
+              <span className="block text-[10px] text-text-secondary font-medium uppercase tracking-wider mt-0.5">Gestão Pro</span>
+            </div>
+          </div>
+          <button onClick={onClose} className="lg:hidden text-text-muted hover:text-text-main">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Lista de Navegação (Scrollável) */}
+        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8 custom-scrollbar">
+          {MENU_ITEMS.map((group, idx) => (
+            <div key={idx}>
+              <h4 className="px-3 text-[10px] font-bold text-text-muted uppercase tracking-widest mb-3 opacity-80">
+                {group.title}
+              </h4>
+              <nav className="space-y-1">
+                {group.items.map((item) => {
+                  const isActive = item.path === '/admin' 
+                    ? location.pathname === '/admin'
+                    : location.pathname.startsWith(item.path);
+
+                  return (
+                    <Link
+                      key={item.path}
+                      to={item.path}
+                      onClick={onClose}
+                      className={`
+                        flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative overflow-hidden
+                        ${isActive 
+                          ? 'bg-primary/10 text-primary font-bold shadow-sm' 
+                          : 'text-text-secondary hover:bg-surface-hover hover:text-text-main'
+                        }
+                        ${item.highlight && !isActive ? 'border border-primary/20 bg-surface-hover text-primary' : 'border border-transparent'}
+                      `}
+                    >
+                      <item.icon className={`w-4 h-4 shrink-0 transition-colors ${isActive ? 'text-primary' : 'text-text-muted group-hover:text-primary'}`} />
+                      <span className="truncate flex-1">{item.label}</span>
+                      {isActive && <div className="w-1 h-1 rounded-full bg-primary" />}
+                    </Link>
+                  );
+                })}
+              </nav>
+            </div>
+          ))}
+        </div>
+
+        {/* Rodapé da Sidebar (User Profile) */}
+        <div className="p-4 border-t border-border bg-surface-hover/30 shrink-0 space-y-3 safe-area-bottom">
+          <button
+            onClick={onOpenFinanceiro}
+            className="w-full flex items-center justify-between px-3 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 text-emerald-700 hover:from-emerald-500/20 transition-all border border-emerald-500/20 group shadow-sm"
+          >
+            <div className="flex items-center gap-3">
+              <BarChart3 className="w-4 h-4" />
+              <span className="text-xs font-bold">Relatório Financeiro</span>
+            </div>
+            <ChevronRight className="w-3 h-3 opacity-50 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+          </button>
+
+          <div className="flex items-center gap-3 px-1 pt-1">
+            <div className="w-9 h-9 rounded-full bg-surface border border-border flex items-center justify-center text-text-secondary font-bold text-xs shadow-sm">
+              {user?.nome?.charAt(0) || 'U'}
+            </div>
+            <div className="overflow-hidden flex-1">
+              <p className="text-xs font-bold text-text-main truncate">{user?.nome}</p>
+              <p className="text-[10px] text-text-muted truncate">{user?.email}</p>
+            </div>
+            <Button variant="ghost" onClick={onLogout} className="h-8 w-8 p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-lg">
+              <LogOut className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </aside>
+    </>
+  );
+}
+
+// --- COMPONENTE PRINCIPAL (ORQUESTRADOR) ---
 
 export function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -18,7 +131,6 @@ export function AdminLayout() {
   
   const { logout, user } = useAuth();
   const { data: veiculos } = useVeiculos();
-  const location = useLocation();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -26,180 +138,50 @@ export function AdminLayout() {
     navigate('/login');
   };
 
-  const menuGroups = [
-    {
-      title: 'Visão Geral',
-      items: [
-        { icon: LayoutDashboard, label: 'Dashboard', path: '/admin' },
-        { icon: AlertTriangle, label: 'Alertas', path: '/admin/alertas' },
-        { icon: Medal, label: 'Ranking', path: '/admin/ranking' },
-      ]
-    },
-    {
-      title: 'Operacional',
-      items: [
-        { icon: Wrench, label: 'Nova Manutenção', path: '/admin/manutencoes/nova', highlight: true },
-        { icon: Fuel, label: 'Novo Abastecimento', path: '/admin/abastecimentos/novo', highlight: true },
-        { icon: ClipboardList, label: 'Hist. Manutenções', path: '/admin/manutencoes' },
-        { icon: Fuel, label: 'Hist. Abastecimentos', path: '/admin/abastecimentos' },
-        { icon: Truck, label: 'Hist. Jornadas', path: '/admin/jornadas' },
-        { icon: FileText, label: 'Planos Preventivos', path: '/admin/planos' },
-      ]
-    },
-    {
-      title: 'Cadastros',
-      items: [
-        { icon: Truck, label: 'Veículos', path: '/admin/veiculos' },
-        { icon: Users, label: 'Equipe', path: '/admin/usuarios' },
-        { icon: FileBadge, label: 'Documentos Legais', path: '/admin/documentos' },
-        { icon: Package, label: 'Produtos/Serviços', path: '/admin/produtos' },
-        { icon: Users, label: 'Fornecedores', path: '/admin/fornecedores' },
-      ]
-    }
-  ];
-
-  const NavItem = ({ item }: { item: any }) => {
-    const isActive = item.path === '/admin' 
-      ? location.pathname === '/admin'
-      : location.pathname.startsWith(item.path);
-
-    return (
-      <Link
-        to={item.path}
-        onClick={() => setIsSidebarOpen(false)}
-        className={`
-          flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 group text-sm font-medium
-          ${isActive 
-            ? 'bg-primary/10 text-primary font-bold shadow-sm' 
-            : 'text-text-secondary hover:bg-surface-hover hover:text-text-main'
-          }
-          ${item.highlight && !isActive ? 'border border-primary/20 bg-surface-hover' : 'border border-transparent'}
-        `}
-      >
-        <item.icon className={`w-4 h-4 transition-colors ${isActive ? 'text-primary' : 'text-text-muted group-hover:text-primary'}`} />
-        <span className="tracking-tight truncate">{item.label}</span>
-      </Link>
-    );
-  };
-
-  const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-surface">
-      <div className="h-16 flex items-center px-6 border-b border-border shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-hover flex items-center justify-center text-white font-bold shadow-button">
-            K
-          </div>
-          <div className="leading-none">
-            <span className="block font-bold text-sm text-text-main tracking-tight">FROTA <span className="text-primary">KLIN</span></span>
-            <span className="block text-[10px] text-text-muted font-medium uppercase tracking-wider mt-0.5">Gestão Inteligente</span>
-          </div>
-        </div>
-      </div>
-
-      <nav className="flex-1 px-4 py-6 space-y-8 overflow-y-auto custom-scrollbar">
-        {menuGroups.map((group, idx) => (
-          <div key={idx}>
-            <h4 className="px-3 text-[10px] font-bold text-text-muted uppercase tracking-wider mb-2">
-              {group.title}
-            </h4>
-            <div className="space-y-0.5">
-              {group.items.map((item) => (
-                <NavItem key={item.path} item={item} />
-              ))}
-            </div>
-          </div>
-        ))}
-      </nav>
-
-      <div className="p-4 border-t border-border bg-surface-hover/30 shrink-0 space-y-2 safe-area-bottom">
-        <button
-          onClick={() => setFinanceiroAberto(true)}
-          className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 transition-colors border border-emerald-500/20 group"
-        >
-          <BarChart3 className="w-4 h-4" />
-          <span className="text-sm font-bold">Relatório Financeiro</span>
-        </button>
-
-        <div className="pt-2 flex items-center gap-3 px-1">
-          <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm border border-primary/20 shrink-0">
-            {user?.nome?.charAt(0) || 'U'}
-          </div>
-          <div className="overflow-hidden flex-1">
-            <p className="text-xs font-bold text-text-main truncate">{user?.nome}</p>
-            <button 
-              onClick={() => setIsLogoutModalOpen(true)}
-              className="text-[10px] text-text-muted hover:text-error flex items-center gap-1 transition-colors"
-            >
-              <LogOut className="w-3 h-3" /> Sair
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
-    // [MODIFICAÇÃO 1] h-[100dvh] garante que o app ocupe a altura real visível no celular, sem cortar.
-    <div className="flex h-[100dvh] bg-background font-sans text-text-main overflow-hidden w-full">
+    // Estrutura GRID: [Sidebar Fixa] + [Conteúdo Flexível]
+    <div className="flex h-[100dvh] bg-background w-full overflow-hidden">
       
-      {/* SIDEBAR DESKTOP */}
-      <aside className="hidden lg:flex w-64 flex-col fixed inset-y-0 left-0 border-r border-border z-30 shadow-sm">
-        <SidebarContent />
-      </aside>
+      {/* Sidebar Componentizada */}
+      <Sidebar 
+        isOpen={isSidebarOpen} 
+        onClose={() => setIsSidebarOpen(false)} 
+        user={user}
+        onLogout={() => setIsLogoutModalOpen(true)}
+        onOpenFinanceiro={() => setFinanceiroAberto(true)}
+      />
 
-      {/* HEADER MOBILE */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 h-16 bg-surface/95 backdrop-blur-md border-b border-border z-40 flex items-center justify-between px-4 transition-all">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => setIsSidebarOpen(true)}
-            className="p-2 -ml-2 text-text-secondary hover:bg-surface-hover rounded-lg active:scale-95 transition-transform"
-          >
-            <Menu className="w-6 h-6" />
-          </button>
-          <span className="font-bold text-base text-text-main">FROTA <span className="text-primary">KLIN</span></span>
-        </div>
-        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold border border-primary/20">
-          {user?.nome?.charAt(0)}
-        </div>
-      </header>
-
-      {/* DRAWER MOBILE (MENU LATERAL) */}
-      {isSidebarOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden">
-          <div 
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity animate-in fade-in" 
-            onClick={() => setIsSidebarOpen(false)}
-          />
-          <aside className="absolute inset-y-0 left-0 w-72 max-w-[85vw] bg-surface shadow-2xl border-r border-border animate-in slide-in-from-left duration-300 flex flex-col">
-             <button 
-                onClick={() => setIsSidebarOpen(false)}
-                className="absolute top-4 right-4 p-2 text-text-muted hover:text-text-main z-50"
-             >
-                <X className="w-6 h-6" />
-             </button>
-            <SidebarContent />
-          </aside>
-        </div>
-      )}
-
-      {/* CONTEÚDO PRINCIPAL (ÁREA DA DIREITA) */}
-      <main className="flex-1 lg:ml-64 flex flex-col h-full pt-16 lg:pt-0 transition-all duration-300 w-full">
+      {/* Área Principal */}
+      <div className="flex-1 flex flex-col min-w-0 h-full relative">
         
-        {/* Wrapper de Scroll Inteligente */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-background scroll-smooth w-full">
-          
-          {/* [MODIFICAÇÃO 2] Container Responsivo
-              - px-3 no mobile: Margem mínima para aproveitar a tela.
-              - max-w-7xl: Limita a largura em telas gigantes (iMac) para não esticar demais.
-              - pb-24: Garante que o último item não fique atrás de botões flutuantes ou barras do sistema.
-          */}
-          <div className="w-full max-w-7xl mx-auto px-3 py-4 sm:px-6 sm:py-6 lg:px-8 animate-enter pb-24">
-            <Outlet />
-          </div>
-        </div>
-      </main>
+        {/* Header Mobile (Rola junto com o conteúdo para liberar espaço) */}
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background custom-scrollbar scroll-smooth relative">
+            
+            {/* Header Mobile (Aparece só em < lg) */}
+            <header className="lg:hidden flex items-center justify-between p-4 bg-surface/80 backdrop-blur-md sticky top-0 z-30 border-b border-border shadow-sm mb-4">
+                <div className="flex items-center gap-3">
+                    <button 
+                        onClick={() => setIsSidebarOpen(true)}
+                        className="p-2 -ml-2 text-text-main hover:bg-surface-hover rounded-lg active:scale-95 transition-transform"
+                    >
+                        <Menu className="w-6 h-6" />
+                    </button>
+                    <span className="font-bold text-lg text-primary tracking-tight">FrotaManager</span>
+                </div>
+                {/* Avatar Mobile */}
+                <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold border border-primary/20">
+                    {user?.nome?.charAt(0)}
+                </div>
+            </header>
 
-      {/* MODAIS GLOBAIS */}
+            {/* Conteúdo das Páginas (Outlet) */}
+            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-32 animate-enter">
+                <Outlet />
+            </div>
+        </main>
+      </div>
+
+      {/* Modais Globais */}
       <ConfirmModal
         isOpen={isLogoutModalOpen}
         onCancel={() => setIsLogoutModalOpen(false)}
