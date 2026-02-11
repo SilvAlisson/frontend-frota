@@ -11,13 +11,12 @@ import {
   MapPin, Calendar, CreditCard, Image as ImageIcon, Loader2 
 } from 'lucide-react';
 
-// --- COMPONENTES DE UI ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select'; 
 import type { Abastecimento, User, Veiculo, Produto, Fornecedor } from '../../types';
 
-// --- UTILS: Compressão de Imagem ---
+// --- UTILS ---
 const comprimirImagem = (arquivo: File): Promise<File> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -83,7 +82,6 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const [uploading, setUploading] = useState(false);
   const [previewFoto, setPreviewFoto] = useState<string | null>(null);
 
-  // 1. Queries
   const { data: abastecimento, isLoading: loadingAbs } = useQuery<Abastecimento>({
     queryKey: ['abastecimento', abastecimentoId],
     queryFn: async () => (await api.get(`/abastecimentos/${abastecimentoId}`)).data,
@@ -95,7 +93,6 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const { data: produtos = [] } = useQuery<Produto[]>({ queryKey: ['produtos'], queryFn: async () => (await api.get('/produtos')).data, staleTime: 1000 * 60 * 30 });
   const { data: fornecedores = [] } = useQuery<Fornecedor[]>({ queryKey: ['fornecedores'], queryFn: async () => (await api.get('/fornecedores')).data, staleTime: 1000 * 60 * 30 });
 
-  // Filtros
   const produtosCombustivel = useMemo(() => produtos.filter(p => ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo)), [produtos]);
   const fornecedoresPosto = useMemo(() => fornecedores.filter(f => f.tipo === 'POSTO'), [fornecedores]);
   const motoristas = useMemo(() => usuarios.filter(u => ['OPERADOR', 'ENCARREGADO'].includes(u.role)), [usuarios]);
@@ -105,7 +102,6 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const fornecedoresOptions = useMemo(() => fornecedoresPosto.map(f => ({ value: f.id, label: f.nome })), [fornecedoresPosto]);
   const produtosOptions = useMemo(() => produtosCombustivel.map(p => ({ value: p.id, label: p.nome })), [produtosCombustivel]);
 
-  // 2. Form Setup
   const { register, control, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<EditFormInput, any, EditFormOutput>({
     resolver: zodResolver(editSchema),
     mode: 'onBlur'
@@ -118,7 +114,6 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
     acc + (Number(item?.quantidade || 0) * Number(item?.valorPorUnidade || 0)), 0
   ) || 0;
 
-  // 3. Populate
   useEffect(() => {
     if (abastecimento) {
       const abs = abastecimento as any;
@@ -137,16 +132,13 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
           valorPorUnidade: i.valorPorUnidade || ((i.produto as any)?.valorAtual || 0)
         })) || []
       });
-
       if (abs.fotoNotaFiscalUrl) setPreviewFoto(abs.fotoNotaFiscalUrl);
     }
   }, [abastecimento, usuarios, fornecedores, reset]);
 
-  // 4. Upload
   const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     const file = e.target.files[0];
-    
     try {
       setUploading(true);
       const compressedFile = await comprimirImagem(file);
@@ -165,7 +157,6 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
     }
   };
 
-  // 5. Mutation
   const updateMutation = useMutation({
     mutationFn: async (data: EditFormOutput) => {
       await api.put(`/abastecimentos/${abastecimentoId}`, {
@@ -198,9 +189,9 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
     </div>
   );
 
-  // [CORREÇÃO]: Layout limpo para se adaptar ao Modal/Drawer pai
   return (
-    <div className="flex flex-col h-full w-full bg-surface">
+    // [CORREÇÃO]: h-full, w-full e min-h-0 para respeitar o flex do modal pai
+    <div className="flex flex-col h-full w-full bg-surface min-h-0">
       
       {/* HEADER FIXO */}
       <div className="px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
@@ -213,10 +204,11 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         </div>
       </div>
 
-      <form onSubmit={handleSubmit((data) => updateMutation.mutate(data))} className="flex flex-col flex-1 overflow-hidden">
+      {/* BODY COM SCROLL INTERNO - min-h-0 garante o comportamento correto do flex */}
+      <form onSubmit={handleSubmit((data) => updateMutation.mutate(data))} className="flex-1 flex flex-col overflow-hidden min-h-0">
         
         {/* MIOLO ROLÁVEL */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 min-h-0">
 
           <div className="flex flex-col md:flex-row gap-6">
             {/* Foto */}

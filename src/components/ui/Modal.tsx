@@ -32,19 +32,16 @@ interface ModalProps {
 export function Modal({ isOpen, onClose, title, children, className }: ModalProps) {
     const isDesktop = useMediaQuery("(min-width: 768px)");
     
+    // Bloqueia o scroll do body quando o modal abre para evitar o fundo rolando
     useEffect(() => {
         if (isOpen && isDesktop) {
-            // Salva o padding original para evitar layout shift quando a barra some
             const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
             document.body.style.paddingRight = `${scrollbarWidth}px`;
             document.body.style.overflow = 'hidden';
         } else {
-            // Reseta quando fecha
             document.body.style.overflow = '';
             document.body.style.paddingRight = '';
         }
-        
-        // Limpeza ao desmontar
         return () => {
             document.body.style.overflow = '';
             document.body.style.paddingRight = '';
@@ -58,7 +55,6 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
     if (!mounted || !isOpen) return null;
 
     // --- MODO MOBILE (GAVETA / DRAWER - VAUL) ---
-    // A lib 'vaul' já usa Portal internamente, então não precisamos envolver
     if (!isDesktop) {
         return (
             <Drawer.Root open={isOpen} onOpenChange={(open) => !open && onClose()} shouldScaleBackground>
@@ -73,7 +69,8 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
                     >
                         <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-border/60 mt-4 mb-2" />
                         
-                        <div className="flex-1 flex flex-col overflow-hidden w-full h-full relative">
+                        {/* Container Flexível com min-h-0 para scroll funcionar */}
+                        <div className="flex-1 flex flex-col overflow-hidden w-full h-full relative min-h-0">
                             {title && (
                                 <div className="px-6 pb-4 text-center border-b border-border/50 shrink-0">
                                     <Drawer.Title className="font-bold text-lg text-text-main tracking-tight">
@@ -81,8 +78,8 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
                                     </Drawer.Title>
                                 </div>
                             )}
-                            {/* Conteúdo do Form */}
-                            <div className="flex-1 overflow-hidden flex flex-col">
+                            {/* Conteúdo do Form com min-h-0 para evitar corte */}
+                            <div className="flex-1 overflow-hidden flex flex-col min-h-0">
                                 {children}
                             </div>
                         </div>
@@ -128,13 +125,12 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
                     </button>
                 </div>
 
-                {/* Corpo do Modal - ONDE O FORMULÁRIO ENTRA */}
-                {/* overflow-hidden aqui garante que o scroll seja gerenciado pelo filho (Form) ou por este container se necessário */}
-                <div className="flex-1 overflow-hidden flex flex-col relative w-full rounded-b-2xl bg-surface">
+                {/* Corpo do Modal com min-h-0 para garantir scroll correto */}
+                <div className="flex-1 overflow-hidden flex flex-col relative w-full rounded-b-2xl bg-surface min-h-0">
                     {children}
                 </div>
             </div>
         </div>,
-        document.body // Alvo do Portal
+        document.body
     );
 }

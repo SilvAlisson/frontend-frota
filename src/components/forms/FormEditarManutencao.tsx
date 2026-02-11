@@ -131,7 +131,6 @@ export function FormEditarManutencao({
     }
   });
 
-  // Inicializa preview da foto
   useEffect(() => {
     if (osParaEditar.fotoComprovanteUrl) {
       setPreviewFoto(osParaEditar.fotoComprovanteUrl);
@@ -144,10 +143,8 @@ export function FormEditarManutencao({
   const fornecedorIdSelecionado = watch('fornecedorId');
   const itensWatch = useWatch({ control, name: 'itens' });
 
-  // Sincroniza Aba
   useEffect(() => { setValue('tipo', abaAtiva); }, [abaAtiva, setValue]);
 
-  // --- FILTROS ---
   const produtosManutencao = useMemo(() => {
     let lista = produtos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo));
     
@@ -178,12 +175,10 @@ export function FormEditarManutencao({
     [produtosManutencao]
   );
 
-  // --- CÁLCULOS ---
   const totalGeral = (itensWatch || []).reduce((acc, item) =>
     acc + ((Number(item?.quantidade) || 0) * (Number(item?.valorPorUnidade) || 0)), 0
   );
 
-  // --- UPLOAD HANDLER ---
   const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     const file = e.target.files[0];
@@ -210,7 +205,6 @@ export function FormEditarManutencao({
     }
   };
 
-  // --- SUBMIT ---
   const onSubmit = async (data: ManutencaoFormOutput) => {
     let obsFinal = data.observacoes || '';
     if (data.alvo === 'OUTROS' && data.numeroCA) {
@@ -237,9 +231,10 @@ export function FormEditarManutencao({
 
   const isLocked = isSubmitting || uploading;
 
-  // [CORREÇÃO]: Container limpo para o Modal
+  // --- RENDERIZAÇÃO ---
+  // Removido max-h-[90vh], bg-white fixo e adicionado min-h-0 para flex nested
   return (
-    <div className="flex flex-col h-full w-full bg-surface">
+    <div className="flex flex-col h-full w-full bg-surface min-h-0">
       
       {/* HEADER FIXO */}
       <div className="px-6 pt-6 pb-2 border-b border-border shrink-0">
@@ -272,8 +267,10 @@ export function FormEditarManutencao({
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
-        {/* MIOLO ROLÁVEL */}
+      {/* BODY COM SCROLL INTERNO */}
+      {/* 'min-h-0' garante que o scroll funcione dentro do modal sem cortar */}
+      <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden min-h-0">
+        
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 custom-scrollbar">
 
           {/* 1. SELEÇÃO DE ALVO */}
