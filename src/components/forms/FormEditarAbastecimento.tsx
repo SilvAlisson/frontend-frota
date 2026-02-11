@@ -11,13 +11,13 @@ import {
   MapPin, Calendar, CreditCard, Image as ImageIcon, Loader2 
 } from 'lucide-react';
 
-// --- SEUS COMPONENTES DE UI ---
+// --- COMPONENTES DE UI ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select'; 
 import type { Abastecimento, User, Veiculo, Produto, Fornecedor } from '../../types';
 
-// --- UTILS: Compressão de Imagem (Mantida) ---
+// --- UTILS: Compressão de Imagem ---
 const comprimirImagem = (arquivo: File): Promise<File> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -50,11 +50,11 @@ const comprimirImagem = (arquivo: File): Promise<File> => {
   });
 };
 
-// --- SCHEMA (Mantido e estendido com foto) ---
+// --- SCHEMA ---
 const itemSchema = z.object({
   produtoId: z.string().min(1, "Selecione o produto"),
   quantidade: z.coerce.number().gt(0, "Qtd inválida"),
-  valorPorUnidade: z.coerce.number().min(0, "Valor inválido"), // Aceita 0, mas preferencialmente > 0
+  valorPorUnidade: z.coerce.number().min(0, "Valor inválido"),
 });
 
 const editSchema = z.object({
@@ -65,7 +65,7 @@ const editSchema = z.object({
   dataHora: z.string().min(1, "Data obrigatória"),
   placaCartaoUsado: z.string().optional(),
   justificativa: z.string().optional(),
-  fotoNotaFiscalUrl: z.string().optional().nullable(), // Adicionado
+  fotoNotaFiscalUrl: z.string().optional().nullable(),
   itens: z.array(itemSchema).min(1, "Adicione itens"),
 });
 
@@ -83,38 +83,19 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const [uploading, setUploading] = useState(false);
   const [previewFoto, setPreviewFoto] = useState<string | null>(null);
 
-  // 1. Queries (Mantendo seus staleTime originais)
+  // 1. Queries
   const { data: abastecimento, isLoading: loadingAbs } = useQuery<Abastecimento>({
     queryKey: ['abastecimento', abastecimentoId],
     queryFn: async () => (await api.get(`/abastecimentos/${abastecimentoId}`)).data,
     retry: 1
   });
 
-  const { data: usuarios = [] } = useQuery<User[]>({
-    queryKey: ['users'],
-    queryFn: async () => (await api.get('/users')).data,
-    staleTime: 1000 * 60 * 5
-  });
+  const { data: usuarios = [] } = useQuery<User[]>({ queryKey: ['users'], queryFn: async () => (await api.get('/users')).data, staleTime: 1000 * 60 * 5 });
+  const { data: veiculos = [] } = useQuery<Veiculo[]>({ queryKey: ['veiculos'], queryFn: async () => (await api.get('/veiculos')).data, staleTime: 1000 * 60 * 5 });
+  const { data: produtos = [] } = useQuery<Produto[]>({ queryKey: ['produtos'], queryFn: async () => (await api.get('/produtos')).data, staleTime: 1000 * 60 * 30 });
+  const { data: fornecedores = [] } = useQuery<Fornecedor[]>({ queryKey: ['fornecedores'], queryFn: async () => (await api.get('/fornecedores')).data, staleTime: 1000 * 60 * 30 });
 
-  const { data: veiculos = [] } = useQuery<Veiculo[]>({
-    queryKey: ['veiculos'],
-    queryFn: async () => (await api.get('/veiculos')).data,
-    staleTime: 1000 * 60 * 5
-  });
-
-  const { data: produtos = [] } = useQuery<Produto[]>({
-    queryKey: ['produtos'],
-    queryFn: async () => (await api.get('/produtos')).data,
-    staleTime: 1000 * 60 * 30
-  });
-
-  const { data: fornecedores = [] } = useQuery<Fornecedor[]>({
-    queryKey: ['fornecedores'],
-    queryFn: async () => (await api.get('/fornecedores')).data,
-    staleTime: 1000 * 60 * 30
-  });
-
-  // Filtros de Negócio e Opções para Select
+  // Filtros
   const produtosCombustivel = useMemo(() => produtos.filter(p => ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo)), [produtos]);
   const fornecedoresPosto = useMemo(() => fornecedores.filter(f => f.tipo === 'POSTO'), [fornecedores]);
   const motoristas = useMemo(() => usuarios.filter(u => ['OPERADOR', 'ENCARREGADO'].includes(u.role)), [usuarios]);
@@ -137,16 +118,12 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
     acc + (Number(item?.quantidade || 0) * Number(item?.valorPorUnidade || 0)), 0
   ) || 0;
 
-  // 3. Populate Form (LÓGICA CRUCIAL MANTIDA)
+  // 3. Populate
   useEffect(() => {
     if (abastecimento) {
-      // Usamos (as any) para acessar propriedades que podem vir populadas (objeto) ou não (id), 
-      // garantindo compatibilidade com diferentes respostas do backend
       const abs = abastecimento as any;
-
       reset({
         veiculoId: abs.veiculoId || abs.veiculo?.id,
-        // Tenta pegar ID direto, senão busca pelo nome no array de usuários (fallback importante que você criou)
         operadorId: abs.operadorId || usuarios.find(u => u.nome === abs.operador?.nome)?.id || '',
         fornecedorId: abs.fornecedorId || fornecedores.find(f => f.nome === abs.fornecedor?.nome)?.id || '',
         kmOdometro: Number(abs.kmOdometro),
@@ -154,7 +131,6 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         placaCartaoUsado: abs.placaCartaoUsado || '',
         justificativa: abs.justificativa || '',
         fotoNotaFiscalUrl: abs.fotoNotaFiscalUrl,
-        // Mapeamento cuidadoso dos itens
         itens: abs.itens?.map((i: any) => ({
           produtoId: i.produtoId || i.produto?.id || '',
           quantidade: i.quantidade,
@@ -162,13 +138,11 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         })) || []
       });
 
-      if (abs.fotoNotaFiscalUrl) {
-        setPreviewFoto(abs.fotoNotaFiscalUrl);
-      }
+      if (abs.fotoNotaFiscalUrl) setPreviewFoto(abs.fotoNotaFiscalUrl);
     }
   }, [abastecimento, usuarios, fornecedores, reset]);
 
-  // 4. Upload Handler
+  // 4. Upload
   const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     const file = e.target.files[0];
@@ -176,17 +150,13 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
     try {
       setUploading(true);
       const compressedFile = await comprimirImagem(file);
-      
       const fileName = `abastecimento-${Date.now()}-${Math.random().toString(36).substring(2,9)}.jpg`;
       const { data: uploadData, error } = await supabase.storage.from('fotos-frota').upload(`public/${fileName}`, compressedFile);
-      
       if (error) throw error;
-      
       const { data: publicUrl } = supabase.storage.from('fotos-frota').getPublicUrl(uploadData.path);
-      
       setValue('fotoNotaFiscalUrl', publicUrl.publicUrl);
       setPreviewFoto(publicUrl.publicUrl);
-      toast.success("Foto atualizada com sucesso!");
+      toast.success("Foto atualizada!");
     } catch (error) {
       console.error(error);
       toast.error("Erro ao enviar foto.");
@@ -209,47 +179,50 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
       });
     },
     onSuccess: () => {
-      toast.success("Registro atualizado com sucesso!");
+      toast.success("Atualizado com sucesso!");
       queryClient.invalidateQueries({ queryKey: ['abastecimentos'] });
       queryClient.invalidateQueries({ queryKey: ['abastecimento', abastecimentoId] });
       onSuccess();
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.error || "Erro ao salvar alterações.");
+      toast.error(err.response?.data?.error || "Erro ao salvar.");
     }
   });
 
   const isLocked = isSubmitting || uploading;
 
   if (loadingAbs) return (
-    <div className="p-12 flex flex-col items-center justify-center space-y-3 bg-surface rounded-xl border border-border h-64">
-      <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-      <p className="text-sm text-text-muted animate-pulse">Carregando dados...</p>
+    <div className="h-64 flex flex-col items-center justify-center space-y-3">
+      <Loader2 className="w-8 h-8 text-primary animate-spin" />
+      <p className="text-sm text-text-muted animate-pulse">Carregando...</p>
     </div>
   );
 
+  // [CORREÇÃO]: Layout limpo para se adaptar ao Modal/Drawer pai
   return (
-    <div className="bg-surface rounded-xl shadow-card border border-border overflow-hidden animate-enter flex flex-col max-h-[85vh]">
+    <div className="flex flex-col h-full w-full bg-surface">
       
-      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
+      {/* HEADER FIXO */}
+      <div className="px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
         <div>
           <h3 className="text-lg font-bold text-text-main">Editar Abastecimento</h3>
           <p className="text-xs text-text-secondary">Ajuste os dados e comprovante.</p>
         </div>
-        <div className="p-2 bg-surface rounded-lg border border-border shadow-sm text-primary">
+        <div className="p-2 bg-surface-hover rounded-lg text-primary">
           <Fuel className="w-5 h-5" />
         </div>
       </div>
 
       <form onSubmit={handleSubmit((data) => updateMutation.mutate(data))} className="flex flex-col flex-1 overflow-hidden">
-        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
+        
+        {/* MIOLO ROLÁVEL */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
 
           <div className="flex flex-col md:flex-row gap-6">
-            
-            {/* --- COLUNA ESQUERDA: FOTO (Nova Funcionalidade) --- */}
+            {/* Foto */}
             <div className="w-full md:w-1/3 flex flex-col gap-2">
               <span className="text-xs font-bold text-text-secondary uppercase ml-1">Comprovante</span>
-              <div className="relative aspect-[3/4] bg-gray-100 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden group hover:border-primary transition-colors cursor-pointer">
+              <div className="relative aspect-[3/4] bg-gray-50 dark:bg-gray-800 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden group hover:border-primary transition-colors cursor-pointer">
                 {uploading ? (
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -257,7 +230,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
                   </div>
                 ) : previewFoto ? (
                   <>
-                    <img src={previewFoto} alt="Nota Fiscal" className="w-full h-full object-cover" />
+                    <img src={previewFoto} alt="Nota" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                        <ImageIcon className="w-8 h-8 text-white" />
                        <span className="text-white text-xs font-bold bg-black/20 px-2 py-1 rounded">Trocar Foto</span>
@@ -266,106 +239,45 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
                 ) : (
                   <div className="text-center text-text-muted p-4">
                     <ImageIcon className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                    <p className="text-xs">Clique para adicionar<br/>comprovante</p>
+                    <p className="text-xs">Clique para adicionar</p>
                   </div>
                 )}
-                
-                <input 
-                  type="file" 
-                  accept="image/*" 
-                  className="absolute inset-0 opacity-0 cursor-pointer z-10"
-                  onChange={handleFotoChange}
-                  disabled={isLocked}
-                />
+                <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={handleFotoChange} disabled={isLocked} />
               </div>
             </div>
 
-            {/* --- COLUNA DIREITA: DADOS (Com Componentes de UI) --- */}
+            {/* Campos */}
             <div className="w-full md:w-2/3 grid grid-cols-1 gap-5 content-start">
-              
-              <Select 
-                label="Veículo" 
-                options={veiculosOptions} 
-                icon={<Truck className="w-4 h-4"/>} 
-                {...register('veiculoId')} 
-                error={errors.veiculoId?.message} 
-                disabled={isLocked} 
-              />
-              
-              <Select 
-                label="Motorista" 
-                options={motoristasOptions} 
-                icon={<UserIcon className="w-4 h-4"/>} 
-                {...register('operadorId')} 
-                disabled={isLocked} 
-              />
-              
-              <Select 
-                label="Fornecedor" 
-                options={fornecedoresOptions} 
-                icon={<MapPin className="w-4 h-4"/>} 
-                {...register('fornecedorId')} 
-                error={errors.fornecedorId?.message} 
-                disabled={isLocked} 
-              />
-
+              <Select label="Veículo" options={veiculosOptions} icon={<Truck className="w-4 h-4"/>} {...register('veiculoId')} error={errors.veiculoId?.message} disabled={isLocked} />
+              <Select label="Motorista" options={motoristasOptions} icon={<UserIcon className="w-4 h-4"/>} {...register('operadorId')} disabled={isLocked} />
+              <Select label="Fornecedor" options={fornecedoresOptions} icon={<MapPin className="w-4 h-4"/>} {...register('fornecedorId')} error={errors.fornecedorId?.message} disabled={isLocked} />
               <div className="grid grid-cols-2 gap-4">
-                <Input
-                  label="KM Odômetro"
-                  type="number"
-                  {...register('kmOdometro')}
-                  error={errors.kmOdometro?.message}
-                  disabled={isLocked}
-                />
-                <Input
-                  label="Cartão (Final)"
-                  maxLength={4}
-                  placeholder="Ex: 1234"
-                  icon={<CreditCard className="w-4 h-4"/>}
-                  {...register('placaCartaoUsado')}
-                  disabled={isLocked}
-                  containerClassName="!mb-0"
-                />
+                <Input label="KM Odômetro" type="number" {...register('kmOdometro')} error={errors.kmOdometro?.message} disabled={isLocked} />
+                <Input label="Cartão (Final)" maxLength={4} placeholder="Ex: 1234" icon={<CreditCard className="w-4 h-4"/>} {...register('placaCartaoUsado')} disabled={isLocked} containerClassName="!mb-0" />
               </div>
-
-              <Input
-                label="Data e Hora"
-                type="datetime-local"
-                icon={<Calendar className="w-4 h-4"/>}
-                {...register('dataHora')}
-                error={errors.dataHora?.message}
-                disabled={isLocked}
-                containerClassName="!mb-0"
-              />
+              <Input label="Data e Hora" type="datetime-local" icon={<Calendar className="w-4 h-4"/>} {...register('dataHora')} error={errors.dataHora?.message} disabled={isLocked} containerClassName="!mb-0" />
             </div>
           </div>
 
-          {/* LISTA DE ITENS */}
-          <div className="bg-background rounded-xl border border-border p-4">
+          {/* Itens */}
+          <div className="bg-surface-hover/30 rounded-xl border border-border p-4">
             <div className="flex justify-between items-center mb-3">
               <label className="text-xs font-bold text-text-secondary uppercase tracking-widest">Itens</label>
               <span className="bg-surface border border-border px-3 py-1 rounded-lg text-xs font-mono font-bold text-primary shadow-sm">
                 Total: R$ {totalGeral.toFixed(2)}
               </span>
             </div>
-
             <div className="space-y-3">
               {fields.map((field, index) => (
-                <div key={field.id} className="grid grid-cols-12 gap-3 items-end bg-surface p-3 rounded-xl border border-border shadow-sm relative group hover:border-primary/30 transition-all">
-                  <button type="button" onClick={() => remove(index)} disabled={isLocked} className="absolute -top-2 -right-2 bg-surface text-text-muted hover:text-error rounded-full w-6 h-6 border border-border shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all z-10">
+                <div key={field.id} className="grid grid-cols-12 gap-3 items-end bg-surface p-3 rounded-xl border border-border shadow-sm relative group">
+                  <button type="button" onClick={() => remove(index)} disabled={isLocked} className="absolute -top-2 -right-2 bg-surface text-text-muted hover:text-error rounded-full w-6 h-6 border border-border shadow-sm flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-all">
                     <X className="w-3 h-3" />
                   </button>
                   <div className="col-span-12 sm:col-span-5">
-                    <Select 
-                      options={produtosOptions}
-                      {...register(`itens.${index}.produtoId`)}
-                      className="h-9 text-xs"
-                      disabled={isLocked}
-                      containerClassName="!mb-0" // Ajuste fino para tabela
-                    />
+                    <Select options={produtosOptions} {...register(`itens.${index}.produtoId`)} className="h-9 text-xs" disabled={isLocked} containerClassName="!mb-0" />
                   </div>
                   <div className="col-span-6 sm:col-span-3">
-                    <Input label="Litros" type="number" step="any" {...register(`itens.${index}.quantidade`)} className="h-9 text-xs text-center" containerClassName="!mb-0" disabled={isLocked} />
+                    <Input label="Qtd" type="number" step="any" {...register(`itens.${index}.quantidade`)} className="h-9 text-xs text-center" containerClassName="!mb-0" disabled={isLocked} />
                   </div>
                   <div className="col-span-6 sm:col-span-4">
                     <Input label="R$ Unit" type="number" step="0.001" {...register(`itens.${index}.valorPorUnidade`)} className="h-9 text-xs text-right font-mono" containerClassName="!mb-0" disabled={isLocked} />
@@ -373,7 +285,6 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
                 </div>
               ))}
             </div>
-            
             <button type="button" onClick={() => append({ produtoId: '', quantidade: 0, valorPorUnidade: 0 })} disabled={isLocked} className="w-full mt-3 py-2 border border-dashed border-border rounded-lg text-xs text-text-muted hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-1">
               <Plus className="w-3 h-3" /> Adicionar Item
             </button>
@@ -382,6 +293,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
           <Input label="Justificativa (Opcional)" {...register('justificativa')} disabled={isLocked} placeholder="Motivo da alteração..." />
         </div>
 
+        {/* FOOTER FIXO */}
         <div className="flex gap-3 p-4 border-t border-border bg-background shrink-0">
           <Button type="button" variant="ghost" onClick={onCancel} className="flex-1" disabled={isLocked}>Cancelar</Button>
           <Button type="submit" variant="primary" isLoading={isLocked} disabled={isLocked} className="flex-[2] shadow-lg" icon={<Save className="w-4 h-4" />}>

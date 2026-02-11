@@ -23,7 +23,7 @@ import type { Veiculo, Produto, Fornecedor } from '../../types';
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
-// --- FUNÇÃO DE COMPRESSÃO (Mesma do Abastecimento) ---
+// --- FUNÇÃO DE COMPRESSÃO ---
 const comprimirImagem = (arquivo: File): Promise<File> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -237,14 +237,15 @@ export function FormEditarManutencao({
 
   const isLocked = isSubmitting || uploading;
 
+  // [CORREÇÃO]: Container limpo para o Modal
   return (
-    <div className="flex flex-col h-full bg-white max-h-[90vh]">
+    <div className="flex flex-col h-full w-full bg-surface">
       
-      {/* HEADER */}
-      <div className="px-6 pt-6 pb-2 border-b border-gray-100 shrink-0">
+      {/* HEADER FIXO */}
+      <div className="px-6 pt-6 pb-2 border-b border-border shrink-0">
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Editar Manutenção</h3>
+            <h3 className="text-lg font-bold text-text-main">Editar Manutenção</h3>
             <p className="text-xs text-text-secondary">Ajuste os detalhes da Ordem de Serviço.</p>
           </div>
           <Badge variant={abaAtiva === 'PREVENTIVA' ? 'success' : 'warning'}>{abaAtiva}</Badge>
@@ -262,7 +263,7 @@ export function FormEditarManutencao({
                 flex-1 py-2 text-xs font-bold uppercase tracking-wider rounded-lg transition-all
                 ${abaAtiva === tipo 
                   ? 'bg-primary/10 text-primary border border-primary/20' 
-                  : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}
+                  : 'bg-surface-hover text-text-secondary hover:bg-surface-hover/80'}
               `}
             >
               {tipo}
@@ -272,12 +273,13 @@ export function FormEditarManutencao({
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
+        {/* MIOLO ROLÁVEL */}
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 custom-scrollbar">
 
           {/* 1. SELEÇÃO DE ALVO */}
           <div className="flex gap-4">
             {ALVOS_MANUTENCAO.map(alvo => (
-              <label key={alvo} className={`flex items-center gap-2 cursor-pointer p-3 border rounded-xl w-full transition-all ${alvoSelecionado === alvo ? 'border-primary bg-primary/5' : 'border-gray-200 hover:bg-gray-50'}`}>
+              <label key={alvo} className={`flex items-center gap-2 cursor-pointer p-3 border rounded-xl w-full transition-all ${alvoSelecionado === alvo ? 'border-primary bg-primary/5' : 'border-border hover:bg-surface-hover'}`}>
                 <input
                   type="radio"
                   value={alvo}
@@ -285,7 +287,7 @@ export function FormEditarManutencao({
                   className="accent-primary w-4 h-4"
                   disabled={isLocked}
                 />
-                <span className="text-sm font-bold text-gray-700">
+                <span className="text-sm font-bold text-text-main">
                   {alvo === 'VEICULO' ? 'Veículo' : 'Outro Equipamento'}
                 </span>
               </label>
@@ -297,7 +299,7 @@ export function FormEditarManutencao({
             {/* --- COLUNA ESQUERDA: FOTO --- */}
             <div className="w-full md:w-1/3 flex flex-col gap-2">
                <span className="text-xs font-bold text-text-secondary uppercase ml-1">Comprovante</span>
-               <div className="relative aspect-[3/4] bg-gray-100 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden group hover:border-primary transition-colors cursor-pointer">
+               <div className="relative aspect-[3/4] bg-surface-hover/30 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden group hover:border-primary transition-colors cursor-pointer">
                  {uploading ? (
                    <div className="flex flex-col items-center gap-2">
                      <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -381,11 +383,11 @@ export function FormEditarManutencao({
           </div>
 
           {/* 3. ITENS E SERVIÇOS */}
-          <div className="space-y-4 pt-4 border-t border-gray-100">
+          <div className="space-y-4 pt-4 border-t border-border">
             <div className="flex justify-between items-center">
-              <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Itens da OS</h4>
+              <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Itens da OS</h4>
               {fornecedorIdSelecionado && produtosManutencao.length < produtos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)).length && (
-                <div className="text-[10px] text-blue-600 bg-blue-50 px-2 py-1 rounded flex items-center gap-1">
+                <div className="text-[10px] text-info bg-info/10 px-2 py-1 rounded flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" /> Filtro Ativo
                 </div>
               )}
@@ -393,12 +395,12 @@ export function FormEditarManutencao({
 
             <div className="space-y-3">
               {fields.map((field, index) => (
-                <div key={field.id} className="bg-gray-50/50 p-3 rounded-xl border border-gray-100 relative group hover:border-primary/20 transition-colors">
+                <div key={field.id} className="bg-surface-hover/30 p-3 rounded-xl border border-border relative group hover:border-primary/20 transition-colors">
                   <button
                     type="button"
                     onClick={() => remove(index)}
                     disabled={isLocked}
-                    className="absolute -top-2 -right-2 bg-white border border-gray-200 text-gray-400 hover:text-red-500 p-1 rounded-full shadow-sm z-10 transition-colors opacity-0 group-hover:opacity-100"
+                    className="absolute -top-2 -right-2 bg-surface border border-border text-text-muted hover:text-error p-1 rounded-full shadow-sm z-10 transition-colors opacity-0 group-hover:opacity-100"
                   >
                     <Trash2 className="w-3 h-3" />
                   </button>
@@ -409,7 +411,7 @@ export function FormEditarManutencao({
                         label="Item"
                         options={produtosOpcoes}
                         {...register(`itens.${index}.produtoId`)}
-                        className="bg-white h-9 text-xs"
+                        className="bg-surface h-9 text-xs"
                         disabled={isLocked}
                         containerClassName="!mb-0"
                       />
@@ -420,7 +422,7 @@ export function FormEditarManutencao({
                         type="number"
                         step="0.1"
                         {...register(`itens.${index}.quantidade`)}
-                        className="bg-white h-9 text-xs text-center"
+                        className="bg-surface h-9 text-xs text-center"
                         disabled={isLocked}
                         containerClassName="!mb-0"
                       />
@@ -430,9 +432,9 @@ export function FormEditarManutencao({
                         label="Valor Unit"
                         type="number"
                         step="0.01"
-                        icon={<DollarSign className="w-3 h-3 text-gray-400"/>}
+                        icon={<DollarSign className="w-3 h-3 text-text-muted"/>}
                         {...register(`itens.${index}.valorPorUnidade`)}
-                        className="bg-white h-9 text-xs text-right font-bold"
+                        className="bg-surface h-9 text-xs text-right font-bold"
                         disabled={isLocked}
                         containerClassName="!mb-0"
                       />
@@ -446,23 +448,23 @@ export function FormEditarManutencao({
               type="button"
               variant="ghost"
               onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })}
-              className="w-full border-dashed border border-gray-200 text-xs text-primary hover:bg-primary/5"
+              className="w-full border-dashed border border-border text-xs text-primary hover:bg-primary/5"
               disabled={isLocked}
             >
               <Plus className="w-3 h-3 mr-1" /> Adicionar Item
             </Button>
             
-            {errors.itens && <p className="text-xs text-red-500 text-right">{errors.itens.root?.message}</p>}
+            {errors.itens && <p className="text-xs text-error text-right">{errors.itens.root?.message}</p>}
           </div>
 
           {/* 4. OBSERVAÇÕES */}
           <div className="pt-2">
-            <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">
+            <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">
               Observações
             </label>
             <textarea
               {...register("observacoes")}
-              className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none min-h-[80px] transition-all"
+              className="w-full px-4 py-3 text-sm bg-surface border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none min-h-[80px] transition-all"
               placeholder="Detalhes adicionais..."
               disabled={isLocked}
             />
@@ -470,11 +472,11 @@ export function FormEditarManutencao({
 
         </div>
 
-        {/* FOOTER */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex gap-3 justify-between items-center shrink-0">
+        {/* FOOTER FIXO */}
+        <div className="px-6 py-4 border-t border-border bg-surface-hover/30 flex gap-3 justify-between items-center shrink-0">
           <div className="text-left">
-            <span className="text-[10px] text-gray-400 font-bold uppercase block">Total</span>
-            <span className="text-xl font-mono font-black text-gray-900">
+            <span className="text-[10px] text-text-muted font-bold uppercase block">Total</span>
+            <span className="text-xl font-mono font-black text-text-main">
               {totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </span>
           </div>
