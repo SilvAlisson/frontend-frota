@@ -17,6 +17,7 @@
     "@tanstack/react-query-devtools": "^5.91.1",
     "@types/qrcode.react": "^1.0.5",
     "axios": "^1.13.1",
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dompurify": "^3.3.0",
     "exceljs": "^4.4.0",

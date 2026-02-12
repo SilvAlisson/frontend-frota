@@ -1,82 +1,63 @@
 import React, { forwardRef } from 'react';
-import { twMerge } from 'tailwind-merge';
-import { clsx, type ClassValue } from 'clsx';
+import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2 } from 'lucide-react';
+import { cn } from '../../lib/utils'; // Ajuste o caminho conforme sua estrutura
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+// Definindo todas as variações possíveis de estilo
+const buttonVariants = cva(
+  // Estilos Base (Sempre presentes)
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-bold tracking-wide transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
+  {
+    variants: {
+      variant: {
+        primary: 
+          "bg-primary text-primary-foreground shadow-button hover:bg-primary-hover hover:shadow-float hover:-translate-y-0.5 border border-transparent",
+        secondary: 
+          "bg-surface text-text-main border border-border shadow-sm hover:bg-surface-hover hover:text-primary hover:border-primary/30",
+        ghost: 
+          "bg-transparent text-text-secondary hover:bg-primary/10 hover:text-primary border border-transparent",
+        danger: 
+          "bg-error text-error-foreground shadow-button hover:bg-error/90 hover:shadow-lg hover:-translate-y-0.5 border border-transparent",
+        success: 
+          "bg-success text-success-foreground shadow-button hover:bg-success/90 hover:shadow-lg hover:-translate-y-0.5 border border-transparent",
+      },
+      size: {
+        default: "h-10 px-5 py-2.5",
+        sm: "h-8 rounded-md px-3 text-xs",
+        lg: "h-12 rounded-lg px-8 text-base",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "primary",
+      size: "default",
+    },
+  }
+);
 
-type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
-
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {
   isLoading?: boolean;
   icon?: React.ReactNode;
 }
 
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({
-    variant = 'primary',
-    isLoading = false,
-    icon,
-    children,
-    className,
-    disabled,
-    ...rest
-  }, ref) => {
-
-    const baseStyles = cn(
-      "inline-flex items-center justify-center gap-2",
-      "px-5 py-2.5",
-      "text-sm font-bold tracking-wide",
-      "rounded-lg",
-      "transition-all duration-200 ease-out", // 'ease-out' é mais natural
-      "active:scale-[0.98]", 
-      "focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-      "disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
-    );
-
-    const variants: Record<ButtonVariant, string> = {
-      primary: cn(
-        "bg-primary text-primary-foreground",
-        "hover:bg-primary-hover hover:-translate-y-0.5", 
-        "shadow-button hover:shadow-float border border-transparent"
-      ),
-      secondary: cn(
-        "bg-surface text-text-main border border-border",
-        "hover:bg-surface-hover hover:border-primary/30 hover:text-primary",
-        "shadow-sm hover:shadow-md"
-      ),
-      ghost: cn(
-        "bg-transparent text-text-secondary",
-        "hover:bg-primary/10 hover:text-primary", // Usando opacidade nativa
-        "shadow-none border border-transparent"
-      ),
-      danger: cn(
-        "bg-error text-error-foreground",
-        "hover:bg-error/90 hover:-translate-y-0.5",
-        "shadow-button hover:shadow-lg border border-transparent"
-      ),
-      success: cn(
-        "bg-success text-success-foreground",
-        "hover:bg-success/90 hover:-translate-y-0.5",
-        "shadow-button hover:shadow-lg border border-transparent"
-      ),
-    };
-
+const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, isLoading = false, icon, children, disabled, ...props }, ref) => {
     return (
       <button
+        className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
-        className={cn(baseStyles, variants[variant], className)}
         disabled={disabled || isLoading}
-        {...rest}
+        {...props}
       >
-        {isLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-        {!isLoading && icon && <span className="-ml-1">{icon}</span>}
+        {isLoading && <Loader2 className="w-4 h-4 animate-spin shrink-0" />}
+        {!isLoading && icon && <span className="shrink-0">{icon}</span>}
         {children}
       </button>
     );
   }
 );
-Button.displayName = 'Button';
+Button.displayName = "Button";
+
+export { Button, buttonVariants };

@@ -1,41 +1,60 @@
 import React, { forwardRef } from 'react';
-import { twMerge } from 'tailwind-merge';
-import { clsx, type ClassValue } from 'clsx';
+import { cva, type VariantProps } from 'class-variance-authority';
+import { cn } from '../../lib/utils';
 
-function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
-}
+const cardVariants = cva(
+  "rounded-2xl overflow-hidden transition-all duration-300 ease-out border",
+  {
+    variants: {
+      variant: {
+        default: "bg-surface border-border shadow-card", // Sombra suave padrão
+        outline: "bg-transparent border-border shadow-none",
+        glass: "backdrop-blur-xl bg-white/80 dark:bg-black/40 border-white/20 shadow-lg",
+        solid: "bg-gray-50 dark:bg-gray-900 border-transparent", // Para fundos mais densos
+      },
+      padding: {
+        none: "p-0",
+        sm: "p-4",
+        default: "p-6",
+        lg: "p-8",
+      },
+      isInteractive: {
+        true: "cursor-pointer hover:shadow-float hover:-translate-y-1 hover:border-primary/30 active:scale-[0.99]",
+        false: "",
+      }
+    },
+    defaultVariants: {
+      variant: "default",
+      padding: "default",
+      isInteractive: false,
+    },
+  }
+);
 
-interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-    variant?: 'default' | 'outline' | 'glass';
-    noPadding?: boolean;
+interface CardProps 
+  extends React.HTMLAttributes<HTMLDivElement>,
+    Omit<VariantProps<typeof cardVariants>, 'isInteractive'> {
+  interactive?: boolean; // Prop manual para forçar comportamento
 }
 
 const Card = forwardRef<HTMLDivElement, CardProps>(
-    ({ className, variant = 'default', noPadding = false, children, ...props }, ref) => {
+  ({ className, variant, padding, interactive, onClick, children, ...props }, ref) => {
+    
+    // Auto-detecção: Se tem onClick, é interativo por padrão
+    const isClickable = interactive || !!onClick;
 
-        const variants = {
-            default: "bg-white border border-border shadow-card", // Usa var --shadow-card tinturada
-            outline: "bg-transparent border border-border shadow-none",
-            glass:   "glass", // Usa a classe utilitária do index.css
-        };
-
-        return (
-            <div
-                ref={ref}
-                className={cn(
-                    "rounded-2xl overflow-hidden transition-all duration-300",
-                    "hover:shadow-float", // Sombra flutuante no hover para todos
-                    variants[variant],
-                    noPadding ? "p-0" : "p-5 sm:p-6",
-                    className
-                )}
-                {...props}
-            >
-                {children}
-            </div>
-        );
-    }
+    return (
+      <div
+        ref={ref}
+        onClick={onClick}
+        className={cn(cardVariants({ variant, padding, isInteractive: isClickable, className }))}
+        {...props}
+      >
+        {children}
+      </div>
+    );
+  }
 );
+
 Card.displayName = "Card";
-export { Card };
+export { Card, cardVariants };
