@@ -18,18 +18,19 @@ interface RelatorioFinanceiroProps {
   veiculos: Veiculo[];
 }
 
-// ABA REESTILIZADA (Com feedback visual melhor e acessibilidade)
+// ABA REESTILIZADA (Com shrink-0 para impedir esmagamento visual)
 const TabButton = ({ active, onClick, icon: Icon, label }: any) => (
   <button
     onClick={onClick}
+    type="button"
     className={cn(
-      "pb-3 px-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-primary/20 rounded-t-lg",
+      "shrink-0 pb-3 px-4 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-primary/20 rounded-t-lg select-none",
       active
         ? "border-primary text-primary bg-primary/5"
         : "border-transparent text-text-secondary hover:text-text-main hover:bg-gray-50"
     )}
   >
-    <Icon className={cn("w-4 h-4", active ? "text-primary" : "text-text-muted")} />
+    <Icon className={cn("w-4 h-4 shrink-0", active ? "text-primary" : "text-text-muted")} />
     {label}
   </button>
 );
@@ -56,6 +57,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
 
         const [resAbast, resManut] = await Promise.all([
           api.get<Abastecimento[]>('/abastecimentos/recentes', { params: { dataInicio, dataFim, limit: 'all' } }),
+          // Mantendo sua correção da rota
           api.get<OrdemServico[]>('/manutencoes/recentes', { params: { dataInicio, dataFim, limit: 'all' } })
         ]);
 
@@ -76,7 +78,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
     return () => { mounted = false; };
   }, [mesFiltro]);
 
-  // CÁLCULOS (Mantidos iguais, apenas encapsulados)
+  // CÁLCULOS (Lógica original mantida 100%)
   const relatorios = useMemo(() => {
     const { abastecimentos, manutencoes } = dadosRaw;
 
@@ -100,8 +102,10 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
     abastecimentos.forEach(a => {
       if (a.veiculoId && veiculoStats[a.veiculoId]) {
         veiculoStats[a.veiculoId].custoComb += Number(a.custoTotal);
+        
         const litros = (a.itens || []).reduce((acc, item) =>
           item.produto.tipo === 'COMBUSTIVEL' ? acc + Number(item.quantidade) : acc, 0);
+        
         veiculoStats[a.veiculoId].litros += litros;
 
         if (a.kmOdometro > 0) {
@@ -154,18 +158,18 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
         <div className="bg-background w-full max-w-5xl h-[85vh] rounded-3xl shadow-2xl flex flex-col border border-border animate-pulse">
             <div className="p-6 border-b border-border flex justify-between items-center">
                 <div className="space-y-2">
-                    <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-6 w-48 bg-gray-200 rounded"></div>
+                    <div className="h-4 w-32 bg-gray-200 rounded"></div>
                 </div>
-                <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
             </div>
             <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="h-36 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-                <div className="h-36 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
-                <div className="h-36 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                <div className="h-36 bg-gray-200 rounded-xl"></div>
+                <div className="h-36 bg-gray-200 rounded-xl"></div>
+                <div className="h-36 bg-gray-200 rounded-xl"></div>
             </div>
              <div className="p-6 flex-1">
-                <div className="h-full bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                <div className="h-full bg-gray-200 rounded-xl"></div>
             </div>
         </div>
       </div>
@@ -178,97 +182,100 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
       {/* Container Principal */}
       <div className="bg-background w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl animate-in zoom-in-95 flex flex-col border border-border">
 
-        {/* HEADER FIXO */}
-        <div className="bg-surface px-6 py-4 border-b border-border flex flex-col sm:flex-row justify-between items-center sticky top-0 z-20 gap-3 shrink-0">
-          <div>
-            <h2 className="text-xl font-bold text-text-main flex items-center gap-2">
-              <div className="p-2 bg-primary/10 rounded-lg">
-                 <TrendingUp className="w-5 h-5 text-primary" />
-              </div>
-              Inteligência Financeira
-            </h2>
-            <p className="text-sm text-text-secondary mt-1">Análise estratégica de custos da frota</p>
-          </div>
+        {/* --- HEADER UNIFICADO (STICKY) --- */}
+        {/* Aqui está a correção: Header e Abas no MESMO bloco sticky */}
+        <div className="sticky top-0 z-20 bg-surface border-b border-border shadow-sm shrink-0">
           
-          <div className="flex gap-3 items-center">
-            <div className="relative">
-                <input
-                  type="month"
-                  value={mesFiltro}
-                  onChange={(e) => setMesFiltro(e.target.value)}
-                  className="h-10 border border-input rounded-lg px-3 text-sm bg-surface text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none shadow-sm cursor-pointer hover:border-primary/50 transition-colors"
-                />
+          {/* Linha Superior: Título e Filtros */}
+          <div className="px-6 pt-5 pb-2 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h2 className="text-xl font-bold text-text-main flex items-center gap-2">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                   <TrendingUp className="w-5 h-5 text-primary" />
+                </div>
+                Inteligência Financeira
+              </h2>
+              <p className="text-sm text-text-secondary mt-1 ml-1">Análise estratégica de custos da frota</p>
             </div>
             
-            <Button 
-                variant="ghost" 
-                onClick={onClose} 
-                className="rounded-full h-10 w-10 p-0 hover:bg-gray-100 dark:hover:bg-gray-800"
-                title="Fechar"
-            >
-              <X className="w-5 h-5" />
-            </Button>
+            <div className="flex gap-3 items-center w-full sm:w-auto">
+              <div className="relative flex-1 sm:flex-none">
+                  <input
+                    type="month"
+                    value={mesFiltro}
+                    onChange={(e) => setMesFiltro(e.target.value)}
+                    className="w-full sm:w-auto h-10 border border-input rounded-lg px-3 text-sm bg-surface text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none shadow-sm cursor-pointer hover:border-primary/50 transition-colors"
+                  />
+              </div>
+              
+              <Button 
+                  variant="ghost" 
+                  onClick={onClose} 
+                  className="rounded-full h-10 w-10 p-0 hover:bg-gray-100 shrink-0"
+                  title="Fechar"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Linha Inferior: Abas de Navegação */}
+          <div className="w-full px-6 pt-2 overflow-x-auto custom-scrollbar">
+            <div className="flex gap-4 min-w-max pb-px">
+              <TabButton active={abaAtiva === 'GERAL'} onClick={() => setAbaAtiva('GERAL')} icon={PieChart} label="Visão Macro" />
+              <TabButton active={abaAtiva === 'CPK'} onClick={() => setAbaAtiva('CPK')} icon={BarChart3} label="Custo por KM (CPK)" />
+              <TabButton active={abaAtiva === 'COMBUSTIVEL'} onClick={() => setAbaAtiva('COMBUSTIVEL')} icon={Fuel} label="Auditoria Combustível" />
+              <TabButton active={abaAtiva === 'MANUTENCAO'} onClick={() => setAbaAtiva('MANUTENCAO')} icon={Wrench} label="DRE Manutenção" />
+            </div>
           </div>
         </div>
 
-        {/* ABAS */}
-        <div className="bg-surface border-b border-border sticky top-[80px] z-10 w-full px-6 pt-2 overflow-x-auto custom-scrollbar">
-          <div className="flex gap-6 min-w-max">
-            <TabButton active={abaAtiva === 'GERAL'} onClick={() => setAbaAtiva('GERAL')} icon={PieChart} label="Visão Macro" />
-            <TabButton active={abaAtiva === 'CPK'} onClick={() => setAbaAtiva('CPK')} icon={BarChart3} label="Custo por KM (CPK)" />
-            <TabButton active={abaAtiva === 'COMBUSTIVEL'} onClick={() => setAbaAtiva('COMBUSTIVEL')} icon={Fuel} label="Auditoria Combustível" />
-            <TabButton active={abaAtiva === 'MANUTENCAO'} onClick={() => setAbaAtiva('MANUTENCAO')} icon={Wrench} label="DRE Manutenção" />
-          </div>
-        </div>
-
-        {/* CONTEÚDO */}
-        <div className="p-6 space-y-6">
+        {/* --- CONTEÚDO (Scrollável) --- */}
+        <div className="p-6 space-y-6 bg-gray-50/30 min-h-0 flex-1">
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
 
-            {/* --- ABA 1: GERAL --- */}
+            {/* ABA GERAL */}
             {abaAtiva === 'GERAL' && (
               <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   
                   {/* Card Total */}
-                  <Card className="flex flex-col justify-between border-l-4 border-l-gray-800 dark:border-l-gray-500 min-h-[140px]">
+                  <Card className="flex flex-col justify-between border-l-4 border-l-gray-800 min-h-[140px]">
                     <div>
                         <p className="text-text-muted text-xs font-bold uppercase tracking-wider mb-2">Total Gasto</p>
                         <h3 className="text-3xl font-bold text-text-main tracking-tight">{formatCurrency(relatorios.geral.total)}</h3>
                     </div>
-                    <div className="text-xs text-text-muted mt-4 pt-4 border-t border-border">
-                        Consolidado do Mês
-                    </div>
+                    <div className="text-xs text-text-muted mt-4 pt-4 border-t border-border">Consolidado do Mês</div>
                   </Card>
 
                   {/* Card Combustível */}
                   <Card className="relative overflow-hidden group border-l-4 border-l-amber-500 min-h-[140px] flex flex-col justify-between">
-                    <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity rotate-12"><Fuel className="w-20 h-20" /></div>
+                    <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 rotate-12"><Fuel className="w-20 h-20" /></div>
                     <div>
-                        <p className="text-amber-600 dark:text-amber-500 text-xs font-bold uppercase tracking-wider mb-2">Combustível</p>
+                        <p className="text-amber-600 text-xs font-bold uppercase tracking-wider mb-2">Combustível</p>
                         <h3 className="text-2xl font-bold text-text-main">{formatCurrency(relatorios.geral.totalAbastecimento)}</h3>
                     </div>
                     <div className="text-xs text-text-muted mt-2">
-                      {((relatorios.geral.totalAbastecimento / (relatorios.geral.total || 1)) * 100).toFixed(1)}% do custo total
+                      {((relatorios.geral.totalAbastecimento / (relatorios.geral.total || 1)) * 100).toFixed(1)}% do total
                     </div>
                   </Card>
 
                   {/* Card Manutenção */}
                   <Card className="relative overflow-hidden group border-l-4 border-l-primary min-h-[140px] flex flex-col justify-between">
-                    <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity rotate-12"><Wrench className="w-20 h-20" /></div>
+                    <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 rotate-12"><Wrench className="w-20 h-20" /></div>
                     <div>
                         <p className="text-primary text-xs font-bold uppercase tracking-wider mb-2">Manutenção</p>
                         <h3 className="text-2xl font-bold text-text-main">{formatCurrency(relatorios.geral.totalManut)}</h3>
                     </div>
                     <div className="text-xs text-text-muted mt-2">
-                      {((relatorios.geral.totalManut / (relatorios.geral.total || 1)) * 100).toFixed(1)}% do custo total
+                      {((relatorios.geral.totalManut / (relatorios.geral.total || 1)) * 100).toFixed(1)}% do total
                     </div>
                   </Card>
                 </div>
 
-                {/* Ranking */}
+                {/* Ranking Top 5 */}
                 <Card padding="none" className="border border-border">
-                  <div className="p-6 border-b border-border bg-gray-50/50 dark:bg-gray-800/20">
+                  <div className="p-6 border-b border-border bg-gray-50/50">
                     <h4 className="font-bold text-text-main flex items-center gap-2">
                       <div className="p-1.5 bg-primary/10 rounded text-primary"><Activity className="w-4 h-4" /></div>
                       Top 5 Veículos (Maior Custo)
@@ -276,13 +283,12 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                   </div>
                   <div className="divide-y divide-border">
                     {relatorios.cpk.slice(0, 5).map((v: any, idx: number) => (
-                      <div key={idx} className="flex items-center justify-between p-4 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors group cursor-default">
+                      <div key={idx} className="flex items-center justify-between p-4 hover:bg-gray-50/80 transition-colors">
                         <div className="flex items-center gap-4">
-                          <span className="w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg text-sm font-bold text-gray-600 dark:text-gray-300 group-hover:bg-primary group-hover:text-white transition-colors">{idx + 1}</span>
+                          <span className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg text-sm font-bold text-gray-600">{idx + 1}</span>
                           <div>
                             <p className="font-bold text-text-main text-sm flex items-center gap-2">
-                                {v.placa}
-                                <span className="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-normal">{v.modelo}</span>
+                                {v.placa} <span className="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-500 font-normal">{v.modelo}</span>
                             </p>
                           </div>
                         </div>
@@ -297,31 +303,28 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
               </div>
             )}
 
-            {/* --- ABA 2: CPK --- */}
+            {/* ABA CPK */}
             {abaAtiva === 'CPK' && (
               <Card padding="none" className="overflow-hidden border border-border">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-50 dark:bg-gray-800 text-text-secondary font-bold border-b border-border text-xs uppercase tracking-wider">
+                    <thead className="bg-gray-50 text-text-secondary font-bold border-b border-border text-xs uppercase tracking-wider">
                       <tr>
                         <th className="px-6 py-4">Veículo</th>
-                        <th className="px-6 py-4 text-right">KM Rodado (Est.)</th>
+                        <th className="px-6 py-4 text-right">KM Rodado</th>
                         <th className="px-6 py-4 text-right">Custo Total</th>
-                        <th className="px-6 py-4 text-right bg-primary/5 text-primary border-l border-border">CPK (R$/KM)</th>
+                        <th className="px-6 py-4 text-right bg-primary/5 text-primary border-l border-border">CPK</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {relatorios.cpk.map((v: any) => (
-                        <tr key={v.placa} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors group">
+                        <tr key={v.placa} className="hover:bg-gray-50/50 transition-colors">
                           <td className="px-6 py-4 font-medium text-text-main">
-                            <div className="flex flex-col">
-                                <span>{v.placa}</span>
-                                <span className="text-xs text-text-muted font-normal">{v.modelo}</span>
-                            </div>
+                            <div className="flex flex-col"><span>{v.placa}</span><span className="text-xs text-text-muted font-normal">{v.modelo}</span></div>
                           </td>
                           <td className="px-6 py-4 text-right text-text-secondary font-mono">{v.kmRodado.toLocaleString('pt-BR')} km</td>
                           <td className="px-6 py-4 text-right font-medium text-text-main font-mono">{formatCurrency(v.totalGeral)}</td>
-                          <td className={cn("px-6 py-4 text-right font-bold font-mono border-l border-border", v.cpk > 2.5 ? "text-red-600 bg-red-50/50 dark:text-red-400 dark:bg-red-900/20" : "text-primary bg-primary/5")}>
+                          <td className={cn("px-6 py-4 text-right font-bold font-mono border-l border-border", v.cpk > 2.5 ? "text-red-600 bg-red-50/50" : "text-primary bg-primary/5")}>
                             {formatCurrency(v.cpk)}
                           </td>
                         </tr>
@@ -329,33 +332,33 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                     </tbody>
                   </table>
                 </div>
-                <div className="p-4 bg-gray-50 dark:bg-gray-800/50 text-xs text-text-muted border-t border-border flex items-center gap-2">
+                <div className="p-4 bg-gray-50 text-xs text-text-muted border-t border-border flex items-center gap-2">
                   <AlertTriangle className="w-3 h-3" />
                   O KM Rodado é estimado pela diferença entre o maior e menor odômetro registrados no mês.
                 </div>
               </Card>
             )}
 
-            {/* --- ABA 3: COMBUSTÍVEL --- */}
+            {/* ABA COMBUSTIVEL */}
             {abaAtiva === 'COMBUSTIVEL' && (
               <Card padding="none" className="overflow-hidden border border-border">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-50 dark:bg-gray-800 text-text-secondary font-bold border-b border-border text-xs uppercase tracking-wider">
+                    <thead className="bg-gray-50 text-text-secondary font-bold border-b border-border text-xs uppercase tracking-wider">
                       <tr>
                         <th className="px-6 py-4">Veículo</th>
                         <th className="px-6 py-4 text-right">Litros Abastecidos</th>
                         <th className="px-6 py-4 text-right">Gasto ($)</th>
-                        <th className="px-6 py-4 text-right bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-500 border-l border-border">Média (KM/L)</th>
+                        <th className="px-6 py-4 text-right bg-amber-50 text-amber-700 border-l border-border">Média (KM/L)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {relatorios.cpk.map((v: any) => (
-                        <tr key={v.placa} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors">
+                        <tr key={v.placa} className="hover:bg-gray-50/50 transition-colors">
                           <td className="px-6 py-4 font-medium text-text-main">{v.placa}</td>
                           <td className="px-6 py-4 text-right text-text-secondary font-mono">{v.litros.toFixed(1)} L</td>
                           <td className="px-6 py-4 text-right font-medium text-text-main font-mono">{formatCurrency(v.custoComb)}</td>
-                          <td className="px-6 py-4 text-right font-bold text-amber-600 dark:text-amber-500 font-mono border-l border-border bg-amber-50/30 dark:bg-amber-900/10">
+                          <td className="px-6 py-4 text-right font-bold text-amber-600 font-mono border-l border-border bg-amber-50/30">
                             {v.mediaKmLi > 0 ? v.mediaKmLi.toFixed(2) : '-'}
                           </td>
                         </tr>
@@ -366,7 +369,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
               </Card>
             )}
 
-            {/* --- ABA 4: MANUTENÇÃO --- */}
+            {/* ABA MANUTENCAO */}
             {abaAtiva === 'MANUTENCAO' && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <Card>
@@ -380,7 +383,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                         <span className="text-text-secondary font-medium">Preventiva (Ideal)</span>
                         <span className="text-text-main font-bold">{formatCurrency(relatorios.manutencao.preventiva)}</span>
                       </div>
-                      <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700">
+                      <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
                         <div
                           className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out"
                           style={{ width: `${(relatorios.manutencao.preventiva / (relatorios.geral.totalManut || 1)) * 100}%` }}
@@ -393,7 +396,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                         <span className="text-text-secondary font-medium">Corretiva (Quebras)</span>
                         <span className="text-text-main font-bold">{formatCurrency(relatorios.manutencao.corretiva)}</span>
                       </div>
-                      <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700">
+                      <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
                         <div
                           className="h-full bg-rose-500 rounded-full transition-all duration-1000 ease-out"
                           style={{ width: `${(relatorios.manutencao.corretiva / (relatorios.geral.totalManut || 1)) * 100}%` }}
@@ -401,8 +404,8 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                       </div>
                     </div>
 
-                    <div className="mt-8 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-900/30 text-sm text-amber-800 dark:text-amber-500 leading-relaxed flex gap-3">
-                      <div className="p-1 bg-amber-100 dark:bg-amber-900/20 rounded-full h-fit"><AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-500"/></div>
+                    <div className="mt-8 p-4 bg-amber-50 rounded-xl border border-amber-200 text-sm text-amber-800 leading-relaxed flex gap-3">
+                      <div className="p-1 bg-amber-100 rounded-full h-fit"><AlertTriangle className="w-4 h-4 text-amber-600"/></div>
                       <div>
                         <strong>Dica de Gestão:</strong> O ideal é que a manutenção corretiva (emergencial) não ultrapasse 30% do custo total de manutenção.
                       </div>
