@@ -5,6 +5,7 @@ import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import { GraficoKmVeiculo } from './GraficoKmVeiculo';
 import { PainelSobrenatural } from './PainelSobrenatural';
+import { cn } from '../lib/utils'; // Importante para mesclar classes
 
 // --- PRIMITIVOS BIG TECH ---
 import { Button } from './ui/Button';
@@ -51,10 +52,10 @@ function KpiCard({
   icon
 }: KpiCardProps) {
 
-  // SKELETON: Mesma geometria do card real para evitar pulos
+  // SKELETON: Mesma geometria do card real
   if (loading) {
     return (
-      <Card className={`flex flex-col justify-between animate-pulse border-border/60 ${highlight ? 'h-full min-h-[160px]' : 'h-[160px]'}`}>
+      <Card className={cn("flex flex-col justify-between animate-pulse border-border/50", highlight ? "min-h-[160px]" : "min-h-[150px]")}>
         <div className="flex justify-between items-start w-full">
           <div className="h-3 bg-gray-200 rounded w-24 mb-1"></div>
           <div className="h-10 w-10 bg-gray-200 rounded-lg"></div>
@@ -68,48 +69,50 @@ function KpiCard({
   }
 
   // Mapeamento de Cores Semânticas
-  const colorMap = {
-    default: { border: 'border-l-primary', text: 'text-primary', bg: 'bg-primary/10', icon: 'text-primary' },
-    success: { border: 'border-l-emerald-500', text: 'text-emerald-600', bg: 'bg-emerald-50', icon: 'text-emerald-600' },
-    warning: { border: 'border-l-amber-500', text: 'text-amber-600', bg: 'bg-amber-50', icon: 'text-amber-600' },
-    danger: { border: 'border-l-rose-500', text: 'text-rose-600', bg: 'bg-rose-50', icon: 'text-rose-600' },
-    info: { border: 'border-l-sky-500', text: 'text-sky-600', bg: 'bg-sky-50', icon: 'text-sky-600' }
+  const styles = {
+    default: { border: 'border-l-primary', iconBg: 'bg-primary/10', iconText: 'text-primary' },
+    success: { border: 'border-l-emerald-500', iconBg: 'bg-emerald-50', iconText: 'text-emerald-600' },
+    warning: { border: 'border-l-amber-500', iconBg: 'bg-amber-50', iconText: 'text-amber-600' },
+    danger:  { border: 'border-l-rose-500', iconBg: 'bg-rose-50', iconText: 'text-rose-600' },
+    info:    { border: 'border-l-sky-500', iconBg: 'bg-sky-50', iconText: 'text-sky-600' }
   };
 
-  const style = colorMap[variant] || colorMap.default;
+  const style = styles[variant] || styles.default;
 
   return (
     <Card
       onClick={onClick}
-      // Aqui usamos classes utilitárias para compor o visual específico do KPI sobre a base do Card
-      className={`
-        relative flex flex-col justify-between
-        border-l-[4px] ${style.border}
-        ${highlight ? 'h-full min-h-[160px]' : 'h-[160px] min-h-[160px]'}
-      `}
+      className={cn(
+        "relative flex flex-col justify-between h-full", // h-full aqui é crucial para alinhamento no grid
+        "border-l-[4px]", style.border,
+        highlight ? "min-h-[160px]" : "min-h-[150px]" // Aumentei a altura mínima para dar respiro
+      )}
     >
-      {/* BIG TECH FIX: 'shrink-0' impede que o cabeçalho seja esmagado 
-         quando o valor numérico carregar.
-      */}
-      <div className="flex justify-between items-start shrink-0">
+      {/* HEADER: shrink-0 BLINDA o título contra esmagamento */}
+      <div className="flex justify-between items-start shrink-0 mb-2">
         <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest font-sans mt-1.5 leading-snug">
           {titulo}
         </h4>
         {icon && (
-          <div className={`p-2.5 rounded-xl ${style.bg} ${style.icon} transition-transform duration-300 group-hover:scale-110 shadow-sm shrink-0 ml-2`}>
+          <div className={cn("p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110 shadow-sm shrink-0 ml-2", style.iconBg, style.iconText)}>
             {icon}
           </div>
         )}
       </div>
 
-      <div className="mt-4 flex flex-col justify-end flex-1 min-h-0">
+      {/* CONTEÚDO: Cresce conforme necessário */}
+      <div className="flex flex-col justify-end flex-1 min-h-0">
         <span 
-          className={`font-mono font-bold text-gray-900 tracking-tight leading-none truncate ${highlight ? 'text-3xl sm:text-4xl' : 'text-3xl'}`}
-          title={valor} // Tooltip nativo se cortar
+          className={cn(
+            "font-mono font-bold text-gray-900 tracking-tight leading-none truncate",
+            highlight ? "text-3xl sm:text-4xl" : "text-2xl sm:text-3xl"
+          )}
+          title={valor}
         >
           {valor}
         </span>
         
+        {/* FOOTER: shrink-0 garante visibilidade */}
         <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between shrink-0">
           <p className="text-xs text-gray-400 font-medium truncate max-w-[90%] group-hover:text-gray-600 transition-colors">
             {descricao}
@@ -123,7 +126,7 @@ function KpiCard({
   );
 }
 
-// Estilo Base para Selects (Visual de Sistema Operacional)
+// Estilo Base para Selects
 const selectStyle = "h-[42px] px-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer min-w-[140px] shadow-sm hover:border-primary/50 appearance-none font-medium";
 
 export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatoriosProps) {
@@ -171,7 +174,7 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
         console.error(err);
         toast.error("Erro ao atualizar dashboard.");
       } finally {
-        setTimeout(() => setLoading(false), 400); // Delay suave
+        setTimeout(() => setLoading(false), 400); 
       }
     };
 
