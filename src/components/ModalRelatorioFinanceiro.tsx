@@ -18,7 +18,7 @@ interface RelatorioFinanceiroProps {
   veiculos: Veiculo[];
 }
 
-// ABA REESTILIZADA (Com feedback visual melhor)
+// ABA REESTILIZADA (Com feedback visual melhor e acessibilidade)
 const TabButton = ({ active, onClick, icon: Icon, label }: any) => (
   <button
     onClick={onClick}
@@ -76,7 +76,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
     return () => { mounted = false; };
   }, [mesFiltro]);
 
-  // CÁLCULOS
+  // CÁLCULOS (Mantidos iguais, apenas encapsulados)
   const relatorios = useMemo(() => {
     const { abastecimentos, manutencoes } = dadosRaw;
 
@@ -147,22 +147,25 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
     };
   }, [dadosRaw, veiculos]);
 
-  // SKELETON LOADING UI
+  // SKELETON LOADING UI (Evita layout shift quando abre)
   if (loading) {
     return (
       <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-        <div className="bg-background w-full max-w-5xl h-[80vh] rounded-3xl shadow-2xl flex flex-col border border-border animate-pulse">
-            <div className="p-6 border-b border-border flex justify-between">
-                <div className="h-8 w-48 bg-gray-200 rounded"></div>
-                <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+        <div className="bg-background w-full max-w-5xl h-[85vh] rounded-3xl shadow-2xl flex flex-col border border-border animate-pulse">
+            <div className="p-6 border-b border-border flex justify-between items-center">
+                <div className="space-y-2">
+                    <div className="h-6 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                </div>
+                <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
             </div>
-            <div className="p-6 grid grid-cols-3 gap-4">
-                <div className="h-32 bg-gray-200 rounded-xl"></div>
-                <div className="h-32 bg-gray-200 rounded-xl"></div>
-                <div className="h-32 bg-gray-200 rounded-xl"></div>
+            <div className="p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="h-36 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                <div className="h-36 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+                <div className="h-36 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
             </div>
              <div className="p-6 flex-1">
-                <div className="h-full bg-gray-200 rounded-xl"></div>
+                <div className="h-full bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
             </div>
         </div>
       </div>
@@ -172,6 +175,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       
+      {/* Container Principal */}
       <div className="bg-background w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl animate-in zoom-in-95 flex flex-col border border-border">
 
         {/* HEADER FIXO */}
@@ -189,18 +193,18 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
           <div className="flex gap-3 items-center">
             <div className="relative">
                 <input
-                type="month"
-                value={mesFiltro}
-                onChange={(e) => setMesFiltro(e.target.value)}
-                className="h-10 border border-input rounded-lg px-3 text-sm bg-surface text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none shadow-sm cursor-pointer hover:border-primary/50 transition-colors"
+                  type="month"
+                  value={mesFiltro}
+                  onChange={(e) => setMesFiltro(e.target.value)}
+                  className="h-10 border border-input rounded-lg px-3 text-sm bg-surface text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none shadow-sm cursor-pointer hover:border-primary/50 transition-colors"
                 />
             </div>
             
             <Button 
                 variant="ghost" 
-                size="icon" 
                 onClick={onClose} 
-                className="rounded-full hover:bg-gray-100"
+                className="rounded-full h-10 w-10 p-0 hover:bg-gray-100 dark:hover:bg-gray-800"
+                title="Fechar"
             >
               <X className="w-5 h-5" />
             </Button>
@@ -227,7 +231,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   
                   {/* Card Total */}
-                  <Card className="flex flex-col justify-between border-l-4 border-l-gray-800 min-h-[140px]">
+                  <Card className="flex flex-col justify-between border-l-4 border-l-gray-800 dark:border-l-gray-500 min-h-[140px]">
                     <div>
                         <p className="text-text-muted text-xs font-bold uppercase tracking-wider mb-2">Total Gasto</p>
                         <h3 className="text-3xl font-bold text-text-main tracking-tight">{formatCurrency(relatorios.geral.total)}</h3>
@@ -238,10 +242,10 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                   </Card>
 
                   {/* Card Combustível */}
-                  <Card className="relative overflow-hidden group border-l-4 border-l-warning-500 min-h-[140px] flex flex-col justify-between">
+                  <Card className="relative overflow-hidden group border-l-4 border-l-amber-500 min-h-[140px] flex flex-col justify-between">
                     <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity rotate-12"><Fuel className="w-20 h-20" /></div>
                     <div>
-                        <p className="text-warning-600 text-xs font-bold uppercase tracking-wider mb-2">Combustível</p>
+                        <p className="text-amber-600 dark:text-amber-500 text-xs font-bold uppercase tracking-wider mb-2">Combustível</p>
                         <h3 className="text-2xl font-bold text-text-main">{formatCurrency(relatorios.geral.totalAbastecimento)}</h3>
                     </div>
                     <div className="text-xs text-text-muted mt-2">
@@ -264,7 +268,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
 
                 {/* Ranking */}
                 <Card padding="none" className="border border-border">
-                  <div className="p-6 border-b border-border bg-gray-50/50">
+                  <div className="p-6 border-b border-border bg-gray-50/50 dark:bg-gray-800/20">
                     <h4 className="font-bold text-text-main flex items-center gap-2">
                       <div className="p-1.5 bg-primary/10 rounded text-primary"><Activity className="w-4 h-4" /></div>
                       Top 5 Veículos (Maior Custo)
@@ -272,13 +276,13 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                   </div>
                   <div className="divide-y divide-border">
                     {relatorios.cpk.slice(0, 5).map((v: any, idx: number) => (
-                      <div key={idx} className="flex items-center justify-between p-4 hover:bg-gray-50/80 transition-colors group cursor-default">
+                      <div key={idx} className="flex items-center justify-between p-4 hover:bg-gray-50/80 dark:hover:bg-gray-800/40 transition-colors group cursor-default">
                         <div className="flex items-center gap-4">
-                          <span className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg text-sm font-bold text-gray-600 group-hover:bg-primary group-hover:text-white transition-colors">{idx + 1}</span>
+                          <span className="w-8 h-8 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg text-sm font-bold text-gray-600 dark:text-gray-300 group-hover:bg-primary group-hover:text-white transition-colors">{idx + 1}</span>
                           <div>
                             <p className="font-bold text-text-main text-sm flex items-center gap-2">
                                 {v.placa}
-                                <span className="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-500 font-normal">{v.modelo}</span>
+                                <span className="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 font-normal">{v.modelo}</span>
                             </p>
                           </div>
                         </div>
@@ -298,7 +302,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
               <Card padding="none" className="overflow-hidden border border-border">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-50 text-text-secondary font-bold border-b border-border text-xs uppercase tracking-wider">
+                    <thead className="bg-gray-50 dark:bg-gray-800 text-text-secondary font-bold border-b border-border text-xs uppercase tracking-wider">
                       <tr>
                         <th className="px-6 py-4">Veículo</th>
                         <th className="px-6 py-4 text-right">KM Rodado (Est.)</th>
@@ -308,7 +312,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                     </thead>
                     <tbody className="divide-y divide-border">
                       {relatorios.cpk.map((v: any) => (
-                        <tr key={v.placa} className="hover:bg-gray-50/50 transition-colors group">
+                        <tr key={v.placa} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors group">
                           <td className="px-6 py-4 font-medium text-text-main">
                             <div className="flex flex-col">
                                 <span>{v.placa}</span>
@@ -317,7 +321,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                           </td>
                           <td className="px-6 py-4 text-right text-text-secondary font-mono">{v.kmRodado.toLocaleString('pt-BR')} km</td>
                           <td className="px-6 py-4 text-right font-medium text-text-main font-mono">{formatCurrency(v.totalGeral)}</td>
-                          <td className={`px-6 py-4 text-right font-bold font-mono border-l border-border ${v.cpk > 2.5 ? 'text-red-600 bg-red-50/50' : 'text-primary bg-primary/5'}`}>
+                          <td className={cn("px-6 py-4 text-right font-bold font-mono border-l border-border", v.cpk > 2.5 ? "text-red-600 bg-red-50/50 dark:text-red-400 dark:bg-red-900/20" : "text-primary bg-primary/5")}>
                             {formatCurrency(v.cpk)}
                           </td>
                         </tr>
@@ -325,7 +329,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                     </tbody>
                   </table>
                 </div>
-                <div className="p-4 bg-gray-50 text-xs text-text-muted border-t border-border flex items-center gap-2">
+                <div className="p-4 bg-gray-50 dark:bg-gray-800/50 text-xs text-text-muted border-t border-border flex items-center gap-2">
                   <AlertTriangle className="w-3 h-3" />
                   O KM Rodado é estimado pela diferença entre o maior e menor odômetro registrados no mês.
                 </div>
@@ -337,21 +341,21 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
               <Card padding="none" className="overflow-hidden border border-border">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-50 text-text-secondary font-bold border-b border-border text-xs uppercase tracking-wider">
+                    <thead className="bg-gray-50 dark:bg-gray-800 text-text-secondary font-bold border-b border-border text-xs uppercase tracking-wider">
                       <tr>
                         <th className="px-6 py-4">Veículo</th>
                         <th className="px-6 py-4 text-right">Litros Abastecidos</th>
                         <th className="px-6 py-4 text-right">Gasto ($)</th>
-                        <th className="px-6 py-4 text-right bg-amber-50 text-amber-700 border-l border-border">Média (KM/L)</th>
+                        <th className="px-6 py-4 text-right bg-amber-50 dark:bg-amber-900/10 text-amber-700 dark:text-amber-500 border-l border-border">Média (KM/L)</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
                       {relatorios.cpk.map((v: any) => (
-                        <tr key={v.placa} className="hover:bg-gray-50/50 transition-colors">
+                        <tr key={v.placa} className="hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors">
                           <td className="px-6 py-4 font-medium text-text-main">{v.placa}</td>
                           <td className="px-6 py-4 text-right text-text-secondary font-mono">{v.litros.toFixed(1)} L</td>
                           <td className="px-6 py-4 text-right font-medium text-text-main font-mono">{formatCurrency(v.custoComb)}</td>
-                          <td className="px-6 py-4 text-right font-bold text-amber-600 font-mono border-l border-border bg-amber-50/30">
+                          <td className="px-6 py-4 text-right font-bold text-amber-600 dark:text-amber-500 font-mono border-l border-border bg-amber-50/30 dark:bg-amber-900/10">
                             {v.mediaKmLi > 0 ? v.mediaKmLi.toFixed(2) : '-'}
                           </td>
                         </tr>
@@ -376,7 +380,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                         <span className="text-text-secondary font-medium">Preventiva (Ideal)</span>
                         <span className="text-text-main font-bold">{formatCurrency(relatorios.manutencao.preventiva)}</span>
                       </div>
-                      <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                      <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700">
                         <div
                           className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out"
                           style={{ width: `${(relatorios.manutencao.preventiva / (relatorios.geral.totalManut || 1)) * 100}%` }}
@@ -389,7 +393,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                         <span className="text-text-secondary font-medium">Corretiva (Quebras)</span>
                         <span className="text-text-main font-bold">{formatCurrency(relatorios.manutencao.corretiva)}</span>
                       </div>
-                      <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                      <div className="w-full h-3 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden border border-gray-200 dark:border-gray-700">
                         <div
                           className="h-full bg-rose-500 rounded-full transition-all duration-1000 ease-out"
                           style={{ width: `${(relatorios.manutencao.corretiva / (relatorios.geral.totalManut || 1)) * 100}%` }}
@@ -397,8 +401,8 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                       </div>
                     </div>
 
-                    <div className="mt-8 p-4 bg-amber-50 rounded-xl border border-amber-200 text-sm text-amber-800 leading-relaxed flex gap-3">
-                      <div className="p-1 bg-amber-100 rounded-full h-fit"><AlertTriangle className="w-4 h-4 text-amber-600"/></div>
+                    <div className="mt-8 p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-200 dark:border-amber-900/30 text-sm text-amber-800 dark:text-amber-500 leading-relaxed flex gap-3">
+                      <div className="p-1 bg-amber-100 dark:bg-amber-900/20 rounded-full h-fit"><AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-500"/></div>
                       <div>
                         <strong>Dica de Gestão:</strong> O ideal é que a manutenção corretiva (emergencial) não ultrapasse 30% do custo total de manutenção.
                       </div>
