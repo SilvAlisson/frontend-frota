@@ -1,7 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
 import { api } from '../services/api';
 import { toast } from 'sonner';
-import { X, TrendingUp, Fuel, Wrench, BarChart3, PieChart, Activity } from 'lucide-react';
+import { cn, formatCurrency } from '../lib/utils';
+import { 
+  X, TrendingUp, Fuel, Wrench, BarChart3, PieChart, 
+  Activity, AlertTriangle
+} from 'lucide-react';
+
+// --- COMPONENTES PRIMITIVOS ---
+import { Button } from './ui/Button';
+import { Card } from './ui/Card';
+
 import type { Veiculo, Abastecimento, OrdemServico } from '../types';
 
 interface RelatorioFinanceiroProps {
@@ -9,16 +18,18 @@ interface RelatorioFinanceiroProps {
   veiculos: Veiculo[];
 }
 
-// Subcomponente de Tab (Aba) Modernizado
+// ABA REESTILIZADA (Com feedback visual melhor)
 const TabButton = ({ active, onClick, icon: Icon, label }: any) => (
   <button
     onClick={onClick}
-    className={`pb-3 px-1 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap ${active
-      ? 'border-primary text-primary'
-      : 'border-transparent text-text-secondary hover:text-text-main hover:border-border'
-      }`}
+    className={cn(
+      "pb-3 px-3 text-sm font-bold border-b-2 transition-all flex items-center gap-2 whitespace-nowrap outline-none focus-visible:ring-2 focus-visible:ring-primary/20 rounded-t-lg",
+      active
+        ? "border-primary text-primary bg-primary/5"
+        : "border-transparent text-text-secondary hover:text-text-main hover:bg-gray-50"
+    )}
   >
-    <Icon className={`w-4 h-4 ${active ? 'text-primary' : 'text-text-muted'}`} />
+    <Icon className={cn("w-4 h-4", active ? "text-primary" : "text-text-muted")} />
     {label}
   </button>
 );
@@ -33,8 +44,9 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
     manutencoes: OrdemServico[]
   }>({ abastecimentos: [], manutencoes: [] });
 
-  // Buscar dados
+  // BUSCAR DADOS
   useEffect(() => {
+    let mounted = true;
     const fetchData = async () => {
       setLoading(true);
       try {
@@ -44,36 +56,35 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
 
         const [resAbast, resManut] = await Promise.all([
           api.get<Abastecimento[]>('/abastecimentos/recentes', { params: { dataInicio, dataFim, limit: 'all' } }),
-          // [CORREÇÃO CRÍTICA]: A rota correta é /manutencoes/recentes, não /ordens-servico/recentes
           api.get<OrdemServico[]>('/manutencoes/recentes', { params: { dataInicio, dataFim, limit: 'all' } })
         ]);
 
-        setDadosRaw({
-          abastecimentos: resAbast.data,
-          manutencoes: resManut.data
-        });
+        if (mounted) {
+          setDadosRaw({
+            abastecimentos: resAbast.data,
+            manutencoes: resManut.data
+          });
+        }
       } catch (err) {
         console.error(err);
         toast.error("Erro ao carregar dados financeiros.");
       } finally {
-        setLoading(false);
+        if (mounted) setTimeout(() => setLoading(false), 300);
       }
     };
     fetchData();
+    return () => { mounted = false; };
   }, [mesFiltro]);
 
-  // --- CÁLCULOS (useMemo) ---
+  // CÁLCULOS
   const relatorios = useMemo(() => {
     const { abastecimentos, manutencoes } = dadosRaw;
 
-    // 1. Totais Gerais
     const totalAbastecimento = abastecimentos.reduce((acc, i) => acc + Number(i.custoTotal), 0);
     const totalManut = manutencoes.reduce((acc, i) => acc + Number(i.custoTotal), 0);
 
-    // 2. Análise por Veículo (CPK)
     const veiculoStats: Record<string, any> = {};
 
-    // Inicializa estrutura
     veiculos.forEach(v => {
       veiculoStats[v.id] = {
         placa: v.placa,
@@ -86,14 +97,11 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
       };
     });
 
-    // Popula com Abastecimentos
     abastecimentos.forEach(a => {
       if (a.veiculoId && veiculoStats[a.veiculoId]) {
         veiculoStats[a.veiculoId].custoComb += Number(a.custoTotal);
-
         const litros = (a.itens || []).reduce((acc, item) =>
           item.produto.tipo === 'COMBUSTIVEL' ? acc + Number(item.quantidade) : acc, 0);
-
         veiculoStats[a.veiculoId].litros += litros;
 
         if (a.kmOdometro > 0) {
@@ -103,14 +111,12 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
       }
     });
 
-    // Popula com Manutenções
     manutencoes.forEach(m => {
       if (m.veiculoId && veiculoStats[m.veiculoId]) {
         veiculoStats[m.veiculoId].custoManut += Number(m.custoTotal);
       }
     });
 
-    // Calcula Métricas Finais
     const listaCPK = Object.values(veiculoStats).map((v: any) => {
       let kmRodado = v.maxKm - v.minKm;
       if (kmRodado < 0 || v.minKm === Infinity || v.maxKm === 0) kmRodado = 0;
@@ -122,7 +128,6 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
       return { ...v, kmRodado, cpk, mediaKmLi, totalGeral };
     }).sort((a, b) => b.totalGeral - a.totalGeral);
 
-    // 3. Manutenção (Preventiva vs Corretiva)
     let manutCorretiva = 0;
     let manutPreventiva = 0;
 
@@ -142,241 +147,268 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
     };
   }, [dadosRaw, veiculos]);
 
-  const formatMoney = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  // SKELETON LOADING UI
+  if (loading) {
+    return (
+      <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="bg-background w-full max-w-5xl h-[80vh] rounded-3xl shadow-2xl flex flex-col border border-border animate-pulse">
+            <div className="p-6 border-b border-border flex justify-between">
+                <div className="h-8 w-48 bg-gray-200 rounded"></div>
+                <div className="h-8 w-8 bg-gray-200 rounded-full"></div>
+            </div>
+            <div className="p-6 grid grid-cols-3 gap-4">
+                <div className="h-32 bg-gray-200 rounded-xl"></div>
+                <div className="h-32 bg-gray-200 rounded-xl"></div>
+                <div className="h-32 bg-gray-200 rounded-xl"></div>
+            </div>
+             <div className="p-6 flex-1">
+                <div className="h-full bg-gray-200 rounded-xl"></div>
+            </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      {/* Container Principal com Estilo Moderno */}
-      <div className="bg-background w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-float animate-in zoom-in-95 flex flex-col border border-border">
+      
+      <div className="bg-background w-full max-w-5xl max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl animate-in zoom-in-95 flex flex-col border border-border">
 
         {/* HEADER FIXO */}
         <div className="bg-surface px-6 py-4 border-b border-border flex flex-col sm:flex-row justify-between items-center sticky top-0 z-20 gap-3 shrink-0">
           <div>
             <h2 className="text-xl font-bold text-text-main flex items-center gap-2">
-              <TrendingUp className="w-6 h-6 text-primary" />
+              <div className="p-2 bg-primary/10 rounded-lg">
+                 <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
               Inteligência Financeira
             </h2>
-            <p className="text-sm text-text-secondary">Análise estratégica de custos da frota</p>
+            <p className="text-sm text-text-secondary mt-1">Análise estratégica de custos da frota</p>
           </div>
-          <div className="flex gap-3">
-            <input
-              type="month"
-              value={mesFiltro}
-              onChange={(e) => setMesFiltro(e.target.value)}
-              className="border border-input rounded-lg px-3 py-1.5 text-sm bg-surface text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none"
-            />
-            <button
-              onClick={onClose}
-              className="p-2 bg-surface hover:bg-surface-hover border border-border rounded-full text-text-secondary transition-colors"
+          
+          <div className="flex gap-3 items-center">
+            <div className="relative">
+                <input
+                type="month"
+                value={mesFiltro}
+                onChange={(e) => setMesFiltro(e.target.value)}
+                className="h-10 border border-input rounded-lg px-3 text-sm bg-surface text-text-main focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none shadow-sm cursor-pointer hover:border-primary/50 transition-colors"
+                />
+            </div>
+            
+            <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={onClose} 
+                className="rounded-full hover:bg-gray-100"
             >
               <X className="w-5 h-5" />
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* ABAS */}
-        <div className="bg-surface border-b border-border sticky top-[76px] z-10 w-full px-6 pt-2 overflow-x-auto custom-scrollbar">
+        <div className="bg-surface border-b border-border sticky top-[80px] z-10 w-full px-6 pt-2 overflow-x-auto custom-scrollbar">
           <div className="flex gap-6 min-w-max">
-            <TabButton
-              active={abaAtiva === 'GERAL'}
-              onClick={() => setAbaAtiva('GERAL')}
-              icon={PieChart}
-              label="Visão Macro"
-            />
-            <TabButton
-              active={abaAtiva === 'CPK'}
-              onClick={() => setAbaAtiva('CPK')}
-              icon={BarChart3}
-              label="Custo por KM (CPK)"
-            />
-            <TabButton
-              active={abaAtiva === 'COMBUSTIVEL'}
-              onClick={() => setAbaAtiva('COMBUSTIVEL')}
-              icon={Fuel}
-              label="Auditoria Combustível"
-            />
-            <TabButton
-              active={abaAtiva === 'MANUTENCAO'}
-              onClick={() => setAbaAtiva('MANUTENCAO')}
-              icon={Wrench}
-              label="DRE Manutenção"
-            />
+            <TabButton active={abaAtiva === 'GERAL'} onClick={() => setAbaAtiva('GERAL')} icon={PieChart} label="Visão Macro" />
+            <TabButton active={abaAtiva === 'CPK'} onClick={() => setAbaAtiva('CPK')} icon={BarChart3} label="Custo por KM (CPK)" />
+            <TabButton active={abaAtiva === 'COMBUSTIVEL'} onClick={() => setAbaAtiva('COMBUSTIVEL')} icon={Fuel} label="Auditoria Combustível" />
+            <TabButton active={abaAtiva === 'MANUTENCAO'} onClick={() => setAbaAtiva('MANUTENCAO')} icon={Wrench} label="DRE Manutenção" />
           </div>
         </div>
 
         {/* CONTEÚDO */}
         <div className="p-6 space-y-6">
-          {loading ? (
-            <div className="text-center py-20 flex flex-col items-center">
-              <div className="animate-spin rounded-full h-10 w-10 border-4 border-border border-t-primary mb-4"></div>
-              <p className="text-text-muted font-medium">Processando indicadores...</p>
-            </div>
-          ) : (
-            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+          <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
 
-              {/* --- ABA 1: GERAL --- */}
-              {abaAtiva === 'GERAL' && (
-                <div className="space-y-6">
-                  {/* KPI Cards */}
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="bg-surface p-6 rounded-xl border border-border shadow-card">
-                      <p className="text-text-muted text-xs font-bold uppercase tracking-wider mb-1">Total Gasto</p>
-                      <h3 className="text-3xl font-bold text-text-main">{formatMoney(relatorios.geral.total)}</h3>
+            {/* --- ABA 1: GERAL --- */}
+            {abaAtiva === 'GERAL' && (
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  
+                  {/* Card Total */}
+                  <Card className="flex flex-col justify-between border-l-4 border-l-gray-800 min-h-[140px]">
+                    <div>
+                        <p className="text-text-muted text-xs font-bold uppercase tracking-wider mb-2">Total Gasto</p>
+                        <h3 className="text-3xl font-bold text-text-main tracking-tight">{formatCurrency(relatorios.geral.total)}</h3>
                     </div>
-                    <div className="bg-surface p-6 rounded-xl border border-border shadow-card relative overflow-hidden group">
-                      <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Fuel className="w-16 h-16" /></div>
-                      <p className="text-warning-600 text-xs font-bold uppercase tracking-wider mb-1">Combustível</p>
-                      <h3 className="text-2xl font-bold text-text-main">{formatMoney(relatorios.geral.totalAbastecimento)}</h3>
-                      <p className="text-xs text-text-muted mt-1">
-                        {((relatorios.geral.totalAbastecimento / (relatorios.geral.total || 1)) * 100).toFixed(1)}% do total
-                      </p>
+                    <div className="text-xs text-text-muted mt-4 pt-4 border-t border-border">
+                        Consolidado do Mês
                     </div>
-                    <div className="bg-surface p-6 rounded-xl border border-border shadow-card relative overflow-hidden group">
-                      <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity"><Wrench className="w-16 h-16" /></div>
-                      <p className="text-primary text-xs font-bold uppercase tracking-wider mb-1">Manutenção</p>
-                      <h3 className="text-2xl font-bold text-text-main">{formatMoney(relatorios.geral.totalManut)}</h3>
-                      <p className="text-xs text-text-muted mt-1">
-                        {((relatorios.geral.totalManut / (relatorios.geral.total || 1)) * 100).toFixed(1)}% do total
-                      </p>
-                    </div>
-                  </div>
+                  </Card>
 
-                  {/* Ranking */}
-                  <div className="bg-surface p-6 rounded-xl border border-border shadow-card">
-                    <h4 className="font-bold text-text-main mb-4 flex items-center gap-2">
-                      <Activity className="w-4 h-4 text-primary" /> Top 5 Veículos (Maior Custo)
+                  {/* Card Combustível */}
+                  <Card className="relative overflow-hidden group border-l-4 border-l-warning-500 min-h-[140px] flex flex-col justify-between">
+                    <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity rotate-12"><Fuel className="w-20 h-20" /></div>
+                    <div>
+                        <p className="text-warning-600 text-xs font-bold uppercase tracking-wider mb-2">Combustível</p>
+                        <h3 className="text-2xl font-bold text-text-main">{formatCurrency(relatorios.geral.totalAbastecimento)}</h3>
+                    </div>
+                    <div className="text-xs text-text-muted mt-2">
+                      {((relatorios.geral.totalAbastecimento / (relatorios.geral.total || 1)) * 100).toFixed(1)}% do custo total
+                    </div>
+                  </Card>
+
+                  {/* Card Manutenção */}
+                  <Card className="relative overflow-hidden group border-l-4 border-l-primary min-h-[140px] flex flex-col justify-between">
+                    <div className="absolute right-0 top-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity rotate-12"><Wrench className="w-20 h-20" /></div>
+                    <div>
+                        <p className="text-primary text-xs font-bold uppercase tracking-wider mb-2">Manutenção</p>
+                        <h3 className="text-2xl font-bold text-text-main">{formatCurrency(relatorios.geral.totalManut)}</h3>
+                    </div>
+                    <div className="text-xs text-text-muted mt-2">
+                      {((relatorios.geral.totalManut / (relatorios.geral.total || 1)) * 100).toFixed(1)}% do custo total
+                    </div>
+                  </Card>
+                </div>
+
+                {/* Ranking */}
+                <Card padding="none" className="border border-border">
+                  <div className="p-6 border-b border-border bg-gray-50/50">
+                    <h4 className="font-bold text-text-main flex items-center gap-2">
+                      <div className="p-1.5 bg-primary/10 rounded text-primary"><Activity className="w-4 h-4" /></div>
+                      Top 5 Veículos (Maior Custo)
                     </h4>
-                    <div className="space-y-3">
-                      {relatorios.cpk.slice(0, 5).map((v: any, idx: number) => (
-                        <div key={idx} className="flex items-center justify-between p-3 bg-background rounded-lg border border-border hover:border-primary/30 transition-colors">
-                          <div className="flex items-center gap-3">
-                            <span className="w-6 h-6 flex items-center justify-center bg-primary/10 rounded-full text-xs font-bold text-primary">{idx + 1}</span>
-                            <div>
-                              <p className="font-bold text-text-main text-sm">{v.placa}</p>
-                              <p className="text-xs text-text-secondary">{v.modelo}</p>
+                  </div>
+                  <div className="divide-y divide-border">
+                    {relatorios.cpk.slice(0, 5).map((v: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between p-4 hover:bg-gray-50/80 transition-colors group cursor-default">
+                        <div className="flex items-center gap-4">
+                          <span className="w-8 h-8 flex items-center justify-center bg-gray-100 rounded-lg text-sm font-bold text-gray-600 group-hover:bg-primary group-hover:text-white transition-colors">{idx + 1}</span>
+                          <div>
+                            <p className="font-bold text-text-main text-sm flex items-center gap-2">
+                                {v.placa}
+                                <span className="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-500 font-normal">{v.modelo}</span>
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-bold text-text-main text-sm">{formatCurrency(v.totalGeral)}</p>
+                          <p className="text-xs text-text-muted">CPK: {formatCurrency(v.cpk)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* --- ABA 2: CPK --- */}
+            {abaAtiva === 'CPK' && (
+              <Card padding="none" className="overflow-hidden border border-border">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-gray-50 text-text-secondary font-bold border-b border-border text-xs uppercase tracking-wider">
+                      <tr>
+                        <th className="px-6 py-4">Veículo</th>
+                        <th className="px-6 py-4 text-right">KM Rodado (Est.)</th>
+                        <th className="px-6 py-4 text-right">Custo Total</th>
+                        <th className="px-6 py-4 text-right bg-primary/5 text-primary border-l border-border">CPK (R$/KM)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {relatorios.cpk.map((v: any) => (
+                        <tr key={v.placa} className="hover:bg-gray-50/50 transition-colors group">
+                          <td className="px-6 py-4 font-medium text-text-main">
+                            <div className="flex flex-col">
+                                <span>{v.placa}</span>
+                                <span className="text-xs text-text-muted font-normal">{v.modelo}</span>
                             </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="font-bold text-text-main text-sm">{formatMoney(v.totalGeral)}</p>
-                            <p className="text-xs text-text-muted">CPK: {formatMoney(v.cpk)}</p>
-                          </div>
-                        </div>
+                          </td>
+                          <td className="px-6 py-4 text-right text-text-secondary font-mono">{v.kmRodado.toLocaleString('pt-BR')} km</td>
+                          <td className="px-6 py-4 text-right font-medium text-text-main font-mono">{formatCurrency(v.totalGeral)}</td>
+                          <td className={`px-6 py-4 text-right font-bold font-mono border-l border-border ${v.cpk > 2.5 ? 'text-red-600 bg-red-50/50' : 'text-primary bg-primary/5'}`}>
+                            {formatCurrency(v.cpk)}
+                          </td>
+                        </tr>
                       ))}
-                    </div>
-                  </div>
+                    </tbody>
+                  </table>
                 </div>
-              )}
+                <div className="p-4 bg-gray-50 text-xs text-text-muted border-t border-border flex items-center gap-2">
+                  <AlertTriangle className="w-3 h-3" />
+                  O KM Rodado é estimado pela diferença entre o maior e menor odômetro registrados no mês.
+                </div>
+              </Card>
+            )}
 
-              {/* --- ABA 2: CPK --- */}
-              {abaAtiva === 'CPK' && (
-                <div className="bg-surface rounded-xl border border-border shadow-card overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                      <thead className="bg-surface-hover text-text-secondary font-bold border-b border-border">
-                        <tr>
-                          <th className="px-4 py-3">Veículo</th>
-                          <th className="px-4 py-3 text-right">KM Rodado (Est.)</th>
-                          <th className="px-4 py-3 text-right">Custo Total</th>
-                          <th className="px-4 py-3 text-right bg-primary/5 text-primary">CPK (R$/KM)</th>
+            {/* --- ABA 3: COMBUSTÍVEL --- */}
+            {abaAtiva === 'COMBUSTIVEL' && (
+              <Card padding="none" className="overflow-hidden border border-border">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-gray-50 text-text-secondary font-bold border-b border-border text-xs uppercase tracking-wider">
+                      <tr>
+                        <th className="px-6 py-4">Veículo</th>
+                        <th className="px-6 py-4 text-right">Litros Abastecidos</th>
+                        <th className="px-6 py-4 text-right">Gasto ($)</th>
+                        <th className="px-6 py-4 text-right bg-amber-50 text-amber-700 border-l border-border">Média (KM/L)</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {relatorios.cpk.map((v: any) => (
+                        <tr key={v.placa} className="hover:bg-gray-50/50 transition-colors">
+                          <td className="px-6 py-4 font-medium text-text-main">{v.placa}</td>
+                          <td className="px-6 py-4 text-right text-text-secondary font-mono">{v.litros.toFixed(1)} L</td>
+                          <td className="px-6 py-4 text-right font-medium text-text-main font-mono">{formatCurrency(v.custoComb)}</td>
+                          <td className="px-6 py-4 text-right font-bold text-amber-600 font-mono border-l border-border bg-amber-50/30">
+                            {v.mediaKmLi > 0 ? v.mediaKmLi.toFixed(2) : '-'}
+                          </td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {relatorios.cpk.map((v: any) => (
-                          <tr key={v.placa} className="hover:bg-surface-hover transition-colors">
-                            <td className="px-4 py-3 font-medium text-text-main">
-                              {v.placa} <span className="text-text-muted font-normal">- {v.modelo}</span>
-                            </td>
-                            <td className="px-4 py-3 text-right text-text-secondary">{v.kmRodado.toLocaleString('pt-BR')} km</td>
-                            <td className="px-4 py-3 text-right font-medium text-text-main">{formatMoney(v.totalGeral)}</td>
-                            <td className={`px-4 py-3 text-right font-bold ${v.cpk > 2.5 ? 'text-error' : 'text-primary'}`}>
-                              {formatMoney(v.cpk)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                  <div className="p-4 bg-background text-xs text-text-muted border-t border-border">
-                    * O KM Rodado é estimado pela diferença entre o maior e menor odômetro registrados no mês.
-                  </div>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-              )}
+              </Card>
+            )}
 
-              {/* --- ABA 3: COMBUSTÍVEL --- */}
-              {abaAtiva === 'COMBUSTIVEL' && (
-                <div className="bg-surface rounded-xl border border-border shadow-card overflow-hidden">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left">
-                      <thead className="bg-surface-hover text-text-secondary font-bold border-b border-border">
-                        <tr>
-                          <th className="px-4 py-3">Veículo</th>
-                          <th className="px-4 py-3 text-right">Litros</th>
-                          <th className="px-4 py-3 text-right">Gasto ($)</th>
-                          <th className="px-4 py-3 text-right bg-warning/5 text-warning-700">Média (KM/L)</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {relatorios.cpk.map((v: any) => (
-                          <tr key={v.placa} className="hover:bg-surface-hover transition-colors">
-                            <td className="px-4 py-3 font-medium text-text-main">{v.placa}</td>
-                            <td className="px-4 py-3 text-right text-text-secondary">{v.litros.toFixed(1)} L</td>
-                            <td className="px-4 py-3 text-right font-medium text-text-main">{formatMoney(v.custoComb)}</td>
-                            <td className="px-4 py-3 text-right font-bold text-warning-600">
-                              {v.mediaKmLi > 0 ? v.mediaKmLi.toFixed(2) : '-'}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
+            {/* --- ABA 4: MANUTENÇÃO --- */}
+            {abaAtiva === 'MANUTENCAO' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Card>
+                  <h4 className="font-bold text-text-main mb-6 flex items-center gap-2 pb-4 border-b border-border">
+                    <Wrench className="w-5 h-5 text-text-muted" /> Preventiva vs Corretiva
+                  </h4>
 
-              {/* --- ABA 4: MANUTENÇÃO --- */}
-              {abaAtiva === 'MANUTENCAO' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-surface p-6 rounded-xl border border-border shadow-card">
-                    <h4 className="font-bold text-text-main mb-6 flex items-center gap-2">
-                      <Wrench className="w-4 h-4 text-text-muted" /> Preventiva vs Corretiva
-                    </h4>
-
-                    <div className="space-y-6">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1.5">
-                          <span className="text-text-secondary font-medium">Preventiva (Ideal)</span>
-                          <span className="text-text-main font-bold">{formatMoney(relatorios.manutencao.preventiva)}</span>
-                        </div>
-                        <div className="w-full h-2.5 bg-background rounded-full overflow-hidden border border-border">
-                          <div
-                            className="h-full bg-primary rounded-full transition-all duration-1000"
-                            style={{ width: `${(relatorios.manutencao.preventiva / (relatorios.geral.totalManut || 1)) * 100}%` }}
-                          />
-                        </div>
+                  <div className="space-y-8">
+                    <div>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-text-secondary font-medium">Preventiva (Ideal)</span>
+                        <span className="text-text-main font-bold">{formatCurrency(relatorios.manutencao.preventiva)}</span>
                       </div>
-
-                      <div>
-                        <div className="flex justify-between text-sm mb-1.5">
-                          <span className="text-text-secondary font-medium">Corretiva (Quebras)</span>
-                          <span className="text-text-main font-bold">{formatMoney(relatorios.manutencao.corretiva)}</span>
-                        </div>
-                        <div className="w-full h-2.5 bg-background rounded-full overflow-hidden border border-border">
-                          <div
-                            className="h-full bg-error rounded-full transition-all duration-1000"
-                            style={{ width: `${(relatorios.manutencao.corretiva / (relatorios.geral.totalManut || 1)) * 100}%` }}
-                          />
-                        </div>
+                      <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                        <div
+                          className="h-full bg-emerald-500 rounded-full transition-all duration-1000 ease-out"
+                          style={{ width: `${(relatorios.manutencao.preventiva / (relatorios.geral.totalManut || 1)) * 100}%` }}
+                        />
                       </div>
                     </div>
 
-                    <div className="mt-8 p-4 bg-warning/10 rounded-lg border border-warning/20 text-xs text-warning-700 leading-relaxed">
-                      <strong>Dica de Gestão:</strong> O ideal é que a manutenção corretiva (emergencial) não ultrapasse 30% do custo total de manutenção.
+                    <div>
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-text-secondary font-medium">Corretiva (Quebras)</span>
+                        <span className="text-text-main font-bold">{formatCurrency(relatorios.manutencao.corretiva)}</span>
+                      </div>
+                      <div className="w-full h-3 bg-gray-100 rounded-full overflow-hidden border border-gray-200">
+                        <div
+                          className="h-full bg-rose-500 rounded-full transition-all duration-1000 ease-out"
+                          style={{ width: `${(relatorios.manutencao.corretiva / (relatorios.geral.totalManut || 1)) * 100}%` }}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="mt-8 p-4 bg-amber-50 rounded-xl border border-amber-200 text-sm text-amber-800 leading-relaxed flex gap-3">
+                      <div className="p-1 bg-amber-100 rounded-full h-fit"><AlertTriangle className="w-4 h-4 text-amber-600"/></div>
+                      <div>
+                        <strong>Dica de Gestão:</strong> O ideal é que a manutenção corretiva (emergencial) não ultrapasse 30% do custo total de manutenção.
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                </Card>
+              </div>
+            )}
 
-            </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
