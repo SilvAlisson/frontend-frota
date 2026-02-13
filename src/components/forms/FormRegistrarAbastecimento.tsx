@@ -5,21 +5,22 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import {
   Fuel, User, MapPin, Calendar, Gauge, DollarSign,
-  Droplets, ChevronRight, ChevronLeft, Check, X
+  Droplets, ChevronRight, ChevronLeft, Check, X, Plus
 } from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
+import { Card } from '../ui/Card';
 import { ModalConfirmacaoFoto } from '../ModalConfirmacaoFoto';
 
 // --- UTILS & HOOKS ---
-import { formatKmVisual, parseKmInteligente } from '../../utils';
+import { formatKmVisual, parseKmInteligente, formatCurrency } from '../../utils'; 
 import { useDashboardData } from '../../hooks/useDashboardData';
 import type { Veiculo, Fornecedor, Produto, User as UserType } from '../../types';
 
-// --- SCHEMA ZOD ATUALIZADO (Unitário é o foco) ---
+// --- SCHEMA ZOD ---
 const abastecimentoSchema = z.object({
   veiculoId: z.string().min(1, "Selecione o veículo"),
   operadorId: z.string().min(1, "Selecione o motorista"),
@@ -29,13 +30,13 @@ const abastecimentoSchema = z.object({
   itens: z.array(z.object({
     produtoId: z.string().min(1, "Selecione o produto"),
     quantidade: z.coerce.number().min(0.01, "Qtd inválida"),
-    valorUnitario: z.coerce.number().min(0.01, "Valor inválido"), // ✅ Agora pedimos Unitário
+    valorUnitario: z.coerce.number().min(0.01, "Valor inválido"),
   })).min(1, "Adicione pelo menos um item")
 });
 
 type FormInput = z.input<typeof abastecimentoSchema>;
 
-// Interface de Payload para API
+// Interface Payload
 interface AbastecimentoPayload {
   veiculoId: string;
   operadorId: string;
@@ -84,7 +85,7 @@ export function FormRegistrarAbastecimento({
   const [payload, setPayload] = useState<AbastecimentoPayload | null>(null);
   const [ultimoKm, setUltimoKm] = useState(0);
 
-  // Filtros de Listas
+  // Filtros
   const operadorOptions = useMemo(() =>
     usuarios.filter(u => u.role === 'OPERADOR').map(u => ({ value: u.id, label: u.nome })),
     [usuarios]);
@@ -101,14 +102,13 @@ export function FormRegistrarAbastecimento({
     veiculos.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` })),
     [veiculos]);
 
-  // Hook Form
   const { register, control, handleSubmit, watch, setValue, trigger, formState: { errors, isSubmitting } } = useForm<FormInput>({
     resolver: zodResolver(abastecimentoSchema),
     defaultValues: {
       veiculoId: veiculoPreSelecionadoId || '',
       operadorId: (usuarioLogado?.role === 'OPERADOR' ? usuarioLogado.id : ''),
       dataHora: new Date().toISOString().slice(0, 16),
-      itens: [{ produtoId: '', quantidade: 0, valorUnitario: 0 }] // ✅ Default Unitário
+      itens: [{ produtoId: '', quantidade: 0, valorUnitario: 0 }]
     }
   });
 
@@ -117,7 +117,7 @@ export function FormRegistrarAbastecimento({
   const veiculoIdSelecionado = watch('veiculoId');
   const itensObservados = watch('itens') || [];
 
-  // Automação: Sugere combustível
+  // Automação Combustível
   useEffect(() => {
     if (veiculoIdSelecionado) {
       const v = veiculos.find(v => v.id === veiculoIdSelecionado);
@@ -135,7 +135,7 @@ export function FormRegistrarAbastecimento({
     }
   }, [veiculoIdSelecionado, veiculos, produtos, setValue]);
 
-  // ✅ Cálculo Total Atualizado (Qtd * Unitário)
+  // Total Geral
   const totalGeral = useMemo(() =>
     itensObservados.reduce((acc, item) => {
       const qtd = Number(item?.quantidade) || 0;
@@ -158,7 +158,7 @@ export function FormRegistrarAbastecimento({
     const kmInputFloat = parseKmInteligente(data.kmAtual, ultimoKm);
 
     if (kmInputFloat < ultimoKm) {
-      toast.warning(`Nota: O valor (${kmInputFloat.toLocaleString()}) é menor que o atual (${ultimoKm.toLocaleString()}). Registrando como retroativo...`);
+      toast.warning(`Atenção: KM informado (${kmInputFloat.toLocaleString()}) é menor que o anterior (${ultimoKm.toLocaleString()}).`);
     }
 
     const payloadFinal: AbastecimentoPayload = {
@@ -170,14 +170,13 @@ export function FormRegistrarAbastecimento({
       itens: data.itens.map(i => {
         const qtd = Number(i.quantidade);
         const unit = Number(i.valorUnitario);
-        // ✅ O sistema calcula o total para enviar (embora o backend recalcule, é bom manter consistência)
         const total = Number((qtd * unit).toFixed(2)); 
         
         return {
           produtoId: i.produtoId,
           quantidade: qtd,
           valorTotal: total,
-          valorPorUnidade: unit // ✅ Envia o unitário correto
+          valorPorUnidade: unit
         };
       })
     };
@@ -189,18 +188,21 @@ export function FormRegistrarAbastecimento({
   const isLocked = isSubmitting || isLoadingDados;
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-surface">
 
       {/* HEADER PROGRESSO */}
       <div className="px-6 pt-6 pb-2 shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Novo Abastecimento</h3>
-            <p className="text-xs text-gray-500 font-medium">Passo {step} de 3</p>
+            <h3 className="text-lg font-bold text-text-main">Novo Abastecimento</h3>
+            <p className="text-xs text-text-secondary font-medium">Etapa {step} de 3</p>
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-1.5">
             {[1, 2, 3].map(s => (
-              <div key={s} className={`h-1.5 w-8 rounded-full transition-all duration-300 ${s <= step ? 'bg-primary' : 'bg-gray-100'}`} />
+              <div 
+                key={s} 
+                className={`h-1.5 w-8 rounded-full transition-all duration-300 ${s <= step ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'}`} 
+              />
             ))}
           </div>
         </div>
@@ -244,7 +246,7 @@ export function FormRegistrarAbastecimento({
                     disabled={isLocked}
                   />
                   {ultimoKm > 0 && (
-                    <p className="text-[10px] text-primary font-bold mt-1.5 flex items-center gap-1 bg-primary/5 p-1 rounded w-fit px-2 border border-primary/10">
+                    <p className="text-[10px] text-primary font-bold mt-1.5 flex items-center gap-1 bg-primary/5 p-1.5 rounded-lg w-fit px-2 border border-primary/10">
                       <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
                       Anterior: {ultimoKm.toLocaleString()} KM
                     </p>
@@ -276,83 +278,91 @@ export function FormRegistrarAbastecimento({
               />
 
               <div className="pt-2">
-                <div className="flex justify-between items-center mb-2 ml-1">
-                  <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Itens do Abastecimento</p>
+                <div className="flex justify-between items-center mb-3 ml-1">
+                  <p className="text-xs font-bold text-text-secondary uppercase tracking-wider">Itens</p>
                   <Button
                     type="button"
                     variant="ghost"
+                    size="sm"
                     onClick={() => append({ produtoId: '', quantidade: 0, valorUnitario: 0 })}
-                    className="h-7 text-xs px-2 text-primary hover:bg-primary/5"
+                    className="text-primary hover:bg-primary/10 h-8"
                     disabled={isLocked}
+                    icon={<Plus className="w-3 h-3" />}
                   >
-                    + Adicionar
+                    Adicionar Item
                   </Button>
                 </div>
 
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {fields.map((field, index) => {
                     const qtd = Number(watch(`itens.${index}.quantidade`)) || 0;
                     const unit = Number(watch(`itens.${index}.valorUnitario`)) || 0;
-                    const totalItem = (qtd * unit).toFixed(2); // Cálculo automático
+                    const totalItem = (qtd * unit).toFixed(2);
 
                     return (
-                      <div key={field.id} className="bg-gray-50/50 p-3 rounded-xl border border-gray-100 group hover:border-primary/20 transition-colors relative">
+                      <Card 
+                        key={field.id} 
+                        padding="sm" 
+                        variant="outline" 
+                        className="relative group bg-gray-50/50 dark:bg-gray-800/50 border-dashed hover:border-solid hover:border-primary/30 transition-colors"
+                      >
                         {fields.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => remove(index)}
-                            disabled={isLocked}
-                            className="absolute -top-2 -right-2 bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 p-1 rounded-full shadow-sm z-10 transition-colors"
-                          >
-                            <X className="w-3 h-3" />
-                          </button>
+                          <div className="absolute -top-2 -right-2 z-10">
+                             <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => remove(index)}
+                                disabled={isLocked}
+                                className="h-6 w-6 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 shadow-sm"
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                          </div>
                         )}
 
                         <div className="grid grid-cols-12 gap-3">
-                          {/* Produto ocupa largura total no mobile */}
                           <div className="col-span-12 sm:col-span-6">
                             <Select
                               label="Produto"
                               options={produtoOptions}
                               {...register(`itens.${index}.produtoId`)}
-                              className="bg-white h-9 text-xs"
+                              className="bg-white dark:bg-gray-900 h-9 text-xs"
                               disabled={isLocked}
                             />
                           </div>
 
-                          {/* Quantidade */}
                           <div className="col-span-6 sm:col-span-3">
                             <Input
                               label="Qtd (L)"
                               type="number"
                               step="0.001"
-                              icon={<Droplets className="w-3 h-3 text-blue-400" />}
+                              icon={<Droplets className="w-3 h-3 text-sky-500" />}
                               {...register(`itens.${index}.quantidade`)}
-                              className="bg-white h-9 text-xs text-center"
+                              className="bg-white dark:bg-gray-900 h-9 text-xs text-center"
                               disabled={isLocked}
                             />
                           </div>
 
-                          {/* Valor Unitário (Mudança Principal) */}
                           <div className="col-span-6 sm:col-span-3">
                             <Input
                               label="Unitário R$"
                               type="number"
                               step="0.001"
                               {...register(`itens.${index}.valorUnitario`)}
-                              className="bg-white h-9 text-xs text-right font-bold text-gray-700"
+                              className="bg-white dark:bg-gray-900 h-9 text-xs text-right font-bold text-text-main"
                               disabled={isLocked}
                             />
                           </div>
                         </div>
 
-                        {/* Exibição do Total Calculado */}
-                        <div className="mt-2 flex justify-end px-1">
-                          <span className="text-xs text-primary font-bold bg-white px-3 py-1 rounded-md border border-primary/20 shadow-sm">
-                            Total Item: R$ {totalItem}
-                          </span>
+                        <div className="mt-2 flex justify-end">
+                          <div className="bg-white dark:bg-gray-900 px-3 py-1 rounded-md border border-border shadow-sm text-xs font-medium text-text-secondary flex gap-2">
+                            <span>Total Item:</span>
+                            <span className="font-bold text-text-main">R$ {totalItem}</span>
+                          </div>
                         </div>
-                      </div>
+                      </Card>
                     );
                   })}
                 </div>
@@ -363,34 +373,36 @@ export function FormRegistrarAbastecimento({
           {/* --- PASSO 3: CONFIRMAÇÃO --- */}
           {step === 3 && (
             <div className="space-y-6 animate-in zoom-in-95 duration-300 py-4">
-              <div className="bg-gray-900 p-8 rounded-3xl text-center text-white relative overflow-hidden shadow-xl mx-auto w-full max-w-sm transform hover:scale-[1.02] transition-transform">
-                <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
-                  <DollarSign className="w-32 h-32" />
+              <Card variant="solid" className="bg-gray-900 dark:bg-black text-white border-transparent text-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                  <DollarSign className="w-32 h-32 rotate-12" />
                 </div>
-                <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary mb-2 relative z-10">Valor Total</p>
-                <p className="text-4xl sm:text-5xl font-mono font-black tracking-tight relative z-10 truncate">
-                  R$ {totalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-center">
-                  <p className="text-xs text-gray-400 font-bold uppercase mb-1">Veículo</p>
-                  <p className="font-bold text-gray-800 text-sm truncate">
-                    {veiculos.find(v => v.id === veiculoIdSelecionado)?.placa || '---'}
+                <div className="relative z-10 py-6">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary mb-2">Valor Total Estimado</p>
+                  <p className="text-4xl sm:text-5xl font-mono font-black tracking-tight truncate">
+                    {formatCurrency(totalGeral)}
                   </p>
                 </div>
-                <div className="p-4 bg-gray-50 rounded-2xl border border-gray-100 text-center">
-                  <p className="text-xs text-gray-400 font-bold uppercase mb-1">Odômetro Final</p>
-                  <p className="font-bold text-gray-800 text-sm">{watch('kmAtual')} KM</p>
-                </div>
+              </Card>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Card variant="outline" padding="sm" className="text-center bg-gray-50/50">
+                  <p className="text-xs text-text-muted font-bold uppercase mb-1">Veículo</p>
+                  <p className="font-bold text-text-main text-sm truncate">
+                    {veiculos.find(v => v.id === veiculoIdSelecionado)?.placa || '---'}
+                  </p>
+                </Card>
+                <Card variant="outline" padding="sm" className="text-center bg-gray-50/50">
+                  <p className="text-xs text-text-muted font-bold uppercase mb-1">Odômetro Final</p>
+                  <p className="font-bold text-text-main text-sm">{watch('kmAtual')} KM</p>
+                </Card>
               </div>
             </div>
           )}
         </div>
 
         {/* FOOTER */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex gap-3 shrink-0">
+        <div className="px-6 py-4 border-t border-border bg-gray-50/30 flex gap-3 shrink-0">
           {step > 1 ? (
             <Button
               type="button"
@@ -407,7 +419,7 @@ export function FormRegistrarAbastecimento({
               type="button"
               variant="ghost"
               onClick={onCancelar}
-              className="flex-1"
+              className="flex-1 text-text-secondary hover:text-text-main"
               disabled={isSubmitting}
             >
               Cancelar
@@ -418,7 +430,7 @@ export function FormRegistrarAbastecimento({
             <Button
               type="button"
               onClick={nextStep}
-              className="flex-[2] shadow-lg shadow-primary/20"
+              className="flex-[2]"
               icon={<ChevronRight className="w-4 h-4" />}
               disabled={isSubmitting}
             >
@@ -428,10 +440,10 @@ export function FormRegistrarAbastecimento({
             <Button
               type="submit"
               isLoading={isSubmitting}
-              className="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20"
+              className="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white border-transparent hover:shadow-lg hover:shadow-emerald-500/20"
               icon={<Check className="w-4 h-4" />}
             >
-              Finalizar
+              Confirmar
             </Button>
           )}
         </div>

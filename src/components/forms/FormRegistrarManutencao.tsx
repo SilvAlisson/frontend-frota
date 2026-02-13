@@ -7,19 +7,20 @@ import { toast } from 'sonner';
 import {
   Wrench, Truck, Calendar, Gauge,
   Plus, Trash2, ChevronRight, ChevronLeft, Check,
-  AlertTriangle
+  AlertTriangle, DollarSign, Package
 } from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
+import { Card } from '../ui/Card'; // ✅ Novo Componente
 import { Badge } from '../ui/Badge';
 import { ModalConfirmacaoFoto } from '../ModalConfirmacaoFoto';
 import { ModalGerenciarServicos } from '../ModalGerenciarServicos';
 
 // --- UTILS & HOOKS ---
-import { parseDecimal, formatKmVisual } from '../../utils';
+import { parseDecimal, formatKmVisual, formatCurrency } from '../../utils';
 import { useDashboardData } from '../../hooks/useDashboardData';
 import type { Veiculo, Produto, Fornecedor } from '../../types';
 
@@ -27,18 +28,16 @@ import type { Veiculo, Produto, Fornecedor } from '../../types';
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
-// --- SCHEMA ZOD ATUALIZADO (Compatível v3.23+ / v4) ---
+// --- SCHEMA ZOD ---
 const manutencaoSchema = z.object({
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
   alvo: z.enum(ALVOS_MANUTENCAO),
   
-  // Campos Opcionais
   veiculoId: z.string().optional().nullable(),
   kmAtual: z.string().optional().nullable(),
   numeroCA: z.string().optional().nullable(),
   observacoes: z.string().optional().nullable(),
 
-  // Campos Obrigatórios com Mensagem Customizada
   fornecedorId: z.string().min(1, "Selecione o fornecedor"),
   data: z.string().min(1, "Data é obrigatória"),
   
@@ -48,27 +47,17 @@ const manutencaoSchema = z.object({
     valorPorUnidade: z.coerce.number().min(0, "Valor inválido"),
   })).min(1, "Adicione pelo menos um item")
 }).superRefine((data, ctx) => {
-  // Validação Condicional
   if (data.alvo === 'VEICULO' && !data.veiculoId) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Selecione o veículo",
-      path: ["veiculoId"]
-    });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Selecione o veículo", path: ["veiculoId"] });
   }
   if (data.alvo === 'OUTROS' && !data.numeroCA) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Informe o nº do CA/Série",
-      path: ["numeroCA"]
-    });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe o nº do CA/Série", path: ["numeroCA"] });
   }
 });
 
 type ManutencaoFormInput = z.input<typeof manutencaoSchema>;
 type ManutencaoFormOutput = z.output<typeof manutencaoSchema>;
 
-// Payload para API
 interface PayloadOrdemServico {
   tipo: string;
   veiculoId: string | null;
@@ -95,7 +84,6 @@ export function FormRegistrarManutencao({
   onClose
 }: FormRegistrarManutencaoProps) {
 
-  // --- DADOS & ESTADOS ---
   const { data: dadosCache, isLoading: isLoadingDados } = useDashboardData();
 
   const veiculos = propsVeiculos?.length ? propsVeiculos : (dadosCache?.veiculos || []);
@@ -114,17 +102,7 @@ export function FormRegistrarManutencao({
     if (produtos.length > 0) setListaProdutos(produtos);
   }, [produtos]);
 
-  // --- REACT HOOK FORM ---
-  const {
-    register,
-    control,
-    handleSubmit,
-    watch,
-    setValue,
-    trigger,
-    reset,
-    formState: { errors, isSubmitting }
-  } = useForm<ManutencaoFormInput, any, ManutencaoFormOutput>({
+  const { register, control, handleSubmit, watch, setValue, trigger, reset, formState: { errors, isSubmitting } } = useForm<ManutencaoFormInput, any, ManutencaoFormOutput>({
     resolver: zodResolver(manutencaoSchema),
     defaultValues: {
       alvo: 'VEICULO',
@@ -144,21 +122,13 @@ export function FormRegistrarManutencao({
   const fornecedorIdSelecionado = watch('fornecedorId');
   const itensObservados = watch('itens');
 
-  // --- MEMOS (ATUALIZADOS) ---
-  
+  // --- MEMOS ---
   const produtosDisponiveis = useMemo(() => {
-    // 1. Bloqueia itens de abastecimento
     const tiposBloqueados = ['COMBUSTIVEL', 'ADITIVO'];
-
-    // 2. Se for CORRETIVA, opcionalmente esconde LAVAGEM para limpar a lista
-    // Mas se for PREVENTIVA, a LAVAGEM aparece (pois não está na lista acima)
-    if (tipoManutencao === 'CORRETIVA') {
-      tiposBloqueados.push('LAVAGEM');
-    }
+    if (tipoManutencao === 'CORRETIVA') tiposBloqueados.push('LAVAGEM');
 
     let lista = listaProdutos.filter(p => !tiposBloqueados.includes(p.tipo));
     
-    // Filtro por fornecedor
     if (fornecedorIdSelecionado) {
       const fornecedor = fornecedores.find(f => f.id === fornecedorIdSelecionado);
       if (fornecedor?.produtosOferecidos?.length) {
@@ -167,23 +137,15 @@ export function FormRegistrarManutencao({
       }
     }
     return lista.sort((a, b) => a.nome.localeCompare(b.nome));
-  }, [listaProdutos, fornecedorIdSelecionado, fornecedores, tipoManutencao]); // Add tipoManutencao
+  }, [listaProdutos, fornecedorIdSelecionado, fornecedores, tipoManutencao]);
 
   const fornecedoresOpcoes = useMemo(() => 
-    fornecedores
-      .filter(f => {
-        // Sempre mostra Oficinas e Mecânicas
+    fornecedores.filter(f => {
         if (['OFICINA', 'MECANICA', 'OUTRO'].includes(f.tipo)) return true;
-
-        // LAVA JATO e POSTO só aparecem na PREVENTIVA
-        if (['LAVA_JATO', 'POSTO'].includes(f.tipo)) {
-          return tipoManutencao === 'PREVENTIVA';
-        }
-
+        if (['LAVA_JATO', 'POSTO'].includes(f.tipo)) return tipoManutencao === 'PREVENTIVA';
         return false;
-      })
-      .map(f => ({ value: f.id, label: f.nome })),
-    [fornecedores, tipoManutencao] // Add tipoManutencao
+      }).map(f => ({ value: f.id, label: f.nome })),
+    [fornecedores, tipoManutencao]
   );
 
   const veiculosOpcoes = useMemo(() => 
@@ -275,18 +237,18 @@ export function FormRegistrarManutencao({
   const isLocked = isSubmitting || isLoadingDados;
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-surface">
       
       {/* HEADER */}
       <div className="px-6 pt-6 pb-2 shrink-0">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h3 className="text-lg font-bold text-gray-900">Nova Manutenção</h3>
-            <p className="text-xs text-gray-500 font-medium">Passo {step} de 3</p>
+            <h3 className="text-lg font-bold text-text-main">Nova Manutenção</h3>
+            <p className="text-xs text-text-secondary font-medium">Etapa {step} de 3</p>
           </div>
-          <div className="flex gap-1">
+          <div className="flex gap-1.5">
             {[1, 2, 3].map(s => (
-              <div key={s} className={`h-1.5 w-8 rounded-full transition-all duration-300 ${s <= step ? 'bg-primary' : 'bg-gray-100'}`} />
+              <div key={s} className={`h-1.5 w-8 rounded-full transition-all duration-300 ${s <= step ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'}`} />
             ))}
           </div>
         </div>
@@ -295,11 +257,12 @@ export function FormRegistrarManutencao({
       <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 overflow-y-auto px-6 py-2 custom-scrollbar">
 
-          {/* PASSO 1 */}
+          {/* PASSO 1: DADOS GERAIS */}
           {step === 1 && (
             <div className="space-y-5 animate-in slide-in-from-right-8 duration-300">
               
-              <div className="grid grid-cols-2 gap-2 bg-gray-50 p-1 rounded-xl border border-gray-100">
+              {/* TIPO DE MANUTENÇÃO */}
+              <div className="grid grid-cols-2 gap-2 bg-gray-50 dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700">
                 {['CORRETIVA', 'PREVENTIVA'].map((t) => (
                   <button
                     key={t}
@@ -308,8 +271,8 @@ export function FormRegistrarManutencao({
                     className={`
                       py-2 text-xs font-bold rounded-lg transition-all
                       ${tipoManutencao === t 
-                        ? 'bg-white text-primary shadow-sm border border-gray-200' 
-                        : 'text-gray-400 hover:text-gray-600'}
+                        ? 'bg-white dark:bg-gray-700 text-primary shadow-sm border border-gray-200 dark:border-gray-600' 
+                        : 'text-text-muted hover:text-text-main'}
                     `}
                   >
                     {t}
@@ -317,16 +280,17 @@ export function FormRegistrarManutencao({
                 ))}
               </div>
 
+              {/* ALVO (VEÍCULO OU OUTRO) */}
               <div className="flex gap-4">
                 {['VEICULO', 'OUTROS'].map(alvo => (
-                  <label key={alvo} className={`flex items-center gap-2 cursor-pointer p-3 border rounded-xl w-full transition-all ${alvoSelecionado === alvo ? 'border-primary bg-primary/5' : 'border-gray-200 hover:bg-gray-50'}`}>
+                  <label key={alvo} className={`flex items-center gap-2 cursor-pointer p-3 border rounded-xl w-full transition-all ${alvoSelecionado === alvo ? 'border-primary bg-primary/5' : 'border-border hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
                     <input
                       type="radio"
                       value={alvo}
                       {...register('alvo')}
                       className="accent-primary w-4 h-4"
                     />
-                    <span className="text-sm font-bold text-gray-700">
+                    <span className="text-sm font-bold text-text-main">
                       {alvo === 'VEICULO' ? 'Veículo da Frota' : 'Outro Equipamento'}
                     </span>
                   </label>
@@ -354,7 +318,7 @@ export function FormRegistrarManutencao({
                       disabled={isLocked}
                     />
                     {ultimoKmRegistrado > 0 && (
-                      <p className="text-[10px] text-primary font-bold mt-1.5 flex items-center gap-1 bg-primary/5 p-1 rounded w-fit px-2 border border-primary/10">
+                      <p className="text-[10px] text-primary font-bold mt-1.5 flex items-center gap-1 bg-primary/5 p-1.5 rounded-lg w-fit px-2 border border-primary/10">
                         <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
                         Anterior: {ultimoKmRegistrado.toLocaleString()} KM
                       </p>
@@ -392,49 +356,63 @@ export function FormRegistrarManutencao({
             </div>
           )}
 
-          {/* PASSO 2 */}
+          {/* PASSO 2: ITENS E SERVIÇOS */}
           {step === 2 && (
             <div className="space-y-4 animate-in slide-in-from-right-8 duration-300">
               
               <div className="flex justify-between items-center px-1">
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Peças e Serviços</h4>
-                <button
+                <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Peças e Serviços</h4>
+                
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={() => setModalServicosOpen(true)}
-                  className="text-xs text-primary font-bold hover:bg-primary/10 px-2 py-1 rounded transition-colors flex items-center gap-1"
+                  className="text-primary hover:bg-primary/10 h-8"
+                  icon={<Plus className="w-3 h-3" />}
                 >
-                  <Plus className="w-3 h-3" /> Novo no Catálogo
-                </button>
+                  Novo no Catálogo
+                </Button>
               </div>
 
               {fornecedorIdSelecionado && produtosDisponiveis.length < listaProdutos.length && (
-                <div className="bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-xs flex items-center gap-2 border border-blue-100">
-                  <AlertTriangle className="w-3 h-3" />
-                  Mostrando apenas itens vinculados a este fornecedor.
+                <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-lg text-xs flex items-center gap-2 border border-blue-100 dark:border-blue-900">
+                  <AlertTriangle className="w-3 h-3 shrink-0" />
+                  Mostrando apenas itens deste fornecedor.
                 </div>
               )}
 
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="bg-gray-50/50 p-3 rounded-xl border border-gray-100 group hover:border-primary/20 transition-colors relative">
+                  <Card 
+                    key={field.id} 
+                    padding="sm" 
+                    variant="outline" 
+                    className="relative group bg-gray-50/50 dark:bg-gray-800/50 border-dashed hover:border-solid hover:border-primary/30 transition-colors"
+                  >
                     {fields.length > 1 && (
-                      <button 
-                        type="button" 
-                        onClick={() => remove(index)}
-                        className="absolute -top-2 -right-2 bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 p-1 rounded-full shadow-sm z-10 transition-colors"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
+                      <div className="absolute -top-2 -right-2 z-10">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => remove(index)}
+                          className="h-6 w-6 rounded-full bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 shadow-sm"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
                     )}
 
                     <div className="grid grid-cols-12 gap-3">
                       <div className="col-span-12 sm:col-span-6">
                         <Select
-                          label="Item"
+                          label="Item / Serviço"
                           options={produtosOpcoes}
                           {...register(`itens.${index}.produtoId`)}
-                          className="bg-white h-9 text-xs"
+                          className="bg-white dark:bg-gray-900 h-9 text-xs"
                           disabled={isLocked}
+                          icon={<Package className="w-4 h-4 text-gray-400" />}
                         />
                       </div>
                       <div className="col-span-4 sm:col-span-2">
@@ -443,7 +421,7 @@ export function FormRegistrarManutencao({
                           type="number"
                           step="0.1"
                           {...register(`itens.${index}.quantidade`)}
-                          className="bg-white h-9 text-xs text-center"
+                          className="bg-white dark:bg-gray-900 h-9 text-xs text-center"
                           disabled={isLocked}
                         />
                       </div>
@@ -453,12 +431,12 @@ export function FormRegistrarManutencao({
                           type="number"
                           step="0.01"
                           {...register(`itens.${index}.valorPorUnidade`)}
-                          className="bg-white h-9 text-xs text-right font-bold text-gray-700"
+                          className="bg-white dark:bg-gray-900 h-9 text-xs text-right font-bold text-text-main"
                           disabled={isLocked}
                         />
                       </div>
                     </div>
-                  </div>
+                  </Card>
                 ))}
               </div>
 
@@ -466,37 +444,43 @@ export function FormRegistrarManutencao({
                 type="button"
                 variant="ghost"
                 onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })}
-                className="w-full border-dashed border border-gray-200 text-xs text-primary hover:bg-primary/5 h-10"
+                className="w-full border-dashed border border-border text-xs text-primary hover:bg-primary/5 h-10"
+                icon={<Plus className="w-3 h-3" />}
               >
-                + Adicionar Item
+                Adicionar Outro Item
               </Button>
 
               {errors.itens && <p className="text-xs text-red-500 font-medium text-right">{errors.itens.root?.message}</p>}
             </div>
           )}
 
-          {/* PASSO 3 */}
+          {/* PASSO 3: CONFIRMAÇÃO E VALORES */}
           {step === 3 && (
             <div className="space-y-6 animate-in slide-in-from-right-8 duration-300 py-2">
               
-              <div className="bg-white p-6 rounded-2xl border border-border shadow-sm text-center">
-                <p className="text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Total Estimado</p>
-                <div className="text-4xl font-mono font-black text-gray-900 tracking-tight">
-                  R$ {totalGeral.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+              <Card variant="solid" className="bg-gray-900 dark:bg-black text-white border-transparent text-center relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                  <DollarSign className="w-32 h-32 rotate-12" />
                 </div>
-                <div className="mt-4 flex justify-center gap-2">
-                  <Badge variant={tipoManutencao === 'PREVENTIVA' ? 'success' : 'warning'}>{tipoManutencao}</Badge>
-                  <Badge variant="neutral">{alvoSelecionado === 'VEICULO' ? 'Veículo' : 'Equipamento'}</Badge>
+                <div className="relative z-10 py-6">
+                  <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary mb-2">Total Estimado</p>
+                  <p className="text-4xl sm:text-5xl font-mono font-black tracking-tight truncate">
+                    {formatCurrency(totalGeral)}
+                  </p>
+                  <div className="mt-4 flex justify-center gap-2">
+                    <Badge variant={tipoManutencao === 'PREVENTIVA' ? 'success' : 'warning'}>{tipoManutencao}</Badge>
+                    <Badge variant="neutral">{alvoSelecionado === 'VEICULO' ? 'Veículo' : 'Equipamento'}</Badge>
+                  </div>
                 </div>
-              </div>
+              </Card>
 
               <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5 ml-1">
+                <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">
                   Observações Gerais
                 </label>
                 <textarea
                   {...register("observacoes")}
-                  className="w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none min-h-[100px] transition-all"
+                  className="w-full px-4 py-3 text-sm bg-surface border border-border rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none resize-none min-h-[100px] transition-all text-text-main"
                   placeholder="Descreva o problema, peças trocadas ou detalhes adicionais..."
                   disabled={isLocked}
                 />
@@ -507,7 +491,7 @@ export function FormRegistrarManutencao({
         </div>
 
         {/* FOOTER */}
-        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex gap-3 shrink-0">
+        <div className="px-6 py-4 border-t border-border bg-gray-50/30 flex gap-3 shrink-0">
           {step > 1 ? (
             <Button 
               type="button" 
@@ -524,7 +508,7 @@ export function FormRegistrarManutencao({
               type="button" 
               variant="ghost" 
               onClick={onClose} 
-              className="flex-1"
+              className="flex-1 text-text-secondary hover:text-text-main"
               disabled={isLocked}
             >
               Cancelar
@@ -535,7 +519,7 @@ export function FormRegistrarManutencao({
             <Button 
               type="button" 
               onClick={nextStep} 
-              className="flex-[2] shadow-lg shadow-primary/20"
+              className="flex-[2]"
               icon={<ChevronRight className="w-4 h-4" />}
               disabled={isLocked}
             >
@@ -544,8 +528,8 @@ export function FormRegistrarManutencao({
           ) : (
             <Button 
               type="submit" 
-              isLoading={isSubmitting}
-              className="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20"
+              isLoading={isSubmitting} 
+              className="flex-[2] bg-emerald-600 hover:bg-emerald-700 text-white border-transparent hover:shadow-lg hover:shadow-emerald-500/20"
               icon={<Check className="w-4 h-4" />}
             >
               Finalizar OS

@@ -1,5 +1,31 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+// --- FUNÇÕES DE ESTILO (DESIGN SYSTEM) ---
+
+/**
+ * Função CN (ClassNames):
+ * Remove conflitos do Tailwind e junta classes condicionalmente.
+ * Essencial para os componentes visuais (Button, Card, Input).
+ */
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+// --- FORMATADORES FINANCEIROS ---
+
+export const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(value);
+};
+
+export const formatNumber = (value: number) => {
+  return new Intl.NumberFormat("pt-BR").format(value);
+};
 
 // --- FORMATAÇÃO INTELIGENTE DE KM ---
 
@@ -8,28 +34,16 @@ import { saveAs } from 'file-saver';
  * Analisa o valor digitado e compara com o histórico do veículo.
  * Se o valor for absurdamente alto (erro de dedo gordo esquecendo a vírgula),
  * ele divide por 10 automaticamente.
- * * Ex: Histórico = 95.000
- * Input = 955102 (Esqueceu a virgula) -> Detecta salto gigante -> Corrige para 95510.2
  */
 export const parseKmInteligente = (inputStr: string, ultimoKmHistorico?: number): number => {
   const valorDigitado = parseDecimal(inputStr);
 
-  // Se não temos histórico (veículo novo ou primeira carga), confiamos no que foi digitado
   if (!ultimoKmHistorico || ultimoKmHistorico === 0) return valorDigitado;
 
-  // LÓGICA DE DEDUÇÃO:
-  // Se o valor digitado for maior que 1.5x o último KM (um salto impossível de 50%),
-  // assumimos que é um erro de casa decimal (esqueceu a vírgula).
   if (valorDigitado > ultimoKmHistorico * 1.5) {
     const tentativaCorrecao = valorDigitado / 10;
-
-    // Agora verificamos se a correção faz sentido:
-    // 1. O valor corrigido tem que ser MAIOR que o histórico (km não volta)
-    // 2. A diferença não pode ser absurda (ex: limitamos a 5.000km/dia, que já é muito)
     if (tentativaCorrecao >= ultimoKmHistorico) {
       const diferenca = tentativaCorrecao - ultimoKmHistorico;
-
-      // Se a diferença corrigida for plausível (menos de 5000km), aplicamos a correção!
       if (diferenca < 5000) {
         console.log(`🔮 Auto-correção de KM ativada: ${valorDigitado} -> ${tentativaCorrecao}`);
         return tentativaCorrecao;
@@ -40,7 +54,36 @@ export const parseKmInteligente = (inputStr: string, ultimoKmHistorico?: number)
   return valorDigitado;
 };
 
-// --- FUNÇÕES BASE (Mantidas e Otimizadas) ---
+// --- FUNÇÕES BASE ---
+
+export const parseDecimal = (value: string | number): number => {
+  if (typeof value === 'number') return value;
+  if (!value) return 0;
+  const cleanValue = value.replace(/\./g, '').replace(',', '.');
+  return parseFloat(cleanValue) || 0;
+};
+
+export const formatKmVisual = (value: string | number): string => {
+  if (!value && value !== 0) return '';
+  let v = String(value).replace(/[^\d,]/g, '');
+
+  const parts = v.split(',');
+  if (parts.length > 2) {
+    v = parts[0] + ',' + parts.slice(1).join('');
+  }
+
+  const [integerPart, decimalPart] = v.split(',');
+  const integerFormatted = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+  if (v.includes(',')) {
+    const decimalLimitado = decimalPart ? decimalPart.substring(0, 1) : '';
+    return `${integerFormatted},${decimalLimitado}`;
+  }
+
+  return integerFormatted;
+};
+
+// --- EXCEL EXPORT ---
 
 export const exportarParaExcel = async (data: any[], nomeArquivo: string) => {
   try {
@@ -88,34 +131,6 @@ export const exportarParaExcel = async (data: any[], nomeArquivo: string) => {
     console.error("Erro ao exportar para Excel:", error);
     alert("Ocorreu um erro ao gerar o arquivo Excel.");
   }
-};
-
-export const parseDecimal = (value: string | number): number => {
-  if (typeof value === 'number') return value;
-  if (!value) return 0;
-  // Aceita tanto ponto quanto vírgula, mas prioriza a vírgula como decimal
-  const cleanValue = value.replace(/\./g, '').replace(',', '.');
-  return parseFloat(cleanValue) || 0;
-};
-
-export const formatKmVisual = (value: string | number): string => {
-  if (!value && value !== 0) return '';
-  let v = String(value).replace(/[^\d,]/g, '');
-
-  const parts = v.split(',');
-  if (parts.length > 2) {
-    v = parts[0] + ',' + parts.slice(1).join('');
-  }
-
-  const [integerPart, decimalPart] = v.split(',');
-  const integerFormatted = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-
-  if (v.includes(',')) {
-    const decimalLimitado = decimalPart ? decimalPart.substring(0, 1) : '';
-    return `${integerFormatted},${decimalLimitado}`;
-  }
-
-  return integerFormatted;
 };
 
 // --- UTILITÁRIOS SOBRENATURAIS ---
