@@ -27,7 +27,7 @@ interface ModalProps {
     title?: string;
     children: React.ReactNode;
     className?: string;
-    nested?: boolean; // 🔑 Permite abrir um modal sobre o outro perfeitamente
+    nested?: boolean; 
 }
 
 export function Modal({ isOpen, onClose, title, children, className, nested = false }: ModalProps) {
@@ -61,19 +61,23 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
                 open={isOpen} 
                 onOpenChange={(open) => !open && onClose()} 
                 shouldScaleBackground
-                nested={nested} // 🔑 Ativa a animação de empilhar gavetas
+                nested={nested} 
             >
                 <Drawer.Portal>
-                    {/* 🔑 Z-index unificado no 9999 para que o fundo sempre cubra a gaveta de trás */}
                     <Drawer.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999]" />
                     
                     <Drawer.Content 
                         className={cn(
                             "bg-surface flex flex-col rounded-t-[2rem] fixed bottom-0 left-0 right-0 z-[9999] outline-none border-t border-border shadow-[0_-10px_40px_rgba(0,0,0,0.3)]",
-                            "max-h-[92dvh]", // 🔑 Evita que o modal estique até o topo desnecessariamente e usa dvh para a barra do navegador
-                            "pb-[max(1.5rem,env(safe-area-inset-bottom))]", // 🔑 Salva os botões de serem esmagados pela barra do iPhone
                             className
                         )}
+                        // 🔥 SOLUÇÃO BIG TECH: Inline Style ignora as falhas do Tailwind.
+                        // 88dvh garante que não brigue com a barra de endereços do Safari.
+                        // O env() protege fisicamente os botões do Home Indicator do iPhone.
+                        style={{ 
+                            maxHeight: '88dvh', 
+                            paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' 
+                        }}
                     >
                         {/* Pega-mão (Handle) */}
                         <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-border/80 mt-4 mb-2" />
@@ -86,8 +90,8 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
                             </div>
                         )}
                         
-                        {/* 🔑 Flex-1 e min-h-0 forçam o conteúdo a gerar barra de rolagem interna se for muito grande */}
-                        <div className="flex-1 overflow-y-auto overflow-x-hidden p-5 custom-scrollbar min-h-0">
+                        {/* 🔑 A classe 'relative' foi adicionada aqui para permitir que rodapés fiquem "Sticky" (Flutuantes) */}
+                        <div className="flex-1 overflow-y-auto overflow-x-hidden p-5 custom-scrollbar min-h-0 relative">
                             {children}
                         </div>
                     </Drawer.Content>
@@ -132,7 +136,9 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
                 </div>
 
                 <div className="flex-1 overflow-y-auto overflow-x-hidden relative w-full rounded-b-[2rem] bg-surface custom-scrollbar min-h-0">
-                    {children}
+                    <div className="p-5">
+                        {children}
+                    </div>
                 </div>
             </div>
         </div>,
