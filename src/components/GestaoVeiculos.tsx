@@ -13,7 +13,6 @@ import { PageHeader } from './ui/PageHeader';
 import { Input } from './ui/Input';
 import { ListaResponsiva } from './ui/ListaResponsiva';
 import { Badge } from './ui/Badge';
-import { Card } from './ui/Card';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -37,7 +36,6 @@ export function GestaoVeiculos() {
   const { data: veiculos = [], isLoading, refetch } = useVeiculos();
 
   // --- FILTRAGEM MEMOIZADA ---
-  // Evita reprocessar a lista inteira se o componente re-renderizar por outro motivo
   const veiculosFiltrados = useMemo(() => {
     if (!busca) return veiculos;
     const termo = busca.toLowerCase();
@@ -65,7 +63,7 @@ export function GestaoVeiculos() {
     }
   };
 
-  // Helper para Badges de Status (Semântico)
+  // Helper para Badges de Status
   const getStatusBadge = (status: string) => {
     const map: Record<string, "success" | "warning" | "neutral" | "danger"> = {
       'ATIVO': 'success',
@@ -78,7 +76,7 @@ export function GestaoVeiculos() {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-10">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
 
       {/* 1. HEADER */}
       <PageHeader
@@ -87,12 +85,13 @@ export function GestaoVeiculos() {
         actionLabel="Novo Veículo"
         onAction={() => setIsCadastroOpen(true)}
         extraAction={
-          <div className="w-full md:w-64">
+          <div className="w-full md:w-72">
             <Input
               placeholder="Buscar placa ou modelo..."
               value={busca}
               onChange={e => setBusca(e.target.value)}
               icon={<Search className="w-4 h-4 text-text-muted" />}
+              className="bg-surface h-11"
             />
           </div>
         }
@@ -102,91 +101,89 @@ export function GestaoVeiculos() {
       {isLoading ? (
          <SkeletonTable />
       ) : (
-        <Card padding="none" className="overflow-hidden border-border/50 shadow-sm">
-          <ListaResponsiva
-            itens={veiculosFiltrados}
-            emptyMessage={busca ? "Nenhum veículo corresponde à sua busca." : "Nenhum veículo cadastrado na frota."}
+        <ListaResponsiva
+          itens={veiculosFiltrados}
+          emptyMessage={busca ? "Nenhum veículo corresponde à sua busca." : "Nenhum veículo cadastrado na frota."}
 
-            // CABEÇALHO DESKTOP
-            desktopHeader={
-              <>
-                <th className={TableStyles.th}>Placa</th>
-                <th className={TableStyles.th}>Modelo / Ano</th>
-                <th className={TableStyles.th}>Combustível</th>
-                <th className={TableStyles.th}>Status</th>
-                <th className={`${TableStyles.th} text-right`}>Ações</th>
-              </>
-            }
+          // CABEÇALHO DESKTOP
+          desktopHeader={
+            <>
+              <th className={TableStyles.th}>Veículo / Placa</th>
+              <th className={TableStyles.th}>Detalhes</th>
+              <th className={TableStyles.th}>Combustível</th>
+              <th className={TableStyles.th}>Status</th>
+              <th className={`${TableStyles.th} text-right`}>Ações</th>
+            </>
+          }
 
-            // LINHA DESKTOP
-            renderDesktop={(v) => (
-              <tr key={v.id} className="hover:bg-surface-hover/50 transition-colors">
-                <td className={TableStyles.td}>
-                  <button
-                    onClick={() => navigate(`/admin/veiculos/${v.id}`)}
-                    className="flex items-center gap-2 font-mono font-bold text-primary bg-primary/5 px-2.5 py-1 rounded-md border border-primary/10 hover:bg-primary/10 transition-colors group"
-                  >
-                    <Truck className="w-4 h-4 opacity-50 group-hover:opacity-100 transition-opacity" />
-                    {v.placa}
-                  </button>
-                </td>
-                <td className={TableStyles.td}>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-text-main">{v.modelo}</span>
-                    <span className="text-xs text-text-secondary font-medium">{v.ano} • {v.tipoVeiculo || 'N/A'}</span>
-                  </div>
-                </td>
-                <td className={`${TableStyles.td} text-text-muted text-xs uppercase tracking-wide`}>
-                  {v.tipoCombustivel.replace(/_/g, ' ')}
-                </td>
-                <td className={TableStyles.td}>
-                  {getStatusBadge(v.status)}
-                </td>
-                <td className={`${TableStyles.td} text-right`}>
-                  <DropdownAcoes
-                    onVerDetalhes={() => navigate(`/admin/veiculos/${v.id}`)}
-                    onEditar={() => setVeiculoParaEditar(v)}
-                    onExcluir={() => setVeiculoParaExcluir(v.id)}
-                  />
-                </td>
-              </tr>
-            )}
-
-            // CARD MOBILE
-            renderMobile={(v) => (
-              <div 
-                key={v.id}
-                className="p-4 flex justify-between items-start cursor-pointer border-b border-border last:border-0 hover:bg-surface-hover/50 active:bg-surface-hover transition-colors" 
-                onClick={() => navigate(`/admin/veiculos/${v.id}`)}
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-lg text-primary">{v.placa}</span>
-                    {getStatusBadge(v.status)}
-                  </div>
-                  <h3 className="font-bold text-text-main">{v.modelo}</h3>
-                  <p className="text-xs text-text-secondary">{v.tipoVeiculo} • {v.ano}</p>
+          // LINHA DESKTOP
+          renderDesktop={(v) => (
+            <>
+              <td className={TableStyles.td}>
+                <button
+                  onClick={() => navigate(`/admin/veiculos/${v.id}`)}
+                  className={`${TableStyles.dataText} flex items-center gap-2 hover:border-primary/50 hover:text-primary transition-colors`}
+                  title="Ver Prontuário do Veículo"
+                >
+                  <Truck className="w-3.5 h-3.5 opacity-50" />
+                  {v.placa}
+                </button>
+              </td>
+              <td className={TableStyles.td}>
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold text-text-main">{v.modelo}</span>
+                  <span className="text-xs text-text-secondary font-medium">{v.ano} • {v.tipoVeiculo || 'N/A'}</span>
                 </div>
+              </td>
+              <td className={`${TableStyles.td}`}>
+                <span className="text-xs font-bold text-text-muted uppercase tracking-wide bg-surface-hover px-2 py-1 rounded-md border border-border/50">
+                  {v.tipoCombustivel.replace(/_/g, ' ')}
+                </span>
+              </td>
+              <td className={TableStyles.td}>
+                {getStatusBadge(v.status)}
+              </td>
+              <td className={`${TableStyles.td} text-right`}>
+                <DropdownAcoes
+                  onVerDetalhes={() => navigate(`/admin/veiculos/${v.id}`)}
+                  onEditar={() => setVeiculoParaEditar(v)}
+                  onExcluir={() => setVeiculoParaExcluir(v.id)}
+                />
+              </td>
+            </>
+          )}
 
-                <div onClick={e => e.stopPropagation()}>
-                  <DropdownAcoes
-                    onVerDetalhes={() => navigate(`/admin/veiculos/${v.id}`)}
-                    onEditar={() => setVeiculoParaEditar(v)}
-                    onExcluir={() => setVeiculoParaExcluir(v.id)}
-                  />
+          // CARD MOBILE (Conteúdo Interno Limpo, o card pai cuida do visual)
+          renderMobile={(v) => (
+            <div className="flex justify-between items-start" onClick={() => navigate(`/admin/veiculos/${v.id}`)}>
+              <div className="space-y-2">
+                <div className="flex items-center gap-2.5">
+                  <span className={`${TableStyles.dataText} text-sm px-2 py-0.5`}>{v.placa}</span>
+                  {getStatusBadge(v.status)}
+                </div>
+                <div>
+                  <h3 className="font-black text-text-main text-base leading-tight">{v.modelo}</h3>
+                  <p className="text-xs text-text-secondary font-medium mt-0.5">{v.tipoVeiculo} • {v.ano}</p>
                 </div>
               </div>
-            )}
-          />
-        </Card>
+
+              <div onClick={e => e.stopPropagation()} className="shrink-0">
+                <DropdownAcoes
+                  onVerDetalhes={() => navigate(`/admin/veiculos/${v.id}`)}
+                  onEditar={() => setVeiculoParaEditar(v)}
+                  onExcluir={() => setVeiculoParaExcluir(v.id)}
+                />
+              </div>
+            </div>
+          )}
+        />
       )}
 
       {/* --- MODAIS --- */}
-
       <Modal
         isOpen={isCadastroOpen}
         onClose={() => setIsCadastroOpen(false)}
-        title="Novo Veículo"
+        title="Cadastrar Novo Equipamento"
         className="max-w-2xl"
       >
         <FormCadastrarVeiculo
@@ -198,7 +195,7 @@ export function GestaoVeiculos() {
       <Modal
         isOpen={!!veiculoParaEditar}
         onClose={() => setVeiculoParaEditar(null)}
-        title="Editar Veículo"
+        title="Atualizar Veículo"
         className="max-w-2xl"
       >
         {veiculoParaEditar && (
@@ -214,14 +211,16 @@ export function GestaoVeiculos() {
         isOpen={!!veiculoParaExcluir}
         onCancel={() => setVeiculoParaExcluir(null)}
         onConfirm={handleExecuteDelete}
-        title="Excluir Veículo"
+        title="Excluir Definitivamente?"
         description={
-          <span>
-            Tem certeza que deseja remover este veículo? <br />
-            <span className="font-bold text-error block mt-1">Isso apagará todo o histórico associado.</span>
-          </span>
+          <div className="space-y-2">
+            <p>Você está prestes a remover este veículo da frota.</p>
+            <p className="text-sm font-bold text-error bg-error/10 p-3 rounded-lg border border-error/20">
+              Atenção: Isso pode corromper históricos de viagens se o veículo já tiver sido utilizado em operações.
+            </p>
+          </div>
         }
-        confirmLabel="Sim, excluir veículo"
+        confirmLabel="Sim, excluir agora"
         variant="danger"
       />
 

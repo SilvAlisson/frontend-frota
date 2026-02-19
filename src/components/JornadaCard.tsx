@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { Gauge, Route, Ghost, CheckCircle2 } from 'lucide-react'; // Removi Flag
+import { Gauge, Route, Ghost, CheckCircle2, Navigation, AlertTriangle } from 'lucide-react';
 
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto';
 import { Button } from './ui/Button';
@@ -93,109 +93,124 @@ export function JornadaCard({
     return (
       <Card className={`p-8 flex flex-col items-center justify-center text-center transition-all ${
         isFantasma 
-          ? 'bg-ghost-500/5 border-ghost-500/20' 
-          : 'bg-success/5 border-success/20'
+          ? 'bg-amber-500/5 border-amber-500/20' 
+          : 'bg-emerald-50 border-emerald-200'
       }`}>
-        <div className={`p-3 rounded-full mb-3 ${
+        <div className={`p-4 rounded-full mb-4 shadow-inner ${
           isFantasma 
-            ? 'bg-ghost-500/10 text-ghost-500' 
-            : 'bg-success/10 text-success'
+            ? 'bg-amber-500/10 text-amber-500' 
+            : 'bg-emerald-100 text-emerald-600'
         }`}>
           {isFantasma ? <Ghost className="w-8 h-8" /> : <CheckCircle2 className="w-8 h-8" />}
         </div>
 
-        <h3 className={`text-lg font-bold ${isFantasma ? 'text-ghost-500' : 'text-success'}`}>
-          {isFantasma ? 'Jornada Assombrada' : 'Jornada Finalizada'}
+        <h3 className={`text-xl font-black tracking-tight ${isFantasma ? 'text-amber-600' : 'text-emerald-700'}`}>
+          {isFantasma ? 'Jornada Assombrada' : 'Turno Encerrado'}
         </h3>
 
-        <p className="text-sm text-text-secondary mt-2 max-w-[250px]">
+        <p className="text-sm text-text-secondary mt-2 max-w-[280px] font-medium leading-relaxed">
           {isFantasma
             ? 'Encerrada automaticamente pelo sistema por inatividade prolongada.'
-            : `Encerrada com sucesso em ${new Date(jornada.dataFim!).toLocaleString('pt-BR')}`
+            : `Encerrada com sucesso às ${new Date(jornada.dataFim!).toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'})}`
           }
         </p>
 
         <Button
           variant="ghost"
           onClick={onJornadaFinalizada}
-          className="mt-6 text-xs h-8 text-text-muted hover:text-text-main"
+          className="mt-6 text-sm h-10 px-6 font-bold text-text-muted hover:text-text-main"
         >
-          Voltar para lista
+          Voltar ao Início
         </Button>
       </Card>
     );
   }
 
-  // --- FORMULÁRIO (SEM A BANDEIRA GIGANTE) ---
+  // --- FORMULÁRIO "EM OPERAÇÃO" ---
   return (
     <>
-      <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+      <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-50/50 to-surface p-5 sm:p-7 shadow-card relative overflow-hidden">
+        {/* Marca d'água visual de operação */}
+        <Navigation className="absolute -right-6 -bottom-6 w-40 h-40 text-emerald-500/5 -rotate-12 pointer-events-none" />
 
-        {/* Cabeçalho Compacto */}
-        <div className="text-center mb-2">
-          <h3 className="text-xl font-bold text-text-main">
-            Finalizar Jornada
-          </h3>
-          <p className="text-xs text-text-secondary mt-1">
-            Confirme o odômetro final para fechar o turno.
-          </p>
-        </div>
+        <form className="space-y-6 relative z-10" onSubmit={handleSubmit(onSubmit)}>
 
-        {/* Cards de Informação */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-background p-3 rounded-xl border border-border text-center flex flex-col items-center justify-center">
-            <span className="text-[10px] text-text-muted font-bold uppercase mb-1 flex items-center gap-1">
-              <Gauge className="w-3 h-3" /> KM Inicial
-            </span>
-            <span className="text-sm font-bold text-text-main font-mono">
-              {jornada.kmInicio.toLocaleString('pt-BR')}
-            </span>
+          {/* Cabeçalho */}
+          <div className="flex flex-col mb-2">
+            <h3 className="text-2xl font-black text-text-main tracking-tight">
+              Encerrar Jornada
+            </h3>
+            <p className="text-sm text-text-secondary font-medium mt-1">
+              Registre o odômetro de chegada do veículo <strong className="text-text-main font-mono bg-surface px-1.5 py-0.5 rounded border border-border/60">{jornada.veiculo?.placa || 'N/A'}</strong>.
+            </p>
           </div>
 
-          <div className="bg-background p-3 rounded-xl border border-border text-center flex flex-col items-center justify-center">
-            <span className="text-[10px] text-text-muted font-bold uppercase mb-1 flex items-center gap-1">
-              <Route className="w-3 h-3" /> Percorrido
-            </span>
-            <span className={`text-sm font-bold font-mono ${distanciaPercorrida > 0 ? 'text-primary' : 'text-text-muted'}`}>
-              {distanciaPercorrida > 0 ? `+ ${distanciaPercorrida.toLocaleString('pt-BR')} km` : '--'}
-            </span>
+          {/* Cards de Informação */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-surface p-4 rounded-2xl border border-border/60 shadow-sm flex flex-col justify-center">
+              <span className="text-[10px] text-text-muted font-black uppercase tracking-widest mb-1 flex items-center gap-1.5">
+                <Gauge className="w-3.5 h-3.5 text-primary" /> KM Inicial
+              </span>
+              <span className="text-xl font-black text-text-main font-mono tracking-tight">
+                {jornada.kmInicio.toLocaleString('pt-BR')}
+              </span>
+            </div>
+
+            <div className={`p-4 rounded-2xl border flex flex-col justify-center transition-all ${
+              distanciaPercorrida > 0 ? 'bg-emerald-500/10 border-emerald-500/20 shadow-sm' : 'bg-surface border-border/60'
+            }`}>
+              <span className={`text-[10px] font-black uppercase tracking-widest mb-1 flex items-center gap-1.5 ${
+                 distanciaPercorrida > 0 ? 'text-emerald-700' : 'text-text-muted'
+              }`}>
+                <Route className={`w-3.5 h-3.5 ${distanciaPercorrida > 0 ? 'text-emerald-600' : ''}`} /> Rodagem
+              </span>
+              <span className={`text-xl font-black font-mono tracking-tight ${
+                 distanciaPercorrida > 0 ? 'text-emerald-600' : 'text-text-muted opacity-50'
+              }`}>
+                {distanciaPercorrida > 0 ? `+${distanciaPercorrida.toLocaleString('pt-BR')}` : '--'}
+              </span>
+            </div>
           </div>
-        </div>
 
-        {/* Input */}
-        <div className="relative">
-          <Input
-            label="KM Final (Painel)"
-            id={`kmFim-${jornada.id}`}
-            type="text"
-            inputMode="numeric"
-            placeholder={`> ${jornada.kmInicio}`}
-            {...register('kmFimInput')}
-            onChange={(e: any) => {
-              register('kmFimInput').onChange(e);
-              handleKmChange(e);
-            }}
-            error={errors.kmFimInput?.message}
-            className="text-lg font-bold tracking-wide font-mono"
-            autoFocus
-          />
+          {/* Input Principal */}
+          <div className="space-y-3 pt-2">
+            <Input
+              label="KM Final do Painel"
+              id={`kmFim-${jornada.id}`}
+              type="text"
+              inputMode="numeric"
+              placeholder={`Deve ser > ${jornada.kmInicio}`}
+              {...register('kmFimInput')}
+              onChange={(e: any) => {
+                register('kmFimInput').onChange(e);
+                handleKmChange(e);
+              }}
+              error={errors.kmFimInput?.message}
+              className="text-2xl h-14 font-black tracking-widest font-mono text-center shadow-inner focus:ring-emerald-500/50"
+              autoFocus
+            />
 
-          <div className="mt-2 flex items-center gap-1.5 text-xs text-text-muted px-1">
-            <div className="w-1.5 h-1.5 rounded-full bg-primary/50" />
-            <span>Responsável: <strong>{nomeEncarregado}</strong></span>
+            {/* Aviso de Auditoria (Substitui aquele item de "Responsável" simples) */}
+            <div className="flex items-start gap-2.5 p-3.5 bg-surface-hover rounded-xl border border-border/60">
+              <AlertTriangle className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
+              <div className="text-xs text-text-secondary leading-relaxed">
+                Este encerramento será auditado por <strong className="text-text-main">{nomeEncarregado}</strong>. Prepare-se para tirar a foto do painel a seguir.
+              </div>
+            </div>
           </div>
-        </div>
 
-        <Button
-          type="submit"
-          variant="primary"
-          className="w-full py-3.5 text-base shadow-button hover:shadow-float"
-          disabled={isSubmitting || !kmFimInput}
-        >
-          Confirmar Encerramento
-        </Button>
-      </form>
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full h-14 text-lg font-black shadow-button hover:shadow-float transition-all"
+            disabled={isSubmitting || !kmFimInput}
+          >
+            Avançar para Foto
+          </Button>
+        </form>
+      </Card>
 
+      {/* Modal permanece inalterado em sua lógica */}
       {modalAberto && dadosValidacao && (
         <ModalConfirmacaoFoto
           titulo="Comprovante Final"
