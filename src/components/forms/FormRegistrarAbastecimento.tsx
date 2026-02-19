@@ -201,7 +201,7 @@ export function FormRegistrarAbastecimento({
             {[1, 2, 3].map(s => (
               <div 
                 key={s} 
-                className={`h-1.5 w-8 rounded-full transition-all duration-300 ${s <= step ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'}`} 
+                className={`h-1.5 w-8 rounded-full transition-all duration-300 ${s <= step ? 'bg-primary' : 'bg-gray-200'}`} 
               />
             ))}
           </div>
@@ -304,7 +304,7 @@ export function FormRegistrarAbastecimento({
                         key={field.id} 
                         padding="sm" 
                         variant="outline" 
-                        className="relative group bg-gray-50/50 dark:bg-gray-800/50 border-dashed hover:border-solid hover:border-primary/30 transition-colors"
+                        className="relative group bg-gray-50/50 border-dashed hover:border-solid hover:border-primary/30 transition-colors"
                       >
                         {fields.length > 1 && (
                           <div className="absolute -top-2 -right-2 z-10">
@@ -327,7 +327,7 @@ export function FormRegistrarAbastecimento({
                               label="Produto"
                               options={produtoOptions}
                               {...register(`itens.${index}.produtoId`)}
-                              className="bg-white dark:bg-gray-900 h-9 text-xs"
+                              className="bg-white h-9 text-xs"
                               disabled={isLocked}
                             />
                           </div>
@@ -339,7 +339,7 @@ export function FormRegistrarAbastecimento({
                               step="0.001"
                               icon={<Droplets className="w-3 h-3 text-sky-500" />}
                               {...register(`itens.${index}.quantidade`)}
-                              className="bg-white dark:bg-gray-900 h-9 text-xs text-center"
+                              className="bg-white h-9 text-xs text-center"
                               disabled={isLocked}
                             />
                           </div>
@@ -350,14 +350,14 @@ export function FormRegistrarAbastecimento({
                               type="number"
                               step="0.001"
                               {...register(`itens.${index}.valorUnitario`)}
-                              className="bg-white dark:bg-gray-900 h-9 text-xs text-right font-bold text-text-main"
+                              className="bg-white h-9 text-xs text-right font-bold text-text-main"
                               disabled={isLocked}
                             />
                           </div>
                         </div>
 
                         <div className="mt-2 flex justify-end">
-                          <div className="bg-white dark:bg-gray-900 px-3 py-1 rounded-md border border-border shadow-sm text-xs font-medium text-text-secondary flex gap-2">
+                          <div className="bg-white px-3 py-1 rounded-md border border-border shadow-sm text-xs font-medium text-text-secondary flex gap-2">
                             <span>Total Item:</span>
                             <span className="font-bold text-text-main">R$ {totalItem}</span>
                           </div>
@@ -373,7 +373,8 @@ export function FormRegistrarAbastecimento({
           {/* --- PASSO 3: CONFIRMAÇÃO --- */}
           {step === 3 && (
             <div className="space-y-6 animate-in zoom-in-95 duration-300 py-4">
-              <Card variant="solid" className="bg-gray-900 dark:bg-black text-white border-transparent text-center relative overflow-hidden">
+              {/* Mantemos este escuro propositalmente pois é o Card de Destaque Financeiro */}
+              <Card variant="solid" className="bg-gray-900 text-white border-transparent text-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
                   <DollarSign className="w-32 h-32 rotate-12" />
                 </div>

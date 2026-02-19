@@ -248,7 +248,7 @@ export function FormRegistrarManutencao({
           </div>
           <div className="flex gap-1.5">
             {[1, 2, 3].map(s => (
-              <div key={s} className={`h-1.5 w-8 rounded-full transition-all duration-300 ${s <= step ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-700'}`} />
+              <div key={s} className={`h-1.5 w-8 rounded-full transition-all duration-300 ${s <= step ? 'bg-primary' : 'bg-gray-200'}`} />
             ))}
           </div>
         </div>
@@ -262,7 +262,7 @@ export function FormRegistrarManutencao({
             <div className="space-y-5 animate-in slide-in-from-right-8 duration-300">
               
               {/* TIPO DE MANUTENÇÃO */}
-              <div className="grid grid-cols-2 gap-2 bg-gray-50 dark:bg-gray-800 p-1 rounded-xl border border-gray-200 dark:border-gray-700">
+              <div className="grid grid-cols-2 gap-2 bg-gray-50 p-1 rounded-xl border border-gray-200">
                 {['CORRETIVA', 'PREVENTIVA'].map((t) => (
                   <button
                     key={t}
@@ -271,7 +271,7 @@ export function FormRegistrarManutencao({
                     className={`
                       py-2 text-xs font-bold rounded-lg transition-all
                       ${tipoManutencao === t 
-                        ? 'bg-white dark:bg-gray-700 text-primary shadow-sm border border-gray-200 dark:border-gray-600' 
+                        ? 'bg-white text-primary shadow-sm border border-gray-200' 
                         : 'text-text-muted hover:text-text-main'}
                     `}
                   >
@@ -283,7 +283,7 @@ export function FormRegistrarManutencao({
               {/* ALVO (VEÍCULO OU OUTRO) */}
               <div className="flex gap-4">
                 {['VEICULO', 'OUTROS'].map(alvo => (
-                  <label key={alvo} className={`flex items-center gap-2 cursor-pointer p-3 border rounded-xl w-full transition-all ${alvoSelecionado === alvo ? 'border-primary bg-primary/5' : 'border-border hover:bg-gray-50 dark:hover:bg-gray-800'}`}>
+                  <label key={alvo} className={`flex items-center gap-2 cursor-pointer p-3 border rounded-xl w-full transition-all ${alvoSelecionado === alvo ? 'border-primary bg-primary/5' : 'border-border hover:bg-gray-50'}`}>
                     <input
                       type="radio"
                       value={alvo}
@@ -376,7 +376,7 @@ export function FormRegistrarManutencao({
               </div>
 
               {fornecedorIdSelecionado && produtosDisponiveis.length < listaProdutos.length && (
-                <div className="bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 px-3 py-2 rounded-lg text-xs flex items-center gap-2 border border-blue-100 dark:border-blue-900">
+                <div className="bg-blue-50 text-blue-700 px-3 py-2 rounded-lg text-xs flex items-center gap-2 border border-blue-100">
                   <AlertTriangle className="w-3 h-3 shrink-0" />
                   Mostrando apenas itens deste fornecedor.
                 </div>
@@ -388,7 +388,7 @@ export function FormRegistrarManutencao({
                     key={field.id} 
                     padding="sm" 
                     variant="outline" 
-                    className="relative group bg-gray-50/50 dark:bg-gray-800/50 border-dashed hover:border-solid hover:border-primary/30 transition-colors"
+                    className="relative group bg-gray-50/50 border-dashed hover:border-solid hover:border-primary/30 transition-colors"
                   >
                     {fields.length > 1 && (
                       <div className="absolute -top-2 -right-2 z-10">
@@ -410,7 +410,7 @@ export function FormRegistrarManutencao({
                           label="Item / Serviço"
                           options={produtosOpcoes}
                           {...register(`itens.${index}.produtoId`)}
-                          className="bg-white dark:bg-gray-900 h-9 text-xs"
+                          className="bg-white h-9 text-xs"
                           disabled={isLocked}
                           icon={<Package className="w-4 h-4 text-gray-400" />}
                         />
@@ -421,7 +421,7 @@ export function FormRegistrarManutencao({
                           type="number"
                           step="0.1"
                           {...register(`itens.${index}.quantidade`)}
-                          className="bg-white dark:bg-gray-900 h-9 text-xs text-center"
+                          className="bg-white h-9 text-xs text-center"
                           disabled={isLocked}
                         />
                       </div>
@@ -431,7 +431,7 @@ export function FormRegistrarManutencao({
                           type="number"
                           step="0.01"
                           {...register(`itens.${index}.valorPorUnidade`)}
-                          className="bg-white dark:bg-gray-900 h-9 text-xs text-right font-bold text-text-main"
+                          className="bg-white h-9 text-xs text-right font-bold text-text-main"
                           disabled={isLocked}
                         />
                       </div>
@@ -458,7 +458,7 @@ export function FormRegistrarManutencao({
           {step === 3 && (
             <div className="space-y-6 animate-in slide-in-from-right-8 duration-300 py-2">
               
-              <Card variant="solid" className="bg-gray-900 dark:bg-black text-white border-transparent text-center relative overflow-hidden">
+              <Card variant="solid" className="bg-gray-900 text-white border-transparent text-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
                   <DollarSign className="w-32 h-32 rotate-12" />
                 </div>
