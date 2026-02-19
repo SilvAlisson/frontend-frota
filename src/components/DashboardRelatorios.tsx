@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import { GraficoKmVeiculo } from './GraficoKmVeiculo';
 import { PainelSobrenatural } from './PainelSobrenatural';
-import { cn } from '../lib/utils'; // Importante para mesclar classes
+import { cn } from '../lib/utils'; 
+
+// --- HOOKS ATÔMICOS ---
+import { useVeiculos } from '../hooks/useVeiculos';
 
 // --- PRIMITIVOS BIG TECH ---
 import { Button } from './ui/Button';
@@ -22,14 +25,14 @@ import {
   FileSpreadsheet,
   ChevronRight
 } from 'lucide-react';
-import type { Veiculo, KpiData, DadosEvolucaoKm, Jornada } from '../types';
+import type { KpiData, DadosEvolucaoKm, Jornada } from '../types';
 
+// ✂️ Removemos "veiculos" da interface
 interface DashboardRelatoriosProps {
-  veiculos: Veiculo[];
   onDrillDown?: (tipo: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => void;
 }
 
-// --- KPI CARD BLINDADO (Anti-Layout Shift) ---
+// --- KPI CARD BLINDADO (Anti-Layout Shift & Tema Dinâmico) ---
 interface KpiCardProps {
   titulo: string;
   valor: string;
@@ -52,17 +55,17 @@ function KpiCard({
   icon
 }: KpiCardProps) {
 
-  // SKELETON: Mesma geometria do card real
+  // SKELETON: Mesma geometria do card real usando cores semânticas
   if (loading) {
     return (
       <Card className={cn("flex flex-col justify-between animate-pulse border-border/50", highlight ? "min-h-[160px]" : "min-h-[150px]")}>
         <div className="flex justify-between items-start w-full">
-          <div className="h-3 bg-gray-200 rounded w-24 mb-1"></div>
-          <div className="h-10 w-10 bg-gray-200 rounded-lg"></div>
+          <div className="h-3 bg-surface-hover rounded w-24 mb-1"></div>
+          <div className="h-10 w-10 bg-surface-hover rounded-lg"></div>
         </div>
         <div className="space-y-3 mt-auto">
-          <div className="h-8 bg-gray-200 rounded w-3/4"></div>
-          <div className="h-3 bg-gray-200 rounded w-full opacity-60"></div>
+          <div className="h-8 bg-surface-hover rounded w-3/4"></div>
+          <div className="h-3 bg-surface-hover rounded w-full opacity-60"></div>
         </div>
       </Card>
     );
@@ -71,10 +74,10 @@ function KpiCard({
   // Mapeamento de Cores Semânticas
   const styles = {
     default: { border: 'border-l-primary', iconBg: 'bg-primary/10', iconText: 'text-primary' },
-    success: { border: 'border-l-emerald-500', iconBg: 'bg-emerald-50', iconText: 'text-emerald-600' },
-    warning: { border: 'border-l-amber-500', iconBg: 'bg-amber-50', iconText: 'text-amber-600' },
-    danger:  { border: 'border-l-rose-500', iconBg: 'bg-rose-50', iconText: 'text-rose-600' },
-    info:    { border: 'border-l-sky-500', iconBg: 'bg-sky-50', iconText: 'text-sky-600' }
+    success: { border: 'border-l-emerald-500', iconBg: 'bg-emerald-500/10', iconText: 'text-emerald-600' },
+    warning: { border: 'border-l-amber-500', iconBg: 'bg-amber-500/10', iconText: 'text-amber-600' },
+    danger:  { border: 'border-l-rose-500', iconBg: 'bg-rose-500/10', iconText: 'text-rose-600' },
+    info:    { border: 'border-l-sky-500', iconBg: 'bg-sky-500/10', iconText: 'text-sky-600' }
   };
 
   const style = styles[variant] || styles.default;
@@ -83,14 +86,13 @@ function KpiCard({
     <Card
       onClick={onClick}
       className={cn(
-        "relative flex flex-col justify-between h-full", // h-full aqui é crucial para alinhamento no grid
+        "relative flex flex-col justify-between h-full hover:shadow-md transition-shadow cursor-pointer",
         "border-l-[4px]", style.border,
-        highlight ? "min-h-[160px]" : "min-h-[150px]" // Aumentei a altura mínima para dar respiro
+        highlight ? "min-h-[160px]" : "min-h-[150px]"
       )}
     >
-      {/* HEADER: shrink-0 BLINDA o título contra esmagamento */}
       <div className="flex justify-between items-start shrink-0 mb-2">
-        <h4 className="text-[11px] font-bold text-gray-500 uppercase tracking-widest font-sans mt-1.5 leading-snug">
+        <h4 className="text-[11px] font-bold text-text-secondary uppercase tracking-widest font-sans mt-1.5 leading-snug">
           {titulo}
         </h4>
         {icon && (
@@ -100,11 +102,10 @@ function KpiCard({
         )}
       </div>
 
-      {/* CONTEÚDO: Cresce conforme necessário */}
       <div className="flex flex-col justify-end flex-1 min-h-0">
         <span 
           className={cn(
-            "font-mono font-bold text-gray-900 tracking-tight leading-none truncate",
+            "font-mono font-bold text-text-main tracking-tight leading-none truncate",
             highlight ? "text-3xl sm:text-4xl" : "text-2xl sm:text-3xl"
           )}
           title={valor}
@@ -112,13 +113,12 @@ function KpiCard({
           {valor}
         </span>
         
-        {/* FOOTER: shrink-0 garante visibilidade */}
-        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between shrink-0">
-          <p className="text-xs text-gray-400 font-medium truncate max-w-[90%] group-hover:text-gray-600 transition-colors">
+        <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between shrink-0">
+          <p className="text-xs text-text-muted font-medium truncate max-w-[90%] group-hover:text-text-main transition-colors">
             {descricao}
           </p>
           {onClick && (
-            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
+            <ChevronRight className="w-4 h-4 text-text-muted/50 group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
           )}
         </div>
       </div>
@@ -126,11 +126,14 @@ function KpiCard({
   );
 }
 
-// Estilo Base para Selects
-const selectStyle = "h-[42px] px-3 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer min-w-[140px] shadow-sm hover:border-primary/50 appearance-none font-medium";
+// Estilo Base para Selects (Cores Semânticas)
+const selectStyle = "h-[42px] px-3 bg-surface border border-border rounded-lg text-sm text-text-main focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer min-w-[140px] shadow-sm hover:border-primary/50 appearance-none font-medium";
 
-export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatoriosProps) {
+export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
   const navigate = useNavigate();
+
+  // 📡 BUSCA INDEPENDENTE COM CACHE
+  const { data: veiculos = [] } = useVeiculos();
 
   const [ano, setAno] = useState(new Date().getFullYear());
   const [mes, setMes] = useState(new Date().getMonth() + 1);
@@ -211,22 +214,22 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
     exportarParaExcel(dados, `Dashboard_${mes}_${ano}.xlsx`);
   };
 
-  const meses = Array.from({ length: 12 }, (_, i) => ({ v: i + 1, l: new Date(0, i).toLocaleString('pt-BR', { month: 'long' }) }));
-  const anos = [new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2];
+  const meses = useMemo(() => Array.from({ length: 12 }, (_, i) => ({ v: i + 1, l: new Date(0, i).toLocaleString('pt-BR', { month: 'long' }) })), []);
+  const anos = useMemo(() => [new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2], []);
 
   return (
     <div className="space-y-8 pb-10 animate-in fade-in duration-500">
 
       {/* HEADER E FILTROS */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 border-b border-gray-200 pb-6">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 border-b border-border pb-6">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900 tracking-tight font-sans">Dashboard Gerencial</h2>
-          <p className="text-sm text-gray-500 font-medium mt-1">
+          <h2 className="text-3xl font-bold text-text-main tracking-tight font-sans">Dashboard Gerencial</h2>
+          <p className="text-sm text-text-secondary font-medium mt-1">
             Visão consolidada de <strong className="text-primary">{meses.find(m => m.v === mes)?.l} de {ano}</strong>.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3 w-full xl:w-auto items-center bg-gray-50 p-1.5 rounded-xl border border-gray-200 shadow-sm">
+        <div className="flex flex-wrap gap-3 w-full xl:w-auto items-center bg-surface p-1.5 rounded-xl border border-border shadow-sm">
           <div className="relative">
             <select
               value={mes}
@@ -237,7 +240,7 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
             </select>
           </div>
           
-          <div className="w-px h-6 bg-gray-300 mx-1"></div>
+          <div className="w-px h-6 bg-border mx-1"></div>
 
           <div className="relative">
             <select
@@ -249,13 +252,13 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
             </select>
           </div>
 
-          <div className="w-px h-6 bg-gray-300 mx-1"></div>
+          <div className="w-px h-6 bg-border mx-1"></div>
 
           <div className="relative">
             <select
               value={veiculoIdFiltro}
               onChange={e => setVeiculoIdFiltro(e.target.value)}
-              className={`${selectStyle} bg-transparent border-none shadow-none focus:ring-0 min-w-[180px] text-gray-700`}
+              className={`${selectStyle} bg-transparent border-none shadow-none focus:ring-0 min-w-[180px]`}
             >
               <option value="">Todas as Placas</option>
               {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>)}
@@ -265,7 +268,7 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
           <Button
             variant="ghost"
             onClick={handleExportar}
-            className="h-[38px] w-[38px] p-0 rounded-lg hover:bg-white ml-1 text-green-600"
+            className="h-[38px] w-[38px] p-0 rounded-lg hover:bg-surface-hover ml-1 text-emerald-600 hover:text-emerald-700"
             title="Exportar Excel"
           >
             <FileSpreadsheet className="w-5 h-5" />
@@ -356,10 +359,10 @@ export function DashboardRelatorios({ veiculos, onDrillDown }: DashboardRelatori
       {veiculoIdFiltro && (
         <div className="animate-in fade-in slide-in-from-top-4 duration-500">
           {loadingGrafico ? (
-            <Card className="h-80 w-full flex items-center justify-center border-gray-200">
+            <Card className="h-80 w-full flex items-center justify-center border-border">
               <div className="flex flex-col items-center gap-2">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span className="text-xs text-gray-400">Carregando gráfico...</span>
+                <span className="text-xs text-text-muted">Carregando gráfico...</span>
               </div>
             </Card>
           ) : (

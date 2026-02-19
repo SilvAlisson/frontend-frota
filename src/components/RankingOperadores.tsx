@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
@@ -31,8 +31,6 @@ export function RankingOperadores() {
   const fmtKml = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout>;
-
     const carregar = async () => {
       setLoading(true);
       try {
@@ -42,28 +40,35 @@ export function RankingOperadores() {
         console.error(err);
         toast.error('Erro ao carregar ranking da frota.');
       } finally {
-        timeoutId = setTimeout(() => setLoading(false), 300);
+        setLoading(false);
       }
     };
     carregar();
-
-    return () => clearTimeout(timeoutId);
   }, [ano, mes]);
 
   const handleExportar = () => {
     if (!ranking.length) return;
-    const dados = ranking.map((v, i) => ({
-      'Posição': `${i + 1}º`,
-      'Veículo': `${v.placa} - ${v.modelo}`,
-      'Média (Km/L)': v.kml.toFixed(2).replace('.', ','),
-      'KM Total': v.totalKM,
-      'Consumo (L)': v.totalLitros
-    }));
-    exportarParaExcel(dados, `Ranking_Frota_${mes}_${ano}.xlsx`);
+    
+    const acaoExportar = async () => {
+      const dados = ranking.map((v, i) => ({
+        'Posição': `${i + 1}º`,
+        'Veículo': `${v.placa} - ${v.modelo}`,
+        'Média (Km/L)': v.kml.toFixed(2).replace('.', ','),
+        'KM Total': v.totalKM,
+        'Consumo (L)': v.totalLitros
+      }));
+      exportarParaExcel(dados, `Ranking_Frota_${mes}_${ano}.xlsx`);
+    };
+
+    toast.promise(acaoExportar(), {
+      loading: 'Gerando relatório...',
+      success: 'Ranking exportado com sucesso!',
+      error: 'Erro ao gerar planilha.'
+    });
   };
 
-  const top3 = ranking.slice(0, 3);
-  const maxKml = ranking.length ? Math.max(...ranking.map(r => r.kml)) : 1;
+  const top3 = useMemo(() => ranking.slice(0, 3), [ranking]);
+  const maxKml = useMemo(() => ranking.length ? Math.max(...ranking.map(r => r.kml)) : 1, [ranking]);
   const isConsumoRuim = (kml: number) => kml < 2.0;
 
   const meses = [
@@ -75,7 +80,7 @@ export function RankingOperadores() {
   const anos = [new Date().getFullYear(), new Date().getFullYear() - 1];
 
   return (
-    <div className="space-y-8 pb-10 animate-in fade-in duration-500">
+    <div className="space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
 
       {/* HEADER */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4 border-b border-border pb-6">
@@ -90,11 +95,11 @@ export function RankingOperadores() {
 
         <div className="flex flex-wrap gap-3 w-full xl:w-auto items-center">
           <div className="flex items-center gap-2 bg-surface border border-border p-1 rounded-lg shadow-sm">
-            <Filter className="w-4 h-4 text-gray-400 ml-2" />
+            <Filter className="w-4 h-4 text-text-muted ml-2" />
             <select
               value={mes}
               onChange={e => setMes(Number(e.target.value))}
-              className="h-9 bg-transparent text-sm text-gray-700 outline-none cursor-pointer border-none focus:ring-0 font-medium"
+              className="h-9 bg-transparent text-sm text-text-main outline-none cursor-pointer border-none focus:ring-0 font-medium"
             >
               {meses.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
             </select>
@@ -102,7 +107,7 @@ export function RankingOperadores() {
             <select
               value={ano}
               onChange={e => setAno(Number(e.target.value))}
-              className="h-9 bg-transparent text-sm text-gray-700 outline-none cursor-pointer border-none focus:ring-0 font-medium"
+              className="h-9 bg-transparent text-sm text-text-main outline-none cursor-pointer border-none focus:ring-0 font-medium"
             >
               {anos.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
@@ -111,11 +116,11 @@ export function RankingOperadores() {
           <Button
             variant="success"
             onClick={handleExportar}
-            disabled={ranking.length === 0}
+            disabled={ranking.length === 0 || loading}
             className="h-11 shadow-sm"
             icon={<Download className="w-4 h-4" />}
           >
-            Excel
+            Exportar
           </Button>
         </div>
       </div>
@@ -142,7 +147,7 @@ export function RankingOperadores() {
           )}
 
           {/* --- LISTA --- */}
-          <Card noPadding>
+          <Card padding="none" className="overflow-hidden border-border/50 shadow-sm">
             <ListaResponsiva
               itens={ranking}
               emptyMessage="Nenhum dado encontrado para este período."
@@ -160,7 +165,7 @@ export function RankingOperadores() {
 
               // DESKTOP ROW
               renderDesktop={(v, idx) => (
-                <>
+                <tr className="hover:bg-surface-hover/50 transition-colors">
                   <td className={`${TableStyles.td} text-center`}>
                     <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${idx < 3 ? 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-500/20' : 'bg-surface-hover text-text-muted'
                       }`}>
@@ -182,7 +187,6 @@ export function RankingOperadores() {
                     <div className="flex flex-col items-end gap-1.5">
                       <div className="flex items-center gap-2">
                         {isConsumoRuim(v.kml) && (
-                          // CORREÇÃO APLICADA AQUI: Envolvendo o ícone em um span com title
                           <span title="Consumo crítico">
                              <AlertTriangle className="w-4 h-4 text-error animate-pulse" />
                           </span>
@@ -191,7 +195,7 @@ export function RankingOperadores() {
                       </div>
                       <div className="w-24 h-1.5 bg-surface-hover rounded-full overflow-hidden">
                         <div
-                          className={`h-full rounded-full ${idx === 0 ? 'bg-yellow-500' : isConsumoRuim(v.kml) ? 'bg-error' : 'bg-primary'}`}
+                          className={`h-full rounded-full transition-all duration-1000 ${idx === 0 ? 'bg-yellow-500' : isConsumoRuim(v.kml) ? 'bg-error' : 'bg-primary'}`}
                           style={{ width: `${Math.min((v.kml / maxKml) * 100, 100)}%` }}
                         />
                       </div>
@@ -199,12 +203,12 @@ export function RankingOperadores() {
                   </td>
                   <td className={`${TableStyles.td} text-right font-mono text-text-secondary`}>{fmtNum(v.totalKM)} <span className="text-xs text-text-muted">km</span></td>
                   <td className={`${TableStyles.td} text-right font-mono text-text-secondary`}>{fmtNum(v.totalLitros)} <span className="text-xs text-text-muted">L</span></td>
-                </>
+                </tr>
               )}
 
               // MOBILE CARD
               renderMobile={(v, idx) => (
-                <div className="flex items-center gap-4 p-4">
+                <div className="flex items-center gap-4 p-4 border-b border-border last:border-0 hover:bg-surface-hover/30 transition-colors">
                   <div className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full font-bold text-sm border ${idx < 3
                     ? 'bg-yellow-50 text-yellow-700 border-yellow-500/20'
                     : 'bg-surface-hover text-text-muted border-border'
@@ -220,7 +224,7 @@ export function RankingOperadores() {
                       {isConsumoRuim(v.kml) && <Badge variant="danger" className="text-[10px] px-1.5">Atenção</Badge>}
                     </div>
                     
-                    <div className="flex items-center justify-between mt-2 gap-4">
+                    <div className="flex items-center justify-between mt-2 gap-4 bg-surface-hover/50 p-2 rounded-lg border border-border">
                       <div>
                         <span className="text-[10px] uppercase text-text-muted font-bold block mb-0.5">Média</span>
                         <span className={`font-mono font-bold text-sm ${isConsumoRuim(v.kml) ? 'text-error' : 'text-primary'}`}>{fmtKml(v.kml)}</span>
@@ -258,15 +262,15 @@ function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoR
     },
     2: {
       bg: 'bg-gradient-to-b from-slate-200/50 via-surface to-surface',
-      border: 'border-slate-300',
-      text: 'text-slate-700',
+      border: 'border-border',
+      text: 'text-text-main',
       icon: Medal,
-      colorIcon: 'text-slate-400',
+      colorIcon: 'text-text-muted',
       label: '2º Lugar'
     },
     3: {
       bg: 'bg-gradient-to-b from-orange-200/30 via-surface to-surface',
-      border: 'border-orange-200',
+      border: 'border-orange-200/50',
       text: 'text-orange-800',
       icon: Award,
       colorIcon: 'text-orange-500',

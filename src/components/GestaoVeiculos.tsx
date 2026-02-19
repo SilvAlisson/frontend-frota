@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import type { Veiculo } from '../types';
 import { toast } from 'sonner';
 import { Search, Truck } from 'lucide-react';
+
+// --- HOOKS ATÔMICOS ---
+import { useVeiculos } from '../hooks/useVeiculos';
 
 // --- DESIGN SYSTEM KLIN ---
 import { PageHeader } from './ui/PageHeader';
@@ -16,7 +18,7 @@ import { DropdownAcoes } from './ui/DropdownAcoes';
 import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { TableStyles } from '../styles/table';
-import { SkeletonTable } from './skeletons/SkeletonTable'; // [NOVO]
+import { SkeletonTable } from './skeletons/SkeletonTable';
 
 // --- FORMS ---
 import { FormCadastrarVeiculo } from './forms/FormCadastrarVeiculo';
@@ -31,31 +33,33 @@ export function GestaoVeiculos() {
   const [veiculoParaExcluir, setVeiculoParaExcluir] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
 
-  // Busca de Dados
-  const { data: veiculos, isLoading, refetch } = useQuery<Veiculo[]>({
-    queryKey: ['veiculos'],
-    queryFn: async () => {
-      const response = await api.get('/veiculos');
-      return response.data;
-    }
-  });
+  // 📡 BUSCA INDEPENDENTE COM CACHE
+  const { data: veiculos = [], isLoading, refetch } = useVeiculos();
 
-  // Filtragem
-  const veiculosFiltrados = veiculos?.filter(v =>
-    v.placa.toLowerCase().includes(busca.toLowerCase()) ||
-    v.modelo.toLowerCase().includes(busca.toLowerCase())
-  ) || [];
+  // --- FILTRAGEM MEMOIZADA ---
+  // Evita reprocessar a lista inteira se o componente re-renderizar por outro motivo
+  const veiculosFiltrados = useMemo(() => {
+    if (!busca) return veiculos;
+    const termo = busca.toLowerCase();
+    return veiculos.filter(v =>
+      v.placa.toLowerCase().includes(termo) ||
+      v.modelo.toLowerCase().includes(termo)
+    );
+  }, [veiculos, busca]);
 
-  // Ação de Exclusão Real
+  // --- ACTIONS ---
   const handleExecuteDelete = async () => {
     if (!veiculoParaExcluir) return;
+
     try {
-      await api.delete(`/veiculos/${veiculoParaExcluir}`);
-      toast.success("Veículo removido com sucesso");
+      await toast.promise(api.delete(`/veiculos/${veiculoParaExcluir}`), {
+        loading: 'Excluindo veículo...',
+        success: 'Veículo removido com sucesso!',
+        error: 'Erro ao remover veículo. Ele pode estar atrelado a algum histórico.'
+      });
       refetch();
     } catch (error) {
-      console.error(error);
-      toast.error("Erro ao remover veículo");
+      console.error('[DELETE_VEICULO_ERROR]', error);
     } finally {
       setVeiculoParaExcluir(null);
     }
@@ -74,7 +78,7 @@ export function GestaoVeiculos() {
   };
 
   return (
-    <div className="space-y-6 animate-enter pb-10">
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-10">
 
       {/* 1. HEADER */}
       <PageHeader
@@ -95,14 +99,13 @@ export function GestaoVeiculos() {
       />
 
       {/* 2. LISTAGEM */}
-      {/* Removemos o Card wrapper aqui para o Skeleton ocupar a área corretamente */}
       {isLoading ? (
          <SkeletonTable />
       ) : (
-        <Card noPadding>
+        <Card padding="none" className="overflow-hidden border-border/50 shadow-sm">
           <ListaResponsiva
             itens={veiculosFiltrados}
-            emptyMessage="Nenhum veículo encontrado na frota."
+            emptyMessage={busca ? "Nenhum veículo corresponde à sua busca." : "Nenhum veículo cadastrado na frota."}
 
             // CABEÇALHO DESKTOP
             desktopHeader={
@@ -117,7 +120,7 @@ export function GestaoVeiculos() {
 
             // LINHA DESKTOP
             renderDesktop={(v) => (
-              <>
+              <tr key={v.id} className="hover:bg-surface-hover/50 transition-colors">
                 <td className={TableStyles.td}>
                   <button
                     onClick={() => navigate(`/admin/veiculos/${v.id}`)}
@@ -146,12 +149,16 @@ export function GestaoVeiculos() {
                     onExcluir={() => setVeiculoParaExcluir(v.id)}
                   />
                 </td>
-              </>
+              </tr>
             )}
 
             // CARD MOBILE
             renderMobile={(v) => (
-              <div className="p-4 flex justify-between items-start cursor-pointer hover:bg-surface-hover/50 active:bg-surface-hover transition-colors" onClick={() => navigate(`/admin/veiculos/${v.id}`)}>
+              <div 
+                key={v.id}
+                className="p-4 flex justify-between items-start cursor-pointer border-b border-border last:border-0 hover:bg-surface-hover/50 active:bg-surface-hover transition-colors" 
+                onClick={() => navigate(`/admin/veiculos/${v.id}`)}
+              >
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="font-mono font-bold text-lg text-primary">{v.placa}</span>

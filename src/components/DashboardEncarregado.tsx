@@ -11,37 +11,34 @@ import { Modal } from './ui/Modal';
 import { useAuth } from '../contexts/AuthContext';
 import type { User } from '../types';
 
+// ✅ Importando os novos hooks "Atômicos"
+import { useUsuarios } from '../hooks/useUsuarios';
+import { useVeiculos } from '../hooks/useVeiculos';
+import { useJornadasAtivas } from '../hooks/useJornadasAtivas';
+
 interface DashboardEncarregadoProps {
     user: User;
-    veiculos: any[];
-    usuarios: any[];
-    produtos: any[];
-    fornecedores: any[];
-    jornadasAbertas: any[];
-    onJornadaFinalizada: () => void;
+    // ✂️ Removemos todas as outras props (veiculos, usuarios, produtos...)
 }
 
 type ViewMode = 'DASHBOARD' | 'MONITORAMENTO' | 'MINHA_JORNADA' | 'HISTORICO' | 'EQUIPE';
 
-export function DashboardEncarregado({
-    user,
-    veiculos,
-    usuarios,
-    produtos,
-    fornecedores,
-    jornadasAbertas,
-    onJornadaFinalizada
-}: DashboardEncarregadoProps) {
+export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
     const { logout } = useAuth();
     const [view, setView] = useState<ViewMode>('DASHBOARD');
     const [modalAbastecimentoOpen, setModalAbastecimentoOpen] = useState(false);
 
+    // 📡 BUSCANDO OS DADOS DE FORMA INDEPENDENTE E COM CACHE
+    const { data: usuarios = [] } = useUsuarios();
+    const { data: veiculos = [] } = useVeiculos();
+    const { data: jornadasAbertas = [], refetch: refetchJornadas } = useJornadasAtivas();
+
     const veiculosLeves = veiculos.filter(v => 
-        ['UTILITARIO', 'LEVE', 'OUTRO'].includes(v.tipoVeiculo)
+        ['UTILITARIO', 'LEVE', 'OUTRO'].includes(v.tipoVeiculo || '')
     );
 
-    const minhaJornadaAtiva = jornadasAbertas.find(j => j.motoristaId === user.id);
-    const equipeAtiva = jornadasAbertas.filter(j => j.motoristaId !== user.id).length;
+    const minhaJornadaAtiva = jornadasAbertas.find(j => j.operador?.id === user.id);
+    const equipeAtiva = jornadasAbertas.filter(j => j.operador?.id !== user.id).length;
 
     // --- CARD "PARRUDO" (DESIGN SYSTEM) ---
     const ActionCard = ({ icon: Icon, title, desc, style, onClick, badge }: any) => (
@@ -93,7 +90,6 @@ export function DashboardEncarregado({
                             <p className="text-xs text-text-secondary font-medium">Gestão Operacional</p>
                         </div>
                     </div>
-                    {/* Botão LogOut corrigido (sem size="sm") */}
                     <Button 
                         variant="ghost" 
                         onClick={logout} 
@@ -195,10 +191,8 @@ export function DashboardEncarregado({
                     className="max-w-2xl"
                 >
                     <FormRegistrarAbastecimento
-                        usuarios={usuarios}
-                        veiculos={veiculos}
-                        produtos={produtos}
-                        fornecedores={fornecedores}
+                        usuarioLogado={user}
+                        // Removemos as passagens de arrays porque o Form vai se virar sozinho agora
                         onCancelar={() => setModalAbastecimentoOpen(false)}
                         onSuccess={() => {
                             setModalAbastecimentoOpen(false);
@@ -215,7 +209,6 @@ export function DashboardEncarregado({
     const PageWrapper = ({ title, children }: any) => (
         <div className="space-y-6 animate-in slide-in-from-right-5 duration-300 pb-20">
             <div className="flex items-center gap-3 py-2 border-b border-border/50">
-                {/* Botão Voltar corrigido (sem size="sm") */}
                 <Button variant="ghost" onClick={() => setView('DASHBOARD')} className="pl-0 hover:bg-transparent text-text-secondary h-9 px-2">
                     <ChevronRight className="w-5 h-5 rotate-180 mr-1" /> Voltar
                 </Button>
@@ -228,7 +221,10 @@ export function DashboardEncarregado({
     if (view === 'MONITORAMENTO') {
         return (
             <PageWrapper title="Monitoramento da Frota">
-                <GestaoJornadas jornadasAbertas={jornadasAbertas} onJornadaFinalizadaManualmente={onJornadaFinalizada} />
+                <GestaoJornadas 
+                    jornadasAbertas={jornadasAbertas} 
+                    onJornadaFinalizadaManualmente={() => refetchJornadas()} 
+                />
             </PageWrapper>
         );
     }
@@ -244,7 +240,7 @@ export function DashboardEncarregado({
                         jornadasAtivas={jornadasAbertas}
                         onJornadaIniciada={() => {
                             setView('DASHBOARD');
-                            onJornadaFinalizada();
+                            refetchJornadas();
                         }}
                     />
                 </div>
@@ -255,7 +251,7 @@ export function DashboardEncarregado({
     if (view === 'HISTORICO') {
         return (
             <PageWrapper title="Histórico de Abastecimentos">
-                <HistoricoAbastecimentos userRole={user.role} veiculos={veiculos} />
+                <HistoricoAbastecimentos userRole={user.role} />
             </PageWrapper>
         );
     }

@@ -1,11 +1,14 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
-import { Edit, Trash2, Camera, X, ImageOff, Download, Filter, Calendar } from 'lucide-react';
-import type { Jornada, Veiculo } from '../types';
+import { Edit, Trash2, Camera, X, ImageOff, Download, Filter, Calendar, Activity } from 'lucide-react';
+import type { Jornada } from '../types';
 
-// --- DESIGN SYSTEM KLIN ---
+// --- HOOKS ATÔMICOS ---
+import { useVeiculos } from '../hooks/useVeiculos';
+
+// --- DESIGN SYSTEM ---
 import { PageHeader } from './ui/PageHeader';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -26,12 +29,14 @@ interface JornadaHistorico extends Jornada {
 }
 
 interface HistoricoJornadasProps {
-  veiculos: Veiculo[];
   userRole?: string;
 }
 
-export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: HistoricoJornadasProps) {
+export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasProps) {
   
+  // 📡 BUSCA INDEPENDENTE DE VEÍCULOS
+  const { data: veiculos = [] } = useVeiculos();
+
   // --- ESTADOS ---
   const [historico, setHistorico] = useState<JornadaHistorico[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,56 +44,67 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
 
-  // Filtros
+  // Filtros de busca
   const [filtros, setFiltros] = useState({
     dataInicio: '',
     dataFim: '',
-    veiculoId: ''
+    veiculoId: '',
+    buscaMotorista: '',
+    buscaPlaca: ''
   });
 
   const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
   const canDelete = userRole === 'ADMIN';
 
-  // --- FETCHING ---
-  const fetchHistorico = async () => {
+  // --- FETCHING OTIMIZADO ---
+  const fetchHistorico = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = {};
+      const params: Record<string, string> = {};
+      
       if (filtros.dataInicio) params.dataInicio = filtros.dataInicio;
       if (filtros.dataFim) params.dataFim = filtros.dataFim;
       if (filtros.veiculoId) params.veiculoId = filtros.veiculoId;
+      if (filtros.buscaMotorista) params.motorista = filtros.buscaMotorista; 
+      if (filtros.buscaPlaca) params.placa = filtros.buscaPlaca;           
 
       const response = await api.get('/jornadas/historico', { params });
       setHistorico(response.data);
     } catch (err) {
-      console.error(err);
+      console.error('Erro no fetch de histórico:', err);
       toast.error('Não foi possível carregar o histórico.');
     } finally {
-      setTimeout(() => setLoading(false), 300);
+      setLoading(false);
     }
-  };
+  }, [filtros]);
 
-  useEffect(() => { fetchHistorico(); }, [filtros]);
+  useEffect(() => { 
+    fetchHistorico(); 
+  }, [fetchHistorico]);
+
+  // --- CÁLCULOS MEMOIZADOS (SUMÁRIO) ---
+  const kmTotalGeral = useMemo(() => {
+    return historico.reduce((acc, j) => {
+      const km = (j.kmFim && j.kmInicio) ? j.kmFim - j.kmInicio : (j.kmPercorrido || 0);
+      return acc + km;
+    }, 0);
+  }, [historico]);
 
   // --- ACTIONS ---
   const handleDelete = async (id: string) => {
     if (!window.confirm("ATENÇÃO: Tem certeza que deseja excluir este registro histórico?")) return;
 
-    const promise = api.delete(`/jornadas/${id}`);
-
-    toast.promise(promise, {
-      loading: 'Removendo registro...',
-      success: () => {
-        setHistorico(prev => prev.filter(item => item.id !== id));
-        return 'Registro excluído com sucesso.';
-      },
-      error: (err) => {
-        console.error("Erro ao excluir:", err);
-        return 'Erro ao excluir jornada.';
-      }
-    });
+    try {
+      await api.delete(`/jornadas/${id}`);
+      setHistorico(prev => prev.filter(item => item.id !== id));
+      toast.success('Registro excluído com sucesso.');
+    } catch (err) {
+      console.error("Erro ao excluir:", err);
+      toast.error('Erro ao excluir jornada.');
+    }
   };
 
+  // ✅ FUNÇÃO RESTAURADA AQUI
   const handleSuccessEdit = () => {
     setEditingId(null);
     fetchHistorico();
@@ -97,28 +113,26 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
   const handleExportar = () => {
     if (historico.length === 0) return;
 
-    const acaoExportar = async () => {
-      const dados = historico.map(j => {
-        const kmAndados = (j.kmFim && j.kmInicio) ? j.kmFim - j.kmInicio : (j.kmPercorrido || 0);
-        return {
-          'Saída': new Date(j.dataInicio).toLocaleString('pt-BR'),
-          'Chegada': j.dataFim ? new Date(j.dataFim).toLocaleString('pt-BR') : 'Em andamento',
-          'Veículo': j.veiculo ? `${j.veiculo.placa} - ${j.veiculo.modelo}` : 'Veículo Excluído',
-          'Motorista': j.operador?.nome || 'Motorista Excluído',
-          'KM Inicial': j.kmInicio,
-          'KM Final': j.kmFim || '-',
-          'Percorrido': kmAndados,
-          'Obs': j.observacoes || ''
-        };
-      });
-      exportarParaExcel(dados, "Historico_Jornadas.xlsx");
-    };
-
-    toast.promise(acaoExportar(), {
-      loading: 'Exportando dados...',
-      success: 'Histórico exportado com sucesso!',
-      error: 'Erro ao exportar arquivo.'
+    const dados = historico.map(j => {
+      const kmAndados = (j.kmFim && j.kmInicio) ? j.kmFim - j.kmInicio : (j.kmPercorrido || 0);
+      return {
+        'Saída': new Date(j.dataInicio).toLocaleString('pt-BR'),
+        'Chegada': j.dataFim ? new Date(j.dataFim).toLocaleString('pt-BR') : 'Em andamento',
+        'Veículo': j.veiculo ? `${j.veiculo.placa} - ${j.veiculo.modelo}` : 'Veículo Excluído',
+        'Motorista': j.operador?.nome || 'Motorista Excluído',
+        'KM Inicial': j.kmInicio,
+        'KM Final': j.kmFim || '-',
+        'Percorrido': kmAndados,
+        'Obs': j.observacoes || ''
+      };
     });
+
+    try {
+      exportarParaExcel(dados, "Historico_Jornadas.xlsx");
+      toast.success('Histórico exportado com sucesso!');
+    } catch (err) {
+      toast.error('Erro ao exportar arquivo.');
+    }
   };
 
   // --- HELPERS ---
@@ -127,79 +141,115 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
     return jornada.fotoFimUrl || jornada.fotoFim || jornada.foto_fim || null;
   };
 
-  const veiculosOptions = [
+  const veiculosOptions = useMemo(() => [
     { value: "", label: "Todos os veículos" },
     ...veiculos.map(v => ({ value: v.id, label: v.placa }))
-  ];
+  ], [veiculos]);
 
   return (
     <div className="space-y-6 pb-10 animate-enter">
       
-      {/* 1. HEADER & FILTROS */}
+      {/* 1. HEADER & FILTROS DE BUSCA AVANÇADOS */}
       <PageHeader 
         title="Histórico de Viagens"
         subtitle="Consulte rotas, quilometragem e fotos dos odômetros."
         extraAction={
-          <div className="flex flex-col sm:flex-row gap-2 w-full xl:w-auto items-end">
-            <div className="flex items-center mr-2">
-               <Badge variant="neutral" className="h-9 px-3">
-                 {historico.length} Registros
-               </Badge>
-            </div>
-
-            <div className="w-full sm:w-32">
-              <Input 
-                type="date" 
-                label="Início" 
-                value={filtros.dataInicio}
-                onChange={e => setFiltros(prev => ({...prev, dataInicio: e.target.value}))}
-              />
-            </div>
-            <div className="w-full sm:w-32">
-              <Input 
-                type="date" 
-                label="Fim" 
-                value={filtros.dataFim}
-                onChange={e => setFiltros(prev => ({...prev, dataFim: e.target.value}))}
-              />
-            </div>
-            <div className="w-full sm:w-48">
-              <Select 
-                label="Veículo" 
-                options={veiculosOptions}
-                value={filtros.veiculoId}
-                onChange={e => setFiltros(prev => ({...prev, veiculoId: e.target.value}))}
-                icon={<Filter className="w-4 h-4" />}
-              />
-            </div>
+          <div className="flex flex-col gap-3 w-full xl:w-auto">
             
-            {/* Botão Admin Limpar Fantasmas */}
-            {userRole === 'ADMIN' && filtros.veiculoId && (
-              <div className="pb-0.5">
-                <BotaoLimparFantasmas 
-                  veiculoId={filtros.veiculoId} 
-                  onSuccess={fetchHistorico}
-                  className="h-9"
+            {/* Linha 1: Filtros de texto/seleção */}
+            <div className="flex flex-col sm:flex-row gap-2 items-end">
+              <div className="w-full sm:w-44">
+                <Input 
+                  placeholder="Nome do motorista..." 
+                  label="Buscar Motorista"
+                  value={filtros.buscaMotorista}
+                  onChange={e => setFiltros(prev => ({...prev, buscaMotorista: e.target.value}))}
                 />
               </div>
-            )}
+              <div className="w-full sm:w-32">
+                <Input 
+                  placeholder="ABC-1234" 
+                  label="Buscar Placa"
+                  value={filtros.buscaPlaca}
+                  onChange={e => setFiltros(prev => ({...prev, buscaPlaca: e.target.value}))}
+                />
+              </div>
+              <div className="w-full sm:w-48">
+                <Select 
+                  label="Lista de Veículos" 
+                  options={veiculosOptions}
+                  value={filtros.veiculoId}
+                  onChange={e => setFiltros(prev => ({...prev, veiculoId: e.target.value}))}
+                  icon={<Filter className="w-4 h-4" />}
+                />
+              </div>
+            </div>
 
-            <div className="pb-0.5">
-              <Button 
-                variant="secondary" 
-                onClick={handleExportar} 
-                icon={<Download className="w-4 h-4" />}
-                disabled={historico.length === 0}
-              >
-                Excel
-              </Button>
+            {/* Linha 2: Datas e Ações */}
+            <div className="flex flex-col sm:flex-row gap-2 items-end xl:justify-end">
+              <div className="w-full sm:w-32">
+                <Input 
+                  type="date" 
+                  label="Data Início" 
+                  value={filtros.dataInicio}
+                  onChange={e => setFiltros(prev => ({...prev, dataInicio: e.target.value}))}
+                />
+              </div>
+              <div className="w-full sm:w-32">
+                <Input 
+                  type="date" 
+                  label="Data Fim" 
+                  value={filtros.dataFim}
+                  onChange={e => setFiltros(prev => ({...prev, dataFim: e.target.value}))}
+                />
+              </div>
+
+              <div className="flex gap-2 pb-0.5">
+                {userRole === 'ADMIN' && filtros.veiculoId && (
+                  <BotaoLimparFantasmas 
+                    veiculoId={filtros.veiculoId} 
+                    onSuccess={fetchHistorico}
+                    className="h-9"
+                  />
+                )}
+                <Button 
+                  variant="secondary" 
+                  onClick={handleExportar} 
+                  icon={<Download className="w-4 h-4" />}
+                  disabled={historico.length === 0}
+                  className="h-9"
+                >
+                  Excel
+                </Button>
+              </div>
             </div>
           </div>
         }
       />
 
-      {/* 2. TABELA */}
-      <Card noPadding>
+      {/* 2. SUMÁRIO DA CONSULTA */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card padding="sm" className="bg-primary/5 border-primary/20 flex flex-col justify-center gap-1">
+          <span className="text-xs font-bold text-primary uppercase tracking-wider flex items-center gap-2">
+            <Activity className="w-4 h-4" /> KM Percorrido
+          </span>
+          <span className="text-2xl font-mono font-black text-primary truncate">
+            {kmTotalGeral.toLocaleString('pt-BR')} <small className="text-sm font-bold opacity-70">km</small>
+          </span>
+        </Card>
+        
+        <Card padding="sm" className="flex flex-col justify-center gap-1 bg-surface">
+          <span className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
+            <Calendar className="w-4 h-4" /> Viagens Listadas
+          </span>
+          <span className="text-2xl font-mono font-black text-text-main">
+            {historico.length} <small className="text-sm font-medium opacity-70">registros</small>
+          </span>
+        </Card>
+      </div>
+
+      {/* 3. TABELA DE RESULTADOS */}
+      <Card padding="none">
         {loading ? (
           <div className="p-6 space-y-4">
             {[1, 2, 3].map(i => <div key={i} className="h-12 bg-surface-hover rounded-lg animate-pulse" />)}
@@ -207,7 +257,7 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
         ) : (
           <ListaResponsiva
             itens={historico}
-            emptyMessage="Nenhuma viagem encontrada neste período."
+            emptyMessage="Nenhuma viagem encontrada neste período ou com estes filtros."
 
             // --- DESKTOP ---
             desktopHeader={
@@ -383,8 +433,7 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
         )}
       </Card>
 
-      {/* 3. MODAIS */}
-
+      {/* 4. MODAIS E LIGHTBOXES */}
       <Modal 
         isOpen={!!editingId} 
         onClose={() => setEditingId(null)} 
@@ -426,7 +475,6 @@ export function HistoricoJornadas({ veiculos, userRole = 'OPERADOR' }: Historico
           </div>
         </div>
       )}
-
     </div>
   );
 }

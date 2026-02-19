@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 import { parseDecimal } from '../utils';
@@ -40,6 +40,16 @@ export function JornadaGestaoItem({
   const [loading, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [error, setError] = useState('');
+
+  // --- CÁLCULOS MEMOIZADOS ---
+  // Evita reprocessar datas complexas a cada letra digitada no input de KM
+  const { horaFormatada, dataFormatada } = useMemo(() => {
+    const data = new Date(jornada.dataInicio);
+    return {
+      horaFormatada: data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      dataFormatada: data.toLocaleDateString('pt-BR')
+    };
+  }, [jornada.dataInicio]);
 
   // --- ACTIONS ---
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,22 +102,21 @@ export function JornadaGestaoItem({
     }
   };
 
-  // Formatadores
-  const dataInicio = new Date(jornada.dataInicio);
-  
   return (
     <>
-      <Card noPadding className="overflow-visible group transition-all hover:border-primary/30 hover:shadow-md">
+      <Card padding="none" className="overflow-visible group transition-all hover:border-primary/30 hover:shadow-md">
         <div className="p-5">
           
           {/* HEADER: Motorista e Status */}
           <div className="flex justify-between items-start mb-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg border border-primary/10">
-                {jornada.operador.nome.charAt(0)}
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg border border-primary/20 shrink-0">
+                {jornada.operador.nome.charAt(0).toUpperCase()}
               </div>
               <div>
-                <h5 className="font-bold text-gray-900 leading-tight">{jornada.operador.nome}</h5>
+                <h5 className="font-bold text-text-main leading-tight truncate max-w-[150px] sm:max-w-[200px]">
+                  {jornada.operador.nome}
+                </h5>
                 <div className="flex items-center gap-2 mt-0.5">
                   <Badge variant="success" className="animate-pulse h-5 px-1.5 text-[10px]">
                     Em Andamento
@@ -127,30 +136,30 @@ export function JornadaGestaoItem({
           <div className="grid grid-cols-2 gap-3 mb-5">
             
             {/* Veículo */}
-            <div className="bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex flex-col">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <div className="bg-surface-hover p-2.5 rounded-xl border border-border flex flex-col">
+              <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
                 <Truck className="w-3 h-3" /> Veículo
               </span>
-              <span className="font-mono font-bold text-gray-800 text-sm">{jornada.veiculo.placa}</span>
-              <span className="text-[10px] text-gray-500 truncate">{jornada.veiculo.modelo}</span>
+              <span className="font-mono font-bold text-text-main text-sm">{jornada.veiculo.placa}</span>
+              <span className="text-[10px] text-text-secondary truncate">{jornada.veiculo.modelo}</span>
             </div>
 
             {/* Início */}
-            <div className="bg-gray-50 p-2.5 rounded-xl border border-gray-100 flex flex-col">
-              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1 flex items-center gap-1">
+            <div className="bg-surface-hover p-2.5 rounded-xl border border-border flex flex-col">
+              <span className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1 flex items-center gap-1">
                 <Clock className="w-3 h-3" /> Início
               </span>
-              <span className="font-bold text-gray-800 text-sm">
-                {dataInicio.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+              <span className="font-bold text-text-main text-sm">
+                {horaFormatada}
               </span>
-              <span className="text-[10px] text-gray-500">
-                {dataInicio.toLocaleDateString('pt-BR')}
+              <span className="text-[10px] text-text-secondary">
+                {dataFormatada}
               </span>
             </div>
           </div>
 
           {/* FORM: Finalizar */}
-          <form onSubmit={handleSubmit} className="pt-4 border-t border-dashed border-gray-200">
+          <form onSubmit={handleSubmit} className="pt-4 border-t border-dashed border-border">
             <div className="flex items-end gap-2">
               <div className="flex-1">
                 <Input
@@ -164,17 +173,18 @@ export function JornadaGestaoItem({
                   }}
                   error={error}
                   disabled={loading}
-                  className="h-10"
+                  className="h-10 font-mono text-sm"
                 />
               </div>
               <Button 
                 type="submit" 
                 isLoading={loading}
                 disabled={loading || !kmFim}
-                className="h-10 px-6 bg-green-600 hover:bg-green-700 text-white shadow-lg shadow-green-600/20"
+                className="h-10 px-4 sm:px-6 bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg shadow-emerald-600/20 border-transparent transition-all"
                 icon={<CheckCircle2 className="w-4 h-4" />}
               >
-                Encerrar
+                <span className="hidden sm:inline">Encerrar</span>
+                <span className="sm:hidden">OK</span>
               </Button>
             </div>
           </form>

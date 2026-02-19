@@ -4,7 +4,6 @@ import {
   Users, 
   FileText, 
   Wrench, 
-  Briefcase, 
   Package, 
   AlertTriangle, 
   Medal, 

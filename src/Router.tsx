@@ -1,8 +1,5 @@
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
-import { api } from './services/api';
 import { useAuth } from './contexts/AuthContext';
-import { useVeiculos } from './hooks/useVeiculos';
 
 // Imports de Dashboards e Componentes
 import { LoginScreen } from './pages/LoginScreen';
@@ -18,7 +15,7 @@ import { GestaoUsuarios } from './components/GestaoUsuarios';
 import { GestaoProdutos } from './components/GestaoProdutos';
 import { GestaoFornecedores } from './components/GestaoFornecedores';
 import { GestaoCargos } from './components/GestaoCargos';
-import { GestaoDocumentos } from './components/GestaoDocumentos'; // <--- NOVO IMPORT
+import { GestaoDocumentos } from './components/GestaoDocumentos';
 import { RankingOperadores } from './components/RankingOperadores';
 import { HistoricoManutencoes } from './components/HistoricoManutencoes';
 import { HistoricoAbastecimentos } from './components/HistoricoAbastecimentos';
@@ -51,54 +48,12 @@ function PrivateRoute({ children, allowedRoles }: { children: React.ReactNode, a
   return <>{children}</>;
 }
 
-// --- LAYOUT E DATA LOADER PARA ADMIN ---
-function AdminDataLayout() {
-  const { isLoading: loadingVeiculos } = useVeiculos();
-
-  if (loadingVeiculos) return <LoadingScreen />;
-
-  return <AdminLayout />;
-}
-
 /**
  * RootDashboardRouter: Decide o que exibir na URL "/"
+ * AGORA LIMPO: Não busca dados, apenas roteia!
  */
 function RootDashboardRouter() {
   const { user, loading } = useAuth();
-
-  // 1. Buscamos os veículos aqui para passar aos Dashboards Operacionais
-  const { data: veiculos } = useVeiculos();
-
-  // 🔒 BLINDAGEM DE SEGURANÇA (FRONTEND)
-  const isGestor = ['ADMIN', 'COORDENADOR', 'ENCARREGADO', 'RH'].includes(user?.role || '');
-  const isOperador = user?.role === 'OPERADOR';
-
-  // --- QUERY 1: Buscar TODOS os usuários (Apenas para Gestores) ---
-  const { data: todosUsuarios } = useQuery({ 
-    queryKey: ['users'], 
-    queryFn: async () => (await api.get('/users')).data, 
-    enabled: !!user && isGestor 
-  });
-
-  // --- QUERY 2: Buscar APENAS ENCARREGADOS (Apenas para Operadores) ---
-  // Esta rota (/users/encarregados) é permitida para OPERADOR no backend (user.routes.ts)
-  const { data: listaEncarregados } = useQuery({
-    queryKey: ['users', 'encarregados'],
-    queryFn: async () => (await api.get('/users/encarregados')).data,
-    enabled: !!user && isOperador
-  });
-
-  // Define qual lista usar baseada no perfil
-  const usuariosDisponiveis = isGestor ? (todosUsuarios || []) : (listaEncarregados || []);
-
-  const { data: produtos } = useQuery({ queryKey: ['produtos'], queryFn: async () => (await api.get('/produtos')).data, enabled: !!user });
-  const { data: fornecedores } = useQuery({ queryKey: ['fornecedores'], queryFn: async () => (await api.get('/fornecedores')).data, enabled: !!user });
-
-  const { data: jornadasAtivas, refetch: refetchJornadas } = useQuery({
-    queryKey: ['jornadas', 'ativas'],
-    queryFn: async () => (await api.get('/jornadas/abertas')).data,
-    enabled: !!user
-  });
 
   if (loading || !user) return <LoadingScreen />;
 
@@ -108,30 +63,13 @@ function RootDashboardRouter() {
     case 'OPERADOR':
       return (
         <div className={containerStyle}>
-          <DashboardOperador
-            user={user}
-            usuarios={usuariosDisponiveis} // <--- CORREÇÃO AQUI: Agora recebe a lista correta
-            veiculos={veiculos || []}
-            produtos={produtos || []}
-            fornecedores={fornecedores || []}
-            jornadasAtivas={jornadasAtivas || []}
-            onJornadaIniciada={() => refetchJornadas()}
-            onJornadaFinalizada={() => refetchJornadas()}
-          />
+          <DashboardOperador user={user} />
         </div>
       );
     case 'ENCARREGADO':
       return (
         <div className={containerStyle}>
-          <DashboardEncarregado
-            user={user}
-            veiculos={veiculos || []}
-            usuarios={usuariosDisponiveis}
-            produtos={produtos || []}
-            fornecedores={fornecedores || []}
-            jornadasAbertas={jornadasAtivas || []}
-            onJornadaFinalizada={() => refetchJornadas()}
-          />
+          <DashboardEncarregado user={user} />
         </div>
       );
     case 'RH':
@@ -150,9 +88,6 @@ export function Router() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const { data: veiculos } = useVeiculos();
-  const veiculosSafe = veiculos || [];
-
   return (
     <Routes>
       <Route path="/login" element={<LoginScreen />} />
@@ -167,41 +102,33 @@ export function Router() {
       {/* Rotas de Admin */}
       <Route path="/admin" element={
         <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'ENCARREGADO']}>
-          <AdminDataLayout />
+          {/* Removemos o AdminDataLayout que travava o sistema esperando veículos */}
+          <AdminLayout />
         </PrivateRoute>
       }>
-        <Route index element={<DashboardRelatorios veiculos={veiculosSafe} />} />
+        <Route index element={<DashboardRelatorios />} />
 
         <Route path="alertas" element={<PainelAlertas />} />
         <Route path="ranking" element={<RankingOperadores />} />
 
         <Route path="manutencoes">
-          <Route index element={
-            <HistoricoManutencoes
-              userRole={user?.role || ''}
-              veiculos={veiculosSafe}
-              produtos={[]}
-              fornecedores={[]}
-            />
-          } />
-          <Route path="nova" element={<FormRegistrarManutencao veiculos={veiculosSafe} produtos={[]} fornecedores={[]} />} />
+          <Route index element={<HistoricoManutencoes userRole={user?.role || ''} />} />
+          {/* REMOVIDAS AS GAMBIARRAS DOS ARRAYS VAZIOS [] */}
+          <Route path="nova" element={<FormRegistrarManutencao onSuccess={() => navigate('/admin/manutencoes')} onClose={() => navigate('/admin/manutencoes')} />} />
         </Route>
 
         <Route path="abastecimentos">
-          <Route index element={<HistoricoAbastecimentos userRole={user?.role || ''} veiculos={veiculosSafe} />} />
+          <Route index element={<HistoricoAbastecimentos userRole={user?.role || ''} />} />
           <Route path="novo" element={
             <FormRegistrarAbastecimento
-              usuarios={[]}
-              veiculos={veiculosSafe}
-              produtos={[]}
-              fornecedores={[]}
+              usuarioLogado={user || undefined}
               onCancelar={() => navigate('/admin/abastecimentos')}
               onSuccess={() => navigate('/admin/abastecimentos')}
             />
           } />
         </Route>
 
-        <Route path="jornadas" element={<HistoricoJornadas veiculos={veiculosSafe} userRole={user?.role} />} />
+        <Route path="jornadas" element={<HistoricoJornadas userRole={user?.role} />} />
 
         <Route path="veiculos">
           <Route index element={<GestaoVeiculos />} />
@@ -216,13 +143,8 @@ export function Router() {
 
         <Route path="produtos" element={<GestaoProdutos />} />
         <Route path="fornecedores" element={<GestaoFornecedores />} />
-
-        {/* Documentos Legais */}
         <Route path="documentos" element={<GestaoDocumentos />} />
-
-        {/* Planos Preventivos */}
-        <Route path="planos" element={<FormPlanoManutencao veiculos={veiculosSafe} />} />
-
+        <Route path="planos" element={<FormPlanoManutencao />} />
         <Route path="cargos" element={<GestaoCargos />} />
       </Route>
 

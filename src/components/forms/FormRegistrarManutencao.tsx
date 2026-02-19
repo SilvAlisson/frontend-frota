@@ -14,15 +14,19 @@ import {
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
-import { Card } from '../ui/Card'; // ✅ Novo Componente
+import { Card } from '../ui/Card'; 
 import { Badge } from '../ui/Badge';
 import { ModalConfirmacaoFoto } from '../ModalConfirmacaoFoto';
 import { ModalGerenciarServicos } from '../ModalGerenciarServicos';
 
 // --- UTILS & HOOKS ---
 import { parseDecimal, formatKmVisual, formatCurrency } from '../../utils';
-import { useDashboardData } from '../../hooks/useDashboardData';
-import type { Veiculo, Produto, Fornecedor } from '../../types';
+
+// ✅ Importando os hooks atômicos
+import { useVeiculos } from '../../hooks/useVeiculos';
+import { useProdutos } from '../../hooks/useProdutos';
+import { useFornecedores } from '../../hooks/useFornecedores';
+import type { Veiculo, Produto } from '../../types';
 
 // --- CONSTANTES ---
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
@@ -68,27 +72,23 @@ interface PayloadOrdemServico {
   itens: { produtoId: string; quantidade: number; valorPorUnidade: number }[];
 }
 
+// ✂️ Propriedades super enxutas
 interface FormRegistrarManutencaoProps {
-  veiculos?: Veiculo[];
-  produtos?: Produto[];
-  fornecedores?: Fornecedor[];
   onSuccess?: () => void;
   onClose?: () => void;
 }
 
 export function FormRegistrarManutencao({
-  veiculos: propsVeiculos,
-  produtos: propsProdutos,
-  fornecedores: propsFornecedores,
   onSuccess,
   onClose
 }: FormRegistrarManutencaoProps) {
 
-  const { data: dadosCache, isLoading: isLoadingDados } = useDashboardData();
-
-  const veiculos = propsVeiculos?.length ? propsVeiculos : (dadosCache?.veiculos || []);
-  const produtos = propsProdutos?.length ? propsProdutos : (dadosCache?.produtos || []);
-  const fornecedores = propsFornecedores?.length ? propsFornecedores : (dadosCache?.fornecedores || []);
+  // 📡 BUSCANDO DADOS INDEPENDENTES COM CACHE
+  const { data: veiculos = [], isLoading: loadV } = useVeiculos();
+  const { data: produtos = [], isLoading: loadP } = useProdutos();
+  const { data: fornecedores = [], isLoading: loadF } = useFornecedores();
+  
+  const isLoadingDados = loadV || loadP || loadF;
 
   const [step, setStep] = useState(1);
   const [modalAberto, setModalAberto] = useState(false);
@@ -261,7 +261,6 @@ export function FormRegistrarManutencao({
           {step === 1 && (
             <div className="space-y-5 animate-in slide-in-from-right-8 duration-300">
               
-              {/* TIPO DE MANUTENÇÃO */}
               <div className="grid grid-cols-2 gap-2 bg-gray-50 p-1 rounded-xl border border-gray-200">
                 {['CORRETIVA', 'PREVENTIVA'].map((t) => (
                   <button
@@ -280,7 +279,6 @@ export function FormRegistrarManutencao({
                 ))}
               </div>
 
-              {/* ALVO (VEÍCULO OU OUTRO) */}
               <div className="flex gap-4">
                 {['VEICULO', 'OUTROS'].map(alvo => (
                   <label key={alvo} className={`flex items-center gap-2 cursor-pointer p-3 border rounded-xl w-full transition-all ${alvoSelecionado === alvo ? 'border-primary bg-primary/5' : 'border-border hover:bg-gray-50'}`}>
@@ -538,7 +536,6 @@ export function FormRegistrarManutencao({
         </div>
       </form>
 
-      {/* MODAL DE FOTO */}
       {modalAberto && formDataParaModal && (
         <ModalConfirmacaoFoto
           titulo={`OS ${formDataParaModal.tipo}`}
@@ -552,7 +549,6 @@ export function FormRegistrarManutencao({
         />
       )}
 
-      {/* MODAL NOVO SERVIÇO */}
       {modalServicosOpen && (
         <ModalGerenciarServicos
           onClose={() => setModalServicosOpen(false)}

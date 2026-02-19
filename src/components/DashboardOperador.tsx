@@ -4,39 +4,35 @@ import { IniciarJornada } from './IniciarJornada';
 import { JornadaCard } from './JornadaCard';
 import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
 import { HistoricoJornadas } from './HistoricoJornadas';
-import { GestaoDocumentos } from './GestaoDocumentos'; // ✅ Importação corrigida
+import { GestaoDocumentos } from './GestaoDocumentos'; 
 import { PageHeader } from './ui/PageHeader';
 import { Modal } from './ui/Modal';
 import { Card } from './ui/Card';
 import { Button } from './ui/Button';
 import { useAuth } from '../contexts/AuthContext';
-import type { User, Veiculo, Jornada, Produto, Fornecedor } from '../types';
+import type { User } from '../types';
+
+// ✅ Importando os novos hooks "Atômicos" (O cérebro do componente)
+import { useUsuarios } from '../hooks/useUsuarios';
+import { useVeiculos } from '../hooks/useVeiculos';
+import { useJornadasAtivas } from '../hooks/useJornadasAtivas';
 
 interface DashboardOperadorProps {
   user: User;
-  usuarios: User[];
-  veiculos: Veiculo[];
-  produtos: Produto[];
-  fornecedores: Fornecedor[];
-  jornadasAtivas: Jornada[];
-  onJornadaIniciada: (jornada: Jornada) => void;
-  onJornadaFinalizada: (id: string) => void;
+  // ✂️ Removemos usuários, veículos, etc. daqui!
 }
 
-export function DashboardOperador({
-  user,
-  usuarios,
-  veiculos,
-  produtos,
-  fornecedores,
-  jornadasAtivas,
-  onJornadaIniciada,
-  onJornadaFinalizada
-}: DashboardOperadorProps) {
+export function DashboardOperador({ user }: DashboardOperadorProps) {
   const { logout } = useAuth();
+  
   const [modalAbastecimentoOpen, setModalAbastecimentoOpen] = useState(false);
   const [modalHistoricoOpen, setModalHistoricoOpen] = useState(false);
   const [modalDocumentosOpen, setModalDocumentosOpen] = useState(false);
+
+  // 📡 BUSCANDO OS DADOS DE FORMA INDEPENDENTE E COM CACHE
+  const { data: usuarios = [] } = useUsuarios();
+  const { data: veiculos = [] } = useVeiculos();
+  const { data: jornadasAtivas = [], refetch: refetchJornadas } = useJornadasAtivas();
 
   // Filtra jornadas para encontrar a do operador logado
   const minhasJornadas = jornadasAtivas.filter(j => j.operador?.id === user.id);
@@ -50,7 +46,6 @@ export function DashboardOperador({
       <PageHeader 
         title={
           <div className="flex items-center gap-3">
-            {/* Avatar Simples */}
             <div className="w-10 h-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center overflow-hidden shrink-0">
               {user.fotoUrl ? (
                 <img src={user.fotoUrl} alt={user.nome} className="w-full h-full object-cover" />
@@ -75,10 +70,9 @@ export function DashboardOperador({
         }
       />
 
-      {/* --- ÁREA DE AÇÃO PRINCIPAL --- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* BLOCO 1: OPERAÇÃO ATUAL (Ocupa 2 colunas) */}
+        {/* BLOCO 1: OPERAÇÃO ATUAL */}
         <div className="lg:col-span-2 space-y-6">
           {!tenhoJornadaAtiva ? (
             <Card className="border-primary/20 bg-primary/5">
@@ -95,7 +89,7 @@ export function DashboardOperador({
                 usuarios={usuarios}
                 veiculos={veiculos}
                 operadorLogadoId={user.id}
-                onJornadaIniciada={onJornadaIniciada}
+                onJornadaIniciada={() => refetchJornadas()}
                 jornadasAtivas={jornadasAtivas}
               />
             </Card>
@@ -113,14 +107,14 @@ export function DashboardOperador({
                 <JornadaCard
                   key={jornada.id}
                   jornada={jornada}
-                  onJornadaFinalizada={() => onJornadaFinalizada(jornada.id)}
+                  onJornadaFinalizada={() => refetchJornadas()}
                 />
               ))}
             </div>
           )}
         </div>
 
-        {/* BLOCO 2: MENU RÁPIDO (Lateral) */}
+        {/* BLOCO 2: MENU RÁPIDO */}
         <div className="space-y-4">
           <button
             onClick={() => setModalAbastecimentoOpen(true)}
@@ -163,7 +157,7 @@ export function DashboardOperador({
         </div>
       </div>
 
-      {/* --- MODAIS --- */}
+      {/* --- MODAIS COM PROPS LIMPAS --- */}
       
       <Modal
         isOpen={modalAbastecimentoOpen}
@@ -172,10 +166,6 @@ export function DashboardOperador({
         className="max-w-2xl"
       >
         <FormRegistrarAbastecimento
-          usuarios={usuarios}
-          veiculos={veiculos}
-          produtos={produtos}
-          fornecedores={fornecedores}
           usuarioLogado={user}
           veiculoPreSelecionadoId={veiculoEmUsoId}
           onCancelar={() => setModalAbastecimentoOpen(false)}
@@ -189,13 +179,9 @@ export function DashboardOperador({
         title="Meu Histórico de Viagens"
         className="max-w-5xl"
       >
-        <HistoricoJornadas
-          veiculos={veiculos}
-          userRole={user.role} 
-        />
+        <HistoricoJornadas userRole={user.role} />
       </Modal>
 
-      {/* MODAL DE DOCUMENTOS */}
       <Modal
         isOpen={modalDocumentosOpen}
         onClose={() => setModalDocumentosOpen(false)}

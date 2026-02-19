@@ -17,8 +17,13 @@ import { ModalConfirmacaoFoto } from '../ModalConfirmacaoFoto';
 
 // --- UTILS & HOOKS ---
 import { formatKmVisual, parseKmInteligente, formatCurrency } from '../../utils'; 
-import { useDashboardData } from '../../hooks/useDashboardData';
-import type { Veiculo, Fornecedor, Produto, User as UserType } from '../../types';
+import type { User as UserType } from '../../types';
+
+// ✅ Importando os hooks atômicos
+import { useVeiculos } from '../../hooks/useVeiculos';
+import { useUsuarios } from '../../hooks/useUsuarios';
+import { useProdutos } from '../../hooks/useProdutos';
+import { useFornecedores } from '../../hooks/useFornecedores';
 
 // --- SCHEMA ZOD ---
 const abastecimentoSchema = z.object({
@@ -51,11 +56,8 @@ interface AbastecimentoPayload {
   }[];
 }
 
+// ✂️ Propriedades super enxutas (O formulário agora é autossuficiente)
 interface FormRegistrarAbastecimentoProps {
-  veiculos?: Veiculo[];
-  usuarios?: UserType[];
-  produtos?: Produto[];
-  fornecedores?: Fornecedor[];
   usuarioLogado?: UserType;
   veiculoPreSelecionadoId?: string;
   onSuccess?: () => void;
@@ -63,22 +65,19 @@ interface FormRegistrarAbastecimentoProps {
 }
 
 export function FormRegistrarAbastecimento({
-  veiculos: propsVeiculos,
-  usuarios: propsUsuarios,
-  produtos: propsProdutos,
-  fornecedores: propsFornecedores,
   usuarioLogado,
   veiculoPreSelecionadoId,
   onCancelar,
   onSuccess
 }: FormRegistrarAbastecimentoProps) {
 
-  const { data: dadosCache, isLoading: isLoadingDados } = useDashboardData();
+  // 📡 BUSCANDO DADOS INDEPENDENTES COM CACHE
+  const { data: veiculos = [], isLoading: loadV } = useVeiculos();
+  const { data: usuarios = [], isLoading: loadU } = useUsuarios();
+  const { data: produtos = [], isLoading: loadP } = useProdutos();
+  const { data: fornecedores = [], isLoading: loadF } = useFornecedores();
 
-  const veiculos = propsVeiculos?.length ? propsVeiculos : (dadosCache?.veiculos || []);
-  const usuarios = propsUsuarios?.length ? propsUsuarios : (dadosCache?.usuarios || []);
-  const produtos = propsProdutos?.length ? propsProdutos : (dadosCache?.produtos || []);
-  const fornecedores = propsFornecedores?.length ? propsFornecedores : (dadosCache?.fornecedores || []);
+  const isLoadingDados = loadV || loadU || loadP || loadF;
 
   const [step, setStep] = useState(1);
   const [modalConfirmacao, setModalConfirmacao] = useState(false);
@@ -373,7 +372,6 @@ export function FormRegistrarAbastecimento({
           {/* --- PASSO 3: CONFIRMAÇÃO --- */}
           {step === 3 && (
             <div className="space-y-6 animate-in zoom-in-95 duration-300 py-4">
-              {/* Mantemos este escuro propositalmente pois é o Card de Destaque Financeiro */}
               <Card variant="solid" className="bg-gray-900 text-white border-transparent text-center relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
                   <DollarSign className="w-32 h-32 rotate-12" />

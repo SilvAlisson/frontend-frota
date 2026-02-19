@@ -41,21 +41,15 @@ api.interceptors.response.use(
 
     // 1. Tratamento de Sessão Expirada (401)
     if (error.response?.status === 401) {
-      //  Verifica se contém '/login' para cobrir casos como '/login?redirect=...'
+      // Verifica se contém '/login' para cobrir casos como '/login?redirect=...'
       const isLoginPage = window.location.pathname.includes('/login');
 
       if (!isLoginPage) {
-        // Limpa os dados
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('authUser');
-
-        //  Avisa o usuário ANTES de redirecionar
+        // Dispara um evento global para o React lidar com o logout suavemente (sem F5 forçado)
+        window.dispatchEvent(new Event('auth:unauthorized'));
+        
+        // Avisa o usuário
         toast.error("Sessão expirada. Por favor, faça login novamente.");
-
-        // Pequeno delay para o usuário ler a mensagem
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 1500);
       }
     }
 

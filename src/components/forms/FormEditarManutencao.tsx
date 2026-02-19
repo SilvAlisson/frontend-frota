@@ -16,9 +16,13 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Badge } from '../ui/Badge';
 
+// --- HOOKS ATÔMICOS ---
+import { useVeiculos } from '../../hooks/useVeiculos';
+import { useProdutos } from '../../hooks/useProdutos';
+import { useFornecedores } from '../../hooks/useFornecedores';
+
 // --- UTILS ---
 import { parseDecimal, formatKmVisual } from '../../utils';
-import type { Veiculo, Produto, Fornecedor } from '../../types';
 
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
@@ -87,18 +91,23 @@ const manutencaoSchema = z.object({
 type ManutencaoFormInput = z.input<typeof manutencaoSchema>;
 type ManutencaoFormOutput = z.output<typeof manutencaoSchema>;
 
+// ✂️ Propriedades enxutas
 interface FormEditarManutencaoProps {
   osParaEditar: any;
-  veiculos: Veiculo[];
-  produtos: Produto[];
-  fornecedores: Fornecedor[];
   onSuccess: () => void;
   onClose: () => void;
 }
 
 export function FormEditarManutencao({
-  osParaEditar, veiculos, produtos, fornecedores, onSuccess, onClose
+  osParaEditar, onSuccess, onClose
 }: FormEditarManutencaoProps) {
+
+  // 📡 BUSCA INDEPENDENTE COM CACHE
+  const { data: veiculos = [], isLoading: loadV } = useVeiculos();
+  const { data: produtos = [], isLoading: loadP } = useProdutos();
+  const { data: fornecedores = [], isLoading: loadF } = useFornecedores();
+
+  const isLoadingDados = loadV || loadP || loadF;
 
   const caMatch = osParaEditar.observacoes?.match(/\[CA: (.+?)\]/);
   const caExistente = caMatch ? caMatch[1] : '';
@@ -229,10 +238,19 @@ export function FormEditarManutencao({
     }
   };
 
-  const isLocked = isSubmitting || uploading;
+  const isLocked = isSubmitting || uploading || isLoadingDados;
+
+  // Renderiza um mini loader se os dados ainda não chegaram do cache/api
+  if (isLoadingDados) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[300px] text-text-muted gap-3">
+         <Loader2 className="w-8 h-8 animate-spin text-primary" />
+         <span className="text-sm font-medium">Carregando dados da OS...</span>
+      </div>
+    );
+  }
 
   // --- RENDERIZAÇÃO ---
-  // Removido max-h-[90vh], bg-white fixo e adicionado min-h-0 para flex nested
   return (
     <div className="flex flex-col h-full w-full bg-surface min-h-0">
       
@@ -268,7 +286,6 @@ export function FormEditarManutencao({
       </div>
 
       {/* BODY COM SCROLL INTERNO */}
-      {/* 'min-h-0' garante que o scroll funcione dentro do modal sem cortar */}
       <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden min-h-0">
         
         <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 custom-scrollbar">

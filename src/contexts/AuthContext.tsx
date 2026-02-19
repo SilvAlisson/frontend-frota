@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { api } from '../services/api'; // Importamos a instância da API para configurar o header
 import type { User } from '../types';
 
 interface AuthContextData {
@@ -18,6 +17,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Inicia true para impedir redirecionamentos errados antes de ler o storage
   const [loading, setLoading] = useState(true);
 
+  // Função interna para limpar dados (usada no logout e no catch)
+  const signOut = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('authUser');
+    
+    // Ao setar para nulo, o Router detecta a mudança e redireciona para o /login na hora
+    setUser(null);
+  };
+
   useEffect(() => {
     // Função para restaurar a sessão ao recarregar a página
     const recoverSession = () => {
@@ -27,17 +35,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (storedToken && storedUser) {
         try {
           const parsedUser = JSON.parse(storedUser) as User;
-
-          // 1. Restaura o estado
+          
+          // 1. Restaura o estado (o interceptor da api.ts fará o resto)
           setUser(parsedUser);
-
-          // 2. Reconecta o token na instância do Axios imediatamente
-          // Isso garante que requisições feitas logo após o load já tenham o token
-          api.defaults.headers.common['Authorization'] = `Bearer ${storedToken}`;
 
         } catch (error) {
           console.error("Sessão inválida encontrada. Limpando dados.", error);
-          // Se o JSON estiver corrompido, faz logout forçado para evitar erros
           signOut();
         }
       }
@@ -46,28 +49,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     recoverSession();
+
+    // --- NOVO: Listener para o evento de erro 401 disparado pela API ---
+    const handleUnauthorized = () => {
+      signOut();
+    };
+
+    window.addEventListener('auth:unauthorized', handleUnauthorized);
+    
+    // Cleanup do listener
+    return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
   }, []);
-
-  // Função interna para limpar dados (usada no logout e no catch)
-  const signOut = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('authUser');
-
-    // Remove o header para evitar envio de token inválido
-    delete api.defaults.headers.common['Authorization'];
-
-    setUser(null);
-  };
 
   const login = (data: { token: string; user: User }) => {
     // 1. Persistência
     localStorage.setItem('authToken', data.token);
     localStorage.setItem('authUser', JSON.stringify(data.user));
 
-    // 2. Configuração da API
-    api.defaults.headers.common['Authorization'] = `Bearer ${data.token}`;
-
-    // 3. Atualização do Estado
+    // 2. Atualização do Estado
     setUser(data.user);
   };
 

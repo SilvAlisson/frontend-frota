@@ -1,12 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import { 
   Calendar, Filter, Download,
-  CheckCircle2, AlertCircle, PlayCircle, FileText, FileX 
+  CheckCircle2, AlertCircle, PlayCircle, FileText, FileX, DollarSign, Wrench 
 } from 'lucide-react';
-import type { OrdemServico, Veiculo, Produto, Fornecedor } from '../types';
+import type { OrdemServico } from '../types';
+
+// --- HOOKS ATÔMICOS ---
+import { useVeiculos } from '../hooks/useVeiculos';
 
 // --- DESIGN SYSTEM ---
 import { PageHeader } from './ui/PageHeader';
@@ -24,22 +27,20 @@ import { TableStyles } from '../styles/table';
 // --- FORMS ---
 import { FormEditarManutencao } from './forms/FormEditarManutencao';
 
+// ✂️ Propriedades enxutas: sem arrays globais passados por prop!
 interface HistoricoManutencoesProps {
   userRole: string;
-  veiculos: Veiculo[];
-  produtos: Produto[];
-  fornecedores: Fornecedor[];
   filtroInicial?: { veiculoId?: string; dataInicio?: string; };
 }
 
 export function HistoricoManutencoes({
   userRole,
-  veiculos,
-  produtos,
-  fornecedores,
   filtroInicial
 }: HistoricoManutencoesProps) {
   
+  // 📡 BUSCA INDEPENDENTE COM CACHE
+  const { data: veiculos = [] } = useVeiculos();
+
   // --- ESTADOS ---
   const [historico, setHistorico] = useState<OrdemServico[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,7 +57,7 @@ export function HistoricoManutencoes({
   const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
   const canDelete = userRole === 'ADMIN';
 
-  // --- FETCHING ---
+  // --- FETCHING OTIMIZADO ---
   const fetchHistorico = useCallback(async () => {
     setLoading(true);
     try {
@@ -75,7 +76,14 @@ export function HistoricoManutencoes({
     }
   }, [filtros]);
 
-  useEffect(() => { fetchHistorico(); }, [fetchHistorico]);
+  useEffect(() => { 
+    fetchHistorico(); 
+  }, [fetchHistorico]);
+
+  // --- CÁLCULOS MEMOIZADOS (SUMÁRIO) ---
+  const totalGasto = useMemo(() => {
+    return historico.reduce((acc, os) => acc + (Number(os.custoTotal) || 0), 0);
+  }, [historico]);
 
   // --- ACTIONS ---
   const handleDelete = async () => {
@@ -110,7 +118,6 @@ export function HistoricoManutencoes({
   };
 
   // --- HELPERS VISUAIS ---
-  
   const getBadgeTipo = (tipo: string) => {
     const map: Record<string, "warning" | "info" | "success" | "neutral"> = {
       'CORRETIVA': 'warning',
@@ -138,13 +145,13 @@ export function HistoricoManutencoes({
     }
   };
 
-  const veiculosOptions = [
+  const veiculosOptions = useMemo(() => [
     { value: "", label: "Todos os veículos" },
     ...veiculos.map(v => ({ value: v.id, label: v.placa }))
-  ];
+  ], [veiculos]);
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-6 pb-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
       
       {/* 1. HEADER & FILTROS */}
       <PageHeader 
@@ -177,22 +184,44 @@ export function HistoricoManutencoes({
                 icon={<Filter className="w-4 h-4"/>}
               />
             </div>
-            <div className="pb-0.5">
+            <div className="pb-0.5 w-full sm:w-auto flex items-end">
               <Button 
                 variant="secondary" 
                 onClick={handleExportar} 
                 icon={<Download className="w-4 h-4" />}
                 disabled={historico.length === 0}
+                className="w-full sm:w-auto h-9"
               >
-                Excel
+                Exportar
               </Button>
             </div>
           </div>
         }
       />
 
-      {/* 2. TABELA */}
-      <Card noPadding>
+      {/* 2. SUMÁRIO DA CONSULTA */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card padding="sm" className="bg-red-50 border-red-100 flex flex-col justify-center gap-1">
+          <span className="text-xs font-bold text-red-700 uppercase tracking-wider flex items-center gap-2">
+            <DollarSign className="w-4 h-4" /> Custo Total de Manutenção
+          </span>
+          <span className="text-2xl font-mono font-black text-red-700 truncate">
+            {totalGasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          </span>
+        </Card>
+        
+        <Card padding="sm" className="bg-surface border-border flex flex-col justify-center gap-1">
+          <span className="text-xs font-bold text-text-muted uppercase tracking-wider flex items-center gap-2">
+            <Wrench className="w-4 h-4" /> Ordens de Serviço (OS)
+          </span>
+          <span className="text-2xl font-mono font-black text-text-main truncate">
+            {historico.length} <small className="text-sm font-medium opacity-70">registros</small>
+          </span>
+        </Card>
+      </div>
+
+      {/* 3. TABELA */}
+      <Card padding="none" className="overflow-hidden border-border/50 shadow-sm">
         {loading ? (
           <div className="p-6 space-y-4">
             {[1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-50 rounded-lg animate-pulse" />)}
@@ -210,7 +239,6 @@ export function HistoricoManutencoes({
                 <th className={TableStyles.th}>Veículo</th>
                 <th className={TableStyles.th}>Fornecedor / Serviços</th>
                 <th className={TableStyles.th}>Custo Total</th>
-                {/* [ATUALIZADO] Nova coluna Prova */}
                 <th className={`${TableStyles.th} text-center`}>Prova</th>
                 <th className={`${TableStyles.th} text-right`}>Ações</th>
               </>
@@ -249,7 +277,6 @@ export function HistoricoManutencoes({
                   </span>
                 </td>
                 
-                {/* [ATUALIZADO] Lógica Visual da Coluna Prova */}
                 <td className={`${TableStyles.td} text-center`}>
                   {os.fotoComprovanteUrl ? (
                     <button
@@ -277,37 +304,32 @@ export function HistoricoManutencoes({
 
             // --- MOBILE ---
             renderMobile={(os) => (
-              <div className="p-4 space-y-3">
+              <div className="p-4 space-y-3 border-b border-border hover:bg-surface-hover/30 transition-colors">
                 <div className="flex justify-between items-start">
                   <div className="flex gap-3">
-                    {/* Ícone Data */}
-                    <div className="bg-gray-50 p-2 rounded-lg border border-gray-100 flex flex-col items-center justify-center w-12 h-12 shrink-0">
-                      <span className="text-sm font-bold text-gray-700">{new Date(os.data).getDate()}</span>
-                      <span className="text-[9px] font-bold uppercase text-gray-400">
+                    <div className="bg-surface-hover p-2 rounded-lg border border-border flex flex-col items-center justify-center w-12 h-12 shrink-0">
+                      <span className="text-sm font-bold text-text-main">{new Date(os.data).getDate()}</span>
+                      <span className="text-[9px] font-bold uppercase text-text-muted">
                         {new Date(os.data).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
                       </span>
                     </div>
-                    {/* Info Principal */}
                     <div>
-                      <span className="font-mono font-bold text-gray-900 block">{os.veiculo?.placa || 'N/A'}</span>
-                      <span className="text-xs text-gray-500">{os.fornecedor?.nome}</span>
+                      <span className="font-mono font-bold text-text-main block">{os.veiculo?.placa || 'N/A'}</span>
+                      <span className="text-xs text-text-secondary">{os.fornecedor?.nome}</span>
                     </div>
                   </div>
-                  {/* Status no Topo Mobile */}
                   <div className="flex flex-col items-end gap-1">
                     {getBadgeStatus(os.status)}
                   </div>
                 </div>
 
-                {/* Linha de Detalhes */}
-                <div className="flex justify-between items-center border-t border-dashed border-gray-100 pt-3">
+                <div className="flex justify-between items-center border-t border-dashed border-border pt-3">
                   {getBadgeTipo(os.tipo)}
-                  <span className="font-mono font-bold text-gray-900">
+                  <span className="font-mono font-bold text-text-main">
                     {Number(os.custoTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                   </span>
                 </div>
 
-                {/* [ATUALIZADO] Ações Mobile com Botão de Nota Explícito */}
                 <div className="flex gap-2 pt-1">
                    {os.fotoComprovanteUrl ? (
                     <Button 
@@ -328,7 +350,7 @@ export function HistoricoManutencoes({
                       Sem Nota
                     </Button>
                   )}
-                  <div className="flex-1">
+                  <div className="flex-1 flex justify-end">
                     <DropdownAcoes 
                         onEditar={canEdit ? () => setEditingOS(os) : undefined}
                         onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
@@ -341,7 +363,7 @@ export function HistoricoManutencoes({
         )}
       </Card>
 
-      {/* 3. MODAIS */}
+      {/* 4. MODAIS */}
       
       {/* Edição */}
       <Modal 
@@ -353,9 +375,6 @@ export function HistoricoManutencoes({
         {editingOS && (
           <FormEditarManutencao
             osParaEditar={editingOS}
-            veiculos={veiculos}
-            produtos={produtos}
-            fornecedores={fornecedores}
             onSuccess={() => { setEditingOS(null); fetchHistorico(); }}
             onClose={() => setEditingOS(null)}
           />

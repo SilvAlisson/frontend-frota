@@ -11,10 +11,17 @@ import {
   MapPin, Calendar, CreditCard, Image as ImageIcon, Loader2 
 } from 'lucide-react';
 
+// --- DESIGN SYSTEM ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select'; 
-import type { Abastecimento, User, Veiculo, Produto, Fornecedor } from '../../types';
+import type { Abastecimento } from '../../types';
+
+// --- HOOKS ATÔMICOS ---
+import { useVeiculos } from '../../hooks/useVeiculos';
+import { useUsuarios } from '../../hooks/useUsuarios';
+import { useProdutos } from '../../hooks/useProdutos';
+import { useFornecedores } from '../../hooks/useFornecedores';
 
 // --- UTILS: Compressão de Imagem ---
 const comprimirImagem = (arquivo: File): Promise<File> => {
@@ -82,17 +89,20 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const [uploading, setUploading] = useState(false);
   const [previewFoto, setPreviewFoto] = useState<string | null>(null);
 
-  // 1. Queries
+  // 📡 DADOS GLOBAIS COM CACHE (ATÔMICOS)
+  const { data: usuarios = [], isLoading: loadU } = useUsuarios();
+  const { data: veiculos = [], isLoading: loadV } = useVeiculos();
+  const { data: produtos = [], isLoading: loadP } = useProdutos();
+  const { data: fornecedores = [], isLoading: loadF } = useFornecedores();
+
+  // 1. Query Específica do Abastecimento
   const { data: abastecimento, isLoading: loadingAbs } = useQuery<Abastecimento>({
     queryKey: ['abastecimento', abastecimentoId],
     queryFn: async () => (await api.get(`/abastecimentos/${abastecimentoId}`)).data,
     retry: 1
   });
 
-  const { data: usuarios = [] } = useQuery<User[]>({ queryKey: ['users'], queryFn: async () => (await api.get('/users')).data, staleTime: 1000 * 60 * 5 });
-  const { data: veiculos = [] } = useQuery<Veiculo[]>({ queryKey: ['veiculos'], queryFn: async () => (await api.get('/veiculos')).data, staleTime: 1000 * 60 * 5 });
-  const { data: produtos = [] } = useQuery<Produto[]>({ queryKey: ['produtos'], queryFn: async () => (await api.get('/produtos')).data, staleTime: 1000 * 60 * 30 });
-  const { data: fornecedores = [] } = useQuery<Fornecedor[]>({ queryKey: ['fornecedores'], queryFn: async () => (await api.get('/fornecedores')).data, staleTime: 1000 * 60 * 30 });
+  const isLoadingDados = loadU || loadV || loadP || loadF || loadingAbs;
 
   // Filtros
   const produtosCombustivel = useMemo(() => produtos.filter(p => ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo)), [produtos]);
@@ -165,7 +175,6 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   // 5. Mutation
   const updateMutation = useMutation({
     mutationFn: async (data: EditFormOutput) => {
-      // Rota correta conforme index.ts do backend
       await api.put(`/abastecimentos/${abastecimentoId}`, {
         ...data,
         dataHora: new Date(data.dataHora).toISOString(),
@@ -187,19 +196,19 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
     }
   });
 
-  // [CORREÇÃO CRÍTICA]: Adicionado updateMutation.isPending
-  // Agora o botão vai travar de verdade enquanto o mutation estiver rodando
   const isLocked = isSubmitting || uploading || updateMutation.isPending;
 
-  if (loadingAbs) return (
-    <div className="h-64 flex flex-col items-center justify-center space-y-3">
-      <Loader2 className="w-8 h-8 text-primary animate-spin" />
-      <p className="text-sm text-text-muted animate-pulse">Carregando...</p>
-    </div>
-  );
+  // Renderiza um loader elegante enquanto as listas não carregam
+  if (isLoadingDados) {
+    return (
+      <div className="h-[300px] flex flex-col items-center justify-center space-y-3">
+        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        <p className="text-sm font-medium text-text-muted animate-pulse">Carregando dados...</p>
+      </div>
+    );
+  }
 
   return (
-    // [LAYOUT]: h-full, w-full e min-h-0 para respeitar o flex do modal pai
     <div className="flex flex-col h-full w-full bg-surface min-h-0">
       
       {/* HEADER FIXO */}
@@ -213,7 +222,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         </div>
       </div>
 
-      {/* BODY COM SCROLL INTERNO - min-h-0 garante o comportamento correto do flex */}
+      {/* BODY COM SCROLL INTERNO */}
       <form onSubmit={handleSubmit((data) => updateMutation.mutate(data))} className="flex-1 flex flex-col overflow-hidden min-h-0">
         
         {/* MIOLO ROLÁVEL */}
@@ -223,7 +232,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
             {/* Foto */}
             <div className="w-full md:w-1/3 flex flex-col gap-2">
               <span className="text-xs font-bold text-text-secondary uppercase ml-1">Comprovante</span>
-              <div className="relative aspect-[3/4] bg-gray-50 dark:bg-gray-800 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden group hover:border-primary transition-colors cursor-pointer">
+              <div className="relative aspect-[3/4] bg-surface-hover/30 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden group hover:border-primary transition-colors cursor-pointer">
                 {uploading ? (
                   <div className="flex flex-col items-center gap-2">
                     <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -270,7 +279,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
             </div>
             <div className="space-y-3">
               {fields.map((field, index) => (
-                <div key={field.id} className="grid grid-cols-12 gap-3 items-end bg-surface p-3 rounded-xl border border-border shadow-sm relative group">
+                <div key={field.id} className="grid grid-cols-12 gap-3 items-end bg-surface p-3 rounded-xl border border-border shadow-sm relative group hover:border-primary/30 transition-colors">
                   <button type="button" onClick={() => remove(index)} disabled={isLocked} className="absolute -top-2 -right-2 bg-surface text-text-muted hover:text-error rounded-full w-6 h-6 border border-border shadow-sm flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-all">
                     <X className="w-3 h-3" />
                   </button>
@@ -281,13 +290,13 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
                     <Input label="Qtd" type="number" step="any" {...register(`itens.${index}.quantidade`)} className="h-9 text-xs text-center" containerClassName="!mb-0" disabled={isLocked} />
                   </div>
                   <div className="col-span-6 sm:col-span-4">
-                    <Input label="R$ Unit" type="number" step="0.001" {...register(`itens.${index}.valorPorUnidade`)} className="h-9 text-xs text-right font-mono" containerClassName="!mb-0" disabled={isLocked} />
+                    <Input label="R$ Unit" type="number" step="0.001" {...register(`itens.${index}.valorPorUnidade`)} className="h-9 text-xs text-right font-mono font-bold" containerClassName="!mb-0" disabled={isLocked} />
                   </div>
                 </div>
               ))}
             </div>
-            <button type="button" onClick={() => append({ produtoId: '', quantidade: 0, valorPorUnidade: 0 })} disabled={isLocked} className="w-full mt-3 py-2 border border-dashed border-border rounded-lg text-xs text-text-muted hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-1">
-              <Plus className="w-3 h-3" /> Adicionar Item
+            <button type="button" onClick={() => append({ produtoId: '', quantidade: 0, valorPorUnidade: 0 })} disabled={isLocked} className="w-full mt-3 py-2 border border-dashed border-border rounded-lg text-xs font-bold text-text-muted hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-1 h-10">
+              <Plus className="w-4 h-4" /> Adicionar Combustível / Aditivo
             </button>
           </div>
 
@@ -295,10 +304,9 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         </div>
 
         {/* FOOTER FIXO */}
-        <div className="flex gap-3 p-4 border-t border-border bg-background shrink-0">
+        <div className="flex gap-3 p-4 border-t border-border bg-surface-hover/30 shrink-0">
           <Button type="button" variant="ghost" onClick={onCancel} className="flex-1" disabled={isLocked}>Cancelar</Button>
           
-          {/* [CORREÇÃO UX]: Botão reage ao 'isLocked' (loading/submitting) */}
           <Button 
             type="submit" 
             variant="primary" 

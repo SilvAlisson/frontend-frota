@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import { FormEditarAbastecimento } from './forms/FormEditarAbastecimento';
-import type { Abastecimento, Veiculo } from '../types';
-import { FileDown, Calendar, Truck, Droplets, Receipt, Gauge } from 'lucide-react';
+import type { Abastecimento } from '../types';
+import { FileDown, Calendar, Truck, Droplets, Receipt, Gauge, DollarSign } from 'lucide-react';
+
+// --- HOOKS ATÔMICOS ---
+import { useVeiculos } from '../hooks/useVeiculos';
 
 // --- DESIGN SYSTEM KLIN ---
 import { PageHeader } from './ui/PageHeader';
@@ -19,25 +22,29 @@ import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { TableStyles } from '../styles/table';
 
+// ✂️ Removemos "veiculos" das propriedades!
 interface HistoricoAbastecimentosProps {
   userRole: string;
-  veiculos: Veiculo[];
   filtroInicial?: {
     veiculoId?: string;
     dataInicio?: string;
   };
 }
 
-export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: HistoricoAbastecimentosProps) {
-  // Estados de Dados
+export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAbastecimentosProps) {
+  
+  // 📡 BUSCA INDEPENDENTE COM CACHE
+  const { data: veiculos = [] } = useVeiculos();
+
+  // --- ESTADOS DE DADOS ---
   const [historico, setHistorico] = useState<Abastecimento[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Estados de Interação
+  // --- ESTADOS DE INTERAÇÃO ---
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Filtros
+  // --- ESTADOS DE FILTROS ---
   const [dataInicioFiltro, setDataInicioFiltro] = useState(filtroInicial?.dataInicio || '');
   const [dataFimFiltro, setDataFimFiltro] = useState('');
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState(filtroInicial?.veiculoId || '');
@@ -49,11 +56,11 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
     if (filtroInicial?.veiculoId) setVeiculoIdFiltro(filtroInicial.veiculoId);
   }, [filtroInicial]);
 
-  // Busca de Dados
-  const fetchHistorico = async () => {
+  // --- FETCHING OTIMIZADO ---
+  const fetchHistorico = useCallback(async () => {
     setLoading(true);
     try {
-      const params: any = {};
+      const params: Record<string, string> = {};
       if (dataInicioFiltro) params.dataInicio = dataInicioFiltro;
       if (dataFimFiltro) params.dataFim = dataFimFiltro;
       if (veiculoIdFiltro) params.veiculoId = veiculoIdFiltro;
@@ -64,15 +71,32 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
       console.error("Erro ao buscar histórico:", err);
       toast.error('Falha ao carregar abastecimentos.');
     } finally {
-      setTimeout(() => setLoading(false), 300);
+      setLoading(false);
     }
-  };
+  }, [dataInicioFiltro, dataFimFiltro, veiculoIdFiltro]);
 
   useEffect(() => {
     fetchHistorico();
-  }, [dataInicioFiltro, dataFimFiltro, veiculoIdFiltro]);
+  }, [fetchHistorico]);
 
-  // Ações
+  // --- CÁLCULOS MEMOIZADOS (SUMÁRIO) ---
+  const totalGasto = useMemo(() => {
+    return historico.reduce((acc, ab) => acc + (Number(ab.custoTotal) || 0), 0);
+  }, [historico]);
+
+  const totalLitros = useMemo(() => {
+    return historico.reduce((acc, ab) => {
+      const litrosDoAbastecimento = ab.itens?.reduce((sum, item) => {
+        if (item.produto.tipo === 'COMBUSTIVEL') {
+          return sum + Number(item.quantidade);
+        }
+        return sum;
+      }, 0) || 0;
+      return acc + litrosDoAbastecimento;
+    }, 0);
+  }, [historico]);
+
+  // --- ACTIONS ---
   const handleDelete = async () => {
     if (!deletingId) return;
     try {
@@ -127,44 +151,41 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
     });
   };
 
-  // Formatadores e Helpers
+  // --- FORMATADORES & HELPERS ---
   const formatCurrency = (value: number | string) => {
     const num = Number(value) || 0;
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   };
 
   const getCombustivelBadge = (ab: Abastecimento) => {
-    // Tenta deduzir o tipo principal pelos itens
     const itemCombustivel = ab.itens?.find(i => i.produto.tipo === 'COMBUSTIVEL');
     const nome = itemCombustivel ? itemCombustivel.produto.nome : 'Outros';
     
-    // Mapeamento simples de cor por nome
     const nomeUpper = nome.toUpperCase();
     let variant: "neutral" | "warning" | "success" | "info" = "neutral";
     
-    if (nomeUpper.includes('DIESEL')) variant = "neutral"; // Diesel geralmente preto/cinza
-    if (nomeUpper.includes('GASOLINA')) variant = "warning"; // Inflamável
-    if (nomeUpper.includes('ETANOL')) variant = "success"; // Verde
-    if (nomeUpper.includes('ARLA')) variant = "info"; // Azul
+    if (nomeUpper.includes('DIESEL')) variant = "neutral";
+    if (nomeUpper.includes('GASOLINA')) variant = "warning";
+    if (nomeUpper.includes('ETANOL')) variant = "success";
+    if (nomeUpper.includes('ARLA')) variant = "info";
 
     return <Badge variant={variant}>{nome}</Badge>;
   };
 
-  // Opções para o Select de Veículos
-  const veiculosOptions = [
+  const veiculosOptions = useMemo(() => [
     { value: "", label: "Todos os veículos" },
     ...veiculos.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` }))
-  ];
+  ], [veiculos]);
 
   return (
-    <div className="space-y-6 pb-10">
+    <div className="space-y-6 pb-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
 
       {/* 1. HEADER E FILTROS */}
       <PageHeader 
         title="Histórico de Abastecimentos"
         subtitle="Monitore custos, consumo e médias de combustível."
         extraAction={
-          <div className="flex flex-col sm:flex-row gap-2 w-full xl:w-auto">
+          <div className="flex flex-col sm:flex-row gap-2 w-full xl:w-auto items-end">
              <div className="w-full sm:w-32">
                <Input 
                  type="date" 
@@ -190,13 +211,13 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
                  icon={<Truck className="w-4 h-4" />}
                />
              </div>
-             <div className="flex items-end pb-0.5">
+             <div className="flex items-end pb-0.5 w-full sm:w-auto">
                <Button 
-                 variant="success" 
+                 variant="secondary" 
                  onClick={handleExportar} 
                  disabled={historico.length === 0}
                  icon={<FileDown className="w-4 h-4" />}
-                 className="w-full sm:w-auto"
+                 className="w-full sm:w-auto h-9"
                >
                  Exportar
                </Button>
@@ -205,11 +226,32 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
         }
       />
 
-      {/* 2. TABELA (CARD) */}
-      <Card noPadding>
+      {/* 2. SUMÁRIO DA CONSULTA */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card padding="sm" className="bg-emerald-50 border-emerald-100 flex flex-col justify-center gap-1">
+          <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider flex items-center gap-2">
+            <DollarSign className="w-4 h-4" /> Total Gasto
+          </span>
+          <span className="text-2xl font-mono font-black text-emerald-700 truncate">
+            {formatCurrency(totalGasto)}
+          </span>
+        </Card>
+        
+        <Card padding="sm" className="bg-sky-50 border-sky-100 flex flex-col justify-center gap-1">
+          <span className="text-xs font-bold text-sky-700 uppercase tracking-wider flex items-center gap-2">
+            <Droplets className="w-4 h-4" /> Volume Abastecido
+          </span>
+          <span className="text-2xl font-mono font-black text-sky-700">
+            {totalLitros.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} <small className="text-sm font-bold opacity-70">L</small>
+          </span>
+        </Card>
+      </div>
+
+      {/* 3. TABELA (CARD) */}
+      <Card padding="none" className="overflow-hidden border-border/50 shadow-sm">
         {loading ? (
           <div className="p-6 space-y-4">
-            {[1, 2, 3].map(i => <div key={i} className="h-12 bg-gray-50 rounded-lg animate-pulse" />)}
+            {[1, 2, 3].map(i => <div key={i} className="h-12 bg-surface-hover rounded-lg animate-pulse" />)}
           </div>
         ) : (
           <ListaResponsiva
@@ -230,11 +272,11 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
               <>
                 <td className={TableStyles.td}>
                   <div className="flex flex-col gap-1">
-                    <span className="font-bold text-gray-900 flex items-center gap-2">
-                        <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="font-bold text-text-main flex items-center gap-2">
+                        <Calendar className="w-3.5 h-3.5 text-text-muted" />
                         {new Date(ab.dataHora).toLocaleDateString('pt-BR')}
                     </span>
-                    <span className="text-xs text-gray-500 ml-5">
+                    <span className="text-xs text-text-secondary ml-5">
                         {new Date(ab.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                     </span>
                   </div>
@@ -242,8 +284,8 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
                 <td className={TableStyles.td}>
                   <div className="flex flex-col">
                     <span className="font-mono font-bold text-primary">{ab.veiculo?.placa || 'Sem placa'}</span>
-                    <span className="text-xs text-gray-500 font-medium">{ab.operador?.nome || 'Sem operador'}</span>
-                    <div className="flex items-center gap-1 mt-0.5 text-[10px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded w-fit border border-gray-100">
+                    <span className="text-xs text-text-secondary font-medium">{ab.operador?.nome || 'Sem operador'}</span>
+                    <div className="flex items-center gap-1 mt-0.5 text-[10px] text-text-muted bg-surface-hover px-1.5 py-0.5 rounded w-fit border border-border">
                         <Gauge className="w-3 h-3" /> {ab.kmOdometro.toLocaleString('pt-BR')} km
                     </div>
                   </div>
@@ -257,7 +299,7 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
                             href={ab.fotoNotaFiscalUrl} 
                             target="_blank" 
                             rel="noopener noreferrer" 
-                            className="text-xs flex items-center gap-1 text-blue-600 hover:text-blue-700 font-medium hover:underline"
+                            className="text-xs flex items-center gap-1 text-sky-600 hover:text-sky-700 font-medium hover:underline"
                         >
                             <Receipt className="w-3 h-3" /> Ver Nota Fiscal
                         </a>
@@ -266,9 +308,9 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
                 </td>
                 <td className={TableStyles.td}>
                   <div className="flex flex-col">
-                      <span className="font-mono font-bold text-gray-900">{formatCurrency(ab.custoTotal)}</span>
-                      <span className="text-xs text-gray-500 flex items-center gap-1">
-                          <Droplets className="w-3 h-3" />
+                      <span className="font-mono font-bold text-text-main">{formatCurrency(ab.custoTotal)}</span>
+                      <span className="text-xs text-text-secondary flex items-center gap-1">
+                          <Droplets className="w-3 h-3 text-sky-500" />
                           {(ab.itens || []).map(i => `${i.quantidade}${i.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'un'}`).join(' + ')}
                       </span>
                   </div>
@@ -284,19 +326,19 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
 
             // --- MOBILE ---
             renderMobile={(ab) => (
-              <div className="p-4 flex flex-col gap-3">
+              <div className="p-4 flex flex-col gap-3 border-b border-border last:border-0 hover:bg-surface-hover/30 transition-colors">
                 <div className="flex justify-between items-start">
                   <div className="flex gap-3">
                     {/* Data Box */}
-                    <div className="bg-gray-50 text-gray-600 p-1.5 rounded-lg border border-gray-200 flex flex-col items-center justify-center w-12 h-12 shrink-0">
+                    <div className="bg-surface-hover text-text-muted p-1.5 rounded-lg border border-border flex flex-col items-center justify-center w-12 h-12 shrink-0">
                       <span className="text-sm font-bold leading-none">{new Date(ab.dataHora).getDate()}</span>
                       <span className="text-[9px] uppercase font-bold">{new Date(ab.dataHora).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</span>
                     </div>
                     
                     {/* Infos Principais */}
                     <div className="flex flex-col">
-                      <span className="font-mono font-bold text-gray-900">{ab.veiculo?.placa || 'Sem Placa'}</span>
-                      <span className="text-xs text-gray-500">{ab.fornecedor?.nome}</span>
+                      <span className="font-mono font-bold text-text-main">{ab.veiculo?.placa || 'Sem Placa'}</span>
+                      <span className="text-xs text-text-secondary">{ab.fornecedor?.nome}</span>
                     </div>
                   </div>
 
@@ -307,19 +349,19 @@ export function HistoricoAbastecimentos({ userRole, veiculos, filtroInicial }: H
                 </div>
 
                 {/* Detalhes Mobile */}
-                <div className="grid grid-cols-2 gap-2 border-t border-dashed border-gray-100 pt-3">
+                <div className="grid grid-cols-2 gap-2 border-t border-dashed border-border pt-3">
                     <div className="flex flex-col">
-                        <span className="text-[10px] text-gray-400 uppercase font-bold">Valor</span>
-                        <span className="font-mono font-bold text-gray-900">{formatCurrency(ab.custoTotal)}</span>
+                        <span className="text-[10px] text-text-muted uppercase font-bold">Valor</span>
+                        <span className="font-mono font-bold text-text-main">{formatCurrency(ab.custoTotal)}</span>
                     </div>
                     <div className="flex flex-col items-end">
-                        <span className="text-[10px] text-gray-400 uppercase font-bold">Combustível</span>
+                        <span className="text-[10px] text-text-muted uppercase font-bold mb-1">Combustível</span>
                         {getCombustivelBadge(ab)}
                     </div>
                 </div>
                 
                 {ab.fotoNotaFiscalUrl && (
-                    <a href={ab.fotoNotaFiscalUrl} target="_blank" className="bg-blue-50 text-blue-600 text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors">
+                    <a href={ab.fotoNotaFiscalUrl} target="_blank" className="bg-sky-50 text-sky-700 border border-sky-100 text-xs font-bold py-2 px-3 rounded-lg flex items-center justify-center gap-2 hover:bg-sky-100 transition-colors mt-1">
                         <Receipt className="w-4 h-4" /> Visualizar Nota Fiscal
                     </a>
                 )}
