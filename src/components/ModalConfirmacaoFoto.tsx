@@ -20,7 +20,7 @@ interface ModalProps {
   apiMethod: 'POST' | 'PUT';
   onClose: () => void;
   onSuccess: (data: any) => void;
-  nested?: boolean; // 🔑 Permite abrir sobrepondo outro modal
+  nested?: boolean;
 }
 
 // --- FUNÇÃO DE COMPRESSÃO (Lógica mantida 100% original) ---
