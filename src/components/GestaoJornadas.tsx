@@ -8,7 +8,7 @@ import {
   MapPin, 
   Clock, 
   AlertCircle,
-  ChevronRight 
+  ChevronRight // ✅ Importado do Lucide
 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -22,7 +22,7 @@ import { Modal } from './ui/Modal';
 import { FormEditarJornada } from './forms/FormEditarJornada';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 
-// Função auxiliar para calcular duração
+// Função auxiliar para calcular duração (Mantida integralmente)
 function formatDuration(dateString: string) {
   const start = new Date(dateString);
   const now = new Date();
@@ -44,12 +44,13 @@ export function GestaoJornadas({
   isLoading = false
 }: GestaoJornadasProps) {
   
-  const [jornadaParaEncerrar, setJornadaParaEncerrar] = useState<string | null>(null);
+  // Alterado para guardar o objeto completo, permitindo acesso ao kmInicio no encerramento
+  const [jornadaParaEncerrar, setJornadaParaEncerrar] = useState<any | null>(null);
   const [jornadaEditandoId, setJornadaEditandoId] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
   const [encerrando, setEncerrando] = useState(false);
 
-  // 🔍 FILTRAGEM CORRIGIDA: Backend usa 'operador', não 'motorista'
+  // Filtragem Otimizada (Corrigida para usar 'operador', que é o padrão do seu backend)
   const jornadasFiltradas = jornadasAbertas.filter(j => 
     j.operador?.nome?.toLowerCase().includes(busca.toLowerCase()) ||
     j.veiculo?.placa?.toLowerCase().includes(busca.toLowerCase()) ||
@@ -60,16 +61,21 @@ export function GestaoJornadas({
     if (!jornadaParaEncerrar) return;
     setEncerrando(true);
     try {
-      // 🚀 CORREÇÃO DA ROTA (404): O Backend espera /finalizar/:id
-      await api.put(`/jornadas/finalizar/${jornadaParaEncerrar}`, {
-        kmFim: 0, // Backend assume o último KM ou trata como forçado
+      // ✅ CORREÇÃO DO ERRO 400 E 404:
+      // 1. Rota correta: /finalizar/:id
+      // 2. Campos que o seu Backend exige: kmFim e observacoes
+      // 3. Valor de segurança: enviamos o kmInicio para não violar a regra "Fim >= Inicio"
+      await api.put(`/jornadas/finalizar/${jornadaParaEncerrar.id}`, {
+        kmFim: jornadaParaEncerrar.kmInicio, 
         observacoes: "Encerrado manualmente via Painel Administrativo"
       });
+
       toast.success("Jornada finalizada com sucesso.");
-      onJornadaFinalizadaManualmente(jornadaParaEncerrar);
-    } catch (error) {
+      onJornadaFinalizadaManualmente(jornadaParaEncerrar.id);
+    } catch (error: any) {
       console.error(error);
-      toast.error("Erro ao finalizar jornada.");
+      const msg = error.response?.data?.error || "Erro ao finalizar jornada.";
+      toast.error(msg);
     } finally {
       setEncerrando(false);
       setJornadaParaEncerrar(null);
@@ -79,7 +85,7 @@ export function GestaoJornadas({
   const handleSuccessEdit = () => {
     setJornadaEditandoId(null);
     toast.success("Jornada atualizada.");
-    onJornadaFinalizadaManualmente(); // Recarrega a lista
+    onJornadaFinalizadaManualmente(); // Recarrega a lista pai
   };
 
   return (
@@ -141,11 +147,13 @@ export function GestaoJornadas({
                 key={jornada.id} 
                 className="group relative bg-surface rounded-2xl p-5 border border-border shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden"
               >
+                {/* Barra de Status Lateral */}
                 <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-success transition-all group-hover:w-2"></div>
 
+                {/* Cabeçalho do Card */}
                 <div className="flex justify-between items-start mb-4 pl-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center font-bold text-primary text-lg shadow-inner border border-primary/10 shrink-0">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary/10 to-primary/20 flex items-center justify-center font-bold text-primary text-lg shadow-inner border border-white/10 shrink-0">
                       {jornada.operador?.nome?.charAt(0) || 'M'}
                     </div>
                     <div>
@@ -165,11 +173,12 @@ export function GestaoJornadas({
 
                   <DropdownAcoes 
                     onEditar={() => setJornadaEditandoId(jornada.id)}
-                    onExcluir={() => setJornadaParaEncerrar(jornada.id)}
+                    onExcluir={() => setJornadaParaEncerrar(jornada)}
                     align="end"
                   />
                 </div>
 
+                {/* Info Grid */}
                 <div className="grid grid-cols-2 gap-3 pl-3 mb-4">
                   <div className="bg-surface-hover/40 p-2.5 rounded-lg border border-border/50">
                     <span className="text-[10px] uppercase font-bold text-text-muted flex items-center gap-1 mb-0.5">
@@ -189,6 +198,7 @@ export function GestaoJornadas({
                   </div>
                 </div>
 
+                {/* Footer / Status */}
                 <div className="pl-3 flex items-center justify-between pt-3 border-t border-dashed border-border">
                    <div className="flex items-center gap-2">
                       <span className="relative flex h-2.5 w-2.5">
@@ -199,7 +209,7 @@ export function GestaoJornadas({
                    </div>
                    
                    <button 
-                      onClick={() => setJornadaParaEncerrar(jornada.id)}
+                      onClick={() => setJornadaParaEncerrar(jornada)}
                       className="text-xs font-medium text-text-muted hover:text-error transition-colors flex items-center gap-1"
                    >
                       Encerrar <ChevronRight className="w-3 h-3" />
@@ -212,6 +222,8 @@ export function GestaoJornadas({
       )}
 
       {/* --- MODAIS --- */}
+
+      {/* Modal de Edição */}
       <Modal 
         isOpen={!!jornadaEditandoId} 
         onClose={() => setJornadaEditandoId(null)}
@@ -227,6 +239,7 @@ export function GestaoJornadas({
         )}
       </Modal>
 
+      {/* Modal de Confirmação (Danger) */}
       <ConfirmModal
         isOpen={!!jornadaParaEncerrar}
         onCancel={() => setJornadaParaEncerrar(null)}
@@ -238,7 +251,7 @@ export function GestaoJornadas({
             <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg flex gap-3">
               <AlertCircle className="w-5 h-5 text-amber-600 dark:text-amber-500 shrink-0" />
               <p className="text-xs text-amber-800 dark:text-amber-200">
-                O KM Final será registrado baseado na lógica de segurança do servidor. Use essa função apenas para correções.
+                O KM Final será registrado como {jornadaParaEncerrar?.kmInicio} (mesmo valor do inicial). Use essa função apenas para correções.
               </p>
             </div>
           </div>
@@ -246,6 +259,7 @@ export function GestaoJornadas({
         confirmLabel={encerrando ? "Processando..." : "Confirmar Encerramento"}
         variant="danger"
       />
+
     </div>
   );
 }
