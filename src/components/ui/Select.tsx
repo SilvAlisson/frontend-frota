@@ -20,7 +20,6 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
     options?: SelectOption[];
     placeholder?: string;
     containerClassName?: string;
-    // O react-hook-form envia esses dois
     value?: string | number;
     onChange?: (event: { target: { name?: string; value: string } }) => void;
 }
@@ -31,7 +30,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         error,
         icon,
         options = [],
-        placeholder = "Selecione uma opção",
+        placeholder,
         className,
         containerClassName,
         id,
@@ -46,10 +45,16 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         const generatedId = React.useId();
         const selectId = id || generatedId;
 
-        // Estado interno para controlar o Radix UI
+        // 🧠 INTELIGÊNCIA DE LEGADO: 
+        // Intercepta a opção vazia (ex: { value: '', label: 'Selecione' }) que o HTML antigo usava
+        const emptyOption = options.find(opt => String(opt.value) === '');
+        const validOptions = options.filter(opt => String(opt.value) !== '');
+        
+        // Usa a label da opção vazia como Placeholder do Radix
+        const displayPlaceholder = emptyOption ? emptyOption.label : (placeholder || "Selecione uma opção");
+
         const [internalValue, setInternalValue] = useState<string>(value !== undefined ? String(value) : '');
 
-        // Sincroniza se vier uma prop value externa (ex: ao carregar um formulário de edição)
         useEffect(() => {
             if (value !== undefined) {
                 setInternalValue(String(value));
@@ -58,7 +63,6 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
         const handleValueChange = (newValue: string) => {
             setInternalValue(newValue);
-            // Simula um evento de mudança padrão para o react-hook-form
             if (onChange) {
                 onChange({
                     target: {
@@ -68,6 +72,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 });
             }
         };
+
+        // Radix exige que o value seja undefined (e não "") para mostrar o placeholder corretamente
+        const radixValue = internalValue === '' ? undefined : internalValue;
 
         return (
             <div className={cn("w-full flex flex-col gap-1.5", containerClassName)}>
@@ -81,13 +88,12 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 )}
 
                 <RadixSelect.Root
-                    value={internalValue}
+                    value={radixValue}
                     onValueChange={handleValueChange}
                     disabled={disabled}
                     name={name}
                 >
                     <div className="relative group w-full">
-                        {/* Ícone customizado na esquerda (opcional) */}
                         {icon && (
                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none z-10 [&>svg]:w-5 [&>svg]:h-5 transition-colors group-focus-within:text-primary">
                                 {icon}
@@ -97,7 +103,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         <RadixSelect.Trigger
                             id={selectId}
                             className={cn(
-                                "flex items-center justify-between w-full py-2.5 text-sm bg-surface border rounded-xl transition-all duration-200 outline-none",
+                                "flex items-center justify-between w-full py-2.5 text-sm bg-surface border rounded-xl transition-all duration-200 outline-none text-left",
                                 "focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm",
                                 "disabled:bg-surface-hover/50 disabled:text-text-muted disabled:cursor-not-allowed",
                                 "data-[placeholder]:text-text-muted",
@@ -106,9 +112,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                                 className
                             )}
                         >
-                            <RadixSelect.Value placeholder={placeholder} />
+                            <RadixSelect.Value placeholder={displayPlaceholder} />
                             <RadixSelect.Icon asChild>
-                                <ChevronDown className={cn("w-4 h-4 opacity-50", error && "text-error")} />
+                                <ChevronDown className={cn("w-4 h-4 opacity-50 shrink-0", error && "text-error")} />
                             </RadixSelect.Icon>
                         </RadixSelect.Trigger>
                     </div>
@@ -125,7 +131,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
                             <RadixSelect.Viewport className="p-1">
                                 <RadixSelect.Group>
-                                    {options.map((opt) => (
+                                    {/* Mapeamos apenas as opções válidas (sem string vazia) */}
+                                    {validOptions.map((opt) => (
                                         <RadixSelect.Item
                                             key={opt.value}
                                             value={String(opt.value)}
@@ -149,19 +156,20 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                     </RadixSelect.Portal>
                 </RadixSelect.Root>
 
-                {/* Input oculto para o react-hook-form conseguir registrar o ref e validar nativamente */}
+                {/* Input oculto para o react-hook-form continuar registrando sem quebrar validações */}
                 <select
                     ref={ref}
                     name={name}
                     value={internalValue}
-                    onChange={() => {}} // Dummy onChange, o Radix controla o valor
+                    onChange={() => {}} 
                     className="sr-only pointer-events-none"
                     aria-hidden="true"
                     tabIndex={-1}
                     {...rest}
                 >
-                    <option value="" disabled />
-                    {options.map((opt) => (
+                    {emptyOption && <option value="" disabled>{emptyOption.label}</option>}
+                    {!emptyOption && <option value="" disabled>{displayPlaceholder}</option>}
+                    {validOptions.map((opt) => (
                         <option key={opt.value} value={opt.value}>
                             {opt.label}
                         </option>
