@@ -13,6 +13,7 @@ import { useVeiculos } from '../hooks/useVeiculos';
 // --- PRIMITIVOS BIG TECH ---
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
+import { Select } from './ui/Select'; // 🔥 Importamos o nosso novo Select!
 
 import {
   Fuel,
@@ -27,12 +28,10 @@ import {
 } from 'lucide-react';
 import type { KpiData, DadosEvolucaoKm, Jornada } from '../types';
 
-// ✂️ Removemos "veiculos" da interface
 interface DashboardRelatoriosProps {
   onDrillDown?: (tipo: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => void;
 }
 
-// --- KPI CARD BLINDADO (Anti-Layout Shift & Tema Dinâmico) ---
 interface KpiCardProps {
   titulo: string;
   valor: string;
@@ -55,13 +54,12 @@ function KpiCard({
   icon
 }: KpiCardProps) {
 
-  // SKELETON: Mesma geometria do card real usando cores semânticas
   if (loading) {
     return (
       <Card className={cn("flex flex-col justify-between animate-pulse border-border/50", highlight ? "min-h-[160px]" : "min-h-[150px]")}>
         <div className="flex justify-between items-start w-full">
           <div className="h-3 bg-surface-hover rounded w-24 mb-1"></div>
-          <div className="h-10 w-10 bg-surface-hover rounded-lg"></div>
+          <div className="h-10 w-10 bg-surface-hover rounded-xl"></div>
         </div>
         <div className="space-y-3 mt-auto">
           <div className="h-8 bg-surface-hover rounded w-3/4"></div>
@@ -71,7 +69,6 @@ function KpiCard({
     );
   }
 
-  // Mapeamento de Cores Semânticas
   const styles = {
     default: { border: 'border-l-primary', iconBg: 'bg-primary/10', iconText: 'text-primary' },
     success: { border: 'border-l-emerald-500', iconBg: 'bg-emerald-500/10', iconText: 'text-emerald-600' },
@@ -86,13 +83,13 @@ function KpiCard({
     <Card
       onClick={onClick}
       className={cn(
-        "relative flex flex-col justify-between h-full hover:shadow-md transition-shadow cursor-pointer",
+        "relative flex flex-col justify-between h-full hover:shadow-float hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden group",
         "border-l-[4px]", style.border,
         highlight ? "min-h-[160px]" : "min-h-[150px]"
       )}
     >
       <div className="flex justify-between items-start shrink-0 mb-2">
-        <h4 className="text-[11px] font-bold text-text-secondary uppercase tracking-widest font-sans mt-1.5 leading-snug">
+        <h4 className="text-[11px] font-black text-text-secondary uppercase tracking-[0.15em] font-sans mt-1.5 leading-snug">
           {titulo}
         </h4>
         {icon && (
@@ -105,7 +102,7 @@ function KpiCard({
       <div className="flex flex-col justify-end flex-1 min-h-0">
         <span 
           className={cn(
-            "font-mono font-bold text-text-main tracking-tight leading-none truncate",
+            "font-mono font-black text-text-main tracking-tighter leading-none truncate",
             highlight ? "text-3xl sm:text-4xl" : "text-2xl sm:text-3xl"
           )}
           title={valor}
@@ -113,12 +110,12 @@ function KpiCard({
           {valor}
         </span>
         
-        <div className="mt-3 pt-3 border-t border-border/50 flex items-center justify-between shrink-0">
-          <p className="text-xs text-text-muted font-medium truncate max-w-[90%] group-hover:text-text-main transition-colors">
+        <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between shrink-0">
+          <p className="text-[11px] text-text-muted font-bold truncate max-w-[90%] group-hover:text-text-main transition-colors">
             {descricao}
           </p>
           {onClick && (
-            <ChevronRight className="w-4 h-4 text-text-muted/50 group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
+            <ChevronRight className="w-4 h-4 text-text-muted/40 group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
           )}
         </div>
       </div>
@@ -126,13 +123,9 @@ function KpiCard({
   );
 }
 
-// Estilo Base para Selects (Cores Semânticas)
-const selectStyle = "h-[42px] px-3 bg-surface border border-border rounded-lg text-sm text-text-main focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer min-w-[140px] shadow-sm hover:border-primary/50 appearance-none font-medium";
-
 export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
   const navigate = useNavigate();
 
-  // 📡 BUSCA INDEPENDENTE COM CACHE
   const { data: veiculos = [] } = useVeiculos();
 
   const [ano, setAno] = useState(new Date().getFullYear());
@@ -214,61 +207,74 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
     exportarParaExcel(dados, `Dashboard_${mes}_${ano}.xlsx`);
   };
 
-  const meses = useMemo(() => Array.from({ length: 12 }, (_, i) => ({ v: i + 1, l: new Date(0, i).toLocaleString('pt-BR', { month: 'long' }) })), []);
-  const anos = useMemo(() => [new Date().getFullYear(), new Date().getFullYear() - 1, new Date().getFullYear() - 2], []);
+  // Prepara as opções para os nossos novos Selects
+  const opcoesMeses = useMemo(() => Array.from({ length: 12 }, (_, i) => ({ 
+    value: i + 1, 
+    label: new Date(0, i).toLocaleString('pt-BR', { month: 'long' }).replace(/^\w/, c => c.toUpperCase()) 
+  })), []);
+  
+  const opcoesAnos = useMemo(() => [
+    { value: new Date().getFullYear(), label: String(new Date().getFullYear()) },
+    { value: new Date().getFullYear() - 1, label: String(new Date().getFullYear() - 1) },
+    { value: new Date().getFullYear() - 2, label: String(new Date().getFullYear() - 2) }
+  ], []);
+
+  const opcoesVeiculos = useMemo(() => {
+    const list = veiculos.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` }));
+    return [{ value: '', label: 'Todas as Placas' }, ...list];
+  }, [veiculos]);
 
   return (
-    <div className="space-y-8 pb-10 animate-in fade-in duration-500">
+    <div className="space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
       {/* HEADER E FILTROS */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 border-b border-border pb-6">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-6 border-b border-border/60 pb-6">
         <div>
-          <h2 className="text-3xl font-bold text-text-main tracking-tight font-sans">Dashboard Gerencial</h2>
+          <h2 className="text-3xl font-black text-text-main tracking-tight">Dashboard Gerencial</h2>
           <p className="text-sm text-text-secondary font-medium mt-1">
-            Visão consolidada de <strong className="text-primary">{meses.find(m => m.v === mes)?.l} de {ano}</strong>.
+            Visão consolidada de <strong className="text-primary">{opcoesMeses.find(m => m.value === mes)?.label} de {ano}</strong>.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3 w-full xl:w-auto items-center bg-surface p-1.5 rounded-xl border border-border shadow-sm">
-          <div className="relative">
-            <select
+        {/* Barra de Filtros Premium */}
+        <div className="flex flex-wrap gap-3 w-full xl:w-auto items-center bg-surface/50 p-2 rounded-2xl border border-border/50 shadow-sm backdrop-blur-sm">
+          
+          <div className="w-32">
+            <Select
               value={mes}
               onChange={e => setMes(Number(e.target.value))}
-              className={`${selectStyle} capitalize pl-3 pr-8 bg-transparent border-none shadow-none focus:ring-0`}
-            >
-              {meses.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
-            </select>
+              options={opcoesMeses}
+              className="h-10 border-transparent bg-transparent hover:bg-surface-hover shadow-none"
+            />
           </div>
           
-          <div className="w-px h-6 bg-border mx-1"></div>
+          <div className="w-px h-6 bg-border/60 mx-1"></div>
 
-          <div className="relative">
-            <select
+          <div className="w-24">
+            <Select
               value={ano}
               onChange={e => setAno(Number(e.target.value))}
-              className={`${selectStyle} bg-transparent border-none shadow-none focus:ring-0 w-24`}
-            >
-              {anos.map(a => <option key={a} value={a}>{a}</option>)}
-            </select>
+              options={opcoesAnos}
+              className="h-10 border-transparent bg-transparent hover:bg-surface-hover shadow-none"
+            />
           </div>
 
-          <div className="w-px h-6 bg-border mx-1"></div>
+          <div className="w-px h-6 bg-border/60 mx-1 hidden sm:block"></div>
 
-          <div className="relative">
-            <select
+          <div className="w-full sm:w-48">
+            <Select
               value={veiculoIdFiltro}
               onChange={e => setVeiculoIdFiltro(e.target.value)}
-              className={`${selectStyle} bg-transparent border-none shadow-none focus:ring-0 min-w-[180px]`}
-            >
-              <option value="">Todas as Placas</option>
-              {veiculos.map(v => <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>)}
-            </select>
+              options={opcoesVeiculos}
+              placeholder="Todas as Placas"
+              className="h-10 border-transparent bg-transparent hover:bg-surface-hover shadow-none"
+            />
           </div>
 
           <Button
             variant="ghost"
             onClick={handleExportar}
-            className="h-[38px] w-[38px] p-0 rounded-lg hover:bg-surface-hover ml-1 text-emerald-600 hover:text-emerald-700"
+            className="h-10 w-10 p-0 rounded-xl hover:bg-emerald-500/10 text-emerald-600 hover:text-emerald-700 transition-colors ml-auto sm:ml-2"
             title="Exportar Excel"
           >
             <FileSpreadsheet className="w-5 h-5" />
@@ -278,8 +284,6 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
 
       {/* KPI GRID */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-
-        {/* Card Destaque (Custo Total) */}
         <div className="lg:col-span-2">
           <KpiCard
             titulo="Custo Operacional Total"
@@ -313,7 +317,6 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
           onClick={() => handleNavigation('/admin/abastecimentos', 'ABASTECIMENTO')}
         />
 
-        {/* Linha 2 */}
         <KpiCard
           titulo="Gasto Combustível"
           valor={formatBRL(kpis?.custoTotalCombustivel)}
@@ -355,14 +358,14 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
         />
       </div>
 
-      {/* GRÁFICO */}
+      {/* GRÁFICO (Onde a mágica do Recharts vai entrar) */}
       {veiculoIdFiltro && (
-        <div className="animate-in fade-in slide-in-from-top-4 duration-500">
+        <div className="animate-in fade-in slide-in-from-bottom-8 duration-700">
           {loadingGrafico ? (
-            <Card className="h-80 w-full flex items-center justify-center border-border">
-              <div className="flex flex-col items-center gap-2">
+            <Card className="h-80 w-full flex items-center justify-center border-border/50">
+              <div className="flex flex-col items-center gap-3">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                <span className="text-xs text-text-muted">Carregando gráfico...</span>
+                <span className="text-sm font-bold text-text-muted animate-pulse">Processando dados telemétricos...</span>
               </div>
             </Card>
           ) : (

@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios'; // 🛡️ Importante para tipagem forte de erros
 import { api } from '../services/api';
 import { toast } from 'sonner';
-import { useAuth } from '../contexts/AuthContext'; // 1. Importar o AuthContext
+import { useAuth } from '../contexts/AuthContext';
 import type { Veiculo } from '../types';
 
 export type CreateVeiculoDTO = Omit<Veiculo, 'id' | 'ultimoKm' | 'status'> & {
@@ -11,17 +12,35 @@ export type CreateVeiculoDTO = Omit<Veiculo, 'id' | 'ultimoKm' | 'status'> & {
 
 export type UpdateVeiculoDTO = Partial<Omit<Veiculo, 'id'>> & { id: string };
 
+// --- HELPER DE ERRO (Reutilizável e Seguro) ---
+const handleApiError = (error: unknown, mensagemPadrao: string) => {
+    console.error(`[API Error] ${mensagemPadrao}:`, error);
+    
+    if (isAxiosError(error)) {
+        // Se for erro da API (ex: 400, 404, 500)
+        const mensagemServidor = error.response?.data?.error || error.response?.data?.message;
+        if (mensagemServidor) {
+            toast.error(mensagemServidor);
+            return;
+        }
+        // Se for erro de rede (API caiu)
+        if (error.code === 'ERR_NETWORK') {
+            toast.error("Erro de conexão. Verifique sua internet ou tente novamente.");
+            return;
+        }
+    }
+    
+    // Fallback genérico
+    toast.error(mensagemPadrao);
+};
+
 // --- LISTAR (GET) ---
 export function useVeiculos() {
-    const { user } = useAuth(); // 2. Pegar o usuário logado
+    const { user } = useAuth();
 
     return useQuery({
-        // 3. Adicionar o role na chave para recarregar se o usuário mudar
         queryKey: ['veiculos', user?.role],
-
         queryFn: async () => {
-            // 4. Lógica de Seleção de Rota
-            // Se for Operador, usa a rota específica de operação. Caso contrário, usa a geral.
             const endpoint = user?.role === 'OPERADOR'
                 ? '/veiculos/operacao'
                 : '/veiculos';
@@ -29,8 +48,8 @@ export function useVeiculos() {
             const { data } = await api.get<Veiculo[]>(endpoint);
             return data;
         },
-        staleTime: 1000 * 60 * 5,
-        enabled: !!user, // 5. Só faz a busca se o usuário estiver carregado
+        staleTime: 1000 * 60 * 5, // 5 minutos de cache
+        enabled: !!user,
     });
 }
 
@@ -40,16 +59,15 @@ export function useCreateVeiculo() {
 
     return useMutation({
         mutationFn: async (novoVeiculo: CreateVeiculoDTO) => {
-            const { data } = await api.post('/veiculos', novoVeiculo);
+            const { data } = await api.post<Veiculo>('/veiculos', novoVeiculo);
             return data;
         },
         onSuccess: () => {
             toast.success('Veículo cadastrado com sucesso!');
             queryClient.invalidateQueries({ queryKey: ['veiculos'] });
         },
-        onError: (error: any) => {
-            console.error("Erro ao cadastrar:", error);
-            toast.error(error.response?.data?.error || 'Erro ao cadastrar veículo');
+        onError: (error: unknown) => {
+            handleApiError(error, 'Erro ao cadastrar veículo');
         },
     });
 }
@@ -60,16 +78,15 @@ export function useUpdateVeiculo() {
 
     return useMutation({
         mutationFn: async ({ id, ...dados }: UpdateVeiculoDTO) => {
-            const { data } = await api.put(`/veiculos/${id}`, dados);
+            const { data } = await api.put<Veiculo>(`/veiculos/${id}`, dados);
             return data;
         },
         onSuccess: () => {
-            toast.success('Veículo atualizado!');
+            toast.success('Veículo atualizado com sucesso!');
             queryClient.invalidateQueries({ queryKey: ['veiculos'] });
         },
-        onError: (error: any) => {
-            console.error("Erro ao atualizar:", error);
-            toast.error(error.response?.data?.error || 'Erro ao atualizar veículo');
+        onError: (error: unknown) => {
+            handleApiError(error, 'Erro ao atualizar veículo');
         },
     });
 }
@@ -83,12 +100,11 @@ export function useDeleteVeiculo() {
             await api.delete(`/veiculos/${id}`);
         },
         onSuccess: () => {
-            toast.success('Veículo removido!');
+            toast.success('Veículo removido com sucesso!');
             queryClient.invalidateQueries({ queryKey: ['veiculos'] });
         },
-        onError: (error: any) => {
-            console.error("Erro ao remover:", error);
-            toast.error(error.response?.data?.error || 'Erro ao remover veículo');
+        onError: (error: unknown) => {
+            handleApiError(error, 'Erro ao remover veículo');
         },
     });
 }

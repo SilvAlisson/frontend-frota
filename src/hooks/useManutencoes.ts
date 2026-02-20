@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
@@ -25,6 +26,16 @@ interface FiltrosManutencao {
     limit?: number | 'all';
 }
 
+const handleApiError = (error: unknown, mensagemPadrao: string) => {
+    console.error(`[API Error] ${mensagemPadrao}:`, error);
+    if (isAxiosError(error)) {
+        const msg = error.response?.data?.error || error.response?.data?.message;
+        if (msg) return toast.error(msg);
+        if (error.code === 'ERR_NETWORK') return toast.error("Sem conexão de rede. Tente novamente.");
+    }
+    toast.error(mensagemPadrao);
+};
+
 // --- LISTAR ---
 export function useManutencoes(filtros?: FiltrosManutencao) {
     const { user } = useAuth();
@@ -40,7 +51,12 @@ export function useManutencoes(filtros?: FiltrosManutencao) {
             const { data } = await api.get(`/manutencoes/recentes?${params.toString()}`);
             return data;
         },
-        enabled: !!user, // Previne chamadas sem autenticação
+        enabled: !!user,
+        staleTime: 1000 * 60 * 2, // 2 minutos de cache
+        retry: (failureCount, error: unknown) => {
+            if (isAxiosError(error) && error.response && error.response.status >= 400 && error.response.status < 500) return false;
+            return failureCount < 3;
+        }
     });
 }
 
@@ -55,14 +71,12 @@ export function useRegistrarManutencao() {
         },
         onSuccess: () => {
             toast.success('OS de Manutenção aberta!');
-            // Atualiza as listas relacionadas automaticamente
             queryClient.invalidateQueries({ queryKey: ['manutencoes'] });
             queryClient.invalidateQueries({ queryKey: ['veiculos'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
         },
-        onError: (error: any) => {
-            console.error("Erro ao registrar OS:", error);
-            toast.error(error.response?.data?.error || 'Erro ao registrar manutenção');
+        onError: (error: unknown) => {
+            handleApiError(error, 'Erro ao registrar manutenção');
         },
     });
 }

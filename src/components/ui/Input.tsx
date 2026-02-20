@@ -1,6 +1,7 @@
 import React, { forwardRef } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { clsx, type ClassValue } from 'clsx';
+import { AlertCircle } from 'lucide-react';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -20,20 +21,20 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || generatedId;
 
     return (
-      <div className={cn("w-full", containerClassName)}>
+      <div className={cn("w-full flex flex-col gap-1.5", containerClassName)}>
         {label && (
           <label
             htmlFor={inputId}
-            className="block mb-1.5 text-xs font-bold text-text-secondary uppercase tracking-wider select-none ml-1"
+            className="text-xs font-bold text-text-secondary uppercase tracking-wider select-none ml-1"
           >
             {label}
           </label>
         )}
 
-        <div className="relative group">
+        <div className="relative group w-full">
           {/* Ícone à Esquerda */}
           {icon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none [&>svg]:w-5 [&>svg]:h-5 transition-colors group-focus-within:text-primary">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none z-10 [&>svg]:w-5 [&>svg]:h-5 transition-colors group-focus-within:text-primary">
               {icon}
             </div>
           )}
@@ -42,39 +43,45 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              // --- Base ---
-              "w-full py-2.5 text-sm text-text-main bg-surface border rounded-lg transition-all duration-200",
+              // --- Base Elite ---
+              "flex w-full py-2.5 text-sm text-text-main bg-surface border rounded-xl transition-all duration-200 outline-none",
               
-              // --- Bordas e Cores ---
-              "border-input placeholder:text-text-muted",
+              // --- Sombras e Bordas ---
+              "border-border/60 shadow-sm",
+              "placeholder:text-text-muted/60",
               "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-primary",
 
-              // --- Foco (Anel de foco semântico) ---
-              "focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-ring",
+              // --- Foco (Estilo Radix UI) ---
+              "focus:ring-2 focus:ring-primary/20 focus:border-primary",
 
               // --- Desabilitado ---
-              "disabled:bg-background disabled:text-text-muted disabled:cursor-not-allowed",
+              "disabled:bg-surface-hover/50 disabled:text-text-muted disabled:cursor-not-allowed disabled:border-border/40",
 
-              // --- Padding Condicional ---
-              icon ? "pl-10 pr-4" : "px-4",
+              // --- Padding Condicional (Ícones) ---
+              icon ? "pl-10" : "pl-4",
+              error ? "pr-10" : "pr-4",
 
-              // --- Estados Normais vs Erro ---
-              !error && "hover:border-primary/50",
-              error && "border-error text-error focus:border-error focus:ring-error/20 pr-10 placeholder:text-error/50",
+              // --- Estados: Normal vs Erro ---
+              !error && "hover:border-border",
+              error && "border-error text-error focus:border-error focus:ring-error/20 placeholder:text-error/50",
 
               className
             )}
             aria-invalid={!!error}
             {...rest}
           />
+
+          {/* Ícone de Erro embutido no Input (Estilo Material/Apple) */}
+          {error && (
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-error pointer-events-none animate-in zoom-in-95 duration-200">
+               <AlertCircle className="w-5 h-5 opacity-80" />
+            </div>
+          )}
         </div>
 
-        {/* Mensagem de Erro */}
+        {/* Mensagem de Erro Textual */}
         {error && (
-          <p className="mt-1.5 text-xs text-error font-medium flex items-center gap-1 animate-enter ml-1">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 flex-shrink-0">
-              <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-            </svg>
+          <p className="text-xs text-error font-bold flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 ml-1 mt-0.5">
             {error}
           </p>
         )}

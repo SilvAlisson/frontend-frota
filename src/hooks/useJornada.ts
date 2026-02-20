@@ -1,9 +1,9 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { api } from '../services/api';
 import { toast } from 'sonner';
-import { useAuth } from '../contexts/AuthContext'; // Importe o Auth
+import { useAuth } from '../contexts/AuthContext';
 
-// --- Tipagem (Baseada no seu Prisma Schema) ---
 export interface Jornada {
     id: string;
     dataInicio: string;
@@ -33,19 +33,23 @@ interface FinalizarJornadaParams {
     fotoFimUrl?: string;
 }
 
-// --- HOOKS ---
+const handleApiError = (error: unknown, mensagemPadrao: string) => {
+    console.error(`[API Error] ${mensagemPadrao}:`, error);
+    if (isAxiosError(error)) {
+        const msg = error.response?.data?.error || error.response?.data?.message;
+        if (msg) return toast.error(msg);
+        if (error.code === 'ERR_NETWORK') return toast.error("Sem conexão. Verifique sua rede.");
+    }
+    toast.error(mensagemPadrao);
+};
 
 // 1. Listar Jornadas Abertas (GET)
 export function useJornadasAbertas() {
-    const { user } = useAuth(); // Pegamos o usuário
+    const { user } = useAuth();
 
     return useQuery({
-        // Adicionamos o role na chave para forçar atualização se o usuário mudar
         queryKey: ['jornadas-abertas', user?.role],
-
         queryFn: async () => {
-            // ✅ SELEÇÃO DE ROTA INTELIGENTE
-            // Operador vê apenas as suas. Admin/Gestor vê todas.
             const endpoint = user?.role === 'OPERADOR'
                 ? '/jornadas/minhas-abertas-operador'
                 : '/jornadas/abertas';
@@ -53,7 +57,12 @@ export function useJornadasAbertas() {
             const response = await api.get<Jornada[]>(endpoint);
             return response.data;
         },
-        enabled: !!user, // Só busca se estiver logado
+        enabled: !!user,
+        staleTime: 1000 * 30, // 30s
+        retry: (failureCount, error: unknown) => {
+            if (isAxiosError(error) && error.response && error.response.status >= 400 && error.response.status < 500) return false;
+            return failureCount < 3;
+        }
     });
 }
 
@@ -69,11 +78,10 @@ export function useIniciarJornada() {
         onSuccess: () => {
             toast.success('Jornada iniciada com sucesso!');
             queryClient.invalidateQueries({ queryKey: ['jornadas-abertas'] });
-            queryClient.invalidateQueries({ queryKey: ['dashboard-data'] }); // Atualiza o painel principal
+            queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
         },
-        onError: (error: any) => {
-            const msg = error.response?.data?.error || 'Erro ao iniciar jornada';
-            toast.error(msg);
+        onError: (error: unknown) => {
+            handleApiError(error, 'Erro ao iniciar jornada');
         },
     });
 }
@@ -92,9 +100,8 @@ export function useFinalizarJornada() {
             queryClient.invalidateQueries({ queryKey: ['jornadas-abertas'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
         },
-        onError: (error: any) => {
-            const msg = error.response?.data?.error || 'Erro ao finalizar jornada';
-            toast.error(msg);
+        onError: (error: unknown) => {
+            handleApiError(error, 'Erro ao finalizar jornada');
         },
     });
 }

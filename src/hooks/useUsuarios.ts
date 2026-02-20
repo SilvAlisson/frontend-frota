@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import type { User } from '../types';
@@ -17,5 +18,9 @@ export function useUsuarios() {
     },
     enabled: !!user,
     staleTime: 1000 * 60 * 5, // Cache de 5 minutos
+    retry: (failureCount, error: unknown) => {
+        if (isAxiosError(error) && error.response && error.response.status >= 400 && error.response.status < 500) return false;
+        return failureCount < 3;
+    }
   });
 }

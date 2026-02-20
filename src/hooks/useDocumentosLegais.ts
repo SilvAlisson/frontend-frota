@@ -1,12 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 import type { DocumentoLegal, CreateDocumentoDTO } from '../types';
 
 interface FiltrosDocumentos {
     categoria?: string;
-    veiculoId?: string; // Para a busca inteligente do backend
+    veiculoId?: string;
 }
+
+const handleApiError = (error: unknown, mensagemPadrao: string) => {
+    console.error(`[API Error] ${mensagemPadrao}:`, error);
+    if (isAxiosError(error)) {
+        const msg = error.response?.data?.error || error.response?.data?.message;
+        if (msg) return toast.error(msg);
+        if (error.code === 'ERR_NETWORK') return toast.error("Erro de conexão com o servidor.");
+    }
+    toast.error(mensagemPadrao);
+};
 
 // --- LISTAR ---
 export function useDocumentosLegais(filtros?: FiltrosDocumentos) {
@@ -24,7 +35,11 @@ export function useDocumentosLegais(filtros?: FiltrosDocumentos) {
             const { data } = await api.get<DocumentoLegal[]>(`/documentos-legais?${params.toString()}`);
             return data;
         },
-        staleTime: 1000 * 60 * 5, // 5 minutos de cache
+        staleTime: 1000 * 60 * 5,
+        retry: (failureCount, error: unknown) => {
+            if (isAxiosError(error) && error.response && error.response.status >= 400 && error.response.status < 500) return false;
+            return failureCount < 3;
+        }
     });
 }
 
@@ -41,9 +56,8 @@ export function useCreateDocumento() {
             toast.success('Documento arquivado com sucesso!');
             queryClient.invalidateQueries({ queryKey: ['documentos-legais'] });
         },
-        onError: (error: any) => {
-            console.error("Erro ao criar documento:", error);
-            toast.error(error.response?.data?.message || 'Erro ao salvar documento');
+        onError: (error: unknown) => {
+            handleApiError(error, 'Erro ao salvar documento');
         }
     });
 }
@@ -60,9 +74,8 @@ export function useDeleteDocumento() {
             toast.success('Documento removido!');
             queryClient.invalidateQueries({ queryKey: ['documentos-legais'] });
         },
-        onError: (error: any) => {
-            console.error("Erro ao deletar documento:", error);
-            toast.error('Erro ao remover documento.');
+        onError: (error: unknown) => {
+            handleApiError(error, 'Erro ao remover documento');
         }
     });
 }

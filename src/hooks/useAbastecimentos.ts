@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { isAxiosError } from 'axios';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
@@ -28,12 +29,33 @@ interface FiltrosHistorico {
     limit?: number | 'all';
 }
 
+// --- HELPER DE ERRO (Reutilizável e Seguro) ---
+const handleApiError = (error: unknown, mensagemPadrao: string) => {
+    console.error(`[API Error] ${mensagemPadrao}:`, error);
+    
+    if (isAxiosError(error)) {
+        // Se for erro da API (ex: 400 Bad Request por KM inválido)
+        const mensagemServidor = error.response?.data?.error || error.response?.data?.message;
+        if (mensagemServidor) {
+            toast.error(mensagemServidor);
+            return;
+        }
+        // Se for erro de rede (Operador sem sinal no posto de gasolina)
+        if (error.code === 'ERR_NETWORK') {
+            toast.error("Erro de conexão. Verifique sua internet ou tente novamente.");
+            return;
+        }
+    }
+    
+    // Fallback genérico
+    toast.error(mensagemPadrao);
+};
+
 // --- LISTAR RECENTES (GET) ---
 export function useAbastecimentos(filtros?: FiltrosHistorico) {
     const { user } = useAuth();
 
     return useQuery({
-        // Adiciona user.role para segregar cache de Admin vs Operador
         queryKey: ['abastecimentos', filtros, user?.role],
 
         queryFn: async () => {
@@ -46,7 +68,17 @@ export function useAbastecimentos(filtros?: FiltrosHistorico) {
             const { data } = await api.get(`/abastecimentos/recentes?${params.toString()}`);
             return data;
         },
-        enabled: !!user, // Previne erro 403 por token vazio
+        
+        enabled: !!user,
+        staleTime: 1000 * 60 * 2, // Cache de 2 minutos para evitar requisições repetidas ao trocar de aba
+        
+        // 🛡️ Retry Inteligente (Não tenta novamente se o token expirou)
+        retry: (failureCount, error: unknown) => {
+            if (isAxiosError(error) && error.response && error.response.status >= 400 && error.response.status < 500) {
+                return false;
+            }
+            return failureCount < 3;
+        }
     });
 }
 
@@ -60,13 +92,14 @@ export function useRegistrarAbastecimento() {
             return data;
         },
         onSuccess: () => {
-            toast.success('Abastecimento registrado!');
+            toast.success('Abastecimento registrado com sucesso!');
+            // Invalida múltiplos caches para forçar a atualização dos relatórios financeiros instantaneamente
             queryClient.invalidateQueries({ queryKey: ['abastecimentos'] });
             queryClient.invalidateQueries({ queryKey: ['veiculos'] });
             queryClient.invalidateQueries({ queryKey: ['dashboard-data'] });
         },
-        onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao registrar abastecimento');
+        onError: (error: unknown) => {
+            handleApiError(error, 'Erro ao registrar abastecimento');
         },
     });
 }
@@ -80,11 +113,11 @@ export function useDeleteAbastecimento() {
             await api.delete(`/abastecimentos/${id}`);
         },
         onSuccess: () => {
-            toast.success('Registro removido.');
+            toast.success('Registro de abastecimento removido.');
             queryClient.invalidateQueries({ queryKey: ['abastecimentos'] });
         },
-        onError: (error: any) => {
-            toast.error(error.response?.data?.error || 'Erro ao remover registro');
+        onError: (error: unknown) => {
+            handleApiError(error, 'Erro ao remover registro de abastecimento');
         },
     });
 }
