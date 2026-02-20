@@ -7,31 +7,32 @@ import { supabase } from '../../supabaseClient';
 import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Select } from '../ui/Select'; // 🔥 Importamos o nosso super Select
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { UserPlus, Camera, Calendar, CreditCard, ChevronDown, User, Briefcase } from 'lucide-react';
+import { UserPlus, Camera, Calendar, CreditCard, User, Briefcase, Mail, KeyRound, Hash } from 'lucide-react';
 
 // Tipos e Constantes
 interface Cargo { id: string; nome: string; }
 const ROLES = ["OPERADOR", "ENCARREGADO", "ADMIN", "RH", "COORDENADOR"] as const;
 
-// Schema de Validação
+// Schema de Validação (Compatível com Zod V4)
 const usuarioSchema = z.object({
   nome: z.string().min(3, "Nome muito curto").transform(val => val.trim()),
   email: z.string().email("Email inválido").toLowerCase(),
   password: z.string().min(6, "Mínimo 6 caracteres"),
-  matricula: z.string().optional().or(z.literal('')),
+  matricula: z.string().optional().nullable(),
   role: z.enum(ROLES, { error: "Função inválida" }),
 
   // Campos RH (Opcionais/Condicionais)
-  cargoId: z.string().optional().or(z.literal('')),
-  cnhNumero: z.string().optional().or(z.literal('')),
-  cnhCategoria: z.string().optional().or(z.literal('')),
-  cnhValidade: z.string().optional().or(z.literal('')),
-  dataAdmissao: z.string().optional().or(z.literal('')),
+  cargoId: z.string().optional().nullable(),
+  cnhNumero: z.string().optional().nullable(),
+  cnhCategoria: z.string().optional().nullable(),
+  cnhValidade: z.string().optional().nullable(),
+  dataAdmissao: z.string().optional().nullable(),
 });
 
-type UsuarioFormInput = z.input<typeof usuarioSchema>;
+type UsuarioFormInput = z.infer<typeof usuarioSchema>;
 
 interface FormProps {
   onSuccess: () => void;
@@ -43,7 +44,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { data: cargos = [] } = useQuery<Cargo[]>({
+  const { data: cargos = [], isLoading: loadCargos } = useQuery<Cargo[]>({
     queryKey: ['cargos-select'],
     queryFn: async () => {
       const response = await api.get('/cargos');
@@ -139,53 +140,68 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
     });
   };
 
-  // Classes utilitárias
-  const labelStyle = "block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1";
-  const selectStyle = "w-full h-11 px-3 bg-surface border border-border rounded-xl text-sm text-text-main focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer disabled:bg-background";
+  // Formatação das opções para o Select
+  const roleOptions = ROLES.map(r => ({
+    value: r,
+    label: r.charAt(0) + r.slice(1).toLowerCase().replace('_', ' ')
+  }));
+
+  const cargoOptions = cargos.map(c => ({
+    value: c.id,
+    label: c.nome
+  }));
 
   return (
-    <div className="bg-surface rounded-xl shadow-card border border-border overflow-hidden animate-enter flex flex-col max-h-[85vh]">
+    <div className="bg-surface rounded-2xl shadow-float border border-border/60 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
 
-      {/* Header */}
-      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
+      {/* Header Premium */}
+      <div className="bg-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex justify-between items-center shrink-0">
         <div>
-          <h3 className="text-lg font-bold text-text-main">Novo Colaborador</h3>
-          <p className="text-xs text-text-secondary">Cadastro de acesso e perfil profissional.</p>
+          <h3 className="text-xl font-black text-text-main tracking-tight">Novo Colaborador</h3>
+          <p className="text-sm text-text-secondary font-medium mt-0.5">Cadastro de acesso e perfil profissional.</p>
         </div>
-        <div className="p-2 bg-surface rounded-lg border border-border shadow-sm text-primary">
-          <UserPlus className="w-5 h-5" />
+        <div className="p-3 bg-primary/10 rounded-xl border border-primary/20 shadow-inner text-primary">
+          <UserPlus className="w-6 h-6" />
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
         
-        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
+        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
 
-          {/* Avatar Upload */}
-          <div className="flex justify-center mb-2">
-            <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
+          {/* Avatar Upload Redesenhado */}
+          <div className="flex flex-col items-center mb-2">
+            <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileSelect} disabled={isSubmitting} />
             <div
-              onClick={() => fileInputRef.current?.click()}
-              className="w-24 h-24 rounded-full bg-background border-4 border-surface shadow-md cursor-pointer hover:scale-105 transition-all relative group overflow-hidden ring-1 ring-border"
+              onClick={() => !isSubmitting && fileInputRef.current?.click()}
+              className={`w-28 h-28 rounded-full bg-surface-hover border-4 border-surface shadow-md cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all relative group overflow-hidden ring-2 ring-border/50 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
               title="Alterar foto de perfil"
             >
               {previewUrl ? (
                 <img src={previewUrl} className="w-full h-full object-cover" alt="Preview" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-text-muted bg-surface-hover">
-                  <User className="w-10 h-10 opacity-50" />
+                <div className="w-full h-full flex items-center justify-center text-text-muted">
+                  <User className="w-12 h-12 opacity-40 group-hover:scale-110 transition-transform" />
                 </div>
               )}
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera className="w-6 h-6 text-white" />
+              <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                <Camera className="w-6 h-6 text-white mb-1" />
+                <span className="text-[10px] font-bold text-white uppercase tracking-wider">Alterar</span>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+            
+            <div className="md:col-span-2 flex items-center gap-2 border-b border-border/50 pb-2">
+              <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
+              <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Dados de Acesso</label>
+            </div>
+
             <div className="md:col-span-2">
               <Input
                 label="Nome Completo"
+                icon={<User className="w-4 h-4 text-text-muted" />}
                 {...register('nome')}
                 placeholder="Ex: João da Silva"
                 error={errors.nome?.message}
@@ -197,6 +213,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
               <Input
                 label="E-mail Corporativo"
                 type="email"
+                icon={<Mail className="w-4 h-4 text-text-muted" />}
                 {...register('email')}
                 placeholder="nome@empresa.com"
                 error={errors.email?.message}
@@ -208,17 +225,19 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
               <Input
                 label="Senha Inicial"
                 type="password"
+                icon={<KeyRound className="w-4 h-4 text-text-muted" />}
                 {...register('password')}
                 placeholder="******"
                 error={errors.password?.message}
                 disabled={isSubmitting}
               />
-              <span className="absolute right-0 top-0 text-[10px] text-text-muted font-medium px-2 py-1 opacity-60">Mín. 6 dígitos</span>
+              <span className="absolute right-3 top-3 text-[10px] text-text-muted font-bold pointer-events-none opacity-60">Mín. 6 chars</span>
             </div>
 
             <div>
               <Input
                 label="Matrícula"
+                icon={<Hash className="w-4 h-4 text-text-muted" />}
                 {...register('matricula')}
                 placeholder="12345"
                 disabled={isSubmitting}
@@ -226,74 +245,92 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
             </div>
 
             <div>
-              <label className={labelStyle}>Função / Perfil</label>
-              <div className="relative">
-                <select {...register('role')} className={selectStyle} disabled={isSubmitting}>
-                  {ROLES.map(r => <option key={r} value={r}>{r.charAt(0) + r.slice(1).toLowerCase().replace('_', ' ')}</option>)}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </div>
+              <Select
+                label="Nível de Acesso (Função)"
+                options={roleOptions}
+                {...register('role')}
+                error={errors.role?.message}
+                disabled={isSubmitting}
+              />
             </div>
           </div>
 
-          {/* Seção RH Condicional */}
+          {/* Seção RH Condicional com Animação */}
           {roleSelecionada === 'OPERADOR' && (
-            <div className="bg-primary/5 p-5 rounded-xl border border-primary/10 animate-in slide-in-from-top-2">
-              <div className="flex items-center gap-2 mb-4 border-b border-primary/10 pb-2">
-                <div className="p-1 bg-primary/20 rounded text-primary">
-                  <Briefcase className="w-3 h-3" />
+            <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20 animate-in slide-in-from-top-4 duration-300">
+              <div className="flex items-center gap-2 mb-5 border-b border-primary/10 pb-2">
+                <div className="p-1.5 bg-primary/20 rounded-lg text-primary shadow-sm">
+                  <Briefcase className="w-4 h-4" />
                 </div>
-                <h4 className="text-xs font-bold text-primary uppercase tracking-widest">Dados do Motorista</h4>
+                <h4 className="text-[11px] font-black text-primary uppercase tracking-[0.15em]">Dados Profissionais (Motorista)</h4>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="md:col-span-2">
-                  <label className={labelStyle}>Cargo</label>
-                  <div className="relative">
-                    <select {...register('cargoId')} className={selectStyle} disabled={isSubmitting}>
-                      <option value="">Selecione o cargo...</option>
-                      {cargos.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-                    </select>
-                    <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
-                      <ChevronDown className="w-4 h-4" />
-                    </div>
-                  </div>
+                  <Select
+                    label="Cargo Oficial"
+                    options={cargoOptions}
+                    placeholder="Selecione o cargo..."
+                    {...register('cargoId')}
+                    disabled={isSubmitting || loadCargos}
+                  />
                 </div>
 
                 <div>
-                  <label className={labelStyle}><CreditCard className="w-3 h-3 inline mr-1"/> Nº CNH</label>
-                  <Input {...register('cnhNumero')} placeholder="Registro" disabled={isSubmitting} className="bg-surface" containerClassName="!mb-0" />
+                  <Input 
+                    label="Nº da CNH"
+                    icon={<CreditCard className="w-4 h-4 text-primary/70" />}
+                    {...register('cnhNumero')} 
+                    placeholder="Registro da Carteira" 
+                    disabled={isSubmitting} 
+                    className="font-mono tracking-wider" 
+                  />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className={labelStyle}>Categoria</label>
-                    <Input {...register('cnhCategoria')} placeholder="AE" className="text-center uppercase" maxLength={2} disabled={isSubmitting} containerClassName="!mb-0" />
+                    <Input 
+                      label="Categoria" 
+                      {...register('cnhCategoria')} 
+                      placeholder="AE" 
+                      className="text-center font-black text-lg uppercase text-primary tracking-widest" 
+                      maxLength={2} 
+                      disabled={isSubmitting} 
+                    />
                   </div>
                   <div>
-                    <label className={labelStyle}>Validade</label>
-                    <Input type="date" {...register('cnhValidade')} disabled={isSubmitting} className="bg-surface" containerClassName="!mb-0" />
+                    <Input 
+                      label="Validade CNH" 
+                      type="date" 
+                      {...register('cnhValidade')} 
+                      disabled={isSubmitting} 
+                      className="text-sm text-text-secondary" 
+                    />
                   </div>
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className={labelStyle}><Calendar className="w-3 h-3 inline mr-1"/> Data de Admissão</label>
-                  <Input type="date" {...register('dataAdmissao')} disabled={isSubmitting} className="bg-surface" containerClassName="!mb-0" />
+                  <Input 
+                    label="Data de Admissão" 
+                    type="date" 
+                    icon={<Calendar className="w-4 h-4 text-primary/70" />}
+                    {...register('dataAdmissao')} 
+                    disabled={isSubmitting} 
+                  />
                 </div>
               </div>
             </div>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-4 bg-background border-t border-border flex justify-end gap-3 shrink-0">
+        {/* Footer Premium */}
+        <div className="px-6 sm:px-8 py-5 bg-surface-hover/50 border-t border-border/60 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
           <Button
             type="button"
             variant="ghost"
             onClick={onCancelar}
             disabled={isSubmitting}
+            className="w-full sm:w-auto"
           >
             Cancelar
           </Button>
@@ -301,9 +338,8 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
             type="submit"
             variant="primary"
             isLoading={isSubmitting}
-            className="shadow-button hover:shadow-float px-6"
-            icon={<UserPlus className="w-4 h-4" />}
-            disabled={isSubmitting}
+            leftIcon={<UserPlus className="w-4 h-4" />}
+            className="w-full sm:w-auto shadow-button hover:shadow-float px-8"
           >
             Cadastrar Colaborador
           </Button>

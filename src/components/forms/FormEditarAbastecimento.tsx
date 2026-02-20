@@ -8,7 +8,7 @@ import { supabase } from '../../supabaseClient';
 import { toast } from 'sonner';
 import { 
   Fuel, Save, Plus, X, User as UserIcon, Truck, 
-  MapPin, Calendar, CreditCard, Image as ImageIcon, Loader2 
+  MapPin, Calendar, CreditCard, Image as ImageIcon, Loader2, Info
 } from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
@@ -22,6 +22,7 @@ import { useVeiculos } from '../../hooks/useVeiculos';
 import { useUsuarios } from '../../hooks/useUsuarios';
 import { useProdutos } from '../../hooks/useProdutos';
 import { useFornecedores } from '../../hooks/useFornecedores';
+import { desformatarDinheiro, formatarDinheiro } from '../../lib/formatters';
 
 // --- UTILS: Compressão de Imagem ---
 const comprimirImagem = (arquivo: File): Promise<File> => {
@@ -56,21 +57,22 @@ const comprimirImagem = (arquivo: File): Promise<File> => {
   });
 };
 
-// --- SCHEMA ---
+// --- SCHEMA ZOD V4 COMPATÍVEL ---
 const itemSchema = z.object({
   produtoId: z.string().min(1, "Selecione o produto"),
-  quantidade: z.coerce.number().gt(0, "Qtd inválida"),
-  valorPorUnidade: z.coerce.number().min(0, "Valor inválido"),
+  quantidade: z.union([z.string(), z.number()]).transform(v => Number(v)).refine(v => !isNaN(v) && v > 0, "Inválido"),
+  // Lidamos com o valor monetário como string pelo fato de ter máscara, ou number se já vier formatado
+  valorPorUnidade: z.union([z.string(), z.number()]).transform(v => typeof v === 'string' ? desformatarDinheiro(v) : Number(v)).refine(v => !isNaN(v) && v >= 0, "Valor inválido"),
 });
 
 const editSchema = z.object({
   veiculoId: z.string().min(1, "Veículo obrigatório"),
   operadorId: z.string().optional(),
   fornecedorId: z.string().min(1, "Fornecedor obrigatório"),
-  kmOdometro: z.coerce.number().min(1, "KM obrigatório"),
+  kmOdometro: z.union([z.string(), z.number()]).transform(v => Number(v)).refine(v => !isNaN(v) && v >= 1, "Inválido"),
   dataHora: z.string().min(1, "Data obrigatória"),
-  placaCartaoUsado: z.string().optional(),
-  justificativa: z.string().optional(),
+  placaCartaoUsado: z.string().optional().nullable(),
+  justificativa: z.string().optional().nullable(),
   fotoNotaFiscalUrl: z.string().optional().nullable(),
   itens: z.array(itemSchema).min(1, "Adicione itens"),
 });
@@ -89,7 +91,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const [uploading, setUploading] = useState(false);
   const [previewFoto, setPreviewFoto] = useState<string | null>(null);
 
-  // 📡 DADOS GLOBAIS COM CACHE (ATÔMICOS)
+  // 📡 DADOS GLOBAIS COM CACHE
   const { data: usuarios = [], isLoading: loadU } = useUsuarios();
   const { data: veiculos = [], isLoading: loadV } = useVeiculos();
   const { data: produtos = [], isLoading: loadP } = useProdutos();
@@ -104,7 +106,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
 
   const isLoadingDados = loadU || loadV || loadP || loadF || loadingAbs;
 
-  // Filtros
+  // Filtros de Selects
   const produtosCombustivel = useMemo(() => produtos.filter(p => ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo)), [produtos]);
   const fornecedoresPosto = useMemo(() => fornecedores.filter(f => f.tipo === 'POSTO'), [fornecedores]);
   const motoristas = useMemo(() => usuarios.filter(u => ['OPERADOR', 'ENCARREGADO'].includes(u.role)), [usuarios]);
@@ -123,11 +125,16 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
   const itensWatch = useWatch({ control, name: "itens" });
 
-  const totalGeral = (itensWatch || []).reduce((acc, item) =>
-    acc + (Number(item?.quantidade || 0) * Number(item?.valorPorUnidade || 0)), 0
-  ) || 0;
+  const totalGeral = useMemo(() => {
+    return (itensWatch || []).reduce((acc, item) => {
+        const qtd = Number(item?.quantidade || 0);
+        // Suporta tanto o valor bruto numérico (se intocado) quanto a string com máscara
+        const unit = typeof item?.valorPorUnidade === 'string' ? desformatarDinheiro(item.valorPorUnidade) : Number(item?.valorPorUnidade || 0);
+        return acc + (qtd * unit);
+    }, 0);
+  }, [itensWatch]);
 
-  // 3. Populate
+  // 3. Populate Form (Garantindo formatação de dinheiro)
   useEffect(() => {
     if (abastecimento) {
       const abs = abastecimento as any;
@@ -136,21 +143,23 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         operadorId: abs.operadorId || usuarios.find(u => u.nome === abs.operador?.nome)?.id || '',
         fornecedorId: abs.fornecedorId || fornecedores.find(f => f.nome === abs.fornecedor?.nome)?.id || '',
         kmOdometro: Number(abs.kmOdometro),
-        dataHora: new Date(abs.dataHora).toISOString().slice(0, 16),
+        // Fuso horário correção
+        dataHora: new Date(new Date(abs.dataHora).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16),
         placaCartaoUsado: abs.placaCartaoUsado || '',
         justificativa: abs.justificativa || '',
         fotoNotaFiscalUrl: abs.fotoNotaFiscalUrl,
         itens: abs.itens?.map((i: any) => ({
           produtoId: i.produtoId || i.produto?.id || '',
           quantidade: i.quantidade,
-          valorPorUnidade: i.valorPorUnidade || ((i.produto as any)?.valorAtual || 0)
+          // Transforma o número que vem do banco (ex: 5.9) em string visual (5,90) para a máscara
+          valorPorUnidade: (i.valorPorUnidade || ((i.produto as any)?.valorAtual || 0)).toFixed(2).replace('.', ',')
         })) || []
       });
       if (abs.fotoNotaFiscalUrl) setPreviewFoto(abs.fotoNotaFiscalUrl);
     }
   }, [abastecimento, usuarios, fornecedores, reset]);
 
-  // 4. Upload
+  // 4. Upload System
   const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files?.length) return;
     const file = e.target.files[0];
@@ -161,6 +170,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
       const { data: uploadData, error } = await supabase.storage.from('fotos-frota').upload(`public/${fileName}`, compressedFile);
       if (error) throw error;
       const { data: publicUrl } = supabase.storage.from('fotos-frota').getPublicUrl(uploadData.path);
+      
       setValue('fotoNotaFiscalUrl', publicUrl.publicUrl);
       setPreviewFoto(publicUrl.publicUrl);
       toast.success("Foto atualizada!");
@@ -172,7 +182,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
     }
   };
 
-  // 5. Mutation
+  // 5. Mutation API
   const updateMutation = useMutation({
     mutationFn: async (data: EditFormOutput) => {
       await api.put(`/abastecimentos/${abastecimentoId}`, {
@@ -181,141 +191,190 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         itens: data.itens.map(i => ({
           produtoId: i.produtoId,
           quantidade: Number(i.quantidade),
-          valorPorUnidade: Number(i.valorPorUnidade)
+          valorPorUnidade: Number(i.valorPorUnidade) // Já validado pelo Zod
         }))
       });
     },
     onSuccess: () => {
-      toast.success("Atualizado com sucesso!");
+      toast.success("Abastecimento atualizado!");
       queryClient.invalidateQueries({ queryKey: ['abastecimentos'] });
       queryClient.invalidateQueries({ queryKey: ['abastecimento', abastecimentoId] });
       onSuccess();
     },
     onError: (err: any) => {
-      toast.error(err.response?.data?.error || "Erro ao salvar.");
+      toast.error(err.response?.data?.error || "Erro ao salvar alterações.");
     }
   });
 
   const isLocked = isSubmitting || uploading || updateMutation.isPending;
 
-  // Renderiza um loader elegante enquanto as listas não carregam
+  // Loader UI
   if (isLoadingDados) {
     return (
-      <div className="h-[300px] flex flex-col items-center justify-center space-y-3">
-        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-        <p className="text-sm font-medium text-text-muted animate-pulse">Carregando dados...</p>
+      <div className="h-[400px] flex flex-col items-center justify-center space-y-4 animate-in fade-in">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <p className="text-sm font-bold text-text-secondary uppercase tracking-widest animate-pulse">Sincronizando Banco de Dados...</p>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full w-full bg-surface min-h-0">
+    <div className="flex flex-col h-full w-full bg-surface rounded-2xl shadow-float border border-border/60 overflow-hidden max-h-[90vh]">
       
-      {/* HEADER FIXO */}
-      <div className="px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
+      {/* HEADER PREMIUM */}
+      <div className="bg-gradient-to-r from-background to-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex justify-between items-center shrink-0">
         <div>
-          <h3 className="text-lg font-bold text-text-main">Editar Abastecimento</h3>
-          <p className="text-xs text-text-secondary">Ajuste os dados e comprovante.</p>
-        </div>
-        <div className="p-2 bg-surface-hover rounded-lg text-primary">
-          <Fuel className="w-5 h-5" />
+          <h3 className="text-xl font-black text-text-main tracking-tight flex items-center gap-2">
+            <div className="p-1.5 bg-primary/10 rounded-lg text-primary shadow-sm">
+                <Fuel className="w-5 h-5" />
+            </div>
+            Modo Edição Avançado
+          </h3>
+          <p className="text-sm text-text-secondary font-medium mt-1">Correção de Odômetro e Detalhes da Nota Fiscal.</p>
         </div>
       </div>
 
-      {/* BODY COM SCROLL INTERNO */}
       <form onSubmit={handleSubmit((data) => updateMutation.mutate(data))} className="flex-1 flex flex-col overflow-hidden min-h-0">
         
-        {/* MIOLO ROLÁVEL */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6 min-h-0">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-8 min-h-0">
 
-          <div className="flex flex-col md:flex-row gap-6">
-            {/* Foto */}
-            <div className="w-full md:w-1/3 flex flex-col gap-2">
-              <span className="text-xs font-bold text-text-secondary uppercase ml-1">Comprovante</span>
-              <div className="relative aspect-[3/4] bg-surface-hover/30 rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center overflow-hidden group hover:border-primary transition-colors cursor-pointer">
+          <div className="flex flex-col lg:flex-row gap-8">
+            
+            {/* FOTO E RECIBO */}
+            <div className="w-full lg:w-1/3 flex flex-col gap-3">
+              <div className="flex items-center gap-2 border-b border-border/50 pb-2">
+                  <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
+                  <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Comprovante</label>
+              </div>
+
+              <div className="relative aspect-[3/4] bg-surface-hover/30 rounded-2xl border-2 border-dashed border-border/60 flex flex-col items-center justify-center overflow-hidden group hover:border-primary/50 transition-colors cursor-pointer shadow-sm">
                 {uploading ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                    <span className="text-xs text-text-muted">Enviando...</span>
+                  <div className="flex flex-col items-center gap-3">
+                    <Loader2 className="w-10 h-10 text-primary animate-spin" />
+                    <span className="text-xs font-bold text-text-secondary uppercase tracking-widest">Processando...</span>
                   </div>
                 ) : previewFoto ? (
                   <>
-                    <img src={previewFoto} alt="Nota" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
-                       <ImageIcon className="w-8 h-8 text-white" />
-                       <span className="text-white text-xs font-bold bg-black/20 px-2 py-1 rounded">Trocar Foto</span>
+                    <img src={previewFoto} alt="Nota Fiscal" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
+                       <ImageIcon className="w-10 h-10 text-white" />
+                       <span className="text-white text-[11px] font-black uppercase tracking-widest bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-md">Substituir Imagem</span>
                     </div>
                   </>
                 ) : (
-                  <div className="text-center text-text-muted p-4">
-                    <ImageIcon className="w-10 h-10 mx-auto mb-2 opacity-50" />
-                    <p className="text-xs">Clique para adicionar</p>
+                  <div className="text-center text-text-muted p-6 opacity-60 group-hover:opacity-100 group-hover:text-primary transition-colors">
+                    <ImageIcon className="w-12 h-12 mx-auto mb-3" />
+                    <p className="text-xs font-bold uppercase tracking-widest">Adicionar Nota Fiscal</p>
                   </div>
                 )}
                 <input type="file" accept="image/*" className="absolute inset-0 opacity-0 cursor-pointer z-10" onChange={handleFotoChange} disabled={isLocked} />
               </div>
             </div>
 
-            {/* Campos */}
-            <div className="w-full md:w-2/3 grid grid-cols-1 gap-5 content-start">
-              <Select label="Veículo" options={veiculosOptions} icon={<Truck className="w-4 h-4"/>} {...register('veiculoId')} error={errors.veiculoId?.message} disabled={isLocked} />
-              <Select label="Motorista" options={motoristasOptions} icon={<UserIcon className="w-4 h-4"/>} {...register('operadorId')} disabled={isLocked} />
-              <Select label="Fornecedor" options={fornecedoresOptions} icon={<MapPin className="w-4 h-4"/>} {...register('fornecedorId')} error={errors.fornecedorId?.message} disabled={isLocked} />
-              <div className="grid grid-cols-2 gap-4">
-                <Input label="KM Odômetro" type="number" {...register('kmOdometro')} error={errors.kmOdometro?.message} disabled={isLocked} />
-                <Input label="Cartão (Final)" maxLength={4} placeholder="Ex: 1234" icon={<CreditCard className="w-4 h-4"/>} {...register('placaCartaoUsado')} disabled={isLocked} containerClassName="!mb-0" />
+            {/* DADOS GERAIS */}
+            <div className="w-full lg:w-2/3 space-y-5">
+              <div className="flex items-center gap-2 border-b border-border/50 pb-2">
+                  <span className="w-1.5 h-4 bg-amber-500 rounded-full shadow-sm"></span>
+                  <label className="text-[10px] font-black text-amber-600 tracking-[0.2em] uppercase">Informações Operacionais</label>
               </div>
-              <Input label="Data e Hora" type="datetime-local" icon={<Calendar className="w-4 h-4"/>} {...register('dataHora')} error={errors.dataHora?.message} disabled={isLocked} containerClassName="!mb-0" />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div className="md:col-span-2">
+                    <Select label="Veículo Oficial" options={veiculosOptions} icon={<Truck className="w-4 h-4"/>} {...register('veiculoId')} error={errors.veiculoId?.message} disabled={isLocked} />
+                </div>
+                
+                <Select label="Operador / Motorista" options={motoristasOptions} icon={<UserIcon className="w-4 h-4"/>} {...register('operadorId')} disabled={isLocked} />
+                <Select label="Posto Fornecedor" options={fornecedoresOptions} icon={<MapPin className="w-4 h-4"/>} {...register('fornecedorId')} error={errors.fornecedorId?.message} disabled={isLocked} />
+                
+                <Input label="Odômetro Registado" type="number" {...register('kmOdometro')} error={errors.kmOdometro?.message as string} disabled={isLocked} className="font-mono font-bold text-lg text-primary" />
+                <Input label="Cartão da Frota (Final)" maxLength={4} placeholder="Ex: 1234" icon={<CreditCard className="w-4 h-4"/>} {...register('placaCartaoUsado')} disabled={isLocked} className="font-mono text-center tracking-widest font-black" />
+                
+                <div className="md:col-span-2">
+                    <Input label="Data e Hora Exata" type="datetime-local" icon={<Calendar className="w-4 h-4"/>} {...register('dataHora')} error={errors.dataHora?.message} disabled={isLocked} />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Itens */}
-          <div className="bg-surface-hover/30 rounded-xl border border-border p-4">
-            <div className="flex justify-between items-center mb-3">
-              <label className="text-xs font-bold text-text-secondary uppercase tracking-widest">Itens</label>
-              <span className="bg-surface border border-border px-3 py-1 rounded-lg text-xs font-mono font-bold text-primary shadow-sm">
-                Total: R$ {totalGeral.toFixed(2)}
-              </span>
+          {/* MATRIZ DE ITENS */}
+          <div className="pt-2">
+            <div className="flex justify-between items-end mb-4 px-1">
+                <div className="flex items-center gap-2">
+                    <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
+                    <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Itens Consumidos</label>
+                </div>
+                <div className="bg-surface border border-border px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center gap-3">
+                    <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Valor Final:</span>
+                    <span className="font-mono font-black text-primary text-lg">R$ {totalGeral.toFixed(2)}</span>
+                </div>
             </div>
-            <div className="space-y-3">
+
+            <div className="space-y-4">
               {fields.map((field, index) => (
-                <div key={field.id} className="grid grid-cols-12 gap-3 items-end bg-surface p-3 rounded-xl border border-border shadow-sm relative group hover:border-primary/30 transition-colors">
-                  <button type="button" onClick={() => remove(index)} disabled={isLocked} className="absolute -top-2 -right-2 bg-surface text-text-muted hover:text-error rounded-full w-6 h-6 border border-border shadow-sm flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-all">
-                    <X className="w-3 h-3" />
+                <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-surface-hover/20 p-5 rounded-2xl border border-border/60 shadow-sm relative group hover:border-primary/40 transition-colors duration-300">
+                  <button type="button" onClick={() => remove(index)} disabled={isLocked} className="absolute -top-3 -right-3 bg-surface text-text-muted hover:text-white hover:bg-error rounded-full w-8 h-8 border border-border/60 shadow-md flex items-center justify-center z-10 opacity-0 group-hover:opacity-100 transition-all">
+                    <X className="w-4 h-4" />
                   </button>
-                  <div className="col-span-12 sm:col-span-5">
-                    <Select options={produtosOptions} {...register(`itens.${index}.produtoId`)} className="h-9 text-xs" disabled={isLocked} containerClassName="!mb-0" />
+
+                  <div className="md:col-span-6">
+                    <Select label="Produto" options={produtosOptions} {...register(`itens.${index}.produtoId`)} error={errors.itens?.[index]?.produtoId?.message} disabled={isLocked} containerClassName="!mb-0" />
                   </div>
-                  <div className="col-span-6 sm:col-span-3">
-                    <Input label="Qtd" type="number" step="any" {...register(`itens.${index}.quantidade`)} className="h-9 text-xs text-center" containerClassName="!mb-0" disabled={isLocked} />
+
+                  <div className="md:col-span-3">
+                    <Input label="Litros / Qtd" type="number" step="any" {...register(`itens.${index}.quantidade`)} error={errors.itens?.[index]?.quantidade?.message as string} className="text-center font-mono font-bold" containerClassName="!mb-0" disabled={isLocked} />
                   </div>
-                  <div className="col-span-6 sm:col-span-4">
-                    <Input label="R$ Unit" type="number" step="0.001" {...register(`itens.${index}.valorPorUnidade`)} className="h-9 text-xs text-right font-mono font-bold" containerClassName="!mb-0" disabled={isLocked} />
+
+                  <div className="md:col-span-3">
+                    <Input 
+                      label="Preço Un." 
+                      {...register(`itens.${index}.valorPorUnidade`, {
+                         onChange: (e) => {
+                             e.target.value = formatarDinheiro(e.target.value);
+                             setValue(`itens.${index}.valorPorUnidade`, e.target.value);
+                         }
+                      })} 
+                      error={errors.itens?.[index]?.valorPorUnidade?.message as string} 
+                      className="text-right font-mono font-black text-emerald-600" 
+                      containerClassName="!mb-0" 
+                      disabled={isLocked} 
+                    />
                   </div>
                 </div>
               ))}
             </div>
-            <button type="button" onClick={() => append({ produtoId: '', quantidade: 0, valorPorUnidade: 0 })} disabled={isLocked} className="w-full mt-3 py-2 border border-dashed border-border rounded-lg text-xs font-bold text-text-muted hover:text-primary hover:bg-primary/5 transition-all flex items-center justify-center gap-1 h-10">
-              <Plus className="w-4 h-4" /> Adicionar Combustível / Aditivo
-            </button>
+
+            <Button type="button" variant="secondary" onClick={() => append({ produtoId: '', quantidade: 0, valorPorUnidade: 0 })} disabled={isLocked} icon={<Plus className="w-4 h-4" />} className="w-full mt-4 border-dashed font-bold shadow-sm">
+            Adicionar Novo Combustível / Aditivo
+            </Button>
           </div>
 
-          <Input label="Justificativa (Opcional)" {...register('justificativa')} disabled={isLocked} placeholder="Motivo da alteração..." />
+          <div className="pt-4 border-t border-border/50 space-y-1.5">
+             <label className="flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase tracking-wider ml-1">
+               <Info className="w-3.5 h-3.5" /> Motivo da Edição (Auditoria)
+             </label>
+             <textarea
+               {...register('justificativa')}
+               disabled={isLocked}
+               className="w-full px-4 py-3 text-sm text-text-main bg-surface border border-border/60 rounded-xl transition-all duration-300 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 placeholder:text-text-muted disabled:bg-background/50 disabled:cursor-not-allowed resize-none shadow-sm h-20"
+               placeholder="Explique o motivo de estar alterando o registro original..."
+             />
+          </div>
+
         </div>
 
-        {/* FOOTER FIXO */}
-        <div className="flex gap-3 p-4 border-t border-border bg-surface-hover/30 shrink-0">
-          <Button type="button" variant="ghost" onClick={onCancel} className="flex-1" disabled={isLocked}>Cancelar</Button>
-          
+        {/* FOOTER PREMIUM */}
+        <div className="px-6 sm:px-8 py-5 bg-surface-hover/30 border-t border-border/60 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
+          <Button type="button" variant="ghost" onClick={onCancel} className="w-full sm:w-auto font-bold" disabled={isLocked}>
+            Cancelar
+          </Button>
           <Button 
             type="submit" 
             variant="primary" 
             isLoading={isLocked} 
-            disabled={isLocked} 
-            className="flex-[2] shadow-lg" 
+            className="w-full sm:w-auto px-10 shadow-button hover:shadow-float-primary font-black uppercase tracking-tight" 
             icon={!isLocked ? <Save className="w-4 h-4" /> : undefined}
           >
-            {isLocked ? 'Salvando...' : 'Salvar Alterações'}
+            Gravar Alterações
           </Button>
         </div>
       </form>

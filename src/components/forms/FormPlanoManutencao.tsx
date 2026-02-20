@@ -15,21 +15,23 @@ import { useVeiculos } from '../../hooks/useVeiculos';
 
 const tiposIntervalo = ["KM", "TEMPO"] as const;
 
-// --- SCHEMA ---
+// --- SCHEMA ZOD V4 COMPATÍVEL ---
 const planoSchema = z.object({
   veiculoId: z.string({ error: "Selecione um veículo" }).min(1, "Veículo obrigatório"),
   descricao: z.string({ error: "Descrição obrigatória" })
     .min(3, "Mínimo 3 letras")
     .transform(val => val.toUpperCase()),
   tipoIntervalo: z.enum(tiposIntervalo, { error: "Tipo inválido" }),
-  valorIntervalo: z.coerce.number({ error: "Informe o intervalo" })
-    .min(1, "Deve ser maior que zero"),
+  
+  // Lidando com a conversão de string (input) para number (output)
+  valorIntervalo: z.union([z.string(), z.number()])
+    .transform(v => Number(v))
+    .refine(v => !isNaN(v) && v >= 1, "Deve ser maior que zero")
 });
 
 type PlanoFormInput = z.input<typeof planoSchema>;
 type PlanoFormOutput = z.output<typeof planoSchema>;
 
-// ✂️ Removemos "veiculos" das propriedades (Prop Drilling Aniquilado!)
 export function FormPlanoManutencao() {
   
   // 📡 DADOS GLOBAIS COM CACHE
@@ -51,7 +53,7 @@ export function FormPlanoManutencao() {
       veiculoId: '',
       descricao: '',
       tipoIntervalo: 'KM',
-      valorIntervalo: '' as any // Hack para iniciar vazio visualmente
+      valorIntervalo: '' // O form inicia vazio para não confundir o usuário
     },
     mode: 'onBlur'
   });
@@ -77,7 +79,7 @@ export function FormPlanoManutencao() {
       setPlanos(response.data);
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao carregar planos de manutenção.");
+      toast.error("Erro ao carregar os planos de manutenção.");
     } finally {
       setLoadingList(false);
     }
@@ -90,28 +92,28 @@ export function FormPlanoManutencao() {
     const promise = api.post('/planos-manutencao', data);
 
     toast.promise(promise, {
-      loading: 'Salvando plano...',
+      loading: 'A gravar plano...',
       success: () => {
         reset();
         fetchPlanos(); 
-        return 'Plano criado com sucesso!';
+        return 'Plano de manutenção ativado com sucesso!';
       },
-      error: (err) => err.response?.data?.error || 'Erro ao criar o plano.'
+      error: (err) => err.response?.data?.error || 'Ocorreu um erro ao criar o plano.'
     });
   };
 
   // --- DELETAR PLANO ---
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Deseja realmente remover este plano de manutenção?")) return;
+    if (!window.confirm("Deseja realmente remover este plano de manutenção? Esta ação apagará os alertas futuros.")) return;
 
     setDeletingId(id);
     try {
       await api.delete(`/planos-manutencao/${id}`);
       setPlanos(prev => prev.filter(p => p.id !== id)); 
-      toast.success("Plano removido.");
+      toast.success("Plano desativado e removido.");
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao remover plano.");
+      toast.error("Falha ao tentar remover o plano.");
       fetchPlanos(); 
     } finally {
       setDeletingId(null);
@@ -131,21 +133,21 @@ export function FormPlanoManutencao() {
   const isLocked = isSubmitting || loadingVeiculos;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-full animate-in fade-in zoom-in-95 duration-300">
 
       {/* COLUNA 1: FORMULÁRIO (Sticky) */}
-      <div className="lg:col-span-5 xl:col-span-4 bg-surface p-6 rounded-xl shadow-lg border border-border h-fit sticky top-6">
-        <div className="flex items-center gap-3 mb-6 border-b border-border pb-4">
-          <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shadow-sm">
-            <Wrench className="w-5 h-5" />
+      <div className="lg:col-span-5 xl:col-span-4 bg-surface p-6 sm:p-8 rounded-2xl shadow-float border border-border/60 h-fit lg:sticky lg:top-6">
+        <div className="flex items-center gap-4 mb-6 border-b border-border/60 pb-4">
+          <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shadow-inner">
+            <Wrench className="w-6 h-6" />
           </div>
           <div>
-            <h4 className="font-bold text-text-main leading-tight">Novo Plano</h4>
-            <p className="text-xs text-text-secondary">Configurar alertas automáticos.</p>
+            <h4 className="text-xl font-black text-text-main tracking-tight leading-none">Novo Plano</h4>
+            <p className="text-xs text-text-secondary font-medium mt-1">Configure alertas automáticos.</p>
           </div>
         </div>
 
-        <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+        <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
           
           <Select
             label="Veículo Alvo"
@@ -157,22 +159,25 @@ export function FormPlanoManutencao() {
 
           <Input
             label="Descrição do Serviço"
-            placeholder="Ex: TROCA DE ÓLEO"
+            placeholder="Ex: TROCA DE ÓLEO DE MOTOR"
             {...register('descricao')}
             error={errors.descricao?.message}
             disabled={isLocked}
-            className="uppercase"
+            className="uppercase font-bold tracking-wide"
             icon={<Activity className="w-4 h-4 text-text-muted"/>}
           />
 
-          <div className="bg-surface-hover/50 p-4 rounded-xl border border-border">
-            <label className="block text-xs font-bold text-text-secondary uppercase mb-3 text-center">
-              Configuração do Ciclo
-            </label>
+          <div className="bg-surface-hover/30 p-5 rounded-2xl border border-border/60 shadow-sm">
+            <div className="flex items-center gap-2 mb-4 pb-2 border-b border-border/50">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full shadow-sm"></span>
+              <label className="text-[10px] font-black text-amber-600 tracking-[0.2em] uppercase">
+                Configuração do Ciclo
+              </label>
+            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <Select
-                label="Tipo"
+                label="Baseado em"
                 options={intervaloOptions}
                 {...register('tipoIntervalo')}
                 disabled={isLocked}
@@ -188,10 +193,10 @@ export function FormPlanoManutencao() {
                   {...register('valorIntervalo')}
                   error={errors.valorIntervalo?.message}
                   disabled={isLocked}
-                  className="text-center font-mono"
+                  className="text-center font-mono font-black"
                   containerClassName="!mb-0"
                 />
-                <span className="absolute right-3 top-[34px] text-[10px] font-bold text-text-muted pointer-events-none uppercase">
+                <span className="absolute right-3 top-[32px] text-[9px] font-black text-text-muted pointer-events-none uppercase tracking-widest">
                   {tipoIntervalo === 'KM' ? 'KM' : 'MESES'}
                 </span>
               </div>
@@ -201,56 +206,59 @@ export function FormPlanoManutencao() {
           <Button
             type="submit"
             variant="primary"
-            className="w-full shadow-lg shadow-primary/20"
+            className="w-full shadow-button hover:shadow-float-primary py-6 font-black uppercase tracking-tight"
             disabled={isLocked}
             isLoading={isSubmitting}
-            icon={<Plus className="w-4 h-4" />}
+            icon={<Plus className="w-5 h-5" />}
           >
-            Criar Plano
+            Registar Plano
           </Button>
         </form>
       </div>
 
       {/* COLUNA 2: LISTA (Scrollável) */}
-      <div className="lg:col-span-7 xl:col-span-8 flex flex-col h-full min-h-[500px]">
-        <div className="flex items-center justify-between mb-4">
-          <h4 className="text-lg font-bold text-text-main flex items-center gap-2">
+      <div className="lg:col-span-7 xl:col-span-8 flex flex-col h-full min-h-[500px] bg-surface rounded-2xl shadow-sm border border-border/60 overflow-hidden">
+        
+        <div className="bg-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex items-center justify-between shrink-0">
+          <h4 className="text-lg font-black text-text-main flex items-center gap-3 tracking-tight">
             Planos Ativos
-            <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-full text-xs border border-primary/20">
+            <span className="bg-primary/10 text-primary px-3 py-1 rounded-lg text-xs border border-primary/20 shadow-inner">
               {planos.length}
             </span>
           </h4>
         </div>
 
         {loadingList ? (
-          <div className="flex-1 flex flex-col items-center justify-center opacity-50">
-            <Loader2 className="w-8 h-8 text-primary animate-spin mb-2" />
-            <p className="text-sm text-text-muted">Carregando...</p>
+          <div className="flex-1 flex flex-col items-center justify-center opacity-60 gap-4">
+            <Loader2 className="w-10 h-10 text-primary animate-spin" />
+            <p className="text-sm font-bold text-text-secondary uppercase tracking-widest animate-pulse">A procurar planos...</p>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto pr-2 space-y-3 pb-4 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-4 custom-scrollbar">
             {planos.length === 0 && (
-              <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-border rounded-xl bg-surface min-h-[300px]">
-                <Activity className="w-12 h-12 text-text-muted/50 mb-2" />
-                <p className="text-text-secondary text-sm font-medium">Nenhum plano configurado.</p>
-                <p className="text-text-muted text-xs mt-1">Utilize o formulário ao lado para criar regras.</p>
+              <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-border/60 rounded-3xl bg-background/30 min-h-[300px] group hover:border-primary/40 transition-colors">
+                <div className="p-5 bg-surface rounded-full mb-4 shadow-sm group-hover:scale-110 transition-transform">
+                  <Activity className="w-10 h-10 text-text-muted/40 group-hover:text-primary/60" />
+                </div>
+                <p className="text-sm font-black text-text-secondary uppercase tracking-widest">Nenhum plano configurado</p>
+                <p className="text-xs text-text-muted mt-2 font-medium">Utilize o formulário ao lado para criar regras de manutenção preventivas.</p>
               </div>
             )}
 
             {planos.map(plano => (
-              <div key={plano.id} className="bg-surface p-4 rounded-xl border border-border shadow-sm hover:shadow-md transition-all relative group overflow-hidden">
+              <div key={plano.id} className="bg-background p-5 rounded-2xl border border-border/60 shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300 relative group overflow-hidden">
                 {/* Faixa Lateral Colorida */}
-                <div className={`absolute left-0 top-0 bottom-0 w-1 ${plano.tipoIntervalo === 'KM' ? 'bg-sky-500' : 'bg-emerald-500'}`} />
+                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${plano.tipoIntervalo === 'KM' ? 'bg-sky-500' : 'bg-emerald-500'}`} />
 
-                <div className="flex justify-between items-start pl-3">
+                <div className="flex justify-between items-start pl-4">
                   <div>
-                    <h5 className="font-bold text-text-main">{plano.descricao}</h5>
-                    <p className="text-xs text-text-secondary font-medium mt-0.5 flex items-center gap-1.5">
-                      <span className="bg-surface-hover px-1.5 py-0.5 rounded text-text-main border border-border font-mono">
+                    <h5 className="font-black text-text-main uppercase tracking-tight">{plano.descricao}</h5>
+                    <p className="text-xs text-text-secondary font-bold mt-1.5 flex items-center gap-2">
+                      <span className="bg-surface px-2 py-1 rounded-md text-text-main border border-border/60 font-mono shadow-sm">
                         {plano.veiculo?.placa || 'N/A'}
                       </span>
-                      <span className="text-border">•</span>
-                      <span>{plano.veiculo?.modelo || 'Veículo Removido'}</span>
+                      <span className="text-border/80">•</span>
+                      <span className="opacity-80">{plano.veiculo?.modelo || 'Veículo Removido'}</span>
                     </p>
                   </div>
 
@@ -258,34 +266,35 @@ export function FormPlanoManutencao() {
                     variant="ghost"
                     onClick={() => handleDelete(plano.id)}
                     isLoading={deletingId === plano.id}
-                    className="!p-1.5 h-8 w-8 text-text-muted hover:text-error hover:bg-error/10 rounded-full"
+                    className="!p-2 h-9 w-9 text-text-muted hover:text-white hover:bg-error rounded-full transition-colors shadow-sm"
                     icon={<Trash2 className="w-4 h-4" />}
                   />
                 </div>
 
-                <div className="mt-3 flex items-center justify-between pl-3 pt-3 border-t border-border/50">
+                <div className="mt-4 flex flex-wrap items-center justify-between pl-4 pt-4 border-t border-border/50 gap-3">
+                  
                   {/* Badge de Regra */}
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-text-muted uppercase tracking-wide">Ciclo:</span>
-                    <span className="text-sm font-bold text-text-main bg-surface-hover px-2 py-0.5 rounded border border-border flex items-center gap-1">
-                      {plano.tipoIntervalo === 'KM' ? <Gauge className="w-3 h-3 text-sky-500" /> : <Calendar className="w-3 h-3 text-emerald-500" />}
-                      {plano.valorIntervalo.toLocaleString('pt-BR')} {plano.tipoIntervalo === 'KM' ? 'KM' : 'Meses'}
+                    <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Frequência:</span>
+                    <span className="text-sm font-black text-text-main bg-surface px-3 py-1 rounded-lg border border-border/60 flex items-center gap-1.5 shadow-sm">
+                      {plano.tipoIntervalo === 'KM' ? <Gauge className="w-3.5 h-3.5 text-sky-500" /> : <Calendar className="w-3.5 h-3.5 text-emerald-500" />}
+                      {plano.valorIntervalo.toLocaleString('pt-BR')} <span className="text-[10px] text-text-muted">{plano.tipoIntervalo === 'KM' ? 'KM' : 'Meses'}</span>
                     </span>
                   </div>
 
                   {/* Badge de Próxima Manutenção */}
                   {plano.tipoIntervalo === 'KM' && plano.kmProximaManutencao && (
-                    <div className="text-right">
-                      <span className="text-[10px] text-text-muted font-bold uppercase mr-2">Próxima:</span>
-                      <span className="text-xs font-bold text-sky-700 bg-sky-50 px-2 py-1 rounded border border-sky-100">
-                        {plano.kmProximaManutencao.toLocaleString('pt-BR')} <span className="text-[10px]">KM</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Alvo:</span>
+                      <span className="text-sm font-black text-sky-700 bg-sky-500/10 px-3 py-1 rounded-lg border border-sky-500/20 shadow-sm flex items-center gap-1">
+                        {plano.kmProximaManutencao.toLocaleString('pt-BR')} <span className="text-[10px] opacity-70">KM</span>
                       </span>
                     </div>
                   )}
-                  {plano.tipoIntervalo === 'TEMPO' && (
-                    <div className="text-right">
-                      <span className="text-[10px] text-text-muted font-bold uppercase mr-2">Próxima:</span>
-                      <span className="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded border border-emerald-100">
+                  {plano.tipoIntervalo === 'TEMPO' && plano.dataProximaManutencao && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Alvo:</span>
+                      <span className="text-sm font-black text-emerald-700 bg-emerald-500/10 px-3 py-1 rounded-lg border border-emerald-500/20 shadow-sm flex items-center gap-1">
                         {formatarDataSegura(plano.dataProximaManutencao)}
                       </span>
                     </div>

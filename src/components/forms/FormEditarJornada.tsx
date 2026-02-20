@@ -4,32 +4,33 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
 import { toast } from 'sonner';
-import { Truck, User, Clock, CheckCircle2, Calendar, FileText, Save } from 'lucide-react';
+import { Truck, User, CheckCircle2, FileText, Save, MapPin, Flag, Loader2 } from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Select } from '../ui/Select'; // Usando o componente padronizado
+import { Select } from '../ui/Select'; 
 
 // --- UTILS ---
 import { formatKmVisual, parseKmInteligente } from '../../utils';
 
-// --- SCHEMA ---
+// --- SCHEMA ZOD V4 COMPATÍVEL ---
 const editJornadaFormSchema = z.object({
-  dataInicio: z.string().min(1, 'Data é obrigatória'),
-  horaInicio: z.string().min(1, 'Hora é obrigatória'),
-  kmInicio: z.string().min(1, 'KM é obrigatório'),
+  dataInicio: z.string().min(1, 'Data obrigatória'),
+  horaInicio: z.string().min(1, 'Hora obrigatória'),
+  kmInicio: z.string().min(1, 'KM inicial obrigatório'),
 
-  dataFim: z.string().nullish(),
-  horaFim: z.string().nullish(),
-  kmFim: z.string().nullish(),
+  dataFim: z.string().optional().nullable(),
+  horaFim: z.string().optional().nullable(),
+  kmFim: z.string().optional().nullable(),
 
-  veiculoId: z.string().min(1, 'Veículo é obrigatório'),
-  operadorId: z.string().min(1, 'Motorista é obrigatório'),
-  observacoes: z.string().nullish(),
+  veiculoId: z.string().min(1, 'Selecione o veículo'),
+  operadorId: z.string().min(1, 'Selecione o motorista'),
+  observacoes: z.string().optional().nullable(),
 });
 
-type EditJornadaFormData = z.infer<typeof editJornadaFormSchema>;
+type EditJornadaFormInput = z.input<typeof editJornadaFormSchema>;
+type EditJornadaFormOutput = z.output<typeof editJornadaFormSchema>;
 
 interface FormEditarJornadaProps {
   jornadaId: string;
@@ -48,17 +49,17 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
   const { 
     register, handleSubmit, reset, setValue, watch, 
     formState: { errors, isSubmitting } 
-  } = useForm<EditJornadaFormData>({
+  } = useForm<EditJornadaFormInput, any, EditJornadaFormOutput>({
     resolver: zodResolver(editJornadaFormSchema),
     defaultValues: {
       kmInicio: '', kmFim: '', observacoes: '',
       dataFim: '', horaFim: ''
-    }
+    },
+    mode: 'onBlur'
   });
 
   const veiculoSelecionadoId = watch('veiculoId');
 
-  // Mapeamento para o componente Select
   const veiculosOptions = useMemo(() => veiculos.map(v => ({ 
     value: v.id, 
     label: `${v.placa} - ${v.modelo}` 
@@ -70,6 +71,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
   })), [operadores]);
 
   useEffect(() => {
+    let isMounted = true;
     const loadData = async () => {
       try {
         const [veiculosRes, usersRes, jornadaRes] = await Promise.all([
@@ -78,13 +80,15 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
           api.get(`/jornadas/${jornadaId}`)
         ]);
 
+        if (!isMounted) return;
+
         setVeiculos(veiculosRes.data);
         setOperadores(usersRes.data.filter((u: any) => ['OPERADOR', 'ENCARREGADO'].includes(u.role)));
 
         const jornada = jornadaRes.data;
         const inicio = new Date(jornada.dataInicio);
 
-        const formData: EditJornadaFormData = {
+        const formData: EditJornadaFormInput = {
           veiculoId: jornada.veiculoId,
           operadorId: jornada.operadorId,
           kmInicio: formatKmVisual(jornada.kmInicio),
@@ -106,13 +110,16 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
         reset(formData);
       } catch (err) {
         console.error("Erro ao carregar dados:", err);
-        toast.error("Erro ao carregar dados da jornada.");
-        onCancelar();
+        if (isMounted) {
+            toast.error("Falha ao carregar o registo da jornada.");
+            onCancelar();
+        }
       } finally {
-        setFetching(false);
+        if (isMounted) setFetching(false);
       }
     };
     loadData();
+    return () => { isMounted = false; };
   }, [jornadaId, reset, onCancelar]);
 
   useEffect(() => {
@@ -122,7 +129,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
     }
   }, [veiculoSelecionadoId, veiculos]);
 
-  const onSubmit = async (data: EditJornadaFormData) => {
+  const onSubmit = async (data: EditJornadaFormOutput) => {
     setLoading(true);
     try {
       const dataInicioISO = new Date(`${data.dataInicio}T${data.horaInicio}`).toISOString();
@@ -138,7 +145,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
       if (data.kmFim && data.kmFim.trim() !== '') {
         kmFimNum = parseKmInteligente(data.kmFim, kmInicioNum);
         if (!isNaN(kmFimNum) && kmFimNum < kmInicioNum) {
-          toast.error(`Erro: KM Final (${kmFimNum}) não pode ser menor que Inicial (${kmInicioNum}).`);
+          toast.error(`Inconsistência Operacional: KM de Chegada (${kmFimNum.toLocaleString()}) não pode ser inferior ao KM de Saída (${kmInicioNum.toLocaleString()}).`);
           setLoading(false);
           return;
         }
@@ -155,11 +162,11 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
       };
 
       await api.put(`/jornadas/${jornadaId}`, payload);
-      toast.success('Jornada atualizada com sucesso!');
+      toast.success('Jornada retificada com sucesso!');
       onSuccess();
     } catch (err: any) {
       console.error(err);
-      toast.error(err.response?.data?.error || 'Erro ao salvar alterações.');
+      toast.error(err.response?.data?.error || 'Ocorreu um erro ao gravar as alterações.');
     } finally {
       setLoading(false);
     }
@@ -169,158 +176,186 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
 
   if (fetching) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 gap-3 bg-surface rounded-xl border border-border">
-        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-        <p className="text-sm text-text-muted font-medium animate-pulse">Carregando dados...</p>
+      <div className="h-[400px] flex flex-col items-center justify-center space-y-4 animate-in fade-in">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <p className="text-sm font-bold text-text-secondary uppercase tracking-widest animate-pulse">A carregar detalhes da operação...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-xl shadow-card border border-border overflow-hidden animate-enter flex flex-col max-h-[85vh]">
+    <div className="bg-surface rounded-2xl shadow-float border border-border/60 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-300">
       
-      {/* HEADER */}
-      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
+      {/* HEADER PREMIUM */}
+      <div className="bg-gradient-to-r from-background to-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex justify-between items-center shrink-0">
         <div>
-          <h3 className="text-lg font-bold text-text-main">Editar Jornada</h3>
-          <p className="text-xs text-text-secondary">Corrija dados de saída, chegada ou veículo incorreto.</p>
-        </div>
-        <div className="p-2 bg-surface rounded-lg border border-border shadow-sm text-primary">
-          <Truck className="w-5 h-5" />
+          <h3 className="text-xl font-black text-text-main tracking-tight flex items-center gap-2">
+            <div className="p-1.5 bg-primary/10 rounded-lg text-primary shadow-sm">
+                <Truck className="w-5 h-5" />
+            </div>
+            Retificar Jornada
+          </h3>
+          <p className="text-sm text-text-secondary font-medium mt-1">Ajustes manuais no histórico de viagens.</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
-        <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 custom-scrollbar">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+        <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-8 space-y-8 custom-scrollbar">
 
           {/* 1. VÍNCULOS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Select 
-              label="Veículo" 
-              options={veiculosOptions}
-              icon={<Truck className="w-4 h-4"/>}
-              {...register('veiculoId')}
-              error={errors.veiculoId?.message}
-              disabled={isLocked}
-            />
-            
-            <Select 
-              label="Motorista"
-              options={operadoresOptions}
-              icon={<User className="w-4 h-4"/>}
-              {...register('operadorId')}
-              error={errors.operadorId?.message}
-              disabled={isLocked}
-            />
-          </div>
+          <div className="space-y-5">
+              <div className="flex items-center gap-2 border-b border-border/50 pb-2">
+                  <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
+                  <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Vínculos de Frota</label>
+              </div>
 
-          {/* 2. DADOS DE SAÍDA (VERDE) */}
-          <div className="bg-success/5 p-4 rounded-xl border border-success/20">
-            <div className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2 text-success">
-              <div className="w-1.5 h-4 bg-success rounded-full" /> Registro de Saída
-            </div>
-            
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label="DATA"
-                  type="date"
-                  icon={<Calendar className="w-4 h-4 text-success"/>}
-                  {...register('dataInicio')}
-                  error={errors.dataInicio?.message}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <Select 
+                  label="Veículo Utilizado" 
+                  options={veiculosOptions}
+                  icon={<Truck className="w-4 h-4"/>}
+                  {...register('veiculoId')}
+                  error={errors.veiculoId?.message}
                   disabled={isLocked}
-                  className="border-success/30 focus:border-success focus:ring-success/20"
                 />
-                <Input
-                  label="HORA"
-                  type="time"
-                  icon={<Clock className="w-4 h-4 text-success"/>}
-                  {...register('horaInicio')}
-                  error={errors.horaInicio?.message}
+                
+                <Select 
+                  label="Motorista Responsável"
+                  options={operadoresOptions}
+                  icon={<User className="w-4 h-4"/>}
+                  {...register('operadorId')}
+                  error={errors.operadorId?.message}
                   disabled={isLocked}
-                  className="border-success/30 focus:border-success focus:ring-success/20"
                 />
               </div>
-              <Input
-                label="KM INICIAL (ODÔMETRO)"
-                {...register('kmInicio')}
-                onChange={(e) => setValue("kmInicio", formatKmVisual(e.target.value))}
-                error={errors.kmInicio?.message}
-                disabled={isLocked}
-                className="border-success/30 focus:border-success focus:ring-success/20 font-mono font-bold text-success-hover"
-              />
-            </div>
           </div>
 
-          {/* 3. DADOS DE CHEGADA (AZUL) */}
-          <div className="bg-primary/5 p-4 rounded-xl border border-primary/20">
-            <div className="text-xs font-bold uppercase tracking-widest mb-3 flex items-center gap-2 text-primary">
-              <div className="w-1.5 h-4 bg-primary rounded-full" /> 
-              Registro de Chegada <span className="text-[10px] font-normal opacity-70 ml-1">(Opcional)</span>
-            </div>
-
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <Input
-                  label="DATA"
-                  type="date"
-                  icon={<Calendar className="w-4 h-4 text-primary"/>}
-                  {...register('dataFim')}
-                  disabled={isLocked}
-                  className="border-primary/30 focus:border-primary focus:ring-primary/20"
-                />
-                <Input
-                  label="HORA"
-                  type="time"
-                  icon={<Clock className="w-4 h-4 text-primary"/>}
-                  {...register('horaFim')}
-                  disabled={isLocked}
-                  className="border-primary/30 focus:border-primary focus:ring-primary/20"
-                />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* 2. DADOS DE SAÍDA (VERDE) */}
+              <div className="bg-success/5 p-6 rounded-2xl border border-success/20 shadow-sm relative overflow-hidden group hover:border-success/40 transition-colors">
+                <div className="absolute -right-4 -top-4 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-500">
+                    <MapPin className="w-32 h-32 text-success" />
+                </div>
+                
+                <div className="relative z-10">
+                    <div className="text-[11px] font-black uppercase tracking-[0.2em] mb-5 flex items-center gap-2 text-success">
+                    <div className="w-2 h-2 bg-success rounded-full animate-pulse" /> Partida (Origem)
+                    </div>
+                    
+                    <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input
+                          label="Data da Saída"
+                          type="date"
+                          {...register('dataInicio')}
+                          error={errors.dataInicio?.message}
+                          disabled={isLocked}
+                          className="border-success/30 focus:border-success focus:ring-success/20 font-medium"
+                          containerClassName="!mb-0"
+                        />
+                        <Input
+                          label="Hora exata"
+                          type="time"
+                          {...register('horaInicio')}
+                          error={errors.horaInicio?.message}
+                          disabled={isLocked}
+                          className="border-success/30 focus:border-success focus:ring-success/20 font-medium"
+                          containerClassName="!mb-0"
+                        />
+                    </div>
+                    <Input
+                        label="KM do Painel (Odômetro)"
+                        {...register('kmInicio')}
+                        onChange={(e) => setValue("kmInicio", formatKmVisual(e.target.value))}
+                        error={errors.kmInicio?.message}
+                        disabled={isLocked}
+                        className="border-success/30 focus:border-success focus:ring-success/20 font-mono font-black text-xl text-success-hover h-12"
+                    />
+                    </div>
+                </div>
               </div>
-              <Input
-                label="KM FINAL"
-                icon={<CheckCircle2 className="w-4 h-4 text-primary"/>}
-                {...register('kmFim')}
-                onChange={(e) => setValue("kmFim", formatKmVisual(e.target.value))}
-                error={errors.kmFim?.message}
-                disabled={isLocked}
-                className="border-primary/30 focus:border-primary focus:ring-primary/20 font-mono font-bold text-primary"
-              />
-            </div>
+
+              {/* 3. DADOS DE CHEGADA (AZUL) */}
+              <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20 shadow-sm relative overflow-hidden group hover:border-primary/40 transition-colors">
+                <div className="absolute -right-4 -top-4 opacity-5 pointer-events-none group-hover:scale-110 transition-transform duration-500">
+                    <Flag className="w-32 h-32 text-primary" />
+                </div>
+
+                <div className="relative z-10">
+                    <div className="text-[11px] font-black uppercase tracking-[0.2em] mb-5 flex items-center justify-between text-primary">
+                        <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4" /> Chegada (Destino)
+                        </div>
+                        <span className="text-[9px] bg-primary/10 px-2 py-0.5 rounded text-primary">Opcional se a viagem estiver em andamento</span>
+                    </div>
+
+                    <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <Input
+                          label="Data do Retorno"
+                          type="date"
+                          {...register('dataFim')}
+                          disabled={isLocked}
+                          className="border-primary/30 focus:border-primary focus:ring-primary/20 font-medium"
+                          containerClassName="!mb-0"
+                        />
+                        <Input
+                          label="Hora exata"
+                          type="time"
+                          {...register('horaFim')}
+                          disabled={isLocked}
+                          className="border-primary/30 focus:border-primary focus:ring-primary/20 font-medium"
+                          containerClassName="!mb-0"
+                        />
+                    </div>
+                    <Input
+                        label="KM Final de Fecho"
+                        {...register('kmFim')}
+                        onChange={(e) => setValue("kmFim", formatKmVisual(e.target.value))}
+                        error={errors.kmFim?.message}
+                        disabled={isLocked}
+                        className="border-primary/30 focus:border-primary focus:ring-primary/20 font-mono font-black text-xl text-primary h-12"
+                    />
+                    </div>
+                </div>
+              </div>
           </div>
 
           {/* 4. OBSERVAÇÕES */}
-          <div className="relative">
-            <label className="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1">
-              Motivo da Edição / Observações
-            </label>
-            <div className="relative">
-              <textarea
-                {...register('observacoes')}
-                disabled={isLocked}
-                className="w-full p-3 pl-10 border border-border rounded-xl text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none resize-none h-24 transition-all bg-surface text-text-main"
-                placeholder="Descreva por que esta jornada está sendo alterada..."
-              />
-              <FileText className="absolute left-3 top-3 w-5 h-5 text-text-muted" />
-            </div>
+          <div className="pt-2">
+             <label className="flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase tracking-wider ml-1 mb-1.5">
+               <FileText className="w-3.5 h-3.5" /> Motivo da Edição / Justificativa
+             </label>
+             <textarea
+               {...register('observacoes')}
+               disabled={isLocked}
+               className="w-full px-4 py-3 text-sm text-text-main bg-surface border border-border/60 rounded-xl transition-all duration-300 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 placeholder:text-text-muted disabled:bg-background/50 disabled:cursor-not-allowed resize-none shadow-sm h-24"
+               placeholder="Ex: O motorista inseriu 150000 em vez de 15000. Registo corrigido manualmente por validação."
+             />
           </div>
 
         </div>
 
-        {/* FOOTER */}
-        <div className="px-6 py-4 border-t border-border bg-background flex justify-end gap-3 shrink-0">
-          <Button type="button" variant="ghost" onClick={onCancelar} disabled={isLocked}>
-            Cancelar
+        {/* FOOTER PREMIUM */}
+        <div className="px-6 sm:px-8 py-5 border-t border-border/60 bg-surface-hover/30 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
+          <Button 
+             type="button" 
+             variant="ghost" 
+             onClick={onCancelar} 
+             disabled={isLocked}
+             className="w-full sm:w-auto font-bold"
+          >
+            Descartar Alterações
           </Button>
           <Button 
             type="submit" 
+            variant="primary"
             isLoading={isLocked} 
             disabled={isLocked}
-            className="px-6 shadow-button hover:shadow-float"
+            className="w-full sm:w-auto shadow-button hover:shadow-float-primary px-10 font-black uppercase tracking-tight"
             icon={<Save className="w-4 h-4" />}
           >
-            Salvar Alterações
+            Salvar Correção
           </Button>
         </div>
       </form>

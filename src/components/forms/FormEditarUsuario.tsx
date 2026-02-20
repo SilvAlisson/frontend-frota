@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
 import { api } from '../../services/api';
 import { supabase } from '../../supabaseClient';
 import DOMPurify from 'dompurify';
 import { toast } from 'sonner';
-import { User, Mail, Hash, Lock, Shield, Briefcase, FileText, Calendar, Camera } from 'lucide-react';
+import { User, Mail, Hash, Lock, Shield, Briefcase, Calendar, Camera, Save, Loader2, CreditCard } from 'lucide-react';
 
 // --- UI COMPONENTS ---
 import { Button } from '../ui/Button';
@@ -20,18 +20,18 @@ interface Cargo {
 
 const ROLES = ["OPERADOR", "ENCARREGADO", "ADMIN", "RH", "COORDENADOR"] as const;
 
-// --- SCHEMA ---
+// --- SCHEMA ZOD V4 COMPATÍVEL ---
 const editarUsuarioSchema = z.object({
   nome: z.string({ error: "Nome é obrigatório" }).min(3).transform(val => val.trim()),
   email: z.string().email().toLowerCase(),
-  matricula: z.string().optional().or(z.literal('')),
+  matricula: z.string().optional().nullable(),
   role: z.enum(ROLES),
-  cargoId: z.string().optional().or(z.literal('')),
-  cnhNumero: z.string().optional().or(z.literal('')),
-  cnhCategoria: z.string().optional().or(z.literal('')),
-  cnhValidade: z.string().optional().or(z.literal('')),
-  dataAdmissao: z.string().optional().or(z.literal('')),
-  password: z.string().optional().or(z.literal('')).refine(val => !val || val.length >= 6, { message: "Nova senha deve ter no mínimo 6 caracteres" })
+  cargoId: z.string().optional().nullable(),
+  cnhNumero: z.string().optional().nullable(),
+  cnhCategoria: z.string().optional().nullable(),
+  cnhValidade: z.string().optional().nullable(),
+  dataAdmissao: z.string().optional().nullable(),
+  password: z.string().optional().nullable().refine(val => !val || val.length >= 6, { message: "Nova senha deve ter no mínimo 6 caracteres" })
 });
 
 type EditarUsuarioFormInput = z.input<typeof editarUsuarioSchema>;
@@ -57,7 +57,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
     register,
     handleSubmit,
     reset,
-    watch,
+    control,
     formState: { errors, isSubmitting }
   } = useForm<EditarUsuarioFormInput, any, EditarUsuarioFormOutput>({
     resolver: zodResolver(editarUsuarioSchema),
@@ -65,9 +65,9 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
     mode: 'onBlur'
   });
 
-  const roleSelecionada = watch('role');
+  const roleSelecionada = useWatch({ control, name: 'role' });
 
-  // [CORREÇÃO] Mapeamento seguro de Roles
+  // Mapeamento seguro de Roles
   const roleOptions = useMemo(() => {
     const labels: Record<string, string> = {
       'OPERADOR': 'Motorista (Operador)',
@@ -92,6 +92,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
   // --- FETCH DADOS ---
   useEffect(() => {
     if (!userId) return;
+    let isMounted = true;
 
     const carregarTudo = async () => {
       setLoadingData(true);
@@ -100,6 +101,8 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
           api.get(`/users/${userId}`),
           api.get('/cargos')
         ]);
+
+        if (!isMounted) return;
 
         setCargos(cargosData.data);
         const user = userData.data;
@@ -117,19 +120,23 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
           cargoId: user.cargoId || '',
           cnhNumero: user.cnhNumero || '',
           cnhCategoria: user.cnhCategoria || '',
+          // Corrige datas para inputs de formato date HTML (YYYY-MM-DD)
           cnhValidade: user.cnhValidade ? user.cnhValidade.split('T')[0] : '',
           dataAdmissao: user.dataAdmissao ? user.dataAdmissao.split('T')[0] : '',
         });
       } catch (err) {
         console.error(err);
-        toast.error("Erro ao carregar dados.");
-        onCancelar();
+        if (isMounted) {
+            toast.error("Erro ao carregar os dados de perfil.");
+            onCancelar();
+        }
       } finally {
-        setLoadingData(false);
+        if (isMounted) setLoadingData(false);
       }
     };
     
     carregarTudo();
+    return () => { isMounted = false; };
   }, [userId, reset, onCancelar]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -164,7 +171,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
         finalFotoUrl = publicUrlData.publicUrl;
       } catch (err) {
         console.error(err);
-        toast.error("Erro ao atualizar foto.");
+        toast.error("Erro ao atualizar foto de perfil.");
         return;
       }
     }
@@ -189,142 +196,222 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
     const promise = api.put(`/users/${userId}`, dataToUpdate);
 
     toast.promise(promise, {
-      loading: 'Salvando alterações...',
+      loading: 'A guardar alterações...',
       success: () => {
         setTimeout(onSuccess, 800);
-        return 'Perfil atualizado!';
+        return 'Perfil do colaborador atualizado!';
       },
       error: (err) => {
         console.error(err);
-        return err.response?.data?.error || 'Falha ao atualizar.';
+        return err.response?.data?.error || 'Falha ao atualizar dados.';
       }
     });
   };
 
-  // [CORREÇÃO] Removida variável 'labelStyle' não utilizada
+  const isLocked = isSubmitting || loadingData;
 
   if (loadingData) {
     return (
-      <div className="bg-white rounded-xl shadow-lg border border-border p-12 flex flex-col items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-primary"></div>
-        <p className="text-sm text-gray-400 font-medium mt-4 animate-pulse">Carregando perfil...</p>
+      <div className="h-[400px] flex flex-col items-center justify-center space-y-4 animate-in fade-in">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <p className="text-sm font-bold text-text-secondary uppercase tracking-widest animate-pulse">A extrair dados do Perfil...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-xl shadow-card border border-border overflow-hidden animate-enter flex flex-col max-h-[85vh]">
+    <div className="bg-surface rounded-2xl shadow-float border border-border/60 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-300">
 
-      {/* HEADER */}
-      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
+      {/* HEADER PREMIUM */}
+      <div className="bg-gradient-to-r from-background to-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex justify-between items-center shrink-0">
         <div>
-          <h3 className="text-lg font-bold text-gray-900">Editar Colaborador</h3>
-          <p className="text-xs text-gray-500">Atualize dados de acesso e perfil.</p>
-        </div>
-        <div className="p-2 bg-surface rounded-lg border border-border shadow-sm text-primary">
-          <User className="w-5 h-5" />
+          <h3 className="text-xl font-black text-text-main tracking-tight flex items-center gap-2">
+            <div className="p-1.5 bg-primary/10 rounded-lg text-primary shadow-sm">
+                <User className="w-6 h-6" />
+            </div>
+            Editar Colaborador
+          </h3>
+          <p className="text-sm text-text-secondary font-medium mt-1">Atualize informações de acesso e credenciais profissionais.</p>
         </div>
       </div>
 
-      <form className="flex flex-col flex-1 overflow-hidden" onSubmit={handleSubmit(onSubmit)}>
+      <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSubmit(onSubmit)}>
         
-        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
+        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
 
-          {/* AVATAR */}
-          <div className="flex flex-col items-center">
-            <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileSelect} disabled={isSubmitting} />
-
+          {/* AVATAR UPLOAD (Redesenhado) */}
+          <div className="flex flex-col items-center mb-2">
+            <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileSelect} disabled={isLocked} />
             <div
-              onClick={() => !isSubmitting && fileInputRef.current?.click()}
-              className={`w-24 h-24 rounded-full bg-background border-4 border-white shadow-lg cursor-pointer hover:scale-105 transition-transform relative group overflow-hidden ring-1 ring-border ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              onClick={() => !isLocked && fileInputRef.current?.click()}
+              className={`w-28 h-28 rounded-full bg-surface-hover border-4 border-surface shadow-md cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all relative group overflow-hidden ring-2 ring-border/50 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
+              title="Alterar foto de perfil"
             >
               {previewUrl || fotoAtualUrl ? (
                 <img src={previewUrl || fotoAtualUrl!} alt="Perfil" className="w-full h-full object-cover" />
               ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300">
-                  <User className="w-10 h-10" />
+                <div className="w-full h-full flex items-center justify-center text-text-muted">
+                  <User className="w-12 h-12 opacity-40 group-hover:scale-110 transition-transform" />
                 </div>
               )}
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Camera className="w-6 h-6 text-white" />
+              <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+                <Camera className="w-6 h-6 text-white mb-1" />
+                <span className="text-[10px] font-bold text-white uppercase tracking-wider">Mudar Foto</span>
               </div>
             </div>
-            <p className="text-xs text-primary font-medium mt-2 cursor-pointer hover:underline" onClick={() => !isSubmitting && fileInputRef.current?.click()}>
-              {previewUrl ? 'Trocar Foto' : 'Adicionar Foto'}
-            </p>
           </div>
 
-          {/* DADOS GERAIS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
+            
+            <div className="md:col-span-2 flex items-center gap-2 border-b border-border/50 pb-2">
+              <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
+              <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Dados Pessoais e Acesso</label>
+            </div>
+
             <div className="md:col-span-2">
-              <Input label="Nome Completo" icon={<User className="w-4 h-4"/>} {...register('nome')} error={errors.nome?.message} disabled={isSubmitting} />
+              <Input 
+                label="Nome Completo" 
+                icon={<User className="w-4 h-4 text-text-muted"/>} 
+                {...register('nome')} 
+                error={errors.nome?.message} 
+                disabled={isLocked} 
+              />
             </div>
 
             <div>
-              <Input label="Email" type="email" icon={<Mail className="w-4 h-4"/>} {...register('email')} error={errors.email?.message} disabled={isSubmitting} />
+              <Input 
+                label="E-mail Corporativo" 
+                type="email" 
+                icon={<Mail className="w-4 h-4 text-text-muted"/>} 
+                {...register('email')} 
+                error={errors.email?.message} 
+                disabled={isLocked} 
+              />
+            </div>
+
+            <div className="relative">
+              <Input 
+                label="Mudar Senha (Opcional)" 
+                type="password" 
+                placeholder="Introduza a nova senha" 
+                icon={<Lock className="w-4 h-4 text-text-muted"/>} 
+                {...register('password')} 
+                error={errors.password?.message} 
+                disabled={isLocked} 
+              />
+              <span className="absolute right-3 top-3 text-[10px] text-text-muted font-bold pointer-events-none opacity-60">Mín. 6 chars</span>
             </div>
 
             <div>
-              <Input label="Matrícula" icon={<Hash className="w-4 h-4"/>} {...register('matricula')} error={errors.matricula?.message} disabled={isSubmitting} />
-            </div>
-
-            <div>
-              <Input label="Nova Senha (Opcional)" type="password" placeholder="******" icon={<Lock className="w-4 h-4"/>} {...register('password')} error={errors.password?.message} disabled={isSubmitting} />
+              <Input 
+                label="Matrícula Interna" 
+                icon={<Hash className="w-4 h-4 text-text-muted"/>} 
+                {...register('matricula')} 
+                error={errors.matricula?.message} 
+                disabled={isLocked} 
+              />
             </div>
 
             <div>
               <Select 
-                label="Função" 
+                label="Nível de Acesso (Função)" 
                 options={roleOptions} 
-                icon={<Shield className="w-4 h-4"/>}
+                icon={<Shield className="w-4 h-4 text-text-muted"/>}
                 {...register('role')} 
                 error={errors.role?.message} 
-                disabled={isSubmitting} 
+                disabled={isLocked} 
               />
             </div>
           </div>
 
-          {/* SEÇÃO RH (Condicional) */}
-          <div className={`transition-all duration-300 overflow-hidden ${roleSelecionada === 'OPERADOR' ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
-            <div className="bg-blue-50/50 p-5 rounded-xl border border-blue-100 mt-2">
-              <div className="flex items-center gap-2 mb-4 pb-2 border-b border-blue-100">
-                <div className="w-1.5 h-4 bg-primary rounded-full" />
-                <h4 className="text-xs font-bold text-blue-800 uppercase tracking-widest">Dados de Habilitação & Cargo</h4>
+          {/* SEÇÃO RH CONDICIONAL (MOTORISTAS) */}
+          <div className={`transition-all duration-500 overflow-hidden ${roleSelecionada === 'OPERADOR' ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0 m-0 p-0 border-0'}`}>
+            <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20">
+              <div className="flex items-center gap-2 mb-5 border-b border-primary/10 pb-2">
+                <div className="p-1.5 bg-primary/20 rounded-lg text-primary shadow-sm">
+                  <Briefcase className="w-4 h-4" />
+                </div>
+                <h4 className="text-[11px] font-black text-primary uppercase tracking-[0.15em]">Documentação (RH e Operacional)</h4>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="md:col-span-2">
                   <Select 
-                    label="Cargo Oficial" 
+                    label="Cargo Profissional" 
                     options={cargoOptions}
-                    icon={<Briefcase className="w-4 h-4"/>}
+                    icon={<Briefcase className="w-4 h-4 text-text-muted"/>}
                     {...register('cargoId')} 
-                    disabled={isSubmitting} 
+                    disabled={isLocked} 
                   />
                 </div>
 
                 <div>
-                  <Input label="Nº CNH" placeholder="Registro" icon={<FileText className="w-4 h-4"/>} {...register('cnhNumero')} disabled={isSubmitting} className="bg-white" />
+                  <Input 
+                    label="Nº da CNH" 
+                    placeholder="Registro" 
+                    icon={<CreditCard className="w-4 h-4 text-primary/70"/>} 
+                    {...register('cnhNumero')} 
+                    disabled={isLocked} 
+                    className="font-mono tracking-wider" 
+                  />
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <Input label="Cat." placeholder="AE" {...register('cnhCategoria')} disabled={isSubmitting} className="bg-white text-center uppercase" maxLength={2} />
-                  <Input label="Validade" type="date" {...register('cnhValidade')} disabled={isSubmitting} className="bg-white" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Input 
+                        label="Categoria" 
+                        placeholder="AE" 
+                        {...register('cnhCategoria')} 
+                        disabled={isLocked} 
+                        className="text-center font-black text-lg uppercase text-primary tracking-widest" 
+                        maxLength={2} 
+                    />
+                  </div>
+                  <div>
+                    <Input 
+                        label="Validade CNH" 
+                        type="date" 
+                        {...register('cnhValidade')} 
+                        disabled={isLocked} 
+                        className="text-sm text-text-secondary" 
+                    />
+                  </div>
                 </div>
 
                 <div className="md:col-span-2">
-                  <Input label="Data de Admissão" type="date" icon={<Calendar className="w-4 h-4"/>} {...register('dataAdmissao')} disabled={isSubmitting} className="bg-white" />
+                  <Input 
+                    label="Data de Admissão (Contrato)" 
+                    type="date" 
+                    icon={<Calendar className="w-4 h-4 text-primary/70"/>} 
+                    {...register('dataAdmissao')} 
+                    disabled={isLocked} 
+                  />
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* FOOTER */}
-        <div className="flex gap-3 p-4 border-t border-border bg-background shrink-0">
-          <Button type="button" variant="ghost" className="flex-1" disabled={isSubmitting} onClick={onCancelar}>Cancelar</Button>
-          <Button type="submit" variant="primary" className="flex-[2] shadow-button hover:shadow-float" disabled={isSubmitting} isLoading={isSubmitting}>
-            Salvar Alterações
+        {/* FOOTER PREMIUM */}
+        <div className="px-6 sm:px-8 py-5 bg-surface-hover/30 border-t border-border/60 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
+          <Button 
+            type="button" 
+            variant="ghost" 
+            className="w-full sm:w-auto font-bold" 
+            disabled={isLocked} 
+            onClick={onCancelar}
+          >
+            Descartar Alterações
+          </Button>
+          <Button 
+            type="submit" 
+            variant="primary" 
+            className="w-full sm:w-auto shadow-button hover:shadow-float-primary px-10 font-black uppercase tracking-tight" 
+            disabled={isLocked} 
+            isLoading={isLocked}
+            icon={<Save className="w-4 h-4"/>}
+          >
+            Salvar Perfil
           </Button>
         </div>
 

@@ -1,11 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
 import { toast } from 'sonner';
-import { Package, Save } from 'lucide-react';
+import { Package, Save, Layers, Archive, AlertTriangle, Loader2 } from 'lucide-react';
 
 // --- UI COMPONENTS ---
 import { Button } from '../ui/Button';
@@ -14,7 +14,7 @@ import { Select } from '../ui/Select';
 
 const tipos = ["PECA", "SERVICO", "COMBUSTIVEL", "ADITIVO", "LUBRIFICANTE", "PNEU", "OUTROS"] as const;
 
-// --- SCHEMA ---
+// --- SCHEMA ZOD V4 COMPATÍVEL ---
 const produtoSchema = z.object({
   nome: z.string({ error: "Nome obrigatório" })
     .trim()
@@ -28,9 +28,17 @@ const produtoSchema = z.object({
     .min(1, { message: "Ex: UN, L" })
     .transform(val => val.trim().toUpperCase()),
 
-  estoqueMinimo: z.coerce.number().min(0, "Mínimo inválido").default(0),
-  estoqueAtual: z.coerce.number().min(0, "Estoque inválido").default(0),
-  valorReferencia: z.coerce.number().min(0, "Valor inválido").optional(),
+  estoqueMinimo: z.union([z.string(), z.number()])
+    .transform(v => Number(v))
+    .refine(v => !isNaN(v) && v >= 0, "Mínimo 0"),
+
+  estoqueAtual: z.union([z.string(), z.number()])
+    .transform(v => Number(v))
+    .refine(v => !isNaN(v) && v >= 0, "Mínimo 0"),
+
+  valorReferencia: z.union([z.string(), z.number()])
+    .transform(v => Number(v))
+    .optional(),
 });
 
 type ProdutoFormInput = z.input<typeof produtoSchema>;
@@ -49,6 +57,7 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting }
   } = useForm<ProdutoFormInput, any, ProdutoFormOutput>({
     resolver: zodResolver(produtoSchema),
@@ -63,6 +72,8 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
     mode: 'onBlur'
   });
 
+  const tipoSelecionado = useWatch({ control, name: 'tipo' });
+
   // Mapeia tipos para o Select
   const tipoOptions = useMemo(() => {
     return tipos.map(t => ({
@@ -71,14 +82,16 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
     }));
   }, []);
 
-  // --- CARREGAMENTO ---
+  // --- CARREGAMENTO INICIAL ---
   useEffect(() => {
     if (!produtoId) return;
 
+    let isMounted = true;
+
     const fetchProduto = async () => {
-      setLoadingData(true);
       try {
         const { data } = await api.get(`/produtos/${produtoId}`);
+        if (!isMounted) return;
 
         const tipoValido = tipos.includes(data.tipo) ? data.tipo : 'OUTROS';
 
@@ -92,14 +105,17 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
         });
       } catch (err) {
         console.error(err);
-        toast.error("Erro ao carregar produto.");
-        onCancelar();
+        if (isMounted) {
+            toast.error("Falha ao carregar os detalhes do produto.");
+            onCancelar();
+        }
       } finally {
-        setLoadingData(false);
+        if (isMounted) setLoadingData(false);
       }
     };
 
     fetchProduto();
+    return () => { isMounted = false; };
   }, [produtoId, reset, onCancelar]);
 
   // --- SUBMISSÃO ---
@@ -113,122 +129,154 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
     const promise = api.put(`/produtos/${produtoId}`, payload);
 
     toast.promise(promise, {
-      loading: 'Atualizando...',
+      loading: 'Guardando alterações...',
       success: () => {
         setTimeout(onSuccess, 500);
-        return 'Item atualizado!';
+        return 'Detalhes do item atualizados com sucesso!';
       },
       error: (err) => {
-        return err.response?.data?.error || 'Erro ao atualizar.';
+        return err.response?.data?.error || 'Erro inesperado ao atualizar.';
       }
     });
   };
 
+  const isServico = tipoSelecionado === 'SERVICO';
+  const isLocked = isSubmitting || loadingData;
+
   if (loadingData) {
     return (
-      <div className="bg-surface rounded-xl shadow-lg border border-border p-12 flex flex-col items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-border border-t-primary"></div>
-        <p className="text-sm text-text-muted font-medium mt-4 animate-pulse">Carregando item...</p>
+      <div className="h-[350px] flex flex-col items-center justify-center space-y-4 animate-in fade-in">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <p className="text-sm font-bold text-text-secondary uppercase tracking-widest animate-pulse">Consultando Catálogo...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-surface rounded-xl shadow-card border border-border overflow-hidden animate-enter flex flex-col max-h-[85vh]">
+    <div className="bg-surface rounded-2xl shadow-float border border-border/60 overflow-hidden animate-in fade-in zoom-in-95 duration-300 flex flex-col max-h-[90vh]">
 
-      {/* HEADER */}
-      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
+      {/* HEADER PREMIUM */}
+      <div className="bg-gradient-to-r from-background to-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex justify-between items-center shrink-0">
         <div>
-          <h3 className="text-lg font-bold text-text-main">Editar Item</h3>
-          <p className="text-xs text-text-secondary">Atualize dados do catálogo.</p>
-        </div>
-        <div className="p-2 bg-surface rounded-lg border border-border shadow-sm text-primary">
-          <Package className="w-5 h-5" />
+          <h3 className="text-xl font-black text-text-main tracking-tight flex items-center gap-2">
+            <div className="p-1.5 bg-primary/10 rounded-lg text-primary shadow-sm">
+                <Package className="w-5 h-5" />
+            </div>
+            Editar Item do Catálogo
+          </h3>
+          <p className="text-sm text-text-secondary font-medium mt-1">Atualize informações de peças, serviços ou consumíveis.</p>
         </div>
       </div>
 
-      <form className="flex flex-col flex-1 overflow-hidden" onSubmit={handleSubmit(onSubmit)}>
+      <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSubmit(onSubmit)}>
         
-        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
+        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
 
-          {/* NOME DO ITEM */}
-          <div>
-            <Input
-              label="Descrição do Item / Serviço"
-              {...register('nome')}
-              placeholder="Ex: FILTRO DE ÓLEO MOTOR"
-              error={errors.nome?.message}
-              disabled={isSubmitting}
-              className="uppercase font-medium"
-              autoFocus
-            />
-          </div>
+          {/* SECÇÃO 1: INFORMAÇÕES BÁSICAS */}
+          <section className="space-y-5">
+            <div className="flex items-center gap-2 border-b border-border/50 pb-2">
+              <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
+              <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Identificação</label>
+            </div>
 
-          {/* GRID TIPO E UNIDADE */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            <Select
-              label="Categoria"
-              options={tipoOptions}
-              {...register('tipo')}
-              error={errors.tipo?.message}
-              disabled={isSubmitting}
-            />
-
-            <Input
-              label="Unidade (UN, L, KG)"
-              {...register('unidadeMedida')}
-              placeholder="Ex: UN"
-              error={errors.unidadeMedida?.message}
-              disabled={isSubmitting}
-              className="uppercase text-center font-bold"
-              maxLength={4}
-            />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2 border-t border-border">
-             <div>
+            <div>
               <Input
-                label="Estoque Mínimo (Alerta)"
-                type="number"
-                {...register('estoqueMinimo')}
-                placeholder="5"
-                error={errors.estoqueMinimo?.message}
-                disabled={isSubmitting}
+                label="Descrição Técnica"
+                {...register('nome')}
+                placeholder="Ex: FILTRO DE ÓLEO MOTOR DIESEL"
+                error={errors.nome?.message}
+                className="uppercase font-black text-primary tracking-wide"
+                autoFocus
+                disabled={isLocked}
               />
-             </div>
+            </div>
 
-             <div>
-               <Input
-                 label="Estoque Atual"
-                 type="number"
-                 {...register('estoqueAtual')}
-                 placeholder="0"
-                 error={errors.estoqueAtual?.message}
-                 disabled={isSubmitting}
-               />
-             </div>
-          </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <Select
+                  label="Categoria"
+                  options={tipoOptions}
+                  icon={<Layers className="w-4 h-4 text-text-muted" />}
+                  {...register('tipo')}
+                  error={errors.tipo?.message}
+                  disabled={isLocked}
+                />
+              </div>
+
+              <div>
+                <Input
+                  label="Medida (UN, L, KG, PAR)"
+                  {...register('unidadeMedida')}
+                  placeholder="UN"
+                  className="uppercase text-center font-bold tracking-widest"
+                  maxLength={4}
+                  error={errors.unidadeMedida?.message}
+                  disabled={isLocked}
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* SECÇÃO 2: GESTÃO DE STOCK */}
+          <section className={`space-y-5 transition-opacity duration-300 ${isServico ? 'opacity-40 grayscale' : 'opacity-100'}`}>
+            <div className="flex items-center gap-2 border-b border-border/50 pb-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full shadow-sm"></span>
+              <label className="text-[10px] font-black text-amber-600 tracking-[0.2em] uppercase">Armazém e Stock</label>
+              {isServico && <span className="ml-auto text-[10px] font-bold text-text-muted italic">(Ignorado para serviços)</span>}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="relative group">
+                <Input
+                  label="Quantidade em Armazém"
+                  type="number"
+                  icon={<Archive className="w-4 h-4 text-text-muted group-focus-within:text-primary transition-colors" />}
+                  {...register('estoqueAtual')}
+                  placeholder="0"
+                  error={errors.estoqueAtual?.message}
+                  disabled={isLocked || isServico}
+                  className="font-mono font-bold text-lg text-center"
+                />
+              </div>
+
+              <div className="relative group">
+                <Input
+                  label="Alerta de Reposição (Mínimo)"
+                  type="number"
+                  icon={<AlertTriangle className="w-4 h-4 text-warning-500/70 group-focus-within:text-warning-500 transition-colors" />}
+                  {...register('estoqueMinimo')}
+                  placeholder="5"
+                  error={errors.estoqueMinimo?.message}
+                  disabled={isLocked || isServico}
+                  className="font-mono font-bold text-lg text-center text-warning-600 focus:ring-warning-500/20 focus:border-warning-500"
+                  containerClassName={errors.estoqueMinimo ? '' : '[&_input]:border-warning-500/30'}
+                />
+              </div>
+            </div>
+          </section>
+
         </div>
 
-        {/* FOOTER */}
-        <div className="p-4 bg-background border-t border-border flex justify-end gap-3 shrink-0">
+        {/* FOOTER PREMIUM */}
+        <div className="px-6 sm:px-8 py-5 bg-surface-hover/30 border-t border-border/60 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
           <Button
             type="button"
             variant="ghost"
             onClick={onCancelar}
-            disabled={isSubmitting}
+            disabled={isLocked}
+            className="w-full sm:w-auto font-bold"
           >
-            Cancelar
+            Descartar Alterações
           </Button>
           <Button
             type="submit"
             variant="primary"
-            className="shadow-button hover:shadow-float px-6"
             isLoading={isSubmitting}
-            disabled={isSubmitting}
             icon={<Save className="w-4 h-4" />}
+            className="w-full sm:w-auto shadow-button hover:shadow-float-primary px-10 font-black uppercase tracking-tight"
+            disabled={isLocked}
           >
-            Salvar Alterações
+            Gravar Edição
           </Button>
         </div>
 

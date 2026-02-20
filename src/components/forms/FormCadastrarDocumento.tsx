@@ -6,11 +6,12 @@ import { supabase } from '../../supabaseClient';
 import { useCreateDocumento } from '../../hooks/useDocumentosLegais';
 import { useVeiculos } from '../../hooks/useVeiculos'; 
 import { toast } from 'sonner';
-import { UploadCloud, FileText, Calendar, Truck, Save, AlertTriangle, Loader2 } from 'lucide-react';
+import { UploadCloud, FileText, Calendar, Truck, Save, AlertTriangle, Loader2, Info } from 'lucide-react';
 
 // Componentes UI
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Select } from '../ui/Select';
 
 // Schema
 const docSchema = z.object({
@@ -22,12 +23,13 @@ const docSchema = z.object({
   veiculoId: z.string().optional(),
 });
 
-type DocFormValues = z.infer<typeof docSchema>;
+type DocFormInput = z.input<typeof docSchema>;
+type DocFormOutput = z.output<typeof docSchema>;
 
 interface FormProps {
   onSuccess: () => void;
   onCancel: () => void;
-  veiculoIdPreSelecionado?: string; // NOVO: Prop para receber o ID do veículo
+  veiculoIdPreSelecionado?: string;
 }
 
 export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSelecionado }: FormProps) {
@@ -45,26 +47,30 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
     return Array.from(new Set(tipos)).sort();
   }, [veiculos]);
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<DocFormValues>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<DocFormInput, any, DocFormOutput>({
     resolver: zodResolver(docSchema),
     defaultValues: { 
+      titulo: '',
+      descricao: '',
       categoria: '',
-      veiculoId: veiculoIdPreSelecionado || '' // Já inicia com o veículo se houver
-    }
+      tipoVeiculo: '',
+      dataValidade: '',
+      veiculoId: veiculoIdPreSelecionado || '' 
+    },
+    mode: 'onBlur'
   });
 
-  // Efeito para garantir que o veículo esteja selecionado e travar campos conflitantes
   useEffect(() => {
     if (veiculoIdPreSelecionado) {
       setValue('veiculoId', veiculoIdPreSelecionado);
-      setValue('tipoVeiculo', ''); // Se é um veículo específico, o "Tipo" não importa tanto para o cadastro
+      setValue('tipoVeiculo', ''); 
     }
   }, [veiculoIdPreSelecionado, setValue]);
 
   const veiculoIdSelecionado = watch('veiculoId');
   const categoriaSelecionada = watch('categoria');
 
-  const handleUploadAndSubmit = async (data: DocFormValues) => {
+  const handleUploadAndSubmit = async (data: DocFormOutput) => {
     if (!file) {
       toast.error("Por favor, selecione um arquivo PDF ou Imagem.");
       return;
@@ -73,11 +79,9 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
     try {
       setUploading(true);
       const fileExt = file.name.split('.').pop();
-      // Nome do arquivo sanitizado
       const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = `documentos-legais/${fileName}`;
 
-      // Upload com a correção de Content-Type para mobile
       const { error: uploadError } = await supabase.storage
         .from('comprovantes')
         .upload(filePath, file, {
@@ -112,189 +116,203 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
     }
   };
 
-  const inputClasses = "w-full h-11 px-3 bg-surface border border-border rounded-xl text-sm focus:border-primary outline-none text-text-main placeholder:text-text-muted transition-all disabled:bg-background disabled:text-text-muted appearance-none cursor-pointer";
-  const labelClasses = "flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase mb-1.5 ml-1";
+  // Mapeamento de opções para os Selects
+  const categoriasOptions = [
+    { value: "AST", label: "⚠️ AST (Análise de Segurança)" },
+    { value: "LICENCA_AMBIENTAL", label: "Licença Ambiental (Global)" },
+    { value: "ATRP", label: "ATRP (Global)" },
+    { value: "OUTROS_GLOBAIS", label: "Outros (Global)" },
+    { value: "CRLV", label: "CRLV (Veículo)" },
+    { value: "CIV", label: "CIV (Veículo)" },
+    { value: "CIPP", label: "CIPP (Veículo)" },
+    { value: "LAUDO_CHAPA", label: "Laudo de Chapa (Veículo)" },
+    { value: "TACOGRAFO", label: "Tacógrafo (Veículo)" },
+    { value: "MANUTENCAO", label: "Relatório de Manutenção (Veículo)" },
+  ];
+
+  const tiposVeiculoOptions = [
+    { value: "", label: "Aplicar a Todos" },
+    ...tiposDisponiveis.map(t => ({ value: t, label: t })),
+    ...(!tiposDisponiveis.length ? [
+      { value: "CAMINHAO", label: "Caminhões" },
+      { value: "CARRO", label: "Carros Leves" }
+    ] : [])
+  ];
+
+  const veiculosOptions = [
+    { value: "", label: "Nenhum Veículo Específico" },
+    ...(veiculos?.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` })) || [])
+  ];
+
+  const isFormLocked = uploading || isPending;
 
   return (
-    <div className="bg-surface rounded-xl shadow-lg border border-border overflow-hidden animate-enter flex flex-col max-h-[85vh]">
+    <div className="bg-surface rounded-2xl shadow-float border border-border/60 overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
       
-      {/* HEADER */}
-      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
+      {/* HEADER PREMIUM */}
+      <div className="bg-gradient-to-r from-background to-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex justify-between items-center shrink-0">
         <div>
-          <h3 className="text-lg font-bold text-text-main">Novo Documento</h3>
-          <p className="text-xs text-text-secondary">Faça upload de documentos legais ou técnicos.</p>
-        </div>
-        <div className="p-2 bg-surface rounded-lg border border-border shadow-sm text-primary">
-          <FileText className="w-5 h-5" />
+          <h3 className="text-xl font-black text-text-main tracking-tight flex items-center gap-2">
+            <div className="p-1.5 bg-primary/10 rounded-lg text-primary shadow-sm">
+                <FileText className="w-5 h-5" />
+            </div>
+            Novo Documento
+          </h3>
+          <p className="text-sm text-text-secondary font-medium mt-1">Upload seguro de ficheiros e licenças legais.</p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(handleUploadAndSubmit)} className="flex flex-col flex-1 overflow-hidden">
+      <form onSubmit={handleSubmit(handleUploadAndSubmit)} className="flex flex-col flex-1 min-h-0">
         
-        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
+        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
           
           {/* ÁREA DE UPLOAD */}
-          <div className={`border-2 border-dashed rounded-xl p-8 text-center transition-all cursor-pointer relative group ${file ? 'border-success/50 bg-success/5' : 'border-border hover:bg-background hover:border-primary/50'}`}>
-            <input
-              type="file"
-              id="doc-upload"
-              accept=".pdf,image/*"
-              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              disabled={uploading || isPending}
-            />
-            <div className="flex flex-col items-center pointer-events-none">
-              <div className={`p-4 rounded-full mb-3 transition-colors ${file ? 'bg-success/10 text-success' : 'bg-primary/5 text-primary group-hover:bg-primary/10'}`}>
-                {file ? <FileText className="w-8 h-8" /> : <UploadCloud className="w-8 h-8" />}
-              </div>
-              
-              {file ? (
-                <>
-                  <span className="text-sm font-bold text-text-main break-all max-w-[250px]">{file.name}</span>
-                  <span className="text-xs text-success font-medium mt-1">Arquivo pronto para envio</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-sm font-bold text-text-main">Clique ou arraste o arquivo aqui</span>
-                  <span className="text-xs text-text-secondary mt-1">PDF, JPG ou PNG (Máx 5MB)</span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {/* CAMPOS PRINCIPAIS */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Input 
-                label="Título do Documento" 
-                {...register('titulo')} 
-                error={errors.titulo?.message} 
-                placeholder="Ex: AST 001 - Operação Padrão" 
-                disabled={uploading || isPending}
-              />
-            </div>
-
-            <div>
-              <label className={labelClasses}>Categoria</label>
-              <div className="relative">
-                <select
-                  {...register('categoria')}
-                  disabled={uploading || isPending}
-                  className={inputClasses}
-                >
-                  <option value="">Selecione...</option>
-                  <option value="AST">⚠️ AST (Análise de Segurança)</option>
-                  <optgroup label="Globais (Empresa)">
-                    <option value="LICENCA_AMBIENTAL">Licença Ambiental</option>
-                    <option value="ATRP">ATRP</option>
-                    <option value="OUTROS_GLOBAIS">Outros</option>
-                  </optgroup>
-                  <optgroup label="Específicos do Veículo">
-                    <option value="CRLV">CRLV</option>
-                    <option value="CIV">CIV</option>
-                    <option value="CIPP">CIPP</option>
-                    <option value="LAUDO_CHAPA">Laudo de Chapa</option>
-                    <option value="TACOGRAFO">Tacógrafo</option>
-                    <option value="MANUTENCAO">Manutenção (Relatório)</option>
-                  </optgroup>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                </div>
-              </div>
-              {errors.categoria && <p className="text-[10px] text-error mt-1 ml-1">{errors.categoria.message}</p>}
-            </div>
-          </div>
-
-          {/* CAMPOS CONDICIONAIS */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className={labelClasses}><Calendar className="w-3 h-3" /> Validade</label>
-              <Input type="date" {...register('dataValidade')} disabled={uploading || isPending} containerClassName="!mb-0" />
-            </div>
-
-            {/* Oculta visualmente ou desabilita o Tipo se já temos um veículo específico, para focar a atenção do usuário */}
-            <div className={veiculoIdPreSelecionado ? 'opacity-50 pointer-events-none' : ''}>
-              <label className={labelClasses}><Truck className="w-3 h-3" /> Tipo Veículo</label>
-              <div className="relative">
-                <select
-                  {...register('tipoVeiculo')}
-                  disabled={!!veiculoIdSelecionado || uploading || isPending}
-                  className={`${inputClasses} ${categoriaSelecionada === 'AST' ? 'border-warning-500/50 bg-warning-500/5' : ''}`}
-                >
-                  <option value="">Aplicar a Todos</option>
-                  {tiposDisponiveis.map(tipo => (
-                    <option key={tipo} value={tipo}>{tipo}</option>
-                  ))}
-                  {!tiposDisponiveis.length && (
-                    <>
-                      <option value="CAMINHAO">Caminhões</option>
-                      <option value="CARRO">Carros Leves</option>
-                    </>
+          <div className="space-y-2">
+              <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase flex items-center gap-2">
+                  <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
+                  Anexo Principal
+              </label>
+              <div className={`
+                border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer relative group overflow-hidden
+                ${file ? 'border-success/50 bg-success/5 shadow-inner' : 'border-border/60 bg-background/30 hover:bg-surface hover:border-primary/50'}
+                ${isFormLocked ? 'opacity-50 pointer-events-none' : ''}
+              `}>
+                <input
+                  type="file"
+                  id="doc-upload"
+                  accept=".pdf,image/*"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                  onChange={(e) => setFile(e.target.files?.[0] || null)}
+                  disabled={isFormLocked}
+                />
+                
+                <div className="flex flex-col items-center pointer-events-none relative z-0">
+                  <div className={`p-4 rounded-full mb-4 shadow-sm transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-1 ${file ? 'bg-success/10 text-success' : 'bg-surface border border-border/60 text-text-muted group-hover:text-primary group-hover:border-primary/20'}`}>
+                    {file ? <FileText className="w-8 h-8" /> : <UploadCloud className="w-8 h-8" />}
+                  </div>
+                  
+                  {file ? (
+                    <div className="space-y-1">
+                      <p className="text-sm font-black text-text-main break-all max-w-[280px] mx-auto line-clamp-2">{file.name}</p>
+                      <p className="text-xs text-success font-bold uppercase tracking-wider">Ficheiro selecionado</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <p className="text-sm font-bold text-text-main">Arraste um ficheiro ou clique para procurar</p>
+                      <p className="text-xs text-text-secondary font-medium">Tamanho máximo: 5MB (PDF, JPG, PNG)</p>
+                    </div>
                   )}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
                 </div>
               </div>
-              
-              {categoriaSelecionada === 'AST' && (
-                <p className="text-[10px] text-warning-600 mt-1 font-bold flex items-center gap-1">
-                  <AlertTriangle className="w-3 h-3" /> Restringir AST por tipo?
-                </p>
-              )}
+          </div>
+
+          <div className="border-t border-border/50 pt-6 space-y-6">
+            <div className="flex items-center gap-2">
+                <span className="w-1.5 h-4 bg-amber-500 rounded-full shadow-sm"></span>
+                <label className="text-[10px] font-black text-amber-600 tracking-[0.2em] uppercase">Metadados do Documento</label>
             </div>
 
-            <div>
-              <label className={labelClasses}>Placa Específica</label>
-              <div className="relative">
-                <select
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <Input 
+                  label="Título Identificador" 
+                  {...register('titulo')} 
+                  error={errors.titulo?.message} 
+                  placeholder="Ex: AST 001 - Regras de Segurança" 
+                  disabled={isFormLocked}
+                  className="font-bold text-text-main"
+                  autoFocus
+                />
+              </div>
+
+              <div>
+                <Select
+                  label="Classificação (Categoria)"
+                  options={categoriasOptions}
+                  {...register('categoria')}
+                  error={errors.categoria?.message}
+                  disabled={isFormLocked}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+              <div>
+                <Input 
+                    label="Válido até" 
+                    type="date" 
+                    icon={<Calendar className="w-4 h-4 text-primary/70" />}
+                    {...register('dataValidade')} 
+                    disabled={isFormLocked} 
+                />
+              </div>
+
+              <div className={veiculoIdPreSelecionado ? 'opacity-40 pointer-events-none grayscale' : ''}>
+                <Select
+                  label="Restringir por Tipo"
+                  options={tiposVeiculoOptions}
+                  icon={<Truck className="w-4 h-4 text-text-muted" />}
+                  {...register('tipoVeiculo')}
+                  disabled={!!veiculoIdSelecionado || isFormLocked}
+                  error={errors.tipoVeiculo?.message}
+                  containerClassName={categoriaSelecionada === 'AST' ? 'ring-2 ring-warning-500/20 rounded-xl bg-warning-500/5 p-1' : ''}
+                />
+                {categoriaSelecionada === 'AST' && (
+                  <p className="text-[10px] text-warning-600 mt-1.5 font-bold flex items-center gap-1 pl-1">
+                    <AlertTriangle className="w-3 h-3" /> Tipo recomendado para AST
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <Select
+                  label="Vincular a Placa Específica"
+                  options={veiculosOptions}
                   {...register('veiculoId')}
-                  onChange={(e) => {
+                  onChange={(e: any) => {
                     setValue('veiculoId', e.target.value);
                     if (e.target.value) setValue('tipoVeiculo', '');
                   }}
-                  // Desabilita se foi passado via prop
-                  disabled={!!veiculoIdPreSelecionado || uploading || isPending}
-                  className={`${inputClasses} ${veiculoIdPreSelecionado ? 'bg-surface-hover font-bold text-primary border-primary/30' : ''}`}
-                >
-                  <option value="">Nenhuma</option>
-                  {veiculos?.map(v => (
-                    <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-                </div>
+                  disabled={!!veiculoIdPreSelecionado || isFormLocked}
+                  error={errors.veiculoId?.message}
+                />
               </div>
             </div>
-          </div>
 
-          {/* DESCRIÇÃO */}
-          <div>
-            <label className={labelClasses}>Descrição / Observações</label>
-            <textarea
-              {...register('descricao')}
-              disabled={uploading || isPending}
-              className={`${inputClasses} h-24 py-2 resize-none`}
-              placeholder="Detalhes adicionais sobre este documento..."
-            />
+            {/* DESCRIÇÃO */}
+            <div className="space-y-1.5">
+              <label className="flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase tracking-wider ml-1">
+                <Info className="w-3.5 h-3.5" /> Detalhes ou Observações
+              </label>
+              <textarea
+                {...register('descricao')}
+                disabled={isFormLocked}
+                className="w-full px-4 py-3 text-sm text-text-main bg-surface border border-border/60 rounded-xl transition-all duration-300 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 placeholder:text-text-muted disabled:bg-background/50 disabled:cursor-not-allowed resize-none shadow-sm h-24"
+                placeholder="Insira detalhes adicionais sobre as regras deste documento..."
+              />
+            </div>
           </div>
         </div>
 
-        {/* FOOTER */}
-        <div className="p-4 bg-background border-t border-border flex justify-end gap-3 shrink-0">
-          <Button type="button" variant="ghost" onClick={onCancel} disabled={uploading || isPending}>
-            Cancelar
+        {/* FOOTER PREMIUM */}
+        <div className="px-6 sm:px-8 py-5 bg-surface-hover/30 border-t border-border/60 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
+          <Button 
+            type="button" 
+            variant="ghost" 
+            onClick={onCancel} 
+            disabled={isFormLocked}
+            className="w-full sm:w-auto font-bold"
+          >
+            Descartar
           </Button>
           <Button
             type="submit"
             variant="primary"
-            isLoading={uploading || isPending}
-            icon={uploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4" />}
-            className="shadow-button hover:shadow-float px-6"
+            isLoading={isFormLocked}
+            icon={uploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4" />} // 🔥 CORRIGIDO AQUI: leftIcon -> icon
+            className="w-full sm:w-auto shadow-button hover:shadow-float-primary px-10 font-black uppercase tracking-tight"
           >
-            {uploading ? 'Enviando...' : 'Salvar Documento'}
+            {uploading ? 'Enviando Ficheiro...' : 'Arquivar Documento'}
           </Button>
         </div>
 
