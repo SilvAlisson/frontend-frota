@@ -23,7 +23,7 @@ interface ModalProps {
   nested?: boolean;
 }
 
-// --- FUNÇÃO DE COMPRESSÃO (Lógica mantida 100% original) ---
+// --- FUNÇÃO DE COMPRESSÃO ---
 const comprimirImagem = (arquivo: File): Promise<File> => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();

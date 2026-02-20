@@ -1,6 +1,8 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useState, useEffect } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { clsx, type ClassValue } from 'clsx';
+import * as RadixSelect from '@radix-ui/react-select';
+import { ChevronDown, Check, AlertCircle } from 'lucide-react';
 
 function cn(...inputs: ClassValue[]) {
     return twMerge(clsx(inputs));
@@ -11,13 +13,16 @@ export interface SelectOption {
     label: string;
 }
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange' | 'value'> {
     label?: string;
     error?: string;
     icon?: React.ReactNode;
     options?: SelectOption[];
     placeholder?: string;
     containerClassName?: string;
+    // O react-hook-form envia esses dois
+    value?: string | number;
+    onChange?: (event: { target: { name?: string; value: string } }) => void;
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
@@ -26,10 +31,14 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         error,
         icon,
         options = [],
-        placeholder,
+        placeholder = "Selecione uma opção",
         className,
         containerClassName,
         id,
+        name,
+        value,
+        onChange,
+        disabled,
         children,
         ...rest
     }, ref) => {
@@ -37,85 +46,131 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         const generatedId = React.useId();
         const selectId = id || generatedId;
 
+        // Estado interno para controlar o Radix UI
+        const [internalValue, setInternalValue] = useState<string>(value !== undefined ? String(value) : '');
+
+        // Sincroniza se vier uma prop value externa (ex: ao carregar um formulário de edição)
+        useEffect(() => {
+            if (value !== undefined) {
+                setInternalValue(String(value));
+            }
+        }, [value]);
+
+        const handleValueChange = (newValue: string) => {
+            setInternalValue(newValue);
+            // Simula um evento de mudança padrão para o react-hook-form
+            if (onChange) {
+                onChange({
+                    target: {
+                        name: name,
+                        value: newValue
+                    }
+                });
+            }
+        };
+
         return (
-            <div className={cn("w-full", containerClassName)}>
+            <div className={cn("w-full flex flex-col gap-1.5", containerClassName)}>
                 {label && (
                     <label
                         htmlFor={selectId}
-                        className="block mb-1.5 text-xs font-bold text-text-secondary uppercase tracking-wider select-none ml-1"
+                        className="text-xs font-bold text-text-secondary uppercase tracking-wider select-none ml-1"
                     >
                         {label}
                     </label>
                 )}
 
-                <div className="relative group">
-                    {icon && (
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none [&>svg]:w-5 [&>svg]:h-5 z-10 transition-colors group-focus-within:text-primary">
-                            {icon}
-                        </div>
-                    )}
-
-                    <select
-                        ref={ref}
-                        id={selectId}
-                        className={cn(
-                            // Base
-                            "w-full py-2.5 text-sm text-text-main bg-surface border rounded-lg transition-all duration-200 appearance-none cursor-pointer",
-                            
-                            // Foco
-                            "focus:outline-none focus:ring-2 focus:ring-ring/20 focus:border-ring",
-                            
-                            // Desabilitado
-                            "disabled:bg-background disabled:text-text-muted disabled:cursor-not-allowed",
-
-                            // Padding
-                            icon ? "pl-10 pr-10" : "pl-4 pr-10",
-
-                            // Placeholder visual
-                            "invalid:text-text-muted",
-
-                            // Estados
-                            !error && "border-input hover:border-primary/50",
-                            error && "border-error text-error focus:border-error focus:ring-error/20",
-
-                            className
-                        )}
-                        aria-invalid={!!error}
-                        {...rest}
-                    >
-                        {placeholder && (
-                            <option value="" disabled className="text-text-muted bg-background">
-                                {placeholder}
-                            </option>
+                <RadixSelect.Root
+                    value={internalValue}
+                    onValueChange={handleValueChange}
+                    disabled={disabled}
+                    name={name}
+                >
+                    <div className="relative group w-full">
+                        {/* Ícone customizado na esquerda (opcional) */}
+                        {icon && (
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none z-10 [&>svg]:w-5 [&>svg]:h-5 transition-colors group-focus-within:text-primary">
+                                {icon}
+                            </div>
                         )}
 
-                        {options.map((opt) => (
-                            <option key={opt.value} value={opt.value}>
-                                {opt.label}
-                            </option>
-                        ))}
-
-                        {children}
-                    </select>
-
-                    {/* Chevron Icon */}
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-text-secondary">
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
-                            className={cn("w-5 h-5 transition-transform duration-200", error && "text-error")}
+                        <RadixSelect.Trigger
+                            id={selectId}
+                            className={cn(
+                                "flex items-center justify-between w-full py-2.5 text-sm bg-surface border rounded-xl transition-all duration-200 outline-none",
+                                "focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm",
+                                "disabled:bg-surface-hover/50 disabled:text-text-muted disabled:cursor-not-allowed",
+                                "data-[placeholder]:text-text-muted",
+                                icon ? "pl-10 pr-4" : "px-4",
+                                !error ? "border-border/60 hover:border-border" : "border-error focus:border-error focus:ring-error/20 text-error",
+                                className
+                            )}
                         >
-                            <path fillRule="evenodd" d="M10 3a.75.75 0 01.55.24l3.25 3.5a.75.75 0 11-1.1 1.02L10 4.852 7.3 7.76a.75.75 0 01-1.1-1.02l3.25-3.5A.75.75 0 0110 3zm-3.76 9.2a.75.75 0 011.06.04l2.7 2.908 2.7-2.908a.75.75 0 111.1 1.02l-3.25 3.5a.75.75 0 01-1.1 0l-3.25-3.5a.75.75 0 01.04-1.06z" clipRule="evenodd" />
-                        </svg>
+                            <RadixSelect.Value placeholder={placeholder} />
+                            <RadixSelect.Icon asChild>
+                                <ChevronDown className={cn("w-4 h-4 opacity-50", error && "text-error")} />
+                            </RadixSelect.Icon>
+                        </RadixSelect.Trigger>
                     </div>
-                </div>
+
+                    <RadixSelect.Portal>
+                        <RadixSelect.Content
+                            position="popper"
+                            sideOffset={6}
+                            className="z-[9999] w-[var(--radix-select-trigger-width)] min-w-[200px] overflow-hidden bg-surface rounded-xl border border-border/60 shadow-float data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+                        >
+                            <RadixSelect.ScrollUpButton className="flex items-center justify-center h-[25px] bg-surface text-text-muted cursor-default">
+                                <ChevronDown className="w-4 h-4 rotate-180" />
+                            </RadixSelect.ScrollUpButton>
+
+                            <RadixSelect.Viewport className="p-1">
+                                <RadixSelect.Group>
+                                    {options.map((opt) => (
+                                        <RadixSelect.Item
+                                            key={opt.value}
+                                            value={String(opt.value)}
+                                            className="relative flex items-center w-full px-8 py-2.5 text-sm font-bold text-text-main rounded-lg outline-none cursor-pointer select-none focus:bg-primary/10 focus:text-primary data-[disabled]:text-text-muted data-[disabled]:pointer-events-none transition-colors"
+                                        >
+                                            <span className="absolute left-2 flex items-center justify-center w-4 h-4">
+                                                <RadixSelect.ItemIndicator>
+                                                    <Check className="w-4 h-4 text-primary" />
+                                                </RadixSelect.ItemIndicator>
+                                            </span>
+                                            <RadixSelect.ItemText>{opt.label}</RadixSelect.ItemText>
+                                        </RadixSelect.Item>
+                                    ))}
+                                </RadixSelect.Group>
+                            </RadixSelect.Viewport>
+
+                            <RadixSelect.ScrollDownButton className="flex items-center justify-center h-[25px] bg-surface text-text-muted cursor-default">
+                                <ChevronDown className="w-4 h-4" />
+                            </RadixSelect.ScrollDownButton>
+                        </RadixSelect.Content>
+                    </RadixSelect.Portal>
+                </RadixSelect.Root>
+
+                {/* Input oculto para o react-hook-form conseguir registrar o ref e validar nativamente */}
+                <select
+                    ref={ref}
+                    name={name}
+                    value={internalValue}
+                    onChange={() => {}} // Dummy onChange, o Radix controla o valor
+                    className="sr-only pointer-events-none"
+                    aria-hidden="true"
+                    tabIndex={-1}
+                    {...rest}
+                >
+                    <option value="" disabled />
+                    {options.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                            {opt.label}
+                        </option>
+                    ))}
+                </select>
 
                 {error && (
-                    <p className="mt-1.5 text-xs text-error font-medium flex items-center gap-1 animate-enter ml-1">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5 flex-shrink-0">
-                            <path fillRule="evenodd" d="M18 10a8 8 0 1 1-16 0 8 8 0 0 1 16 0Zm-8-5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0v-4.5A.75.75 0 0 1 10 5Zm0 10a1 1 0 1 0 0-2 1 1 0 0 0 0 2Z" clipRule="evenodd" />
-                        </svg>
+                    <p className="text-xs text-error font-bold flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 ml-1 mt-0.5">
+                        <AlertCircle className="w-3.5 h-3.5" />
                         {error}
                     </p>
                 )}

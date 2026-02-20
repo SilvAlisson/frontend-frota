@@ -1,189 +1,89 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { MoreVertical, Edit3, Trash2, Eye } from 'lucide-react';
-
-// Tipagem para Ações Extras
-interface CustomAction {
-    label: string;
-    onClick: () => void;
-    icon?: React.ReactNode;
-    className?: string;
-    variant?: 'default' | 'danger'; // Permitir variantes semânticas
-}
+import React from 'react';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { MoreVertical, Edit2, Trash2, Eye } from 'lucide-react';
 
 interface DropdownAcoesProps {
-    onEditar?: () => void;
-    onExcluir?: () => void;
-    onVerDetalhes?: () => void;
-    customActions?: CustomAction[];
-    disabled?: boolean;
-    align?: 'start' | 'end'; // [NOVO] Prop para alinhar à esquerda ou direita
+  onEditar?: () => void;
+  onExcluir?: () => void;
+  onVerDetalhes?: () => void;
+  align?: 'start' | 'center' | 'end';
+  children?: React.ReactNode; // 🔥 Permite injetar opções extras em telas específicas!
 }
 
-export function DropdownAcoes({
-    onEditar,
-    onExcluir,
-    onVerDetalhes,
-    customActions,
-    disabled,
-    align = 'end' // Padrão: Abre para a esquerda (alinhado à direita)
+export function DropdownAcoes({ 
+  onEditar, 
+  onExcluir, 
+  onVerDetalhes,
+  align = 'end',
+  children
 }: DropdownAcoesProps) {
-    const [isOpen, setIsOpen] = useState(false);
-    const menuRef = useRef<HTMLDivElement>(null);
-
-    // Fechar ao clicar fora
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
-                setIsOpen(false);
-            }
-        }
-        if (isOpen) {
-            document.addEventListener("mousedown", handleClickOutside);
-        }
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [isOpen]);
-
-    // Fechar ao rolar a tela (evita dropdown flutuando errado)
-    useEffect(() => {
-        const handleScroll = () => isOpen && setIsOpen(false);
-        if (isOpen) {
-            window.addEventListener('scroll', handleScroll, true);
-        }
-        return () => window.removeEventListener('scroll', handleScroll, true);
-    }, [isOpen]);
-
-    const toggleMenu = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        if (!disabled) setIsOpen(!isOpen);
-    };
-
-    // Lógica de Alinhamento CSS
-    const alignmentClasses = align === 'end' 
-        ? 'right-0 origin-top-right' 
-        : 'left-0 origin-top-left';
-
-    return (
-        <div className="relative inline-block text-left" ref={menuRef}>
-            
-            {/* Trigger Button (O botão de "...") */}
-            <button
-                type="button"
-                onClick={toggleMenu}
-                disabled={disabled}
-                aria-haspopup="true"
-                aria-expanded={isOpen}
-                className={`
-                    flex items-center justify-center w-8 h-8 rounded-lg transition-all duration-200
-                    focus:outline-none focus:ring-2 focus:ring-primary/30
-                    ${isOpen
-                        ? 'bg-surface-hover text-primary shadow-inner'
-                        : 'text-text-secondary hover:bg-surface-hover hover:text-text-main'
-                    }
-                    ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer active:scale-90'}
-                `}
-            >
-                <MoreVertical className="w-5 h-5" />
-            </button>
-
-            {/* Dropdown Panel */}
-            {isOpen && (
-                <div
-                    className={`
-                        absolute z-50 mt-1 w-52 rounded-xl bg-surface/95 backdrop-blur-md 
-                        shadow-float border border-border/60 ring-1 ring-black/5 
-                        animate-in fade-in zoom-in-95 duration-100 ease-out
-                        ${alignmentClasses}
-                    `}
-                    onClick={(e) => e.stopPropagation()}
-                    role="menu"
-                >
-                    <div className="p-1.5 space-y-0.5">
-
-                        {onVerDetalhes && (
-                            <MenuOption
-                                onClick={() => { onVerDetalhes(); setIsOpen(false); }}
-                                icon={<Eye className="w-4 h-4" />}
-                                label="Ver Detalhes"
-                            />
-                        )}
-
-                        {onEditar && (
-                            <MenuOption
-                                onClick={() => { onEditar(); setIsOpen(false); }}
-                                icon={<Edit3 className="w-4 h-4" />}
-                                label="Editar"
-                            />
-                        )}
-
-                        {/* Ações Customizadas */}
-                        {customActions?.map((action, idx) => (
-                            <MenuOption
-                                key={idx}
-                                onClick={() => { action.onClick(); setIsOpen(false); }}
-                                icon={action.icon}
-                                label={action.label}
-                                className={action.className}
-                                variant={action.variant}
-                            />
-                        ))}
-
-                        {/* Separador para Ações Destrutivas */}
-                        {onExcluir && (
-                            <>
-                                {(onVerDetalhes || onEditar || (customActions && customActions.length > 0)) && (
-                                    <div className="my-1 h-px bg-border/60 mx-1" />
-                                )}
-                                <MenuOption
-                                    onClick={() => { onExcluir(); setIsOpen(false); }}
-                                    icon={<Trash2 className="w-4 h-4" />}
-                                    label="Excluir"
-                                    variant="danger"
-                                />
-                            </>
-                        )}
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
-
-// --- Subcomponente de Opção de Menu ---
-
-interface MenuOptionProps {
-    onClick: () => void;
-    icon?: React.ReactNode;
-    label: string;
-    className?: string;
-    variant?: 'default' | 'danger';
-}
-
-function MenuOption({ onClick, icon, label, className, variant = 'default' }: MenuOptionProps) {
-    
-    // Classes dinâmicas baseadas na variante (Perigo vs Padrão)
-    const variantClasses = variant === 'danger'
-        ? "text-error hover:bg-error/10 hover:text-error-dark font-medium"
-        : "text-text-main hover:bg-surface-hover hover:text-primary";
-
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            role="menuitem"
-            className={`
-                flex w-full items-center gap-3 px-3 py-2.5 text-sm rounded-lg transition-all
-                group select-none
-                ${variantClasses}
-                ${className || ''}
-            `}
+  
+  return (
+    <DropdownMenu.Root>
+      <DropdownMenu.Trigger asChild>
+        <button 
+          // 🛡️ Impede que o clique nos 3 pontinhos ative o clique da linha da tabela
+          onClick={(e) => e.stopPropagation()} 
+          className="p-2 h-9 w-9 rounded-xl transition-all duration-200 text-text-muted hover:text-primary hover:bg-primary/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 active:scale-95 flex items-center justify-center"
+          aria-label="Mais opções"
         >
-            {/* Ícone com opacidade leve que aumenta no hover */}
-            {icon && (
-                <span className={`shrink-0 transition-opacity ${variant === 'danger' ? 'opacity-100' : 'opacity-60 group-hover:opacity-100'}`}>
-                    {icon}
-                </span>
-            )}
-            <span className="truncate font-medium">{label}</span>
+          <MoreVertical className="w-5 h-5" />
         </button>
-    );
+      </DropdownMenu.Trigger>
+
+      <DropdownMenu.Portal>
+        <DropdownMenu.Content 
+          align={align}
+          sideOffset={8}
+          // 🎬 Adicionado animate-out para o menu sumir suavemente ao fechar
+          className="z-[9999] min-w-[180px] bg-surface rounded-xl p-1.5 shadow-float border border-border/60 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 duration-200"
+        >
+          
+          {onVerDetalhes && (
+            <DropdownMenu.Item 
+              onSelect={(e) => { e.preventDefault(); onVerDetalhes(); }}
+              className="flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-text-main rounded-lg cursor-pointer outline-none hover:bg-surface-hover focus:bg-surface-hover transition-colors group"
+            >
+              <Eye className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" />
+              Detalhes
+            </DropdownMenu.Item>
+          )}
+
+          {onEditar && (
+            <DropdownMenu.Item 
+              onSelect={(e) => { e.preventDefault(); onEditar(); }}
+              className="flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-text-main rounded-lg cursor-pointer outline-none hover:bg-surface-hover focus:bg-surface-hover transition-colors group"
+            >
+              <Edit2 className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" />
+              Editar
+            </DropdownMenu.Item>
+          )}
+
+          {/* Renderiza opções customizadas extras, se passadas via children */}
+          {children && (
+            <>
+              {(onEditar || onVerDetalhes) && <DropdownMenu.Separator className="h-px bg-border/50 my-1.5 mx-1" />}
+              {children}
+            </>
+          )}
+
+          {/* Separador flexível */}
+          {(onEditar || onVerDetalhes || children) && onExcluir && (
+            <DropdownMenu.Separator className="h-px bg-border/50 my-1.5 mx-1" />
+          )}
+
+          {onExcluir && (
+            <DropdownMenu.Item 
+              onSelect={(e) => { e.preventDefault(); onExcluir(); }}
+              className="flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-error rounded-lg cursor-pointer outline-none hover:bg-error/10 focus:bg-error/10 transition-colors group"
+            >
+              <Trash2 className="w-4 h-4 text-error/70 group-hover:text-error transition-colors" />
+              Excluir
+            </DropdownMenu.Item>
+          )}
+
+        </DropdownMenu.Content>
+      </DropdownMenu.Portal>
+    </DropdownMenu.Root>
+  );
 }
