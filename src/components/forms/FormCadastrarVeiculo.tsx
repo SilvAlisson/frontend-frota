@@ -3,18 +3,23 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import DOMPurify from 'dompurify';
 import { api } from '../../services/api';
+import { formatarPlaca } from '../../lib/formatters';
+
+// --- COMPONENTES ELITE ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Select } from '../ui/Select'; 
 import { toast } from 'sonner';
-import { Truck, Save, AlertCircle, ChevronDown } from 'lucide-react';
+import { Truck, Save } from 'lucide-react';
 
 // --- CONFIGURAÇÃO DAS CATEGORIAS ---
 const CATEGORIAS_VEICULO = ['POLIGUINDASTE', 'VACUO', 'MUNCK', 'LEVE', 'OUTRO'] as const;
 
 // --- SCHEMA ---
 const veiculoSchema = z.object({
+  // Placa agora tem min(7) ao invés de length(7) porque a máscara adiciona hífen (ficando com 8 caracteres)
   placa: z.string()
-    .length(7, 'A placa deve ter 7 caracteres')
+    .min(7, 'A placa deve estar completa')
     .toUpperCase()
     .transform(val => val.trim()),
 
@@ -51,6 +56,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
     register,
     handleSubmit,
     reset,
+    setValue, // 🔥 Pegamos o setValue para injetar a máscara
     formState: { errors, isSubmitting }
   } = useForm<VeiculoFormInput, any, VeiculoFormOutput>({
     resolver: zodResolver(veiculoSchema),
@@ -72,12 +78,12 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
 
   const onSubmit = async (data: VeiculoFormOutput) => {
     try {
-      // Remove mediaEstimada do envio pois não existe na tabela Veiculo (tratado no backend ou futuro)
       const { mediaEstimada, ...dadosParaEnvio } = data;
 
       const payload = {
         ...dadosParaEnvio,
-        placa: DOMPurify.sanitize(data.placa),
+        // Limpamos o hífen da placa antes de mandar pro banco para ficar sempre 7 letras (ABC1D23 ou ABC1234)
+        placa: DOMPurify.sanitize(data.placa.replace('-', '')),
         modelo: DOMPurify.sanitize(data.modelo),
         marca: DOMPurify.sanitize(data.marca),
         vencimentoCiv: data.vencimentoCiv ? new Date(data.vencimentoCiv).toISOString() : null,
@@ -86,7 +92,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
 
       await api.post('/veiculos', payload);
 
-      toast.success(`Veículo ${data.placa} cadastrado com sucesso!`);
+      toast.success(`Veículo ${payload.placa} cadastrado com sucesso!`);
       reset();
       setTimeout(onSuccess, 500);
 
@@ -97,51 +103,74 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
     }
   };
 
-  // Estilos padronizados
   const labelStyle = "block text-xs font-bold text-text-secondary uppercase tracking-wider mb-1.5 ml-1";
-  const selectStyle = "w-full h-11 px-3 bg-surface border border-border rounded-xl text-sm text-text-main focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all cursor-pointer disabled:bg-background appearance-none";
 
   return (
-    <div className="bg-surface rounded-xl shadow-card border border-border overflow-hidden animate-enter flex flex-col max-h-[85vh]">
+    <div className="bg-surface rounded-2xl shadow-float border border-border/60 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
 
       {/* HEADER */}
-      <div className="bg-background px-6 py-4 border-b border-border flex justify-between items-center shrink-0">
+      <div className="bg-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex justify-between items-center shrink-0">
         <div>
-          <h3 className="text-lg font-bold text-text-main">Novo Veículo</h3>
-          <p className="text-xs text-text-secondary">Preencha os dados técnicos da frota.</p>
+          <h3 className="text-xl font-black text-text-main tracking-tight">Novo Veículo</h3>
+          <p className="text-sm text-text-secondary font-medium mt-0.5">Preencha os dados técnicos da frota.</p>
         </div>
-        <div className="p-2 bg-surface rounded-lg border border-border shadow-sm text-primary">
-          <Truck className="w-5 h-5" />
+        <div className="p-3 bg-primary/10 rounded-xl border border-primary/20 shadow-inner text-primary">
+          <Truck className="w-6 h-6" />
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 overflow-hidden">
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
         
-        <div className="p-6 space-y-6 overflow-y-auto custom-scrollbar">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
 
             {/* SEÇÃO: IDENTIFICAÇÃO */}
-            <div className="md:col-span-2 flex items-center gap-2 mb-2 border-b border-border pb-2">
-              <span className="w-1.5 h-4 bg-primary rounded-full"></span>
-              <label className="text-[10px] font-bold text-primary tracking-widest uppercase">Identificação</label>
+            <div className="md:col-span-2 flex items-center gap-2 border-b border-border/50 pb-2">
+              <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
+              <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Identificação</label>
             </div>
 
             <div>
+              {/* 🔥 AQUI ESTÁ A MÁSCARA DE PLACA */}
               <Input
-                label="Placa"
-                {...register('placa')}
-                placeholder="ABC1D23"
-                className="uppercase font-mono tracking-wide font-bold"
-                maxLength={7}
+                label="Placa do Veículo"
+                {...register('placa', {
+                  onChange: (e) => {
+                    const formatado = formatarPlaca(e.target.value);
+                    setValue('placa', formatado);
+                  }
+                })}
+                placeholder="ABC-1234"
+                className="uppercase font-mono text-lg font-black tracking-widest text-center"
+                maxLength={8} // 7 caracteres + 1 hífen
                 autoFocus
                 disabled={isSubmitting}
                 error={errors.placa?.message}
               />
             </div>
 
-            <div>
+            <div className="grid grid-cols-2 gap-4">
               <Input
-                label="Modelo"
+                label="Marca"
+                {...register('marca')}
+                placeholder="Ex: Scania"
+                disabled={isSubmitting}
+                error={errors.marca?.message}
+              />
+              <Input
+                label="Ano"
+                type="number"
+                {...register('ano')}
+                placeholder="2024"
+                disabled={isSubmitting}
+                error={errors.ano?.message}
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <Input
+                label="Modelo Completo"
                 {...register('modelo')}
                 placeholder="Ex: Constellation 24.280"
                 disabled={isSubmitting}
@@ -149,68 +178,46 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
               />
             </div>
 
-            <div>
-              <Input
-                label="Marca"
-                {...register('marca')}
-                placeholder="Ex: Volkswagen"
-                disabled={isSubmitting}
-                error={errors.marca?.message}
-              />
-            </div>
-
-            <div>
-              <Input
-                label="Ano Fabricação"
-                type="number"
-                {...register('ano')}
-                placeholder={new Date().getFullYear().toString()}
-                disabled={isSubmitting}
-                error={errors.ano?.message}
-              />
-            </div>
-
             {/* SEÇÃO: DADOS TÉCNICOS */}
-            <div className="md:col-span-2 flex items-center gap-2 mt-4 mb-2 border-b border-border pb-2">
-              <span className="w-1.5 h-4 bg-primary rounded-full"></span>
-              <label className="text-[10px] font-bold text-primary tracking-widest uppercase">Dados Técnicos</label>
+            <div className="md:col-span-2 flex items-center gap-2 mt-4 border-b border-border/50 pb-2">
+              <span className="w-1.5 h-4 bg-amber-500 rounded-full shadow-sm"></span>
+              <label className="text-[10px] font-black text-amber-600 tracking-[0.2em] uppercase">Dados Técnicos</label>
             </div>
 
             <div>
-              <label className={labelStyle}>Categoria</label>
-              <div className="relative">
-                <select {...register('tipoVeiculo')} className={selectStyle} disabled={isSubmitting}>
-                  <option value="POLIGUINDASTE">Poliguindaste</option>
-                  <option value="VACUO">Caminhão Vácuo</option>
-                  <option value="MUNCK">Caminhão Munck</option>
-                  <option value="LEVE">Veículo Leve</option>
-                  <option value="OUTRO">Outro</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </div>
-              {errors.tipoVeiculo && <p className="text-[10px] text-error mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3"/> {errors.tipoVeiculo.message}</p>}
+              {/* NOVO SELECT DE ELITE */}
+              <Select
+                label="Categoria Operacional"
+                {...register('tipoVeiculo')}
+                disabled={isSubmitting}
+                error={errors.tipoVeiculo?.message}
+                options={[
+                  { value: 'POLIGUINDASTE', label: 'Poliguindaste' },
+                  { value: 'VACUO', label: 'Caminhão Vácuo' },
+                  { value: 'MUNCK', label: 'Caminhão Munck' },
+                  { value: 'LEVE', label: 'Veículo Leve' },
+                  { value: 'OUTRO', label: 'Outro' },
+                ]}
+              />
             </div>
 
             <div>
-              <label className={labelStyle}>Combustível</label>
-              <div className="relative">
-                <select {...register('tipoCombustivel')} className={selectStyle} disabled={isSubmitting}>
-                  <option value="DIESEL_S10">Diesel S10</option>
-                  <option value="GASOLINA_COMUM">Gasolina Comum</option>
-                  <option value="ETANOL">Etanol</option>
-                  <option value="GNV">GNV</option>
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted">
-                  <ChevronDown className="w-4 h-4" />
-                </div>
-              </div>
-              {errors.tipoCombustivel && <p className="text-[10px] text-error mt-1 flex items-center gap-1"><AlertCircle className="w-3 h-3"/> {errors.tipoCombustivel.message}</p>}
+              <Select
+                label="Tipo de Combustível"
+                {...register('tipoCombustivel')}
+                disabled={isSubmitting}
+                error={errors.tipoCombustivel?.message}
+                options={[
+                  { value: 'DIESEL_S10', label: 'Diesel S10' },
+                  { value: 'GASOLINA_COMUM', label: 'Gasolina Comum' },
+                  { value: 'ETANOL', label: 'Etanol' },
+                  { value: 'GNV', label: 'Gás Natural (GNV)' },
+                ]}
+              />
             </div>
 
             <div>
-              <label className={labelStyle}>Tanque (Litros)</label>
+              <label className={labelStyle}>Capacidade do Tanque</label>
               <div className="relative">
                 <Input
                   type="number"
@@ -220,12 +227,12 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
                   error={errors.capacidadeTanque?.message}
                   containerClassName="!mb-0"
                 />
-                <span className="absolute right-3 top-3 text-xs text-text-muted font-bold pointer-events-none">L</span>
+                <span className="absolute right-4 top-3 text-xs text-text-muted font-bold pointer-events-none">LITROS</span>
               </div>
             </div>
 
             <div>
-              <label className={labelStyle}>Média Alvo</label>
+              <label className={labelStyle}>Média Alvo de Consumo</label>
               <div className="relative">
                 <Input
                   type="number"
@@ -236,49 +243,50 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
                   error={errors.mediaEstimada?.message}
                   containerClassName="!mb-0"
                 />
-                <span className="absolute right-3 top-3 text-xs text-text-muted font-bold pointer-events-none">KM/L</span>
+                <span className="absolute right-4 top-3 text-xs text-text-muted font-bold pointer-events-none">KM/L</span>
               </div>
             </div>
 
             <div className="md:col-span-2">
-              <label className={labelStyle}>KM Inicial (Odômetro)</label>
+              <label className={labelStyle}>KM Inicial (Odômetro de Entrada)</label>
               <Input
                 type="number"
                 {...register('kmAtual')}
                 placeholder="0"
                 disabled={isSubmitting}
-                className="font-mono text-lg"
+                className="font-mono text-xl tracking-tight text-primary font-black bg-primary/5 border-primary/20 focus:border-primary focus:ring-primary/30"
                 error={errors.kmAtual?.message}
               />
-              <p className="text-[10px] text-text-muted mt-1 ml-1">Insira o valor exato do painel para o marco zero.</p>
+              <p className="text-[11px] font-bold text-text-secondary mt-1.5">Insira o valor exato que consta no painel hoje para definir o "Marco Zero" da telemetria.</p>
             </div>
 
             {/* SEÇÃO: DOCUMENTAÇÃO */}
-            <div className="md:col-span-2 flex items-center gap-2 mt-4 mb-2 border-b border-border pb-2">
-              <span className="w-1.5 h-4 bg-primary rounded-full"></span>
-              <label className="text-[10px] font-bold text-primary tracking-widest uppercase">Documentação</label>
+            <div className="md:col-span-2 flex items-center gap-2 mt-4 border-b border-border/50 pb-2">
+              <span className="w-1.5 h-4 bg-blue-500 rounded-full shadow-sm"></span>
+              <label className="text-[10px] font-black text-blue-600 tracking-[0.2em] uppercase">Documentação Regulatória</label>
             </div>
 
             <div>
               <label className={labelStyle}>Vencimento CIV</label>
-              <Input type="date" {...register('vencimentoCiv')} disabled={isSubmitting} />
+              <Input type="date" {...register('vencimentoCiv')} disabled={isSubmitting} className="text-text-secondary cursor-pointer" />
             </div>
 
             <div>
               <label className={labelStyle}>Vencimento CIPP</label>
-              <Input type="date" {...register('vencimentoCipp')} disabled={isSubmitting} />
+              <Input type="date" {...register('vencimentoCipp')} disabled={isSubmitting} className="text-text-secondary cursor-pointer" />
             </div>
 
           </div>
         </div>
 
-        {/* FOOTER */}
-        <div className="p-4 bg-background border-t border-border flex justify-end gap-3 shrink-0">
+        {/* FOOTER PREMIUM */}
+        <div className="px-6 sm:px-8 py-4 bg-surface-hover/50 border-t border-border/60 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
           <Button
             type="button"
             variant="ghost"
             onClick={onCancelar}
             disabled={isSubmitting}
+            className="w-full sm:w-auto"
           >
             Cancelar
           </Button>
@@ -286,11 +294,10 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
             type="submit"
             variant="primary"
             isLoading={isSubmitting}
-            className="shadow-button hover:shadow-float px-6"
             icon={<Save className="w-4 h-4" />}
-            disabled={isSubmitting}
+            className="w-full sm:w-auto"
           >
-            {isSubmitting ? 'Salvando...' : 'Salvar Veículo'}
+            Salvar Veículo
           </Button>
         </div>
       </form>

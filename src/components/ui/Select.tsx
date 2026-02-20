@@ -45,8 +45,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         const generatedId = React.useId();
         const selectId = id || generatedId;
 
-        // 🧠 INTELIGÊNCIA DE LEGADO: 
-        // Intercepta a opção vazia (ex: { value: '', label: 'Selecione' }) que o HTML antigo usava
+        // Intercepta a opção vazia que o HTML antigo usava
         const emptyOption = options.find(opt => String(opt.value) === '');
         const validOptions = options.filter(opt => String(opt.value) !== '');
         
@@ -73,7 +72,6 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             }
         };
 
-        // Radix exige que o value seja undefined (e não "") para mostrar o placeholder corretamente
         const radixValue = internalValue === '' ? undefined : internalValue;
 
         return (
@@ -114,7 +112,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         >
                             <RadixSelect.Value placeholder={displayPlaceholder} />
                             <RadixSelect.Icon asChild>
-                                <ChevronDown className={cn("w-4 h-4 opacity-50 shrink-0", error && "text-error")} />
+                                <ChevronDown className={cn("w-4 h-4 opacity-50 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180", error && "text-error")} />
                             </RadixSelect.Icon>
                         </RadixSelect.Trigger>
                     </div>
@@ -123,15 +121,16 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         <RadixSelect.Content
                             position="popper"
                             sideOffset={6}
-                            className="z-[9999] w-[var(--radix-select-trigger-width)] min-w-[200px] overflow-hidden bg-surface rounded-xl border border-border/60 shadow-float data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+                            // 🔥 O SEGREDO DO SCROLL: Usamos var(--radix-select-content-available-height)
+                            className="z-[9999] w-[var(--radix-select-trigger-width)] min-w-[200px] max-h-[var(--radix-select-content-available-height)] overflow-hidden bg-surface rounded-xl border border-border/60 shadow-float data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
                         >
-                            <RadixSelect.ScrollUpButton className="flex items-center justify-center h-[25px] bg-surface text-text-muted cursor-default">
+                            <RadixSelect.ScrollUpButton className="flex items-center justify-center h-[25px] bg-surface text-text-muted cursor-default hover:bg-surface-hover transition-colors">
                                 <ChevronDown className="w-4 h-4 rotate-180" />
                             </RadixSelect.ScrollUpButton>
 
-                            <RadixSelect.Viewport className="p-1">
+                            {/* 🔥 Limitando o Viewport para forçar o scroll interno */}
+                            <RadixSelect.Viewport className="p-1 max-h-[300px] overflow-y-auto custom-scrollbar">
                                 <RadixSelect.Group>
-                                    {/* Mapeamos apenas as opções válidas (sem string vazia) */}
                                     {validOptions.map((opt) => (
                                         <RadixSelect.Item
                                             key={opt.value}
@@ -149,14 +148,14 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                                 </RadixSelect.Group>
                             </RadixSelect.Viewport>
 
-                            <RadixSelect.ScrollDownButton className="flex items-center justify-center h-[25px] bg-surface text-text-muted cursor-default">
+                            <RadixSelect.ScrollDownButton className="flex items-center justify-center h-[25px] bg-surface text-text-muted cursor-default hover:bg-surface-hover transition-colors">
                                 <ChevronDown className="w-4 h-4" />
                             </RadixSelect.ScrollDownButton>
                         </RadixSelect.Content>
                     </RadixSelect.Portal>
                 </RadixSelect.Root>
 
-                {/* Input oculto para o react-hook-form continuar registrando sem quebrar validações */}
+                {/* Input oculto para o react-hook-form */}
                 <select
                     ref={ref}
                     name={name}

@@ -1,31 +1,34 @@
 import React, { forwardRef } from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { Loader2 } from 'lucide-react';
-import { cn } from '../../lib/utils'; // Ajuste o caminho conforme sua estrutura
+import { cn } from '../../lib/utils'; 
 
-// Definindo todas as variações possíveis de estilo
 const buttonVariants = cva(
-  // Estilos Base (Sempre presentes)
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-bold tracking-wide transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98]",
+  // --- Base Elite ---
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-bold transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:pointer-events-none disabled:opacity-60 active:scale-[0.97] select-none",
   {
     variants: {
       variant: {
         primary: 
-          "bg-primary text-primary-foreground shadow-button hover:bg-primary-hover hover:shadow-float hover:-translate-y-0.5 border border-transparent",
+          "bg-primary text-white shadow-sm hover:bg-primary/90 hover:shadow-md",
         secondary: 
-          "bg-surface text-text-main border border-border shadow-sm hover:bg-surface-hover hover:text-primary hover:border-primary/30",
+          "bg-surface-hover text-text-main border border-border/50 shadow-sm hover:bg-border/50",
+        outline: 
+          "border-[1.5px] border-border/60 bg-transparent text-text-main hover:bg-surface-hover hover:border-border",
         ghost: 
-          "bg-transparent text-text-secondary hover:bg-primary/10 hover:text-primary border border-transparent",
+          "bg-transparent text-text-main hover:bg-surface-hover/50",
         danger: 
-          "bg-error text-error-foreground shadow-button hover:bg-error/90 hover:shadow-lg hover:-translate-y-0.5 border border-transparent",
+          "bg-error text-white shadow-sm hover:bg-error/90 hover:shadow-md",
         success: 
-          "bg-success text-success-foreground shadow-button hover:bg-success/90 hover:shadow-lg hover:-translate-y-0.5 border border-transparent",
+          "bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 hover:shadow-md",
+        glass: 
+          "bg-surface/50 backdrop-blur-md border border-border/50 text-text-main hover:bg-surface/80 shadow-sm",
       },
       size: {
-        default: "h-10 px-5 py-2.5",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-12 rounded-lg px-8 text-base",
-        icon: "h-10 w-10",
+        default: "h-11 px-5",
+        sm: "h-9 rounded-lg px-4 text-xs",
+        lg: "h-14 rounded-xl px-8 text-base",
+        icon: "h-10 w-10 p-0",
       },
     },
     defaultVariants: {
@@ -48,16 +51,23 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       <button
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        // 🛡️ TRAVA DUPLO-CLIQUE: Fica disabled se estiver carregando
         disabled={disabled || isLoading}
         {...props}
       >
-        {isLoading && <Loader2 className="w-4 h-4 animate-spin shrink-0" />}
-        {!isLoading && icon && <span className="shrink-0">{icon}</span>}
+        {/* Se estiver carregando, mostra o spinner. Se não, mostra o ícone (caso exista) */}
+        {isLoading ? (
+          <Loader2 className="w-5 h-5 animate-spin shrink-0" />
+        ) : (
+          icon && <span className="shrink-0">{icon}</span>
+        )}
+        
         {children}
       </button>
     );
   }
 );
+
 Button.displayName = "Button";
 
 export { Button, buttonVariants };

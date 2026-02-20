@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { AlertTriangle, Info, CheckCircle2, X } from 'lucide-react';
+import { cn } from '../../lib/utils'; // 🪄 Nosso utilitário de classes
 
 type ModalVariant = 'danger' | 'primary' | 'warning' | 'success';
 
@@ -46,9 +47,9 @@ export function ConfirmModal({
             icon: <AlertTriangle className="w-6 h-6" />
         },
         warning: {
-            iconBg: 'bg-warning/10',
-            iconColor: 'text-warning',
-            btnVariant: 'primary' as const, // Mantemos primary para não ser agressivo
+            iconBg: 'bg-amber-500/10',
+            iconColor: 'text-amber-600',
+            btnVariant: 'primary' as const, // Primary para não ser destrutivo
             icon: <AlertTriangle className="w-6 h-6" />
         },
         primary: {
@@ -59,7 +60,7 @@ export function ConfirmModal({
         },
         success: {
             iconBg: 'bg-success/10',
-            iconColor: 'text-success-500',
+            iconColor: 'text-success',
             btnVariant: 'success' as const,
             icon: <CheckCircle2 className="w-6 h-6" />
         }
@@ -69,46 +70,48 @@ export function ConfirmModal({
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0"
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0 animate-in fade-in duration-300"
             role="dialog"
             aria-modal="true"
         >
-            {/* Backdrop Tinturado */}
+            {/* Backdrop com Blur Premium */}
             <div
-                className="fixed inset-0 bg-text-main/30 backdrop-blur-sm transition-opacity animate-in fade-in duration-300"
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
                 onClick={!isLoading ? onCancel : undefined}
             />
 
-            {/* Card do Modal */}
-            <div className="relative bg-surface rounded-2xl shadow-float w-full max-w-sm overflow-hidden p-6 transform transition-all animate-enter">
+            {/* Card do Modal com Animação de Zoom */}
+            <div className="relative bg-surface rounded-2xl shadow-float border border-border/60 w-full max-w-sm overflow-hidden p-6 sm:p-8 transform transition-all animate-in zoom-in-95 slide-in-from-bottom-2 duration-300">
 
                 <button
                     onClick={onCancel}
                     disabled={isLoading}
-                    className="absolute top-4 right-4 text-text-muted hover:text-text-main transition-colors disabled:opacity-50"
+                    className="absolute top-4 right-4 text-text-muted hover:text-text-main transition-colors disabled:opacity-50 hover:bg-surface-hover p-1.5 rounded-lg"
+                    aria-label="Fechar modal"
                 >
                     <X className="w-5 h-5" />
                 </button>
 
                 <div className="flex flex-col items-center text-center">
-                    <div className={`mx-auto flex h-14 w-14 items-center justify-center rounded-full ${style.iconBg} mb-5 ${style.iconColor}`}>
+                    <div className={cn("mx-auto flex h-16 w-16 items-center justify-center rounded-2xl mb-5 shadow-inner border border-white/20", style.iconBg, style.iconColor)}>
                         {style.icon}
                     </div>
 
-                    <h3 className="text-xl font-bold text-text-main tracking-tight font-sans">
+                    <h3 className="text-xl font-black text-text-main tracking-tight">
                         {title}
                     </h3>
 
-                    <div className="text-sm text-text-secondary mt-2 leading-relaxed">
+                    <div className="text-sm font-medium text-text-secondary mt-2.5 leading-relaxed">
                         {description}
                     </div>
                 </div>
 
-                <div className="flex gap-3 mt-8">
+                {/* Botões usando o nosso Button Inteligente */}
+                <div className="flex flex-col sm:flex-row gap-3 mt-8">
                     <Button
                         type="button"
                         variant="secondary"
-                        className="flex-1 justify-center"
+                        className="flex-1 w-full"
                         onClick={onCancel}
                         disabled={isLoading}
                     >
@@ -118,9 +121,9 @@ export function ConfirmModal({
                     <Button
                         type="button"
                         variant={style.btnVariant}
-                        className="flex-1 justify-center shadow-button hover:shadow-float"
+                        className="flex-1 w-full"
                         onClick={onConfirm}
-                        isLoading={isLoading}
+                        isLoading={isLoading} // 🔥 A mágica do Loading entra aqui!
                     >
                         {confirmLabel}
                     </Button>
