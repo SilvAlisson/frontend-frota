@@ -12,12 +12,9 @@ export function Dashboard() {
   if (!user) return null;
 
   return (
-    <div className="animate-enter pb-12">
-      {/* NOTA: Removemos a <nav> (Header) daqui. 
-        O Header e Sidebar agora são responsabilidade do `AdminLayout.tsx`.
-        Isso evita duplicação de menus.
-      */}
-
+    // O wrapper agora garante uma entrada com 'fade' e deslize suave vindo de baixo
+    <div className="animate-in fade-in slide-in-from-bottom-4 duration-700 pb-12 h-full w-full">
+      
       {/* 1. VISÃO DO OPERADOR */}
       {user.role === 'OPERADOR' && (
         <DashboardOperador user={user} />
@@ -33,10 +30,11 @@ export function Dashboard() {
         <DashboardRH user={user} />
       )}
 
-      {/* 4. VISÃO DO ADMIN */}
+      {/* 4. VISÃO DO ADMIN (O Cérebro Analítico) */}
       {user.role === 'ADMIN' && (
         <DashboardRelatorios />
       )}
+      
     </div>
   );
 }

@@ -4,7 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../services/api';
 import { toast } from 'sonner';
-import { Settings, Package, Sparkles, Trash2, Lightbulb, Box } from 'lucide-react';
+import { Settings, Package, Sparkles, Trash2, Lightbulb, Box, Loader2, Droplets, Grid } from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
 import { Button } from './ui/Button';
@@ -16,20 +16,22 @@ import type { Produto } from '../types';
 
 const tiposServico = ["SERVICO", "PECA", "LAVAGEM", "OUTRO"] as const;
 
+// --- SCHEMA ZOD V4 COMPATÍVEL ---
 const servicoSchema = z.object({
-    nome: z.string()
-        .min(1, { message: "Nome obrigatório" })
+    nome: z.string({ error: "Nome obrigatório" })
         .min(2, { message: "Mínimo 2 caracteres" })
         .transform(val => val.toUpperCase().trim()),
 
     tipo: z.enum(tiposServico).default('SERVICO'),
 
-    unidadeMedida: z.string()
-        .min(1, { message: "Unidade obrigatória" })
+    unidadeMedida: z.string({ error: "Unidade obrigatória" })
+        .min(1, { message: "Ex: UN, HR" })
+        .transform(val => val.toUpperCase().trim())
         .default('UN'),
 });
 
 type ServicoFormInput = z.input<typeof servicoSchema>;
+type ServicoFormOutput = z.output<typeof servicoSchema>;
 
 interface ModalGerenciarServicosProps {
     onClose: () => void;
@@ -46,17 +48,19 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
         handleSubmit,
         reset,
         formState: { errors, isSubmitting }
-    } = useForm<ServicoFormInput>({
+    } = useForm<ServicoFormInput, any, ServicoFormOutput>({
         resolver: zodResolver(servicoSchema),
         defaultValues: {
             nome: '',
             tipo: 'SERVICO',
             unidadeMedida: 'UN'
-        }
+        },
+        mode: 'onBlur'
     });
 
     // --- CARREGAR DADOS ---
     const fetchServicos = async () => {
+        setLoading(true);
         try {
             const response = await api.get<Produto[]>('/produtos');
             const filtrados = response.data
@@ -66,7 +70,7 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
             setServicos(filtrados);
         } catch (err) {
             console.error(err);
-            toast.error('Erro ao carregar catálogo.');
+            toast.error('Falha ao aceder ao catálogo de serviços.');
         } finally {
             setLoading(false);
         }
@@ -77,10 +81,10 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
     }, []);
 
     // --- ADICIONAR ---
-    const onSubmit = async (data: ServicoFormInput) => {
+    const onSubmit = async (data: ServicoFormOutput) => {
         try {
             const response = await api.post('/produtos', data);
-            toast.success(`${data.tipo} adicionado!`);
+            toast.success(`Catálogo atualizado com sucesso!`);
 
             reset();
             fetchServicos();
@@ -92,32 +96,32 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
             if (err.response?.status === 409) {
                 toast.error('Este item já existe no catálogo.');
             } else {
-                toast.error('Erro ao cadastrar item.');
+                toast.error('Ocorreu um erro ao registar o item.');
             }
         }
     };
 
     // --- REMOVER ---
     const handleDelete = async (id: string) => {
-        if (!window.confirm('Tem certeza? Isso removerá o item do catálogo permanentemente.')) return;
+        if (!window.confirm('Tem a certeza? Esta ação removerá o item do catálogo base.')) return;
 
         setDeletingId(id);
         try {
             await api.delete(`/produtos/${id}`);
             setServicos(prev => prev.filter(p => p.id !== id));
-            toast.success('Item removido.');
+            toast.success('Item removido do catálogo.');
         } catch (err) {
-            toast.error('Não é possível remover itens usados em OS.');
+            toast.error('Não é possível remover itens que já tenham sido utilizados em Ordens de Serviço.');
         } finally {
             setDeletingId(null);
         }
     };
 
     const categoriasOpcoes = [
-        { value: 'SERVICO', label: '🛠️ Serviço' },
-        { value: 'PECA', label: '⚙️ Peça' },
-        { value: 'LAVAGEM', label: '🚿 Lavagem' },
-        { value: 'OUTRO', label: '📦 Outro' }
+        { value: 'SERVICO', label: '🛠️ Serviço de Oficina' },
+        { value: 'PECA', label: '⚙️ Peça / Componente' },
+        { value: 'LAVAGEM', label: '🚿 Lavagem / Estética' },
+        { value: 'OUTRO', label: '📦 Outros' }
     ];
 
     return (
@@ -127,23 +131,34 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
             title="Catálogo de Manutenção" 
             className="max-w-5xl"
         >
-            <div className="flex flex-col md:flex-row gap-6 p-1">
+            {/* AQUI ESTÁ A MAGIA DO SCROLL: 
+              Limitamos a altura máxima (max-h) e usamos overflow-y-auto no wrapper interno,
+              garantindo que o conteúdo não vaza para cima do header do modal.
+            */}
+            <div className="flex flex-col md:flex-row gap-8 p-2 max-h-[75vh] overflow-y-auto custom-scrollbar">
 
                 {/* COLUNA 1: FORMULÁRIO */}
-                <div className="w-full md:w-1/3 flex flex-col gap-4">
-                    <Card padding="default" variant="outline" className="bg-gray-50/50">
-                        <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wider mb-4 flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-yellow-500" /> Novo Item
-                        </h4>
+                <div className="w-full md:w-1/3 flex flex-col gap-6 h-fit shrink-0 md:sticky md:top-0">
+                    
+                    <Card padding="default" className="bg-surface-hover/30 border border-border/60 shadow-sm rounded-3xl">
+                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border/50">
+                            <div className="p-2 bg-amber-500/10 rounded-xl text-amber-500 shadow-inner">
+                                <Sparkles className="w-5 h-5" />
+                            </div>
+                            <h4 className="text-[11px] font-black text-text-main uppercase tracking-[0.2em]">
+                                Registar Novo Item
+                            </h4>
+                        </div>
 
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                             <Input
-                                label="Nome do Item"
-                                placeholder="Ex: TROCA DE PNEU"
+                                label="Descrição do Serviço / Peça"
+                                placeholder="Ex: TROCA DE ÓLEO"
                                 {...register('nome')}
                                 error={errors.nome?.message}
-                                className="uppercase bg-white"
+                                className="uppercase font-bold tracking-wide"
                                 autoFocus
+                                disabled={isSubmitting}
                             />
 
                             <Select
@@ -151,33 +166,43 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
                                 options={categoriasOpcoes}
                                 {...register('tipo')}
                                 error={errors.tipo?.message}
-                                className="bg-white"
+                                disabled={isSubmitting}
                             />
 
-                            <Input
-                                label="Unidade (Ex: UN, HR, KIT)"
-                                placeholder="UN"
-                                {...register('unidadeMedida')}
-                                error={errors.unidadeMedida?.message}
-                                className="uppercase bg-white"
-                            />
+                            <div className="relative">
+                                <Input
+                                    label="Unidade de Medida"
+                                    placeholder="UN"
+                                    {...register('unidadeMedida')}
+                                    error={errors.unidadeMedida?.message}
+                                    className="uppercase font-mono font-bold text-center tracking-widest"
+                                    maxLength={4}
+                                    disabled={isSubmitting}
+                                    containerClassName="!mb-0"
+                                />
+                                <span className="absolute right-4 top-[34px] text-[9px] font-black text-text-muted pointer-events-none uppercase tracking-widest">
+                                    EX: UN, HR
+                                </span>
+                            </div>
 
                             <Button
                                 type="submit"
+                                variant="primary"
                                 isLoading={isSubmitting}
-                                className="w-full mt-2"
+                                disabled={isSubmitting}
+                                className="w-full shadow-button hover:shadow-float-primary mt-2 py-5 font-black uppercase tracking-widest"
                             >
                                 Adicionar ao Catálogo
                             </Button>
                         </form>
                     </Card>
 
-                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 flex gap-3">
-                        <div className="mt-0.5"><Lightbulb className="w-4 h-4 text-blue-500" /></div>
+                    <div className="p-5 bg-info/10 rounded-3xl border border-info/20 flex gap-4 shadow-sm">
+                        <div className="mt-1 shrink-0"><Lightbulb className="w-5 h-5 text-info" /></div>
                         <div>
-                            <h5 className="text-blue-700 font-bold text-xs mb-1">Dica Rápida</h5>
-                            <p className="text-xs text-blue-600/80 leading-relaxed">
-                                Cadastre itens genéricos como "TROCA DE PNEU" para reaproveitar. Evite duplicatas.
+                            <h5 className="text-info font-black text-[10px] uppercase tracking-[0.2em] mb-1.5">Dica de Ouro</h5>
+                            <p className="text-xs text-info/80 font-medium leading-relaxed">
+                                Cadastre itens genéricos (ex: "LAVAGEM COMPLETA" ou "MÃO DE OBRA MECÂNICA") para reaproveitá-los em múltiplas faturas.
                             </p>
                         </div>
                     </div>
@@ -185,48 +210,55 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
 
                 {/* COLUNA 2: LISTAGEM */}
                 <div className="w-full md:w-2/3 flex flex-col gap-4">
-                    <h4 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2 px-1">
-                        <Package className="w-4 h-4 text-gray-400" /> Itens Disponíveis ({servicos.length})
-                    </h4>
+                    <div className="flex items-center justify-between px-2 mb-2 border-b border-border/50 pb-2">
+                        <h4 className="text-[11px] font-black text-text-secondary uppercase tracking-[0.2em] flex items-center gap-2">
+                            <Grid className="w-4 h-4 text-text-muted" /> Itens Disponíveis
+                        </h4>
+                        <span className="bg-primary/10 text-primary font-bold px-3 py-1 rounded-lg text-xs shadow-inner border border-primary/20">
+                            {servicos.length}
+                        </span>
+                    </div>
 
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center py-12 text-gray-400 gap-3 bg-gray-50 rounded-2xl">
-                            <div className="animate-spin w-6 h-6 border-2 border-gray-300 border-t-primary rounded-full" />
-                            <span className="text-sm font-medium">Carregando catálogo...</span>
+                        <div className="flex flex-col items-center justify-center py-20 text-primary/50 gap-4 bg-surface border border-border/60 rounded-3xl shadow-sm">
+                            <Loader2 className="animate-spin w-10 h-10" />
+                            <span className="text-xs font-black uppercase tracking-widest animate-pulse">A carregar catálogo...</span>
                         </div>
                     ) : servicos.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-12 text-gray-400 border-2 border-dashed border-gray-200 rounded-2xl">
-                            <div className="bg-gray-50 p-4 rounded-full mb-3">
-                                <Box className="w-8 h-8 text-gray-300" />
+                        <div className="flex flex-col items-center justify-center py-24 text-text-muted border-2 border-dashed border-border/60 rounded-3xl bg-surface-hover/30 transition-colors hover:border-primary/30">
+                            <div className="bg-surface p-5 rounded-full mb-4 shadow-sm">
+                                <Box className="w-10 h-10 text-text-muted/50" />
                             </div>
-                            <p className="font-medium text-sm">Nenhum item cadastrado no catálogo.</p>
+                            <p className="font-black uppercase tracking-widest text-sm text-text-main">Catálogo Vazio</p>
+                            <p className="text-xs font-medium mt-1">Utilize o formulário ao lado para registar o primeiro item.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 auto-rows-max">
                             {servicos.map(item => (
                                 <Card 
                                     key={item.id} 
                                     padding="sm" 
-                                    variant="outline" 
-                                    className="group flex items-center justify-between hover:border-primary/30 transition-all"
+                                    className="group flex items-center justify-between border-border/60 shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-300 bg-surface h-full"
                                 >
-                                    <div className="flex items-center gap-3 overflow-hidden">
-                                        <div className={`p-2 rounded-lg shrink-0 ${
-                                            item.tipo === 'SERVICO' ? 'bg-primary/10 text-primary' :
-                                            item.tipo === 'PECA' ? 'bg-orange-50 text-orange-600' :
-                                            'bg-gray-100 text-gray-600'
+                                    <div className="flex items-center gap-4 overflow-hidden py-1 pl-1">
+                                        <div className={`p-2.5 rounded-xl shrink-0 shadow-inner ${
+                                            item.tipo === 'SERVICO' ? 'bg-primary/10 text-primary border border-primary/20' :
+                                            item.tipo === 'PECA' ? 'bg-amber-500/10 text-amber-600 border border-amber-500/20' :
+                                            item.tipo === 'LAVAGEM' ? 'bg-sky-500/10 text-sky-600 border border-sky-500/20' :
+                                            'bg-surface-hover border border-border text-text-secondary'
                                         }`}>
                                             {item.tipo === 'SERVICO' && <Settings className="w-4 h-4" />}
                                             {item.tipo === 'PECA' && <Package className="w-4 h-4" />}
-                                            {item.tipo !== 'SERVICO' && item.tipo !== 'PECA' && <span className="font-bold text-xs">{item.tipo.substring(0, 1)}</span>}
+                                            {item.tipo === 'LAVAGEM' && <Droplets className="w-4 h-4" />}
+                                            {item.tipo !== 'SERVICO' && item.tipo !== 'PECA' && item.tipo !== 'LAVAGEM' && <span className="font-black text-xs px-1">{item.tipo.substring(0, 1)}</span>}
                                         </div>
 
-                                        <div className="min-w-0">
-                                            <p className="font-bold text-gray-800 text-sm truncate" title={item.nome}>
+                                        <div className="min-w-0 flex flex-col justify-center">
+                                            <p className="font-black text-text-main text-sm truncate tracking-tight" title={item.nome}>
                                                 {item.nome}
                                             </p>
-                                            <p className="text-[10px] text-gray-500 bg-gray-50 px-1.5 rounded inline-block mt-0.5 border border-gray-100 font-medium">
-                                                {item.unidadeMedida}
+                                            <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-1">
+                                                Unidade: <span className="bg-surface-hover px-1.5 py-0.5 rounded border border-border/60 text-text-main font-mono">{item.unidadeMedida}</span>
                                             </p>
                                         </div>
                                     </div>
@@ -237,11 +269,11 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
                                         size="icon"
                                         onClick={() => handleDelete(item.id)}
                                         disabled={deletingId === item.id}
-                                        className="h-8 w-8 text-gray-300 hover:text-red-500 hover:bg-red-50 opacity-100 md:opacity-0 group-hover:opacity-100 shrink-0 transition-opacity"
-                                        title="Remover"
+                                        className="h-10 w-10 text-text-muted hover:text-white hover:bg-error opacity-100 lg:opacity-0 group-hover:opacity-100 shrink-0 transition-all rounded-xl ml-2 shadow-sm"
+                                        title="Remover Item"
                                     >
                                         {deletingId === item.id ? (
-                                            <div className="animate-spin h-3 w-3 border-2 border-red-500 border-t-transparent rounded-full" />
+                                            <Loader2 className="animate-spin h-4 w-4" />
                                         ) : (
                                             <Trash2 className="w-4 h-4" />
                                         )}
