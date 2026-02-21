@@ -12,6 +12,7 @@ import {
 
 // --- COMPONENTES PRIMITIVOS DA NOSSA UI DE ELITE ---
 import { Button } from './ui/Button';
+import { Input } from './ui/Input'; // ✨ Input importado
 import { Card } from './ui/Card';
 import { Tabs, type TabItem } from './ui/Tabs';
 import { Callout } from './ui/Callout';
@@ -220,12 +221,16 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
             </div>
             
             <div className="flex gap-3 items-center w-full sm:w-auto bg-surface-hover/50 p-1.5 rounded-2xl border border-border/60 shadow-inner">
-              <div className="relative flex-1 sm:flex-none px-2">
-                  <input
+              
+              {/* ✨ O NOSSO NOVO COMPONENTE INPUT GHOST */}
+              <div className="w-full sm:w-44">
+                  <Input
                     type="month"
+                    variant="ghost"
                     value={mesFiltro}
                     onChange={(e) => setMesFiltro(e.target.value)}
-                    className="w-full sm:w-auto h-10 border-none rounded-xl bg-transparent text-text-main focus:ring-0 outline-none cursor-pointer uppercase tracking-wider font-mono font-black text-sm"
+                    className="cursor-pointer uppercase tracking-widest font-mono font-black text-sm h-11"
+                    containerClassName="!mb-0"
                   />
               </div>
               

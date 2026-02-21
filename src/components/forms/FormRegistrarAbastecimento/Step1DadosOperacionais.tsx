@@ -1,9 +1,10 @@
 // src/components/forms/FormRegistrarAbastecimento/Step1DadosOperacionais.tsx
 import { useEffect, useState, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { Fuel, User, Gauge, Calendar } from 'lucide-react';
+import { Fuel, User, Gauge, Calendar, AlertTriangle } from 'lucide-react';
 import { Select } from '../../ui/Select';
 import { Input } from '../../ui/Input';
+import { Callout } from '../../ui/Callout'; // ✨ Importando o Callout
 import { formatKmVisual } from '../../../utils';
 import { useVeiculos } from '../../../hooks/useVeiculos';
 import { useUsuarios } from '../../../hooks/useUsuarios';
@@ -20,6 +21,11 @@ export function Step1DadosOperacionais() {
   const [ultimoKm, setUltimoKm] = useState<number>(0);
 
   const veiculoIdSelecionado = watch('veiculoId');
+  const kmAtualVisual = watch('kmAtual');
+
+  // ✨ Lógica para disparar o Callout de aviso
+  const kmAtualNum = Number(kmAtualVisual?.replace(/\D/g, '')) || 0;
+  const isKmInvalido = ultimoKm > 0 && kmAtualNum > 0 && kmAtualNum < ultimoKm;
 
   const operadorOptions = useMemo(() =>
     usuarios.filter(u => u.role === 'OPERADOR').map(u => ({ value: u.id, label: u.nome })),
@@ -70,32 +76,45 @@ export function Step1DadosOperacionais() {
           disabled={isLocked}
         />
 
-        <div>
+        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="flex flex-col">
+            <Input
+              label="KM do Painel (Odômetro)"
+              icon={<Gauge className="w-4 h-4 text-primary" />}
+              {...register('kmAtual')}
+              onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
+              placeholder={ultimoKm > 0 ? `Ref: ${ultimoKm}` : "Ex: 15.000"}
+              error={errors.kmAtual?.message as string}
+              className="font-mono text-lg font-black text-primary"
+              disabled={isLocked}
+              containerClassName="!mb-1"
+            />
+            {ultimoKm > 0 && (
+              <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-1.5 ml-1">
+                Último registo: <strong className="text-text-main font-mono">{ultimoKm.toLocaleString('pt-BR')} km</strong>
+              </p>
+            )}
+          </div>
+
           <Input
-            label="KM do Painel (Odômetro)"
-            icon={<Gauge className="w-4 h-4 text-primary" />}
-            {...register('kmAtual')}
-            onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
-            placeholder={ultimoKm > 0 ? `Ref: ${ultimoKm}` : "Ex: 15.000"}
-            error={errors.kmAtual?.message as string}
-            className="font-mono text-lg font-black text-primary"
+            label="Data e Hora"
+            type="datetime-local"
+            icon={<Calendar className="w-4 h-4" />}
+            {...register('dataHora')}
+            error={errors.dataHora?.message as string}
             disabled={isLocked}
           />
-          {ultimoKm > 0 && (
-            <p className="text-[11px] text-text-secondary font-medium mt-1.5 flex items-center gap-1.5 ml-1">
-              Última leitura registada: <strong className="text-text-main font-mono">{ultimoKm.toLocaleString()} km</strong>
-            </p>
-          )}
         </div>
 
-        <Input
-          label="Data e Hora"
-          type="datetime-local"
-          icon={<Calendar className="w-4 h-4" />}
-          {...register('dataHora')}
-          error={errors.dataHora?.message as string}
-          disabled={isLocked}
-        />
+        {/* ✨ CALLOUT DE AVISO DE KM INCONSISTENTE */}
+        {isKmInvalido && (
+          <div className="md:col-span-2 animate-in fade-in zoom-in-95 duration-300">
+            <Callout variant="warning" title="Odómetro Inconsistente" icon={AlertTriangle}>
+              O valor digitado (<strong className="font-mono">{kmAtualNum.toLocaleString('pt-BR')}</strong>) é <strong>menor</strong> que o último KM registado na base de dados para este veículo. Confirme se os dados estão corretos antes de avançar.
+            </Callout>
+          </div>
+        )}
+
       </div>
     </div>
   );

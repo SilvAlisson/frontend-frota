@@ -1,10 +1,11 @@
 // src/components/forms/FormRegistrarManutencao/Step2ItensServicos.tsx
 import { useState, useEffect, useMemo } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
-import { Plus, X, Package, AlertTriangle } from 'lucide-react';
+import { Plus, X, Package, Store } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
+import { Callout } from '../../ui/Callout'; // ✨
 import { ModalGerenciarServicos } from '../../ModalGerenciarServicos';
 import { formatCurrency } from '../../../utils';
 import { formatarDinheiro, desformatarDinheiro } from '../../../lib/formatters';
@@ -53,9 +54,9 @@ export function Step2ItensServicos() {
   );
 
   return (
-    <div className="space-y-5 animate-in slide-in-from-right-4 duration-300">
-      <div className="flex justify-between items-center pb-2 border-b border-border/50">
-        <h4 className="text-[10px] font-black text-text-secondary uppercase tracking-[0.15em]">Peças e Serviços Utilizados</h4>
+    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+      <div className="flex justify-between items-center pb-3 border-b border-border/60">
+        <h4 className="text-[10px] font-black text-text-secondary uppercase tracking-[0.2em]">Relação de Peças e Serviços</h4>
         <Button
           type="button"
           variant="ghost"
@@ -68,11 +69,11 @@ export function Step2ItensServicos() {
         </Button>
       </div>
 
+      {/* ✨ O AVISO DE FILTRO DA OFICINA AGORA USA CALLOUT */}
       {fornecedorIdSelecionado && produtosDisponiveis.length < listaProdutos.length && (
-        <div className="bg-sky-500/10 text-sky-700 px-4 py-3 rounded-xl text-xs font-medium flex items-center gap-2 border border-sky-500/20 mb-4">
-          <AlertTriangle className="w-4 h-4 shrink-0" />
-          Mostrando apenas itens fornecidos por esta oficina.
-        </div>
+        <Callout variant="info" title="Filtro Ativo" icon={Store}>
+          A exibir apenas os serviços e peças que estão registados como fornecidos pela oficina selecionada.
+        </Callout>
       )}
 
       <div className="space-y-4">
@@ -82,45 +83,48 @@ export function Step2ItensServicos() {
           const totalItem = (qtd * unit).toFixed(2);
 
           return (
-            <div key={field.id} className="relative bg-surface p-4 rounded-xl border border-border/60 shadow-sm hover:border-primary/40 transition-colors group">
+            <div key={field.id} className="relative bg-surface p-5 rounded-2xl border border-border/60 shadow-sm hover:shadow-md hover:border-primary/40 transition-all duration-300 group">
               {fields.length > 1 && (
-                <div className="absolute -top-3 -right-3 z-10">
+                <div className="absolute -top-3 -right-3 z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
                   <button
                       type="button"
                       onClick={() => remove(index)}
                       disabled={isLocked}
-                      className="h-7 w-7 rounded-full bg-surface border border-border/60 text-text-muted hover:text-error hover:border-error/40 hover:bg-error/10 shadow-sm flex items-center justify-center transition-all disabled:opacity-50"
+                      className="h-8 w-8 rounded-full bg-surface border border-border/60 text-text-muted hover:text-white hover:border-error hover:bg-error shadow-sm flex items-center justify-center transition-all disabled:opacity-50"
+                      title="Remover linha"
                     >
-                      <X className="w-3.5 h-3.5" />
+                      <X className="w-4 h-4" />
                     </button>
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-12 gap-4">
-                <div className="sm:col-span-6">
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
+                <div className="xl:col-span-6">
                   <Select
-                    label="Item / Serviço"
+                    label="Item / Serviço do Catálogo"
                     options={produtosOpcoes}
                     {...register(`itens.${index}.produtoId`)}
                     error={errors.itens?.[index]?.produtoId?.message}
                     disabled={isLocked}
                     icon={<Package className="w-4 h-4 text-text-muted" />}
+                    containerClassName="!mb-0"
                   />
                 </div>
                 
-                <div className="grid grid-cols-2 sm:col-span-6 gap-4">
+                <div className="grid grid-cols-2 xl:col-span-6 gap-4">
                   <Input
-                    label="Qtd"
+                    label="Quantidade"
                     type="number"
                     step="0.1"
                     {...register(`itens.${index}.quantidade`)}
                     error={errors.itens?.[index]?.quantidade?.message}
-                    className="font-mono font-bold text-center"
+                    className="font-mono font-black text-center"
                     disabled={isLocked}
+                    containerClassName="!mb-0"
                   />
 
                   <Input
-                    label="Valor Unitário"
+                    label="Preço Unitário"
                     {...register(`itens.${index}.valorPorUnidade`, {
                       onChange: (e) => {
                         e.target.value = formatarDinheiro(e.target.value);
@@ -131,14 +135,15 @@ export function Step2ItensServicos() {
                     className="font-mono font-black text-emerald-600 tracking-tight"
                     placeholder="R$ 0,00"
                     disabled={isLocked}
+                    containerClassName="!mb-0"
                   />
                 </div>
               </div>
 
-              <div className="mt-4 pt-3 flex justify-end border-t border-border/40">
-                <div className="px-4 py-1.5 rounded-lg border border-border/50 bg-background text-sm font-medium flex gap-2 shadow-sm">
-                  <span className="text-text-muted uppercase tracking-wider text-[10px] self-center">Subtotal:</span>
-                  <span className="font-mono font-black text-text-main">{formatCurrency(Number(totalItem))}</span>
+              <div className="mt-5 pt-4 flex justify-end border-t border-border/40">
+                <div className="px-4 py-2 rounded-xl bg-surface-hover/80 text-sm font-medium flex items-center gap-3 border border-border/60">
+                  <span className="text-text-muted uppercase tracking-[0.2em] text-[9px] font-black">Subtotal:</span>
+                  <span className="font-mono font-black text-text-main text-lg tracking-tight leading-none">{formatCurrency(Number(totalItem))}</span>
                 </div>
               </div>
             </div>
@@ -150,10 +155,10 @@ export function Step2ItensServicos() {
         type="button"
         variant="outline"
         onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: '' } as any)}
-        className="w-full border-dashed"
+        className="w-full border-dashed border-2 hover:border-primary/50 hover:text-primary transition-all bg-background h-12 mt-2"
         icon={<Plus className="w-4 h-4" />}
       >
-        Adicionar mais uma peça ou serviço
+        Adicionar outra Peça ou Serviço
       </Button>
 
       {modalServicosOpen && (

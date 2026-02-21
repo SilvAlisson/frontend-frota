@@ -8,6 +8,10 @@ import { GestaoDocumentos } from './GestaoDocumentos';
 import { PageHeader } from './ui/PageHeader';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
+
+// ✨ O nosso Empty State
+import { EmptyState } from './ui/EmptyState';
+
 import { useAuth } from '../contexts/AuthContext';
 import type { User } from '../types';
 
@@ -178,7 +182,9 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
 
       {/* MODAIS */}
       <Modal isOpen={modalAbastecimentoOpen} onClose={() => setModalAbastecimentoOpen(false)} title="Novo Abastecimento" className="max-w-2xl">
-        <FormRegistrarAbastecimento usuarioLogado={user} veiculoPreSelecionadoId={veiculoEmUsoId} onCancelar={() => setModalAbastecimentoOpen(false)} onSuccess={() => setModalAbastecimentoOpen(false)} />
+        <div className="p-2">
+           <FormRegistrarAbastecimento usuarioLogado={user} veiculoPreSelecionadoId={veiculoEmUsoId} onCancelar={() => setModalAbastecimentoOpen(false)} onSuccess={() => setModalAbastecimentoOpen(false)} />
+        </div>
       </Modal>
 
       <Modal isOpen={modalHistoricoOpen} onClose={() => setModalHistoricoOpen(false)} title="Meu Histórico de Viagens" className="max-w-5xl">
@@ -189,10 +195,13 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
         {veiculoEmUsoId ? (
           <GestaoDocumentos veiculoId={veiculoEmUsoId} somenteLeitura={true} />
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-center bg-surface-hover/30 rounded-3xl border-2 border-dashed border-border/60 shadow-inner">
-            <Info className="w-12 h-12 text-warning-500 mb-4 opacity-50" />
-            <h3 className="text-lg font-black text-text-main uppercase tracking-widest">Veículo Não Vinculado</h3>
-            <p className="text-text-secondary text-sm font-medium mt-2 max-w-xs mx-auto">Inicie um turno de trabalho para conseguir aceder aos documentos do veículo em uso.</p>
+          // ✨ O NOSSO EMPTY STATE SUBSTITUINDO O CÓDIGO MANUAL
+          <div className="pt-6 pb-2">
+            <EmptyState 
+              icon={Info} 
+              title="Veículo Não Vinculado" 
+              description="Inicie um turno de trabalho para conseguir aceder aos documentos do veículo em uso." 
+            />
           </div>
         )}
       </Modal>

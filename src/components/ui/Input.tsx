@@ -2,12 +2,30 @@ import React, { forwardRef } from 'react';
 import { twMerge } from 'tailwind-merge';
 import { clsx, type ClassValue } from 'clsx';
 import { AlertCircle } from 'lucide-react';
+import { cva, type VariantProps } from 'class-variance-authority';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+// ✨ Sistema de Variantes (O Upgrade!)
+const inputVariants = cva(
+  "flex w-full text-sm transition-all duration-200 outline-none placeholder:text-text-muted/60 disabled:cursor-not-allowed disabled:opacity-60 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-primary",
+  {
+    variants: {
+      variant: {
+        default: "bg-surface border border-border/60 rounded-xl py-2.5 focus:ring-2 focus:ring-primary/20 focus:border-primary shadow-sm hover:border-border disabled:bg-surface-hover/50 disabled:border-border/40 text-text-main",
+        ghost: "bg-transparent border-transparent rounded-xl h-11 hover:bg-surface-hover/80 focus:bg-surface-hover shadow-none focus:ring-0 text-text-main",
+      }
+    },
+    defaultVariants: {
+      variant: "default"
+    }
+  }
+);
+
+// Adicionamos o VariantProps à Interface
+interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'>, VariantProps<typeof inputVariants> {
   label?: string;
   error?: string;
   icon?: React.ReactNode;
@@ -15,7 +33,7 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, icon, className, containerClassName, id, ...rest }, ref) => {
+  ({ label, error, icon, className, containerClassName, id, variant, ...rest }, ref) => {
 
     const generatedId = React.useId();
     const inputId = id || generatedId;
@@ -43,27 +61,16 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             id={inputId}
             className={cn(
-              // --- Base Elite ---
-              "flex w-full py-2.5 text-sm text-text-main bg-surface border rounded-xl transition-all duration-200 outline-none",
+              // Aplica a variante (default ou ghost)
+              inputVariants({ variant }),
               
-              // --- Sombras e Bordas ---
-              "border-border/60 shadow-sm",
-              "placeholder:text-text-muted/60",
-              "file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-primary",
-
-              // --- Foco (Estilo Radix UI) ---
-              "focus:ring-2 focus:ring-primary/20 focus:border-primary",
-
-              // --- Desabilitado ---
-              "disabled:bg-surface-hover/50 disabled:text-text-muted disabled:cursor-not-allowed disabled:border-border/40",
-
-              // --- Padding Condicional (Ícones) ---
-              icon ? "pl-10" : "pl-4",
-              error ? "pr-10" : "pr-4",
-
-              // --- Estados: Normal vs Erro ---
-              !error && "hover:border-border",
-              error && "border-error text-error focus:border-error focus:ring-error/20 placeholder:text-error/50",
+              // Padding da esquerda (abre espaço para o ícone, se houver)
+              icon ? "pl-10" : (variant === 'ghost' ? "pl-3" : "pl-4"),
+              
+              // Padding da direita e estilos de erro
+              error 
+                ? "pr-10 border-error border text-error focus:border-error focus:ring-error/20 placeholder:text-error/50" 
+                : (variant === 'default' ? "pr-4" : "pr-3"),
 
               className
             )}
