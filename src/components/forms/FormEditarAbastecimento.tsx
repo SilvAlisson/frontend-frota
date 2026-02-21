@@ -151,8 +151,8 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         itens: abs.itens?.map((i: any) => ({
           produtoId: i.produtoId || i.produto?.id || '',
           quantidade: i.quantidade,
-          // Transforma o número que vem do banco (ex: 5.9) em string visual (5,90) para a máscara
-          valorPorUnidade: (i.valorPorUnidade || ((i.produto as any)?.valorAtual || 0)).toFixed(2).replace('.', ',')
+          // ✨ CORREÇÃO: Converter para Number() antes do .toFixed()
+          valorPorUnidade: Number(i.valorPorUnidade || ((i.produto as any)?.valorAtual || 0)).toFixed(2).replace('.', ',')
         })) || []
       });
       if (abs.fotoNotaFiscalUrl) setPreviewFoto(abs.fotoNotaFiscalUrl);
