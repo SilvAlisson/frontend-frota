@@ -4,19 +4,22 @@ import { FormCadastrarFornecedor } from './forms/FormCadastrarFornecedor';
 import { FormEditarFornecedor } from './forms/FormEditarFornecedor';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
+import { Trash2, Edit2, Store, Plus, Loader2 } from 'lucide-react';
 import type { Fornecedor } from '../types';
 
-// Ícones Minimalistas
-function IconeLixo() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12.54 0c-.34.055-.68.11-.1022.166m11.54 0c.376.09.74.19 1.097.302l-1.148 3.896M12 18V9" /></svg>; }
-function IconeEditar() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg>; }
-function IconePredio() { return <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21" /></svg>; }
+// ✨ Novos Componentes Elite
+import { ConfirmModal } from './ui/ConfirmModal';
+import { EmptyState } from './ui/EmptyState';
 
 export function GestaoFornecedores() {
 
   const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
   const [loading, setLoading] = useState(true);
   const [modo, setModo] = useState<'listando' | 'adicionando' | 'editando'>('listando');
+  
+  // Estados para exclusão segura
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [fornecedorParaExcluir, setFornecedorParaExcluir] = useState<Fornecedor | null>(null);
   const [fornecedorIdSelecionado, setFornecedorIdSelecionado] = useState<string | null>(null);
 
   const fetchFornecedores = async () => {
@@ -26,7 +29,7 @@ export function GestaoFornecedores() {
       setFornecedores(response.data);
     } catch (err) {
       console.error(err);
-      toast.error('Não foi possível carregar a lista de fornecedores.');
+      toast.error('Não foi possível carregar a lista de parceiros.');
     } finally {
       setLoading(false);
     }
@@ -36,24 +39,21 @@ export function GestaoFornecedores() {
     fetchFornecedores();
   }, []);
 
-  const handleDelete = async (fornecedorId: string) => {
-    if (!window.confirm("Tem certeza que deseja remover este parceiro?")) return;
+  // --- NOVA LÓGICA DE EXCLUSÃO (ConfirmModal) ---
+  const handleExecuteDelete = async () => {
+    if (!fornecedorParaExcluir) return;
 
-    setDeletingId(fornecedorId);
-    const promise = api.delete(`/fornecedores/${fornecedorId}`);
-
-    toast.promise(promise, {
-      loading: 'Removendo...',
-      success: () => {
-        setFornecedores(prev => prev.filter(f => f.id !== fornecedorId));
-        setDeletingId(null);
-        return 'Parceiro removido.';
-      },
-      error: (err) => {
-        setDeletingId(null);
-        return err.response?.data?.error || 'Erro ao remover.';
-      }
-    });
+    setDeletingId(fornecedorParaExcluir.id);
+    try {
+      await api.delete(`/fornecedores/${fornecedorParaExcluir.id}`);
+      setFornecedores(prev => prev.filter(f => f.id !== fornecedorParaExcluir.id));
+      toast.success('Parceiro removido com sucesso.');
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Erro ao remover. Pode estar vinculado a históricos.');
+    } finally {
+      setDeletingId(null);
+      setFornecedorParaExcluir(null); // Fecha o modal
+    }
   };
 
   const handleSucesso = () => {
@@ -67,26 +67,22 @@ export function GestaoFornecedores() {
     setFornecedorIdSelecionado(null);
   };
 
-  // Helper para cor do ícone baseado no tipo (se existir no objeto)
+  // Helper para cor do ícone baseado no tipo (Glassmorphism adaptado)
   const getIconColor = (tipo?: string) => {
-    if (tipo === 'POSTO') return 'bg-amber-50 text-amber-600 border-amber-100';
-    if (tipo === 'LAVA_JATO') return 'bg-blue-50 text-blue-600 border-blue-100';
-    // [PADRONIZAÇÃO] Default alinhado com o tema
-    return 'bg-background text-gray-500 border-border';
+    if (tipo === 'POSTO') return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
+    if (tipo === 'LAVA_JATO') return 'bg-sky-500/10 text-sky-600 border-sky-500/20';
+    return 'bg-surface-hover text-text-secondary border-border/60';
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-10">
 
       {/* CABEÇALHO */}
-      {/* [PADRONIZAÇÃO] border-gray-100 -> border-border */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border pb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/60 pb-6">
         <div>
-          <h3 className="text-xl font-bold text-gray-900 tracking-tight">
-            Parceiros & Fornecedores
-          </h3>
-          <p className="text-sm text-text-secondary mt-1">
-            Gerencie oficinas, postos de combustível e prestadores.
+          <h1 className="text-2xl sm:text-3xl font-black text-text-main tracking-tight leading-none">Parceiros & Fornecedores</h1>
+          <p className="text-text-secondary font-medium mt-1.5 opacity-90">
+            Gerencie oficinas, postos de combustível e prestadores de serviço.
           </p>
         </div>
 
@@ -94,28 +90,29 @@ export function GestaoFornecedores() {
           <Button
             variant="primary"
             onClick={() => setModo('adicionando')}
-            className="shadow-lg shadow-primary/20"
-            icon={
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-              </svg>
-            }
+            className="shadow-button hover:shadow-float-primary h-11 w-full sm:w-auto"
+            icon={<Plus className="w-4 h-4" />}
           >
             Novo Parceiro
           </Button>
         )}
       </div>
 
-      {/* FORMULÁRIOS */}
+      {/* FORMULÁRIOS (COM TRANSIÇÃO) */}
       {modo === 'adicionando' && (
-        // [PADRONIZAÇÃO] shadow-card, border-border
-        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-card border border-border max-w-xl mx-auto animate-in zoom-in-95 duration-200">
+        <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-xl mx-auto animate-in slide-in-from-right-8 duration-300">
+          <div className="mb-6 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit" onClick={handleCancelarForm}>
+            <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar
+          </div>
           <FormCadastrarFornecedor onSuccess={handleSucesso} onCancelar={handleCancelarForm} />
         </div>
       )}
 
       {modo === 'editando' && fornecedorIdSelecionado && (
-        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-card border border-border max-w-xl mx-auto animate-in zoom-in-95 duration-200">
+        <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-xl mx-auto animate-in slide-in-from-right-8 duration-300">
+           <div className="mb-6 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit" onClick={handleCancelarForm}>
+            <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar
+          </div>
           <FormEditarFornecedor
             fornecedorId={fornecedorIdSelecionado}
             onSuccess={handleSucesso}
@@ -129,67 +126,61 @@ export function GestaoFornecedores() {
         <>
           {loading ? (
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {[1, 2, 3, 4].map(i => (
-                // [PADRONIZAÇÃO] border-gray-100 -> border-border, rounded-xl -> rounded-2xl
-                <div key={i} className="h-40 bg-white rounded-2xl border border-border animate-pulse"></div>
+              {[1, 2, 3, 4, 5, 6].map(i => (
+                <div key={i} className="h-40 bg-surface-hover/50 rounded-3xl border border-border/40 animate-pulse"></div>
               ))}
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-max">
               {fornecedores.map((f) => (
-                // [PADRONIZAÇÃO] border-gray-200 -> border-border, rounded-xl -> rounded-2xl
-                <div key={f.id} className="group bg-white p-5 rounded-2xl shadow-sm border border-border hover:shadow-md hover:border-primary/30 transition-all duration-300 flex flex-col relative">
+                <div key={f.id} className="group bg-surface p-5 sm:p-6 rounded-3xl shadow-sm border border-border/60 hover:shadow-md hover:border-primary/40 transition-all duration-300 flex flex-col relative h-full">
 
                   {/* Topo: Ícone e Ações */}
-                  <div className="flex justify-between items-start mb-4">
-                    <div className={`h-12 w-12 rounded-xl flex items-center justify-center shadow-sm border ${getIconColor(f.tipo)}`}>
-                      <IconePredio />
+                  <div className="flex justify-between items-start mb-5">
+                    <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shadow-inner border ${getIconColor(f.tipo)}`}>
+                      <Store className="w-5 h-5" />
                     </div>
 
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 bg-surface-hover/50 rounded-xl p-1 border border-border/40 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => { setFornecedorIdSelecionado(f.id); setModo('editando'); }}
-                        // [PADRONIZAÇÃO] hover:text-primary
-                        className="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors"
+                        className="p-1.5 text-text-muted hover:text-primary hover:bg-surface rounded-lg transition-all shadow-sm"
                         title="Editar"
                       >
-                        <IconeEditar />
+                        <Edit2 className="w-4 h-4" />
                       </button>
                       <button
-                        onClick={() => handleDelete(f.id)}
+                        onClick={() => setFornecedorParaExcluir(f)}
                         disabled={deletingId === f.id}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                        className="p-1.5 text-text-muted hover:text-error hover:bg-error/10 rounded-lg transition-all shadow-sm"
                         title="Excluir"
                       >
-                        {deletingId === f.id ? <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" /> : <IconeLixo />}
+                        {deletingId === f.id ? <Loader2 className="w-4 h-4 animate-spin text-error" /> : <Trash2 className="w-4 h-4" />}
                       </button>
                     </div>
                   </div>
 
                   {/* Informações */}
-                  <div className="mb-2">
-                    <h4 className="font-bold text-gray-900 text-lg leading-tight mb-1 truncate" title={f.nome}>
+                  <div className="mb-4">
+                    <h4 className="font-black text-text-main text-lg tracking-tight leading-tight mb-1.5 truncate" title={f.nome}>
                       {f.nome}
                     </h4>
                     {f.tipo && (
-                      // [PADRONIZAÇÃO] bg-gray-100 -> bg-background, border-gray-200 -> border-border
-                      <span className="inline-block text-[10px] uppercase font-bold tracking-wider text-gray-500 bg-background px-1.5 py-0.5 rounded border border-border">
+                      <span className="inline-block text-[9px] uppercase font-black tracking-widest text-text-secondary bg-surface-hover px-2 py-1 rounded-md border border-border/50">
                         {f.tipo.replace('_', ' ')}
                       </span>
                     )}
                   </div>
 
                   {/* Rodapé: CNPJ */}
-                  {/* [PADRONIZAÇÃO] border-gray-50 -> border-background */}
-                  <div className="mt-auto pt-3 border-t border-background flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase">CNPJ</span>
+                  <div className="mt-auto pt-4 border-t border-border/40 flex items-center justify-between">
+                    <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">CNPJ</span>
                     {f.cnpj ? (
-                      // [PADRONIZAÇÃO] bg-gray-50 -> bg-background, border-gray-100 -> border-border
-                      <span className="text-xs font-mono text-gray-600 bg-background px-1.5 py-0.5 rounded border border-border">
+                      <span className="text-xs font-mono font-bold text-text-main bg-surface-hover/50 px-2 py-0.5 rounded border border-border/40">
                         {f.cnpj}
                       </span>
                     ) : (
-                      <span className="text-xs text-gray-300 italic">Não informado</span>
+                      <span className="text-xs text-text-muted/60 font-medium italic">Não informado</span>
                     )}
                   </div>
 
@@ -199,29 +190,34 @@ export function GestaoFornecedores() {
           )}
 
           {!loading && fornecedores.length === 0 && (
-            // [PADRONIZAÇÃO] border-gray-200 -> border-border
-            <div className="flex flex-col items-center justify-center py-20 bg-white rounded-2xl border-2 border-dashed border-border text-center">
-              {/* [PADRONIZAÇÃO] bg-gray-50 -> bg-background */}
-              <div className="p-4 bg-background rounded-full mb-4">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-8 h-8 text-gray-400">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.75 21V9.349m0 0a3.001 3.001 0 0 0 3.75-.615A2.993 2.993 0 0 0 9.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 0 0 2.25 1.016c.896 0 1.7-.393 2.25-1.015a3.001 3.001 0 0 0 3.75.614m-16.5 0a3.004 3.004 0 0 1-.621-4.72l1.189-1.19A1.5 1.5 0 0 1 5.378 3h13.243a1.5 1.5 0 0 1 1.06.44l1.19 1.189a3 3 0 0 1-.621 4.72m-13.5 8.65h3.75a.75.75 0 0 0 .75-.75V13.5a.75.75 0 0 0-.75-.75H6.75a.75.75 0 0 0-.75.75v3.75c0 .414.336.75.75.75Z" />
-                </svg>
-              </div>
-              <h4 className="text-lg font-medium text-gray-900">Nenhum parceiro cadastrado</h4>
-              <p className="text-gray-500 text-sm mt-1 max-w-xs mx-auto">
-                Adicione oficinas e postos para começar.
-              </p>
-              <Button
-                variant="ghost"
-                onClick={() => setModo('adicionando')}
-                className="mt-4 text-primary bg-primary/5 hover:bg-primary/10"
-              >
-                Cadastrar Primeiro
-              </Button>
+            // ✨ NOSSO EMPTY STATE SUBSTITUINDO O CÓDIGO MANUAL
+            <div className="pt-10">
+              <EmptyState 
+                icon={Store} 
+                title="Sem Parceiros Registados" 
+                description="Adicione oficinas, postos de combustível ou fornecedores de peças para começar a associar despesas."
+                action={
+                  <Button variant="secondary" onClick={() => setModo('adicionando')} icon={<Plus className="w-4 h-4"/>}>
+                    Registar o Primeiro
+                  </Button>
+                }
+              />
             </div>
           )}
         </>
       )}
+
+      {/* ✨ O NOSSO CONFIRM MODAL ELEGANTE */}
+      <ConfirmModal 
+        isOpen={!!fornecedorParaExcluir}
+        onCancel={() => setFornecedorParaExcluir(null)}
+        onConfirm={handleExecuteDelete}
+        title="Remover Parceiro"
+        description={`Tem a certeza que deseja excluir "${fornecedorParaExcluir?.nome}"? Documentos e manutenções já associadas podem perder esta referência.`}
+        variant="danger"
+        confirmLabel={deletingId ? "A remover..." : "Sim, Excluir"}
+      />
+
     </div>
   );
 }

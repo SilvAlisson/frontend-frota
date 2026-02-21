@@ -4,17 +4,17 @@ import { GestaoUsuarios } from './GestaoUsuarios';
 import { GestaoCargos } from './GestaoCargos';
 import { PainelAlertas } from './PainelAlertas';
 import type { User } from '../types';
+import { Tabs, type TabItem } from './ui/Tabs';
 
 interface DashboardRHProps {
   user: User;
 }
 
-type AbaRH = 'alertas' | 'usuarios' | 'cargos';
-
 export function DashboardRH({ user }: DashboardRHProps) {
-  const [abaAtiva, setAbaAtiva] = useState<AbaRH>('usuarios');
+  const [abaAtiva, setAbaAtiva] = useState('usuarios');
 
-  const abas = [
+  // Estrutura de dados para as Abas
+  const abas: TabItem[] = [
     {
       id: 'usuarios', 
       label: 'Colaboradores', 
@@ -28,7 +28,8 @@ export function DashboardRH({ user }: DashboardRHProps) {
     {
       id: 'alertas', 
       label: 'Alertas & Vencimentos', 
-      icon: AlertTriangle
+      icon: AlertTriangle,
+      hasNotification: true // A bolinha vermelha animada!
     },
   ];
 
@@ -49,36 +50,13 @@ export function DashboardRH({ user }: DashboardRHProps) {
           </p>
         </div>
 
-        {/* MENU DE NAVEGAÇÃO (Segmented Control Premium) */}
-        <div className="bg-surface-hover/50 p-1.5 rounded-2xl border border-border/60 inline-flex overflow-x-auto custom-scrollbar w-full xl:w-auto shadow-inner">
-          <div className="flex space-x-1 min-w-max w-full xl:w-auto">
-            {abas.map((aba) => {
-              const isActive = abaAtiva === aba.id;
-              const Icon = aba.icon;
-              
-              return (
-                <button
-                  key={aba.id}
-                  onClick={() => setAbaAtiva(aba.id as AbaRH)}
-                  className={`
-                    relative flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ease-out flex-1 xl:flex-none
-                    ${isActive
-                      ? 'text-primary bg-surface shadow-sm ring-1 ring-border/60'
-                      : 'text-text-secondary hover:bg-surface hover:text-text-main'}
-                  `}
-                >
-                  <Icon className={`w-4 h-4 transition-transform duration-300 ${isActive ? 'scale-110 text-primary' : 'text-text-muted'}`} />
-                  {aba.label}
-                  
-                  {/* Ponto de notificação elegante na aba de alertas */}
-                  {aba.id === 'alertas' && (
-                     <span className="absolute top-2.5 right-2.5 w-1.5 h-1.5 bg-error rounded-full animate-pulse shadow-[0_0_5px_rgba(239,68,68,0.6)]" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        {/* ✨ O NOSSO NOVO COMPONENTE TABS */}
+        <Tabs 
+          tabs={abas}
+          activeTab={abaAtiva}
+          onChange={setAbaAtiva}
+          variant="segmented"
+        />
       </div>
 
       {/* ÁREA DE CONTEÚDO COM TRANSIÇÃO SUAVE */}

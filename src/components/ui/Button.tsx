@@ -4,8 +4,8 @@ import { Loader2 } from 'lucide-react';
 import { cn } from '../../lib/utils'; 
 
 const buttonVariants = cva(
-  // --- Base Elite ---
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-bold transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:pointer-events-none disabled:opacity-60 active:scale-[0.97] select-none",
+  // --- Base Elite (Adicionado cursor-default) ---
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-bold transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:pointer-events-none disabled:opacity-60 active:scale-[0.97] select-none cursor-default",
   {
     variants: {
       variant: {

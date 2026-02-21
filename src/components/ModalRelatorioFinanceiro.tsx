@@ -10,9 +10,12 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid
 } from 'recharts';
 
-// --- COMPONENTES PRIMITIVOS ---
+// --- COMPONENTES PRIMITIVOS DA NOSSA UI DE ELITE ---
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
+import { Tabs, type TabItem } from './ui/Tabs';
+import { Callout } from './ui/Callout';
+import { EmptyState } from './ui/EmptyState';
 
 import type { Veiculo, Abastecimento, OrdemServico } from '../types';
 
@@ -20,22 +23,6 @@ interface RelatorioFinanceiroProps {
   onClose: () => void;
   veiculos: Veiculo[];
 }
-
-const TabButton = ({ active, onClick, icon: Icon, label }: any) => (
-  <button
-    onClick={onClick}
-    type="button"
-    className={cn(
-      "shrink-0 pb-3 px-1 sm:px-4 text-sm font-bold border-b-2 transition-all duration-300 flex items-center gap-2 whitespace-nowrap outline-none select-none relative group",
-      active
-        ? "border-primary text-primary"
-        : "border-transparent text-text-muted hover:text-text-main"
-    )}
-  >
-    <Icon className={cn("w-4 h-4 shrink-0 transition-transform duration-300", active ? "scale-110" : "group-hover:scale-110")} />
-    {label}
-  </button>
-);
 
 // 🎨 TOOLTIP PREMIUM (Stripe Style)
 const CustomBarTooltip = ({ active, payload }: any) => {
@@ -68,12 +55,20 @@ const CustomBarTooltip = ({ active, payload }: any) => {
 export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinanceiroProps) {
   const [mesFiltro, setMesFiltro] = useState(new Date().toISOString().slice(0, 7));
   const [loading, setLoading] = useState(false);
-  const [abaAtiva, setAbaAtiva] = useState<'GERAL' | 'CPK' | 'COMBUSTIVEL' | 'MANUTENCAO'>('GERAL');
+  const [abaAtiva, setAbaAtiva] = useState('GERAL');
 
   const [dadosRaw, setDadosRaw] = useState<{
     abastecimentos: Abastecimento[],
     manutencoes: OrdemServico[]
   }>({ abastecimentos: [], manutencoes: [] });
+
+  // Definição das Abas para o componente Tabs
+  const relatorioTabs: TabItem[] = [
+    { id: 'GERAL', label: 'Visão Macro', icon: PieChart },
+    { id: 'CPK', label: 'Custo por KM (CPK)', icon: BarChart3 },
+    { id: 'COMBUSTIVEL', label: 'Análise Combustível', icon: Fuel },
+    { id: 'MANUTENCAO', label: 'DRE Manutenção', icon: Wrench },
+  ];
 
   useEffect(() => {
     let mounted = true;
@@ -99,7 +94,7 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
         console.error(err);
         toast.error("Erro ao extrair inteligência financeira do servidor.");
       } finally {
-        if (mounted) setTimeout(() => setLoading(false), 400); // Suaviza a UX do loading
+        if (mounted) setTimeout(() => setLoading(false), 400); 
       }
     };
     fetchData();
@@ -247,14 +242,14 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
             </div>
           </div>
 
-          {/* MENUS TABS (Segmented Design) */}
-          <div className="w-full px-6 sm:px-10 mt-2 overflow-x-auto custom-scrollbar">
-            <div className="flex gap-6 sm:gap-10 min-w-max border-b border-border/40">
-              <TabButton active={abaAtiva === 'GERAL'} onClick={() => setAbaAtiva('GERAL')} icon={PieChart} label="Visão Macro" />
-              <TabButton active={abaAtiva === 'CPK'} onClick={() => setAbaAtiva('CPK')} icon={BarChart3} label="Custo por KM (CPK)" />
-              <TabButton active={abaAtiva === 'COMBUSTIVEL'} onClick={() => setAbaAtiva('COMBUSTIVEL')} icon={Fuel} label="Análise Combustível" />
-              <TabButton active={abaAtiva === 'MANUTENCAO'} onClick={() => setAbaAtiva('MANUTENCAO')} icon={Wrench} label="DRE Manutenção" />
-            </div>
+          {/* ✨ MENUS TABS COMPONENTE */}
+          <div className="w-full px-6 sm:px-10 mt-2">
+             <Tabs 
+               tabs={relatorioTabs}
+               activeTab={abaAtiva}
+               onChange={setAbaAtiva}
+               variant="underline"
+             />
           </div>
         </div>
 
@@ -355,10 +350,11 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                       </ResponsiveContainer>
                     </div>
                   ) : (
-                    <div className="h-[300px] flex flex-col items-center justify-center border-2 border-dashed border-border/60 rounded-3xl bg-surface-hover/30">
-                        <Activity className="w-10 h-10 text-text-muted/40 mb-3" />
-                        <p className="text-text-secondary font-black tracking-widest uppercase text-sm">Sem Dados para Ranking</p>
-                    </div>
+                    <EmptyState 
+                      icon={Activity} 
+                      title="Sem Dados para Ranking" 
+                      description="Ainda não existem registos suficientes de consumo e oficina para processar este mês."
+                    />
                   )}
                 </Card>
               </div>
@@ -396,8 +392,8 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                       ))}
                       {relatorios.cpk.length === 0 && (
                           <tr>
-                              <td colSpan={4} className="px-6 py-12 text-center text-text-muted font-bold text-sm uppercase tracking-widest">
-                                  Nenhum registo encontrado neste período.
+                              <td colSpan={4} className="px-6 py-12">
+                                <EmptyState icon={Info} title="Sem Registos" description="Nenhum registo encontrado neste período." />
                               </td>
                           </tr>
                       )}
@@ -438,8 +434,8 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                       ))}
                       {relatorios.cpk.length === 0 && (
                           <tr>
-                              <td colSpan={4} className="px-6 py-12 text-center text-text-muted font-bold text-sm uppercase tracking-widest">
-                                  Nenhum abastecimento registado neste período.
+                              <td colSpan={4} className="px-6 py-12">
+                                <EmptyState icon={Fuel} title="Sem Abastecimentos" description="Nenhum abastecimento registado neste período." />
                               </td>
                           </tr>
                       )}
@@ -488,13 +484,13 @@ export function ModalRelatorioFinanceiro({ onClose, veiculos }: RelatorioFinance
                       </div>
                     </div>
 
-                    <div className="mt-4 p-5 bg-amber-500/5 rounded-2xl border border-amber-500/20 text-sm text-text-main leading-relaxed flex items-start gap-4 shadow-sm">
-                      <div className="p-2 bg-amber-500/20 rounded-xl shrink-0"><AlertTriangle className="w-5 h-5 text-amber-600"/></div>
-                      <div>
-                        <strong className="text-amber-600 block mb-1 font-black uppercase tracking-widest text-[10px]">Alerta de Gestão de Frota</strong> 
-                        <span className="font-medium opacity-90">A proporção ideal global indica que a manutenção corretiva (emergencial/quebras) não deve ultrapassar a margem de <strong className="text-text-main">30%</strong> do custo total de manutenção do mês.</span>
-                      </div>
+                    {/* ✨ O NOVO CALLOUT EM AÇÃO PARA O AVISO DE GESTÃO */}
+                    <div className="mt-4">
+                      <Callout variant="warning" title="Alerta de Gestão de Frota" icon={AlertTriangle}>
+                        A proporção ideal global indica que a manutenção corretiva (emergencial/quebras) não deve ultrapassar a margem de <strong className="text-text-main">30%</strong> do custo total de manutenção do mês.
+                      </Callout>
                     </div>
+
                   </div>
                 </Card>
               </div>

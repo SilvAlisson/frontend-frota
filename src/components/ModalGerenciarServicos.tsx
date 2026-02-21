@@ -12,6 +12,9 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Modal } from './ui/Modal';
 import { Card } from './ui/Card';
+import { ConfirmModal } from './ui/ConfirmModal';
+import { Callout } from './ui/Callout';
+import { EmptyState } from './ui/EmptyState';
 import type { Produto } from '../types';
 
 const tiposServico = ["SERVICO", "PECA", "LAVAGEM", "OUTRO"] as const;
@@ -41,6 +44,9 @@ interface ModalGerenciarServicosProps {
 export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarServicosProps) {
     const [servicos, setServicos] = useState<Produto[]>([]);
     const [loading, setLoading] = useState(true);
+    
+    // --- ESTADOS DO MODAL DE EXCLUSÃO ---
+    const [itemToDelete, setItemToDelete] = useState<string | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
     const {
@@ -101,19 +107,20 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
         }
     };
 
-    // --- REMOVER ---
-    const handleDelete = async (id: string) => {
-        if (!window.confirm('Tem a certeza? Esta ação removerá o item do catálogo base.')) return;
-
-        setDeletingId(id);
+    // --- REMOVER (NOVA LÓGICA SEM WINDOW.CONFIRM) ---
+    const executeDelete = async () => {
+        if (!itemToDelete) return;
+        
+        setDeletingId(itemToDelete);
         try {
-            await api.delete(`/produtos/${id}`);
-            setServicos(prev => prev.filter(p => p.id !== id));
+            await api.delete(`/produtos/${itemToDelete}`);
+            setServicos(prev => prev.filter(p => p.id !== itemToDelete));
             toast.success('Item removido do catálogo.');
         } catch (err) {
             toast.error('Não é possível remover itens que já tenham sido utilizados em Ordens de Serviço.');
         } finally {
             setDeletingId(null);
+            setItemToDelete(null); // Fecha o modal
         }
     };
 
@@ -131,15 +138,10 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
             title="Catálogo de Manutenção" 
             className="max-w-5xl"
         >
-            {/* AQUI ESTÁ A MAGIA DO SCROLL: 
-              Limitamos a altura máxima (max-h) e usamos overflow-y-auto no wrapper interno,
-              garantindo que o conteúdo não vaza para cima do header do modal.
-            */}
             <div className="flex flex-col md:flex-row gap-8 p-2 max-h-[75vh] overflow-y-auto custom-scrollbar">
 
                 {/* COLUNA 1: FORMULÁRIO */}
                 <div className="w-full md:w-1/3 flex flex-col gap-6 h-fit shrink-0 md:sticky md:top-0">
-                    
                     <Card padding="default" className="bg-surface-hover/30 border border-border/60 shadow-sm rounded-3xl">
                         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border/50">
                             <div className="p-2 bg-amber-500/10 rounded-xl text-amber-500 shadow-inner">
@@ -197,15 +199,10 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
                         </form>
                     </Card>
 
-                    <div className="p-5 bg-info/10 rounded-3xl border border-info/20 flex gap-4 shadow-sm">
-                        <div className="mt-1 shrink-0"><Lightbulb className="w-5 h-5 text-info" /></div>
-                        <div>
-                            <h5 className="text-info font-black text-[10px] uppercase tracking-[0.2em] mb-1.5">Dica de Ouro</h5>
-                            <p className="text-xs text-info/80 font-medium leading-relaxed">
-                                Cadastre itens genéricos (ex: "LAVAGEM COMPLETA" ou "MÃO DE OBRA MECÂNICA") para reaproveitá-los em múltiplas faturas.
-                            </p>
-                        </div>
-                    </div>
+                    {/* ✨ O NOVO CALLOUT EM AÇÃO */}
+                    <Callout variant="info" title="Dica de Ouro" icon={Lightbulb}>
+                        Cadastre itens genéricos (ex: "LAVAGEM COMPLETA" ou "MÃO DE OBRA MECÂNICA") para reaproveitá-los em múltiplas faturas.
+                    </Callout>
                 </div>
 
                 {/* COLUNA 2: LISTAGEM */}
@@ -225,13 +222,12 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
                             <span className="text-xs font-black uppercase tracking-widest animate-pulse">A carregar catálogo...</span>
                         </div>
                     ) : servicos.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-24 text-text-muted border-2 border-dashed border-border/60 rounded-3xl bg-surface-hover/30 transition-colors hover:border-primary/30">
-                            <div className="bg-surface p-5 rounded-full mb-4 shadow-sm">
-                                <Box className="w-10 h-10 text-text-muted/50" />
-                            </div>
-                            <p className="font-black uppercase tracking-widest text-sm text-text-main">Catálogo Vazio</p>
-                            <p className="text-xs font-medium mt-1">Utilize o formulário ao lado para registar o primeiro item.</p>
-                        </div>
+                        /* ✨ O NOVO EMPTY STATE EM AÇÃO */
+                        <EmptyState 
+                            icon={Box} 
+                            title="Catálogo Vazio" 
+                            description="Utilize o formulário ao lado para registar o primeiro item." 
+                        />
                     ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 auto-rows-max">
                             {servicos.map(item => (
@@ -267,7 +263,7 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
                                         type="button"
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() => handleDelete(item.id)}
+                                        onClick={() => setItemToDelete(item.id)} // ⚠️ Aciona o Modal
                                         disabled={deletingId === item.id}
                                         className="h-10 w-10 text-text-muted hover:text-white hover:bg-error opacity-100 lg:opacity-0 group-hover:opacity-100 shrink-0 transition-all rounded-xl ml-2 shadow-sm"
                                         title="Remover Item"
@@ -284,6 +280,17 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
                     )}
                 </div>
             </div>
+            
+            {/* ✨ O NOSSO CONFIRM MODAL (Substitui o window.confirm) */}
+            <ConfirmModal 
+                isOpen={!!itemToDelete}
+                onCancel={() => setItemToDelete(null)}
+                onConfirm={executeDelete}
+                title="Excluir Item do Catálogo"
+                description="Tem a certeza de que deseja remover este item? Esta ação é irreversível e o item não estará mais disponível para novas faturas."
+                variant="danger"
+                confirmLabel="Sim, Excluir"
+            />
         </Modal>
     );
 }
