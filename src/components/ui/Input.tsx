@@ -8,7 +8,7 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// ✨ Sistema de Variantes (O Upgrade!)
+//  Sistema de Variantes
 const inputVariants = cva(
   "flex w-full text-sm transition-all duration-200 outline-none placeholder:text-text-muted/60 disabled:cursor-not-allowed disabled:opacity-60 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-primary",
   {
@@ -67,9 +67,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               // Padding da esquerda (abre espaço para o ícone, se houver)
               icon ? "pl-10" : (variant === 'ghost' ? "pl-3" : "pl-4"),
               
-              // Padding da direita e estilos de erro
               error 
-                ? "pr-10 border-error border text-error focus:border-error focus:ring-error/20 placeholder:text-error/50" 
+                ? "pr-12 text-ellipsis border-error border text-error focus:border-error focus:ring-error/20 placeholder:text-error/50" 
                 : (variant === 'default' ? "pr-4" : "pr-3"),
 
               className
