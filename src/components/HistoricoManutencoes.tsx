@@ -270,8 +270,8 @@ export function HistoricoManutencoes({
                   <th className={`${TableStyles.th} pl-8 py-5`}>Data da OS</th>
                   <th className={TableStyles.th}>Informação Técnica</th>
                   <th className={TableStyles.th}>Status Geral</th>
-                  <th className={TableStyles.th}>Custos & Valores</th>
-                  <th className={`${TableStyles.th} text-center`}>Comprovativo</th>
+                  <th className={TableStyles.th}>Custo Financeiro</th>
+                  <th className={`${TableStyles.th} text-center`}>Ticket Manutenção</th>
                   <th className={`${TableStyles.th} text-right pr-8`}>Gestão</th>
                 </>
               }

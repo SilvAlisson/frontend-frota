@@ -272,7 +272,7 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
                   <th className={TableStyles.th}>Veículo</th>
                   <th className={TableStyles.th}>Motorista</th>
                   <th className={TableStyles.th}>Telemetria (KM)</th>
-                  <th className={`${TableStyles.th} text-center`}>Provas (Fotos)</th>
+                  <th className={`${TableStyles.th} text-center`}>Comprovantes</th>
                   {(canEdit || canDelete) && <th className={`${TableStyles.th} text-right pr-8`}>Gestão</th>}
                 </>
               }

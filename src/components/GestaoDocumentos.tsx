@@ -3,17 +3,18 @@ import { useDocumentosLegais, useDeleteDocumento } from '../hooks/useDocumentosL
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { FormCadastrarDocumento } from './forms/FormCadastrarDocumento';
+import { FormEditarDocumento } from './forms/FormEditarDocumento'; // ✨ NOVO IMPORT
 import { formatDateDisplay } from '../utils/dateUtils';
 import { Button } from './ui/Button';
 import { 
   FileText, Wrench, ShieldCheck, AlertTriangle, FileWarning, 
-  Trash2, ExternalLink, Plus, Loader2
+  Trash2, Edit, ExternalLink, Plus, Loader2
 } from 'lucide-react';
 
-// ✨ Novos Componentes Elite
 import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
 import { Callout } from './ui/Callout';
+import { Modal } from './ui/Modal'; // ✨ IMPORT DO MODAL
 
 // --- UTILS (Extraído para performance) ---
 const getStatusInfo = (dataValidade?: string | null, categoria?: string) => {
@@ -34,10 +35,10 @@ const getStatusInfo = (dataValidade?: string | null, categoria?: string) => {
   };
 
   const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0); // Normalizar para início do dia
+  hoje.setHours(0, 0, 0, 0); 
   
   const validade = new Date(dataValidade);
-  validade.setHours(23, 59, 59, 999); // Normalizar para fim do dia
+  validade.setHours(23, 59, 59, 999); 
   
   const diffTime = validade.getTime() - hoje.getTime();
   const diasParaVencer = Math.ceil(diffTime / (1000 * 3600 * 24));
@@ -86,17 +87,17 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
   const [modoAdicionar, setModoAdicionar] = useState(false);
   const [filtroCategoria, setFiltroCategoria] = useState('TODOS');
   
-  // ✨ Estados para a Exclusão Segura
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [docParaExcluir, setDocParaExcluir] = useState<{id: string, titulo: string} | null>(null);
+  
+  // ✨ NOVO: Estado para a Edição
+  const [editingId, setEditingId] = useState<string | null>(null);
 
-  // 1. Busca Documentos
   const { data: documentos, isLoading: isLoadingDocs } = useDocumentosLegais({
     categoria: filtroCategoria,
     veiculoId: veiculoId
   });
 
-  // 2. Busca Plano de Manutenção
   const { data: planos, isLoading: isLoadingPlanos } = useQuery({
     queryKey: ['planos', veiculoId],
     queryFn: async () => {
@@ -109,7 +110,6 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
 
   const { mutateAsync: deletarDoc } = useDeleteDocumento();
 
-  // --- NOVA LÓGICA DE EXCLUSÃO (ConfirmModal) ---
   const handleDeleteRequest = (id: string, titulo: string) => {
     setDocParaExcluir({ id, titulo });
   };
@@ -119,21 +119,17 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
     try {
       setDeletingId(docParaExcluir.id);
       await deletarDoc(docParaExcluir.id);
-    } catch (error) {
-      // Erro já tratado no hook/toast global
-    } finally {
+    } catch (error) {} finally {
       setDeletingId(null);
-      setDocParaExcluir(null); // Fecha o modal
+      setDocParaExcluir(null); 
     }
   };
 
-  // Loading State Unificado
   const isLoading = isLoadingDocs || (!!veiculoId && filtroCategoria === 'TODOS' && isLoadingPlanos);
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500">
+    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 relative">
       
-      {/* CABEÇALHO */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/60 pb-6">
         <div>
           <h2 className="text-2xl font-black text-text-main flex items-center gap-3 tracking-tight">
@@ -168,7 +164,6 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
         </div>
       ) : (
         <>
-          {/* FILTROS (TAGS) */}
           <div className="relative group">
             <div className="flex gap-2 overflow-x-auto pb-3 custom-scrollbar">
               {CATEGORIAS.map(cat => (
@@ -190,9 +185,7 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
             </div>
           </div>
 
-          {/* LISTA DE DOCUMENTOS */}
           {isLoading ? (
-            // SKELETON LOADING
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                {[1, 2, 3].map(i => (
                  <div key={i} className="h-36 bg-surface-hover/50 rounded-3xl border border-border/40 animate-pulse p-5">
@@ -209,7 +202,6 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max">
 
-              {/* CARD: PLANO DE MANUTENÇÃO (Destaque Premium) */}
               {planos && planos.length > 0 && filtroCategoria === 'TODOS' && (
                 <div className="bg-gradient-to-br from-info/5 to-info/10 p-6 rounded-3xl border border-info/20 shadow-sm relative group cursor-pointer hover:shadow-float hover:border-info/40 transition-all">
                   <div className="absolute top-4 right-4">
@@ -237,7 +229,6 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
                 </div>
               )}
 
-              {/* ✨ EMPTY STATE SUBSTITUINDO O CÓDIGO MANUAL */}
               {documentos?.length === 0 && (!planos || planos.length === 0 || filtroCategoria !== 'TODOS') && (
                 <div className="col-span-full pt-8">
                    <EmptyState 
@@ -255,7 +246,6 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
                 </div>
               )}
 
-              {/* CARDS DE DOCUMENTOS */}
               {documentos?.map(doc => {
                 const status = getStatusInfo(doc.dataValidade, doc.categoria);
                 const isAst = doc.categoria === 'AST';
@@ -273,25 +263,34 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
                         : 'bg-surface border-border/60 hover:border-primary/40'}
                     `}
                   >
-                    {/* Botão Deletar Invisível até Hover */}
+                    {/* ✨ Grupo de Botões de Ação (Editar e Apagar) */}
                     {!somenteLeitura && (
-                      <button
-                        onClick={() => handleDeleteRequest(doc.id, doc.titulo)}
-                        disabled={isDeleting}
-                        className="absolute top-4 right-4 p-2 rounded-xl text-text-muted hover:text-error hover:bg-error/10 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-all focus:opacity-100 shadow-sm bg-surface-hover/80 lg:bg-transparent"
-                        title="Remover Documento"
-                      >
-                        {isDeleting ? <Loader2 className="w-4 h-4 animate-spin text-error" /> : <Trash2 className="w-4 h-4" />}
-                      </button>
+                      <div className="absolute top-4 right-4 flex items-center gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-all bg-surface-hover/80 lg:bg-transparent rounded-xl p-1 shadow-sm lg:shadow-none">
+                        <button
+                          onClick={() => setEditingId(doc.id)}
+                          disabled={isDeleting}
+                          className="p-2 rounded-xl text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"
+                          title="Editar Documento"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteRequest(doc.id, doc.titulo)}
+                          disabled={isDeleting}
+                          className="p-2 rounded-xl text-text-muted hover:text-error hover:bg-error/10 transition-colors"
+                          title="Remover Documento"
+                        >
+                          {isDeleting ? <Loader2 className="w-4 h-4 animate-spin text-error" /> : <Trash2 className="w-4 h-4" />}
+                        </button>
+                      </div>
                     )}
 
                     <div className="flex items-start gap-4 flex-1">
-                      {/* Ícone do Tipo */}
                       <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shrink-0 border shadow-inner ${isAst ? 'bg-warning-500/10 text-warning-600 border-warning-500/20' : 'bg-surface-hover/80 text-text-secondary border-border/60'}`}>
                         {isAst ? <FileWarning className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
                       </div>
                       
-                      <div className="flex-1 min-w-0 pr-8">
+                      <div className="flex-1 min-w-0 pr-16 lg:pr-8 group-hover:pr-16 transition-all">
                         <div className="flex flex-wrap gap-2 mb-2">
                           <span className={`inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] ${isAst ? 'text-warning-700 bg-warning-500/10 border border-warning-500/20' : 'text-text-secondary bg-surface-hover border border-border/60'}`}>
                             {doc.categoria.replace(/_/g, ' ')}
@@ -310,7 +309,6 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
                       </div>
                     </div>
 
-                    {/* Rodapé do Card */}
                     <div className="pt-4 mt-4 border-t border-border/60 flex items-center justify-between">
                       <div className={`text-[10px] uppercase tracking-widest font-black px-2.5 py-1.5 rounded-lg border flex items-center gap-1.5 shadow-sm ${status.color}`}>
                         {StatusIcon && <StatusIcon className="w-3.5 h-3.5" />}
@@ -334,7 +332,22 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
         </>
       )}
 
-      {/* ✨ CONFIRM MODAL COM CALLOUT INTEGRADO */}
+      {/* ✨ NOVO: Modal de Edição */}
+      <Modal 
+        isOpen={!!editingId} 
+        onClose={() => setEditingId(null)}
+        title="Atualizar Informações do Documento"
+        className="max-w-2xl"
+      >
+        {editingId && (
+          <FormEditarDocumento 
+            documentoId={editingId} 
+            onSuccess={() => setEditingId(null)} 
+            onCancel={() => setEditingId(null)} 
+          />
+        )}
+      </Modal>
+
       <ConfirmModal 
         isOpen={!!docParaExcluir}
         onCancel={() => setDocParaExcluir(null)}

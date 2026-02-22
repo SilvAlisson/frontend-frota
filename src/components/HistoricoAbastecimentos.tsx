@@ -319,7 +319,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                               rel="noopener noreferrer" 
                               className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-sky-600 hover:text-sky-700 bg-sky-50 px-2 py-1 rounded-md transition-colors cursor-pointer"
                           >
-                              <Receipt className="w-3.5 h-3.5" /> Anexo
+                              <Receipt className="w-3.5 h-3.5" /> Nota Fiscal
                           </a>
                       )}
                     </div>
