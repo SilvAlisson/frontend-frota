@@ -32,24 +32,20 @@ interface HistoricoManutencoesProps {
   filtroInicial?: { veiculoId?: string; dataInicio?: string; };
 }
 
-const ITENS_POR_PAGINA = 20; // Vacina anti-travamento Mobile
+const ITENS_POR_PAGINA = 20;
 
 export function HistoricoManutencoes({
   userRole,
   filtroInicial
 }: HistoricoManutencoesProps) {
   
-  // 📡 BUSCA INDEPENDENTE COM CACHE
   const { data: veiculos = [] } = useVeiculos();
 
-  // --- ESTADOS DE DADOS ---
   const [historico, setHistorico] = useState<OrdemServico[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // --- ESTADOS DE RENDERIZAÇÃO PROGRESSIVA ---
   const [visibleCount, setVisibleCount] = useState(ITENS_POR_PAGINA);
   
-  // --- ESTADOS DE INTERAÇÃO ---
   const [editingOS, setEditingOS] = useState<OrdemServico | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -62,7 +58,6 @@ export function HistoricoManutencoes({
   const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
   const canDelete = userRole === 'ADMIN';
 
-  // --- FETCHING OTIMIZADO ---
   const fetchHistorico = useCallback(async () => {
     setLoading(true);
     try {
@@ -73,7 +68,7 @@ export function HistoricoManutencoes({
 
       const response = await api.get<OrdemServico[]>('/manutencoes/recentes', { params });
       setHistorico(response.data);
-      setVisibleCount(ITENS_POR_PAGINA); // Reset da paginação visual
+      setVisibleCount(ITENS_POR_PAGINA);
     } catch (err) {
       console.error(err);
       toast.error('Erro ao carregar o histórico financeiro da oficina.');
@@ -86,12 +81,10 @@ export function HistoricoManutencoes({
     fetchHistorico(); 
   }, [fetchHistorico]);
 
-  // --- CÁLCULOS MEMOIZADOS (SUMÁRIO GLOBAL INTACTO) ---
   const totalGasto = useMemo(() => {
     return historico.reduce((acc, os) => acc + (Number(os.custoTotal) || 0), 0);
   }, [historico]);
 
-  // Aplica a limitação visual de itens renderizados no DOM
   const historicoVisivel = useMemo(() => {
     return historico.slice(0, visibleCount);
   }, [historico, visibleCount]);
@@ -100,7 +93,6 @@ export function HistoricoManutencoes({
     setVisibleCount(prev => prev + ITENS_POR_PAGINA);
   };
 
-  // --- ACTIONS ---
   const handleDelete = async () => {
     if (!deletingId) return;
     try {
@@ -114,38 +106,31 @@ export function HistoricoManutencoes({
     }
   };
 
-  const handleExportar = () => {
+  const handleExportar = async () => {
     if (historico.length === 0) {
       toast.warning("Sem dados disponíveis para exportar.");
       return;
     }
-    const exportPromise = new Promise((resolve, reject) => {
-        try {
-            const dados = historico.map(os => ({
-              'Data': new Date(os.data).toLocaleDateString('pt-BR'),
-              'Placa': os.veiculo?.placa || 'N/A',
-              'Tipo': os.tipo,
-              'Status': os.status || 'CONCLUÍDA',
-              'Fornecedor': os.fornecedor?.nome || 'N/A',
-              'Itens': (os.itens || []).map(i => `${i.produto.nome} (${i.quantidade})`).join(', '),
-              'Valor Total': Number(os.custoTotal).toFixed(2).replace('.', ','),
-              'Link Comprovante': os.fotoComprovanteUrl || 'Sem comprovante'
-            }));
-            exportarParaExcel(dados, "Historico_Manutencoes.xlsx");
-            resolve(true);
-        } catch(err) {
-            reject(err);
-        }
-    });
 
-    toast.promise(exportPromise, {
-      loading: 'A gerar folha de cálculo...',
-      success: 'Transferência concluída.',
-      error: 'Erro a exportar ficheiro.'
-    });
+    try {
+      const dados = historico.map(os => ({
+        'Data': new Date(os.data).toLocaleDateString('pt-BR'),
+        'Placa': os.veiculo?.placa || 'N/A',
+        'Tipo': os.tipo,
+        'Status': os.status || 'CONCLUÍDA',
+        'Fornecedor': os.fornecedor?.nome || 'N/A',
+        'Itens': (os.itens || []).map(i => `${i.produto.nome} (${i.quantidade})`).join(', '),
+        'Valor Total': Number(os.custoTotal), // Deixado como número para somar no Excel
+        'Link Comprovante': os.fotoComprovanteUrl || 'Sem comprovante'
+      }));
+      
+      exportarParaExcel(dados, "Historico_Manutencoes.xlsx");
+      toast.success('Transferência concluída.');
+    } catch(err) {
+      toast.error('Erro a exportar ficheiro.');
+    }
   };
 
-  // --- HELPERS VISUAIS (DESIGN SYSTEM) ---
   const getBadgeTipo = (tipo: string) => {
     const map: Record<string, "warning" | "info" | "success" | "neutral"> = {
       'CORRETIVA': 'warning',
@@ -252,160 +237,159 @@ export function HistoricoManutencoes({
         </Card>
       </div>
 
-      {/* 3. TABELA (CARD) */}
+      {/* 3. TABELA (CARD) COM LARGURAS TRAVADAS ✨ */}
       <Card padding="none" className="overflow-hidden border-border/60 shadow-sm rounded-3xl bg-surface">
-        {loading ? (
-          <div className="p-6 sm:p-8 space-y-4">
-            {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-surface-hover/50 rounded-xl animate-pulse border border-border/30" />)}
-          </div>
-        ) : (
-          <div className="flex flex-col h-full">
-            <ListaResponsiva
-              itens={historicoVisivel}
-              emptyMessage="Nenhum registo de manutenção encontrado neste período."
+        <div className="overflow-x-auto"> {/* Mantém scroll horizontal em tablets */}
+          {loading ? (
+            <div className="p-6 sm:p-8 space-y-4">
+              {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-surface-hover/50 rounded-xl animate-pulse border border-border/30" />)}
+            </div>
+          ) : (
+            <div className="flex flex-col h-full min-w-[900px]"> {/* Trava largura mínima */}
+              <ListaResponsiva
+                itens={historicoVisivel}
+                emptyMessage="Nenhum registo de manutenção encontrado neste período."
 
-              // --- DESKTOP ---
-              desktopHeader={
-                <>
-                  <th className={`${TableStyles.th} pl-8 py-5`}>Data da OS</th>
-                  <th className={TableStyles.th}>Informação Técnica</th>
-                  <th className={TableStyles.th}>Status Geral</th>
-                  <th className={TableStyles.th}>Custos & Valores</th>
-                  <th className={`${TableStyles.th} text-center`}>Comprovativo</th>
-                  <th className={`${TableStyles.th} text-right pr-8`}>Gestão</th>
-                </>
-              }
-              renderDesktop={(os) => (
-                <>
-                  <td className={`${TableStyles.td} pl-8`}>
-                    <div className="flex flex-col gap-2 items-start">
-                      <span className="font-bold text-text-main flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-text-muted/60" />
-                        {new Date(os.data).toLocaleDateString('pt-BR')}
-                      </span>
-                      {getBadgeTipo(os.tipo)}
-                    </div>
-                  </td>
-                  <td className={TableStyles.td}>
-                    <div className="flex flex-col gap-1 max-w-[280px]">
-                      <div className="flex items-center gap-2">
-                         <span className="font-mono font-black text-primary text-base tracking-tight">{os.veiculo?.placa || 'N/D'}</span>
-                         <span className="text-[10px] bg-surface-hover px-1.5 py-0.5 rounded border border-border font-bold uppercase tracking-widest text-text-secondary">{os.veiculo?.modelo}</span>
-                      </div>
-                      <span className="text-xs text-text-secondary font-medium mt-1 truncate" title={os.fornecedor?.nome}>{os.fornecedor?.nome || 'Oficina Não Registada'}</span>
-                      <p className="text-[10px] text-text-muted uppercase tracking-wider font-bold mt-1.5 leading-snug line-clamp-2" title={(os.itens || []).map(i => i.produto.nome).join(', ')}>
-                        {(os.itens || []).map(i => i.produto.nome).join(', ')}
-                      </p>
-                    </div>
-                  </td>
-                  <td className={TableStyles.td}>
-                    {getBadgeStatus(os.status)}
-                  </td>
-                  <td className={TableStyles.td}>
-                    <span className="font-mono font-black text-text-main text-base">
-                      {Number(os.custoTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                    </span>
-                  </td>
-                  
-                  <td className={`${TableStyles.td} text-center`}>
-                    {os.fotoComprovanteUrl ? (
-                      <button
-                        onClick={() => window.open(os.fotoComprovanteUrl || '', '_blank')}
-                        className="inline-flex items-center justify-center p-2 rounded-xl bg-sky-50 text-sky-600 hover:bg-sky-100 hover:text-sky-700 transition-all shadow-sm border border-sky-100 group"
-                        title="Visualizar Nota de Serviço"
-                      >
-                        <FileText className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                      </button>
-                    ) : (
-                      <span className="inline-flex items-center justify-center p-2 rounded-xl bg-surface-hover text-text-muted/40 border border-border/50" title="Sem comprovativo físico">
-                        <FileX className="w-5 h-5" />
-                      </span>
-                    )}
-                  </td>
+                // ✨ DESKTOP HEADER COM LARGURAS TRAVADAS
+                desktopHeader={
+                  <>
+                    <th className={`${TableStyles.th} w-44 min-w-[11rem] pl-8 py-5`}>Data da OS</th>
+                    <th className={`${TableStyles.th} w-auto min-w-[16rem]`}>Informação Técnica</th>
+                    <th className={`${TableStyles.th} w-32 min-w-[8rem]`}>Status Geral</th>
+                    <th className={`${TableStyles.th} w-40 min-w-[10rem]`}>Custos & Valores</th>
+                    <th className={`${TableStyles.th} w-32 min-w-[8rem] text-center`}>Comprovativo</th>
+                    <th className={`${TableStyles.th} w-24 min-w-[6rem] text-right pr-8`}>Gestão</th>
+                  </>
+                }
 
-                  <td className={`${TableStyles.td} text-right pr-8`}>
-                    <DropdownAcoes 
-                      onEditar={canEdit ? () => setEditingOS(os) : undefined}
-                      onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
-                    />
-                  </td>
-                </>
-              )}
-
-              // --- MOBILE ---
-              renderMobile={(os) => (
-                <div className="p-5 flex flex-col gap-4 border-b border-border/60 hover:bg-surface-hover/30 transition-colors">
-                  <div className="flex justify-between items-start">
-                    <div className="flex gap-4">
-                      {/* Data Box Premium */}
-                      <div className="bg-surface shadow-sm text-text-main p-2 rounded-xl border border-border/80 flex flex-col items-center justify-center w-14 h-14 shrink-0">
-                        <span className="text-lg font-black leading-none">{new Date(os.data).getDate()}</span>
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-text-muted mt-0.5">
-                          {new Date(os.data).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
+                // ✨ DESKTOP ROW COM AS MESMAS LARGURAS TRAVADAS
+                renderDesktop={(os) => (
+                  <tr className="hover:bg-surface-hover/50 transition-colors group border-b border-border/40 last:border-0">
+                    <td className={`${TableStyles.td} w-44 min-w-[11rem] pl-8`}>
+                      <div className="flex flex-col gap-2 items-start">
+                        <span className="font-bold text-text-main flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-text-muted/60" />
+                          {new Date(os.data).toLocaleDateString('pt-BR')}
                         </span>
+                        {getBadgeTipo(os.tipo)}
                       </div>
-                      
-                      {/* Infos Rápidas */}
-                      <div className="flex flex-col justify-center">
-                        <span className="font-mono font-black text-primary text-lg tracking-tight leading-none block mb-1">{os.veiculo?.placa || 'Sem Placa'}</span>
-                        <span className="text-xs text-text-secondary font-medium">{os.fornecedor?.nome || 'Oficina não registada'}</span>
+                    </td>
+                    <td className={`${TableStyles.td} w-auto min-w-[16rem]`}>
+                      <div className="flex flex-col gap-1 max-w-[280px]">
+                        <div className="flex items-center gap-2">
+                           <span className="font-mono font-black text-primary text-base tracking-tight">{os.veiculo?.placa || 'N/D'}</span>
+                           <span className="text-[10px] bg-surface-hover px-1.5 py-0.5 rounded border border-border font-bold uppercase tracking-widest text-text-secondary truncate">{os.veiculo?.modelo}</span>
+                        </div>
+                        <span className="text-xs text-text-secondary font-medium mt-1 truncate" title={os.fornecedor?.nome}>{os.fornecedor?.nome || 'Oficina Não Registada'}</span>
+                        <p className="text-[10px] text-text-muted uppercase tracking-wider font-bold mt-1.5 leading-snug line-clamp-2" title={(os.itens || []).map(i => i.produto.nome).join(', ')}>
+                          {(os.itens || []).map(i => i.produto.nome).join(', ')}
+                        </p>
+                      </div>
+                    </td>
+                    <td className={`${TableStyles.td} w-32 min-w-[8rem]`}>
+                      {getBadgeStatus(os.status)}
+                    </td>
+                    <td className={`${TableStyles.td} w-40 min-w-[10rem]`}>
+                      <span className="font-mono font-black text-text-main text-base">
+                        {Number(os.custoTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </span>
+                    </td>
+                    
+                    <td className={`${TableStyles.td} w-32 min-w-[8rem] text-center`}>
+                      {os.fotoComprovanteUrl ? (
+                        <button
+                          onClick={() => window.open(os.fotoComprovanteUrl || '', '_blank')}
+                          className="inline-flex items-center justify-center p-2 rounded-xl bg-sky-50 text-sky-600 hover:bg-sky-100 hover:text-sky-700 transition-all shadow-sm border border-sky-100 group"
+                          title="Visualizar Nota de Serviço"
+                        >
+                          <FileText className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                        </button>
+                      ) : (
+                        <span className="inline-flex items-center justify-center p-2 rounded-xl bg-surface-hover text-text-muted/40 border border-border/50" title="Sem comprovativo físico">
+                          <FileX className="w-5 h-5" />
+                        </span>
+                      )}
+                    </td>
+
+                    <td className={`${TableStyles.td} w-24 min-w-[6rem] text-right pr-8`}>
+                      <DropdownAcoes 
+                        onEditar={canEdit ? () => setEditingOS(os) : undefined}
+                        onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
+                      />
+                    </td>
+                  </tr>
+                )}
+
+                // --- MOBILE ---
+                renderMobile={(os) => (
+                  <div className="p-5 flex flex-col gap-4 border-b border-border/60 hover:bg-surface-hover/30 transition-colors">
+                    <div className="flex justify-between items-start">
+                      <div className="flex gap-4">
+                        <div className="bg-surface shadow-sm text-text-main p-2 rounded-xl border border-border/80 flex flex-col items-center justify-center w-14 h-14 shrink-0">
+                          <span className="text-lg font-black leading-none">{new Date(os.data).getDate()}</span>
+                          <span className="text-[9px] font-bold uppercase tracking-widest text-text-muted mt-0.5">
+                            {new Date(os.data).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
+                          </span>
+                        </div>
+                        
+                        <div className="flex flex-col justify-center">
+                          <span className="font-mono font-black text-primary text-lg tracking-tight leading-none block mb-1">{os.veiculo?.placa || 'Sem Placa'}</span>
+                          <span className="text-xs text-text-secondary font-medium">{os.fornecedor?.nome || 'Oficina não registada'}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-2">
+                         {getBadgeStatus(os.status)}
+                         <DropdownAcoes 
+                           onEditar={canEdit ? () => setEditingOS(os) : undefined}
+                           onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
+                         />
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-end gap-2">
-                       {getBadgeStatus(os.status)}
-                       <DropdownAcoes 
-                         onEditar={canEdit ? () => setEditingOS(os) : undefined}
-                         onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
-                       />
+                    <div className="flex justify-between items-center bg-surface-hover/50 p-3 rounded-xl border border-border/40">
+                      <div className="flex flex-col gap-1.5 items-start">
+                         <span className="text-[9px] text-text-muted uppercase font-black tracking-widest">Serviço</span>
+                         {getBadgeTipo(os.tipo)}
+                      </div>
+                      <div className="flex flex-col items-end">
+                         <span className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-1">Custo da OS</span>
+                         <span className="font-mono font-black text-text-main text-lg tracking-tighter">
+                           {Number(os.custoTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                         </span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Informação Operacional e Custos */}
-                  <div className="flex justify-between items-center bg-surface-hover/50 p-3 rounded-xl border border-border/40">
-                    <div className="flex flex-col gap-1.5 items-start">
-                       <span className="text-[9px] text-text-muted uppercase font-black tracking-widest">Serviço</span>
-                       {getBadgeTipo(os.tipo)}
-                    </div>
-                    <div className="flex flex-col items-end">
-                       <span className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-1">Custo da OS</span>
-                       <span className="font-mono font-black text-text-main text-lg tracking-tighter">
-                         {Number(os.custoTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                       </span>
-                    </div>
+                    {os.fotoComprovanteUrl && (
+                      <Button 
+                        variant="secondary" 
+                        className="w-full text-xs font-bold h-11 text-sky-700 bg-sky-50 border-sky-100 hover:bg-sky-100 shadow-sm transition-all" 
+                        icon={<FileText className="w-4 h-4"/>}
+                        onClick={() => window.open(os.fotoComprovanteUrl || '', '_blank')}
+                      >
+                        Aceder a Comprovativo Físico
+                      </Button>
+                    )}
                   </div>
+                )}
+              />
 
-                  {/* Comprovativo */}
-                  {os.fotoComprovanteUrl && (
-                    <Button 
-                      variant="secondary" 
-                      className="w-full text-xs font-bold h-11 text-sky-700 bg-sky-50 border-sky-100 hover:bg-sky-100 shadow-sm transition-all" 
-                      icon={<FileText className="w-4 h-4"/>}
-                      onClick={() => window.open(os.fotoComprovanteUrl || '', '_blank')}
-                    >
-                      Aceder a Comprovativo Físico
-                    </Button>
-                  )}
-                </div>
+              {historicoVisivel.length < historico.length && (
+                 <div className="p-6 border-t border-border/60 bg-surface-hover/30 flex justify-center">
+                   <Button 
+                     variant="secondary" 
+                     onClick={handleCarregarMais}
+                     className="w-full sm:w-auto bg-surface hover:shadow-md transition-all group"
+                   >
+                      Ver mais {Math.min(ITENS_POR_PAGINA, historico.length - historicoVisivel.length)} Manutenções
+                      <ChevronDown className="w-4 h-4 ml-2 text-text-muted group-hover:text-primary transition-colors" />
+                   </Button>
+                 </div>
               )}
-            />
 
-            {/* BOTÃO CARREGAR MAIS (PAGINAÇÃO PROGRESSIVA MOBILE/DESKTOP) */}
-            {historicoVisivel.length < historico.length && (
-               <div className="p-6 border-t border-border/60 bg-surface-hover/30 flex justify-center">
-                  <Button 
-                    variant="secondary" 
-                    onClick={handleCarregarMais}
-                    className="w-full sm:w-auto bg-surface hover:shadow-md transition-all group"
-                  >
-                     Ver mais {Math.min(ITENS_POR_PAGINA, historico.length - historicoVisivel.length)} Manutenções
-                     <ChevronDown className="w-4 h-4 ml-2 text-text-muted group-hover:text-primary transition-colors" />
-                  </Button>
-               </div>
-            )}
-
-          </div>
-        )}
+            </div>
+          )}
+        </div>
       </Card>
 
       {/* --- MODAIS --- */}
