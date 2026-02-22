@@ -30,20 +30,25 @@ interface HistoricoAbastecimentosProps {
   };
 }
 
-const ITENS_POR_PAGINA = 20;
+const ITENS_POR_PAGINA = 20; // Vacina anti-travamento Mobile
 
 export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAbastecimentosProps) {
   
+  // 📡 BUSCA INDEPENDENTE COM CACHE
   const { data: veiculos = [] } = useVeiculos();
 
+  // --- ESTADOS DE DADOS ---
   const [historico, setHistorico] = useState<Abastecimento[]>([]);
   const [loading, setLoading] = useState(true);
   
+  // --- ESTADOS DE RENDERIZAÇÃO PROGRESSIVA (ANTI-LAG) ---
   const [visibleCount, setVisibleCount] = useState(ITENS_POR_PAGINA);
   
+  // --- ESTADOS DE INTERAÇÃO ---
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // --- ESTADOS DE FILTROS ---
   const [dataInicioFiltro, setDataInicioFiltro] = useState(filtroInicial?.dataInicio || '');
   const [dataFimFiltro, setDataFimFiltro] = useState('');
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState(filtroInicial?.veiculoId || '');
@@ -54,6 +59,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     if (filtroInicial?.veiculoId) setVeiculoIdFiltro(filtroInicial.veiculoId);
   }, [filtroInicial]);
 
+  // --- FETCHING OTIMIZADO ---
   const fetchHistorico = useCallback(async () => {
     setLoading(true);
     try {
@@ -64,7 +70,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
 
       const response = await api.get('/abastecimentos/recentes', { params });
       setHistorico(response.data);
-      setVisibleCount(ITENS_POR_PAGINA);
+      setVisibleCount(ITENS_POR_PAGINA); // Resetar paginação visual ao filtrar
     } catch (err) {
       console.error("Erro ao buscar histórico:", err);
       toast.error('Falha ao carregar abastecimentos.');
@@ -77,6 +83,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     fetchHistorico();
   }, [fetchHistorico]);
 
+  // --- CÁLCULOS MEMOIZADOS (SUMÁRIO GLOBAL INTACTO) ---
   const totalGasto = useMemo(() => {
     return historico.reduce((acc, ab) => acc + (Number(ab.custoTotal) || 0), 0);
   }, [historico]);
@@ -93,6 +100,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     }, 0);
   }, [historico]);
 
+  // Aplica a limitação de itens renderizados
   const historicoVisivel = useMemo(() => {
     return historico.slice(0, visibleCount);
   }, [historico, visibleCount]);
@@ -101,6 +109,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     setVisibleCount(prev => prev + ITENS_POR_PAGINA);
   };
 
+  // --- ACTIONS ---
   const handleDelete = async () => {
     if (!deletingId) return;
     try {
@@ -114,40 +123,48 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     }
   };
 
-  const handleExportar = async () => {
+  const handleExportar = () => {
     if (historico.length === 0) {
       toast.warning("Nenhum dado para exportar.");
       return;
     }
 
-    try {
-      const dadosFormatados = historico.flatMap(ab => {
-        const itensSafe = ab.itens || [];
-        const itensFormatados = itensSafe.map(item =>
-          `${item.produto.nome} (${item.quantidade} ${item.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'Un'})`
-        ).join(', ');
+    const exportPromise = new Promise((resolve, reject) => {
+      try {
+        const dadosFormatados = historico.flatMap(ab => {
+          const itensSafe = ab.itens || [];
+          const itensFormatados = itensSafe.map(item =>
+            `${item.produto.nome} (${item.quantidade} ${item.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'Un'})`
+          ).join(', ');
 
-        const custoNum = Number(ab.custoTotal) || 0;
+          const custoNum = Number(ab.custoTotal) || 0;
 
-        return {
-          'Data': new Date(ab.dataHora).toLocaleDateString('pt-BR'),
-          'Placa': ab.veiculo?.placa || 'N/A',
-          'Modelo': ab.veiculo?.modelo || 'N/A',
-          'KM': ab.kmOdometro,
-          'Combustível/Itens': itensFormatados,
-          'Fornecedor': ab.fornecedor?.nome || 'N/A',
-          'Operador': ab.operador?.nome || 'N/A',
-          'Total (R$)': custoNum, // Deixamos como Number para o Excel poder somar
-        };
-      });
-      
-      exportarParaExcel(dadosFormatados, "Historico_Abastecimentos.xlsx");
-      toast.success("Planilha transferida com sucesso!");
-    } catch (err) {
-      toast.error("Erro na exportação.");
-    }
+          return {
+            'Data': new Date(ab.dataHora).toLocaleDateString('pt-BR'),
+            'Placa': ab.veiculo?.placa || 'N/A',
+            'Modelo': ab.veiculo?.modelo || 'N/A',
+            'KM': ab.kmOdometro,
+            'Combustível/Itens': itensFormatados,
+            'Fornecedor': ab.fornecedor?.nome || 'N/A',
+            'Operador': ab.operador?.nome || 'N/A',
+            'Total (R$)': custoNum.toFixed(2).replace('.', ','),
+          };
+        });
+        exportarParaExcel(dadosFormatados, "Historico_Abastecimentos.xlsx");
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
+
+    toast.promise(exportPromise, {
+      loading: 'A preparar exportação...',
+      success: 'Planilha transferida com sucesso!',
+      error: 'Erro na exportação.'
+    });
   };
 
+  // --- FORMATADORES & HELPERS ---
   const formatCurrency = (value: number | string) => {
     const num = Number(value) || 0;
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -247,144 +264,144 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
         </Card>
       </div>
 
-      {/* 3. TABELA (CARD) COM LARGURAS TRAVADAS ✨ */}
+      {/* 3. TABELA (CARD) */}
       <Card padding="none" className="overflow-hidden border-border/60 shadow-sm rounded-3xl bg-surface">
-        <div className="overflow-x-auto"> {/* Garante scroll sem quebrar em monitores pequenos */}
-          {loading ? (
-            <div className="p-6 sm:p-8 space-y-4">
-              {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-16 bg-surface-hover/50 rounded-xl animate-pulse border border-border/30" />)}
-            </div>
-          ) : (
-            <div className="flex flex-col h-full min-w-[900px]"> {/* Trava a largura mínima do contentor da tabela */}
-              <ListaResponsiva
-                itens={historicoVisivel}
-                emptyMessage="Nenhum abastecimento encontrado neste período."
+        {loading ? (
+          <div className="p-6 sm:p-8 space-y-4">
+            {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-16 bg-surface-hover/50 rounded-xl animate-pulse border border-border/30" />)}
+          </div>
+        ) : (
+          <div className="flex flex-col h-full">
+            <ListaResponsiva
+              itens={historicoVisivel}
+              emptyMessage="Nenhum abastecimento encontrado neste período."
 
-                // ✨ DESKTOP HEADER COM LARGURAS TRAVADAS
-                desktopHeader={
-                  <>
-                    <th className={`${TableStyles.th} w-44 min-w-[11rem] pl-8 py-5`}>Data e Hora</th>
-                    <th className={`${TableStyles.th} w-auto min-w-[16rem]`}>Identificação</th>
-                    <th className={`${TableStyles.th} w-48 min-w-[12rem]`}>Produto Abastecido</th>
-                    <th className={`${TableStyles.th} w-40 min-w-[10rem] text-right`}>Custo Financeiro</th>
-                    <th className={`${TableStyles.th} w-24 min-w-[6rem] text-right pr-8`}>Gestão</th>
-                  </>
-                }
-
-                // ✨ DESKTOP ROW COM AS MESMAS LARGURAS TRAVADAS
-                renderDesktop={(ab) => (
-                  <tr className="hover:bg-surface-hover/50 transition-colors group border-b border-border/40 last:border-0">
-                    <td className={`${TableStyles.td} w-44 min-w-[11rem] pl-8`}>
-                      <div className="flex flex-col gap-1">
-                        <span className="font-bold text-text-main flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-text-muted/60" />
-                            {new Date(ab.dataHora).toLocaleDateString('pt-BR')}
-                        </span>
-                        <span className="text-xs text-text-secondary font-mono ml-6 tracking-widest opacity-80">
-                            {new Date(ab.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      </div>
-                    </td>
-                    <td className={`${TableStyles.td} w-auto min-w-[16rem]`}>
-                      <div className="flex flex-col gap-1 truncate">
-                        <span className="font-mono font-black text-primary text-base tracking-tight truncate">{ab.veiculo?.placa || 'N/D'}</span>
-                        <span className="text-[11px] text-text-secondary font-bold uppercase tracking-wider truncate" title={ab.operador?.nome}>{ab.operador?.nome || 'Sistema'}</span>
-                        <div className="flex items-center gap-1.5 mt-1 text-[10px] text-text-main font-bold bg-surface-hover px-2 py-1 rounded-md w-fit border border-border/60">
-                            <Gauge className="w-3.5 h-3.5 opacity-60" /> {ab.kmOdometro.toLocaleString('pt-BR')} KM
-                        </div>
-                      </div>
-                    </td>
-                    <td className={`${TableStyles.td} w-48 min-w-[12rem]`}>
-                      <div className="flex flex-col gap-2.5 items-start">
-                        {getCombustivelBadge(ab)}
-                        
-                        {ab.fotoNotaFiscalUrl && (
-                            <a 
-                                href={ab.fotoNotaFiscalUrl} 
-                                target="_blank" 
-                                rel="noopener noreferrer" 
-                                className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-sky-600 hover:text-sky-700 bg-sky-50 px-2 py-1 rounded-md transition-colors cursor-pointer"
-                            >
-                                <Receipt className="w-3.5 h-3.5" /> Anexo
-                            </a>
-                        )}
-                      </div>
-                    </td>
-                    <td className={`${TableStyles.td} w-40 min-w-[10rem] text-right`}>
-                      <div className="flex flex-col items-end gap-1">
-                          <span className="font-mono font-black text-text-main text-base">{formatCurrency(ab.custoTotal)}</span>
-                          <span className="text-[11px] text-text-secondary font-bold flex items-center gap-1.5 bg-surface-hover w-fit px-1.5 py-0.5 rounded border border-border/50">
-                              <Droplets className="w-3 h-3 text-sky-500" />
-                              {(ab.itens || []).map(i => `${i.quantidade}${i.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'un'}`).join(' + ')}
-                          </span>
-                      </div>
-                    </td>
-                    <td className={`${TableStyles.td} w-24 min-w-[6rem] text-right pr-8`}>
-                      <DropdownAcoes 
-                        onEditar={canEdit ? () => setEditingId(ab.id) : undefined}
-                        onExcluir={userRole === 'ADMIN' ? () => setDeletingId(ab.id) : undefined}
-                      />
-                    </td>
-                  </tr>
-                )}
-
-                // --- MOBILE ---
-                renderMobile={(ab) => (
-                  <div className="p-5 flex flex-col gap-4 border-b border-border/60 last:border-0 hover:bg-surface-hover/30 transition-colors">
-                    <div className="flex justify-between items-start">
-                      <div className="flex gap-4">
-                        <div className="bg-surface shadow-sm text-text-main p-2 rounded-xl border border-border/80 flex flex-col items-center justify-center w-14 h-14 shrink-0">
-                          <span className="text-lg font-black leading-none">{new Date(ab.dataHora).getDate()}</span>
-                          <span className="text-[9px] uppercase font-bold tracking-widest text-text-muted mt-0.5">{new Date(ab.dataHora).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</span>
-                        </div>
-                        
-                        <div className="flex flex-col justify-center">
-                          <span className="font-mono font-black text-primary text-lg tracking-tight leading-none">{ab.veiculo?.placa || 'Sem Placa'}</span>
-                          <span className="text-xs text-text-secondary font-medium mt-1">{ab.fornecedor?.nome || 'Fornecedor Local'}</span>
-                        </div>
-                      </div>
-
-                      <DropdownAcoes 
-                        onEditar={canEdit ? () => setEditingId(ab.id) : undefined}
-                        onExcluir={userRole === 'ADMIN' ? () => setDeletingId(ab.id) : undefined}
-                      />
+              // --- DESKTOP ---
+              desktopHeader={
+                <>
+                  <th className={`${TableStyles.th} pl-8 py-5`}>Data e Hora</th>
+                  <th className={TableStyles.th}>Identificação</th>
+                  <th className={TableStyles.th}>Produto Abastecido</th>
+                  <th className={TableStyles.th}>Custo Financeiro</th>
+                  <th className={`${TableStyles.th} text-right pr-8`}>Gestão</th>
+                </>
+              }
+              renderDesktop={(ab) => (
+                <>
+                  <td className={`${TableStyles.td} pl-8`}>
+                    <div className="flex flex-col gap-1">
+                      <span className="font-bold text-text-main flex items-center gap-2">
+                          <Calendar className="w-4 h-4 text-text-muted/60" />
+                          {new Date(ab.dataHora).toLocaleDateString('pt-BR')}
+                      </span>
+                      <span className="text-xs text-text-secondary font-mono ml-6 tracking-widest opacity-80">
+                          {new Date(ab.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
-
-                    <div className="grid grid-cols-2 gap-3 bg-surface-hover/50 p-3 rounded-xl border border-border/40">
-                        <div className="flex flex-col">
-                            <span className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-0.5">Custo</span>
-                            <span className="font-mono font-black text-text-main">{formatCurrency(ab.custoTotal)}</span>
-                        </div>
-                        <div className="flex flex-col items-end">
-                            <span className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-1.5">Produto</span>
-                            {getCombustivelBadge(ab)}
-                        </div>
+                  </td>
+                  <td className={TableStyles.td}>
+                    <div className="flex flex-col gap-1">
+                      <span className="font-mono font-black text-primary text-base tracking-tight">{ab.veiculo?.placa || 'N/D'}</span>
+                      <span className="text-[11px] text-text-secondary font-bold uppercase tracking-wider">{ab.operador?.nome || 'Sistema'}</span>
+                      <div className="flex items-center gap-1.5 mt-1 text-[10px] text-text-main font-bold bg-surface-hover px-2 py-1 rounded-md w-fit border border-border/60">
+                          <Gauge className="w-3.5 h-3.5 opacity-60" /> {ab.kmOdometro.toLocaleString('pt-BR')} KM
+                      </div>
                     </div>
-                    
-                    {ab.fotoNotaFiscalUrl && (
-                        <a href={ab.fotoNotaFiscalUrl} target="_blank" className="bg-sky-50 text-sky-700 border border-sky-100 text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 hover:bg-sky-100 transition-colors shadow-sm cursor-pointer">
-                            <Receipt className="w-4 h-4" /> Visualizar Nota Fiscal
-                        </a>
-                    )}
-                  </div>
-                )}
-              />
-
-              {historicoVisivel.length < historico.length && (
-                 <div className="p-6 border-t border-border/60 bg-surface-hover/30 flex justify-center">
-                   <Button 
-                     variant="secondary" 
-                     onClick={handleCarregarMais}
-                     className="w-full sm:w-auto bg-surface hover:shadow-md transition-all group"
-                   >
-                      Carregar mais {Math.min(ITENS_POR_PAGINA, historico.length - historicoVisivel.length)} registros
-                      <ChevronDown className="w-4 h-4 ml-2 text-text-muted group-hover:text-primary transition-colors" />
-                   </Button>
-                 </div>
+                  </td>
+                  <td className={TableStyles.td}>
+                    <div className="flex flex-col gap-2.5 items-start">
+                      {getCombustivelBadge(ab)}
+                      
+                      {ab.fotoNotaFiscalUrl && (
+                          <a 
+                              href={ab.fotoNotaFiscalUrl} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-sky-600 hover:text-sky-700 bg-sky-50 px-2 py-1 rounded-md transition-colors cursor-pointer"
+                          >
+                              <Receipt className="w-3.5 h-3.5" /> Anexo
+                          </a>
+                      )}
+                    </div>
+                  </td>
+                  <td className={TableStyles.td}>
+                    <div className="flex flex-col gap-1">
+                        <span className="font-mono font-black text-text-main text-base">{formatCurrency(ab.custoTotal)}</span>
+                        <span className="text-[11px] text-text-secondary font-bold flex items-center gap-1.5 bg-surface-hover w-fit px-1.5 py-0.5 rounded border border-border/50">
+                            <Droplets className="w-3 h-3 text-sky-500" />
+                            {(ab.itens || []).map(i => `${i.quantidade}${i.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'un'}`).join(' + ')}
+                        </span>
+                    </div>
+                  </td>
+                  <td className={`${TableStyles.td} text-right pr-8`}>
+                    <DropdownAcoes 
+                      onEditar={canEdit ? () => setEditingId(ab.id) : undefined}
+                      onExcluir={userRole === 'ADMIN' ? () => setDeletingId(ab.id) : undefined}
+                    />
+                  </td>
+                </>
               )}
-            </div>
-          )}
-        </div>
+
+              // --- MOBILE ---
+              renderMobile={(ab) => (
+                <div className="p-5 flex flex-col gap-4 border-b border-border/60 last:border-0 hover:bg-surface-hover/30 transition-colors">
+                  <div className="flex justify-between items-start">
+                    <div className="flex gap-4">
+                      {/* Data Box Premium */}
+                      <div className="bg-surface shadow-sm text-text-main p-2 rounded-xl border border-border/80 flex flex-col items-center justify-center w-14 h-14 shrink-0">
+                        <span className="text-lg font-black leading-none">{new Date(ab.dataHora).getDate()}</span>
+                        <span className="text-[9px] uppercase font-bold tracking-widest text-text-muted mt-0.5">{new Date(ab.dataHora).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</span>
+                      </div>
+                      
+                      {/* Infos Principais */}
+                      <div className="flex flex-col justify-center">
+                        <span className="font-mono font-black text-primary text-lg tracking-tight leading-none">{ab.veiculo?.placa || 'Sem Placa'}</span>
+                        <span className="text-xs text-text-secondary font-medium mt-1">{ab.fornecedor?.nome || 'Fornecedor Local'}</span>
+                      </div>
+                    </div>
+
+                    <DropdownAcoes 
+                      onEditar={canEdit ? () => setEditingId(ab.id) : undefined}
+                      onExcluir={userRole === 'ADMIN' ? () => setDeletingId(ab.id) : undefined}
+                    />
+                  </div>
+
+                  {/* Detalhes Mobile Glassmorphism */}
+                  <div className="grid grid-cols-2 gap-3 bg-surface-hover/50 p-3 rounded-xl border border-border/40">
+                      <div className="flex flex-col">
+                          <span className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-0.5">Custo</span>
+                          <span className="font-mono font-black text-text-main">{formatCurrency(ab.custoTotal)}</span>
+                      </div>
+                      <div className="flex flex-col items-end">
+                          <span className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-1.5">Produto</span>
+                          {getCombustivelBadge(ab)}
+                      </div>
+                  </div>
+                  
+                  {ab.fotoNotaFiscalUrl && (
+                      <a href={ab.fotoNotaFiscalUrl} target="_blank" className="bg-sky-50 text-sky-700 border border-sky-100 text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 hover:bg-sky-100 transition-colors shadow-sm cursor-pointer">
+                          <Receipt className="w-4 h-4" /> Visualizar Nota Fiscal
+                      </a>
+                  )}
+                </div>
+              )}
+            />
+
+            {/* BOTÃO CARREGAR MAIS (PAGINAÇÃO PROGRESSIVA MOBILE/DESKTOP) */}
+            {historicoVisivel.length < historico.length && (
+               <div className="p-6 border-t border-border/60 bg-surface-hover/30 flex justify-center">
+                  <Button 
+                    variant="secondary" 
+                    onClick={handleCarregarMais}
+                    className="w-full sm:w-auto bg-surface hover:shadow-md transition-all group"
+                  >
+                     Carregar mais {Math.min(ITENS_POR_PAGINA, historico.length - historicoVisivel.length)} registros
+                     <ChevronDown className="w-4 h-4 ml-2 text-text-muted group-hover:text-primary transition-colors" />
+                  </Button>
+               </div>
+            )}
+          </div>
+        )}
       </Card>
 
       {/* --- MODAIS --- */}
