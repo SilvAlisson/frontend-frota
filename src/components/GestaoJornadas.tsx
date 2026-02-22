@@ -8,7 +8,7 @@ import {
   MapPin, 
   Clock, 
   AlertCircle,
-  ChevronRight // ✅ Importado do Lucide
+  ChevronRight 
 } from 'lucide-react';
 import { api } from '../services/api';
 
@@ -22,7 +22,7 @@ import { Modal } from './ui/Modal';
 import { FormEditarJornada } from './forms/FormEditarJornada';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 
-// Função auxiliar para calcular duração (Mantida integralmente)
+// Função auxiliar para calcular duração 
 function formatDuration(dateString: string) {
   const start = new Date(dateString);
   const now = new Date();

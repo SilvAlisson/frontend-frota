@@ -4,7 +4,6 @@ import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import { GraficoKmVeiculo } from './GraficoKmVeiculo';
-import { PainelSobrenatural } from './PainelSobrenatural';
 import { cn } from '../lib/utils'; 
 
 // --- HOOKS ATÔMICOS ---
@@ -19,7 +18,7 @@ import {
   Fuel, Wrench, Gauge, DollarSign, Activity, 
   Droplets, TrendingUp, FileSpreadsheet, ChevronRight, Loader2
 } from 'lucide-react';
-import type { KpiData, DadosEvolucaoKm, Jornada } from '../types';
+import type { KpiData, DadosEvolucaoKm } from '../types';
 
 interface DashboardRelatoriosProps {
   onDrillDown?: (tipo: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => void;
@@ -121,7 +120,6 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
 
   const [kpis, setKpis] = useState<KpiData | null>(null);
   const [dadosGraficoKm, setDadosGraficoKm] = useState<DadosEvolucaoKm[]>([]);
-  const [jornadasRecentes, setJornadasRecentes] = useState<Jornada[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [loadingGrafico, setLoadingGrafico] = useState(false);
@@ -147,11 +145,6 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
 
         const responseKpi = await api.get('/relatorios/sumario', { params });
         setKpis(responseKpi.data.kpis);
-
-        const responseJornadas = await api.get('/jornadas/historico', {
-          params: { ...params, limit: 100 }
-        });
-        setJornadasRecentes(responseJornadas.data);
 
       } catch (err) {
         console.error(err);
@@ -360,11 +353,6 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
             <GraficoKmVeiculo dados={dadosGraficoKm} />
           )}
         </div>
-      )}
-
-      {/* COMPONENTE DE GAMIFICATION / ALERTAS EXTRAS */}
-      {!loading && jornadasRecentes.length > 0 && (
-        <PainelSobrenatural jornadas={jornadasRecentes} />
       )}
 
     </div>

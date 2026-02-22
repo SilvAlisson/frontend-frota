@@ -7,7 +7,7 @@ import { supabase } from '../../supabaseClient';
 import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Select } from '../ui/Select'; // 🔥 Importamos o nosso super Select
+import { Select } from '../ui/Select';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { UserPlus, Camera, Calendar, CreditCard, User, Briefcase, Mail, KeyRound, Hash } from 'lucide-react';
@@ -338,7 +338,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
             type="submit"
             variant="primary"
             isLoading={isSubmitting}
-            leftIcon={<UserPlus className="w-4 h-4" />}
+            icon={<UserPlus className="w-4 h-4" />} // ✨ CORREÇÃO AQUI
             className="w-full sm:w-auto shadow-button hover:shadow-float px-8"
           >
             Cadastrar Colaborador

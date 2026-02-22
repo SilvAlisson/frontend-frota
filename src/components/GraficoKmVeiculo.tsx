@@ -2,8 +2,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import type { DadosEvolucaoKm } from '../types';
 import { Activity } from 'lucide-react';
 
-// Cor Primária em HEX (Pode ajustar para o tom exato do seu Tailwind 'primary')
-const PRIMARY_COLOR = '#10b981'; // Emerald 500 - Fica lindo e moderno
+// Cor Primária em HEX
+const PRIMARY_COLOR = '#10b981'; 
 
 interface GraficoKmVeiculoProps {
     dados: DadosEvolucaoKm[];

@@ -22,7 +22,6 @@ import { TableStyles } from '../styles/table';
 
 // --- COMPONENTES & FORMS ---
 import { FormEditarJornada } from './forms/FormEditarJornada';
-import { BotaoLimparFantasmas } from './BotaoLimparFantasmas';
 
 interface JornadaHistorico extends Jornada {
   kmPercorrido?: number;
@@ -219,14 +218,8 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
                 </div>
               </div>
 
+              {/* ✨ Botão de Exportar ocupando o espaço deixado pelo falecido Fantasma */}
               <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 xl:ml-auto">
-                {userRole === 'ADMIN' && filtros.veiculoId && (
-                  <BotaoLimparFantasmas 
-                    veiculoId={filtros.veiculoId} 
-                    onSuccess={fetchHistorico}
-                    className="h-11 sm:h-12 w-full sm:w-auto flex-1"
-                  />
-                )}
                 <Button 
                   variant="secondary" 
                   onClick={handleExportar} 
