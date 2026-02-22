@@ -166,18 +166,18 @@ export function RankingOperadores() {
               // DESKTOP HEADER
               desktopHeader={
                 <>
-                  <th className={`${TableStyles.th} w-20 text-center pl-6 py-5`}>Posição</th>
-                  <th className={TableStyles.th}>Veículo</th>
-                  <th className={`${TableStyles.th} text-right`}>Eficiência (Km/L)</th>
-                  <th className={`${TableStyles.th} text-right`}>Distância (KM)</th>
-                  <th className={`${TableStyles.th} text-right pr-8`}>Consumo Total</th>
+                  <th className={`${TableStyles.th} w-[10%] text-center pl-6 py-5`}>Posição</th>
+                  <th className={`${TableStyles.th} w-[40%] text-left`}>Veículo</th>
+                  <th className={`${TableStyles.th} w-[20%] text-right`}>Eficiência (Km/L)</th>
+                  <th className={`${TableStyles.th} w-[15%] text-right`}>Distância (KM)</th>
+                  <th className={`${TableStyles.th} w-[15%] text-right pr-8`}>Consumo Total</th>
                 </>
               }
 
               // DESKTOP ROW
               renderDesktop={(v, idx) => (
                 <tr className="hover:bg-surface-hover/50 transition-colors group">
-                  <td className={`${TableStyles.td} text-center pl-6`}>
+                  <td className={`${TableStyles.td} w-[10%] text-center pl-6`}>
                     <span className={`inline-flex items-center justify-center w-8 h-8 rounded-xl text-sm font-black shadow-sm ${
                         idx === 0 ? 'bg-yellow-500 text-white border-yellow-600' :
                         idx === 1 ? 'bg-slate-200 text-slate-700 border-slate-300' :
@@ -187,18 +187,18 @@ export function RankingOperadores() {
                       {idx + 1}º
                     </span>
                   </td>
-                  <td className={TableStyles.td}>
+                  <td className={`${TableStyles.td} w-[40%] text-left`}>
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-inner group-hover:scale-105 transition-transform">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-inner group-hover:scale-105 transition-transform shrink-0">
                         <Truck className="w-5 h-5" />
                       </div>
-                      <div className="flex flex-col">
-                        <span className="block font-black text-text-main text-base tracking-tight leading-none">{v.placa}</span>
-                        <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mt-1">{v.modelo}</span>
+                      <div className="flex flex-col truncate">
+                        <span className="block font-black text-text-main text-base tracking-tight leading-none truncate">{v.placa}</span>
+                        <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mt-1 truncate">{v.modelo}</span>
                       </div>
                     </div>
                   </td>
-                  <td className={`${TableStyles.td} text-right`}>
+                  <td className={`${TableStyles.td} w-[20%] text-right`}>
                     <div className="flex flex-col items-end gap-1.5">
                       <div className="flex items-center gap-2">
                         {isConsumoRuim(v.kml) && (
@@ -218,10 +218,10 @@ export function RankingOperadores() {
                       </div>
                     </div>
                   </td>
-                  <td className={`${TableStyles.td} text-right font-mono font-bold text-text-secondary text-base`}>
+                  <td className={`${TableStyles.td} w-[15%] text-right font-mono font-bold text-text-secondary text-base`}>
                      {fmtNum(v.totalKM)} <span className="text-[10px] text-text-muted uppercase tracking-widest ml-0.5">km</span>
                   </td>
-                  <td className={`${TableStyles.td} text-right font-mono font-bold text-text-secondary text-base pr-8`}>
+                  <td className={`${TableStyles.td} w-[15%] text-right font-mono font-bold text-text-secondary text-base pr-8`}>
                      {fmtNum(v.totalLitros)} <span className="text-[10px] text-text-muted uppercase tracking-widest ml-0.5">L</span>
                   </td>
                 </tr>
