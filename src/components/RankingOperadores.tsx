@@ -9,7 +9,7 @@ import { ListaResponsiva } from './ui/ListaResponsiva';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Card } from './ui/Card';
-import { Select } from './ui/Select';
+import { Select } from './ui/Select'; 
 import { TableStyles } from '../styles/table';
 
 interface VeiculoRanking {
@@ -109,7 +109,6 @@ export function RankingOperadores() {
               containerClassName="!mb-0"
             />
           </div>
-          
           <div className="w-full sm:w-32">
             <Select
               options={opcoesAno}
@@ -154,116 +153,118 @@ export function RankingOperadores() {
             </div>
           )}
 
-          {/* --- LISTA COM ALINHAMENTO FORÇADO --- */}
+          {/* --- LISTA COM ALINHAMENTO CORRIGIDO --- */}
           <Card padding="none" className="overflow-hidden border-border/50 shadow-sm rounded-3xl bg-surface">
-            <div className="overflow-x-auto"> {/* Garante que a tabela não quebra ecrãs menores */}
-              <ListaResponsiva
-                itens={ranking}
-                emptyMessage="Nenhum dado consolidado encontrado para este período."
+            <ListaResponsiva
+              itens={ranking}
+              emptyMessage="Nenhum dado consolidado encontrado para este período."
 
-                // ✨ DESKTOP HEADER COM MIN-WIDTH ABSOLUTO
-                desktopHeader={
-                  <>
-                    <th className={`${TableStyles.th} w-24 min-w-[6rem] text-center pl-6 py-5`}>Posição</th>
-                    <th className={`${TableStyles.th} w-auto min-w-[15rem] text-left`}>Veículo</th>
-                    <th className={`${TableStyles.th} w-48 min-w-[12rem] text-right`}>Eficiência (Km/L)</th>
-                    <th className={`${TableStyles.th} w-40 min-w-[10rem] text-right`}>Distância (KM)</th>
-                    <th className={`${TableStyles.th} w-44 min-w-[11rem] text-right pr-8`}>Consumo Total</th>
-                  </>
-                }
+              // HEADER - Larguras padronizadas com as das outras tabelas
+              desktopHeader={
+                <>
+                  <th className={`${TableStyles.th} pl-8 py-5 text-center`}>Posição</th>
+                  <th className={`${TableStyles.th} w-full text-left`}>Veículo</th> {/* O w-full empurra tudo para a direita */}
+                  <th className={`${TableStyles.th} text-right whitespace-nowrap`}>Eficiência (Km/L)</th>
+                  <th className={`${TableStyles.th} text-right whitespace-nowrap`}>Distância (KM)</th>
+                  <th className={`${TableStyles.th} text-right pr-8 whitespace-nowrap`}>Consumo Total</th>
+                </>
+              }
 
-                // ✨ DESKTOP ROW COM AS MESMAS MIN-WIDTH
-                renderDesktop={(v, idx) => (
-                  <tr className="hover:bg-surface-hover/50 transition-colors group">
-                    <td className={`${TableStyles.td} w-24 min-w-[6rem] text-center pl-6`}>
-                      <span className={`inline-flex items-center justify-center w-8 h-8 rounded-xl text-sm font-black shadow-sm ${
-                          idx === 0 ? 'bg-yellow-500 text-white border-yellow-600' :
-                          idx === 1 ? 'bg-slate-200 text-slate-700 border-slate-300' :
-                          idx === 2 ? 'bg-orange-200 text-orange-800 border-orange-300' :
-                          'bg-surface-hover text-text-muted border-border/60'
-                        } border`}>
-                        {idx + 1}º
-                      </span>
-                    </td>
-                    <td className={`${TableStyles.td} w-auto min-w-[15rem] text-left`}>
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-inner shrink-0 group-hover:scale-105 transition-transform">
-                          <Truck className="w-5 h-5" />
-                        </div>
-                        <div className="flex flex-col truncate">
-                          <span className="block font-black text-text-main text-base tracking-tight leading-none truncate" title={v.placa}>{v.placa}</span>
-                          <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mt-1 truncate" title={v.modelo}>{v.modelo}</span>
-                        </div>
-                      </div>
-                    </td>
-                    <td className={`${TableStyles.td} w-48 min-w-[12rem] text-right`}>
-                      <div className="flex flex-col items-end gap-1.5">
-                        <div className="flex items-center gap-2">
-                          {isConsumoRuim(v.kml) && (
-                            <span title="Consumo Crítico - Alerta de Manutenção">
-                               <AlertTriangle className="w-4 h-4 text-error animate-pulse" />
-                            </span>
-                          )}
-                          <span className={`font-mono font-black text-lg tracking-tight ${isConsumoRuim(v.kml) ? 'text-error' : 'text-text-main'}`}>
-                            {fmtKml(v.kml)}
-                          </span>
-                        </div>
-                        <div className="w-24 h-1.5 bg-surface-hover rounded-full overflow-hidden shadow-inner border border-border/40">
-                          <div
-                            className={`h-full rounded-full transition-all duration-1000 ${idx === 0 ? 'bg-yellow-500' : isConsumoRuim(v.kml) ? 'bg-error' : 'bg-primary'}`}
-                            style={{ width: `${Math.min((v.kml / maxKml) * 100, 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                    <td className={`${TableStyles.td} w-40 min-w-[10rem] text-right font-mono font-bold text-text-secondary text-base`}>
-                       {fmtNum(v.totalKM)} <span className="text-[10px] text-text-muted uppercase tracking-widest ml-0.5">km</span>
-                    </td>
-                    <td className={`${TableStyles.td} w-44 min-w-[11rem] text-right font-mono font-bold text-text-secondary text-base pr-8`}>
-                       {fmtNum(v.totalLitros)} <span className="text-[10px] text-text-muted uppercase tracking-widest ml-0.5">L</span>
-                    </td>
-                  </tr>
-                )}
-
-                // MOBILE CARD
-                renderMobile={(v, idx) => (
-                  <div className="flex items-start gap-4 p-5 border-b border-border/60 last:border-0 hover:bg-surface-hover/30 transition-colors">
-                    <div className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl font-black text-lg border shadow-sm ${
+              // ROW - Correspondente aos Headers
+              renderDesktop={(v, idx) => (
+                <tr className="hover:bg-surface-hover/50 transition-colors group">
+                  <td className={`${TableStyles.td} text-center pl-8`}>
+                    <span className={`inline-flex items-center justify-center w-8 h-8 rounded-xl text-sm font-black shadow-sm ${
                         idx === 0 ? 'bg-yellow-500 text-white border-yellow-600' :
                         idx === 1 ? 'bg-slate-200 text-slate-700 border-slate-300' :
                         idx === 2 ? 'bg-orange-200 text-orange-800 border-orange-300' :
                         'bg-surface-hover text-text-muted border-border/60'
-                      }`}>
+                      } border`}>
                       {idx + 1}º
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <h4 className="font-black text-text-main text-lg tracking-tight leading-none">{v.placa}</h4>
-                          <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mt-1 truncate max-w-[150px]">{v.modelo}</p>
-                        </div>
-                        {isConsumoRuim(v.kml) && <Badge variant="danger" className="text-[9px] px-1.5 shadow-sm">Crítico</Badge>}
+                    </span>
+                  </td>
+
+                  <td className={`${TableStyles.td} w-full text-left`}>
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-inner shrink-0 group-hover:scale-105 transition-transform">
+                        <Truck className="w-5 h-5" />
                       </div>
-                      
-                      <div className="grid grid-cols-3 gap-2 bg-surface-hover/50 p-2.5 rounded-xl border border-border/40">
-                        <div className="flex flex-col items-center justify-center p-1 bg-surface rounded-lg border border-border/50">
-                          <span className="text-[9px] uppercase text-text-muted font-black tracking-widest mb-0.5">Média</span>
-                          <span className={`font-mono font-black text-sm tracking-tighter ${isConsumoRuim(v.kml) ? 'text-error' : 'text-primary'}`}>{fmtKml(v.kml)}</span>
-                        </div>
-                        <div className="flex flex-col items-center justify-center p-1 bg-surface rounded-lg border border-border/50">
-                          <span className="text-[9px] uppercase text-text-muted font-black tracking-widest mb-0.5">KM</span>
-                          <span className="font-mono font-bold text-text-secondary text-sm tracking-tighter">{fmtNum(v.totalKM)}</span>
-                        </div>
-                        <div className="flex flex-col items-center justify-center p-1 bg-surface rounded-lg border border-border/50">
-                          <span className="text-[9px] uppercase text-text-muted font-black tracking-widest mb-0.5">Litros</span>
-                          <span className="font-mono font-bold text-text-secondary text-sm tracking-tighter">{fmtNum(v.totalLitros)}</span>
-                        </div>
+                      <div className="flex flex-col truncate">
+                        <span className="block font-black text-text-main text-base tracking-tight leading-none truncate">{v.placa}</span>
+                        <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mt-1 truncate">{v.modelo}</span>
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className={`${TableStyles.td} text-right whitespace-nowrap`}>
+                    <div className="flex flex-col items-end gap-1.5 w-full">
+                      <div className="flex items-center justify-end gap-2 w-full">
+                        {isConsumoRuim(v.kml) && (
+                          <span title="Consumo Crítico - Alerta de Manutenção">
+                             <AlertTriangle className="w-4 h-4 text-error animate-pulse" />
+                          </span>
+                        )}
+                        <span className={`font-mono font-black text-lg tracking-tight ${isConsumoRuim(v.kml) ? 'text-error' : 'text-text-main'}`}>
+                          {fmtKml(v.kml)}
+                        </span>
+                      </div>
+                      <div className="w-24 h-1.5 bg-surface-hover rounded-full overflow-hidden shadow-inner border border-border/40 ml-auto">
+                        <div
+                          className={`h-full rounded-full transition-all duration-1000 ${idx === 0 ? 'bg-yellow-500' : isConsumoRuim(v.kml) ? 'bg-error' : 'bg-primary'}`}
+                          style={{ width: `${Math.min((v.kml / maxKml) * 100, 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </td>
+
+                  <td className={`${TableStyles.td} text-right font-mono font-bold text-text-secondary text-base whitespace-nowrap`}>
+                     {fmtNum(v.totalKM)} <span className="text-[10px] text-text-muted uppercase tracking-widest ml-0.5">km</span>
+                  </td>
+
+                  <td className={`${TableStyles.td} text-right font-mono font-bold text-text-secondary text-base pr-8 whitespace-nowrap`}>
+                     {fmtNum(v.totalLitros)} <span className="text-[10px] text-text-muted uppercase tracking-widest ml-0.5">L</span>
+                  </td>
+                </tr>
+              )}
+
+              // MOBILE CARD
+              renderMobile={(v, idx) => (
+                <div className="flex items-start gap-4 p-5 border-b border-border/60 last:border-0 hover:bg-surface-hover/30 transition-colors">
+                  <div className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl font-black text-lg border shadow-sm ${
+                      idx === 0 ? 'bg-yellow-500 text-white border-yellow-600' :
+                      idx === 1 ? 'bg-slate-200 text-slate-700 border-slate-300' :
+                      idx === 2 ? 'bg-orange-200 text-orange-800 border-orange-300' :
+                      'bg-surface-hover text-text-muted border-border/60'
+                    }`}>
+                    {idx + 1}º
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <h4 className="font-black text-text-main text-lg tracking-tight leading-none">{v.placa}</h4>
+                        <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mt-1 truncate max-w-[150px]">{v.modelo}</p>
+                      </div>
+                      {isConsumoRuim(v.kml) && <Badge variant="danger" className="text-[9px] px-1.5 shadow-sm">Crítico</Badge>}
+                    </div>
+                    
+                    <div className="grid grid-cols-3 gap-2 bg-surface-hover/50 p-2.5 rounded-xl border border-border/40">
+                      <div className="flex flex-col items-center justify-center p-1 bg-surface rounded-lg border border-border/50">
+                        <span className="text-[9px] uppercase text-text-muted font-black tracking-widest mb-0.5">Média</span>
+                        <span className={`font-mono font-black text-sm tracking-tighter ${isConsumoRuim(v.kml) ? 'text-error' : 'text-primary'}`}>{fmtKml(v.kml)}</span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center p-1 bg-surface rounded-lg border border-border/50">
+                        <span className="text-[9px] uppercase text-text-muted font-black tracking-widest mb-0.5">KM</span>
+                        <span className="font-mono font-bold text-text-secondary text-sm tracking-tighter">{fmtNum(v.totalKM)}</span>
+                      </div>
+                      <div className="flex flex-col items-center justify-center p-1 bg-surface rounded-lg border border-border/50">
+                        <span className="text-[9px] uppercase text-text-muted font-black tracking-widest mb-0.5">Litros</span>
+                        <span className="font-mono font-bold text-text-secondary text-sm tracking-tighter">{fmtNum(v.totalLitros)}</span>
                       </div>
                     </div>
                   </div>
-                )}
-              />
-            </div>
+                </div>
+              )}
+            />
           </Card>
         </>
       )}
