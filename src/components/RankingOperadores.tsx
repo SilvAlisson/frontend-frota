@@ -2,13 +2,14 @@ import { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
-import { Trophy, Medal, Award, Download, Filter, Truck, AlertTriangle } from 'lucide-react';
+import { Trophy, Medal, Award, Download, Truck, AlertTriangle, Calendar } from 'lucide-react';
 
 // Componentes UI
 import { ListaResponsiva } from './ui/ListaResponsiva';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Card } from './ui/Card';
+import { Select } from './ui/Select'; // ✨ Importação sendo utilizada corretamente agora!
 import { TableStyles } from '../styles/table';
 
 interface VeiculoRanking {
@@ -61,7 +62,7 @@ export function RankingOperadores() {
     };
 
     toast.promise(acaoExportar(), {
-      loading: 'Gerando relatório...',
+      loading: 'A gerar relatório...',
       success: 'Ranking exportado com sucesso!',
       error: 'Erro ao gerar planilha.'
     });
@@ -71,115 +72,129 @@ export function RankingOperadores() {
   const maxKml = useMemo(() => ranking.length ? Math.max(...ranking.map(r => r.kml)) : 1, [ranking]);
   const isConsumoRuim = (kml: number) => kml < 2.0;
 
-  const meses = [
-    { v: 1, l: 'Janeiro' }, { v: 2, l: 'Fevereiro' }, { v: 3, l: 'Março' },
-    { v: 4, l: 'Abril' }, { v: 5, l: 'Maio' }, { v: 6, l: 'Junho' },
-    { v: 7, l: 'Julho' }, { v: 8, l: 'Agosto' }, { v: 9, l: 'Setembro' },
-    { v: 10, l: 'Outubro' }, { v: 11, l: 'Novembro' }, { v: 12, l: 'Dezembro' }
-  ];
-  const anos = [new Date().getFullYear(), new Date().getFullYear() - 1];
+  // ✨ Opções Formatadas para o Select Customizado
+  const opcoesMes = useMemo(() => [
+    { value: 1, label: 'Janeiro' }, { value: 2, label: 'Fevereiro' }, { value: 3, label: 'Março' },
+    { value: 4, label: 'Abril' }, { value: 5, label: 'Maio' }, { value: 6, label: 'Junho' },
+    { value: 7, label: 'Julho' }, { value: 8, label: 'Agosto' }, { value: 9, label: 'Setembro' },
+    { value: 10, label: 'Outubro' }, { value: 11, label: 'Novembro' }, { value: 12, label: 'Dezembro' }
+  ], []);
+
+  const opcoesAno = useMemo(() => [
+    { value: new Date().getFullYear(), label: String(new Date().getFullYear()) },
+    { value: new Date().getFullYear() - 1, label: String(new Date().getFullYear() - 1) },
+    { value: new Date().getFullYear() - 2, label: String(new Date().getFullYear() - 2) }
+  ], []);
 
   return (
     <div className="space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
 
       {/* HEADER */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4 border-b border-border pb-6">
+      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4 border-b border-border/60 pb-6">
         <div>
-          <h2 className="text-2xl font-bold text-text-main tracking-tight flex items-center gap-2">
-            <Trophy className="w-6 h-6 text-yellow-500" /> Eficiência da Frota
+          <h2 className="text-2xl font-black text-text-main tracking-tight flex items-center gap-2">
+            <Trophy className="w-6 h-6 text-yellow-500 drop-shadow-sm" /> Eficiência da Frota
           </h2>
-          <p className="text-sm text-text-secondary mt-1">
+          <p className="text-sm font-medium text-text-secondary mt-1">
             Análise de consumo por ativo (Veículo). Identifique falhas mecânicas e oportunidades de economia.
           </p>
         </div>
 
-        <div className="flex flex-wrap gap-3 w-full xl:w-auto items-center">
-          <div className="flex items-center gap-2 bg-surface border border-border p-1 rounded-lg shadow-sm">
-            <Filter className="w-4 h-4 text-text-muted ml-2" />
-            <select
+        <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto items-end bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
+          
+          {/* ✨ SELECTS PREMIUM APLICADOS AQUI */}
+          <div className="w-full sm:w-44">
+            <Select
+              options={opcoesMes}
               value={mes}
               onChange={e => setMes(Number(e.target.value))}
-              className="h-9 bg-transparent text-sm text-text-main outline-none cursor-pointer border-none focus:ring-0 font-medium"
-            >
-              {meses.map(m => <option key={m.v} value={m.v}>{m.l}</option>)}
-            </select>
-            <div className="w-px h-6 bg-border mx-1"></div>
-            <select
+              icon={<Calendar className="w-4 h-4" />}
+              containerClassName="!mb-0"
+            />
+          </div>
+          
+          <div className="w-full sm:w-32">
+            <Select
+              options={opcoesAno}
               value={ano}
               onChange={e => setAno(Number(e.target.value))}
-              className="h-9 bg-transparent text-sm text-text-main outline-none cursor-pointer border-none focus:ring-0 font-medium"
-            >
-              {anos.map(a => <option key={a} value={a}>{a}</option>)}
-            </select>
+              containerClassName="!mb-0"
+            />
           </div>
 
-          <Button
-            variant="success"
-            onClick={handleExportar}
-            disabled={ranking.length === 0 || loading}
-            className="h-11 shadow-sm"
-            icon={<Download className="w-4 h-4" />}
-          >
-            Exportar
-          </Button>
+          <div className="w-full sm:w-auto mt-2 sm:mt-0 ml-auto">
+            <Button
+              variant="secondary"
+              onClick={handleExportar}
+              disabled={ranking.length === 0 || loading}
+              className="h-11 sm:h-11 w-full sm:w-auto bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-500/20 shadow-sm"
+              icon={<Download className="w-4 h-4" />}
+            >
+              Exportar
+            </Button>
+          </div>
         </div>
       </div>
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
-          {[1, 2, 3].map(i => <div key={i} className="h-56 bg-surface-hover rounded-2xl" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-56 bg-surface-hover/50 rounded-3xl border border-border/40" />)}
         </div>
       ) : (
         <>
           {/* --- PODIUM --- */}
           {top3.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 items-end max-w-5xl mx-auto">
-              <div className="order-2 md:order-1">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 items-end max-w-5xl mx-auto px-2">
+              <div className="order-2 md:order-1 animate-in slide-in-from-bottom-8 duration-700 delay-100">
                 {top3[1] && <CardPodium pos={2} veiculo={top3[1]} />}
               </div>
-              <div className="order-1 md:order-2">
+              <div className="order-1 md:order-2 animate-in slide-in-from-bottom-12 duration-500">
                 {top3[0] && <CardPodium pos={1} veiculo={top3[0]} isWinner />}
               </div>
-              <div className="order-3">
+              <div className="order-3 animate-in slide-in-from-bottom-6 duration-1000 delay-200">
                 {top3[2] && <CardPodium pos={3} veiculo={top3[2]} />}
               </div>
             </div>
           )}
 
           {/* --- LISTA --- */}
-          <Card padding="none" className="overflow-hidden border-border/50 shadow-sm">
+          <Card padding="none" className="overflow-hidden border-border/50 shadow-sm rounded-3xl bg-surface">
             <ListaResponsiva
               itens={ranking}
-              emptyMessage="Nenhum dado encontrado para este período."
+              emptyMessage="Nenhum dado consolidado encontrado para este período."
 
               // DESKTOP HEADER
               desktopHeader={
                 <>
-                  <th className={`${TableStyles.th} w-16 text-center`}>#</th>
+                  <th className={`${TableStyles.th} w-20 text-center pl-6 py-5`}>Posição</th>
                   <th className={TableStyles.th}>Veículo</th>
                   <th className={`${TableStyles.th} text-right`}>Eficiência (Km/L)</th>
-                  <th className={`${TableStyles.th} text-right`}>KM Rodado</th>
-                  <th className={`${TableStyles.th} text-right`}>Consumo (L)</th>
+                  <th className={`${TableStyles.th} text-right`}>Distância (KM)</th>
+                  <th className={`${TableStyles.th} text-right pr-8`}>Consumo Total</th>
                 </>
               }
 
               // DESKTOP ROW
               renderDesktop={(v, idx) => (
-                <tr className="hover:bg-surface-hover/50 transition-colors">
-                  <td className={`${TableStyles.td} text-center`}>
-                    <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold ${idx < 3 ? 'bg-yellow-50 text-yellow-700 ring-1 ring-yellow-500/20' : 'bg-surface-hover text-text-muted'
-                      }`}>
+                <tr className="hover:bg-surface-hover/50 transition-colors group">
+                  <td className={`${TableStyles.td} text-center pl-6`}>
+                    <span className={`inline-flex items-center justify-center w-8 h-8 rounded-xl text-sm font-black shadow-sm ${
+                        idx === 0 ? 'bg-yellow-500 text-white border-yellow-600' :
+                        idx === 1 ? 'bg-slate-200 text-slate-700 border-slate-300' :
+                        idx === 2 ? 'bg-orange-200 text-orange-800 border-orange-300' :
+                        'bg-surface-hover text-text-muted border-border/60'
+                      } border`}>
                       {idx + 1}º
                     </span>
                   </td>
                   <td className={TableStyles.td}>
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20 text-primary">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-inner group-hover:scale-105 transition-transform">
                         <Truck className="w-5 h-5" />
                       </div>
-                      <div>
-                        <span className="block font-bold text-text-main">{v.placa}</span>
-                        <span className="text-xs text-text-secondary">{v.modelo}</span>
+                      <div className="flex flex-col">
+                        <span className="block font-black text-text-main text-base tracking-tight leading-none">{v.placa}</span>
+                        <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mt-1">{v.modelo}</span>
                       </div>
                     </div>
                   </td>
@@ -187,13 +202,15 @@ export function RankingOperadores() {
                     <div className="flex flex-col items-end gap-1.5">
                       <div className="flex items-center gap-2">
                         {isConsumoRuim(v.kml) && (
-                          <span title="Consumo crítico">
+                          <span title="Consumo Crítico - Alerta de Manutenção">
                              <AlertTriangle className="w-4 h-4 text-error animate-pulse" />
                           </span>
                         )}
-                        <span className={`font-mono font-bold text-base ${isConsumoRuim(v.kml) ? 'text-error' : 'text-text-main'}`}>{fmtKml(v.kml)}</span>
+                        <span className={`font-mono font-black text-lg tracking-tight ${isConsumoRuim(v.kml) ? 'text-error' : 'text-text-main'}`}>
+                          {fmtKml(v.kml)}
+                        </span>
                       </div>
-                      <div className="w-24 h-1.5 bg-surface-hover rounded-full overflow-hidden">
+                      <div className="w-24 h-1.5 bg-surface-hover rounded-full overflow-hidden shadow-inner border border-border/40">
                         <div
                           className={`h-full rounded-full transition-all duration-1000 ${idx === 0 ? 'bg-yellow-500' : isConsumoRuim(v.kml) ? 'bg-error' : 'bg-primary'}`}
                           style={{ width: `${Math.min((v.kml / maxKml) * 100, 100)}%` }}
@@ -201,41 +218,47 @@ export function RankingOperadores() {
                       </div>
                     </div>
                   </td>
-                  <td className={`${TableStyles.td} text-right font-mono text-text-secondary`}>{fmtNum(v.totalKM)} <span className="text-xs text-text-muted">km</span></td>
-                  <td className={`${TableStyles.td} text-right font-mono text-text-secondary`}>{fmtNum(v.totalLitros)} <span className="text-xs text-text-muted">L</span></td>
+                  <td className={`${TableStyles.td} text-right font-mono font-bold text-text-secondary text-base`}>
+                     {fmtNum(v.totalKM)} <span className="text-[10px] text-text-muted uppercase tracking-widest ml-0.5">km</span>
+                  </td>
+                  <td className={`${TableStyles.td} text-right font-mono font-bold text-text-secondary text-base pr-8`}>
+                     {fmtNum(v.totalLitros)} <span className="text-[10px] text-text-muted uppercase tracking-widest ml-0.5">L</span>
+                  </td>
                 </tr>
               )}
 
               // MOBILE CARD
               renderMobile={(v, idx) => (
-                <div className="flex items-center gap-4 p-4 border-b border-border last:border-0 hover:bg-surface-hover/30 transition-colors">
-                  <div className={`flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-full font-bold text-sm border ${idx < 3
-                    ? 'bg-yellow-50 text-yellow-700 border-yellow-500/20'
-                    : 'bg-surface-hover text-text-muted border-border'
+                <div className="flex items-start gap-4 p-5 border-b border-border/60 last:border-0 hover:bg-surface-hover/30 transition-colors">
+                  <div className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl font-black text-lg border shadow-sm ${
+                      idx === 0 ? 'bg-yellow-500 text-white border-yellow-600' :
+                      idx === 1 ? 'bg-slate-200 text-slate-700 border-slate-300' :
+                      idx === 2 ? 'bg-orange-200 text-orange-800 border-orange-300' :
+                      'bg-surface-hover text-text-muted border-border/60'
                     }`}>
                     {idx + 1}º
                   </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h4 className="font-bold text-text-main text-sm">{v.placa}</h4>
-                        <p className="text-xs text-text-secondary">{v.modelo}</p>
+                        <h4 className="font-black text-text-main text-lg tracking-tight leading-none">{v.placa}</h4>
+                        <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mt-1 truncate max-w-[150px]">{v.modelo}</p>
                       </div>
-                      {isConsumoRuim(v.kml) && <Badge variant="danger" className="text-[10px] px-1.5">Atenção</Badge>}
+                      {isConsumoRuim(v.kml) && <Badge variant="danger" className="text-[9px] px-1.5 shadow-sm">Crítico</Badge>}
                     </div>
                     
-                    <div className="flex items-center justify-between mt-2 gap-4 bg-surface-hover/50 p-2 rounded-lg border border-border">
-                      <div>
-                        <span className="text-[10px] uppercase text-text-muted font-bold block mb-0.5">Média</span>
-                        <span className={`font-mono font-bold text-sm ${isConsumoRuim(v.kml) ? 'text-error' : 'text-primary'}`}>{fmtKml(v.kml)}</span>
+                    <div className="grid grid-cols-3 gap-2 bg-surface-hover/50 p-2.5 rounded-xl border border-border/40">
+                      <div className="flex flex-col items-center justify-center p-1 bg-surface rounded-lg border border-border/50">
+                        <span className="text-[9px] uppercase text-text-muted font-black tracking-widest mb-0.5">Média</span>
+                        <span className={`font-mono font-black text-sm tracking-tighter ${isConsumoRuim(v.kml) ? 'text-error' : 'text-primary'}`}>{fmtKml(v.kml)}</span>
                       </div>
-                      <div>
-                        <span className="text-[10px] uppercase text-text-muted font-bold block mb-0.5">KM</span>
-                        <span className="font-mono text-text-secondary text-sm">{fmtNum(v.totalKM)}</span>
+                      <div className="flex flex-col items-center justify-center p-1 bg-surface rounded-lg border border-border/50">
+                        <span className="text-[9px] uppercase text-text-muted font-black tracking-widest mb-0.5">KM</span>
+                        <span className="font-mono font-bold text-text-secondary text-sm tracking-tighter">{fmtNum(v.totalKM)}</span>
                       </div>
-                      <div>
-                        <span className="text-[10px] uppercase text-text-muted font-bold block mb-0.5">Litros</span>
-                        <span className="font-mono text-text-secondary text-sm">{fmtNum(v.totalLitros)}</span>
+                      <div className="flex flex-col items-center justify-center p-1 bg-surface rounded-lg border border-border/50">
+                        <span className="text-[9px] uppercase text-text-muted font-black tracking-widest mb-0.5">Litros</span>
+                        <span className="font-mono font-bold text-text-secondary text-sm tracking-tighter">{fmtNum(v.totalLitros)}</span>
                       </div>
                     </div>
                   </div>
@@ -253,27 +276,27 @@ export function RankingOperadores() {
 function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoRanking, isWinner?: boolean }) {
   const config = {
     1: {
-      bg: 'bg-gradient-to-b from-yellow-500/10 via-surface to-surface',
-      border: 'border-yellow-500/30',
-      text: 'text-yellow-700',
+      bg: 'bg-gradient-to-br from-yellow-500 to-amber-600',
+      border: 'border-yellow-400',
+      text: 'text-white',
       icon: Trophy,
-      colorIcon: 'text-yellow-500',
+      colorIcon: 'text-yellow-100',
       label: 'Mais Econômico'
     },
     2: {
-      bg: 'bg-gradient-to-b from-slate-200/50 via-surface to-surface',
-      border: 'border-border',
-      text: 'text-text-main',
+      bg: 'bg-gradient-to-br from-slate-200 to-slate-300',
+      border: 'border-slate-300',
+      text: 'text-slate-800',
       icon: Medal,
-      colorIcon: 'text-text-muted',
+      colorIcon: 'text-slate-500',
       label: '2º Lugar'
     },
     3: {
-      bg: 'bg-gradient-to-b from-orange-200/30 via-surface to-surface',
-      border: 'border-orange-200/50',
-      text: 'text-orange-800',
+      bg: 'bg-gradient-to-br from-orange-200 to-orange-300',
+      border: 'border-orange-300',
+      text: 'text-orange-900',
       icon: Award,
-      colorIcon: 'text-orange-500',
+      colorIcon: 'text-orange-600',
       label: '3º Lugar'
     }
   }[pos as 1 | 2 | 3];
@@ -282,40 +305,43 @@ function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoR
 
   return (
     <div className={`
-        relative rounded-2xl border p-5 flex flex-col items-center text-center shadow-card transition-all duration-500
+        relative rounded-3xl border p-6 flex flex-col items-center text-center shadow-card transition-all duration-500 overflow-hidden
         ${config.bg} ${config.border}
-        ${isWinner ? 'h-72 justify-end ring-4 ring-yellow-500/10 z-10 transform scale-105 shadow-float' : 'h-60 justify-end opacity-90 hover:opacity-100 hover:scale-105'}
+        ${isWinner ? 'h-72 justify-end ring-4 ring-yellow-500/20 z-10 transform sm:scale-105 shadow-xl' : 'h-64 justify-end opacity-95 hover:opacity-100 sm:hover:scale-105'}
       `}>
 
+      {/* Reflexo / Brilho */}
+      <div className="absolute top-0 left-0 w-full h-full bg-white/10 opacity-0 hover:opacity-100 transition-opacity pointer-events-none" />
+
       {/* Posição Gigante de Fundo */}
-      <div className={`absolute top-2 font-black text-8xl opacity-[0.05] select-none ${config.text}`}>
+      <div className={`absolute -top-4 -right-2 font-black text-9xl opacity-20 select-none ${config.text} drop-shadow-md`}>
         {pos}
       </div>
 
-      <div className={`absolute top-4 right-4 ${config.colorIcon}`}>
+      <div className={`absolute top-5 left-5 p-2 bg-white/20 rounded-xl backdrop-blur-sm shadow-inner ${config.text}`}>
         <Icon className="w-6 h-6" />
       </div>
 
       {/* Avatar do Veículo */}
-      <div className="relative mb-4">
-        <div className={`w-16 h-16 rounded-full border-4 border-surface shadow-lg flex items-center justify-center text-2xl font-bold bg-surface text-text-secondary overflow-hidden`}>
-          <Truck className="w-8 h-8 text-text-muted" />
+      <div className="relative mb-5">
+        <div className="w-20 h-20 rounded-2xl border-4 border-white/30 shadow-lg flex items-center justify-center bg-white/10 backdrop-blur-md overflow-hidden transform group-hover:scale-110 transition-transform">
+          <Truck className={`w-10 h-10 ${config.text} drop-shadow-md`} />
         </div>
-        <div className={`absolute -bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-surface border shadow-sm whitespace-nowrap ${config.text} ${config.border}`}>
+        <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-lg bg-white shadow-md whitespace-nowrap ${config.text.replace('text-white', 'text-yellow-700')}`}>
           {config.label}
         </div>
       </div>
 
-      <h3 className="font-bold truncate w-full px-2 text-xl text-text-main leading-none">{veiculo.placa}</h3>
-      <p className="text-xs text-text-secondary mb-3">{veiculo.modelo}</p>
+      <h3 className={`font-black truncate w-full px-2 text-2xl tracking-tight leading-none mb-1 ${config.text} drop-shadow-sm`}>{veiculo.placa}</h3>
+      <p className={`text-[11px] font-bold uppercase tracking-widest mb-4 opacity-80 ${config.text}`}>{veiculo.modelo}</p>
 
       {/* Stats Box */}
-      <div className="w-full bg-surface/60 rounded-xl p-3 backdrop-blur-sm border border-border">
+      <div className="w-full bg-white/20 rounded-2xl p-3 backdrop-blur-md border border-white/30 shadow-inner">
         <div className="flex flex-col">
-          <span className="text-[10px] uppercase tracking-wider text-text-muted font-bold mb-0.5">Eficiência</span>
-          <span className={`font-mono font-bold text-2xl ${config.text}`}>
+          <span className={`text-[9px] uppercase tracking-[0.2em] font-black mb-0.5 opacity-80 ${config.text}`}>Média de Consumo</span>
+          <span className={`font-mono font-black text-3xl tracking-tighter drop-shadow-sm ${config.text}`}>
             {veiculo.kml.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            <span className="text-xs text-text-muted font-normal ml-1">km/l</span>
+            <span className="text-[10px] uppercase tracking-widest font-bold ml-1 opacity-70">km/l</span>
           </span>
         </div>
       </div>
