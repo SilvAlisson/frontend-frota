@@ -99,7 +99,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
                   </div>
                   <div className="text-white">
                     <h3 className="text-2xl font-black tracking-tight drop-shadow-sm">Iniciar Turno</h3>
-                    <p className="text-primary-50 font-medium mt-1 text-sm sm:text-base opacity-90">Vincule-se a um veículo para começar o dia de trabalho.</p>
+                    <p className="text-primary-50 font-medium mt-1 text-sm sm:text-base opacity-90">Selecione a placa do <strong>veículo</strong> para começar o dia de trabalho.</p>
                   </div>
                 </div>
 
@@ -147,8 +147,8 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
                 <Fuel className="w-7 h-7" />
               </div>
               <div className="flex-1">
-                <span className="block font-black text-text-main text-lg tracking-tight mb-0.5">Abastecer</span>
-                <span className="text-xs font-bold text-text-secondary opacity-80">Lançar faturas de combustível</span>
+                <span className="block font-black text-text-main text-lg tracking-tight mb-0.5">Abastecimento</span>
+                <span className="text-xs font-bold text-text-secondary opacity-80">Lançar abastecimentos de combustível e aditivos</span>
               </div>
             </button>
 
@@ -161,7 +161,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
               </div>
               <div className="flex-1">
                 <span className="block font-black text-text-main text-lg tracking-tight mb-0.5">Licenças</span>
-                <span className="text-xs font-bold text-text-secondary opacity-80">Acesso a CNH e CRLV</span>
+                <span className="text-xs font-bold text-text-secondary opacity-80">Acesso aos documentos legais KLIN e ASTs</span>
               </div>
             </button>
 
@@ -174,7 +174,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
               </div>
               <div className="flex-1">
                 <span className="block font-black text-text-main text-lg tracking-tight mb-0.5">Histórico</span>
-                <span className="text-xs font-bold text-text-secondary opacity-80">Registo de viagens fechadas</span>
+                <span className="text-xs font-bold text-text-secondary opacity-80">Seu registro pessoal de turno</span>
               </div>
             </button>
         </div>
