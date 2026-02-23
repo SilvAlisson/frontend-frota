@@ -41,7 +41,7 @@ export function PainelAlertas({ }: PainelAlertasProps) {
     return (
       <div className="flex flex-col items-center justify-center py-20 opacity-60 gap-4 animate-in fade-in duration-500">
         <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-sm text-text-secondary font-black uppercase tracking-widest animate-pulse">A analisar métricas da frota...</p>
+        <p className="text-sm text-text-secondary font-black uppercase tracking-widest animate-pulse">Analisando métricas da frota...</p>
       </div>
     );
   }

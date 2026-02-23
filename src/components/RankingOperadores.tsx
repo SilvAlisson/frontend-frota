@@ -95,7 +95,7 @@ export function RankingOperadores() {
             <Trophy className="w-6 h-6 text-yellow-500 drop-shadow-sm" /> Eficiência da Frota
           </h2>
           <p className="text-sm font-medium text-text-secondary mt-1">
-            Análise de consumo por ativo (Veículo). Identifique falhas mecânicas e oportunidades de economia.
+            Análise de consumo por ativo (Veículo).
           </p>
         </div>
 

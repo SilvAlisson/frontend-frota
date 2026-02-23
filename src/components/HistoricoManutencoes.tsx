@@ -184,7 +184,7 @@ export function HistoricoManutencoes({
       {/* 1. HEADER & FILTROS */}
       <PageHeader 
         title="Histórico de Manutenções"
-        subtitle="Controlo absoluto de revisões, reparações e custos associados."
+        subtitle="Controle de manutenções KLIN."
         extraAction={
           <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto items-end bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
             <div className="w-full sm:w-40">
@@ -241,7 +241,7 @@ export function HistoricoManutencoes({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow">
           <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-primary" /> Capital Investido na Oficina
+            <DollarSign className="w-4 h-4 text-primary" /> Capital Investido em Manutenções Corretivas e Preventivas
           </span>
           <span className="text-3xl font-mono font-black text-text-main truncate">
             {totalGasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}

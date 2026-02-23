@@ -161,7 +161,7 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
       
       <PageHeader 
         title="Histórico de Viagens"
-        subtitle="Consulte rotas, quilometragem e provas fotográficas dos odómetros."
+        subtitle="Consulte a quilometragem dos veículos, com provas fotográficas dos hodômetro dia-a-dia."
         extraAction={
           <div className="flex flex-col gap-3 w-full xl:w-auto bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
             <div className="flex flex-col sm:flex-row gap-3 items-end">
