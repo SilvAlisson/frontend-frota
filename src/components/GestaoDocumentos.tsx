@@ -321,7 +321,7 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
                         rel="noopener noreferrer"
                         className="text-[11px] font-black uppercase tracking-widest text-primary hover:text-white bg-primary/10 hover:bg-primary px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm"
                       >
-                        Clique para visualizar<ExternalLink className="w-3.5 h-3.5" />
+                        Visualizar<ExternalLink className="w-3.5 h-3.5" />
                       </a>
                     </div>
                   </div>
