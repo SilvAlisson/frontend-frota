@@ -12,7 +12,6 @@ import { useVeiculos } from '../hooks/useVeiculos';
 // --- DESIGN SYSTEM KLIN ---
 import { PageHeader } from './ui/PageHeader';
 import { Button } from './ui/Button';
-import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { ListaResponsiva } from './ui/ListaResponsiva';
 import { Card } from './ui/Card';
@@ -20,6 +19,7 @@ import { Badge } from './ui/Badge';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
+import { DatePicker } from './ui/DatePicker'; // ✨ O nosso novo DatePicker
 import { TableStyles } from '../styles/table';
 
 interface HistoricoAbastecimentosProps {
@@ -199,23 +199,23 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
         subtitle="Monitore custos, consumo e médias de combustível de forma centralizada."
         extraAction={
           <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto items-end bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
-             <div className="w-full sm:w-36">
-               <Input 
-                 type="date" 
-                 label="Data Inicial" 
-                 value={dataInicioFiltro} 
-                 onChange={(e) => setDataInicioFiltro(e.target.value)} 
-                 containerClassName="!mb-0"
-               />
+             <div className="w-full sm:w-40">
+                {/* ✨ DatePicker da Data Inicial */}
+                <DatePicker
+                  label="Data Inicial"
+                  placeholder="Início"
+                  date={dataInicioFiltro ? new Date(`${dataInicioFiltro}T12:00:00`) : undefined}
+                  onChange={date => setDataInicioFiltro(date ? date.toISOString().split('T')[0] : '')}
+                />
              </div>
-             <div className="w-full sm:w-36">
-               <Input 
-                 type="date" 
-                 label="Data Final" 
-                 value={dataFimFiltro} 
-                 onChange={(e) => setDataFimFiltro(e.target.value)} 
-                 containerClassName="!mb-0"
-               />
+             <div className="w-full sm:w-40">
+                {/* ✨ DatePicker da Data Final */}
+                <DatePicker
+                  label="Data Final"
+                  placeholder="Fim"
+                  date={dataFimFiltro ? new Date(`${dataFimFiltro}T12:00:00`) : undefined}
+                  onChange={date => setDataFimFiltro(date ? date.toISOString().split('T')[0] : '')}
+                />
              </div>
              <div className="w-px h-10 bg-border/60 hidden sm:block mx-1"></div>
              <div className="w-full sm:w-64">

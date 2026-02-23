@@ -3,7 +3,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Menu, X, BarChart3, LogOut, ChevronRight
 } from 'lucide-react';
-import { Drawer } from 'vaul'; // ✨ Importação do Vaul
+import { Drawer } from 'vaul'; 
 import { useAuth } from '../contexts/AuthContext';
 import { useVeiculos } from '../hooks/useVeiculos';
 import { ConfirmModal } from '../components/ui/ConfirmModal'; 
@@ -24,10 +24,7 @@ interface SidebarContentProps {
 function SidebarContent({ onClose, user, onLogout, onOpenFinanceiro }: SidebarContentProps) {
   const location = useLocation();
 
-  // Fechar sidebar ao mudar de rota (específico para mobile)
-  useEffect(() => {
-    if (onClose) onClose();
-  }, [location.pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+  // 🔥 REMOVIDO: O useEffect que estava aqui e que fechava o menu ao abrir foi movido para o AdminLayout!
 
   return (
     <>
@@ -135,6 +132,12 @@ export function AdminLayout() {
   const { logout, user } = useAuth();
   const { data: veiculos } = useVeiculos();
   const navigate = useNavigate();
+  const location = useLocation(); // ✨ Adicionado aqui
+
+  // ✨ CORREÇÃO: Fecha a sidebar no telemóvel apenas quando a rota muda de facto
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
 
   const handleLogout = () => {
     logout(); 

@@ -14,7 +14,6 @@ import { useVeiculos } from '../hooks/useVeiculos';
 // --- DESIGN SYSTEM ---
 import { PageHeader } from './ui/PageHeader';
 import { Button } from './ui/Button';
-import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { ListaResponsiva } from './ui/ListaResponsiva';
 import { Card } from './ui/Card';
@@ -22,6 +21,7 @@ import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { DropdownAcoes } from './ui/DropdownAcoes';
+import { DatePicker } from './ui/DatePicker'; // ✨ O nosso DatePicker importado
 import { TableStyles } from '../styles/table';
 
 // --- FORMS ---
@@ -187,22 +187,28 @@ export function HistoricoManutencoes({
         subtitle="Controlo absoluto de revisões, reparações e custos associados."
         extraAction={
           <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto items-end bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
-            <div className="w-full sm:w-36">
-              <Input 
-                type="date" 
-                label="Data Inicial" 
-                value={filtros.dataInicio} 
-                onChange={e => setFiltros(prev => ({ ...prev, dataInicio: e.target.value }))}
-                containerClassName="!mb-0"
+            <div className="w-full sm:w-40">
+              {/* ✨ DatePicker da Data Inicial acoplado direto no state */}
+              <DatePicker
+                label="Data Inicial"
+                placeholder="Início"
+                date={filtros.dataInicio ? new Date(`${filtros.dataInicio}T12:00:00`) : undefined}
+                onChange={date => setFiltros(prev => ({ 
+                    ...prev, 
+                    dataInicio: date ? date.toISOString().split('T')[0] : '' 
+                }))}
               />
             </div>
-            <div className="w-full sm:w-36">
-              <Input 
-                type="date" 
-                label="Data Final" 
-                value={filtros.dataFim} 
-                onChange={e => setFiltros(prev => ({ ...prev, dataFim: e.target.value }))}
-                containerClassName="!mb-0"
+            <div className="w-full sm:w-40">
+              {/* ✨ DatePicker da Data Final acoplado direto no state */}
+              <DatePicker
+                label="Data Final"
+                placeholder="Fim"
+                date={filtros.dataFim ? new Date(`${filtros.dataFim}T12:00:00`) : undefined}
+                onChange={date => setFiltros(prev => ({ 
+                    ...prev, 
+                    dataFim: date ? date.toISOString().split('T')[0] : '' 
+                }))}
               />
             </div>
             <div className="w-px h-10 bg-border/60 hidden sm:block mx-1"></div>

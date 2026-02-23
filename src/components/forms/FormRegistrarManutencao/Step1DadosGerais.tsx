@@ -1,10 +1,11 @@
 // src/components/forms/FormRegistrarManutencao/Step1DadosGerais.tsx
 import { useEffect, useMemo, useState } from 'react';
-import { useFormContext } from 'react-hook-form';
-import { Wrench, Truck, Calendar, Gauge, AlertTriangle } from 'lucide-react';
+import { useFormContext, Controller } from 'react-hook-form'; // ✨ Adicionado Controller
+import { Wrench, Truck, Gauge, AlertTriangle } from 'lucide-react'; // Removido Calendar (já vem no DatePicker)
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
-import { Callout } from '../../ui/Callout'; // ✨
+import { Callout } from '../../ui/Callout';
+import { DatePicker } from '../../ui/DatePicker'; // ✨ Nosso novo DatePicker
 import { formatKmVisual } from '../../../utils';
 import { api } from '../../../services/api';
 import { useVeiculos } from '../../../hooks/useVeiculos';
@@ -13,7 +14,8 @@ import type { Veiculo } from '../../../types';
 import type { ManutencaoFormValues, TipoManutencao } from './schema';
 
 export function Step1DadosGerais() {
-  const { register, watch, setValue, formState: { errors, isSubmitting } } = useFormContext<ManutencaoFormValues>();
+  // ✨ Extraído o control do form context
+  const { register, watch, setValue, control, formState: { errors, isSubmitting } } = useFormContext<ManutencaoFormValues>();
   
   const { data: veiculos = [], isLoading: loadV } = useVeiculos();
   const { data: fornecedores = [], isLoading: loadF } = useFornecedores();
@@ -26,7 +28,6 @@ export function Step1DadosGerais() {
   const veiculoIdSelecionado = watch('veiculoId');
   const kmAtualVisual = watch('kmAtual');
 
-  // ✨ Lógica para disparar o Callout de aviso
   const kmAtualNum = Number(kmAtualVisual?.replace(/\D/g, '')) || 0;
   const isKmInvalido = ultimoKmRegistrado > 0 && kmAtualNum > 0 && kmAtualNum < ultimoKmRegistrado;
 
@@ -140,7 +141,7 @@ export function Step1DadosGerais() {
         />
       )}
 
-      {/* ✨ CALLOUT DE AVISO DE KM INCONSISTENTE */}
+      {/* CALLOUT DE AVISO DE KM INCONSISTENTE */}
       {alvoSelecionado === 'VEICULO' && isKmInvalido && (
         <div className="animate-in fade-in zoom-in-95 duration-300">
           <Callout variant="warning" title="Odómetro Inconsistente" icon={AlertTriangle}>
@@ -158,13 +159,25 @@ export function Step1DadosGerais() {
           error={errors.fornecedorId?.message}
           disabled={isLocked}
         />
-        <Input
-          label="Data do Serviço / Fatura"
-          type="date"
-          icon={<Calendar className="w-4 h-4" />}
-          {...register("data")}
-          error={errors.data?.message}
-          disabled={isLocked}
+        
+        {/* ✨ AQUI: Subistituído por DatePicker com Controller */}
+        <Controller
+          control={control}
+          name="data"
+          render={({ field }) => (
+            <DatePicker
+              label="Data do Serviço / Fatura"
+              placeholder="Selecione a data"
+              // Convertendo de string para Date. O T12:00:00 blinda contra fuso horário anterior
+              date={field.value ? new Date(`${field.value}T12:00:00`) : undefined}
+              onChange={(newDate) => {
+                // Ao clicar no calendário, salva no form como YYYY-MM-DD
+                field.onChange(newDate ? newDate.toISOString().split('T')[0] : '');
+              }}
+              error={errors.data?.message}
+              disabled={isLocked}
+            />
+          )}
         />
       </div>
     </div>

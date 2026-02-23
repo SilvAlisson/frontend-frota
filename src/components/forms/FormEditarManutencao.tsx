@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useForm, useFieldArray, useWatch } from 'react-hook-form';
+import { useForm, useFieldArray, useWatch, Controller } from 'react-hook-form'; // ✨ Adicionado Controller
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
@@ -7,14 +7,15 @@ import { supabase } from '../../supabaseClient';
 import { toast } from 'sonner';
 import { 
   Trash2, Plus, AlertTriangle, Wrench, Truck, Gauge, 
-  Calendar, Check, Image as ImageIcon, Loader2, Info
-} from 'lucide-react';
+  Check, Image as ImageIcon, Loader2, Info
+} from 'lucide-react'; // Removido Calendar nativo
 
 // --- DESIGN SYSTEM ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Badge } from '../ui/Badge';
+import { DatePicker } from '../ui/DatePicker'; // ✨ Adicionado DatePicker
 
 // --- HOOKS ATÔMICOS ---
 import { useVeiculos } from '../../hooks/useVeiculos';
@@ -422,13 +423,22 @@ export function FormEditarManutencao({
                   disabled={isLocked}
                 />
 
-                <Input
-                  label="Data do Faturamento"
-                  type="date"
-                  icon={<Calendar className="w-4 h-4"/>}
-                  {...register("data")}
-                  error={errors.data?.message}
-                  disabled={isLocked}
+                {/* ✨ DatePicker via Controller */}
+                <Controller
+                  control={control}
+                  name="data"
+                  render={({ field }) => (
+                    <DatePicker
+                      label="Data do Faturamento"
+                      placeholder="Selecione a data"
+                      date={field.value ? new Date(`${field.value}T12:00:00`) : undefined}
+                      onChange={(newDate) => {
+                        field.onChange(newDate ? newDate.toISOString().split('T')[0] : '');
+                      }}
+                      error={errors.data?.message}
+                      disabled={isLocked}
+                    />
+                  )}
                 />
               </div>
 

@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form'; // ✨ Adicionado Controller
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -8,7 +8,8 @@ import { api } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
-import { FileText, Save, Calendar, Tag } from 'lucide-react';
+import { DatePicker } from '../ui/DatePicker'; // ✨ Adicionado DatePicker
+import { FileText, Save, Tag } from 'lucide-react'; // Removido Calendar nativo dos ícones aqui pois o DatePicker já tem
 
 const editDocumentoSchema = z.object({
   titulo: z.string().min(3, "O título precisa ter pelo menos 3 letras"),
@@ -28,7 +29,8 @@ interface FormEditarDocumentoProps {
 export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEditarDocumentoProps) {
   const queryClient = useQueryClient();
 
-  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<EditDocumentoFormData>({
+  // ✨ Extraído o control
+  const { register, handleSubmit, reset, watch, control, formState: { errors, isSubmitting } } = useForm<EditDocumentoFormData>({
     resolver: zodResolver(editDocumentoSchema),
   });
 
@@ -38,7 +40,6 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
   useEffect(() => {
     async function carregarDocumento() {
       try {
-        // Traz as informações atuais do documento para pré-preencher o form
         const response = await api.get(`/documentos-legais/${documentoId}`);
         const doc = response.data;
         
@@ -58,7 +59,6 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
 
   const mutation = useMutation({
     mutationFn: async (dados: EditDocumentoFormData) => {
-      // Se a categoria for permanente, forçamos a validade para null
       if (!showValidade) dados.dataValidade = null;
       
       const payload = {
@@ -91,6 +91,8 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
     { value: 'OUTROS', label: 'Outros Ficheiros' },
   ];
 
+  const isFormLocked = isSubmitting || mutation.isPending;
+
   return (
     <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="flex flex-col space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -100,6 +102,7 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
             icon={<FileText className="w-4 h-4 text-text-muted" />}
             {...register('titulo')} 
             error={errors.titulo?.message} 
+            disabled={isFormLocked}
           />
         </div>
         
@@ -109,15 +112,26 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
           icon={<Tag className="w-4 h-4" />}
           {...register('categoria')} 
           error={errors.categoria?.message} 
+          disabled={isFormLocked}
         />
         
+        {/* ✨ DatePicker acoplado via Controller */}
         {showValidade ? (
-          <Input 
-            label="Nova Data de Validade" 
-            type="date" 
-            icon={<Calendar className="w-4 h-4 text-text-muted" />}
-            {...register('dataValidade')} 
-            error={errors.dataValidade?.message} 
+          <Controller
+            control={control}
+            name="dataValidade"
+            render={({ field }) => (
+              <DatePicker
+                label="Nova Data de Validade"
+                placeholder="Sem validade"
+                date={field.value ? new Date(`${field.value}T12:00:00`) : undefined}
+                onChange={(newDate) => {
+                  field.onChange(newDate ? newDate.toISOString().split('T')[0] : '');
+                }}
+                error={errors.dataValidade?.message}
+                disabled={isFormLocked}
+              />
+            )}
           />
         ) : (
           <div className="flex flex-col justify-center bg-success/10 border border-success/20 rounded-xl p-3 h-[72px] mt-1.5">
@@ -130,6 +144,7 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
           <label className="text-[11px] font-black uppercase tracking-widest text-text-secondary ml-1">Observações (Opcional)</label>
           <textarea 
             {...register('descricao')} 
+            disabled={isFormLocked}
             className="w-full bg-surface border border-border/60 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all resize-none shadow-sm min-h-[80px]"
             placeholder="Anotações internas sobre este documento..."
           />
@@ -137,10 +152,10 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
       </div>
 
       <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-4 border-t border-border/60">
-        <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting || mutation.isPending}>
+        <Button type="button" variant="ghost" onClick={onCancel} disabled={isFormLocked}>
           Cancelar
         </Button>
-        <Button type="submit" variant="primary" icon={<Save className="w-4 h-4" />} isLoading={isSubmitting || mutation.isPending} className="shadow-button">
+        <Button type="submit" variant="primary" icon={<Save className="w-4 h-4" />} isLoading={isFormLocked} className="shadow-button">
           Gravar Alterações
         </Button>
       </div>

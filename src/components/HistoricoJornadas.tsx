@@ -17,7 +17,8 @@ import { ListaResponsiva } from './ui/ListaResponsiva';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
-import { ConfirmModal } from './ui/ConfirmModal'; // ✨ Adicionado
+import { ConfirmModal } from './ui/ConfirmModal'; 
+import { DatePicker } from './ui/DatePicker'; // ✨ O nosso DatePicker importado
 import { TableStyles } from '../styles/table';
 
 // --- COMPONENTES & FORMS ---
@@ -198,27 +199,33 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
 
             <div className="flex flex-col sm:flex-row gap-3 items-end sm:justify-between xl:justify-start">
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                <div className="w-full sm:w-32">
-                  <Input 
-                    type="date" 
-                    label="Data Início" 
-                    value={filtros.dataInicio}
-                    onChange={e => setFiltros(prev => ({...prev, dataInicio: e.target.value}))}
-                    containerClassName="!mb-0"
+                <div className="w-full sm:w-40">
+                  {/* ✨ DatePicker: Data Início */}
+                  <DatePicker
+                    label="Data Início"
+                    placeholder="Início"
+                    date={filtros.dataInicio ? new Date(`${filtros.dataInicio}T12:00:00`) : undefined}
+                    onChange={date => setFiltros(prev => ({ 
+                        ...prev, 
+                        dataInicio: date ? date.toISOString().split('T')[0] : '' 
+                    }))}
                   />
                 </div>
-                <div className="w-full sm:w-32">
-                  <Input 
-                    type="date" 
-                    label="Data Fim" 
-                    value={filtros.dataFim}
-                    onChange={e => setFiltros(prev => ({...prev, dataFim: e.target.value}))}
-                    containerClassName="!mb-0"
+                <div className="w-full sm:w-40">
+                  {/* ✨ DatePicker: Data Fim */}
+                  <DatePicker
+                    label="Data Fim"
+                    placeholder="Fim"
+                    date={filtros.dataFim ? new Date(`${filtros.dataFim}T12:00:00`) : undefined}
+                    onChange={date => setFiltros(prev => ({ 
+                        ...prev, 
+                        dataFim: date ? date.toISOString().split('T')[0] : '' 
+                    }))}
                   />
                 </div>
               </div>
 
-              {/* ✨ Botão de Exportar ocupando o espaço deixado pelo falecido Fantasma */}
+              {/* Botão de Exportar ocupando o espaço deixado pelo falecido Fantasma */}
               <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 xl:ml-auto">
                 <Button 
                   variant="secondary" 
