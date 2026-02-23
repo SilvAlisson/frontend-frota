@@ -122,8 +122,8 @@ export function LoginScreen() {
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background text-text-main space-y-6 animate-in fade-in duration-500">
         <Loader2 className="w-16 h-16 text-primary animate-spin" />
         <div className="text-center space-y-2">
-          <h2 className="text-xl font-black tracking-tight uppercase">Aceder ao Sistema...</h2>
-          <p className="text-sm font-bold text-text-muted animate-pulse">A validar túnel seguro</p>
+          <h2 className="text-xl font-black tracking-tight uppercase">Iniciando Gestão de Frota...</h2>
+          <p className="text-sm font-bold text-text-muted animate-pulse">Validando código QR...</p>
         </div>
       </div>
     );
@@ -136,7 +136,7 @@ export function LoginScreen() {
       {/* --- LADO ESQUERDO: IMAGEM FROTA (LIMPA E CINEMATOGRÁFICA) --- */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-zinc-950 overflow-hidden">
         
-        {/* ✨ Imagem de caminhão pesado em operação */}
+        {/* Imagem de caminhão pesado em operação */}
         <img
           src="https://plus.unsplash.com/premium_photo-1661935334659-a4f95e515c3b?q=80&w=861&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="Caminhão pesado em operação"
