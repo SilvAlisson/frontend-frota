@@ -24,8 +24,6 @@ interface SidebarContentProps {
 function SidebarContent({ onClose, user, onLogout, onOpenFinanceiro }: SidebarContentProps) {
   const location = useLocation();
 
-  // 🔥 REMOVIDO: O useEffect que estava aqui e que fechava o menu ao abrir foi movido para o AdminLayout!
-
   return (
     <>
       {/* Header da Sidebar */}
@@ -222,7 +220,7 @@ export function AdminLayout() {
         onConfirm={handleLogout}
         title="Encerrar Sessão"
         description="Tem a certeza que deseja fechar a sua sessão e sair do sistema?"
-        confirmLabel="Sair de Forma Segura"
+        confirmLabel="Sair do Sistema?"
         variant="danger"
       />
 
