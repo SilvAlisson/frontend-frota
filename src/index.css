@@ -4,87 +4,69 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @theme {
-  /* --- PALETA DE CORES (OKLCH - High Dynamic Range) --- */
-  /* Por que OKLCH? Para permitir opacidade nativa (ex: bg-primary/20) e gradientes perfeitos */
-  
-  /* Azul Petróleo (Base da Marca) */
+  /* --- 1. CORES ESTÁTICAS (Marca) --- */
   --color-klin-50: oklch(0.97 0.02 235);
   --color-klin-100: oklch(0.94 0.04 235);
   --color-klin-200: oklch(0.88 0.06 235);
   --color-klin-300: oklch(0.80 0.09 235);
   --color-klin-400: oklch(0.65 0.12 235);
-  --color-klin-500: oklch(0.52 0.13 235.5); /* Equivalente vibrante ao #126A91 */
+  --color-klin-500: oklch(0.52 0.13 235.5);
   --color-klin-600: oklch(0.45 0.13 235.5);
-  --color-klin-700: oklch(0.38 0.11 235.5); /* Equivalente ao #0E4A5C */
+  --color-klin-700: oklch(0.38 0.11 235.5);
   --color-klin-800: oklch(0.30 0.09 235.5);
   --color-klin-900: oklch(0.20 0.06 235.5);
   
-  /* Verde Sucesso (Ajustado para harmonia visual) */
-  --color-success-500: oklch(0.62 0.14 175);
-  
-  /* Roxo "Fantasma" (Para os registros automáticos) */
   --color-ghost-500: oklch(0.65 0.20 290);
 
-  /* --- SISTEMA SEMÂNTICO --- */
-  /* Mapeamos as cores puras para funções do sistema */
-  
-  --color-primary: var(--color-klin-500);
-  --color-primary-foreground: oklch(1 0 0); /* Branco Puro */
-  --color-primary-hover: var(--color-klin-700);
-  --color-primary-soft: var(--color-klin-50);
+  /* --- 2. MAPEAMENTO SEMÂNTICO DINÂMICO --- */
+  /* O Tailwind vai ler estas variáveis que mudam dependendo do tema (claro/escuro) */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
 
-  --color-secondary: oklch(1 0 0);
-  --color-secondary-foreground: var(--color-klin-700);
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
   
-  /* Superfícies */
-  --color-background: oklch(0.985 0.002 240); /* Cool Gray muito leve */
-  --color-surface: oklch(1 0 0);
-  --color-surface-hover: oklch(0.99 0.002 240);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-text-main: var(--text-main);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --color-error: var(--error);
+  --color-error-foreground: var(--error-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+
+  /* --- 3. SOMBRAS TINTURADAS --- */
+  --shadow-card: var(--shadow-card-val);
+  --shadow-float: var(--shadow-float-val);
+  --shadow-button: var(--shadow-button-val);
+
+  /* --- 4. CONFIGURAÇÕES GERAIS --- */
+  --font-sans: "Inter", ui-sans-serif, system-ui;
+  --font-mono: "JetBrains Mono", monospace;
   
-  --color-border: oklch(0.89 0.01 240);
-  --color-input: oklch(0.92 0.01 240);
-  --color-ring: var(--color-klin-500);
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.25rem;
 
-  /* Texto */
-  --color-text-main: oklch(0.20 0.04 240); /* Slate Profundo */
-  --color-text-secondary: oklch(0.45 0.04 240);
-  --color-text-muted: oklch(0.70 0.02 240);
-
-  /* Status */
-  --color-error: oklch(0.63 0.22 29);
-  --color-error-foreground: oklch(1 0 0);
-  
-  --color-warning: oklch(0.75 0.15 85);
-  --color-warning-foreground: oklch(1 0 0);
-
-  --color-success: var(--color-success-500);
-  --color-success-foreground: oklch(1 0 0);
-
-  /* --- SOMBRAS "TINTURADAS" (Color Mix) --- */
-  /* O segredo do design premium: Sombras não são pretas, são azul-escuras transparentes */
-  
-  --shadow-card: 
-    0 1px 3px 0 color-mix(in srgb, var(--color-klin-900) 6%, transparent), 
-    0 1px 2px -1px color-mix(in srgb, var(--color-klin-900) 4%, transparent);
-  
-  --shadow-float: 
-    0 10px 15px -3px color-mix(in srgb, var(--color-klin-900) 12%, transparent), 
-    0 4px 6px -4px color-mix(in srgb, var(--color-klin-900) 8%, transparent);
-    
-  --shadow-button: 0 1px 2px 0 color-mix(in srgb, var(--color-klin-900) 10%, transparent);
-
-  /* --- ANIMAÇÕES NATIVAS V4 --- */
   --animate-ghost-pulse: ghost-pulse 3s infinite ease-in-out;
-  --animate-enter: enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; /* Curva Apple-like */
+  --animate-enter: enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   
   @keyframes ghost-pulse {
     0%, 100% { 
-      background-color: color-mix(in srgb, var(--color-surface) 100%, transparent);
-      border-color: var(--color-border);
+      background-color: color-mix(in srgb, var(--surface) 100%, transparent);
+      border-color: var(--border);
     }
     50% { 
-      /* Pulsa para um roxo espectral muito suave */
-      background-color: color-mix(in srgb, var(--color-ghost-500) 8%, var(--color-surface)); 
+      background-color: color-mix(in srgb, var(--color-ghost-500) 8%, var(--surface)); 
       border-color: var(--color-ghost-500);
     }
   }
@@ -93,27 +75,79 @@
     from { opacity: 0; transform: translateY(8px) scale(0.98); }
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
-
-  /* Fontes */
-  --font-sans: "Inter", ui-sans-serif, system-ui;
-  --font-mono: "JetBrains Mono", monospace;
-  
-  /* Raios */
-  --radius-lg: 0.75rem;
-  --radius-md: 0.5rem;
-  --radius-sm: 0.25rem;
 }
 
-/* --- 2. CAMADA BASE (Reset Inteligente) --- */
+/* --- CAMADA BASE (Variáveis de Tema) --- */
 @layer base {
+  /* TEMA CLARO (Default) */
+  :root {
+    --primary: var(--color-klin-500);
+    --primary-foreground: oklch(1 0 0);
+    --primary-hover: var(--color-klin-700);
+    --primary-soft: var(--color-klin-50);
+
+    --background: oklch(0.985 0.002 240);
+    --surface: oklch(1 0 0);
+    --surface-hover: oklch(0.97 0.002 240);
+    
+    --border: oklch(0.89 0.01 240);
+    --input: oklch(0.92 0.01 240);
+    --ring: var(--color-klin-500);
+
+    --text-main: oklch(0.20 0.04 240);
+    --text-secondary: oklch(0.45 0.04 240);
+    --text-muted: oklch(0.65 0.02 240);
+
+    --error: oklch(0.63 0.22 29);
+    --error-foreground: oklch(1 0 0);
+    --warning: oklch(0.75 0.15 85);
+    --warning-foreground: oklch(1 0 0);
+    --success: oklch(0.62 0.14 175);
+    --success-foreground: oklch(1 0 0);
+
+    --shadow-card-val: 0 1px 3px 0 color-mix(in srgb, var(--color-klin-900) 6%, transparent), 0 1px 2px -1px color-mix(in srgb, var(--color-klin-900) 4%, transparent);
+    --shadow-float-val: 0 10px 15px -3px color-mix(in srgb, var(--color-klin-900) 12%, transparent), 0 4px 6px -4px color-mix(in srgb, var(--color-klin-900) 8%, transparent);
+    --shadow-button-val: 0 1px 2px 0 color-mix(in srgb, var(--color-klin-900) 10%, transparent);
+  }
+
+  /* TEMA ESCURO (Apple / Vercel style) */
+  .dark {
+    --primary: var(--color-klin-400); /* Azul um pouco mais claro para destacar no escuro */
+    --primary-foreground: oklch(1 0 0);
+    --primary-hover: var(--color-klin-300);
+    --primary-soft: color-mix(in srgb, var(--color-klin-500) 15%, transparent);
+
+    --background: oklch(0.15 0.01 240); /* Fundo muito escuro (Slate) */
+    --surface: oklch(0.20 0.02 240);    /* Cartões levemente mais claros que o fundo */
+    --surface-hover: oklch(0.25 0.02 240);
+    
+    --border: oklch(0.28 0.02 240);
+    --input: oklch(0.25 0.02 240);
+    --ring: var(--color-klin-400);
+
+    --text-main: oklch(0.95 0.01 240); /* Quase branco */
+    --text-secondary: oklch(0.75 0.02 240);
+    --text-muted: oklch(0.55 0.02 240);
+
+    --error: oklch(0.65 0.20 29);
+    --error-foreground: oklch(1 0 0);
+    --warning: oklch(0.80 0.15 85);
+    --warning-foreground: oklch(0.15 0.01 240);
+    --success: oklch(0.65 0.14 175);
+    --success-foreground: oklch(1 0 0);
+
+    /* No modo escuro, as sombras devem ser quase pretas absolutas */
+    --shadow-card-val: 0 4px 6px -1px color-mix(in srgb, black 40%, transparent);
+    --shadow-float-val: 0 20px 25px -5px color-mix(in srgb, black 50%, transparent);
+    --shadow-button-val: 0 1px 2px 0 color-mix(in srgb, black 30%, transparent);
+  }
+
   body {
-    @apply bg-background text-text-main antialiased font-sans;
-    /* Features OpenType para números tabulares (importante para tabelas financeiras) */
+    @apply bg-background text-text-main antialiased font-sans transition-colors duration-300;
     font-feature-settings: "tnum", "cv02", "cv03", "cv04"; 
     -webkit-font-smoothing: antialiased;
   }
 
-  /* Scrollbar Moderna e Minimalista */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -122,40 +156,32 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-300/60 rounded-full transition-colors;
+    @apply bg-text-muted/30 rounded-full transition-colors;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-primary/60; /* Usa a cor primária com opacidade */
+    @apply bg-primary/60;
   }
-  
-  /* Remove highlight azul mobile ao clicar */
   * {
     -webkit-tap-highlight-color: transparent;
   }
 }
 
-/* --- 3. UTILITÁRIOS DE ELITE --- */
+/* --- UTILITÁRIOS --- */
 @layer utilities {
-  
-  /* Vidro Fosco Real (Glassmorphism) */
   .glass {
-    @apply bg-surface/80 backdrop-blur-xl border border-white/40 shadow-float;
+    @apply bg-surface/80 backdrop-blur-xl border border-border/50 shadow-float;
   }
 
-  /* O Fantasma (Assombração do Sistema) */
   .ghost-row {
     @apply relative border-l-4 overflow-hidden transition-colors;
-    /* A animação agora vem da variável do tema v4 */
     animation: var(--animate-ghost-pulse);
     border-left-color: var(--color-ghost-500);
   }
 
-  /* Tipografia Técnica para IDs e Placas */
   .text-data {
     @apply font-mono tracking-tight text-text-secondary font-medium text-xs;
   }
   
-  /* Hover 3D Sutil para Cards */
   .hover-lift {
     @apply transition-transform duration-300 ease-out;
   }

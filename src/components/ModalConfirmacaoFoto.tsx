@@ -3,9 +3,9 @@ import axios from 'axios';
 import { api } from '../services/api';
 import { supabase } from '../supabaseClient';
 import { Button } from './ui/Button';
+import { Modal } from './ui/Modal'; // ✨ USAMOS O NOSSO MODAL BLINDADO!
 import { toast } from 'sonner';
 import { Camera, Loader2, Check, AlertCircle } from 'lucide-react';
-import { Modal } from './ui/Modal'; 
 
 // Estilos padronizados Premium
 const fileInputContainer = "relative border-2 border-dashed border-border/60 rounded-3xl p-4 hover:bg-surface-hover transition-all duration-300 cursor-pointer group hover:border-primary/50 flex flex-col items-center justify-center min-h-[280px] overflow-hidden bg-surface shadow-sm";
@@ -206,19 +206,28 @@ export function ModalConfirmacaoFoto({
     });
   };
 
-  return (
-    <Modal 
-      isOpen={true} 
-      onClose={!loading ? onClose : () => {}} 
-      title={titulo} 
-      nested={nested} 
-    >
-      <div className="flex flex-col h-full">
+  // Trava de segurança extra para impedir fecho acidental no "X"
+  const safeOnClose = () => {
+    if (!loading && !processandoFoto) {
+      onClose();
+    }
+  };
 
-        <div className="space-y-6 flex-1">
+  return (
+    <Modal
+      isOpen={true}
+      onClose={safeOnClose}
+      title={titulo}
+      nested={nested}
+      className="max-w-md" // Mantém a proporção elegante para fotos
+    >
+      <div className="flex flex-col h-full space-y-6">
+        
+        {/* CONTEÚDO PRINCIPAL */}
+        <div className="space-y-6">
           {/* Visor de Painel */}
           {kmParaConfirmar !== null && (
-            <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-5 rounded-2xl border border-primary/20 text-center shadow-inner relative overflow-hidden mt-2">
+            <div className="bg-gradient-to-br from-primary/10 to-primary/5 p-5 rounded-2xl border border-primary/20 text-center shadow-inner relative overflow-hidden">
               <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.03] mix-blend-overlay"></div>
               <p className="text-[10px] text-primary font-black uppercase tracking-[0.2em] mb-1.5 relative z-10">
                 Leitura do Painel
@@ -244,7 +253,7 @@ export function ModalConfirmacaoFoto({
               <input
                 type="file"
                 accept="image/*"
-                capture="environment"
+                capture="environment" // 📸 Força a abrir a câmara traseira no mobile
                 className={hiddenInput}
                 onChange={handleFileChange}
                 disabled={loading || processandoFoto}
@@ -291,14 +300,14 @@ export function ModalConfirmacaoFoto({
           </div>
         </div>
 
-        {/* 🔥 RODAPÉ FLUTUANTE PREMIUM (Sticky Footer) 🔥 */}
-        <div className="sticky bottom-[-1.25rem] -mx-5 px-5 py-4 mt-8 bg-surface/80 backdrop-blur-xl border-t border-border/60 flex gap-3 z-20 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+        {/* 🔥 RODAPÉ STICKY (O truque -mx-5 -mb-5 cola-o aos limites do Modal) 🔥 */}
+        <div className="mt-auto pt-5 border-t border-border/60 bg-surface flex gap-3 pb-safe -mx-5 -mb-5 p-5 sticky bottom-0 z-10 rounded-b-[2rem]">
           <Button
             type="button"
             variant="ghost"
             className="flex-1 h-14 font-bold bg-surface-hover/50 hover:bg-surface-hover"
-            onClick={onClose}
-            disabled={loading}
+            onClick={safeOnClose}
+            disabled={loading || processandoFoto}
           >
             Cancelar
           </Button>
