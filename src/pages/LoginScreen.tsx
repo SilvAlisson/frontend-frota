@@ -136,26 +136,28 @@ export function LoginScreen() {
       {/* --- LADO ESQUERDO: IMAGEM FROTA (LIMPA E CINEMATOGRÁFICA) --- */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-zinc-950 overflow-hidden">
         
-        {/* ✨ Imagem de caminhão pesado/poliguindaste em estrada */}
+        {/* ✨ Imagem de caminhão pesado em operação (Mais clara e sem animações que quebram o código) */}
         <img
-          src="https://images.unsplash.com/photo-1605810731557-010ab28eb88e?q=80&w=2070&auto=format&fit=crop"
+          src="https://images.unsplash.com/photo-1621905252507-b35492cc74b4?q=80&w=2069&auto=format&fit=crop"
           alt="Caminhão pesado em operação"
-          className="absolute inset-0 w-full h-full object-cover opacity-60 scale-105 animate-[kenburns_20s_ease-in-out_infinite_alternate]"
+          className="absolute inset-0 w-full h-full object-cover opacity-50"
         />
         
-        {/* Gradiente escuro para dar contraste ao texto, com um brilho super sutil da cor primária no canto inferior */}
-        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent"></div>
-        <div className="absolute -bottom-32 -left-32 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] pointer-events-none"></div>
+        {/* Gradiente escuro otimizado para não esconder a foto */}
+        <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/70 to-zinc-950/20"></div>
+        
+        {/* Brilho da marca (Azul Klin) */}
+        <div className="absolute -bottom-32 -left-32 w-[600px] h-[600px] bg-primary/30 rounded-full blur-[120px] pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col justify-end p-16 h-full text-white w-full">
           <div className="mb-6 animate-in slide-in-from-left-8 duration-700 fade-in">
             <div className="w-16 h-16 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl flex items-center justify-center mb-8 shadow-[0_8px_30px_rgb(0,0,0,0.12)]">
               <Truck className="w-8 h-8 text-white" />
             </div>
-            <h1 className="text-5xl font-black tracking-tighter mb-4 leading-tight">
+            <h1 className="text-5xl font-black tracking-tighter mb-4 leading-tight drop-shadow-lg">
               A Nova Era da <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-white to-white/60">Gestão de Frota.</span>
             </h1>
-            <p className="text-zinc-300 font-medium text-lg max-w-md leading-relaxed">
+            <p className="text-zinc-300 font-medium text-lg max-w-md leading-relaxed drop-shadow-md">
               Centralizando o controle completo das <strong>Operações</strong>, <strong>Abastecimentos</strong> e <strong>Manutenções</strong> em um único centro de comando inteligente, garantindo eficiência e rastreabilidade em tempo real.
             </p>
           </div>
