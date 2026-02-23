@@ -138,7 +138,7 @@ export function LoginScreen() {
         
         {/* ✨ Imagem de caminhão pesado em operação (Mais clara e sem animações que quebram o código) */}
         <img
-          src="https://images.unsplash.com/photo-1621905252507-b35492cc74b4?q=80&w=2069&auto=format&fit=crop"
+          src="https://plus.unsplash.com/premium_photo-1661935334659-a4f95e515c3b?q=80&w=861&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="Caminhão pesado em operação"
           className="absolute inset-0 w-full h-full object-cover opacity-50"
         />
