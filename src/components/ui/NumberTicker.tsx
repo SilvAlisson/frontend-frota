@@ -11,7 +11,7 @@ interface NumberTickerProps {
 
 export function NumberTicker({
   value,
-  duration = 2.5, 
+  duration = 3.5, 
   className,
   formatter
 }: NumberTickerProps) {
