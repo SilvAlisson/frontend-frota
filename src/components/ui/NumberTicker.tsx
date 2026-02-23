@@ -11,7 +11,7 @@ interface NumberTickerProps {
 
 export function NumberTicker({
   value,
-  duration = 1.5, // Duração de 1.5 segundos por padrão
+  duration = 2.5, // Duração de 1.5 segundos por padrão
   className,
   formatter
 }: NumberTickerProps) {
