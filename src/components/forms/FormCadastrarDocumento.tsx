@@ -1,17 +1,18 @@
 import { useState, useMemo, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { supabase } from '../../supabaseClient'; 
 import { useCreateDocumento } from '../../hooks/useDocumentosLegais';
 import { useVeiculos } from '../../hooks/useVeiculos'; 
 import { toast } from 'sonner';
-import { UploadCloud, FileText, Calendar, Truck, Save, AlertTriangle, Loader2, Info } from 'lucide-react';
+import { UploadCloud, FileText, Truck, Save, AlertTriangle, Loader2, Info } from 'lucide-react';
 
 // Componentes UI
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
+import { DatePicker } from '../ui/DatePicker';
 
 // Schema
 const docSchema = z.object({
@@ -47,7 +48,8 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
     return Array.from(new Set(tipos)).sort();
   }, [veiculos]);
 
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<DocFormInput, any, DocFormOutput>({
+  // ✨ Extraímos o `control` do useForm
+  const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm<DocFormInput, any, DocFormOutput>({
     resolver: zodResolver(docSchema),
     defaultValues: { 
       titulo: '',
@@ -103,7 +105,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
         arquivoUrl: publicUrl,
         tipoVeiculo: data.tipoVeiculo || undefined,
         veiculoId: data.veiculoId || undefined, 
-        dataValidade: data.dataValidade ? new Date(data.dataValidade) : undefined,
+        dataValidade: data.dataValidade ? new Date(data.dataValidade + "T12:00:00Z") : undefined,
       }, {
         onSuccess: () => onSuccess()
       });
@@ -116,7 +118,6 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
     }
   };
 
-  // Mapeamento de opções para os Selects
   const categoriasOptions = [
     { value: "AST", label: "⚠️ AST (Análise de Segurança)" },
     { value: "LICENCA_AMBIENTAL", label: "Licença Ambiental (Global)" },
@@ -237,13 +238,26 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 items-start">
+              
+              {/* AQUI ESTÁ O NOSSO DATE PICKER COM CONTROLLER */}
               <div>
-                <Input 
-                    label="Válido até" 
-                    type="date" 
-                    icon={<Calendar className="w-4 h-4 text-primary/70" />}
-                    {...register('dataValidade')} 
-                    disabled={isFormLocked} 
+                <Controller
+                  control={control}
+                  name="dataValidade"
+                  render={({ field }) => (
+                    <DatePicker
+                      label="Válido até"
+                      placeholder="Sem validade"
+                      // Convertendo de volta para Date. O T12:00:00 evita bugs de timezone (dia anterior).
+                      date={field.value ? new Date(`${field.value}T12:00:00`) : undefined}
+                      onChange={(newDate) => {
+                        // Converte o Date para 'YYYY-MM-DD' e guarda no react-hook-form
+                        field.onChange(newDate ? newDate.toISOString().split('T')[0] : '');
+                      }}
+                      error={errors.dataValidade?.message}
+                      disabled={isFormLocked}
+                    />
+                  )}
                 />
               </div>
 
@@ -309,7 +323,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
             type="submit"
             variant="primary"
             isLoading={isFormLocked}
-            icon={uploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4" />} // 🔥 CORRIGIDO AQUI: leftIcon -> icon
+            icon={uploading ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4" />}
             className="w-full sm:w-auto shadow-button hover:shadow-float-primary px-10 font-black uppercase tracking-tight"
           >
             {uploading ? 'Enviando Ficheiro...' : 'Arquivar Documento'}

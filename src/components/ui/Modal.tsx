@@ -62,6 +62,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
                 onOpenChange={(open) => !open && onClose()} 
                 shouldScaleBackground
                 nested={nested} 
+                dismissible={false} // ✨ CORREÇÃO: Desativa o fecho por arraste!
             >
                 <Drawer.Portal>
                     <Drawer.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[9999]" />
@@ -71,26 +72,30 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
                             "bg-surface flex flex-col rounded-t-[2rem] fixed bottom-0 left-0 right-0 z-[9999] outline-none border-t border-border shadow-[0_-10px_40px_rgba(0,0,0,0.3)]",
                             className
                         )}
-                        // 🔥 SOLUÇÃO BIG TECH: Inline Style ignora as falhas do Tailwind.
-                        // 88dvh garante que não brigue com a barra de endereços do Safari.
-                        // O env() protege fisicamente os botões do Home Indicator do iPhone.
                         style={{ 
                             maxHeight: '88dvh', 
                             paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' 
                         }}
                     >
-                        {/* Pega-mão (Handle) */}
+                        {/* Pega-mão (Handle) - Mantido apenas pela estética, mesmo sem arraste */}
                         <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-border/80 mt-4 mb-2" />
                         
                         {title && (
-                            <div className="px-6 pb-4 text-center border-b border-border/50 shrink-0">
+                            <div className="px-6 pb-4 flex items-center justify-between border-b border-border/50 shrink-0">
                                 <Drawer.Title className="font-black text-xl text-text-main tracking-tight">
                                     {title}
                                 </Drawer.Title>
+                                {/* ✨ NOVO: Botão de fechar visível no Mobile */}
+                                <button
+                                    onClick={onClose}
+                                    className="p-2 -mr-2 rounded-xl text-text-muted hover:text-text-main hover:bg-surface-hover transition-all active:scale-95 bg-surface-hover/50"
+                                    aria-label="Fechar modal"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
                             </div>
                         )}
                         
-                        {/* 🔑 A classe 'relative' foi adicionada aqui para permitir que rodapés fiquem "Sticky" (Flutuantes) */}
                         <div className="flex-1 overflow-y-auto overflow-x-hidden p-5 custom-scrollbar min-h-0 relative">
                             {children}
                         </div>
