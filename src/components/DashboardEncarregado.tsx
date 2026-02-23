@@ -149,7 +149,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                             <ActionCard 
                                 icon={Gauge}
                                 title="Monitoramento da Frota"
-                                desc="Supervisionar veículos em operação e forçar fecho de viagens."
+                                desc="Supervisionar veículos em operação e forçar fechamento de turno."
                                 style={{ gradient: 'from-blue-600 to-blue-500', border: 'border-blue-500' }}
                                 onClick={() => setView('MONITORAMENTO')}
                                 badge={jornadasAbertas.length > 0 ? `${jornadasAbertas.length} em Movimento` : null}
@@ -158,15 +158,15 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                             <ActionCard 
                                 icon={Droplets}
                                 title="Lançar Abastecimento"
-                                desc="Registar entrada de combustível, aditivo ou lavagem via faturas."
+                                desc="Registrar abastecimento de combustível e ou aditivo."
                                 style={{ gradient: 'from-amber-500 to-orange-500', border: 'border-orange-500' }}
                                 onClick={() => setModalAbastecimentoOpen(true)}
                             />
 
                             <ActionCard 
                                 icon={Key}
-                                title="Viatura Pessoal"
-                                desc={minhaJornadaAtiva ? "Aceder e encerrar a sua viagem atual." : "Iniciar o uso de um veículo utilitário da empresa."}
+                                title="Veículo Administrativo"
+                                desc={minhaJornadaAtiva ? "Aceder e encerrar a sua viagem atual." : "Iniciar turno com a guerreira (veículo utilitário da empresa)."}
                                 style={{ gradient: 'from-emerald-600 to-emerald-500', border: 'border-emerald-500' }}
                                 onClick={() => setView('MINHA_JORNADA')}
                             />
@@ -182,7 +182,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                             <ActionCard 
                                 icon={History}
                                 title="Histórico de Ações"
-                                desc="Consultar todos os abastecimentos registados e fechados."
+                                desc="Consultar todos os abastecimentos registados."
                                 style={{ gradient: 'from-slate-700 to-slate-600', border: 'border-slate-600' }}
                                 onClick={() => setView('HISTORICO')}
                             />

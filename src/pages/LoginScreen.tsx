@@ -206,9 +206,9 @@ export function LoginScreen() {
           {mode === 'CREDENTIALS' && (
             <form onSubmit={handleSubmit(onCredentialsSubmit)} className="space-y-5 animate-in slide-in-from-left-4 fade-in duration-300">
               <Input
-                label="Correio Eletrónico"
+                label="Digite seu E-mail"
                 type="email"
-                placeholder="nome@klin.com.br"
+                placeholder="nome@klinambiental.com.br"
                 {...register('email')}
                 error={errors.email?.message}
                 icon={<Mail className="w-5 h-5 text-text-muted" />}
@@ -218,7 +218,7 @@ export function LoginScreen() {
 
               <div className="space-y-2">
                 <Input
-                  label="Palavra-passe"
+                  label="Senha"
                   type="password"
                   placeholder="••••••••"
                   {...register('password')}
@@ -229,7 +229,7 @@ export function LoginScreen() {
                   containerClassName="!mb-0"
                 />
                 <div className="flex justify-end">
-                  <a href="#" className="text-xs font-bold text-text-secondary hover:text-primary transition-colors">Recuperar acesso?</a>
+                  <a href="#" className="text-xs font-bold text-text-secondary hover:text-primary transition-colors">Esqueceu sua Senha?</a>
                 </div>
               </div>
 
@@ -241,7 +241,7 @@ export function LoginScreen() {
                 disabled={isSubmitting}
               >
                 {isSubmitting ? 'A Autenticar...' : (
-                  <>Aceder à Plataforma <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
+                  <>Entrar <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
                 )}
               </Button>
             </form>
