@@ -9,10 +9,11 @@ import { cn } from '../lib/utils';
 // --- HOOKS ATÔMICOS ---
 import { useVeiculos } from '../hooks/useVeiculos';
 
-// --- PRIMITIVOS ---
+// --- PRIMITIVOS & REGISTRIES ---
 import { Button } from './ui/Button';
 import { Card } from './ui/Card';
 import { Select } from './ui/Select'; 
+import { NumberTicker } from './ui/NumberTicker';
 
 import {
   Fuel, Wrench, Gauge, DollarSign, Activity, 
@@ -24,9 +25,11 @@ interface DashboardRelatoriosProps {
   onDrillDown?: (tipo: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => void;
 }
 
+// PROPS ATUALIZADAS PARA SUPORTAR O TICKER
 interface KpiCardProps {
   titulo: string;
-  valor: string;
+  valorRaw?: number; 
+  formatter: (val: number) => string;
   descricao: string;
   onClick?: () => void;
   loading?: boolean;
@@ -36,7 +39,7 @@ interface KpiCardProps {
 }
 
 // --- KPI CARD PREMIUM (GLASSMORPHISM & GLOW) ---
-function KpiCard({ titulo, valor, descricao, onClick, loading, highlight, variant = 'default', icon }: KpiCardProps) {
+function KpiCard({ titulo, valorRaw, formatter, descricao, onClick, loading, highlight, variant = 'default', icon }: KpiCardProps) {
   if (loading) {
     return (
       <Card className={cn("flex flex-col justify-between overflow-hidden border-border/40 bg-surface/50", highlight ? "min-h-[160px]" : "min-h-[150px]")}>
@@ -88,9 +91,10 @@ function KpiCard({ titulo, valor, descricao, onClick, loading, highlight, varian
             "font-mono font-black text-text-main tracking-tighter leading-none truncate transition-colors duration-300",
             highlight ? "text-4xl sm:text-5xl" : "text-2xl sm:text-3xl"
           )}
-          title={valor}
+          title={formatter(valorRaw || 0)}
         >
-          {valor}
+          {/* ✨ A MÁGICA ACONTECE AQUI */}
+          <NumberTicker value={valorRaw || 0} formatter={formatter} duration={1.5} />
         </span>
         
         <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between shrink-0">
@@ -103,7 +107,6 @@ function KpiCard({ titulo, valor, descricao, onClick, loading, highlight, varian
         </div>
       </div>
       
-      {/* Reflexo de fundo sutil */}
       <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-current opacity-[0.02] rounded-full blur-2xl group-hover:opacity-[0.05] transition-opacity pointer-events-none" />
     </Card>
   );
@@ -111,7 +114,6 @@ function KpiCard({ titulo, valor, descricao, onClick, loading, highlight, varian
 
 export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
   const navigate = useNavigate();
-
   const { data: veiculos = [] } = useVeiculos();
 
   const [ano, setAno] = useState(new Date().getFullYear());
@@ -125,16 +127,14 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
   const [loadingGrafico, setLoadingGrafico] = useState(false);
 
   const handleNavigation = (rotaPadrao: string, tipoDrillDown: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => {
-    if (onDrillDown) {
-      onDrillDown(tipoDrillDown);
-    } else {
-      navigate(rotaPadrao);
-    }
+    if (onDrillDown) onDrillDown(tipoDrillDown);
+    else navigate(rotaPadrao);
   };
 
-  const formatBRL = (val?: number) => val?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) || 'R$ 0,00';
-  const formatNum = (val?: number) => val?.toLocaleString('pt-BR') || '0';
-  const formatDec = (val?: number) => val?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0,00';
+  // ✨ Formatadores agora recebem e devolvem APENAS os números para a animação
+  const formatBRL = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const formatNum = (val: number) => val.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+  const formatDec = (val: number) => val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   useEffect(() => {
     const carregarDados = async () => {
@@ -177,12 +177,12 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
   const handleExportar = () => {
     if (!kpis) return;
     const dados = [
-      { Indicador: 'Custo Total Operacional', Valor: formatBRL(kpis.custoTotalGeral) },
-      { Indicador: 'Quilometragem Total', Valor: formatNum(kpis.kmTotalRodado) },
-      { Indicador: 'Custo Médio por KM', Valor: formatBRL(kpis.custoMedioPorKM) },
-      { Indicador: 'Consumo Médio (Km/L)', Valor: formatDec(kpis.consumoMedioKML) },
-      { Indicador: 'Gasto com Combustível', Valor: formatBRL(kpis.custoTotalCombustivel) },
-      { Indicador: 'Gasto com Manutenção', Valor: formatBRL(kpis.custoTotalManutencao) },
+      { Indicador: 'Custo Total Operacional', Valor: formatBRL(kpis.custoTotalGeral || 0) },
+      { Indicador: 'Quilometragem Total', Valor: formatNum(kpis.kmTotalRodado || 0) },
+      { Indicador: 'Custo Médio por KM', Valor: formatBRL(kpis.custoMedioPorKM || 0) },
+      { Indicador: 'Consumo Médio (Km/L)', Valor: formatDec(kpis.consumoMedioKML || 0) },
+      { Indicador: 'Gasto com Combustível', Valor: formatBRL(kpis.custoTotalCombustivel || 0) },
+      { Indicador: 'Gasto com Manutenção', Valor: formatBRL(kpis.custoTotalManutencao || 0) },
     ];
     exportarParaExcel(dados, `Report_Frota_${mes}_${ano}.xlsx`);
     toast.success("Download do relatório iniciado!");
@@ -207,7 +207,7 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
   return (
     <div className="space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
-      {/* HEADER E FILTROS (Estilo macOS / Flutuante) */}
+      {/* HEADER E FILTROS */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 border-b border-border/60 pb-6 sticky top-0 bg-background/90 backdrop-blur-xl z-20 pt-2 -mt-2">
         <div>
           <h2 className="text-2xl sm:text-3xl font-black text-text-main tracking-tight leading-none">Inteligência Operacional</h2>
@@ -216,7 +216,6 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
           </p>
         </div>
 
-        {/* Barra de Ferramentas */}
         <div className="flex flex-wrap lg:flex-nowrap gap-3 w-full xl:w-auto items-center bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
           <div className="w-full sm:w-[130px]">
             <Select
@@ -268,7 +267,8 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
         <div className="sm:col-span-2">
           <KpiCard
             titulo="Custo Operacional Global"
-            valor={formatBRL(kpis?.custoTotalGeral)}
+            valorRaw={kpis?.custoTotalGeral}
+            formatter={formatBRL}
             descricao="Combustíveis + Manutenção + Insumos"
             loading={loading}
             highlight
@@ -280,7 +280,8 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
 
         <KpiCard
           titulo="Quilometragem Total"
-          valor={formatNum(kpis?.kmTotalRodado)}
+          valorRaw={kpis?.kmTotalRodado}
+          formatter={formatNum}
           descricao="Distância percorrida no período"
           loading={loading}
           variant="info"
@@ -290,7 +291,8 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
 
         <KpiCard
           titulo="Eficiência de Consumo"
-          valor={formatDec(kpis?.consumoMedioKML)}
+          valorRaw={kpis?.consumoMedioKML}
+          formatter={formatDec}
           descricao="Média de consumo da frota (KM/L)"
           loading={loading}
           variant="success"
@@ -300,7 +302,8 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
 
         <KpiCard
           titulo="Despesa em Combustível"
-          valor={formatBRL(kpis?.custoTotalCombustivel)}
+          valorRaw={kpis?.custoTotalCombustivel}
+          formatter={formatBRL}
           descricao="Diesel, Gasolina e GNV"
           loading={loading}
           variant="default"
@@ -310,7 +313,8 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
 
         <KpiCard
           titulo="Custos de Oficina"
-          valor={formatBRL(kpis?.custoTotalManutencao)}
+          valorRaw={kpis?.custoTotalManutencao}
+          formatter={formatBRL}
           descricao="Preventivas e Corretivas"
           loading={loading}
           variant="warning"
@@ -320,7 +324,8 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
 
         <KpiCard
           titulo="Aditivos e Fluidos"
-          valor={formatBRL(kpis?.custoTotalAditivo)}
+          valorRaw={kpis?.custoTotalAditivo}
+          formatter={formatBRL}
           descricao="Consumo de Arla 32 e Óleos"
           loading={loading}
           variant="info"
@@ -330,7 +335,8 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
 
         <KpiCard
           titulo="Custo Médio / KM"
-          valor={formatBRL(kpis?.custoMedioPorKM)}
+          valorRaw={kpis?.custoMedioPorKM}
+          formatter={formatBRL}
           descricao="Indicador de rentabilidade"
           loading={loading}
           variant={(kpis?.custoMedioPorKM || 0) > 4 ? 'danger' : 'success'}
