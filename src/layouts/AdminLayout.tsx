@@ -30,7 +30,7 @@ function SidebarContent({ onClose, user, onLogout, onOpenFinanceiro }: SidebarCo
       <div className="flex h-[72px] items-center justify-between px-6 border-b border-border/60 shrink-0">
         <div className="flex items-center gap-3 group cursor-pointer">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-hover text-white flex items-center justify-center font-black text-lg shadow-inner group-hover:scale-105 transition-transform duration-300">
-            F
+            KLIN ENGENHARIA E GESTÃO AMBIENTAL
           </div>
           <div>
             <span className="block font-black text-[15px] text-text-main tracking-tight leading-none">FROTA <span className="text-primary">PRO</span></span>
