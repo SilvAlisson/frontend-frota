@@ -76,6 +76,7 @@ const CATEGORIAS = [
   { id: 'TACOGRAFO', label: 'Tacógrafo' },
   { id: 'LAUDO_CHAPA', label: 'Laudo Chapa' },
   { id: 'MANUTENCAO', label: 'Manutenção' },
+  { id: 'CTF', label: 'CTF' },
 ];
 
 interface GestaoDocumentosProps {
