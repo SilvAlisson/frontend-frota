@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Menu, X, BarChart3, LogOut, ChevronRight
+  Menu, X, BarChart3, LogOut, ChevronRight, Sun, Moon
 } from 'lucide-react';
 import { Drawer } from 'vaul'; 
 import { useAuth } from '../contexts/AuthContext';
@@ -11,6 +11,33 @@ import { ModalRelatorioFinanceiro } from '../components/ModalRelatorioFinanceiro
 import { Button } from '../components/ui/Button';
 import { MENU_ITEMS } from '../config/navigation';
 
+// --- SISTEMA DE TEMA (DARK MODE) ---
+// Função auxiliar para inicializar e guardar o tema
+function useTheme() {
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    // 1. Tenta recuperar do LocalStorage
+    const saved = localStorage.getItem('theme');
+    if (saved === 'dark' || saved === 'light') return saved;
+    // 2. Se não houver, lê a preferência do sistema operacional
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+    return 'light'; // Padrão: Claro
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
+
+  return { theme, toggleTheme };
+}
+
 // --- COMPONENTES AUXILIARES ---
 
 interface SidebarContentProps {
@@ -18,10 +45,12 @@ interface SidebarContentProps {
   user: any;
   onLogout: () => void;
   onOpenFinanceiro: () => void;
+  theme: 'light' | 'dark';
+  toggleTheme: () => void;
 }
 
 // 🛠️ Extraímos o miolo da Sidebar para reaproveitarmos no Desktop e no Mobile
-function SidebarContent({ onClose, user, onLogout, onOpenFinanceiro }: SidebarContentProps) {
+function SidebarContent({ onClose, user, onLogout, onOpenFinanceiro, theme, toggleTheme }: SidebarContentProps) {
   const location = useLocation();
 
   return (
@@ -90,16 +119,17 @@ function SidebarContent({ onClose, user, onLogout, onOpenFinanceiro }: SidebarCo
       <div className="p-4 border-t border-border/60 bg-surface-hover/30 shrink-0 space-y-3 pb-safe">
         <button
           onClick={onOpenFinanceiro}
-          className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 transition-all border border-emerald-500/20 group shadow-sm"
+          className="w-full flex items-center justify-between px-4 py-3 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-500 hover:bg-emerald-500/20 transition-all border border-emerald-500/20 group shadow-sm"
         >
           <div className="flex items-center gap-3">
-            <BarChart3 className="w-4 h-4 text-emerald-600" />
+            <BarChart3 className="w-4 h-4 text-emerald-600 dark:text-emerald-500" />
             <span className="text-xs font-black uppercase tracking-widest">Financeiro</span>
           </div>
           <ChevronRight className="w-4 h-4 opacity-50 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
         </button>
 
-        <div className="flex items-center gap-3 px-2 pt-2">
+        <div className="flex items-center gap-2 px-1 pt-2">
+          {/* Avatar */}
           <div className="w-10 h-10 rounded-full bg-surface border-2 border-border/60 flex items-center justify-center text-text-main font-black text-sm shadow-sm overflow-hidden shrink-0">
              {user?.fotoUrl ? (
                 <img src={user.fotoUrl} alt="Perfil" className="w-full h-full object-cover" />
@@ -107,11 +137,25 @@ function SidebarContent({ onClose, user, onLogout, onOpenFinanceiro }: SidebarCo
                 user?.nome?.trim().charAt(0).toUpperCase() || 'U'
              )}
           </div>
-          <div className="overflow-hidden flex-1">
+          
+          {/* Info */}
+          <div className="overflow-hidden flex-1 px-1">
             <p className="text-sm font-black text-text-main truncate leading-tight">{user?.nome}</p>
             <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider truncate mt-0.5">{user?.role || 'Acesso Restrito'}</p>
           </div>
-          <Button variant="ghost" onClick={onLogout} className="!p-2 w-10 h-10 text-text-muted hover:text-error hover:bg-error/10 rounded-xl transition-colors">
+
+          {/* ✨ Botão de Tema */}
+          <Button 
+            variant="ghost" 
+            onClick={toggleTheme} 
+            className="!p-2 w-10 h-10 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl transition-colors shrink-0"
+            title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
+          >
+            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+          </Button>
+
+          {/* Logout */}
+          <Button variant="ghost" onClick={onLogout} className="!p-2 w-10 h-10 text-text-muted hover:text-error hover:bg-error/10 rounded-xl transition-colors shrink-0">
             <LogOut className="w-5 h-5" />
           </Button>
         </div>
@@ -130,9 +174,12 @@ export function AdminLayout() {
   const { logout, user } = useAuth();
   const { data: veiculos } = useVeiculos();
   const navigate = useNavigate();
-  const location = useLocation(); // ✨ Adicionado aqui
+  const location = useLocation();
+  
+  // ✨ Instancia o Hook do Tema
+  const { theme, toggleTheme } = useTheme();
 
-  // ✨ CORREÇÃO: Fecha a sidebar no telemóvel apenas quando a rota muda de facto
+  // Fecha a sidebar no telemóvel apenas quando a rota muda de facto
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [location.pathname]);
@@ -151,6 +198,8 @@ export function AdminLayout() {
             user={user}
             onLogout={() => setIsLogoutModalOpen(true)}
             onOpenFinanceiro={() => setFinanceiroAberto(true)}
+            theme={theme}
+            toggleTheme={toggleTheme}
          />
       </aside>
 
@@ -160,7 +209,6 @@ export function AdminLayout() {
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden" />
           <Drawer.Content className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-surface/95 backdrop-blur-xl border-r border-border/60 outline-none lg:hidden">
             
-            {/* 🛡️ Título e Descrição para Leitores de Ecrã (Acessibilidade) */}
             <div className="sr-only">
               <Drawer.Title>Menu de Navegação</Drawer.Title>
               <Drawer.Description>Aceda às secções e definições do sistema FrotaPro.</Drawer.Description>
@@ -171,6 +219,8 @@ export function AdminLayout() {
               user={user}
               onLogout={() => setIsLogoutModalOpen(true)}
               onOpenFinanceiro={() => setFinanceiroAberto(true)}
+              theme={theme}
+              toggleTheme={toggleTheme}
             />
           </Drawer.Content>
         </Drawer.Portal>
@@ -196,13 +246,23 @@ export function AdminLayout() {
                     </div>
                 </div>
                 
-                {/* Avatar Mobile */}
-                <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black border border-primary/20 shadow-inner overflow-hidden">
-                    {user?.fotoUrl ? (
-                        <img src={user.fotoUrl} alt="Perfil" className="w-full h-full object-cover" />
-                    ) : (
-                        user?.nome?.trim().charAt(0).toUpperCase() || 'U'
-                    )}
+                <div className="flex items-center gap-3">
+                  {/* ✨ Botão de Tema também no Header Mobile */}
+                  <button 
+                    onClick={toggleTheme}
+                    className="p-2 text-text-muted hover:text-primary transition-colors"
+                  >
+                    {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+                  </button>
+
+                  {/* Avatar Mobile */}
+                  <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black border border-primary/20 shadow-inner overflow-hidden">
+                      {user?.fotoUrl ? (
+                          <img src={user.fotoUrl} alt="Perfil" className="w-full h-full object-cover" />
+                      ) : (
+                          user?.nome?.trim().charAt(0).toUpperCase() || 'U'
+                      )}
+                  </div>
                 </div>
             </header>
 

@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/Button';
 import { ModalQrCode } from './ModalQrCode';
 import { EmptyState } from './ui/EmptyState';
 import { QrCode, Users } from 'lucide-react';
 import type { User, Jornada } from '../types';
+import autoAnimate from '@formkit/auto-animate'; // ✨ A MAGIA DA ANIMAÇÃO APLICADA AQUI
 
 interface MinhaEquipeProps {
   usuarios: User[];
@@ -13,6 +14,15 @@ interface MinhaEquipeProps {
 
 export function MinhaEquipe({ usuarios, jornadasAbertas, onUpdate }: MinhaEquipeProps) {
   const [usuarioParaQr, setUsuarioParaQr] = useState<User | null>(null);
+  
+  // ✨ Referência para animar a grelha
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (parentRef.current) {
+      autoAnimate(parentRef.current);
+    }
+  }, [parentRef]);
 
   // Filtra apenas operadores
   const operadores = usuarios.filter(u => u.role === 'OPERADOR');
@@ -37,8 +47,8 @@ export function MinhaEquipe({ usuarios, jornadasAbertas, onUpdate }: MinhaEquipe
         </span>
       </div>
 
-      {/* Lista de Cards */}
-      <div className="grid gap-4">
+      {/* Lista de Cards com Animação */}
+      <div className="grid gap-4" ref={parentRef}>
         {operadores.map(op => {
           const jornadaAtiva = jornadasAbertas.find(j => j.operador?.id === op.id);
 
@@ -92,7 +102,7 @@ export function MinhaEquipe({ usuarios, jornadasAbertas, onUpdate }: MinhaEquipe
               <div className="w-full sm:w-auto flex justify-end pt-3 sm:pt-0 border-t border-dashed border-border/60 sm:border-none">
                 <Button
                   variant="secondary"
-                  className="text-xs h-9 w-full sm:w-auto shadow-sm bg-surface hover:bg-primary/10 hover:border-primary/20 hover:text-primary transition-all rounded-xl"
+                  className="text-xs h-9 w-full sm:w-auto shadow-sm bg-surface hover:bg-surface-hover hover:border-primary/40 hover:text-primary transition-all rounded-xl"
                   onClick={() => handleAbrirModal(op)}
                   icon={<QrCode className="w-4 h-4" />}
                 >

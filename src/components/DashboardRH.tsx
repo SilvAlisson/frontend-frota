@@ -37,10 +37,10 @@ export function DashboardRH({ user }: DashboardRHProps) {
     <div className="space-y-6 sm:space-y-8 animate-in fade-in zoom-in-95 duration-500 pb-24">
       
       {/* HEADER PREMIUM & FILTROS (Estilo macOS / Flutuante) */}
-      <div className="flex flex-col xl:flex-row items-start xl:items-end justify-between gap-6 border-b border-border/60 pb-6 sticky top-0 bg-background/90 backdrop-blur-xl z-20 pt-2 -mt-2">
+      <div className="flex flex-col xl:flex-row items-start xl:items-end justify-between gap-6 border-b border-border/60 pb-6 sticky top-0 bg-background/80 backdrop-blur-xl z-20 pt-2 -mt-2">
         <div>
           <h2 className="text-2xl sm:text-3xl font-black text-text-main tracking-tight leading-none flex items-center gap-3">
-             <div className="p-2 bg-primary/10 rounded-xl text-primary shadow-sm">
+             <div className="p-2.5 bg-primary/10 rounded-2xl text-primary shadow-inner border border-primary/20">
                 <ShieldCheck className="w-7 h-7" />
              </div>
              Gestão de Pessoas
@@ -60,7 +60,7 @@ export function DashboardRH({ user }: DashboardRHProps) {
       </div>
 
       {/* ÁREA DE CONTEÚDO COM TRANSIÇÃO SUAVE */}
-      <div className="bg-surface shadow-sm rounded-3xl p-6 sm:p-8 border border-border/60 min-h-[600px] relative overflow-hidden transition-all duration-500">
+      <div className="bg-surface shadow-sm hover:shadow-md rounded-[2rem] p-6 sm:p-8 border border-border/60 min-h-[600px] relative overflow-hidden transition-all duration-500">
         
         {/* Usamos a chave (key) no wrapper de animação para forçar o React a re-renderizar a animação de entrada quando a aba muda */}
         <div key={abaAtiva} className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">

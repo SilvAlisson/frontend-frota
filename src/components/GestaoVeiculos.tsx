@@ -101,7 +101,7 @@ export function GestaoVeiculos() {
                 value={busca}
                 onChange={e => setBusca(e.target.value)}
                 icon={<Search className="w-4 h-4 text-text-muted" />}
-                className="bg-surface-hover/50 border-none font-medium h-11"
+                className="bg-surface-hover/50 border-none focus:ring-1 focus:ring-primary/30 font-medium h-11"
                 containerClassName="!mb-0"
               />
             </div>
@@ -115,7 +115,6 @@ export function GestaoVeiculos() {
            <SkeletonTable />
          </div>
       ) : veiculosFiltrados.length === 0 ? (
-        // ✨ O NOSSO EMPTY STATE ELEGANTE
         <EmptyState 
           icon={Truck} 
           title={busca ? "Nenhum veículo encontrado" : "Frota Vazia"} 
@@ -125,7 +124,7 @@ export function GestaoVeiculos() {
         <div className="bg-surface rounded-3xl shadow-sm border border-border/60 overflow-hidden">
           <ListaResponsiva
             itens={veiculosFiltrados}
-            emptyMessage="" // Deixamos vazio pois o EmptyState já tomou conta do recado
+            emptyMessage=""
 
             // CABEÇALHO DESKTOP
             desktopHeader={
@@ -142,15 +141,18 @@ export function GestaoVeiculos() {
             renderDesktop={(v) => (
               <>
                 <td className={`${TableStyles.td} pl-8`}>
+                  {/* ✨ POLIMENTO: Removido o bg duplicado, agora o hover fica orgânico e suave */}
                   <button
                     onClick={() => navigate(`/admin/veiculos/${v.id}`)}
-                    className={`${TableStyles.dataText} flex items-center gap-3 hover:text-primary transition-colors group`}
+                    className="flex items-center gap-3 group outline-none"
                     title="Aceder ao Prontuário"
                   >
-                    <div className="p-2.5 bg-surface-hover rounded-xl border border-border/60 text-text-muted group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/20 transition-all shadow-sm">
+                    <div className="p-2.5 bg-surface-hover rounded-xl border border-border/60 text-text-muted group-hover:bg-primary/10 group-hover:text-primary group-hover:border-primary/30 transition-all shadow-sm">
                       <Truck className="w-4 h-4" />
                     </div>
-                    <span className="font-mono tracking-tight text-base font-black">{v.placa}</span>
+                    <span className="font-mono text-base font-black text-text-main group-hover:text-primary transition-colors tracking-tight">
+                      {v.placa}
+                    </span>
                   </button>
                 </td>
                 <td className={TableStyles.td}>
@@ -238,7 +240,6 @@ export function GestaoVeiculos() {
         )}
       </Modal>
 
-      {/* ✨ CONFIRM MODAL COM CALLOUT INTEGRADO */}
       <ConfirmModal
         isOpen={!!veiculoParaExcluir}
         onCancel={() => setVeiculoParaExcluir(null)}

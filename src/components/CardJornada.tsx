@@ -5,15 +5,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { api } from '../services/api';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { ConfirmModal } from './ui/ConfirmModal';
+import { Modal } from './ui/Modal';
 import { toast } from 'sonner';
+import { Image as ImageIcon, Edit, Save, X, Trash2, Camera, AlertCircle, PlayCircle, CheckCircle2 } from 'lucide-react';
 import type { Jornada } from '../types';
-
-// --- Ícones (Inline para não depender de lib externa) ---
-const IconImage = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" /></svg>;
-const IconEdit = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" /></svg>;
-const IconSave = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></svg>;
-const IconX = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>;
-const IconTrash = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18" /><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" /><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" /></svg>;
 
 // --- Schema de Edição ---
 const editSchema = z.object({
@@ -34,6 +30,11 @@ interface CardJornadaProps {
 export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [imageModal, setImageModal] = useState<string | null>(null);
+  
+  // ✨ Estados para os Modais de UI Elite
+  const [deletingId, setDeletingId] = useState<boolean>(false);
+  const [forceFinishModal, setForceFinishModal] = useState<boolean>(false);
+  const [kmFimManual, setKmFimManual] = useState('');
 
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<EditFormData>({
     resolver: zodResolver(editSchema),
@@ -45,7 +46,6 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
     }
   });
 
-  // Função para Salvar Edição
   const onSaveEdit = async (data: EditFormData) => {
     try {
       const payload = {
@@ -66,82 +66,87 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
     }
   };
 
-  // Função para Excluir
   const handleDelete = async () => {
-    if (!confirm("Tem certeza que deseja EXCLUIR este registro permanentemente?")) return;
     try {
       await api.delete(`/jornadas/${jornada.id}`);
-      toast.success("Registro excluído.");
+      toast.success("Registro excluído permanentemente.");
+      setDeletingId(false);
       onUpdate();
     } catch (err) {
       toast.error("Erro ao excluir.");
+      setDeletingId(false);
     }
   };
 
-  // Função para Finalizar Manualmente
-  const handleForceFinish = async () => {
-    const kmFimManual = prompt(`A jornada iniciou com ${jornada.kmInicio} KM. Qual o KM Final?`);
-    if (!kmFimManual) return;
-
+  const handleForceFinish = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!kmFimManual || isNaN(Number(kmFimManual))) {
+        toast.error("Insira um KM válido.");
+        return;
+    }
+    
+    const toastId = toast.loading("Encerrando rota...");
     try {
       await api.put(`/jornadas/finalizar/${jornada.id}`, {
         kmFim: parseFloat(kmFimManual),
         observacoes: "Finalizado manualmente pelo Gestor"
       });
-      toast.success("Jornada finalizada.");
+      toast.dismiss(toastId);
+      toast.success("Jornada finalizada com sucesso!");
+      setForceFinishModal(false);
       onUpdate();
     } catch (err) {
-      toast.error("Erro ao finalizar.");
+      toast.dismiss(toastId);
+      toast.error("Erro ao finalizar a rota.");
     }
   };
 
-  const statusColor = jornada.dataFim ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-blue-500';
+  // ✨ Variações semânticas para o Modo Escuro e Claro
+  const statusColor = jornada.dataFim 
+    ? 'border-l-4 border-l-success' 
+    : 'border-l-4 border-l-info';
 
   return (
     <>
-      <div className={`bg-white rounded-xl shadow-sm border border-gray-100 p-4 hover:shadow-md transition-all ${statusColor}`}>
+      <div className={`bg-surface rounded-2xl shadow-sm border border-border/60 p-5 hover:shadow-md transition-all duration-300 group ${statusColor}`}>
 
         {/* HEADER: Motorista e Veículo */}
-        <div className="flex justify-between items-start mb-4">
+        <div className="flex justify-between items-start mb-5">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-gray-100 flex items-center justify-center font-bold text-gray-500">
-              {/* CORREÇÃO AQUI: Adicionado ?. e fallback */}
-              {jornada.operador?.nome?.charAt(0) || '?'}
+            <div className="h-10 w-10 rounded-full bg-surface-hover flex items-center justify-center font-black text-text-muted border border-border/50 shadow-inner">
+              {jornada.operador?.nome?.trim().charAt(0).toUpperCase() || '?'}
             </div>
             <div>
-              <h4 className="font-bold text-gray-900">
-                {/* CORREÇÃO AQUI: Adicionado ?. e fallback */}
+              <h4 className="font-black text-text-main tracking-tight leading-none mb-1.5">
                 {jornada.operador?.nome || 'Operador não identificado'}
               </h4>
-              <div className="flex items-center gap-2 text-xs text-gray-500">
-                <span className="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-gray-700 font-bold border border-gray-200">
-                  {/* CORREÇÃO AQUI: Adicionado ?. e fallback */}
+              <div className="flex items-center gap-2 text-xs text-text-secondary">
+                <span className="bg-surface-hover/80 px-2 py-0.5 rounded-md font-mono font-bold border border-border/60 tracking-widest uppercase">
                   {jornada.veiculo?.placa || 'Sem placa'}
                 </span>
-                <span>
-                  {/* CORREÇÃO AQUI: Adicionado ?. e fallback */}
+                <span className="font-medium truncate max-w-[120px]">
                   {jornada.veiculo?.modelo || 'Veículo desc.'}
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Botoes de Ação (Apenas Gestor) */}
-          <div className="flex gap-1">
+          {/* Botões de Ação (Gestor) */}
+          <div className="flex gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
             {!isEditing ? (
               <>
-                <Button variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-blue-600" onClick={() => setIsEditing(true)} title="Editar Dados">
-                  <IconEdit />
+                <Button variant="ghost" className="h-9 w-9 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => setIsEditing(true)} title="Editar Dados">
+                  <Edit className="w-4 h-4" />
                 </Button>
                 {mode === 'GESTOR' && (
-                  <Button variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-red-600" onClick={handleDelete} title="Excluir">
-                    <IconTrash />
+                  <Button variant="ghost" className="h-9 w-9 !p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-xl" onClick={() => setDeletingId(true)} title="Excluir">
+                    <Trash2 className="w-4 h-4" />
                   </Button>
                 )}
               </>
             ) : (
-              <Button variant="ghost" className="h-8 w-8 p-0 text-gray-400 hover:text-gray-600" onClick={() => setIsEditing(false)} title="Cancelar Edição">
-                <IconX />
+              <Button variant="ghost" className="h-9 w-9 !p-0 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-xl bg-surface-hover/50" onClick={() => setIsEditing(false)} title="Cancelar Edição">
+                <X className="w-5 h-5" />
               </Button>
             )}
           </div>
@@ -149,64 +154,71 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
 
         {/* BODY: Formulário de Edição ou Visualização */}
         {isEditing ? (
-          <form onSubmit={handleSubmit(onSaveEdit)} className="space-y-3 bg-gray-50 p-3 rounded-lg border border-dashed border-gray-300">
-            <div className="grid grid-cols-2 gap-2">
-              <Input label="Início (Data/Hora)" type="datetime-local" {...register('dataInicio')} error={errors.dataInicio?.message} />
-              <Input label="KM Inicial" type="number" {...register('kmInicio')} error={errors.kmInicio?.message} />
+          <form onSubmit={handleSubmit(onSaveEdit)} className="space-y-4 bg-surface-hover/30 p-4 rounded-xl border border-border/60 animate-in fade-in zoom-in-95 duration-200 shadow-inner">
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="Saída (Data/Hora)" type="datetime-local" {...register('dataInicio')} error={errors.dataInicio?.message} containerClassName="!mb-0" className="text-xs" />
+              <Input label="KM Inicial" type="number" {...register('kmInicio')} error={errors.kmInicio?.message} containerClassName="!mb-0" className="font-mono text-xs" />
             </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <Input label="Fim (Data/Hora)" type="datetime-local" {...register('dataFim')} />
-              <Input label="KM Final" type="number" {...register('kmFim')} />
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="Chegada (Data/Hora)" type="datetime-local" {...register('dataFim')} containerClassName="!mb-0" className="text-xs" />
+              <Input label="KM Final" type="number" {...register('kmFim')} containerClassName="!mb-0" className="font-mono text-xs" />
             </div>
-
-            <Button type="submit" variant="primary" className="w-full h-8 text-xs" isLoading={isSubmitting}>
-              <IconSave /> Salvar Correção
-            </Button>
+            <div className="pt-2">
+                <Button type="submit" variant="primary" className="w-full h-10 text-xs font-bold shadow-sm" isLoading={isSubmitting}>
+                  <Save className="w-4 h-4" /> Salvar Correção
+                </Button>
+            </div>
           </form>
         ) : (
-          <div className="grid grid-cols-2 gap-4 text-sm">
+          <div className="grid grid-cols-2 gap-4 text-sm relative">
+            {/* Linha conectora de design */}
+            <div className="absolute top-1/2 left-[20%] right-[20%] h-px border-t border-dashed border-border/80 -translate-y-1/2 -z-10 hidden sm:block"></div>
+
             {/* Bloco Início */}
-            <div className="space-y-1">
-              <p className="text-xs text-gray-400 font-bold uppercase">Saída</p>
-              <p className="font-medium text-gray-700">
-                {new Date(jornada.dataInicio).toLocaleString('pt-BR')}
+            <div className="space-y-1.5 bg-surface p-3 rounded-xl border border-border/40 relative z-10">
+              <p className="text-[10px] text-text-muted font-black uppercase tracking-[0.2em] flex items-center gap-1.5">
+                  <PlayCircle className="w-3 h-3 text-info" /> Ponto de Partida
               </p>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-gray-900">{jornada.kmInicio.toLocaleString()} km</span>
+              <p className="font-medium text-text-main text-xs">
+                {new Date(jornada.dataInicio).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+              </p>
+              <div className="flex items-center gap-2 pt-1 border-t border-border/50">
+                <span className="font-mono font-black text-text-main text-sm">{jornada.kmInicio.toLocaleString()} km</span>
                 {jornada.fotoInicioUrl && (
-                  <button onClick={() => setImageModal(jornada.fotoInicioUrl!)} className="text-blue-500 hover:text-blue-700 text-xs flex items-center gap-1 underline">
-                    <IconImage /> Ver Foto
+                  <button onClick={() => setImageModal(jornada.fotoInicioUrl!)} className="text-info hover:text-info/80 transition-colors ml-auto" title="Ver foto do painel">
+                    <Camera className="w-4 h-4" />
                   </button>
                 )}
               </div>
             </div>
 
             {/* Bloco Fim */}
-            <div className="space-y-1 text-right">
-              <p className="text-xs text-gray-400 font-bold uppercase">Chegada</p>
+            <div className="space-y-1.5 bg-surface p-3 rounded-xl border border-border/40 relative z-10">
+              <p className="text-[10px] text-text-muted font-black uppercase tracking-[0.2em] flex items-center gap-1.5 justify-end">
+                 Ponto de Chegada <CheckCircle2 className="w-3 h-3 text-success" /> 
+              </p>
               {jornada.dataFim ? (
                 <>
-                  <p className="font-medium text-gray-700">
-                    {new Date(jornada.dataFim).toLocaleString('pt-BR')}
+                  <p className="font-medium text-text-main text-xs text-right">
+                    {new Date(jornada.dataFim).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
                   </p>
-                  <div className="flex items-center justify-end gap-2">
+                  <div className="flex items-center justify-end gap-2 pt-1 border-t border-border/50">
                     {jornada.fotoFimUrl && (
-                      <button onClick={() => setImageModal(jornada.fotoFimUrl!)} className="text-blue-500 hover:text-blue-700 text-xs flex items-center gap-1 underline">
-                        <IconImage /> Ver Foto
+                      <button onClick={() => setImageModal(jornada.fotoFimUrl!)} className="text-success hover:text-success/80 transition-colors mr-auto" title="Ver foto do painel final">
+                        <Camera className="w-4 h-4" />
                       </button>
                     )}
-                    <span className="font-bold text-gray-900">{jornada.kmFim?.toLocaleString()} km</span>
+                    <span className="font-mono font-black text-text-main text-sm">{jornada.kmFim?.toLocaleString()} km</span>
                   </div>
                 </>
               ) : (
-                <div className="flex flex-col items-end gap-2">
-                  <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 animate-pulse">
-                    Em Rota
+                <div className="flex flex-col items-end gap-2 pt-0.5">
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest bg-info/10 text-info border border-info/20 animate-pulse shadow-sm">
+                    Em Rota Atual
                   </span>
                   {mode === 'GESTOR' && (
-                    <button onClick={handleForceFinish} className="text-xs text-red-500 hover:underline">
-                      Finalizar Manualmente
+                    <button onClick={() => setForceFinishModal(true)} className="text-[10px] text-error font-bold hover:underline underline-offset-2 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" /> Encerrar Manual
                     </button>
                   )}
                 </div>
@@ -217,26 +229,66 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
 
         {/* Rodapé: KM Rodados */}
         {jornada.kmFim && !isEditing && (
-          <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
-            <span className="text-xs text-gray-500">Distância Percorrida</span>
-            <span className="text-sm font-bold text-green-600">
+          <div className="mt-4 pt-3 border-t border-border/60 flex justify-between items-center bg-surface-hover/30 px-3 py-2 -mx-2 -mb-2 rounded-b-xl">
+            <span className="text-[10px] text-text-secondary font-black uppercase tracking-widest">Distância Total Percorrida</span>
+            <span className="text-sm font-mono font-black text-success">
               {jornada.kmFim - jornada.kmInicio} km
             </span>
           </div>
         )}
       </div>
 
-      {/* Modal Simples de Imagem (Zoom) */}
+      {/* ✨ VISUALIZADOR DE FOTOS PADRONIZADO E CHIQUE */}
       {imageModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in" onClick={() => setImageModal(null)}>
-          <div className="relative max-w-3xl w-full bg-white rounded-lg overflow-hidden shadow-2xl">
-            <button className="absolute top-2 right-2 bg-black/50 text-white rounded-full p-2 hover:bg-black/70" onClick={() => setImageModal(null)}>
-              <IconX />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-8 animate-in fade-in duration-300" onClick={() => setImageModal(null)}>
+          <div className="relative w-full h-full flex flex-col items-center justify-center">
+            <button className="absolute top-4 right-4 sm:top-8 sm:right-8 text-white hover:text-error bg-white/10 hover:bg-white/20 rounded-full p-2.5 transition-all z-50 shadow-lg cursor-pointer" onClick={() => setImageModal(null)}>
+              <X className="w-6 h-6 sm:w-8 sm:h-8" />
             </button>
-            <img src={imageModal} alt="Comprovante" className="w-full h-auto max-h-[80vh] object-contain" />
+            <img src={imageModal} alt="Comprovante de Odómetro" className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-500 ring-1 ring-white/10" onClick={(e) => e.stopPropagation()} />
+            <p className="text-white/60 mt-6 text-sm font-bold uppercase tracking-widest flex items-center gap-2">
+              <ImageIcon className="w-4 h-4"/> Registo do Painel
+            </p>
           </div>
         </div>
       )}
+
+      {/* ✨ MODAIS SUBSTITUTOS DOS ALERTAS NATIVOS */}
+      <ConfirmModal 
+        isOpen={deletingId}
+        onCancel={() => setDeletingId(false)}
+        onConfirm={handleDelete}
+        title="Excluir Jornada"
+        description="Tem a certeza que deseja excluir esta viagem dos registos globais da empresa? A quilometragem do veículo será afetada."
+        variant="danger"
+        confirmLabel="Sim, Excluir Viagem"
+      />
+
+      <Modal
+        isOpen={forceFinishModal}
+        onClose={() => setForceFinishModal(false)}
+        title="Encerramento Manual de Rota"
+      >
+         <form onSubmit={handleForceFinish} className="space-y-6">
+            <div className="bg-warning/10 border border-warning/20 p-4 rounded-xl flex gap-3 text-warning-700">
+                <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
+                <p className="text-sm font-medium">A jornada começou com <strong className="font-mono">{jornada.kmInicio} km</strong>. Insira a quilometragem exata marcada no painel neste momento.</p>
+            </div>
+            <Input 
+                label="Odómetro Final (KM)" 
+                type="number" 
+                placeholder="Ex: 15400"
+                value={kmFimManual}
+                onChange={(e) => setKmFimManual(e.target.value)}
+                autoFocus
+                className="font-mono font-black text-lg text-primary"
+            />
+            <div className="flex gap-3 justify-end pt-2">
+                <Button variant="ghost" onClick={() => setForceFinishModal(false)} type="button">Cancelar</Button>
+                <Button variant="primary" type="submit">Gravar Odómetro</Button>
+            </div>
+         </form>
+      </Modal>
     </>
   );
 }

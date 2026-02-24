@@ -39,24 +39,25 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
     const equipeAtiva = jornadasAbertas.filter(j => j.operador?.id !== user.id).length;
 
     // --- ACTION CARD (PADRÃO ELITE) ---
+    // ✨ Atualizado para usar opacidades puras do Tailwind (perfeito para Dark Mode)
     const ActionCard = ({ icon: Icon, title, desc, style, onClick, badge }: any) => (
         <button 
             onClick={onClick}
             className={`
-                relative w-full text-left p-6 rounded-3xl bg-surface shadow-sm hover:shadow-float active:scale-[0.98] transition-all duration-300 group border border-border/60
+                relative w-full text-left p-6 rounded-3xl bg-surface shadow-sm hover:shadow-md active:scale-[0.98] transition-all duration-300 group border border-border/60
                 overflow-hidden flex flex-col sm:flex-row items-start sm:items-center gap-5
-                border-l-4 ${style.border}
+                border-l-[4px] hover:border-l-[6px] ${style.borderClass}
             `}
         >
-            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner text-white bg-gradient-to-br ${style.gradient} group-hover:scale-110 transition-transform`}>
-                <Icon className="w-7 h-7" />
+            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform duration-500 border ${style.iconContainerClass}`}>
+                <Icon className={`w-7 h-7 ${style.iconClass}`} />
             </div>
             
             <div className="flex-1 min-w-0 py-1">
                 <div className="flex items-center gap-3">
                     <h3 className="font-black text-text-main text-lg tracking-tight">{title}</h3>
                     {badge && (
-                        <span className="bg-error text-white text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg shadow-sm animate-pulse shrink-0">
+                        <span className="bg-error/10 border border-error/20 text-error text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg shadow-sm animate-pulse shrink-0">
                             {badge}
                         </span>
                     )}
@@ -66,7 +67,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                 </p>
             </div>
 
-            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-text-muted opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all bg-surface border border-border/60 p-2 rounded-full shadow-sm hidden sm:flex">
+            <div className="absolute right-5 top-1/2 -translate-y-1/2 text-text-muted opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all bg-surface-hover border border-border/60 p-2 rounded-full shadow-sm hidden sm:flex">
                 <ChevronRight className="w-5 h-5" />
             </div>
         </button>
@@ -107,11 +108,11 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                 <div className="max-w-7xl mx-auto px-4 sm:px-0 space-y-8">
                     {/* 2. KPIs COMPACTOS E VISUAIS */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <div className={`p-6 rounded-3xl border-2 flex items-center gap-5 shadow-sm transition-all duration-300 relative overflow-hidden group ${minhaJornadaAtiva ? 'bg-success/5 border-success/30' : 'bg-surface border-border/60'}`}>
+                        <div className={`p-6 rounded-3xl border flex items-center gap-5 shadow-sm transition-all duration-300 relative overflow-hidden group ${minhaJornadaAtiva ? 'bg-success/5 border-success/30' : 'bg-surface border-border/60'}`}>
                             <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform duration-500">
                                 <Key className="w-32 h-32" />
                             </div>
-                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner shrink-0 ${minhaJornadaAtiva ? 'bg-success text-white' : 'bg-surface-hover border border-border/60 text-text-muted'}`}>
+                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner shrink-0 border ${minhaJornadaAtiva ? 'bg-success/20 text-success border-success/30' : 'bg-surface-hover border-border/60 text-text-muted'}`}>
                                 <Key className="w-6 h-6" />
                             </div>
                             <div className="relative z-10 flex-1">
@@ -122,7 +123,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                             </div>
                         </div>
 
-                        <div className="p-6 rounded-3xl bg-surface border-2 border-border/60 flex items-center gap-5 shadow-sm relative overflow-hidden group hover:border-primary/30 transition-colors">
+                        <div className="p-6 rounded-3xl bg-surface border border-border/60 flex items-center gap-5 shadow-sm relative overflow-hidden group hover:border-primary/30 transition-colors">
                             <div className="absolute -right-4 -bottom-4 opacity-5 group-hover:scale-110 transition-transform duration-500">
                                 <MapPin className="w-32 h-32" />
                             </div>
@@ -150,7 +151,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                 icon={Gauge}
                                 title="Monitoramento da Frota"
                                 desc="Supervisionar veículos em operação e forçar fechamento de turno."
-                                style={{ gradient: 'from-blue-600 to-blue-500', border: 'border-blue-500' }}
+                                style={{ borderClass: 'border-info', iconContainerClass: 'bg-info/10 border-info/20', iconClass: 'text-info' }}
                                 onClick={() => setView('MONITORAMENTO')}
                                 badge={jornadasAbertas.length > 0 ? `${jornadasAbertas.length} em Movimento` : null}
                             />
@@ -159,7 +160,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                 icon={Droplets}
                                 title="Lançar Abastecimento"
                                 desc="Registrar abastecimento de combustível e ou aditivo."
-                                style={{ gradient: 'from-amber-500 to-orange-500', border: 'border-orange-500' }}
+                                style={{ borderClass: 'border-warning-600', iconContainerClass: 'bg-warning-500/10 border-warning-500/20', iconClass: 'text-warning-600' }}
                                 onClick={() => setModalAbastecimentoOpen(true)}
                             />
 
@@ -167,7 +168,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                 icon={Key}
                                 title="Veículo Administrativo"
                                 desc={minhaJornadaAtiva ? "Aceder e encerrar a sua viagem atual." : "Iniciar turno com a guerreira (veículo utilitário da empresa)."}
-                                style={{ gradient: 'from-emerald-600 to-emerald-500', border: 'border-emerald-500' }}
+                                style={{ borderClass: 'border-success', iconContainerClass: 'bg-success/10 border-success/20', iconClass: 'text-success' }}
                                 onClick={() => setView('MINHA_JORNADA')}
                             />
 
@@ -175,7 +176,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                 icon={Users}
                                 title="A Minha Equipa"
                                 desc="Ver lista de motoristas e informações de contato rápido."
-                                style={{ gradient: 'from-purple-600 to-purple-500', border: 'border-purple-500' }}
+                                style={{ borderClass: 'border-purple-500', iconContainerClass: 'bg-purple-500/10 border-purple-500/20', iconClass: 'text-purple-500' }}
                                 onClick={() => setView('EQUIPE')}
                             />
 
@@ -183,7 +184,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                 icon={History}
                                 title="Histórico de Ações"
                                 desc="Consultar todos os abastecimentos registados."
-                                style={{ gradient: 'from-slate-700 to-slate-600', border: 'border-slate-600' }}
+                                style={{ borderClass: 'border-slate-500', iconContainerClass: 'bg-slate-500/10 border-slate-500/20', iconClass: 'text-slate-500' }}
                                 onClick={() => setView('HISTORICO')}
                             />
                         </div>
@@ -198,7 +199,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                 {/* 5. FAB (Floating Action Button) - Mobile Only */}
                 <button
                     onClick={() => setModalAbastecimentoOpen(true)}
-                    className="fixed bottom-6 right-6 h-16 w-16 bg-primary text-white rounded-full shadow-float flex items-center justify-center z-50 md:hidden active:scale-90 transition-transform animate-in zoom-in duration-300"
+                    className="fixed bottom-6 right-6 h-16 w-16 bg-primary text-white rounded-full shadow-float flex items-center justify-center z-50 md:hidden active:scale-90 transition-transform animate-in zoom-in duration-300 border border-white/20"
                     aria-label="Atalho Novo Abastecimento"
                 >
                     <Plus className="w-8 h-8" />
@@ -227,8 +228,8 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
     // --- SUB-PÁGINAS (WRAPPER) ---
     const PageWrapper = ({ title, children }: any) => (
         <div className="space-y-6 animate-in slide-in-from-right-8 duration-500 pb-20">
-            <div className="flex items-center gap-4 py-4 border-b border-border/60 sticky top-0 bg-surface/90 backdrop-blur-md z-40 -mx-4 px-4 sm:-mx-8 sm:px-8 shadow-sm">
-                <Button variant="secondary" onClick={() => setView('DASHBOARD')} className="!p-2 w-10 h-10 rounded-full shadow-sm bg-surface hover:bg-surface-hover">
+            <div className="flex items-center gap-4 py-4 border-b border-border/60 sticky top-0 bg-background/80 backdrop-blur-xl z-40 -mx-4 px-4 sm:-mx-8 sm:px-8 shadow-sm">
+                <Button variant="secondary" onClick={() => setView('DASHBOARD')} className="!p-2 w-10 h-10 rounded-xl shadow-sm">
                     <ChevronRight className="w-6 h-6 rotate-180" />
                 </Button>
                 <h2 className="text-xl font-black text-text-main tracking-tight truncate">{title}</h2>

@@ -94,12 +94,12 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
               
               <div className="relative z-10 flex flex-col h-full justify-between gap-6">
                 <div className="flex items-start gap-4">
-                  <div className="p-4 bg-white/20 text-white rounded-2xl shadow-inner backdrop-blur-sm">
+                  <div className="p-4 bg-white/20 text-white rounded-2xl shadow-inner backdrop-blur-sm border border-white/20">
                     <Play className="w-8 h-8 fill-current" />
                   </div>
                   <div className="text-white">
                     <h3 className="text-2xl font-black tracking-tight drop-shadow-sm">Iniciar Turno</h3>
-                    <p className="text-primary-50 font-medium mt-1 text-sm sm:text-base opacity-90">Selecione a placa do <strong>veículo</strong> para começar o dia de trabalho.</p>
+                    <p className="text-white/90 font-medium mt-1 text-sm sm:text-base">Selecione a placa do <strong>veículo</strong> para começar o dia de trabalho.</p>
                   </div>
                 </div>
 
@@ -141,22 +141,22 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
             
             <button
               onClick={() => setModalAbastecimentoOpen(true)}
-              className="w-full flex items-center gap-5 bg-surface border border-border/60 p-5 rounded-3xl shadow-sm hover:shadow-float active:scale-[0.98] transition-all text-left group"
+              className="w-full flex items-center gap-5 bg-surface border border-border/60 p-5 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left group hover:border-warning/30"
             >
-              <div className="p-4 bg-warning-500/10 text-warning-600 rounded-2xl shadow-inner group-hover:scale-110 transition-transform duration-300">
+              <div className="p-4 bg-warning/10 text-warning-600 dark:text-warning border border-warning/20 rounded-2xl shadow-inner group-hover:scale-110 transition-transform duration-300">
                 <Fuel className="w-7 h-7" />
               </div>
               <div className="flex-1">
                 <span className="block font-black text-text-main text-lg tracking-tight mb-0.5">Abastecimento</span>
-                <span className="text-xs font-bold text-text-secondary opacity-80">Lançar abastecimentos de combustível e aditivos</span>
+                <span className="text-xs font-bold text-text-secondary opacity-80">Lançar abastecimento de combustível ou aditivo</span>
               </div>
             </button>
 
             <button
               onClick={() => setModalDocumentosOpen(true)}
-              className="w-full flex items-center gap-5 bg-surface border border-border/60 p-5 rounded-3xl shadow-sm hover:shadow-float active:scale-[0.98] transition-all text-left group"
+              className="w-full flex items-center gap-5 bg-surface border border-border/60 p-5 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left group hover:border-sky-500/30"
             >
-              <div className="p-4 bg-sky-500/10 text-sky-600 rounded-2xl shadow-inner group-hover:scale-110 transition-transform duration-300">
+              <div className="p-4 bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 rounded-2xl shadow-inner group-hover:scale-110 transition-transform duration-300">
                 <FileText className="w-7 h-7" />
               </div>
               <div className="flex-1">
@@ -167,14 +167,14 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
 
             <button
               onClick={() => setModalHistoricoOpen(true)}
-              className="w-full flex items-center gap-5 bg-surface border border-border/60 p-5 rounded-3xl shadow-sm hover:shadow-float active:scale-[0.98] transition-all text-left group"
+              className="w-full flex items-center gap-5 bg-surface border border-border/60 p-5 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left group hover:border-purple-500/30"
             >
-              <div className="p-4 bg-purple-500/10 text-purple-600 rounded-2xl shadow-inner group-hover:scale-110 transition-transform duration-300">
+              <div className="p-4 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 rounded-2xl shadow-inner group-hover:scale-110 transition-transform duration-300">
                 <History className="w-7 h-7" />
               </div>
               <div className="flex-1">
                 <span className="block font-black text-text-main text-lg tracking-tight mb-0.5">Histórico</span>
-                <span className="text-xs font-bold text-text-secondary opacity-80">Seu registro pessoal de turno</span>
+                <span className="text-xs font-bold text-text-secondary opacity-80">Seu registro pessoal de turnos anteriores</span>
               </div>
             </button>
         </div>
@@ -195,7 +195,6 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
         {veiculoEmUsoId ? (
           <GestaoDocumentos veiculoId={veiculoEmUsoId} somenteLeitura={true} />
         ) : (
-          // ✨ O NOSSO EMPTY STATE SUBSTITUINDO O CÓDIGO MANUAL
           <div className="pt-6 pb-2">
             <EmptyState 
               icon={Info} 

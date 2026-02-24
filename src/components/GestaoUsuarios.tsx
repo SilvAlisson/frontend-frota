@@ -228,14 +228,14 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                 <td className={TableStyles.td}>
                   <div className="flex flex-col items-start gap-1.5">
                     <BadgeRole role={u.role} />
-                    {u.matricula && <span className="text-[10px] text-text-muted font-mono font-bold uppercase tracking-widest bg-surface-hover px-1.5 py-0.5 rounded">ID: {u.matricula}</span>}
+                    {u.matricula && <span className="text-[10px] text-text-muted font-mono font-bold uppercase tracking-widest bg-surface-hover px-1.5 py-0.5 rounded border border-border/50">ID: {u.matricula}</span>}
                   </div>
                 </td>
                 <td className={`${TableStyles.td} text-sm font-medium text-text-secondary`}>
                   {u.email}
                 </td>
                 <td className={`${TableStyles.td} text-right pr-8`}>
-                  <div className="flex justify-end gap-1.5">
+                  <div className="flex justify-end gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
                     <Button variant="ghost" className="h-9 w-9 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => setUsuarioParaTreinamento(u)} title="Registo de Treinamentos">
                       <GraduationCap className="w-4 h-4" />
                     </Button>
@@ -318,7 +318,10 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
       {usuarioParaTreinamento && (
         <ModalTreinamentosUsuario
           usuario={usuarioParaTreinamento}
-          onClose={() => setUsuarioParaTreinamento(null)}
+          onClose={() => {
+              setUsuarioParaTreinamento(null);
+              refetch(); // Atualiza a lista caso os treinos alterem o status do operador
+          }}
         />
       )}
     </div>
@@ -333,8 +336,9 @@ function Avatar({ nome, url, size = 'md' }: { nome: string, url?: string | null,
 
   if (url) return <img src={url} alt={nome} className={`${dims} rounded-2xl object-cover border border-border/60 shadow-sm`} />;
 
+  // ✨ Adicionado um gradiente suave para Avatares sem foto (fica muito mais premium no Dark Mode)
   return (
-    <div className={`${dims} rounded-2xl bg-surface-hover text-text-secondary flex items-center justify-center font-black border border-border/60 shadow-inner`}>
+    <div className={`${dims} rounded-2xl bg-gradient-to-br from-surface-hover to-border/40 text-text-main flex items-center justify-center font-black border border-border/60 shadow-inner`}>
       {initials}
     </div>
   );

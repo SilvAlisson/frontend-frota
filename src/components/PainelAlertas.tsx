@@ -113,12 +113,12 @@ function CardAlerta({ alerta }: { alerta: Alerta }) {
   const isVencido = alerta.nivel === 'VENCIDO';
   const isPrevisao = alerta.mensagem.toUpperCase().includes('PREVISÃO');
 
-  // Configuração Visual Base (Atenção - Warning)
+  // Configuração Visual Base (Atenção - Usando as variáveis dinâmicas do Tailwind CSS v4)
   let config = {
-    border: 'border-l-warning-500',
-    textTitle: 'text-warning-600',
-    badgeBg: 'bg-warning-500/10 text-warning-700 border-warning-500/20',
-    iconBg: 'bg-warning-500/10 text-warning-600 border-warning-500/20',
+    border: 'border-l-warning',
+    textTitle: 'text-warning',
+    badgeBg: 'bg-warning/10 text-warning border-warning/20',
+    iconBg: 'bg-warning/10 text-warning border-warning/20',
     icon: AlertTriangle,
     category: 'Atenção',
     badgeLabel: alerta.nivel
@@ -137,13 +137,13 @@ function CardAlerta({ alerta }: { alerta: Alerta }) {
     };
   }
 
-  // Sobrescrita para PREVISÃO (Informativo - Sky/Primary)
+  // Sobrescrita para PREVISÃO (Informativo - Cores fixas precisam do 'dark:' explícito)
   if (isPrevisao) {
     config = {
       border: 'border-l-sky-500',
-      textTitle: 'text-sky-600',
-      badgeBg: 'bg-sky-500/10 text-sky-600 border-sky-500/20',
-      iconBg: 'bg-sky-500/10 text-sky-600 border-sky-500/20',
+      textTitle: 'text-sky-600 dark:text-sky-400',
+      badgeBg: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
+      iconBg: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20',
       icon: Clock,
       category: 'Previsão de Rodagem',
       badgeLabel: 'PROJETADO'
@@ -180,7 +180,7 @@ function CardAlerta({ alerta }: { alerta: Alerta }) {
           <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${config.textTitle}`}>
             {config.category}
           </span>
-          <span className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border ${config.badgeBg}`}>
+          <span className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border shadow-sm ${config.badgeBg}`}>
             {config.badgeLabel}
           </span>
         </div>

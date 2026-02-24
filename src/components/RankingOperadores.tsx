@@ -123,7 +123,7 @@ export function RankingOperadores() {
               variant="secondary"
               onClick={handleExportar}
               disabled={ranking.length === 0 || loading}
-              className="h-11 sm:h-11 w-full sm:w-auto bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-500/20 shadow-sm"
+              className="h-11 sm:h-11 w-full sm:w-auto bg-emerald-500/10 text-emerald-700 border-emerald-500/20 hover:bg-emerald-500/20 shadow-sm"
               icon={<Download className="w-4 h-4" />}
             >
               Exportar
@@ -154,32 +154,32 @@ export function RankingOperadores() {
           )}
 
           {/* --- LISTA COM ALINHAMENTO CORRIGIDO --- */}
-          <Card padding="none" className="overflow-hidden border-border/50 shadow-sm rounded-3xl bg-surface">
+          <Card padding="none" className="overflow-hidden border-border/60 shadow-sm rounded-3xl bg-surface">
             <ListaResponsiva
               itens={ranking}
               emptyMessage="Nenhum dado consolidado encontrado para este período."
 
-              // HEADER - Larguras padronizadas com as das outras tabelas
+              // HEADER
               desktopHeader={
                 <>
                   <th className={`${TableStyles.th} pl-8 py-5 text-center`}>Posição</th>
-                  <th className={`${TableStyles.th} w-full text-left`}>Veículo</th> {/* O w-full empurra tudo para a direita */}
+                  <th className={`${TableStyles.th} w-full text-left`}>Veículo</th>
                   <th className={`${TableStyles.th} text-right whitespace-nowrap`}>Eficiência (Km/L)</th>
                   <th className={`${TableStyles.th} text-right whitespace-nowrap`}>Distância (KM)</th>
                   <th className={`${TableStyles.th} text-right pr-8 whitespace-nowrap`}>Consumo Total</th>
                 </>
               }
 
-              // ROW - Correspondente aos Headers
+              // ROW
               renderDesktop={(v, idx) => (
                 <tr className="hover:bg-surface-hover/50 transition-colors group">
                   <td className={`${TableStyles.td} text-center pl-8`}>
-                    <span className={`inline-flex items-center justify-center w-8 h-8 rounded-xl text-sm font-black shadow-sm ${
-                        idx === 0 ? 'bg-yellow-500 text-white border-yellow-600' :
-                        idx === 1 ? 'bg-slate-200 text-slate-700 border-slate-300' :
-                        idx === 2 ? 'bg-orange-200 text-orange-800 border-orange-300' :
+                    <span className={`inline-flex items-center justify-center w-8 h-8 rounded-xl text-sm font-black shadow-sm border ${
+                        idx === 0 ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' :
+                        idx === 1 ? 'bg-slate-500/10 text-slate-500 border-slate-500/30' :
+                        idx === 2 ? 'bg-orange-500/10 text-orange-600 border-orange-500/30' :
                         'bg-surface-hover text-text-muted border-border/60'
-                      } border`}>
+                      }`}>
                       {idx + 1}º
                     </span>
                   </td>
@@ -231,9 +231,9 @@ export function RankingOperadores() {
               renderMobile={(v, idx) => (
                 <div className="flex items-start gap-4 p-5 border-b border-border/60 last:border-0 hover:bg-surface-hover/30 transition-colors">
                   <div className={`flex-shrink-0 w-12 h-12 flex items-center justify-center rounded-xl font-black text-lg border shadow-sm ${
-                      idx === 0 ? 'bg-yellow-500 text-white border-yellow-600' :
-                      idx === 1 ? 'bg-slate-200 text-slate-700 border-slate-300' :
-                      idx === 2 ? 'bg-orange-200 text-orange-800 border-orange-300' :
+                      idx === 0 ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' :
+                      idx === 1 ? 'bg-slate-500/10 text-slate-500 border-slate-500/30' :
+                      idx === 2 ? 'bg-orange-500/10 text-orange-600 border-orange-500/30' :
                       'bg-surface-hover text-text-muted border-border/60'
                     }`}>
                     {idx + 1}º
@@ -272,32 +272,32 @@ export function RankingOperadores() {
   );
 }
 
-// Subcomponente Podium
+// Subcomponente Podium (100% Compatível com Dark Mode)
 function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoRanking, isWinner?: boolean }) {
   const config = {
     1: {
-      bg: 'bg-gradient-to-br from-yellow-500 to-amber-600',
-      border: 'border-yellow-400',
-      text: 'text-white',
+      bg: 'bg-yellow-500/10',
+      border: 'border-yellow-500/30',
+      text: 'text-yellow-600 dark:text-yellow-500',
       icon: Trophy,
-      colorIcon: 'text-yellow-100',
-      label: 'Mais Econômico'
+      label: 'Mais Econômico',
+      labelBg: 'bg-yellow-500 text-white'
     },
     2: {
-      bg: 'bg-gradient-to-br from-slate-200 to-slate-300',
-      border: 'border-slate-300',
-      text: 'text-slate-800',
+      bg: 'bg-slate-500/10',
+      border: 'border-slate-500/30',
+      text: 'text-slate-600 dark:text-slate-400',
       icon: Medal,
-      colorIcon: 'text-slate-500',
-      label: '2º Lugar'
+      label: '2º Lugar',
+      labelBg: 'bg-slate-500 text-white'
     },
     3: {
-      bg: 'bg-gradient-to-br from-orange-200 to-orange-300',
-      border: 'border-orange-300',
-      text: 'text-orange-900',
+      bg: 'bg-orange-500/10',
+      border: 'border-orange-500/30',
+      text: 'text-orange-600 dark:text-orange-500',
       icon: Award,
-      colorIcon: 'text-orange-600',
-      label: '3º Lugar'
+      label: '3º Lugar',
+      labelBg: 'bg-orange-500 text-white'
     }
   }[pos as 1 | 2 | 3];
 
@@ -305,41 +305,41 @@ function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoR
 
   return (
     <div className={`
-        relative rounded-3xl border p-6 flex flex-col items-center text-center shadow-card transition-all duration-500 overflow-hidden
-        ${config.bg} ${config.border}
-        ${isWinner ? 'h-72 justify-end ring-4 ring-yellow-500/20 z-10 transform sm:scale-105 shadow-xl' : 'h-64 justify-end opacity-95 hover:opacity-100 sm:hover:scale-105'}
+        relative rounded-[2rem] border p-6 flex flex-col items-center text-center transition-all duration-500 overflow-hidden group
+        ${config.bg} ${config.border} backdrop-blur-sm
+        ${isWinner ? 'h-72 justify-end ring-2 ring-yellow-500/30 z-10 transform sm:scale-105 shadow-xl bg-yellow-500/15' : 'h-64 justify-end opacity-95 hover:opacity-100 sm:hover:scale-105 shadow-md'}
       `}>
 
-      {/* Reflexo / Brilho */}
-      <div className="absolute top-0 left-0 w-full h-full bg-white/10 opacity-0 hover:opacity-100 transition-opacity pointer-events-none" />
+      {/* Reflexo / Brilho Sutil */}
+      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent dark:from-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-      {/* Posição Gigante de Fundo */}
-      <div className={`absolute -top-4 -right-2 font-black text-9xl opacity-20 select-none ${config.text} drop-shadow-md`}>
+      {/* Posição Gigante de Fundo (Mais discreto no dark mode) */}
+      <div className={`absolute -top-4 -right-2 font-black text-9xl opacity-[0.07] dark:opacity-[0.04] select-none ${config.text} drop-shadow-md`}>
         {pos}
       </div>
 
-      <div className={`absolute top-5 left-5 p-2 bg-white/20 rounded-xl backdrop-blur-sm shadow-inner ${config.text}`}>
+      <div className={`absolute top-5 left-5 p-2 bg-surface/80 rounded-xl backdrop-blur-md shadow-sm border border-border/50 ${config.text}`}>
         <Icon className="w-6 h-6" />
       </div>
 
       {/* Avatar do Veículo */}
       <div className="relative mb-5">
-        <div className="w-20 h-20 rounded-2xl border-4 border-white/30 shadow-lg flex items-center justify-center bg-white/10 backdrop-blur-md overflow-hidden transform group-hover:scale-110 transition-transform">
-          <Truck className={`w-10 h-10 ${config.text} drop-shadow-md`} />
+        <div className={`w-20 h-20 rounded-2xl border-2 border-surface shadow-lg flex items-center justify-center bg-surface/80 backdrop-blur-xl overflow-hidden transform group-hover:scale-110 transition-transform ${config.text}`}>
+          <Truck className="w-10 h-10 drop-shadow-sm" />
         </div>
-        <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-lg bg-white shadow-md whitespace-nowrap ${config.text.replace('text-white', 'text-yellow-700')}`}>
+        <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-lg shadow-md whitespace-nowrap border border-white/10 ${config.labelBg}`}>
           {config.label}
         </div>
       </div>
 
-      <h3 className={`font-black truncate w-full px-2 text-2xl tracking-tight leading-none mb-1 ${config.text} drop-shadow-sm`}>{veiculo.placa}</h3>
+      <h3 className={`font-black truncate w-full px-2 text-2xl tracking-tight leading-none mb-1 ${config.text}`}>{veiculo.placa}</h3>
       <p className={`text-[11px] font-bold uppercase tracking-widest mb-4 opacity-80 ${config.text}`}>{veiculo.modelo}</p>
 
       {/* Stats Box */}
-      <div className="w-full bg-white/20 rounded-2xl p-3 backdrop-blur-md border border-white/30 shadow-inner">
+      <div className="w-full bg-surface/80 rounded-2xl p-3 backdrop-blur-xl border border-border/50 shadow-sm relative z-10">
         <div className="flex flex-col">
           <span className={`text-[9px] uppercase tracking-[0.2em] font-black mb-0.5 opacity-80 ${config.text}`}>Média de Consumo</span>
-          <span className={`font-mono font-black text-3xl tracking-tighter drop-shadow-sm ${config.text}`}>
+          <span className={`font-mono font-black text-3xl tracking-tighter ${config.text}`}>
             {veiculo.kml.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             <span className="text-[10px] uppercase tracking-widest font-bold ml-1 opacity-70">km/l</span>
           </span>
