@@ -19,7 +19,7 @@ import { Badge } from './ui/Badge';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
-import { DatePicker } from './ui/DatePicker'; // ✨ O nosso novo DatePicker
+import { DatePicker } from './ui/DatePicker';
 import { TableStyles } from '../styles/table';
 
 interface HistoricoAbastecimentosProps {
@@ -200,7 +200,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
         extraAction={
           <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto items-end bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
              <div className="w-full sm:w-40">
-                {/* ✨ DatePicker da Data Inicial */}
                 <DatePicker
                   label="Data Inicial"
                   placeholder="Início"
@@ -209,7 +208,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                 />
              </div>
              <div className="w-full sm:w-40">
-                {/* ✨ DatePicker da Data Final */}
                 <DatePicker
                   label="Data Final"
                   placeholder="Fim"
@@ -234,7 +232,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                  onClick={handleExportar} 
                  disabled={historico.length === 0}
                  icon={<FileDown className="w-4 h-4" />}
-                 className="w-full sm:w-auto h-11 sm:h-12 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-500/20"
+                 className="w-full sm:w-auto h-11 sm:h-12 bg-emerald-500/10 text-emerald-700 dark:text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20"
                >
                  Exportar Excel
                </Button>
@@ -245,20 +243,20 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
 
       {/* 2. SUMÁRIO DA CONSULTA */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-        <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow group">
           <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-emerald-500" /> Capital Investido
+            <DollarSign className="w-4 h-4 text-emerald-500 dark:text-emerald-400" /> Capital Investido
           </span>
-          <span className="text-3xl font-mono font-black text-text-main truncate">
+          <span className="text-3xl font-mono font-black text-text-main truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
             {formatCurrency(totalGasto)}
           </span>
         </Card>
         
-        <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow group">
           <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
-            <Droplets className="w-4 h-4 text-sky-500" /> Litragem Abastecida
+            <Droplets className="w-4 h-4 text-sky-500 dark:text-sky-400" /> Litragem Abastecida
           </span>
-          <span className="text-3xl font-mono font-black text-text-main">
+          <span className="text-3xl font-mono font-black text-text-main group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
             {totalLitros.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} <small className="text-lg font-bold opacity-60 ml-1 uppercase tracking-widest">Litros</small>
           </span>
         </Card>
@@ -317,7 +315,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                               href={ab.fotoNotaFiscalUrl} 
                               target="_blank" 
                               rel="noopener noreferrer" 
-                              className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-sky-600 hover:text-sky-700 bg-sky-50 px-2 py-1 rounded-md transition-colors cursor-pointer"
+                              className="text-[11px] font-bold uppercase tracking-wider flex items-center gap-1.5 text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-300 bg-sky-500/10 hover:bg-sky-500/20 px-2 py-1 rounded-md transition-colors border border-sky-500/20 shadow-sm cursor-pointer"
                           >
                               <Receipt className="w-3.5 h-3.5" /> Nota Fiscal
                           </a>
@@ -328,7 +326,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                     <div className="flex flex-col gap-1">
                         <span className="font-mono font-black text-text-main text-base">{formatCurrency(ab.custoTotal)}</span>
                         <span className="text-[11px] text-text-secondary font-bold flex items-center gap-1.5 bg-surface-hover w-fit px-1.5 py-0.5 rounded border border-border/50">
-                            <Droplets className="w-3 h-3 text-sky-500" />
+                            <Droplets className="w-3 h-3 text-sky-500 dark:text-sky-400" />
                             {(ab.itens || []).map(i => `${i.quantidade}${i.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'un'}`).join(' + ')}
                         </span>
                     </div>
@@ -379,7 +377,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                   </div>
                   
                   {ab.fotoNotaFiscalUrl && (
-                      <a href={ab.fotoNotaFiscalUrl} target="_blank" className="bg-sky-50 text-sky-700 border border-sky-100 text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 hover:bg-sky-100 transition-colors shadow-sm cursor-pointer">
+                      <a href={ab.fotoNotaFiscalUrl} target="_blank" className="bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 text-xs font-bold py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 hover:bg-sky-500/20 transition-colors shadow-sm cursor-pointer">
                           <Receipt className="w-4 h-4" /> Visualizar Nota Fiscal
                       </a>
                   )}

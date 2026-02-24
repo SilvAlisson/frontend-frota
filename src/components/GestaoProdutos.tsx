@@ -1,12 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { FormCadastrarProduto } from './forms/FormCadastrarProduto';
 import { FormEditarProduto } from './forms/FormEditarProduto';
 import { exportarParaExcel } from '../utils';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
+import autoAnimate from '@formkit/auto-animate';
 
-// ✨ Novos Componentes Elite e Ícones Padronizados
+//  Componentes e Ícones Padronizados
 import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
 import { Callout } from './ui/Callout';
@@ -22,21 +23,21 @@ interface Produto {
   unidadeMedida: string;
 }
 
-// Helper para Ícones e Cores por Tipo (Glassmorphism e Lucide)
+// Helper para Ícones e Cores por Tipo (Glassmorphism e Dark Mode Ready)
 const getTypeConfig = (tipo: string) => {
   switch (tipo) {
     case 'COMBUSTIVEL':
       return {
         icon: <Fuel className="w-5 h-5" />,
-        bg: 'bg-amber-500/10',
-        text: 'text-amber-600',
-        border: 'border-amber-500/20'
+        bg: 'bg-orange-500/10',
+        text: 'text-orange-600 dark:text-orange-500',
+        border: 'border-orange-500/20'
       };
     case 'ADITIVO':
       return {
         icon: <Droplets className="w-5 h-5" />,
         bg: 'bg-sky-500/10',
-        text: 'text-sky-600',
+        text: 'text-sky-600 dark:text-sky-400',
         border: 'border-sky-500/20'
       };
     case 'SERVICO':
@@ -62,10 +63,19 @@ export function GestaoProdutos() {
   const [loading, setLoading] = useState(true);
   const [modo, setModo] = useState<'listando' | 'adicionando' | 'editando'>('listando');
   
-  // ✨ Estados para a Exclusão Segura
+  //  Estados para a Exclusão Segura
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [produtoParaExcluir, setProdutoParaExcluir] = useState<Produto | null>(null);
   const [produtoIdSelecionado, setProdutoIdSelecionado] = useState<string | null>(null);
+
+  //  Referência para a grelha animada
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (parentRef.current) {
+      autoAnimate(parentRef.current);
+    }
+  }, [parentRef, modo]);
 
   const fetchProdutos = async () => {
     setLoading(true);
@@ -207,7 +217,7 @@ export function GestaoProdutos() {
               ))}
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-max">
+            <div ref={parentRef} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-max">
               {produtos.map((produto) => {
                 const style = getTypeConfig(produto.tipo);
                 return (
@@ -261,7 +271,7 @@ export function GestaoProdutos() {
             </div>
           )}
 
-          {/* ✨ EMPTY STATE ELEGANTE */}
+          {/*  EMPTY STATE ELEGANTE */}
           {!loading && produtos.length === 0 && (
             <div className="pt-10">
               <EmptyState 
@@ -279,7 +289,7 @@ export function GestaoProdutos() {
         </>
       )}
 
-      {/* ✨ CONFIRM MODAL COM CALLOUT INTEGRADO */}
+      {/* CONFIRM MODAL COM CALLOUT INTEGRADO */}
       <ConfirmModal 
         isOpen={!!produtoParaExcluir}
         onCancel={() => setProdutoParaExcluir(null)}

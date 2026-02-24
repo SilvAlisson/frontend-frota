@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { api } from '../services/api';
 import { FormCadastrarFornecedor } from './forms/FormCadastrarFornecedor';
 import { FormEditarFornecedor } from './forms/FormEditarFornecedor';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
-import { Trash2, Edit2, Store, Plus, Loader2 } from 'lucide-react';
+import { Trash2, Edit2, Store, Plus, Loader2, AlertTriangle } from 'lucide-react';
 import type { Fornecedor } from '../types';
+import autoAnimate from '@formkit/auto-animate';
 
-// ✨ Novos Componentes Elite
+// ✨ Componentes Elite
 import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
+import { Callout } from './ui/Callout';
 
 export function GestaoFornecedores() {
 
@@ -21,6 +23,15 @@ export function GestaoFornecedores() {
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [fornecedorParaExcluir, setFornecedorParaExcluir] = useState<Fornecedor | null>(null);
   const [fornecedorIdSelecionado, setFornecedorIdSelecionado] = useState<string | null>(null);
+
+  // Referência para a grelha animada
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (parentRef.current) {
+      autoAnimate(parentRef.current);
+    }
+  }, [parentRef, modo]);
 
   const fetchFornecedores = async () => {
     setLoading(true);
@@ -39,7 +50,7 @@ export function GestaoFornecedores() {
     fetchFornecedores();
   }, []);
 
-  // --- NOVA LÓGICA DE EXCLUSÃO (ConfirmModal) ---
+  // --- LÓGICA DE EXCLUSÃO (ConfirmModal) ---
   const handleExecuteDelete = async () => {
     if (!fornecedorParaExcluir) return;
 
@@ -67,11 +78,11 @@ export function GestaoFornecedores() {
     setFornecedorIdSelecionado(null);
   };
 
-  // Helper para cor do ícone baseado no tipo (Glassmorphism adaptado)
+  // Helper de cor 100% compatível com Dark Mode
   const getIconColor = (tipo?: string) => {
-    if (tipo === 'POSTO') return 'bg-amber-500/10 text-amber-600 border-amber-500/20';
-    if (tipo === 'LAVA_JATO') return 'bg-sky-500/10 text-sky-600 border-sky-500/20';
-    return 'bg-surface-hover text-text-secondary border-border/60';
+    if (tipo === 'POSTO') return 'bg-orange-500/10 text-orange-600 dark:text-orange-500 border-orange-500/20';
+    if (tipo === 'LAVA_JATO') return 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20';
+    return 'bg-surface-hover/80 text-text-secondary border-border/60';
   };
 
   return (
@@ -131,7 +142,7 @@ export function GestaoFornecedores() {
               ))}
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-max">
+            <div ref={parentRef} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-max">
               {fornecedores.map((f) => (
                 <div key={f.id} className="group bg-surface p-5 sm:p-6 rounded-3xl shadow-sm border border-border/60 hover:shadow-md hover:border-primary/40 transition-all duration-300 flex flex-col relative h-full">
 
@@ -144,7 +155,7 @@ export function GestaoFornecedores() {
                     <div className="flex gap-1 bg-surface-hover/50 rounded-xl p-1 border border-border/40 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={() => { setFornecedorIdSelecionado(f.id); setModo('editando'); }}
-                        className="p-1.5 text-text-muted hover:text-primary hover:bg-surface rounded-lg transition-all shadow-sm"
+                        className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-all shadow-sm"
                         title="Editar"
                       >
                         <Edit2 className="w-4 h-4" />
@@ -190,7 +201,7 @@ export function GestaoFornecedores() {
           )}
 
           {!loading && fornecedores.length === 0 && (
-            // ✨ NOSSO EMPTY STATE SUBSTITUINDO O CÓDIGO MANUAL
+            //  NOSSO EMPTY STATE ELEGANTE
             <div className="pt-10">
               <EmptyState 
                 icon={Store} 
@@ -207,13 +218,22 @@ export function GestaoFornecedores() {
         </>
       )}
 
-      {/* ✨ O NOSSO CONFIRM MODAL ELEGANTE */}
+      {/* MODAL ELEGANTE COM CALLOUT */}
       <ConfirmModal 
         isOpen={!!fornecedorParaExcluir}
         onCancel={() => setFornecedorParaExcluir(null)}
         onConfirm={handleExecuteDelete}
         title="Remover Parceiro"
-        description={`Tem a certeza que deseja excluir "${fornecedorParaExcluir?.nome}"? Documentos e manutenções já associadas podem perder esta referência.`}
+        description={
+          <div className="space-y-4">
+            <p className="text-text-secondary text-sm font-medium">
+                Tem a certeza que deseja excluir <strong className="text-text-main font-black">"{fornecedorParaExcluir?.nome}"</strong> da sua rede de fornecedores?
+            </p>
+            <Callout variant="warning" title="Atenção" icon={AlertTriangle}>
+                Históricos de manutenção ou abastecimentos já registados com este parceiro não serão apagados, mas perderão o vínculo de pesquisa rápida.
+            </Callout>
+          </div>
+        }
         variant="danger"
         confirmLabel={deletingId ? "A remover..." : "Sim, Excluir"}
       />

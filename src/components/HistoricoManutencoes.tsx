@@ -21,7 +21,7 @@ import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { DropdownAcoes } from './ui/DropdownAcoes';
-import { DatePicker } from './ui/DatePicker'; // ✨ O nosso DatePicker importado
+import { DatePicker } from './ui/DatePicker';
 import { TableStyles } from '../styles/table';
 
 // --- FORMS ---
@@ -188,7 +188,6 @@ export function HistoricoManutencoes({
         extraAction={
           <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto items-end bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
             <div className="w-full sm:w-40">
-              {/* ✨ DatePicker da Data Inicial acoplado direto no state */}
               <DatePicker
                 label="Data Inicial"
                 placeholder="Início"
@@ -200,7 +199,6 @@ export function HistoricoManutencoes({
               />
             </div>
             <div className="w-full sm:w-40">
-              {/* ✨ DatePicker da Data Final acoplado direto no state */}
               <DatePicker
                 label="Data Final"
                 placeholder="Fim"
@@ -228,7 +226,7 @@ export function HistoricoManutencoes({
                 onClick={handleExportar} 
                 icon={<Download className="w-4 h-4" />}
                 disabled={historico.length === 0}
-                className="w-full sm:w-auto h-11 sm:h-12 bg-sky-500/10 text-sky-700 hover:bg-sky-500/20 border-sky-500/20"
+                className="w-full sm:w-auto h-11 sm:h-12 bg-sky-500/10 text-sky-600 dark:text-sky-400 hover:bg-sky-500/20 border-sky-500/20"
               >
                 Exportar Excel
               </Button>
@@ -239,20 +237,20 @@ export function HistoricoManutencoes({
 
       {/* 2. SUMÁRIO DA CONSULTA (KPIs Premium) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-        <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow group">
           <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-primary" /> Capital Investido em Manutenções Corretivas e Preventivas
+            <DollarSign className="w-4 h-4 text-primary" /> Capital Investido em Manutenções
           </span>
-          <span className="text-3xl font-mono font-black text-text-main truncate">
+          <span className="text-3xl font-mono font-black text-text-main truncate group-hover:text-primary transition-colors">
             {totalGasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
           </span>
         </Card>
         
-        <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow group">
           <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
-            <Wrench className="w-4 h-4 text-amber-500" /> Ordens de Serviço (OS) Emitidas
+            <Wrench className="w-4 h-4 text-amber-500 dark:text-amber-400" /> Ordens de Serviço Emitidas
           </span>
-          <span className="text-3xl font-mono font-black text-text-main truncate">
+          <span className="text-3xl font-mono font-black text-text-main truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
             {historico.length} <small className="text-lg font-bold opacity-60 uppercase tracking-widest ml-1">Fichas</small>
           </span>
         </Card>
@@ -296,7 +294,7 @@ export function HistoricoManutencoes({
                     <div className="flex flex-col gap-1 max-w-[280px]">
                       <div className="flex items-center gap-2">
                          <span className="font-mono font-black text-primary text-base tracking-tight">{os.veiculo?.placa || 'N/D'}</span>
-                         <span className="text-[10px] bg-surface-hover px-1.5 py-0.5 rounded border border-border font-bold uppercase tracking-widest text-text-secondary">{os.veiculo?.modelo}</span>
+                         <span className="text-[10px] bg-surface-hover px-1.5 py-0.5 rounded border border-border/60 font-bold uppercase tracking-widest text-text-secondary">{os.veiculo?.modelo}</span>
                       </div>
                       <span className="text-xs text-text-secondary font-medium mt-1 truncate" title={os.fornecedor?.nome}>{os.fornecedor?.nome || 'Oficina Não Registada'}</span>
                       <p className="text-[10px] text-text-muted uppercase tracking-wider font-bold mt-1.5 leading-snug line-clamp-2" title={(os.itens || []).map(i => i.produto.nome).join(', ')}>
@@ -317,7 +315,7 @@ export function HistoricoManutencoes({
                     {os.fotoComprovanteUrl ? (
                       <button
                         onClick={() => window.open(os.fotoComprovanteUrl || '', '_blank')}
-                        className="inline-flex items-center justify-center p-2 rounded-xl bg-sky-50 text-sky-600 hover:bg-sky-100 hover:text-sky-700 transition-all shadow-sm border border-sky-100 group"
+                        className="inline-flex items-center justify-center p-2 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 hover:bg-sky-500/20 transition-all shadow-sm border border-sky-500/20 group"
                         title="Visualizar Nota de Serviço"
                       >
                         <FileText className="w-5 h-5 group-hover:scale-110 transition-transform" />
@@ -385,7 +383,7 @@ export function HistoricoManutencoes({
                   {os.fotoComprovanteUrl && (
                     <Button 
                       variant="secondary" 
-                      className="w-full text-xs font-bold h-11 text-sky-700 bg-sky-50 border-sky-100 hover:bg-sky-100 shadow-sm transition-all" 
+                      className="w-full text-xs font-bold h-11 bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20 hover:bg-sky-500/20 shadow-sm transition-all" 
                       icon={<FileText className="w-4 h-4"/>}
                       onClick={() => window.open(os.fotoComprovanteUrl || '', '_blank')}
                     >

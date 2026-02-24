@@ -18,7 +18,7 @@ import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal'; 
-import { DatePicker } from './ui/DatePicker'; // ✨ O nosso DatePicker importado
+import { DatePicker } from './ui/DatePicker';
 import { TableStyles } from '../styles/table';
 
 // --- COMPONENTES & FORMS ---
@@ -161,7 +161,7 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
       
       <PageHeader 
         title="Histórico de Viagens"
-        subtitle="Consulte a quilometragem dos veículos, com provas fotográficas dos hodômetro dia-a-dia."
+        subtitle="Consulte a quilometragem dos veículos, com provas fotográficas dos hodômetros dia-a-dia."
         extraAction={
           <div className="flex flex-col gap-3 w-full xl:w-auto bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
             <div className="flex flex-col sm:flex-row gap-3 items-end">
@@ -200,7 +200,6 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
             <div className="flex flex-col sm:flex-row gap-3 items-end sm:justify-between xl:justify-start">
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 <div className="w-full sm:w-40">
-                  {/* ✨ DatePicker: Data Início */}
                   <DatePicker
                     label="Data Início"
                     placeholder="Início"
@@ -212,7 +211,6 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
                   />
                 </div>
                 <div className="w-full sm:w-40">
-                  {/* ✨ DatePicker: Data Fim */}
                   <DatePicker
                     label="Data Fim"
                     placeholder="Fim"
@@ -225,14 +223,14 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
                 </div>
               </div>
 
-              {/* Botão de Exportar ocupando o espaço deixado pelo falecido Fantasma */}
+              {/* Botão de Exportar */}
               <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 xl:ml-auto">
                 <Button 
                   variant="secondary" 
                   onClick={handleExportar} 
                   icon={<Download className="w-4 h-4" />}
                   disabled={historico.length === 0}
-                  className="h-11 sm:h-12 w-full sm:w-auto flex-1 bg-emerald-500/10 text-emerald-700 hover:bg-emerald-500/20 border-emerald-500/20"
+                  className="h-11 sm:h-12 w-full sm:w-auto flex-1 bg-emerald-500/10 text-emerald-700 dark:text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20 shadow-sm"
                 >
                   Excel
                 </Button>
@@ -242,21 +240,22 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
         }
       />
 
+      {/* KPIs Premium Interativos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-        <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow group">
           <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
             <Activity className="w-4 h-4 text-primary" /> Distância Total Percorrida
           </span>
-          <span className="text-3xl font-mono font-black text-text-main truncate">
+          <span className="text-3xl font-mono font-black text-text-main truncate group-hover:text-primary transition-colors">
             {kmTotalGeral.toLocaleString('pt-BR')} <small className="text-lg font-bold opacity-60 uppercase tracking-widest ml-1">km</small>
           </span>
         </Card>
         
-        <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow group">
           <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
-            <MapPin className="w-4 h-4 text-sky-500" /> Total de Deslocações
+            <MapPin className="w-4 h-4 text-sky-500 dark:text-sky-400" /> Total de Deslocações
           </span>
-          <span className="text-3xl font-mono font-black text-text-main">
+          <span className="text-3xl font-mono font-black text-text-main group-hover:text-sky-600 dark:group-hover:text-sky-400 transition-colors">
             {historico.length} <small className="text-lg font-bold opacity-60 uppercase tracking-widest ml-1">Registos</small>
           </span>
         </Card>
@@ -352,7 +351,7 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
 
                     {(canEdit || canDelete) && (
                       <td className={`${TableStyles.td} text-right pr-8`}>
-                        <div className="flex justify-end gap-1">
+                        <div className="flex justify-end gap-1 opacity-60 hover:opacity-100 transition-opacity">
                           {canEdit && (
                             <Button variant="ghost" className="h-9 w-9 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-lg" onClick={() => setEditingId(j.id)} title="Editar">
                               <Edit className="w-4 h-4" />
@@ -482,7 +481,6 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
         )}
       </Modal>
 
-      {/* ✨ O NOSSO CONFIRM MODAL (Substitui o window.confirm) */}
       <ConfirmModal 
         isOpen={!!deletingId}
         onCancel={() => setDeletingId(null)}
