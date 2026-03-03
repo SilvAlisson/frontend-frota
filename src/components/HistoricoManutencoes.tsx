@@ -4,7 +4,7 @@ import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import { 
   Calendar, Filter, Download, ChevronDown,
-  CheckCircle2, AlertCircle, PlayCircle, FileText, FileX, DollarSign, Wrench 
+  CheckCircle2, AlertCircle, PlayCircle, FileText, FileX, DollarSign, Wrench, Store 
 } from 'lucide-react';
 import type { OrdemServico } from '../types';
 
@@ -44,6 +44,7 @@ export function HistoricoManutencoes({
 
   // --- ESTADOS DE DADOS ---
   const [historico, setHistorico] = useState<OrdemServico[]>([]);
+  const [fornecedores, setFornecedores] = useState<{id: string, nome: string}[]>([]); // ✨ NOVO: Lista de Fornecedores
   const [loading, setLoading] = useState(true);
   
   // --- ESTADOS DE RENDERIZAÇÃO PROGRESSIVA ---
@@ -55,12 +56,20 @@ export function HistoricoManutencoes({
 
   const [filtros, setFiltros] = useState({
     veiculoId: filtroInicial?.veiculoId || '',
+    fornecedorId: '',
     dataInicio: filtroInicial?.dataInicio || '',
     dataFim: ''
   });
 
   const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
   const canDelete = userRole === 'ADMIN';
+
+  // --- BUSCA DE FORNECEDORES PARA O SELECT DO BM ---
+  useEffect(() => {
+    api.get('/fornecedores')
+       .then(res => setFornecedores(res.data))
+       .catch(err => console.error("Erro ao carregar fornecedores", err));
+  }, []);
 
   // --- FETCHING OTIMIZADO ---
   const fetchHistorico = useCallback(async () => {
@@ -70,6 +79,7 @@ export function HistoricoManutencoes({
       if (filtros.veiculoId) params.veiculoId = filtros.veiculoId;
       if (filtros.dataInicio) params.dataInicio = filtros.dataInicio;
       if (filtros.dataFim) params.dataFim = filtros.dataFim;
+      if (filtros.fornecedorId) params.fornecedorId = filtros.fornecedorId; // Filtro API
 
       const response = await api.get<OrdemServico[]>('/manutencoes/recentes', { params });
       setHistorico(response.data);
@@ -96,9 +106,7 @@ export function HistoricoManutencoes({
     return historico.slice(0, visibleCount);
   }, [historico, visibleCount]);
 
-  const handleCarregarMais = () => {
-    setVisibleCount(prev => prev + ITENS_POR_PAGINA);
-  };
+  const handleCarregarMais = () => setVisibleCount(prev => prev + ITENS_POR_PAGINA);
 
   // --- ACTIONS ---
   const handleDelete = async () => {
@@ -121,17 +129,28 @@ export function HistoricoManutencoes({
     }
     const exportPromise = new Promise((resolve, reject) => {
         try {
+            // ✨ MAPA DE DADOS ORGANIZADO PARA O EXCEL DO BM
             const dados = historico.map(os => ({
-              'Data': new Date(os.data).toLocaleDateString('pt-BR'),
-              'Placa': os.veiculo?.placa || 'N/A',
-              'Tipo': os.tipo,
-              'Status': os.status || 'CONCLUÍDA',
-              'Fornecedor': os.fornecedor?.nome || 'N/A',
-              'Itens': (os.itens || []).map(i => `${i.produto.nome} (${i.quantidade})`).join(', '),
-              'Valor Total': Number(os.custoTotal).toFixed(2).replace('.', ','),
-              'Link Comprovante': os.fotoComprovanteUrl || 'Sem comprovante'
+              'Data da OS': new Date(os.data).toLocaleDateString('pt-BR'),
+              'Oficina / Fornecedor': os.fornecedor?.nome || 'Não Registada',
+              'Placa do Veículo': os.veiculo?.placa || 'N/A',
+              'Modelo': os.veiculo?.modelo || 'N/A',
+              'Categoria de Serviço': os.tipo,
+              'Itens e Serviços Realizados': (os.itens || []).map(i => `${i.quantidade}x ${i.produto.nome}`).join(' | '),
+              'Valor Total (R$)': Number(os.custoTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
+              'Status Atual': os.status || 'CONCLUÍDA',
+              // A Fórmula Mágica que cria um botão no Excel
+              'Comprovante / Nota': os.fotoComprovanteUrl ? `=HYPERLINK("${os.fotoComprovanteUrl}", "Visualizar Comprovante")` : 'Sem anexo'
             }));
-            exportarParaExcel(dados, "Historico_Manutencoes.xlsx");
+
+            // Nomeia o ficheiro com o nome da oficina se estiver filtrado
+            let nomeFicheiro = "BM_Manutencoes_Globais.xlsx";
+            if (filtros.fornecedorId) {
+                const nomeFornecedor = fornecedores.find(f => f.id === filtros.fornecedorId)?.nome?.replace(/[^a-zA-Z0-9]/g, '_');
+                nomeFicheiro = `BM_${nomeFornecedor}.xlsx`;
+            }
+
+            exportarParaExcel(dados, nomeFicheiro);
             resolve(true);
         } catch(err) {
             reject(err);
@@ -140,7 +159,7 @@ export function HistoricoManutencoes({
 
     toast.promise(exportPromise, {
       loading: 'A gerar folha de cálculo...',
-      success: 'Transferência concluída.',
+      success: 'Boletim de Medição exportado com sucesso!',
       error: 'Erro a exportar ficheiro.'
     });
   };
@@ -159,76 +178,89 @@ export function HistoricoManutencoes({
     const s = status?.toUpperCase() || 'CONCLUIDA';
     
     switch (s) {
-      case 'AGENDADA':
-        return <Badge variant="neutral" className="gap-1.5 py-1 px-2.5 shadow-sm"><Calendar className="w-3.5 h-3.5 opacity-70"/> Agendada</Badge>;
-      case 'EM_ANDAMENTO':
-        return <Badge variant="warning" className="gap-1.5 py-1 px-2.5 shadow-sm"><PlayCircle className="w-3.5 h-3.5 opacity-70"/> Na Oficina</Badge>;
+      case 'AGENDADA': return <Badge variant="neutral" className="gap-1.5 py-1 px-2.5 shadow-sm"><Calendar className="w-3.5 h-3.5 opacity-70"/> Agendada</Badge>;
+      case 'EM_ANDAMENTO': return <Badge variant="warning" className="gap-1.5 py-1 px-2.5 shadow-sm"><PlayCircle className="w-3.5 h-3.5 opacity-70"/> Na Oficina</Badge>;
       case 'CONCLUIDA':
-      case 'CONCLUÍDA':
-        return <Badge variant="success" className="gap-1.5 py-1 px-2.5 shadow-sm"><CheckCircle2 className="w-3.5 h-3.5 opacity-70"/> Concluída</Badge>;
-      case 'CANCELADA':
-        return <Badge variant="danger" className="gap-1.5 py-1 px-2.5 shadow-sm"><AlertCircle className="w-3.5 h-3.5 opacity-70"/> Cancelada</Badge>;
-      default:
-        return <Badge variant="neutral">{s}</Badge>;
+      case 'CONCLUÍDA': return <Badge variant="success" className="gap-1.5 py-1 px-2.5 shadow-sm"><CheckCircle2 className="w-3.5 h-3.5 opacity-70"/> Concluída</Badge>;
+      case 'CANCELADA': return <Badge variant="danger" className="gap-1.5 py-1 px-2.5 shadow-sm"><AlertCircle className="w-3.5 h-3.5 opacity-70"/> Cancelada</Badge>;
+      default: return <Badge variant="neutral">{s}</Badge>;
     }
   };
 
   const veiculosOptions = useMemo(() => [
-    { value: "", label: "Visão Global" },
+    { value: "", label: "Todos os Veículos" },
     ...veiculos.map(v => ({ value: v.id, label: v.placa }))
   ], [veiculos]);
+
+  const fornecedoresOptions = useMemo(() => [
+    { value: "", label: "Todas as Oficinas / Postos" },
+    ...fornecedores.map(f => ({ value: f.id, label: f.nome }))
+  ], [fornecedores]);
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
       
       {/* 1. HEADER & FILTROS */}
       <PageHeader 
-        title="Histórico de Manutenções"
-        subtitle="Controle de manutenções KLIN."
+        title="Boletim de Manutenções"
+        subtitle="Controle de manutenções KLIN. Filtre por oficina para gerar o Boletim de Medição (BM)."
         extraAction={
-          <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto items-end bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
-            <div className="w-full sm:w-40">
-              <DatePicker
-                label="Data Inicial"
-                placeholder="Início"
-                date={filtros.dataInicio ? new Date(`${filtros.dataInicio}T12:00:00`) : undefined}
-                onChange={date => setFiltros(prev => ({ 
-                    ...prev, 
-                    dataInicio: date ? date.toISOString().split('T')[0] : '' 
-                }))}
-              />
+          <div className="flex flex-col xl:flex-row gap-3 w-full xl:w-auto items-end bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
+            <div className="flex gap-3 w-full">
+              <div className="flex-1">
+                <DatePicker
+                  label="Data Inicial"
+                  placeholder="Início"
+                  date={filtros.dataInicio ? new Date(`${filtros.dataInicio}T12:00:00`) : undefined}
+                  onChange={date => setFiltros(prev => ({ ...prev, dataInicio: date ? date.toISOString().split('T')[0] : '' }))}
+                />
+              </div>
+              <div className="flex-1">
+                <DatePicker
+                  label="Data Final"
+                  placeholder="Fim"
+                  date={filtros.dataFim ? new Date(`${filtros.dataFim}T12:00:00`) : undefined}
+                  onChange={date => setFiltros(prev => ({ ...prev, dataFim: date ? date.toISOString().split('T')[0] : '' }))}
+                />
+              </div>
             </div>
-            <div className="w-full sm:w-40">
-              <DatePicker
-                label="Data Final"
-                placeholder="Fim"
-                date={filtros.dataFim ? new Date(`${filtros.dataFim}T12:00:00`) : undefined}
-                onChange={date => setFiltros(prev => ({ 
-                    ...prev, 
-                    dataFim: date ? date.toISOString().split('T')[0] : '' 
-                }))}
-              />
+            
+            <div className="w-px h-10 bg-border/60 hidden xl:block mx-1"></div>
+            
+            <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+              <div className="w-full sm:w-48">
+                <Select 
+                  label="Filtrar Veículo" 
+                  options={veiculosOptions} 
+                  value={filtros.veiculoId}
+                  onChange={e => setFiltros(prev => ({ ...prev, veiculoId: e.target.value }))}
+                  icon={<Filter className="w-4 h-4"/>}
+                  containerClassName="!mb-0"
+                />
+              </div>
+
+              {/* ✨ NOVO FILTRO DE OFICINA PARA O BM */}
+              <div className="w-full sm:w-56">
+                <Select 
+                  label="Oficina / Fornecedor" 
+                  options={fornecedoresOptions}
+                  value={filtros.fornecedorId}
+                  onChange={e => setFiltros(prev => ({ ...prev, fornecedorId: e.target.value }))}
+                  icon={<Store className="w-4 h-4"/>}
+                  containerClassName="!mb-0"
+                />
+              </div>
             </div>
-            <div className="w-px h-10 bg-border/60 hidden sm:block mx-1"></div>
-            <div className="w-full sm:w-56">
-              <Select 
-                label="Filtrar Veículo" 
-                options={veiculosOptions} 
-                value={filtros.veiculoId}
-                onChange={e => setFiltros(prev => ({ ...prev, veiculoId: e.target.value }))}
-                icon={<Filter className="w-4 h-4"/>}
-                containerClassName="!mb-0"
-              />
-            </div>
-            <div className="w-full sm:w-auto flex items-end pb-0.5 ml-auto">
+
+            <div className="w-full xl:w-auto flex items-end pb-0.5 mt-2 xl:mt-0 xl:ml-auto">
               <Button 
                 variant="secondary" 
                 onClick={handleExportar} 
                 icon={<Download className="w-4 h-4" />}
                 disabled={historico.length === 0}
-                className="w-full sm:w-auto h-11 sm:h-12 bg-sky-500/10 text-sky-600 dark:text-sky-400 hover:bg-sky-500/20 border-sky-500/20"
+                className="w-full xl:w-auto h-11 sm:h-12 bg-sky-500/10 text-sky-600 dark:text-sky-400 hover:bg-sky-500/20 border-sky-500/20"
               >
-                Exportar Excel
+                Gerar BM (Excel)
               </Button>
             </div>
           </div>
@@ -239,7 +271,7 @@ export function HistoricoManutencoes({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow group">
           <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-primary" /> Capital Investido em Manutenções
+            <DollarSign className="w-4 h-4 text-primary" /> Subtotal do Período/Oficina
           </span>
           <span className="text-3xl font-mono font-black text-text-main truncate group-hover:text-primary transition-colors">
             {totalGasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -248,7 +280,7 @@ export function HistoricoManutencoes({
         
         <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow group">
           <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
-            <Wrench className="w-4 h-4 text-amber-500 dark:text-amber-400" /> Ordens de Serviço Emitidas
+            <Wrench className="w-4 h-4 text-amber-500 dark:text-amber-400" /> Ordens de Serviço (Fichas)
           </span>
           <span className="text-3xl font-mono font-black text-text-main truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
             {historico.length} <small className="text-lg font-bold opacity-60 uppercase tracking-widest ml-1">Fichas</small>
@@ -266,7 +298,7 @@ export function HistoricoManutencoes({
           <div className="flex flex-col h-full">
             <ListaResponsiva
               itens={historicoVisivel}
-              emptyMessage="Nenhum registo de manutenção encontrado neste período."
+              emptyMessage="Nenhum registo encontrado com estes filtros."
 
               // --- DESKTOP ---
               desktopHeader={
@@ -402,7 +434,7 @@ export function HistoricoManutencoes({
                     onClick={handleCarregarMais}
                     className="w-full sm:w-auto bg-surface hover:shadow-md transition-all group"
                   >
-                     Ver mais {Math.min(ITENS_POR_PAGINA, historico.length - historicoVisivel.length)} Manutenções
+                     Ver mais {Math.min(ITENS_POR_PAGINA, historico.length - historicoVisivel.length)} Fichas
                      <ChevronDown className="w-4 h-4 ml-2 text-text-muted group-hover:text-primary transition-colors" />
                   </Button>
                </div>

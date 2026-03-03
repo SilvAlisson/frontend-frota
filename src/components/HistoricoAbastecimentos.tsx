@@ -4,7 +4,7 @@ import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import { FormEditarAbastecimento } from './forms/FormEditarAbastecimento';
 import type { Abastecimento } from '../types';
-import { FileDown, Calendar, Truck, Droplets, Receipt, Gauge, DollarSign, ChevronDown } from 'lucide-react';
+import { FileDown, Calendar, Truck, Droplets, Receipt, Gauge, DollarSign, ChevronDown, Store } from 'lucide-react';
 
 // --- HOOKS ATÔMICOS ---
 import { useVeiculos } from '../hooks/useVeiculos';
@@ -39,6 +39,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
 
   // --- ESTADOS DE DADOS ---
   const [historico, setHistorico] = useState<Abastecimento[]>([]);
+  const [fornecedores, setFornecedores] = useState<{id: string, nome: string}[]>([]); // ✨ NOVO: Lista de Fornecedores
   const [loading, setLoading] = useState(true);
   
   // --- ESTADOS DE RENDERIZAÇÃO PROGRESSIVA (ANTI-LAG) ---
@@ -52,12 +53,20 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
   const [dataInicioFiltro, setDataInicioFiltro] = useState(filtroInicial?.dataInicio || '');
   const [dataFimFiltro, setDataFimFiltro] = useState('');
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState(filtroInicial?.veiculoId || '');
+  const [fornecedorIdFiltro, setFornecedorIdFiltro] = useState(''); // ✨ NOVO FILTRO
 
   const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
 
   useEffect(() => {
     if (filtroInicial?.veiculoId) setVeiculoIdFiltro(filtroInicial.veiculoId);
   }, [filtroInicial]);
+
+  // Busca fornecedores (Postos) para o Select do BM
+  useEffect(() => {
+    api.get('/fornecedores')
+       .then(res => setFornecedores(res.data))
+       .catch(err => console.error("Erro ao carregar fornecedores", err));
+  }, []);
 
   // --- FETCHING OTIMIZADO ---
   const fetchHistorico = useCallback(async () => {
@@ -83,13 +92,18 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     fetchHistorico();
   }, [fetchHistorico]);
 
-  // --- CÁLCULOS MEMOIZADOS (SUMÁRIO GLOBAL INTACTO) ---
+  // ✨ FILTRO LOCAL INTELIGENTE (Garante que a UI e o Excel só veem o fornecedor filtrado)
+  const historicoFiltrado = useMemo(() => {
+    return historico.filter(ab => !fornecedorIdFiltro || ab.fornecedor?.id === fornecedorIdFiltro);
+  }, [historico, fornecedorIdFiltro]);
+
+  // --- CÁLCULOS MEMOIZADOS E ATUALIZADOS PARA RESPONDER AO FILTRO ---
   const totalGasto = useMemo(() => {
-    return historico.reduce((acc, ab) => acc + (Number(ab.custoTotal) || 0), 0);
-  }, [historico]);
+    return historicoFiltrado.reduce((acc, ab) => acc + (Number(ab.custoTotal) || 0), 0);
+  }, [historicoFiltrado]);
 
   const totalLitros = useMemo(() => {
-    return historico.reduce((acc, ab) => {
+    return historicoFiltrado.reduce((acc, ab) => {
       const litrosDoAbastecimento = ab.itens?.reduce((sum, item) => {
         if (item.produto.tipo === 'COMBUSTIVEL') {
           return sum + Number(item.quantidade);
@@ -98,12 +112,12 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
       }, 0) || 0;
       return acc + litrosDoAbastecimento;
     }, 0);
-  }, [historico]);
+  }, [historicoFiltrado]);
 
-  // Aplica a limitação de itens renderizados
+  // Aplica a limitação de itens renderizados ao array já filtrado
   const historicoVisivel = useMemo(() => {
-    return historico.slice(0, visibleCount);
-  }, [historico, visibleCount]);
+    return historicoFiltrado.slice(0, visibleCount);
+  }, [historicoFiltrado, visibleCount]);
 
   const handleCarregarMais = () => {
     setVisibleCount(prev => prev + ITENS_POR_PAGINA);
@@ -124,14 +138,14 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
   };
 
   const handleExportar = () => {
-    if (historico.length === 0) {
-      toast.warning("Nenhum dado para exportar.");
+    if (historicoFiltrado.length === 0) {
+      toast.warning("Nenhum dado para exportar com estes filtros.");
       return;
     }
 
     const exportPromise = new Promise((resolve, reject) => {
       try {
-        const dadosFormatados = historico.flatMap(ab => {
+        const dadosFormatados = historicoFiltrado.flatMap(ab => {
           const itensSafe = ab.itens || [];
           const itensFormatados = itensSafe.map(item =>
             `${item.produto.nome} (${item.quantidade} ${item.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'Un'})`
@@ -141,16 +155,26 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
 
           return {
             'Data': new Date(ab.dataHora).toLocaleDateString('pt-BR'),
+            'Posto / Fornecedor': ab.fornecedor?.nome || 'N/A',
             'Placa': ab.veiculo?.placa || 'N/A',
             'Modelo': ab.veiculo?.modelo || 'N/A',
-            'KM': ab.kmOdometro,
-            'Combustível/Itens': itensFormatados,
-            'Fornecedor': ab.fornecedor?.nome || 'N/A',
+            'KM Registado': ab.kmOdometro,
+            'Itens Abastecidos': itensFormatados,
             'Operador': ab.operador?.nome || 'N/A',
-            'Total (R$)': custoNum.toFixed(2).replace('.', ','),
+            'Total Pago (R$)': custoNum.toFixed(2).replace('.', ','),
+            // ✨ O SEGREDO DOS LINKS NO EXCEL:
+            'Nota Fiscal': ab.fotoNotaFiscalUrl ? `=HYPERLINK("${ab.fotoNotaFiscalUrl}", "Acessar Comprovante")` : 'Sem anexo'
           };
         });
-        exportarParaExcel(dadosFormatados, "Historico_Abastecimentos.xlsx");
+
+        // Nome do ficheiro dinâmico com base no posto
+        let nomeFicheiro = "BM_Abastecimentos_Globais.xlsx";
+        if (fornecedorIdFiltro) {
+            const nomeFornecedor = fornecedores.find(f => f.id === fornecedorIdFiltro)?.nome?.replace(/[^a-zA-Z0-9]/g, '_');
+            nomeFicheiro = `BM_Abastecimentos_${nomeFornecedor}.xlsx`;
+        }
+
+        exportarParaExcel(dadosFormatados, nomeFicheiro);
         resolve(true);
       } catch (err) {
         reject(err);
@@ -159,7 +183,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
 
     toast.promise(exportPromise, {
       loading: 'A preparar exportação...',
-      success: 'Planilha transferida com sucesso!',
+      success: 'Boletim de Medição exportado com sucesso!',
       error: 'Erro na exportação.'
     });
   };
@@ -186,55 +210,78 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
   };
 
   const veiculosOptions = useMemo(() => [
-    { value: "", label: "Visão Global" },
+    { value: "", label: "Todos os Veículos" },
     ...veiculos.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` }))
   ], [veiculos]);
+
+  const fornecedoresOptions = useMemo(() => [
+    { value: "", label: "Todos os Postos / Oficinas" },
+    ...fornecedores.map(f => ({ value: f.id, label: f.nome }))
+  ], [fornecedores]);
 
   return (
     <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
       {/* 1. HEADER E FILTROS */}
       <PageHeader 
-        title="Histórico de Abastecimentos"
-        subtitle="Monitore custos, consumo e médias de combustível de forma centralizada."
+        title="Boletim de Abastecimentos"
+        subtitle="Filtre por Posto para gerar o Boletim de Medição (BM) com os comprovantes integrados."
         extraAction={
-          <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto items-end bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
-             <div className="w-full sm:w-40">
-                <DatePicker
-                  label="Data Inicial"
-                  placeholder="Início"
-                  date={dataInicioFiltro ? new Date(`${dataInicioFiltro}T12:00:00`) : undefined}
-                  onChange={date => setDataInicioFiltro(date ? date.toISOString().split('T')[0] : '')}
-                />
+          <div className="flex flex-col xl:flex-row gap-3 w-full xl:w-auto items-end bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
+             <div className="flex gap-3 w-full">
+               <div className="flex-1">
+                  <DatePicker
+                    label="Data Inicial"
+                    placeholder="Início"
+                    date={dataInicioFiltro ? new Date(`${dataInicioFiltro}T12:00:00`) : undefined}
+                    onChange={date => setDataInicioFiltro(date ? date.toISOString().split('T')[0] : '')}
+                  />
+               </div>
+               <div className="flex-1">
+                  <DatePicker
+                    label="Data Final"
+                    placeholder="Fim"
+                    date={dataFimFiltro ? new Date(`${dataFimFiltro}T12:00:00`) : undefined}
+                    onChange={date => setDataFimFiltro(date ? date.toISOString().split('T')[0] : '')}
+                  />
+               </div>
              </div>
-             <div className="w-full sm:w-40">
-                <DatePicker
-                  label="Data Final"
-                  placeholder="Fim"
-                  date={dataFimFiltro ? new Date(`${dataFimFiltro}T12:00:00`) : undefined}
-                  onChange={date => setDataFimFiltro(date ? date.toISOString().split('T')[0] : '')}
-                />
+             
+             <div className="w-px h-10 bg-border/60 hidden xl:block mx-1"></div>
+             
+             <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+               <div className="w-full sm:w-48">
+                 <Select 
+                   label="Filtrar Veículo"
+                   options={veiculosOptions}
+                   value={veiculoIdFiltro}
+                   onChange={(e) => setVeiculoIdFiltro(e.target.value)}
+                   icon={<Truck className="w-4 h-4" />}
+                   containerClassName="!mb-0"
+                 />
+               </div>
+               {/* ✨ NOVO FILTRO DE FORNECEDOR / POSTO */}
+               <div className="w-full sm:w-56">
+                 <Select 
+                   label="Posto / Fornecedor"
+                   options={fornecedoresOptions}
+                   value={fornecedorIdFiltro}
+                   onChange={(e) => setFornecedorIdFiltro(e.target.value)}
+                   icon={<Store className="w-4 h-4" />}
+                   containerClassName="!mb-0"
+                 />
+               </div>
              </div>
-             <div className="w-px h-10 bg-border/60 hidden sm:block mx-1"></div>
-             <div className="w-full sm:w-64">
-               <Select 
-                 label="Filtrar Veículo"
-                 options={veiculosOptions}
-                 value={veiculoIdFiltro}
-                 onChange={(e) => setVeiculoIdFiltro(e.target.value)}
-                 icon={<Truck className="w-4 h-4" />}
-                 containerClassName="!mb-0"
-               />
-             </div>
-             <div className="flex items-end pb-0.5 w-full sm:w-auto ml-auto">
+
+             <div className="w-full xl:w-auto flex items-end pb-0.5 mt-2 xl:mt-0 xl:ml-auto">
                <Button 
                  variant="secondary" 
                  onClick={handleExportar} 
-                 disabled={historico.length === 0}
+                 disabled={historicoFiltrado.length === 0}
                  icon={<FileDown className="w-4 h-4" />}
-                 className="w-full sm:w-auto h-11 sm:h-12 bg-emerald-500/10 text-emerald-700 dark:text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20"
+                 className="w-full xl:w-auto h-11 sm:h-12 bg-emerald-500/10 text-emerald-700 dark:text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20"
                >
-                 Exportar Excel
+                 Gerar BM (Excel)
                </Button>
              </div>
           </div>
@@ -245,7 +292,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow group">
           <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
-            <DollarSign className="w-4 h-4 text-emerald-500 dark:text-emerald-400" /> Capital Investido
+            <DollarSign className="w-4 h-4 text-emerald-500 dark:text-emerald-400" /> Capital Investido (Relatório Atual)
           </span>
           <span className="text-3xl font-mono font-black text-text-main truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
             {formatCurrency(totalGasto)}
@@ -272,7 +319,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
           <div className="flex flex-col h-full">
             <ListaResponsiva
               itens={historicoVisivel}
-              emptyMessage="Nenhum abastecimento encontrado neste período."
+              emptyMessage="Nenhum abastecimento encontrado com estes filtros."
 
               // --- DESKTOP ---
               desktopHeader={
@@ -386,14 +433,14 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
             />
 
             {/* BOTÃO CARREGAR MAIS (PAGINAÇÃO PROGRESSIVA MOBILE/DESKTOP) */}
-            {historicoVisivel.length < historico.length && (
+            {historicoVisivel.length < historicoFiltrado.length && (
                <div className="p-6 border-t border-border/60 bg-surface-hover/30 flex justify-center">
                   <Button 
                     variant="secondary" 
                     onClick={handleCarregarMais}
                     className="w-full sm:w-auto bg-surface hover:shadow-md transition-all group"
                   >
-                     Carregar mais {Math.min(ITENS_POR_PAGINA, historico.length - historicoVisivel.length)} registros
+                     Carregar mais {Math.min(ITENS_POR_PAGINA, historicoFiltrado.length - historicoVisivel.length)} registros
                      <ChevronDown className="w-4 h-4 ml-2 text-text-muted group-hover:text-primary transition-colors" />
                   </Button>
                </div>

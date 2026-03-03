@@ -1,6 +1,5 @@
 export type UserRole = 'ADMIN' | 'ENCARREGADO' | 'OPERADOR' | 'RH' | 'COORDENADOR';
 
-// [OPCIONAL] Tipagem forte para CNH evita erros de digitação ("B" vs "b")
 export type CategoriaCNH = 'A' | 'B' | 'C' | 'D' | 'E' | 'AB' | 'AC' | 'AD' | 'AE';
 
 export interface User {
@@ -118,6 +117,7 @@ export interface Abastecimento {
   custoTotal: number;
 
   veiculoId: string;
+  fornecedorId?: string | null;
 
   placaCartaoUsado?: string | null;
   justificativa?: string | null;
@@ -131,9 +131,11 @@ export interface Abastecimento {
     modelo: string;
   };
   operador?: {
+    id: string;
     nome: string;
   };
   fornecedor?: {
+    id: string;
     nome: string;
   };
   itens?: ItemAbastecimento[];
@@ -151,7 +153,7 @@ export interface ItemManutencao {
   produto: {
     id: string;
     nome: string;
-    tipo?: TipoProduto; // [CORREÇÃO] Uso do Enum aqui
+    tipo?: TipoProduto;
   };
 }
 
@@ -164,6 +166,7 @@ export interface OrdemServico {
 
   // ID raiz para edição
   veiculoId: string | null;
+  fornecedorId?: string | null;
 
   tipo: TipoManutencao;
   status: StatusOS;
@@ -181,9 +184,11 @@ export interface OrdemServico {
   } | null;
 
   encarregado?: {
+    id: string;
     nome: string;
   };
   fornecedor?: {
+    id: string;
     nome: string;
   };
   itens?: ItemManutencao[];
@@ -200,7 +205,7 @@ export interface DocumentoLegal {
   arquivoUrl: string;
   categoria: string;
   tipoVeiculo?: string | null;
-  veiculoId?: string | null; // <--- NOVO: ID para documentos específicos de placa
+  veiculoId?: string | null;
   dataValidade?: string | null;
   createdAt?: string;
   updatedAt: string;
@@ -214,7 +219,7 @@ export interface CreateDocumentoDTO {
   categoria: string;
   dataValidade?: Date;
   tipoVeiculo?: string;
-  veiculoId?: string; // <--- NOVO: ID para envio no cadastro
+  veiculoId?: string;
 }
 
 export type TipoIntervaloManutencao = 'KM' | 'TEMPO';

@@ -46,7 +46,6 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
   
-  // --- ESTADO PARA O CONFIRM MODAL ---
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const [filtros, setFiltros] = useState({
@@ -100,7 +99,6 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
     setVisibleCount(prev => prev + ITENS_POR_PAGINA);
   };
 
-  // --- NOVA LÓGICA DE EXCLUSÃO (UI Elite) ---
   const executeDelete = async () => {
     if (!deletingId) return;
 
@@ -112,7 +110,7 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
       console.error("Erro ao excluir:", err);
       toast.error('Erro ao excluir jornada.');
     } finally {
-      setDeletingId(null); // Fecha o modal
+      setDeletingId(null);
     }
   };
 
@@ -121,34 +119,53 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
     fetchHistorico();
   };
 
-  const handleExportar = () => {
-    if (historico.length === 0) return;
-
-    const dados = historico.map(j => {
-      const kmAndados = (j.kmFim && j.kmInicio) ? j.kmFim - j.kmInicio : (j.kmPercorrido || 0);
-      return {
-        'Saída': new Date(j.dataInicio).toLocaleString('pt-BR'),
-        'Chegada': j.dataFim ? new Date(j.dataFim).toLocaleString('pt-BR') : 'Em andamento',
-        'Veículo': j.veiculo ? `${j.veiculo.placa} - ${j.veiculo.modelo}` : 'Veículo Excluído',
-        'Motorista': j.operador?.nome || 'Motorista Excluído',
-        'KM Inicial': j.kmInicio,
-        'KM Final': j.kmFim || '-',
-        'Percorrido': kmAndados,
-        'Obs': j.observacoes || ''
-      };
-    });
-
-    try {
-      exportarParaExcel(dados, "Historico_Jornadas.xlsx");
-      toast.success('Histórico exportado com sucesso!');
-    } catch (err) {
-      toast.error('Erro ao exportar ficheiro.');
-    }
-  };
-
   const getFotoUrl = (jornada: JornadaHistorico, tipo: 'inicio' | 'fim'): string | null => {
     if (tipo === 'inicio') return jornada.fotoInicioUrl || jornada.fotoInicio || jornada.foto_inicio || null;
     return jornada.fotoFimUrl || jornada.fotoFim || jornada.foto_fim || null;
+  };
+
+  // ✨ MÁGICA DA EXPORTAÇÃO EXCEL PARA JORNADAS
+  const handleExportar = () => {
+    if (historico.length === 0) {
+      toast.warning("Sem dados disponíveis para exportar.");
+      return;
+    }
+
+    const exportPromise = new Promise((resolve, reject) => {
+      try {
+        const dados = historico.map(j => {
+          const kmAndados = (j.kmFim && j.kmInicio) ? j.kmFim - j.kmInicio : (j.kmPercorrido || 0);
+          const imgInicio = getFotoUrl(j, 'inicio');
+          const imgFim = getFotoUrl(j, 'fim');
+
+          return {
+            'Data/Hora Saída': new Date(j.dataInicio).toLocaleString('pt-BR'),
+            'Data/Hora Chegada': j.dataFim ? new Date(j.dataFim).toLocaleString('pt-BR') : 'Em andamento',
+            'Placa': j.veiculo?.placa || 'Veículo Excluído',
+            'Modelo': j.veiculo?.modelo || 'N/A',
+            'Motorista': j.operador?.nome || 'Motorista Excluído',
+            'KM Inicial': j.kmInicio,
+            'KM Final': j.kmFim || 'Em Rota',
+            'Distância (KM)': kmAndados > 0 ? kmAndados : 0,
+            'Observações': j.observacoes || '-',
+            // ✨ MÁGICA DO EXCEL: Fórmulas de Hyperlink para as duas fotos do painel
+            'Foto KM Inicial': imgInicio ? `=HYPERLINK("${imgInicio}", "Acessar Foto")` : 'Sem foto',
+            'Foto KM Final': imgFim ? `=HYPERLINK("${imgFim}", "Acessar Foto")` : 'Sem foto'
+          };
+        });
+
+        exportarParaExcel(dados, "Relatorio_Viagens.xlsx");
+        resolve(true);
+      } catch (err) {
+        reject(err);
+      }
+    });
+
+    toast.promise(exportPromise, {
+      loading: 'A gerar folha de cálculo...',
+      success: 'Relatório de Viagens exportado com sucesso!',
+      error: 'Erro ao exportar ficheiro.'
+    });
   };
 
   const veiculosOptions = useMemo(() => [
