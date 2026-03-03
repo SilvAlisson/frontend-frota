@@ -32,7 +32,7 @@ interface HistoricoManutencoesProps {
   filtroInicial?: { veiculoId?: string; dataInicio?: string; };
 }
 
-const ITENS_POR_PAGINA = 20; // Vacina anti-travamento Mobile
+const ITENS_POR_PAGINA = 20;
 
 export function HistoricoManutencoes({
   userRole,
@@ -85,7 +85,7 @@ export function HistoricoManutencoes({
       
       const response = await api.get<OrdemServico[]>('/manutencoes/recentes', { params });
       setHistorico(response.data);
-      setVisibleCount(ITENS_POR_PAGINA); // Reset da paginação visual
+      setVisibleCount(ITENS_POR_PAGINA);
     } catch (err) {
       console.error(err);
       toast.error('Erro ao carregar o histórico financeiro da oficina.');
@@ -98,7 +98,7 @@ export function HistoricoManutencoes({
     fetchHistorico(); 
   }, [fetchHistorico]);
 
-  // ✨ FILTRO LOCAL INTELIGENTE (INSTANTÂNEO E BLINDADO NO TYPESCRIPT)
+  // ✨ FILTRO LOCAL INTELIGENTE
   const historicoFiltrado = useMemo(() => {
     return historico.filter(os => {
       if (!fornecedorIdFiltro) return true;
@@ -106,19 +106,16 @@ export function HistoricoManutencoes({
     });
   }, [historico, fornecedorIdFiltro]);
 
-  // --- CÁLCULOS MEMOIZADOS (BASEADOS NO FILTRO LOCAL) ---
   const totalGasto = useMemo(() => {
     return historicoFiltrado.reduce((acc, os) => acc + (Number(os.custoTotal) || 0), 0);
   }, [historicoFiltrado]);
 
-  // Aplica a limitação visual de itens renderizados no DOM
   const historicoVisivel = useMemo(() => {
     return historicoFiltrado.slice(0, visibleCount);
   }, [historicoFiltrado, visibleCount]);
 
   const handleCarregarMais = () => setVisibleCount(prev => prev + ITENS_POR_PAGINA);
 
-  // --- ACTIONS ---
   const handleDelete = async () => {
     if (!deletingId) return;
     try {
@@ -139,22 +136,21 @@ export function HistoricoManutencoes({
     }
     const exportPromise = new Promise((resolve, reject) => {
         try {
-            // ✨ MAPA DE DADOS ORGANIZADO PARA O EXCEL DO BM
+            // ✨ MAPA OTIMIZADO PARA O BM (Removido Modelo e Status Atual, Custo convertido para Number)
             const dados = historicoFiltrado.map(os => ({
               'Data da OS': new Date(os.data).toLocaleDateString('pt-BR'),
               'Oficina / Fornecedor': os.fornecedor?.nome || 'Não Registada',
               'Placa do Veículo': os.veiculo?.placa || 'N/A',
-              'Modelo': os.veiculo?.modelo || 'N/A',
               'Categoria de Serviço': os.tipo,
               'Itens e Serviços Realizados': (os.itens || []).map(i => `${i.quantidade}x ${i.produto.nome}`).join(' | '),
-              'Valor Total (R$)': Number(os.custoTotal).toLocaleString('pt-BR', { minimumFractionDigits: 2 }),
-              'Status Atual': os.status || 'CONCLUÍDA',
-              // A Fórmula Mágica que cria um botão no Excel
+              'Valor Total (R$)': Number(os.custoTotal), // Agora é um número real
               'Comprovante / Nota': os.fotoComprovanteUrl ? `=HYPERLINK("${os.fotoComprovanteUrl}", "Visualizar Comprovante")` : 'Sem anexo'
             }));
 
             // Nomeia o ficheiro com o nome da oficina se estiver filtrado
             let nomeFicheiro = "BM_Manutencoes_Globais.xlsx";
+            
+            // Usamos a variável de estado 'fornecedorIdFiltro' em vez de 'filtros.fornecedorId'
             if (fornecedorIdFiltro) {
                 const nomeFornecedor = fornecedores.find(f => f.id === fornecedorIdFiltro)?.nome?.replace(/[^a-zA-Z0-9]/g, '_');
                 nomeFicheiro = `BM_${nomeFornecedor}.xlsx`;
@@ -249,7 +245,7 @@ export function HistoricoManutencoes({
                 />
               </div>
 
-              {/* ✨ NOVO FILTRO DE OFICINA PARA O BM (FRONTEND) */}
+              {/* ✨ FILTRO DE OFICINA PARA O BM (FRONTEND) */}
               <div className="w-full sm:w-56">
                 <Select 
                   label="Oficina / Fornecedor" 
@@ -383,21 +379,17 @@ export function HistoricoManutencoes({
                 <div className="p-5 flex flex-col gap-4 border-b border-border/60 hover:bg-surface-hover/30 transition-colors">
                   <div className="flex justify-between items-start">
                     <div className="flex gap-4">
-                      {/* Data Box Premium */}
                       <div className="bg-surface shadow-sm text-text-main p-2 rounded-xl border border-border/80 flex flex-col items-center justify-center w-14 h-14 shrink-0">
                         <span className="text-lg font-black leading-none">{new Date(os.data).getDate()}</span>
                         <span className="text-[9px] font-bold uppercase tracking-widest text-text-muted mt-0.5">
                           {new Date(os.data).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
                         </span>
                       </div>
-                      
-                      {/* Infos Rápidas */}
                       <div className="flex flex-col justify-center">
                         <span className="font-mono font-black text-primary text-lg tracking-tight leading-none block mb-1">{os.veiculo?.placa || 'Sem Placa'}</span>
                         <span className="text-xs text-text-secondary font-medium">{os.fornecedor?.nome || 'Oficina não registada'}</span>
                       </div>
                     </div>
-
                     <div className="flex flex-col items-end gap-2">
                        {getBadgeStatus(os.status)}
                        <DropdownAcoes 
@@ -406,8 +398,6 @@ export function HistoricoManutencoes({
                        />
                     </div>
                   </div>
-
-                  {/* Informação Operacional e Custos */}
                   <div className="flex justify-between items-center bg-surface-hover/50 p-3 rounded-xl border border-border/40">
                     <div className="flex flex-col gap-1.5 items-start">
                        <span className="text-[9px] text-text-muted uppercase font-black tracking-widest">Serviço</span>
@@ -420,8 +410,6 @@ export function HistoricoManutencoes({
                        </span>
                     </div>
                   </div>
-
-                  {/* Comprovativo */}
                   {os.fotoComprovanteUrl && (
                     <Button 
                       variant="secondary" 
@@ -436,7 +424,6 @@ export function HistoricoManutencoes({
               )}
             />
 
-            {/* BOTÃO CARREGAR MAIS (PAGINAÇÃO PROGRESSIVA MOBILE/DESKTOP) */}
             {historicoVisivel.length < historicoFiltrado.length && (
                <div className="p-6 border-t border-border/60 bg-surface-hover/30 flex justify-center">
                   <Button 
