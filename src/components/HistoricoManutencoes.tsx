@@ -136,7 +136,7 @@ export function HistoricoManutencoes({
     }
     const exportPromise = new Promise((resolve, reject) => {
         try {
-            // ✨ MAPA OTIMIZADO PARA O BM (Removido Modelo e Status Atual, Custo convertido para Number)
+            //  MAPA OTIMIZADO PARA O BM (Removido Modelo e Status Atual, Custo convertido para Number)
             const dados = historicoFiltrado.map(os => ({
               'Data da OS': new Date(os.data).toLocaleDateString('pt-BR'),
               'Oficina / Fornecedor': os.fornecedor?.nome || 'Não Registada',
