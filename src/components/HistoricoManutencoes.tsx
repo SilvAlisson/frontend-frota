@@ -142,9 +142,9 @@ export function HistoricoManutencoes({
               'Oficina / Fornecedor': os.fornecedor?.nome || 'Não Registada',
               'Placa do Veículo': os.veiculo?.placa || 'N/A',
               'Categoria de Serviço': os.tipo,
-              'Itens e Serviços Realizados': (os.itens || []).map(i => `${i.quantidade}x ${i.produto.nome}`).join(' | '),
-              'Valor Total (R$)': Number(os.custoTotal), // Agora é um número real
-              'Comprovante / Nota': os.fotoComprovanteUrl ? `=HYPERLINK("${os.fotoComprovanteUrl}", "Visualizar Comprovante")` : 'Sem anexo'
+              'Serviços Realizados': (os.itens || []).map(i => `${i.quantidade}x ${i.produto.nome}`).join(' | '),
+              'Valor Total (R$)': Number(os.custoTotal),
+              'Comprovante': os.fotoComprovanteUrl ? `=HYPERLINK("${os.fotoComprovanteUrl}", "Visualizar Comprovante")` : 'Sem anexo'
             }));
 
             // Nomeia o ficheiro com o nome da oficina se estiver filtrado
