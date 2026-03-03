@@ -44,7 +44,7 @@ export function HistoricoManutencoes({
 
   // --- ESTADOS DE DADOS ---
   const [historico, setHistorico] = useState<OrdemServico[]>([]);
-  const [fornecedores, setFornecedores] = useState<{id: string, nome: string}[]>([]); // ✨ NOVO: Lista de Fornecedores
+  const [fornecedores, setFornecedores] = useState<{id: string, nome: string}[]>([]); 
   const [loading, setLoading] = useState(true);
   
   // --- ESTADOS DE RENDERIZAÇÃO PROGRESSIVA ---
@@ -54,12 +54,15 @@ export function HistoricoManutencoes({
   const [editingOS, setEditingOS] = useState<OrdemServico | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
+  // --- ESTADOS DE FILTRO (API) ---
   const [filtros, setFiltros] = useState({
     veiculoId: filtroInicial?.veiculoId || '',
-    fornecedorId: '',
     dataInicio: filtroInicial?.dataInicio || '',
     dataFim: ''
   });
+
+  // --- ESTADO DE FILTRO LOCAL (FRONTEND) ---
+  const [fornecedorIdFiltro, setFornecedorIdFiltro] = useState('');
 
   const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
   const canDelete = userRole === 'ADMIN';
@@ -71,7 +74,7 @@ export function HistoricoManutencoes({
        .catch(err => console.error("Erro ao carregar fornecedores", err));
   }, []);
 
-  // --- FETCHING OTIMIZADO ---
+  // --- FETCHING OTIMIZADO (SÓ VAI NA API QUANDO MUDA DATA OU VEÍCULO) ---
   const fetchHistorico = useCallback(async () => {
     setLoading(true);
     try {
@@ -79,8 +82,7 @@ export function HistoricoManutencoes({
       if (filtros.veiculoId) params.veiculoId = filtros.veiculoId;
       if (filtros.dataInicio) params.dataInicio = filtros.dataInicio;
       if (filtros.dataFim) params.dataFim = filtros.dataFim;
-      if (filtros.fornecedorId) params.fornecedorId = filtros.fornecedorId; // Filtro API
-
+      
       const response = await api.get<OrdemServico[]>('/manutencoes/recentes', { params });
       setHistorico(response.data);
       setVisibleCount(ITENS_POR_PAGINA); // Reset da paginação visual
@@ -96,15 +98,23 @@ export function HistoricoManutencoes({
     fetchHistorico(); 
   }, [fetchHistorico]);
 
-  // --- CÁLCULOS MEMOIZADOS (SUMÁRIO GLOBAL INTACTO) ---
+  // ✨ FILTRO LOCAL INTELIGENTE (INSTANTÂNEO E BLINDADO NO TYPESCRIPT)
+  const historicoFiltrado = useMemo(() => {
+    return historico.filter(os => {
+      if (!fornecedorIdFiltro) return true;
+      return os.fornecedor?.id === fornecedorIdFiltro || os.fornecedorId === fornecedorIdFiltro;
+    });
+  }, [historico, fornecedorIdFiltro]);
+
+  // --- CÁLCULOS MEMOIZADOS (BASEADOS NO FILTRO LOCAL) ---
   const totalGasto = useMemo(() => {
-    return historico.reduce((acc, os) => acc + (Number(os.custoTotal) || 0), 0);
-  }, [historico]);
+    return historicoFiltrado.reduce((acc, os) => acc + (Number(os.custoTotal) || 0), 0);
+  }, [historicoFiltrado]);
 
   // Aplica a limitação visual de itens renderizados no DOM
   const historicoVisivel = useMemo(() => {
-    return historico.slice(0, visibleCount);
-  }, [historico, visibleCount]);
+    return historicoFiltrado.slice(0, visibleCount);
+  }, [historicoFiltrado, visibleCount]);
 
   const handleCarregarMais = () => setVisibleCount(prev => prev + ITENS_POR_PAGINA);
 
@@ -123,14 +133,14 @@ export function HistoricoManutencoes({
   };
 
   const handleExportar = () => {
-    if (historico.length === 0) {
-      toast.warning("Sem dados disponíveis para exportar.");
+    if (historicoFiltrado.length === 0) {
+      toast.warning("Sem dados disponíveis para exportar com estes filtros.");
       return;
     }
     const exportPromise = new Promise((resolve, reject) => {
         try {
             // ✨ MAPA DE DADOS ORGANIZADO PARA O EXCEL DO BM
-            const dados = historico.map(os => ({
+            const dados = historicoFiltrado.map(os => ({
               'Data da OS': new Date(os.data).toLocaleDateString('pt-BR'),
               'Oficina / Fornecedor': os.fornecedor?.nome || 'Não Registada',
               'Placa do Veículo': os.veiculo?.placa || 'N/A',
@@ -145,8 +155,8 @@ export function HistoricoManutencoes({
 
             // Nomeia o ficheiro com o nome da oficina se estiver filtrado
             let nomeFicheiro = "BM_Manutencoes_Globais.xlsx";
-            if (filtros.fornecedorId) {
-                const nomeFornecedor = fornecedores.find(f => f.id === filtros.fornecedorId)?.nome?.replace(/[^a-zA-Z0-9]/g, '_');
+            if (fornecedorIdFiltro) {
+                const nomeFornecedor = fornecedores.find(f => f.id === fornecedorIdFiltro)?.nome?.replace(/[^a-zA-Z0-9]/g, '_');
                 nomeFicheiro = `BM_${nomeFornecedor}.xlsx`;
             }
 
@@ -239,13 +249,13 @@ export function HistoricoManutencoes({
                 />
               </div>
 
-              {/* ✨ NOVO FILTRO DE OFICINA PARA O BM */}
+              {/* ✨ NOVO FILTRO DE OFICINA PARA O BM (FRONTEND) */}
               <div className="w-full sm:w-56">
                 <Select 
                   label="Oficina / Fornecedor" 
                   options={fornecedoresOptions}
-                  value={filtros.fornecedorId}
-                  onChange={e => setFiltros(prev => ({ ...prev, fornecedorId: e.target.value }))}
+                  value={fornecedorIdFiltro}
+                  onChange={e => setFornecedorIdFiltro(e.target.value)}
                   icon={<Store className="w-4 h-4"/>}
                   containerClassName="!mb-0"
                 />
@@ -257,7 +267,7 @@ export function HistoricoManutencoes({
                 variant="secondary" 
                 onClick={handleExportar} 
                 icon={<Download className="w-4 h-4" />}
-                disabled={historico.length === 0}
+                disabled={historicoFiltrado.length === 0}
                 className="w-full xl:w-auto h-11 sm:h-12 bg-sky-500/10 text-sky-600 dark:text-sky-400 hover:bg-sky-500/20 border-sky-500/20"
               >
                 Gerar BM (Excel)
@@ -283,7 +293,7 @@ export function HistoricoManutencoes({
             <Wrench className="w-4 h-4 text-amber-500 dark:text-amber-400" /> Ordens de Serviço (Fichas)
           </span>
           <span className="text-3xl font-mono font-black text-text-main truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-            {historico.length} <small className="text-lg font-bold opacity-60 uppercase tracking-widest ml-1">Fichas</small>
+            {historicoFiltrado.length} <small className="text-lg font-bold opacity-60 uppercase tracking-widest ml-1">Fichas</small>
           </span>
         </Card>
       </div>
@@ -427,14 +437,14 @@ export function HistoricoManutencoes({
             />
 
             {/* BOTÃO CARREGAR MAIS (PAGINAÇÃO PROGRESSIVA MOBILE/DESKTOP) */}
-            {historicoVisivel.length < historico.length && (
+            {historicoVisivel.length < historicoFiltrado.length && (
                <div className="p-6 border-t border-border/60 bg-surface-hover/30 flex justify-center">
                   <Button 
                     variant="secondary" 
                     onClick={handleCarregarMais}
                     className="w-full sm:w-auto bg-surface hover:shadow-md transition-all group"
                   >
-                     Ver mais {Math.min(ITENS_POR_PAGINA, historico.length - historicoVisivel.length)} Fichas
+                     Ver mais {Math.min(ITENS_POR_PAGINA, historicoFiltrado.length - historicoVisivel.length)} Fichas
                      <ChevronDown className="w-4 h-4 ml-2 text-text-muted group-hover:text-primary transition-colors" />
                   </Button>
                </div>
