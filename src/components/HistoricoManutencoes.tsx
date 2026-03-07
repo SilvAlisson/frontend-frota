@@ -34,6 +34,34 @@ interface HistoricoManutencoesProps {
 
 const ITENS_POR_PAGINA = 20;
 
+// ✨ HELPER DE DATAS BLINDADO (Fim do problema de Timezone e Estouro de Layout)
+const DateHelper = {
+  getDia: (isoDate: string) => {
+    if (!isoDate) return '--';
+    return isoDate.split('T')[0].split('-')[2];
+  },
+  getMesCurto: (isoDate: string) => {
+    if (!isoDate) return '---';
+    const mesIndex = parseInt(isoDate.split('T')[0].split('-')[1], 10) - 1;
+    const meses = ['Jan.', 'Fev.', 'Mar.', 'Abr.', 'Mai.', 'Jun.', 'Jul.', 'Ago.', 'Set.', 'Out.', 'Nov.', 'Dez.'];
+    return meses[mesIndex];
+  },
+  getCompleta: (isoDate: string) => {
+    if (!isoDate) return '---';
+    const partes = isoDate.split('T')[0].split('-');
+    const dia = partes[2];
+    const ano = partes[0];
+    const mesIndex = parseInt(partes[1], 10) - 1;
+    const meses = ['Jan.', 'Fev.', 'Mar.', 'Abr.', 'Mai.', 'Jun.', 'Jul.', 'Ago.', 'Set.', 'Out.', 'Nov.', 'Dez.'];
+    return `${dia} ${meses[mesIndex]} ${ano}`;
+  },
+  getExcel: (isoDate: string) => {
+    if (!isoDate) return '';
+    const partes = isoDate.split('T')[0].split('-');
+    return `${partes[2]}/${partes[1]}/${partes[0]}`;
+  }
+};
+
 export function HistoricoManutencoes({
   userRole,
   filtroInicial
@@ -136,9 +164,9 @@ export function HistoricoManutencoes({
     }
     const exportPromise = new Promise((resolve, reject) => {
         try {
-            //  MAPA OTIMIZADO PARA O BM (Removido Modelo e Status Atual, Custo convertido para Number)
+            // ✨ MAPA DE DADOS OTIMIZADO PARA O BM
             const dados = historicoFiltrado.map(os => ({
-              'Data da OS': new Date(os.data).toLocaleDateString('pt-BR'),
+              'Data da OS': DateHelper.getExcel(os.data), // ✨ Uso do helper pro Excel
               'Oficina / Fornecedor': os.fornecedor?.nome || 'Não Registada',
               'Placa do Veículo': os.veiculo?.placa || 'N/A',
               'Categoria de Serviço': os.tipo,
@@ -150,7 +178,6 @@ export function HistoricoManutencoes({
             // Nomeia o ficheiro com o nome da oficina se estiver filtrado
             let nomeFicheiro = "BM_Manutencoes_Globais.xlsx";
             
-            // Usamos a variável de estado 'fornecedorIdFiltro' em vez de 'filtros.fornecedorId'
             if (fornecedorIdFiltro) {
                 const nomeFornecedor = fornecedores.find(f => f.id === fornecedorIdFiltro)?.nome?.replace(/[^a-zA-Z0-9]/g, '_');
                 nomeFicheiro = `BM_${nomeFornecedor}.xlsx`;
@@ -323,7 +350,8 @@ export function HistoricoManutencoes({
                     <div className="flex flex-col gap-2 items-start">
                       <span className="font-bold text-text-main flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-text-muted/60" />
-                        {new Date(os.data).toLocaleDateString('pt-BR')}
+                        {/* ✨ AQUI: Uso do helper no desktop */}
+                        {DateHelper.getCompleta(os.data)}
                       </span>
                       {getBadgeTipo(os.tipo)}
                     </div>
@@ -379,10 +407,11 @@ export function HistoricoManutencoes({
                 <div className="p-5 flex flex-col gap-4 border-b border-border/60 hover:bg-surface-hover/30 transition-colors">
                   <div className="flex justify-between items-start">
                     <div className="flex gap-4">
+                      {/* ✨ AQUI: Uso do helper no Card Mobile (Nunca mais vai estourar) */}
                       <div className="bg-surface shadow-sm text-text-main p-2 rounded-xl border border-border/80 flex flex-col items-center justify-center w-14 h-14 shrink-0">
-                        <span className="text-lg font-black leading-none">{new Date(os.data).getDate()}</span>
-                        <span className="text-[9px] font-bold uppercase tracking-widest text-text-muted mt-0.5">
-                          {new Date(os.data).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
+                        <span className="text-lg font-black leading-none">{DateHelper.getDia(os.data)}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted mt-0.5">
+                          {DateHelper.getMesCurto(os.data)}
                         </span>
                       </div>
                       <div className="flex flex-col justify-center">
@@ -436,7 +465,6 @@ export function HistoricoManutencoes({
                   </Button>
                </div>
             )}
-
           </div>
         )}
       </Card>
