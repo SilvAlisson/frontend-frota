@@ -30,7 +30,39 @@ interface HistoricoAbastecimentosProps {
   };
 }
 
-const ITENS_POR_PAGINA = 20; // Vacina anti-travamento Mobile
+const ITENS_POR_PAGINA = 20;
+
+// ✨ HELPER DE DATAS BLINDADO PARA ABASTECIMENTOS (Fim do problema de Timezone)
+const DateHelper = {
+  getDia: (isoDate: string) => {
+    if (!isoDate) return '--';
+    return isoDate.split('T')[0].split('-')[2];
+  },
+  getMesCurto: (isoDate: string) => {
+    if (!isoDate) return '---';
+    const mesIndex = parseInt(isoDate.split('T')[0].split('-')[1], 10) - 1;
+    const meses = ['Jan.', 'Fev.', 'Mar.', 'Abr.', 'Mai.', 'Jun.', 'Jul.', 'Ago.', 'Set.', 'Out.', 'Nov.', 'Dez.'];
+    return meses[mesIndex];
+  },
+  getCompleta: (isoDate: string) => {
+    if (!isoDate) return '---';
+    const partes = isoDate.split('T')[0].split('-');
+    const dia = partes[2];
+    const ano = partes[0];
+    const mesIndex = parseInt(partes[1], 10) - 1;
+    const meses = ['Jan.', 'Fev.', 'Mar.', 'Abr.', 'Mai.', 'Jun.', 'Jul.', 'Ago.', 'Set.', 'Out.', 'Nov.', 'Dez.'];
+    return `${dia} ${meses[mesIndex]} ${ano}`;
+  },
+  getHora: (isoDate: string) => {
+    if (!isoDate || !isoDate.includes('T')) return '--:--';
+    return isoDate.split('T')[1].substring(0, 5); // Pega apenas HH:mm
+  },
+  getExcel: (isoDate: string) => {
+    if (!isoDate) return '';
+    const dataPart = isoDate.split('T')[0].split('-');
+    return `${dataPart[2]}/${dataPart[1]}/${dataPart[0]}`;
+  }
+};
 
 export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAbastecimentosProps) {
   
@@ -39,7 +71,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
 
   // --- ESTADOS DE DADOS ---
   const [historico, setHistorico] = useState<Abastecimento[]>([]);
-  const [fornecedores, setFornecedores] = useState<{id: string, nome: string}[]>([]); // ✨ NOVO: Lista de Fornecedores
+  const [fornecedores, setFornecedores] = useState<{id: string, nome: string}[]>([]); 
   const [loading, setLoading] = useState(true);
   
   // --- ESTADOS DE RENDERIZAÇÃO PROGRESSIVA (ANTI-LAG) ---
@@ -53,7 +85,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
   const [dataInicioFiltro, setDataInicioFiltro] = useState(filtroInicial?.dataInicio || '');
   const [dataFimFiltro, setDataFimFiltro] = useState('');
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState(filtroInicial?.veiculoId || '');
-  const [fornecedorIdFiltro, setFornecedorIdFiltro] = useState(''); // ✨ NOVO FILTRO
+  const [fornecedorIdFiltro, setFornecedorIdFiltro] = useState('');
 
   const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
 
@@ -61,14 +93,12 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     if (filtroInicial?.veiculoId) setVeiculoIdFiltro(filtroInicial.veiculoId);
   }, [filtroInicial]);
 
-  // Busca fornecedores (Postos) para o Select do BM
   useEffect(() => {
     api.get('/fornecedores')
        .then(res => setFornecedores(res.data))
        .catch(err => console.error("Erro ao carregar fornecedores", err));
   }, []);
 
-  // --- FETCHING OTIMIZADO ---
   const fetchHistorico = useCallback(async () => {
     setLoading(true);
     try {
@@ -79,7 +109,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
 
       const response = await api.get('/abastecimentos/recentes', { params });
       setHistorico(response.data);
-      setVisibleCount(ITENS_POR_PAGINA); // Resetar paginação visual ao filtrar
+      setVisibleCount(ITENS_POR_PAGINA); 
     } catch (err) {
       console.error("Erro ao buscar histórico:", err);
       toast.error('Falha ao carregar abastecimentos.');
@@ -92,12 +122,13 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     fetchHistorico();
   }, [fetchHistorico]);
 
-  // ✨ FILTRO LOCAL INTELIGENTE (Garante que a UI e o Excel só veem o fornecedor filtrado)
   const historicoFiltrado = useMemo(() => {
-    return historico.filter(ab => !fornecedorIdFiltro || ab.fornecedor?.id === fornecedorIdFiltro);
+    return historico.filter(ab => {
+      if (!fornecedorIdFiltro) return true;
+      return ab.fornecedor?.id === fornecedorIdFiltro || ab.fornecedorId === fornecedorIdFiltro;
+    });
   }, [historico, fornecedorIdFiltro]);
 
-  // --- CÁLCULOS MEMOIZADOS E ATUALIZADOS PARA RESPONDER AO FILTRO ---
   const totalGasto = useMemo(() => {
     return historicoFiltrado.reduce((acc, ab) => acc + (Number(ab.custoTotal) || 0), 0);
   }, [historicoFiltrado]);
@@ -114,7 +145,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     }, 0);
   }, [historicoFiltrado]);
 
-  // Aplica a limitação de itens renderizados ao array já filtrado
   const historicoVisivel = useMemo(() => {
     return historicoFiltrado.slice(0, visibleCount);
   }, [historicoFiltrado, visibleCount]);
@@ -123,7 +153,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     setVisibleCount(prev => prev + ITENS_POR_PAGINA);
   };
 
-  // --- ACTIONS ---
   const handleDelete = async () => {
     if (!deletingId) return;
     try {
@@ -145,33 +174,29 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
 
     const exportPromise = new Promise((resolve, reject) => {
       try {
-        const dadosFormatados = historicoFiltrado.flatMap(ab => {
+        // ✨ MAPA DE DADOS OTIMIZADO PARA O BM (Sem colunas inúteis e Valor como Número Real)
+        const dadosFormatados = historicoFiltrado.map(ab => {
           const itensSafe = ab.itens || [];
           const itensFormatados = itensSafe.map(item =>
-            `${item.produto.nome} (${item.quantidade} ${item.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'Un'})`
-          ).join(', ');
-
-          const custoNum = Number(ab.custoTotal) || 0;
+            `${item.quantidade}${item.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'Un'} ${item.produto.nome}`
+          ).join(' | ');
 
           return {
-            'Data': new Date(ab.dataHora).toLocaleDateString('pt-BR'),
-            'Posto / Fornecedor': ab.fornecedor?.nome || 'N/A',
-            'Placa': ab.veiculo?.placa || 'N/A',
-            'Modelo': ab.veiculo?.modelo || 'N/A',
+            'Data do Abastecimento': DateHelper.getExcel(ab.dataHora),
+            'Posto / Fornecedor': ab.fornecedor?.nome || 'Não Registado',
+            'Placa do Veículo': ab.veiculo?.placa || 'N/A',
+            'Produtos / Combustível': itensFormatados,
             'KM Registado': ab.kmOdometro,
-            'Itens Abastecidos': itensFormatados,
-            'Operador': ab.operador?.nome || 'N/A',
-            'Total Pago (R$)': custoNum.toFixed(2).replace('.', ','),
-            // ✨ O SEGREDO DOS LINKS NO EXCEL:
+            'Motorista / Operador': ab.operador?.nome || 'N/A',
+            'Valor Total (R$)': Number(ab.custoTotal), // Retorna NÚMERO NATIVO
             'Nota Fiscal': ab.fotoNotaFiscalUrl ? `=HYPERLINK("${ab.fotoNotaFiscalUrl}", "Acessar Comprovante")` : 'Sem anexo'
           };
         });
 
-        // Nome do ficheiro dinâmico com base no posto
         let nomeFicheiro = "BM_Abastecimentos_Globais.xlsx";
         if (fornecedorIdFiltro) {
             const nomeFornecedor = fornecedores.find(f => f.id === fornecedorIdFiltro)?.nome?.replace(/[^a-zA-Z0-9]/g, '_');
-            nomeFicheiro = `BM_Abastecimentos_${nomeFornecedor}.xlsx`;
+            nomeFicheiro = `BM_${nomeFornecedor}.xlsx`;
         }
 
         exportarParaExcel(dadosFormatados, nomeFicheiro);
@@ -188,7 +213,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     });
   };
 
-  // --- FORMATADORES & HELPERS ---
   const formatCurrency = (value: number | string) => {
     const num = Number(value) || 0;
     return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
@@ -211,7 +235,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
 
   const veiculosOptions = useMemo(() => [
     { value: "", label: "Todos os Veículos" },
-    ...veiculos.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` }))
+    ...veiculos.map(v => ({ value: v.id, label: v.placa }))
   ], [veiculos]);
 
   const fornecedoresOptions = useMemo(() => [
@@ -222,7 +246,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
   return (
     <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
-      {/* 1. HEADER E FILTROS */}
       <PageHeader 
         title="Boletim de Abastecimentos"
         subtitle="Filtre por Posto para gerar o Boletim de Medição (BM) com os comprovantes integrados."
@@ -260,7 +283,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                    containerClassName="!mb-0"
                  />
                </div>
-               {/* ✨ NOVO FILTRO DE FORNECEDOR / POSTO */}
                <div className="w-full sm:w-56">
                  <Select 
                    label="Posto / Fornecedor"
@@ -288,7 +310,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
         }
       />
 
-      {/* 2. SUMÁRIO DA CONSULTA */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow group">
           <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
@@ -309,7 +330,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
         </Card>
       </div>
 
-      {/* 3. TABELA (CARD) */}
       <Card padding="none" className="overflow-hidden border-border/60 shadow-sm rounded-3xl bg-surface">
         {loading ? (
           <div className="p-6 sm:p-8 space-y-4">
@@ -321,7 +341,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
               itens={historicoVisivel}
               emptyMessage="Nenhum abastecimento encontrado com estes filtros."
 
-              // --- DESKTOP ---
               desktopHeader={
                 <>
                   <th className={`${TableStyles.th} pl-8 py-5`}>Data e Hora</th>
@@ -337,10 +356,11 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                     <div className="flex flex-col gap-1">
                       <span className="font-bold text-text-main flex items-center gap-2">
                           <Calendar className="w-4 h-4 text-text-muted/60" />
-                          {new Date(ab.dataHora).toLocaleDateString('pt-BR')}
+                          {/* ✨ HELPER DE DATA NO DESKTOP */}
+                          {DateHelper.getCompleta(ab.dataHora)}
                       </span>
                       <span className="text-xs text-text-secondary font-mono ml-6 tracking-widest opacity-80">
-                          {new Date(ab.dataHora).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          {DateHelper.getHora(ab.dataHora)}
                       </span>
                     </div>
                   </td>
@@ -387,18 +407,18 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                 </>
               )}
 
-              // --- MOBILE ---
               renderMobile={(ab) => (
                 <div className="p-5 flex flex-col gap-4 border-b border-border/60 last:border-0 hover:bg-surface-hover/30 transition-colors">
                   <div className="flex justify-between items-start">
                     <div className="flex gap-4">
-                      {/* Data Box Premium */}
+                      {/* ✨ HELPER DE DATA NO MOBILE */}
                       <div className="bg-surface shadow-sm text-text-main p-2 rounded-xl border border-border/80 flex flex-col items-center justify-center w-14 h-14 shrink-0">
-                        <span className="text-lg font-black leading-none">{new Date(ab.dataHora).getDate()}</span>
-                        <span className="text-[9px] uppercase font-bold tracking-widest text-text-muted mt-0.5">{new Date(ab.dataHora).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}</span>
+                        <span className="text-lg font-black leading-none">{DateHelper.getDia(ab.dataHora)}</span>
+                        <span className="text-[10px] uppercase font-bold tracking-widest text-text-muted mt-0.5">
+                          {DateHelper.getMesCurto(ab.dataHora)}
+                        </span>
                       </div>
                       
-                      {/* Infos Principais */}
                       <div className="flex flex-col justify-center">
                         <span className="font-mono font-black text-primary text-lg tracking-tight leading-none">{ab.veiculo?.placa || 'Sem Placa'}</span>
                         <span className="text-xs text-text-secondary font-medium mt-1">{ab.fornecedor?.nome || 'Fornecedor Local'}</span>
@@ -411,7 +431,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                     />
                   </div>
 
-                  {/* Detalhes Mobile Glassmorphism */}
                   <div className="grid grid-cols-2 gap-3 bg-surface-hover/50 p-3 rounded-xl border border-border/40">
                       <div className="flex flex-col">
                           <span className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-0.5">Custo</span>
@@ -432,7 +451,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
               )}
             />
 
-            {/* BOTÃO CARREGAR MAIS (PAGINAÇÃO PROGRESSIVA MOBILE/DESKTOP) */}
             {historicoVisivel.length < historicoFiltrado.length && (
                <div className="p-6 border-t border-border/60 bg-surface-hover/30 flex justify-center">
                   <Button 
@@ -449,7 +467,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
         )}
       </Card>
 
-      {/* --- MODAIS --- */}
       <Modal 
         isOpen={!!editingId} 
         onClose={() => setEditingId(null)}

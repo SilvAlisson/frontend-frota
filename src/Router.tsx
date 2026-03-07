@@ -24,6 +24,10 @@ import { FormRegistrarManutencao } from './components/forms/FormRegistrarManuten
 import { FormRegistrarAbastecimento } from './components/forms/FormRegistrarAbastecimento';
 import { FormPlanoManutencao } from './components/forms/FormPlanoManutencao';
 
+// ✨ IMPORTS DAS NOVAS TELAS DE RECUPERAÇÃO DE SENHA
+import { EsqueceuSenha } from './pages/EsqueceuSenha';
+import { RedefinirSenha } from './pages/RedefinirSenha';
+
 const LoadingScreen = () => (
   <div className="flex flex-col items-center justify-center h-screen bg-slate-50">
     <div className="animate-spin rounded-full h-12 w-12 border-4 border-slate-200 border-t-emerald-500 mb-4"></div>
@@ -92,6 +96,10 @@ export function Router() {
     <Routes>
       <Route path="/login" element={<LoginScreen />} />
 
+      {/* ✨ ROTAS PÚBLICAS DE RECUPERAÇÃO DE SENHA ✨ */}
+      <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
+      <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+
       {/* Rota Raiz (Dashboards Operacionais) */}
       <Route path="/" element={
         <PrivateRoute>
@@ -113,7 +121,6 @@ export function Router() {
 
         <Route path="manutencoes">
           <Route index element={<HistoricoManutencoes userRole={user?.role || ''} />} />
-          {/* REMOVIDAS AS GAMBIARRAS DOS ARRAYS VAZIOS [] */}
           <Route path="nova" element={<FormRegistrarManutencao onSuccess={() => navigate('/admin/manutencoes')} onClose={() => navigate('/admin/manutencoes')} />} />
         </Route>
 

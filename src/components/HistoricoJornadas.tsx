@@ -35,6 +35,39 @@ interface HistoricoJornadasProps {
 
 const ITENS_POR_PAGINA = 20;
 
+// ✨ HELPER DE DATAS BLINDADO (Fim do problema de Timezone e Estouro de Layout)
+const DateHelper = {
+  getDia: (isoDate: string) => {
+    if (!isoDate) return '--';
+    return isoDate.split('T')[0].split('-')[2];
+  },
+  getMesCurto: (isoDate: string) => {
+    if (!isoDate) return '---';
+    const mesIndex = parseInt(isoDate.split('T')[0].split('-')[1], 10) - 1;
+    const meses = ['Jan.', 'Fev.', 'Mar.', 'Abr.', 'Mai.', 'Jun.', 'Jul.', 'Ago.', 'Set.', 'Out.', 'Nov.', 'Dez.'];
+    return meses[mesIndex];
+  },
+  getCompleta: (isoDate: string) => {
+    if (!isoDate) return '---';
+    const partes = isoDate.split('T')[0].split('-');
+    const dia = partes[2];
+    const ano = partes[0];
+    const mesIndex = parseInt(partes[1], 10) - 1;
+    const meses = ['Jan.', 'Fev.', 'Mar.', 'Abr.', 'Mai.', 'Jun.', 'Jul.', 'Ago.', 'Set.', 'Out.', 'Nov.', 'Dez.'];
+    return `${dia} ${meses[mesIndex]} ${ano}`;
+  },
+  getHora: (isoDate: string) => {
+    if (!isoDate || !isoDate.includes('T')) return '--:--';
+    return isoDate.split('T')[1].substring(0, 5); // Retorna HH:mm
+  },
+  getExcelDataHora: (isoDate: string) => {
+    if (!isoDate) return '';
+    const partesData = isoDate.split('T')[0].split('-');
+    const hora = isoDate.includes('T') ? isoDate.split('T')[1].substring(0, 5) : '';
+    return `${partesData[2]}/${partesData[1]}/${partesData[0]} ${hora}`.trim();
+  }
+};
+
 export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasProps) {
   
   const { data: veiculos = [] } = useVeiculos();
@@ -124,7 +157,7 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
     return jornada.fotoFimUrl || jornada.fotoFim || jornada.foto_fim || null;
   };
 
-  // ✨ MÁGICA DA EXPORTAÇÃO EXCEL PARA JORNADAS
+  // ✨ MÁGICA DA EXPORTAÇÃO EXCEL PARA JORNADAS (Com DateHelper e Hyperlinks)
   const handleExportar = () => {
     if (historico.length === 0) {
       toast.warning("Sem dados disponíveis para exportar.");
@@ -139,8 +172,8 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
           const imgFim = getFotoUrl(j, 'fim');
 
           return {
-            'Data/Hora Saída': new Date(j.dataInicio).toLocaleString('pt-BR'),
-            'Data/Hora Chegada': j.dataFim ? new Date(j.dataFim).toLocaleString('pt-BR') : 'Em andamento',
+            'Data/Hora Saída': DateHelper.getExcelDataHora(j.dataInicio),
+            'Data/Hora Chegada': j.dataFim ? DateHelper.getExcelDataHora(j.dataFim) : 'Em andamento',
             'Placa': j.veiculo?.placa || 'Veículo Excluído',
             'Modelo': j.veiculo?.modelo || 'N/A',
             'Motorista': j.operador?.nome || 'Motorista Excluído',
@@ -148,7 +181,6 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
             'KM Final': j.kmFim || 'Em Rota',
             'Distância (KM)': kmAndados > 0 ? kmAndados : 0,
             'Observações': j.observacoes || '-',
-            // ✨ MÁGICA DO EXCEL: Fórmulas de Hyperlink para as duas fotos do painel
             'Foto KM Inicial': imgInicio ? `=HYPERLINK("${imgInicio}", "Acessar Foto")` : 'Sem foto',
             'Foto KM Final': imgFim ? `=HYPERLINK("${imgFim}", "Acessar Foto")` : 'Sem foto'
           };
@@ -310,7 +342,8 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
                       <div className="flex flex-col gap-1.5 items-start">
                         <span className="font-bold text-text-main text-sm flex items-center gap-2">
                           <Calendar className="w-3.5 h-3.5 text-text-muted/60" />
-                          {new Date(j.dataInicio).toLocaleDateString('pt-BR')}
+                          {/* ✨ HELPER DE DATA (Desktop) */}
+                          {DateHelper.getCompleta(j.dataInicio)}
                         </span>
                         {j.dataFim ? (
                           <Badge variant="success" className="text-[10px] h-5 px-2 tracking-widest">FINALIZADA</Badge>
@@ -395,10 +428,11 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
                   <div className="p-5 flex flex-col gap-4 border-b border-border/60 hover:bg-surface-hover/30 transition-colors">
                     <div className="flex justify-between items-start">
                       <div className="flex gap-4">
+                        {/* ✨ HELPER DE DATA (Mobile com estilo calendário) */}
                         <div className="bg-surface shadow-sm text-text-main p-2 rounded-xl border border-border/80 flex flex-col items-center justify-center w-14 h-14 shrink-0">
-                          <span className="text-lg font-black leading-none">{new Date(j.dataInicio).getDate()}</span>
+                          <span className="text-lg font-black leading-none">{DateHelper.getDia(j.dataInicio)}</span>
                           <span className="text-[9px] font-bold uppercase tracking-widest text-text-muted mt-0.5">
-                            {new Date(j.dataInicio).toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '')}
+                            {DateHelper.getMesCurto(j.dataInicio)}
                           </span>
                         </div>
                         <div className="flex flex-col justify-center gap-1">

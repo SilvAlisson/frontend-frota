@@ -229,7 +229,14 @@ export function LoginScreen() {
                   containerClassName="!mb-0"
                 />
                 <div className="flex justify-end">
-                  <a href="#" className="text-xs font-bold text-text-secondary hover:text-primary transition-colors">Esqueceu sua Senha?</a>
+                  {/* ✨ BOTÃO MÁGICO ADICIONADO AQUI ✨ */}
+                  <button 
+                    type="button" 
+                    onClick={() => navigate('/esqueceu-senha')}
+                    className="text-xs font-bold text-text-secondary hover:text-primary transition-colors"
+                  >
+                    Esqueceu sua Senha?
+                  </button>
                 </div>
               </div>
 
