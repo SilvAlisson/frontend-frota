@@ -1,0 +1,254 @@
+@import "tailwindcss";
+
+/* 1. TIPOGRAFIA TÉCNICA E MODERNA */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@theme {
+  /* --- 1. CORES ESTÁTICAS (Marca) --- */
+  --color-klin-50: oklch(0.97 0.02 235);
+  --color-klin-100: oklch(0.94 0.04 235);
+  --color-klin-200: oklch(0.88 0.06 235);
+  --color-klin-300: oklch(0.80 0.09 235);
+  --color-klin-400: oklch(0.65 0.12 235);
+  --color-klin-500: oklch(0.52 0.13 235.5);
+  --color-klin-600: oklch(0.45 0.13 235.5);
+  --color-klin-700: oklch(0.38 0.11 235.5);
+  --color-klin-800: oklch(0.30 0.09 235.5);
+  --color-klin-900: oklch(0.20 0.06 235.5);
+
+  --color-ghost-500: oklch(0.65 0.20 290);
+
+  /* --- 2. MAPEAMENTO SEMÂNTICO DINÂMICO --- */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-soft: var(--primary-soft);
+
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-text-main: var(--text-main);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+
+  --color-error: var(--error);
+  --color-error-foreground: var(--error-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+
+  /* --- 3. SOMBRAS TINTURADAS --- */
+  --shadow-card: var(--shadow-card-val);
+  --shadow-float: var(--shadow-float-val);
+  --shadow-button: var(--shadow-button-val);
+
+  /* --- 4. CONFIGURAÇÕES GERAIS --- */
+  --font-sans: "Inter", ui-sans-serif, system-ui;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* --- 5. AJUSTES DE RAIO (Refinamento do DESIGN.md) --- */
+  --radius-lg: 0.75rem;
+  --radius-xl: 0.75rem;
+  /* Para botões (rounded-xl) */
+  --radius-2xl: 1rem;
+  /* Para cards (rounded-2xl) */
+  --radius-3xl: 1.5rem;
+  /* Para modais/layouts airy */
+  --radius-md: 0.5rem;
+  --radius-sm: 0.25rem;
+
+  /* --- 6. VARIÁVEIS DE ANIMAÇÃO --- */
+  --animate-ghost-pulse: ghost-pulse 3s infinite ease-in-out;
+  --animate-enter: enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  --transition-timing-function: ease-out;
+  --transition-duration: 300ms;
+
+  @keyframes ghost-pulse {
+
+    0%,
+    100% {
+      background-color: color-mix(in srgb, var(--surface) 100%, transparent);
+      border-color: var(--border);
+    }
+
+    50% {
+      background-color: color-mix(in srgb, var(--color-ghost-500) 8%, var(--surface));
+      border-color: var(--color-ghost-500);
+    }
+  }
+
+  @keyframes enter {
+    from {
+      opacity: 0;
+      transform: translateY(8px) scale(0.98);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+}
+
+/* --- CAMADA BASE (Variáveis de Tema) --- */
+@layer base {
+
+  /* TEMA CLARO (Default) */
+  :root {
+    --primary: var(--color-klin-500);
+    --primary-foreground: oklch(1 0 0);
+    --primary-hover: var(--color-klin-700);
+    --primary-soft: var(--color-klin-50);
+
+    --background: oklch(0.985 0.002 240);
+    --surface: oklch(1 0 0);
+    --surface-hover: oklch(0.97 0.002 240);
+
+    --border: oklch(0.89 0.01 240);
+    --input: oklch(0.92 0.01 240);
+    --ring: var(--color-klin-500);
+
+    --text-main: oklch(0.20 0.04 240);
+    --text-secondary: oklch(0.45 0.04 240);
+    --text-muted: oklch(0.65 0.02 240);
+
+    --error: oklch(0.63 0.22 29);
+    --error-foreground: oklch(1 0 0);
+    --warning: oklch(0.75 0.15 85);
+    --warning-foreground: oklch(1 0 0);
+    --success: oklch(0.62 0.14 175);
+    --success-foreground: oklch(1 0 0);
+
+    --shadow-card-val: 0 1px 3px 0 color-mix(in srgb, var(--color-klin-900) 6%, transparent), 0 1px 2px -1px color-mix(in srgb, var(--color-klin-900) 4%, transparent);
+    --shadow-float-val: 0 10px 15px -3px color-mix(in srgb, var(--color-klin-900) 12%, transparent), 0 4px 6px -4px color-mix(in srgb, var(--color-klin-900) 8%, transparent);
+    --shadow-button-val: 0 1px 2px 0 color-mix(in srgb, var(--color-klin-900) 10%, transparent);
+  }
+
+  /* TEMA ESCURO (Apple / Vercel style) */
+  .dark {
+    --primary: var(--color-klin-400);
+    --primary-foreground: oklch(1 0 0);
+    --primary-hover: var(--color-klin-300);
+    --primary-soft: color-mix(in srgb, var(--color-klin-500) 15%, transparent);
+
+    --background: oklch(0.15 0.01 240);
+    --surface: oklch(0.20 0.02 240);
+    --surface-hover: oklch(0.25 0.02 240);
+
+    --border: oklch(0.28 0.02 240);
+    --input: oklch(0.25 0.02 240);
+    --ring: var(--color-klin-400);
+
+    --text-main: oklch(0.95 0.01 240);
+    --text-secondary: oklch(0.75 0.02 240);
+    --text-muted: oklch(0.55 0.02 240);
+
+    --error: oklch(0.65 0.20 29);
+    --error-foreground: oklch(1 0 0);
+    --warning: oklch(0.80 0.15 85);
+    --warning-foreground: oklch(0.15 0.01 240);
+    --success: oklch(0.65 0.14 175);
+    --success-foreground: oklch(1 0 0);
+
+    --shadow-card-val: 0 4px 6px -1px color-mix(in srgb, black 40%, transparent);
+    --shadow-float-val: 0 20px 25px -5px color-mix(in srgb, black 50%, transparent);
+    --shadow-button-val: 0 1px 2px 0 color-mix(in srgb, black 30%, transparent);
+  }
+
+  body {
+    @apply bg-background text-text-main antialiased font-sans transition-colors duration-300;
+    font-feature-settings: "tnum", "cv02", "cv03", "cv04";
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-text-muted/30 rounded-full transition-colors;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary/60;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* --- UTILITÁRIOS PREMIUM (Baseados no DESIGN.md) --- */
+@layer utilities {
+  .glass {
+    @apply backdrop-blur-xl border transition-all duration-300;
+    background: color-mix(in srgb, var(--surface) 70%, transparent);
+    border-color: color-mix(in srgb, var(--border) 40%, transparent);
+    box-shadow: var(--shadow-float-val);
+  }
+
+  /* Efeito de Vidro Profundo (Modo Escuro) vs Cristal (Modo Claro) */
+  .glass-premium {
+    @apply backdrop-blur-3xl border transition-all duration-500;
+    background: color-mix(in srgb, var(--surface) 60%, transparent);
+    border-color: color-mix(in srgb, var(--text-main) 10%, transparent);
+    box-shadow: 0 25px 50px -12px color-mix(in srgb, black 50%, transparent);
+  }
+
+  .dark .glass-premium {
+    background: rgba(15, 23, 42, 0.4);
+    border-color: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255,255,255,0.05);
+  }
+
+  .btn-tactile {
+    @apply transition-all active:scale-[0.97] hover:-translate-y-1 hover:shadow-button;
+  }
+
+  .ghost-row {
+    @apply relative border-l-4 overflow-hidden transition-colors;
+    animation: var(--animate-ghost-pulse);
+    border-left-color: var(--color-ghost-500);
+  }
+
+  .text-data {
+    @apply font-mono tracking-tight text-text-secondary font-medium text-xs;
+    font-feature-settings: "tnum";
+  }
+
+  .hover-lift {
+    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-float;
+  }
+
+  /* Safe Areas para Bottom Navigation Bar no iOS */
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-top {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  /* Ocultar scrollbar mantendo scroll funcional */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+
