@@ -1,0 +1,212 @@
+﻿import React, { useRef, useEffect } from 'react';
+import { Inbox } from 'lucide-react';
+import autoAnimate from '@formkit/auto-animate'; // ✨ A MAGIA ENTRA AQUI
+import { TableStyles } from '../../styles/table';
+
+import { useVirtualizer } from '@tanstack/react-virtual';
+
+interface ListaResponsivaProps<T> {
+  itens: T[];
+  emptyMessage?: string;
+  renderDesktop: (item: T, index: number) => React.ReactNode;
+  renderMobile: (item: T, index: number) => React.ReactNode;
+  desktopHeader: React.ReactNode;
+  getRowClassName?: (item: T) => string;
+  isInteractive?: boolean;
+  virtualized?: boolean;
+  virtualContainerHeight?: string;
+}
+
+export function ListaResponsiva<T extends { id?: string | number }>({
+  itens,
+  emptyMessage = "Nenhum registro encontrado.",
+  renderDesktop,
+  renderMobile,
+  desktopHeader,
+  getRowClassName,
+  isInteractive = true,
+  virtualized = false,
+  virtualContainerHeight = "600px"
+}: ListaResponsivaProps<T>) {
+
+  // ✨ Refs para os contentores que vão receber os itens
+  const desktopParentRef = useRef<HTMLTableSectionElement>(null);
+  const mobileParentRef = useRef<HTMLDivElement>(null);
+  const virtualDesktopContainerRef = useRef<HTMLDivElement>(null);
+  const virtualMobileContainerRef = useRef<HTMLDivElement>(null);
+
+  // ✨ Ativamos o auto-animate APENAS se não for virtualizado
+  useEffect(() => {
+    if (!virtualized) {
+      if (desktopParentRef.current) autoAnimate(desktopParentRef.current);
+      if (mobileParentRef.current) autoAnimate(mobileParentRef.current);
+    }
+  }, [desktopParentRef, mobileParentRef, virtualized]);
+
+  // --- VIRTUALIZATION SETUP ---
+  const desktopVirtualizer = useVirtualizer({
+    count: itens.length,
+    getScrollElement: () => virtualDesktopContainerRef.current,
+    estimateSize: () => 65,
+    overscan: 5,
+  });
+
+  const mobileVirtualizer = useVirtualizer({
+    count: itens.length,
+    getScrollElement: () => virtualMobileContainerRef.current,
+    estimateSize: () => 140, // Height base de um card mobile do veículo
+    overscan: 5,
+  });
+
+  if (!itens || itens.length === 0) {
+    return (
+      <div className={`${TableStyles.emptyState} animate-in fade-in duration-500`}>
+        <div className="w-16 h-16 bg-background rounded-full mb-4 flex items-center justify-center shadow-inner border border-border/50">
+          <Inbox className="w-8 h-8 text-text-muted" />
+        </div>
+        <p className="text-text-main font-bold text-lg tracking-tight mb-1">Nada por aqui</p>
+        <p className="text-text-secondary font-medium text-sm">
+          {emptyMessage}
+        </p>
+      </div>
+    );
+  }
+
+  const cursorClass = isInteractive ? 'cursor-pointer' : '';
+
+  return (
+    <>
+      {/* ðŸ–¥ï¸ DESKTOP (Tabela Premium) */}
+      <div 
+        ref={virtualized ? virtualDesktopContainerRef : null}
+        className={`hidden md:block animate-in fade-in slide-in-from-bottom-2 duration-500 ${TableStyles.wrapper} ${virtualized ? 'overflow-y-auto custom-scrollbar' : ''}`}
+        style={virtualized ? { height: virtualContainerHeight } : {}}
+      >
+        <div className="overflow-x-auto min-h-full">
+          <table className="w-full text-sm text-left border-collapse relative">
+            <thead className={virtualized ? "sticky top-0 z-10 bg-surface shadow-sm" : ""}>
+              <tr>{desktopHeader}</tr>
+            </thead>
+            
+            <tbody 
+              ref={virtualized ? undefined : desktopParentRef} 
+              className="bg-surface"
+              style={virtualized ? { height: `${desktopVirtualizer.getTotalSize()}px`, position: 'relative' } : undefined}
+            >
+              {virtualized ? (
+                desktopVirtualizer.getVirtualItems().map((virtualRow) => {
+                  const item = itens[virtualRow.index];
+                  const idx = virtualRow.index;
+                  const customClass = getRowClassName ? getRowClassName(item) : '';
+                  const rowClass = `${TableStyles.rowHover} ${cursorClass} ${customClass}`;
+                  const rowKey = item.id ? String(item.id) : `row-${idx}`;
+
+                  return (
+                    <tr 
+                      key={rowKey} 
+                      className={rowClass}
+                      style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        transform: `translateY(${virtualRow.start}px)`,
+                      }}
+                      data-index={virtualRow.index}
+                      ref={desktopVirtualizer.measureElement}
+                    >
+                      {renderDesktop(item, idx)}
+                    </tr>
+                  );
+                })
+              ) : (
+                itens.map((item, idx) => {
+                  const customClass = getRowClassName ? getRowClassName(item) : '';
+                  const rowClass = `${TableStyles.rowHover} ${cursorClass} ${customClass}`;
+                  const rowKey = item.id ? String(item.id) : `row-${idx}`;
+
+                  return (
+                    <tr key={rowKey} className={rowClass}>
+                      {renderDesktop(item, idx)}
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 📱 MOBILE (Cards Flutuantes) */}
+      <div 
+        ref={virtualized ? virtualMobileContainerRef : mobileParentRef}
+        className={`md:hidden space-y-4 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${virtualized ? 'overflow-y-auto custom-scrollbar relative' : ''}`}
+        style={virtualized ? { height: virtualContainerHeight } : {}}
+      >
+        {virtualized ? (
+          <div style={{ height: `${mobileVirtualizer.getTotalSize()}px`, width: '100%', position: 'relative' }}>
+            {mobileVirtualizer.getVirtualItems().map((virtualRow) => {
+              const item = itens[virtualRow.index];
+              const idx = virtualRow.index;
+              const customClass = getRowClassName ? getRowClassName(item) : '';
+              const cardKey = item.id ? String(item.id) : `card-${idx}`;
+
+              return (
+                <div
+                  key={cardKey}
+                  data-index={virtualRow.index}
+                  ref={mobileVirtualizer.measureElement}
+                  className={`
+                    p-5 rounded-[1.25rem] shadow-sm border border-border/60 relative overflow-hidden 
+                    active:scale-[0.98] transition-all duration-300 bg-surface hover:shadow-md
+                    ${customClass} ${cursorClass}
+                  `}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    transform: `translateY(${virtualRow.start}px)`,
+                  }}
+                >
+                  {!customClass.includes('ghost-row') && (
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/80 to-primary/40 rounded-l-[1.25rem] opacity-70" />
+                  )}
+                  <div className="pl-2">
+                    {renderMobile(item, idx)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          itens.map((item, idx) => {
+            const customClass = getRowClassName ? getRowClassName(item) : '';
+            const cardKey = item.id ? String(item.id) : `card-${idx}`;
+            
+            return (
+              <div
+                key={cardKey}
+                className={`
+                  p-5 rounded-[1.25rem] shadow-sm border border-border/60 relative overflow-hidden 
+                  active:scale-[0.98] transition-all duration-300 bg-surface hover:shadow-md
+                  ${customClass} ${cursorClass}
+                `}
+              >
+                {!customClass.includes('ghost-row') && (
+                  <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/80 to-primary/40 rounded-l-[1.25rem] opacity-70" />
+                )}
+
+                <div className="pl-2">
+                  {renderMobile(item, idx)}
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </>
+  );
+}
+
+
