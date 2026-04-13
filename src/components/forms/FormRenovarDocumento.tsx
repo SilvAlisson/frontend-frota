@@ -9,6 +9,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { DatePicker } from '../ui/DatePicker';
 import { FileText, RefreshCcw, UploadCloud, Loader2 } from 'lucide-react';
+import { supabase } from '../../supabaseClient';
 
 const renovarDocumentoSchema = z.object({
   titulo: z.string().min(3, "O título precisa ter pelo menos 3 letras"),
@@ -69,19 +70,23 @@ export function FormRenovarDocumento({ documentoId, onSuccess, onCancel }: FormR
 
     setIsUploading(true);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      const fileName = `${crypto.randomUUID()}-${file.name}`;
+      
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('documentos-frota')
+        .upload(`public/${fileName}`, file);
 
-      // Usar a rota genérica que já existe (ou assumir que o upload funciona no sistema da Klin)
-      const response = await api.post<{ url: string }>('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      if (uploadError) throw uploadError;
 
-      setValue('arquivoUrl', response.data.url, { shouldValidate: true });
-      toast.success('Novo arquivo anexado!');
+      const { data: { publicUrl } } = supabase.storage
+        .from('documentos-frota')
+        .getPublicUrl(uploadData.path);
+
+      setValue('arquivoUrl', publicUrl, { shouldValidate: true });
+      toast.success('Novo arquivo anexado com sucesso na nuvem!');
     } catch (error) {
       console.error(error);
-      toast.error('Erro ao fazer upload do arquivo.');
+      toast.error('Erro ao fazer upload do arquivo para o Supabase.');
     } finally {
       setIsUploading(false);
     }
