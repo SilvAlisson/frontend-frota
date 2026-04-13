@@ -9,6 +9,7 @@ import { handleApiError } from '../../services/errorHandler';
 import { api } from '../../services/api';
 import { useDefeitos } from '../../hooks/useDefeitos';
 import { cn } from '../../lib/utils';
+import { supabase } from '../../supabaseClient';
 
 interface FormRegistrarDefeitoProps {
   veiculoId: string;
@@ -65,17 +66,24 @@ export function FormRegistrarDefeito({ veiculoId, onSuccess, onCancel }: FormReg
   const onSubmit = async (data: DefeitoFormData) => {
     setIsSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append('file', data.foto);
-      const resUpload = await api.post<{ url: string }>('/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const extension = data.foto.name.split('.').pop();
+      const fileName = `${crypto.randomUUID()}.${extension}`;
+
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('fotos-frota')
+        .upload(`public/${fileName}`, data.foto);
+        
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrl } = supabase.storage
+         .from('fotos-frota')
+         .getPublicUrl(uploadData.path);
       
       await registrarDefeito.mutateAsync({
         veiculoId,
         categoria: data.categoria,
         descricao: data.descricao || '',
-        fotoUrl: resUpload.data.url
+        fotoUrl: publicUrl.publicUrl
       });
 
       onSuccess();

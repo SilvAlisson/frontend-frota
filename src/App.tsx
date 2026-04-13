@@ -1,7 +1,18 @@
+import { lazy, Suspense } from 'react';
 import { Router } from './Router';
 import { Toaster } from 'sonner';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
+
+// 🛠️ DevTools: Carregado dinamicamente APENAS em desenvolvimento.
+// Em produção, o Vite faz tree-shaking e ZERO bytes desta lib vão para o bundle.
+const ReactQueryDevtools = import.meta.env.DEV
+  ? lazy(() =>
+      import('@tanstack/react-query-devtools').then((m) => ({
+        default: m.ReactQueryDevtools,
+      }))
+    )
+  : () => null;
+
 
 function AppContent() {
   const { theme } = useTheme();
@@ -20,7 +31,12 @@ function AppContent() {
           fontFamily: 'var(--font-sans)',
         }}
       />
-      <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
+      {/* 🛠️ DevTools: Apenas em desenvolvimento — tree-shaken pelo Vite em produção */}
+      {import.meta.env.DEV && (
+        <Suspense fallback={null}>
+          <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
+        </Suspense>
+      )}
     </div>
   );
 }

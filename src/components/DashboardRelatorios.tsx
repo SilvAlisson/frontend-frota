@@ -26,6 +26,7 @@ import {
   BarChart2, LineChart
 } from 'lucide-react';
 import type { KpiData, DadosEvolucaoKm, Veiculo } from '../types';
+import { useSumarioKPIs, useEvolucaoKm, useEvolucaoCpk, usePerformanceFrota } from '../hooks/useDashboardRelatorios';
 
 const GraficoKmVeiculo = React.lazy(() => import('./GraficoKmVeiculo').then(module => ({ default: module.GraficoKmVeiculo })));
 
@@ -270,91 +271,16 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
   const [mes, setMes] = useState(new Date().getMonth() + 1);
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState('');
 
-  const [kpis, setKpis] = useState<KpiData | null>(null);
-  const [dadosGraficoKm, setDadosGraficoKm] = useState<DadosEvolucaoKm[]>([]);
-  const [dadosCpk, setDadosCpk] = useState<DadoCpk[]>([]);
-  const [dadosPerformance, setDadosPerformance] = useState<DadoPerformance[]>([]);
-
-  const [loading, setLoading] = useState(true);
-  const [loadingGrafico, setLoadingGrafico] = useState(false);
-  const [loadingCpk, setLoadingCpk] = useState(false);
-  const [loadingPerformance, setLoadingPerformance] = useState(false);
+  // 🔥 PERFORMANCE OPTIMIZER: React Query para fetching paralelo + cache, zero waterfalls
+  const { data: kpis, isLoading: loading } = useSumarioKPIs({ ano, mes, veiculoId: veiculoIdFiltro || undefined });
+  const { data: dadosGraficoKm = [], isLoading: loadingGrafico } = useEvolucaoKm(veiculoIdFiltro || undefined, 7);
+  const { data: dadosCpk = [], isLoading: loadingCpk } = useEvolucaoCpk(veiculoIdFiltro || undefined);
+  const { data: dadosPerformance = [], isLoading: loadingPerformance } = usePerformanceFrota({ ano, mes });
 
   const handleNavigation = React.useCallback((rotaPadrao: string, tipoDrillDown: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => {
     if (onDrillDown) onDrillDown(tipoDrillDown);
     else navigate(rotaPadrao);
   }, [navigate, onDrillDown]);
-
-  // --- KPIs + Gráfico de Hodômetro (filtro por veículo) ---
-  useEffect(() => {
-    const carregarDados = async () => {
-      setLoading(true);
-      try {
-        const params: any = { ano, mes };
-        if (veiculoIdFiltro) params.veiculoId = veiculoIdFiltro;
-        const responseKpi = await api.get('/relatorios/sumario', { params });
-        setKpis(responseKpi.data.kpis);
-      } catch (err) {
-        console.error(err);
-        toast.error("Erro ao atualizar métricas da Dashboard.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const carregarGraficoKm = async () => {
-      if (!veiculoIdFiltro) {
-        setDadosGraficoKm([]);
-        return;
-      }
-      setLoadingGrafico(true);
-      try {
-        const response = await api.get(`/relatorios/evolucao-km?veiculoId=${veiculoIdFiltro}&dias=7`);
-        setDadosGraficoKm(response.data);
-      } catch (err) {
-        console.error("Erro gráfico km:", err);
-      } finally {
-        setLoadingGrafico(false);
-      }
-    };
-
-    carregarDados();
-    carregarGraficoKm();
-  }, [ano, mes, veiculoIdFiltro]);
-
-  // --- Gráficos Globais: CPK Histórico (independente do mês/ano) ---
-  useEffect(() => {
-    const carregarCpk = async () => {
-      setLoadingCpk(true);
-      try {
-        const params: any = {};
-        if (veiculoIdFiltro) params.veiculoId = veiculoIdFiltro;
-        const res = await api.get('/relatorios/evolucao-cpk', { params });
-        setDadosCpk(res.data);
-      } catch (err) {
-        console.error("Erro CPK:", err);
-      } finally {
-        setLoadingCpk(false);
-      }
-    };
-    carregarCpk();
-  }, [veiculoIdFiltro]);
-
-  // --- Gráficos Globais: Performance da Frota (acompanha mes/ano) ---
-  useEffect(() => {
-    const carregarPerformance = async () => {
-      setLoadingPerformance(true);
-      try {
-        const res = await api.get('/relatorios/performance-frota', { params: { ano, mes } });
-        setDadosPerformance(res.data);
-      } catch (err) {
-        console.error("Erro performance:", err);
-      } finally {
-        setLoadingPerformance(false);
-      }
-    };
-    carregarPerformance();
-  }, [ano, mes]);
 
   const handleExportar = () => {
     if (!kpis) return;
