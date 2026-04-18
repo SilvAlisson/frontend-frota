@@ -117,7 +117,7 @@ export function FormRegistrarAbastecimento({
       <div className="px-6 sm:px-8 pt-6 pb-4 shrink-0 border-b border-border/50 bg-surface-hover/30">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h3 className="text-xl font-black text-text-main tracking-tight flex items-center gap-2">
+            <h3 className="font-header text-xl sm:text-2xl font-black text-text-main tracking-tight flex items-center gap-2">
               <div className="p-1.5 bg-primary/10 rounded-lg text-primary"><Fuel className="w-5 h-5"/></div>
               Novo Abastecimento
             </h3>

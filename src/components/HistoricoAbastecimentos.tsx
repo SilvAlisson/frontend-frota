@@ -3,6 +3,8 @@ import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import { FormEditarAbastecimento } from './forms/FormEditarAbastecimento';
+import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
+import { useAuth } from '../contexts/AuthContext';
 import type { Abastecimento } from '../types';
 import { FileDown, Calendar, Truck, Droplets, Receipt, Gauge, DollarSign, ChevronDown, Store } from 'lucide-react';
 import { GraficoCurvaAbastecimento } from './ui/GraficosFlota';
@@ -83,6 +85,9 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
+  const [isNovoAbastecimentoOpen, setIsNovoAbastecimentoOpen] = useState(false);
+
+  const { user } = useAuth();
 
   // --- ESTADOS DE FILTROS ---
   const [dataInicioFiltro, setDataInicioFiltro] = useState(filtroInicial?.dataInicio || '');
@@ -269,6 +274,8 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
       <PageHeader 
         title="Boletim de Abastecimentos"
         subtitle="Filtre por Posto pargerando o Boletim de Medição (BM) com os comprovantes integrados."
+        actionLabel={canEdit ? "Novo Abastecimento" : undefined}
+        onAction={canEdit ? () => setIsNovoAbastecimentoOpen(true) : undefined}
         extraAction={
           <div className="flex flex-col xl:flex-row gap-3 w-full xl:w-auto items-end bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
              <div className="flex gap-3 w-full">
@@ -507,6 +514,24 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
           </div>
         )}
       </Card>
+
+      <Modal 
+        isOpen={isNovoAbastecimentoOpen} 
+        onClose={() => setIsNovoAbastecimentoOpen(false)}
+        title="Novo Abastecimento"
+        className="max-w-2xl"
+      >
+        {isNovoAbastecimentoOpen && (
+          <FormRegistrarAbastecimento
+            usuarioLogado={user || undefined}
+            onSuccess={() => {
+              setIsNovoAbastecimentoOpen(false);
+              fetchHistorico();
+            }}
+            onCancelar={() => setIsNovoAbastecimentoOpen(false)}
+          />
+        )}
+      </Modal>
 
       <Modal 
         isOpen={!!editingId} 

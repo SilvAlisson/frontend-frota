@@ -6,13 +6,13 @@ import { AlertTriangle, Camera, Info, CarFront, Wrench, Zap, CircleDashed } from
 import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Textarea';
 import { handleApiError } from '../../services/errorHandler';
-import { api } from '../../services/api';
 import { useDefeitos } from '../../hooks/useDefeitos';
 import { cn } from '../../lib/utils';
-import { supabase } from '../../supabaseClient';
+import { uploadToR2 } from '../../services/uploadService';
 
 interface FormRegistrarDefeitoProps {
-  veiculoId: string;
+  veiculoId?: string;
+  veiculosDisponiveis?: any[]; // To pick a vehicle if not in a shift
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -28,21 +28,22 @@ const CATEGORIAS = [
 ];
 
 const defeitoSchema = z.object({
+  veiculoId: z.string({ message: 'Selecione o veículo.' }).min(1, 'O veículo é obrigatório.'),
   categoria: z.string({ message: 'Selecione uma categoria válida.' }).min(1, 'A categoria do defeito é obrigatória.'),
-  descricao: z.string().max(300, 'A descrição deve ter no máximo 300 caracteres').optional(),
+  descricao: z.string({ message: 'Descreva o defeito encontrado.' }).min(5, 'A descrição deve ter pelo menos 5 caracteres').max(300, 'A descrição deve ter no máximo 300 caracteres'),
   foto: z.instanceof(File, { message: 'Evidência fotográfica obrigatória.' }),
 });
 
 type DefeitoFormData = z.infer<typeof defeitoSchema>;
 
-export function FormRegistrarDefeito({ veiculoId, onSuccess, onCancel }: FormRegistrarDefeitoProps) {
+export function FormRegistrarDefeito({ veiculoId, veiculosDisponiveis = [], onSuccess, onCancel }: FormRegistrarDefeitoProps) {
   const { registrarDefeito } = useDefeitos();
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<DefeitoFormData>({
     resolver: zodResolver(defeitoSchema),
-    defaultValues: { descricao: '' }
+    defaultValues: { descricao: '', veiculoId: veiculoId || '' }
   });
 
   const categoriaSelecionada = watch('categoria');
@@ -68,22 +69,13 @@ export function FormRegistrarDefeito({ veiculoId, onSuccess, onCancel }: FormReg
     try {
       const extension = data.foto.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${extension}`;
+      const publicUrlString = await uploadToR2(data.foto, fileName, data.foto.type || 'image/jpeg');
 
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('fotos-frota')
-        .upload(`public/${fileName}`, data.foto);
-        
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrl } = supabase.storage
-         .from('fotos-frota')
-         .getPublicUrl(uploadData.path);
-      
       await registrarDefeito.mutateAsync({
-        veiculoId,
+        veiculoId: data.veiculoId,
         categoria: data.categoria,
         descricao: data.descricao || '',
-        fotoUrl: publicUrl.publicUrl
+        fotoUrl: publicUrlString
       });
 
       onSuccess();
@@ -96,24 +88,42 @@ export function FormRegistrarDefeito({ veiculoId, onSuccess, onCancel }: FormReg
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 animate-in fade-in duration-300">
-      
+
       {/* Alerta Tático (Pro-Max) */}
       <div className="bg-warning-500/10 border border-warning-500/20 p-4 rounded-[1.25rem] flex items-start gap-4 text-warning-700 dark:text-warning-500 shadow-sm relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-warning-500/10 rounded-full blur-3xl -mr-10 -mt-10" />
         <AlertTriangle className="w-6 h-6 shrink-0 mt-0.5" />
         <div className="flex flex-col gap-1 relative z-10">
-          <span className="font-black text-sm uppercase tracking-wider">Atenção Imediata</span>
+          <span className="font-header font-black text-sm uppercase tracking-wider">Atenção Imediata</span>
           <p className="text-sm font-medium opacity-90 leading-relaxed">Envie a foto do ocorrido. Em emergências graves com o freio ou motor, entre em contato com a base por telefone imediatamente.</p>
         </div>
       </div>
 
+      {!veiculoId && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <label className="font-header text-sm font-black text-text-main uppercase tracking-widest flex gap-2">Veículo <span className="text-error">*</span></label>
+            {errors.veiculoId && <span className="text-[10px] font-bold text-error bg-error/10 px-2 py-0.5 rounded-md animate-pulse">{errors.veiculoId.message}</span>}
+          </div>
+          <select
+            {...register('veiculoId')}
+            className="w-full h-14 bg-surface px-4 rounded-xl border border-border/60 text-text-main focus:ring-2 focus:ring-primary/50 outline-none transition-all font-medium appearance-none"
+          >
+            <option value="">Selecione a placa...</option>
+            {veiculosDisponiveis.map((v: any) => (
+              <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Grid de Categorias Touch-Friendly */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-           <label className="text-sm font-black text-text-main uppercase tracking-widest flex gap-2">Categoria <span className="text-error">*</span></label>
-           {errors.categoria && <span className="text-[10px] font-bold text-error bg-error/10 px-2 py-0.5 rounded-md animate-pulse">{errors.categoria.message}</span>}
+          <label className="font-header text-sm font-black text-text-main uppercase tracking-widest flex gap-2">Categoria <span className="text-error">*</span></label>
+          {errors.categoria && <span className="text-[10px] font-bold text-error bg-error/10 px-2 py-0.5 rounded-md animate-pulse">{errors.categoria.message}</span>}
         </div>
-        
+
         <div className="grid grid-cols-3 sm:grid-cols-4 gap-3 select-none">
           {CATEGORIAS.map(cat => {
             const Icon = cat.icon || Wrench;
@@ -125,8 +135,8 @@ export function FormRegistrarDefeito({ veiculoId, onSuccess, onCancel }: FormReg
                 variant={isActive ? "danger" : "outline"}
                 className={cn(
                   "h-auto py-5 px-2 flex flex-col items-center justify-center gap-3 transition-all duration-300 border",
-                  isActive 
-                    ? "shadow-[0_0_15px_rgba(239,68,68,0.2)] scale-[0.98] border-error" 
+                  isActive
+                    ? "shadow-[0_0_15px_rgba(239,68,68,0.2)] scale-[0.98] border-error"
                     : "hover:border-primary/40 hover:bg-surface-hover hover:scale-105 active:scale-95 border-border/60"
                 )}
                 onClick={() => setValue('categoria', cat.id, { shouldValidate: true })}
@@ -142,47 +152,50 @@ export function FormRegistrarDefeito({ veiculoId, onSuccess, onCancel }: FormReg
 
       {/* Evidência (Dropzone UI-Pro) */}
       <div className="space-y-4">
-         <div className="flex items-center justify-between">
-            <label className="text-sm font-black text-text-main uppercase tracking-widest flex gap-2">Registro Fotográfico <span className="text-error">*</span></label>
-            {errors.foto && <span className="text-[10px] font-bold text-error bg-error/10 px-2 py-0.5 rounded-md animate-pulse">{errors.foto.message}</span>}
-         </div>
-         
-         {fotoPreview ? (
-           <div className="relative w-full h-56 sm:h-64 rounded-2xl overflow-hidden border border-border group bg-black shadow-inner">
-              <img src={fotoPreview} alt="Preview Defeito" className="w-full h-full object-contain opacity-90 group-hover:scale-105 transition-transform duration-700" />
-              <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 bg-black/60 backdrop-blur-sm transition-all duration-300 pointer-events-none">
-                <Button 
-                  type="button"
-                  variant="primary"
-                  onClick={clearFoto}
-                  className="pointer-events-auto shadow-float text-sm font-black uppercase tracking-widest px-6"
-                >
-                   Repetir Foto
-                </Button>
-              </div>
-           </div>
-         ) : (
-           <label className={cn(
-             "w-full h-40 sm:h-48 border-2 border-dashed rounded-2xl bg-surface transition-all flex flex-col items-center justify-center gap-4 cursor-pointer text-text-muted group relative overflow-hidden",
-             errors.foto ? "border-error/50 bg-error/5" : "border-primary/20 hover:border-primary/50 hover:bg-primary/5"
-           )}>
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface-hover/50 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className={cn(
-                "p-4 rounded-full transition-all duration-500 relative z-10",
-                errors.foto ? "bg-error/10 text-error animate-bounce" : "bg-primary/10 text-primary group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(var(--primary),0.3)]"
-              )}>
-                <Camera className="w-8 h-8" />
-              </div>
-              <span className="text-xs font-black uppercase tracking-widest text-center px-4 relative z-10 group-hover:text-text-main transition-colors">Abrir Câmera</span>
-              <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFoto} />
-           </label>
-         )}
+        <div className="flex items-center justify-between">
+          <label className="text-sm font-black text-text-main uppercase tracking-widest flex gap-2">Registro Fotográfico <span className="text-error">*</span></label>
+          {errors.foto && <span className="text-[10px] font-bold text-error bg-error/10 px-2 py-0.5 rounded-md animate-pulse">{errors.foto.message}</span>}
+        </div>
+
+        {fotoPreview ? (
+          <div className="relative w-full h-56 sm:h-64 rounded-2xl overflow-hidden border border-border group bg-black shadow-inner">
+            <img src={fotoPreview} alt="Preview Defeito" className="w-full h-full object-contain opacity-90 group-hover:scale-105 transition-transform duration-700" />
+            <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 bg-black/60 backdrop-blur-sm transition-all duration-300 pointer-events-none">
+              <Button
+                type="button"
+                variant="primary"
+                onClick={clearFoto}
+                className="pointer-events-auto shadow-float text-sm font-black uppercase tracking-widest px-6"
+              >
+                Repetir Foto
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <label className={cn(
+            "w-full h-40 sm:h-48 border-2 border-dashed rounded-2xl bg-surface transition-all flex flex-col items-center justify-center gap-4 cursor-pointer text-text-muted group relative overflow-hidden",
+            errors.foto ? "border-error/50 bg-error/5" : "border-primary/20 hover:border-primary/50 hover:bg-primary/5"
+          )}>
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-surface-hover/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className={cn(
+              "p-4 rounded-full transition-all duration-500 relative z-10",
+              errors.foto ? "bg-error/10 text-error animate-bounce" : "bg-primary/10 text-primary group-hover:scale-110 group-hover:shadow-[0_0_20px_rgba(var(--primary),0.3)]"
+            )}>
+              <Camera className="w-8 h-8" />
+            </div>
+            <span className="text-xs font-black uppercase tracking-widest text-center px-4 relative z-10 group-hover:text-text-main transition-colors">Abrir Câmera</span>
+            <input type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFoto} />
+          </label>
+        )}
       </div>
 
       {/* Observação (Textarea Pro) */}
       <div className="space-y-4">
-        <label htmlFor="defeito-desc" className="text-sm font-black text-text-main uppercase tracking-widest flex gap-2">Detalhamento Visual (Opcional)</label>
-        <Textarea 
+        <div className="flex items-center justify-between">
+          <label htmlFor="defeito-desc" className="text-sm font-black text-text-main uppercase tracking-widest flex gap-2">Detalhamento Visual <span className="text-error">*</span></label>
+          {errors.descricao && <span className="text-[10px] font-bold text-error bg-error/10 px-2 py-0.5 rounded-md animate-pulse">{errors.descricao.message}</span>}
+        </div>
+        <Textarea
           id="defeito-desc"
           placeholder="Onde é o desgaste? Faz barulho? Descreva resumidamente..."
           {...register('descricao')}
@@ -198,11 +211,11 @@ export function FormRegistrarDefeito({ veiculoId, onSuccess, onCancel }: FormReg
       {/* Ações Táticas */}
       <div className="flex gap-4 pt-4 border-t border-border/40">
         <Button type="button" variant="ghost" onClick={onCancel} disabled={isSubmitting} className="flex-1 font-black uppercase tracking-widest mt-2 h-14 bg-surface-hover/50">
-           Voltar
+          Voltar
         </Button>
-        <Button 
-          type="submit" 
-          isLoading={isSubmitting} 
+        <Button
+          type="submit"
+          isLoading={isSubmitting}
           className="flex-1 font-black uppercase tracking-widest bg-error hover:bg-error-600 text-white mt-2 h-14 shadow-[0_4px_14px_rgba(239,68,68,0.4)]"
         >
           {isSubmitting ? 'Transmitindo...' : 'Transmitir Defeito'}

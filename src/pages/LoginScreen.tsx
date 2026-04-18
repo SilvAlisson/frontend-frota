@@ -170,7 +170,7 @@ export function LoginScreen() {
             <div className="w-16 h-16 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl flex items-center justify-center mb-8 shadow-float">
               <Truck className="w-8 h-8 text-white/90" />
             </div>
-            <h1 className="text-5xl font-black tracking-tighter mb-4 leading-tight drop-shadow-md">
+            <h1 className="text-5xl font-header font-black tracking-tighter mb-4 leading-tight drop-shadow-md">
               A Nova Era da <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-soft to-primary">Gestão de Frota.</span>
             </h1>
             <p className="text-zinc-400 font-medium text-lg max-w-md leading-relaxed">
@@ -195,8 +195,8 @@ export function LoginScreen() {
         <div className="w-full max-w-[420px] space-y-8 glass-premium p-8 sm:p-10 rounded-[2.5rem] animate-enter">
 
           <div className="text-center sm:text-left">
-            <h2 className="text-3xl font-black text-text-main tracking-tight italic uppercase">Acesso Seguro</h2>
-            <p className="text-sm font-bold text-text-secondary mt-1.5">Bem-vindo ao workspace <span className="text-primary font-black uppercase tracking-wider text-[10px]">Klin Frota</span></p>
+            <h2 className="text-4xl font-header font-black text-text-main tracking-tight">Frota KLIN</h2>
+            <p className="text-sm font-medium text-text-secondary mt-1.5">Acesso ao Workspace Seguro</p>
           </div>
 
           {/* Abas de Navegação (Segmented Control) */}
@@ -247,6 +247,15 @@ export function LoginScreen() {
                   disabled={isSubmitting}
                   className="font-bold bg-surface/40 backdrop-blur-sm border-border/40 focus:bg-surface/60 transition-all rounded-xl"
                   containerClassName="!mb-0"
+                  onFocus={() => {
+                    // 🚀 PERFORMANCE: Smart Prefetching
+                    import('../layouts/AdminLayout' /* webpackPrefetch: true */).catch(() => {});
+                    import('../components/DashboardRelatorios' /* webpackPrefetch: true */).catch(() => {});
+                  }}
+                  onMouseEnter={() => {
+                    // Antecipação do movimento do mouse
+                    import('../components/DashboardRelatorios').catch(() => {});
+                  }}
                 />
                 <div className="flex justify-end">
                   <button

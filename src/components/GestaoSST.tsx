@@ -2,17 +2,20 @@ import { useState, useId } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {
+import { 
   ShieldCheck, AlertTriangle, Plus, Pencil, Trash2,
   Clock, CheckCircle2, XCircle, Filter,
-  Target, TrendingUp, Download, Bell,
+  Target, TrendingUp, Download, Bell, GraduationCap, HeartPulse
 } from 'lucide-react';
 
 import { useSST, type AcaoSST, type ProgramaSST, type StatusSST } from '../hooks/useSST';
+import { useUsuarios } from '../hooks/useUsuarios';
+import type { User } from '../types';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Modal } from './ui/Modal';
+import { ModalTreinamentosUsuario } from './ModalTreinamentosUsuario';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
 import { Badge } from './ui/Badge';
@@ -354,11 +357,15 @@ function FormAcaoSST({
 // ─── Componente Principal ─────────────────────────────────────────────────────
 
 export function GestaoSST() {
-  const [aba, setAba] = useState<'dashboard' | 'plano'>('dashboard');
+  const [aba, setAba] = useState<'dashboard' | 'plano' | 'treinamentos'>('dashboard');
   const [filtroPrograma, setFiltroPrograma] = useState<ProgramaSST | ''>('');
   const [modalAberto, setModalAberto] = useState(false);
   const [acaoParaEditar, setAcaoParaEditar] = useState<AcaoSST | undefined>(undefined);
   const [acaoParaExcluir, setAcaoParaExcluir] = useState<AcaoSST | null>(null);
+
+  // States para Treinamentos/Saude
+  const { data: usuarios = [], isLoading: isLoadingUsuarios } = useUsuarios();
+  const [usuarioSelecionadoTreino, setUsuarioSelecionadoTreino] = useState<User | null>(null);
 
   const {
     acoesFiltradas, alertas, estatisticas,
@@ -459,31 +466,33 @@ export function GestaoSST() {
         </div>
       </div>
 
-      {/* ── ABAS ──────────────────────────────────────────────────────────── */}
-      <div className="flex gap-1 bg-surface-hover/50 p-1 rounded-xl border border-border/60 w-fit" role="tablist" aria-label="Seções de SST">
-        {([
-          { key: 'dashboard', label: 'Dashboard de Metas', icon: Target },
-          { key: 'plano',     label: 'Plano de Ação',      icon: ShieldCheck },
-        ] as const).map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            role="tab"
-            aria-selected={aba === key}
-            aria-controls={`sst-tab-${key}`}
-            onClick={() => setAba(key)}
-            className={cn(
-              'flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 outline-none',
-              'focus-visible:ring-2 focus-visible:ring-primary/60',
-              aba === key
-                ? 'bg-surface text-text-main shadow-sm border border-border/60'
-                : 'text-text-muted hover:text-text-main'
-            )}
-          >
-            <Icon className="w-4 h-4" aria-hidden="true" />
-            {label}
-          </button>
-        ))}
-      </div>
+      {/* ── ALERTA DE CONSTRUÇÃO REMOVIDO ──────────────────────────────────────── */}
+      <>
+          <div className="flex gap-1 bg-surface-hover/50 p-1 rounded-xl border border-border/60 w-fit overflow-x-auto max-w-full" role="tablist" aria-label="Seções de SST">
+            {([
+              { key: 'dashboard', label: 'Dashboard de Metas', icon: Target },
+              { key: 'plano',     label: 'Plano de Ação',      icon: ShieldCheck },
+              { key: 'treinamentos', label: 'Treinamentos & Saúde', icon: HeartPulse },
+            ] as const).map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                role="tab"
+                aria-selected={aba === key}
+                aria-controls={`sst-tab-${key}`}
+                onClick={() => setAba(key)}
+                className={cn(
+                  'flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 outline-none',
+                  'focus-visible:ring-2 focus-visible:ring-primary/60',
+                  aba === key
+                    ? 'bg-surface text-text-main shadow-sm border border-border/60'
+                    : 'text-text-muted hover:text-text-main'
+                )}
+              >
+                <Icon className="w-4 h-4" aria-hidden="true" />
+                {label}
+              </button>
+            ))}
+          </div>
 
       {/* ── ABA: DASHBOARD ───────────────────────────────────────────────── */}
       {aba === 'dashboard' && (
@@ -798,6 +807,69 @@ export function GestaoSST() {
         variant="danger"
         confirmLabel={deletarAcao.isPending ? 'A remover...' : 'Sim, Excluir'}
       />
+      {/* ── ABA: TREINAMENTOS E SAÚDE ─────────────────────────────────────── */}
+      {aba === 'treinamentos' && (
+        <div id="sst-tab-treinamentos" role="tabpanel" aria-label="Treinamentos e Saúde" className="space-y-5 animate-in slide-in-from-bottom-4 duration-500">
+           
+           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-3">
+              <div>
+                 <h2 className="text-xl font-black text-text-main flex items-center gap-2">
+                    <HeartPulse className="w-5 h-5 text-primary" />
+                    Controle de Saúde Corporativa e Exames
+                 </h2>
+                 <p className="text-sm font-medium text-text-secondary mt-1">Gerencie certificados, NRs e atestados (ASO) individualmente por colaborador.</p>
+              </div>
+           </div>
+
+           {isLoadingUsuarios ? (
+             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+               {[1, 2, 3].map(i => <div key={i} className="h-24 bg-surface-hover/50 rounded-2xl animate-pulse" />)}
+             </div>
+           ) : (
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+               {usuarios.map(u => (
+                 <div key={u.id} className="bg-surface border border-border/60 rounded-2xl p-5 flex items-center justify-between hover:shadow-md transition-all gap-3 overflow-hidden">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-10 w-10 shrink-0 bg-primary/10 rounded-xl flex items-center justify-center text-primary font-black shadow-inner border border-primary/20">
+                        {u.nome.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="font-bold text-text-main text-sm truncate" title={u.nome}>{u.nome}</p>
+                        <p className="text-[10px] text-text-secondary uppercase tracking-widest font-bold bg-surface-hover px-1.5 py-0.5 border border-border/40 rounded mt-1 w-fit truncate max-w-full">
+                           {u.role === 'OPERADOR' ? 'Condutor' : u.role}
+                        </p>
+                      </div>
+                    </div>
+                    <Button 
+                       variant="ghost" 
+                       size="icon" 
+                       aria-label="Abrir Treinamentos"
+                       onClick={() => setUsuarioSelecionadoTreino(u)}
+                       className="shrink-0 rounded-full hover:bg-primary/10 hover:text-primary"
+                    >
+                       <GraduationCap className="w-4 h-4" />
+                    </Button>
+                 </div>
+               ))}
+               {usuarios.length === 0 && (
+                 <div className="col-span-full">
+                    <EmptyState icon={GraduationCap} title="Nenhum Colaborador" description="Não há colaboradores disponíveis para gerenciar." />
+                 </div>
+               )}
+             </div>
+           )}
+        </div>
+      )}
+
+      {/* MODAL TREINAMENTOS COMPARTILHADO */}
+      {usuarioSelecionadoTreino && (
+        <ModalTreinamentosUsuario 
+            usuario={usuarioSelecionadoTreino} 
+            onClose={() => setUsuarioSelecionadoTreino(null)} 
+        />
+      )}
+
+      </>
     </div>
   );
 }

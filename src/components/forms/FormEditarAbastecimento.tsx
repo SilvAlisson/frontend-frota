@@ -4,17 +4,17 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
-import { supabase } from '../../supabaseClient';
+import { uploadToR2 } from '../../services/uploadService';
 import { toast } from 'sonner';
-import { 
-  Fuel, Save, Plus, X, User as UserIcon, Truck, 
+import {
+  Fuel, Save, Plus, X, User as UserIcon, Truck,
   MapPin, Calendar, CreditCard, Image as ImageIcon, Loader2, Info
 } from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Select } from '../ui/Select'; 
+import { Select } from '../ui/Select';
 import { ModalConfirmarAnomalia } from '../ui/ModalConfirmarAnomalia';
 import type { Abastecimento } from '../../types';
 
@@ -132,9 +132,9 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
 
   const totalGeral = useMemo(() => {
     return (itensWatch || []).reduce((acc, item) => {
-        const qtd = Number(item?.quantidade || 0);
-        const unit = typeof item?.valorPorUnidade === 'string' ? desformatarDinheiro(item.valorPorUnidade) : Number(item?.valorPorUnidade || 0);
-        return acc + (qtd * unit);
+      const qtd = Number(item?.quantidade || 0);
+      const unit = typeof item?.valorPorUnidade === 'string' ? desformatarDinheiro(item.valorPorUnidade) : Number(item?.valorPorUnidade || 0);
+      return acc + (qtd * unit);
     }, 0);
   }, [itensWatch]);
 
@@ -172,13 +172,11 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
     try {
       setUploading(true);
       const compressedFile = await comprimirImagem(file);
-      const fileName = `abastecimento-${Date.now()}-${Math.random().toString(36).substring(2,9)}.jpg`;
-      const { data: uploadData, error } = await supabase.storage.from('fotos-frota').upload(`public/${fileName}`, compressedFile);
-      if (error) throw error;
-      const { data: publicUrl } = supabase.storage.from('fotos-frota').getPublicUrl(uploadData.path);
-      
-      setValue('fotoNotaFiscalUrl', publicUrl.publicUrl);
-      setPreviewFoto(publicUrl.publicUrl);
+      const fileName = `abastecimento-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.jpg`;
+      const publicUrlString = await uploadToR2(compressedFile, fileName, compressedFile.type || 'image/jpeg');
+
+      setValue('fotoNotaFiscalUrl', publicUrlString);
+      setPreviewFoto(publicUrlString);
       toast.success("Foto atualizada!");
     } catch (error) {
       console.error(error);
@@ -217,7 +215,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   // ✨ Interceptor de submit com validação de anomalias
   const handleValidacaoESubmit = (data: EditFormOutput) => {
     const itensNumericos = data.itens.map((i) => ({
-      quantidade:      Number(i.quantidade),
+      quantidade: Number(i.quantidade),
       valorPorUnidade: Number(i.valorPorUnidade),
     }));
     const anomaliasDetectadas = validarAbastecimento(itensNumericos, totalGeral);
@@ -262,13 +260,13 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
           setDadosPendentes(null);
         }}
       />
-      
+
       {/* HEADER PREMIUM */}
       <div className="bg-gradient-to-r from-background to-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex justify-between items-center shrink-0">
         <div>
           <h3 className="text-xl font-black text-text-main tracking-tight flex items-center gap-2">
             <div className="p-1.5 bg-primary/10 rounded-lg text-primary shadow-sm">
-                <Fuel className="w-5 h-5" />
+              <Fuel className="w-5 h-5" />
             </div>
             Modo Edição Avançado
           </h3>
@@ -277,16 +275,16 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
       </div>
 
       <form onSubmit={handleSubmit(handleValidacaoESubmit)} className="flex-1 flex flex-col overflow-hidden min-h-0">
-        
+
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-8 min-h-0">
 
           <div className="flex flex-col lg:flex-row gap-8">
-            
+
             {/* FOTO E RECIBO */}
             <div className="w-full lg:w-1/3 flex flex-col gap-3">
               <div className="flex items-center gap-2 border-b border-border/50 pb-2">
-                  <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
-                  <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Comprovante</label>
+                <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
+                <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Comprovante</label>
               </div>
 
               <div className="relative aspect-[3/4] bg-surface-hover/30 rounded-2xl border-2 border-dashed border-border/60 flex flex-col items-center justify-center overflow-hidden group hover:border-primary/50 transition-colors cursor-pointer shadow-sm">
@@ -299,8 +297,8 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
                   <>
                     <img src={previewFoto} alt="Nota Fiscal" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                     <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
-                       <ImageIcon className="w-10 h-10 text-white" />
-                       <span className="text-white text-[11px] font-black uppercase tracking-widest bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-md">Substituir Imagem</span>
+                      <ImageIcon className="w-10 h-10 text-white" />
+                      <span className="text-white text-[11px] font-black uppercase tracking-widest bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-md">Substituir Imagem</span>
                     </div>
                   </>
                 ) : (
@@ -316,23 +314,23 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
             {/* DADOS GERAIS */}
             <div className="w-full lg:w-2/3 space-y-5">
               <div className="flex items-center gap-2 border-b border-border/50 pb-2">
-                  <span className="w-1.5 h-4 bg-amber-500 rounded-full shadow-sm"></span>
-                  <label className="text-[10px] font-black text-amber-600 tracking-[0.2em] uppercase">Informações Operacionais</label>
+                <span className="w-1.5 h-4 bg-amber-500 rounded-full shadow-sm"></span>
+                <label className="text-[10px] font-black text-amber-600 tracking-[0.2em] uppercase">Informações Operacionais</label>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="md:col-span-2">
-                    <Select label="Veículo Oficial" options={veiculosOptions} icon={<Truck className="w-4 h-4"/>} {...register('veiculoId')} error={errors.veiculoId?.message} disabled={isLocked} />
+                  <Select label="Veículo Oficial" options={veiculosOptions} icon={<Truck className="w-4 h-4" />} {...register('veiculoId')} error={errors.veiculoId?.message} disabled={isLocked} />
                 </div>
-                
-                <Select label="Operador / Motorista" options={motoristasOptions} icon={<UserIcon className="w-4 h-4"/>} {...register('operadorId')} disabled={isLocked} />
-                <Select label="Posto Fornecedor" options={fornecedoresOptions} icon={<MapPin className="w-4 h-4"/>} {...register('fornecedorId')} error={errors.fornecedorId?.message} disabled={isLocked} />
-                
+
+                <Select label="Operador / Motorista" options={motoristasOptions} icon={<UserIcon className="w-4 h-4" />} {...register('operadorId')} disabled={isLocked} />
+                <Select label="Posto Fornecedor" options={fornecedoresOptions} icon={<MapPin className="w-4 h-4" />} {...register('fornecedorId')} error={errors.fornecedorId?.message} disabled={isLocked} />
+
                 <Input label="Hodômetro Registrado" type="number" {...register('kmOdometro')} error={errors.kmOdometro?.message as string} disabled={isLocked} className="font-mono font-bold text-lg text-primary" />
-                <Input label="Cartão da Frota (Final)" maxLength={4} placeholder="Ex: 1234" icon={<CreditCard className="w-4 h-4"/>} {...register('placaCartaoUsado')} disabled={isLocked} className="font-mono text-center tracking-widest font-black" />
-                
+                <Input label="Cartão da Frota (Final)" maxLength={4} placeholder="Ex: 1234" icon={<CreditCard className="w-4 h-4" />} {...register('placaCartaoUsado')} disabled={isLocked} className="font-mono text-center tracking-widest font-black" />
+
                 <div className="md:col-span-2">
-                    <Input label="Data e Hora Exata" type="datetime-local" icon={<Calendar className="w-4 h-4"/>} {...register('dataHora')} error={errors.dataHora?.message} disabled={isLocked} />
+                  <Input label="Data e Hora Exata" type="datetime-local" icon={<Calendar className="w-4 h-4" />} {...register('dataHora')} error={errors.dataHora?.message} disabled={isLocked} />
                 </div>
               </div>
             </div>
@@ -341,14 +339,14 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
           {/* MATRIZ DE ITENS */}
           <div className="pt-2">
             <div className="flex justify-between items-end mb-4 px-1">
-                <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
-                    <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Itens Consumidos</label>
-                </div>
-                <div className="bg-surface border border-border px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center gap-3">
-                    <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Valor Final:</span>
-                    <span className="font-mono font-black text-primary text-lg">{totalGeralFormatado}</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
+                <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Itens Consumidos</label>
+              </div>
+              <div className="bg-surface border border-border px-4 py-2 rounded-xl text-sm font-medium shadow-sm flex items-center gap-3">
+                <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Valor Final:</span>
+                <span className="font-mono font-black text-primary text-lg">{totalGeralFormatado}</span>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -367,18 +365,18 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
                   </div>
 
                   <div className="md:col-span-3">
-                    <Input 
-                      label="Preço Un." 
+                    <Input
+                      label="Preço Un."
                       {...register(`itens.${index}.valorPorUnidade`, {
-                         onChange: (e) => {
-                             e.target.value = formatarDinheiro(e.target.value);
-                             setValue(`itens.${index}.valorPorUnidade`, e.target.value);
-                         }
-                      })} 
-                      error={errors.itens?.[index]?.valorPorUnidade?.message as string} 
-                      className="text-right font-mono font-black text-emerald-600" 
-                      containerClassName="!mb-0" 
-                      disabled={isLocked} 
+                        onChange: (e) => {
+                          e.target.value = formatarDinheiro(e.target.value);
+                          setValue(`itens.${index}.valorPorUnidade`, e.target.value);
+                        }
+                      })}
+                      error={errors.itens?.[index]?.valorPorUnidade?.message as string}
+                      className="text-right font-mono font-black text-emerald-600"
+                      containerClassName="!mb-0"
+                      disabled={isLocked}
                     />
                   </div>
                 </div>
@@ -386,20 +384,20 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
             </div>
 
             <Button type="button" variant="secondary" onClick={() => append({ produtoId: '', quantidade: 0, valorPorUnidade: 0 })} disabled={isLocked} icon={<Plus className="w-4 h-4" />} className="w-full mt-4 border-dashed font-bold shadow-sm">
-            Adicionar Novo Combustível / Aditivo
+              Adicionar Novo Combustível / Aditivo
             </Button>
           </div>
 
           <div className="pt-4 border-t border-border/50 space-y-1.5">
-             <label className="flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase tracking-wider ml-1">
-               <Info className="w-3.5 h-3.5" /> Motivo da Edição (Auditoria)
-             </label>
-             <textarea
-               {...register('justificativa')}
-               disabled={isLocked}
-               className="w-full px-4 py-3 text-sm text-text-main bg-surface border border-border/60 rounded-xl transition-all duration-300 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 placeholder:text-text-muted disabled:bg-background/50 disabled:cursor-not-allowed resize-none shadow-sm h-20"
-               placeholder="Explique o motivo de estar alterando o registro original..."
-             />
+            <label className="flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase tracking-wider ml-1">
+              <Info className="w-3.5 h-3.5" /> Motivo da Edição (Auditoria)
+            </label>
+            <textarea
+              {...register('justificativa')}
+              disabled={isLocked}
+              className="w-full px-4 py-3 text-sm text-text-main bg-surface border border-border/60 rounded-xl transition-all duration-300 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 placeholder:text-text-muted disabled:bg-background/50 disabled:cursor-not-allowed resize-none shadow-sm h-20"
+              placeholder="Explique o motivo de estar alterando o registro original..."
+            />
           </div>
 
         </div>
@@ -409,11 +407,11 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
           <Button type="button" variant="ghost" onClick={onCancel} className="w-full sm:w-auto font-bold" disabled={isLocked}>
             Cancelar
           </Button>
-          <Button 
-            type="submit" 
-            variant="primary" 
-            isLoading={isLocked} 
-            className="w-full sm:w-auto px-10 shadow-button hover:shadow-float-primary font-black uppercase tracking-tight" 
+          <Button
+            type="submit"
+            variant="primary"
+            isLoading={isLocked}
+            className="w-full sm:w-auto px-10 shadow-button hover:shadow-float-primary font-black uppercase tracking-tight"
             icon={!isLocked ? <Save className="w-4 h-4" /> : undefined}
           >
             Gravar Alterações

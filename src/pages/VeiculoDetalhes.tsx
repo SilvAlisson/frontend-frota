@@ -1,5 +1,5 @@
-﻿import React, { useState, Suspense } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, Suspense, useEffect } from 'react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Tabs } from '../components/ui/Tabs';
 import { GestaoDocumentos } from '../components/GestaoDocumentos';
@@ -22,12 +22,21 @@ import {
 export function VeiculoDetalhes() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     
     // ✨ HOOK EXTRAÍDO (SRP)
     const { veiculo, dadosKm, loading } = useVeiculoDetalhes(id);
 
+    const queryTab = searchParams.get('tab');
     // ✨ Novo estado de navegação por abas
-    const [abaAtiva, setAbaAtiva] = useState('geral');
+    const [abaAtiva, setAbaAtiva] = useState(queryTab || 'geral');
+
+    useEffect(() => {
+        if (queryTab) {
+            setAbaAtiva(queryTab);
+        }
+    }, [queryTab]);
+
     const [limiteManutencoes, setLimiteManutencoes] = useState(10);
     const [limiteAbastecimentos, setLimiteAbastecimentos] = useState(10);
 

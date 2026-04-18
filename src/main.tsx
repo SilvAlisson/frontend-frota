@@ -1,13 +1,27 @@
-﻿import { StrictMode } from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
 import * as Sentry from "@sentry/react";
+import Hotjar from '@hotjar/browser';
+import { registerSW } from 'virtual:pwa-register';
+
 import { AuthProvider } from './contexts/AuthContext';
 import App from './App';
 import './index.css';
 
-// Inicialização do Sentry (DSN via variável de ambiente — não expor no código-fonte)
+// Registro PWA Automático
+registerSW({ immediate: true });
+
+// Inicialização Hotjar
+const hotjarId = Number(import.meta.env.VITE_HOTJAR_ID) || 0;
+if (hotjarId) {
+  Hotjar.init(hotjarId, 6);
+} else {
+  console.warn('VITE_HOTJAR_ID não configurado. Hotjar Inativo.');
+}
+
+// Inicialização do Sentry
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN as string,
   integrations: [
@@ -20,7 +34,7 @@ Sentry.init({
   replaysOnErrorSampleRate: 1.0,
 });
 
-// [IMPLEMENTAÇÃO] Configuração do QueryClient para ouvir erros e enviar ao Sentry
+// Configuração do QueryClient para ouvir erros e enviar ao Sentry
 const queryClient = new QueryClient({
   queryCache: new QueryCache({
     onError: (error) => {

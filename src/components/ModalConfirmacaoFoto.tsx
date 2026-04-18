@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
 import { api } from '../services/api';
-import { supabase } from '../supabaseClient';
+import { uploadToR2 } from '../services/uploadService';
 import { Button } from './ui/Button';
 import { Modal } from './ui/Modal'; // ✨ USAMOS O NOSSO MODAL BLINDADO!
 import { toast } from 'sonner';
@@ -150,23 +150,11 @@ export function ModalConfirmacaoFoto({
 
     const fluxoCompleto = async () => {
       const fileType = apiEndpoint.split('/')[1] || 'geral';
-      const fileName = `${fileType}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.jpg`;
-      const filePath = `public/${fileName}`;
+      const fileExt = foto.name.split('.').pop() || 'jpg';
+      const fileName = `${fileType}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 
-      const { data: uploadData, error: uploadError } = await supabase
-        .storage
-        .from('fotos-frota')
-        .upload(filePath, foto);
-
-      if (uploadError) throw new Error('Falha no upload da imagem.');
-      if (!uploadData) throw new Error('Erro desconhecido no upload.');
-
-      const { data: publicUrlData } = supabase
-        .storage
-        .from('fotos-frota')
-        .getPublicUrl(uploadData.path);
-
-      const fotoUrl = publicUrlData.publicUrl;
+      const publicUrlString = await uploadToR2(foto, fileName, foto.type || 'image/jpeg');
+      const fotoUrl = publicUrlString;
 
       let dadosCompletos = { ...dadosJornada };
 

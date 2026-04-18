@@ -1,4 +1,5 @@
 export type UserRole = 'ADMIN' | 'ENCARREGADO' | 'OPERADOR' | 'RH' | 'COORDENADOR';
+export type StatusOperador = 'ATIVO' | 'FERIAS' | 'ATESTADO' | 'AFASTADO';
 
 export type CategoriaCNH = 'A' | 'B' | 'C' | 'D' | 'E' | 'AB' | 'AC' | 'AD' | 'AE';
 
@@ -20,6 +21,7 @@ export interface User {
   cargo: string | null;
   fotoUrl?: string | null;
   loginToken?: string | null;
+  status?: StatusOperador;
 
   // RH Fields
   cnhNumero?: string | null;
@@ -258,10 +260,12 @@ export interface PlanoManutencao {
 }
 
 export interface Alerta {
-  tipo: 'MANUTENCAO' | 'DOCUMENTO';
+  tipo: 'MANUTENCAO' | 'DOCUMENTO' | 'VEICULO_OCIOSO' | 'OPERADOR_OCIOSO' | 'TENTATIVA_FRAUDE' | 'ERRO_SISTEMA' | 'SST';
   nivel: 'VENCIDO' | 'ATENCAO' | 'PROJETADO';
   mensagem: string;
   veiculoId?: string;
+  usuarioId?: string;
+  logId?: string; // ID do SystemLog para resolução
 }
 
 export interface DadosEvolucaoKm {

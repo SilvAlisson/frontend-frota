@@ -1,9 +1,9 @@
-﻿import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
-import { supabase } from '../../supabaseClient';
+import { uploadToR2 } from '../../services/uploadService';
 import DOMPurify from 'dompurify';
 import { toast } from 'sonner';
 import { User, Mail, Hash, Lock, Shield, Briefcase, Calendar, Camera, Save, Loader2, CreditCard } from 'lucide-react';
@@ -11,7 +11,7 @@ import { User, Mail, Hash, Lock, Shield, Briefcase, Calendar, Camera, Save, Load
 // --- UI COMPONENTS ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Select } from '../ui/Select'; 
+import { Select } from '../ui/Select';
 
 interface Cargo {
   id: string;
@@ -76,7 +76,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
       'COORDENADOR': 'Coordenador',
       'ADMIN': 'Administrador'
     };
-    
+
     return ROLES.map(role => ({
       value: role,
       label: labels[role] || role
@@ -127,14 +127,14 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
       } catch (err) {
         console.error(err);
         if (isMounted) {
-            toast.error("Erro ao carregar os dados de perfil.");
-            onCancelar();
+          toast.error("Erro ao carregar os dados de perfil.");
+          onCancelar();
         }
       } finally {
         if (isMounted) setLoadingData(false);
       }
     };
-    
+
     carregarTudo();
     return () => { isMounted = false; };
   }, [userId, reset, onCancelar]);
@@ -156,19 +156,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
       try {
         const fileExt = fotoFile.name.split('.').pop();
         const fileName = `perfil-${userId}-${Date.now()}.${fileExt}`;
-        const filePath = `perfis/${fileName}`;
-
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from('fotos-frota')
-          .upload(filePath, fotoFile);
-
-        if (uploadError) throw uploadError;
-
-        const { data: publicUrlData } = supabase.storage
-          .from('fotos-frota')
-          .getPublicUrl(uploadData.path);
-
-        finalFotoUrl = publicUrlData.publicUrl;
+        finalFotoUrl = await uploadToR2(fotoFile, fileName, fotoFile.type || 'image/jpeg');
       } catch (err) {
         console.error(err);
         toast.error("Erro ao atualizar foto de perfil.");
@@ -227,7 +215,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
         <div>
           <h3 className="text-xl font-black text-text-main tracking-tight flex items-center gap-2">
             <div className="p-1.5 bg-primary/10 rounded-lg text-primary shadow-sm">
-                <User className="w-6 h-6" />
+              <User className="w-6 h-6" />
             </div>
             Editar Colaborador
           </h3>
@@ -236,7 +224,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
       </div>
 
       <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSubmit(onSubmit)}>
-        
+
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
 
           {/* AVATAR UPLOAD (Redesenhado) */}
@@ -262,64 +250,64 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-            
+
             <div className="md:col-span-2 flex items-center gap-2 border-b border-border/50 pb-2">
               <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
               <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Dados Pessoais e Acesso</label>
             </div>
 
             <div className="md:col-span-2">
-              <Input 
-                label="Nome Completo" 
-                icon={<User className="w-4 h-4 text-text-muted"/>} 
-                {...register('nome')} 
-                error={errors.nome?.message} 
-                disabled={isLocked} 
+              <Input
+                label="Nome Completo"
+                icon={<User className="w-4 h-4 text-text-muted" />}
+                {...register('nome')}
+                error={errors.nome?.message}
+                disabled={isLocked}
               />
             </div>
 
             <div>
-              <Input 
-                label="E-mail Corporativo" 
-                type="email" 
-                icon={<Mail className="w-4 h-4 text-text-muted"/>} 
-                {...register('email')} 
-                error={errors.email?.message} 
-                disabled={isLocked} 
+              <Input
+                label="E-mail Corporativo"
+                type="email"
+                icon={<Mail className="w-4 h-4 text-text-muted" />}
+                {...register('email')}
+                error={errors.email?.message}
+                disabled={isLocked}
               />
             </div>
 
             <div className="relative">
-              <Input 
-                label="Mudar Senha (Opcional)" 
-                type="password" 
-                placeholder="Introduza a nova senha" 
-                icon={<Lock className="w-4 h-4 text-text-muted"/>} 
-                {...register('password')} 
-                error={errors.password?.message} 
-                disabled={isLocked} 
+              <Input
+                label="Mudar Senha (Opcional)"
+                type="password"
+                placeholder="Introduza a nova senha"
+                icon={<Lock className="w-4 h-4 text-text-muted" />}
+                {...register('password')}
+                error={errors.password?.message}
+                disabled={isLocked}
               />
               <span className="absolute right-3 top-3 text-[10px] text-text-muted font-bold pointer-events-none opacity-60">Mín. 6 chars</span>
             </div>
 
             <div>
-              <Input 
-                label="Matrícula Interna" 
-                icon={<Hash className="w-4 h-4 text-text-muted"/>} 
-                {...register('matricula')} 
-                error={errors.matricula?.message} 
-                disabled={isLocked} 
+              <Input
+                label="Matrícula Interna"
+                icon={<Hash className="w-4 h-4 text-text-muted" />}
+                {...register('matricula')}
+                error={errors.matricula?.message}
+                disabled={isLocked}
               />
             </div>
 
             <div>
-              <Select 
-                label="Nível de Acesso (Função)" 
-                options={roleOptions} 
-                icon={<Shield className="w-4 h-4 text-text-muted"/>}
-                {...register('role')} 
-                error={errors.role?.message} 
-                disabled={isLocked} 
+              <Select
+                label="Nível de Acesso (Função)"
+                options={roleOptions}
+                icon={<Shield className="w-4 h-4 text-text-muted" />}
+                {...register('role')}
+                error={errors.role?.message}
+                disabled={isLocked}
               />
             </div>
           </div>
@@ -336,55 +324,55 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div className="md:col-span-2">
-                  <Select 
-                    label="Cargo Profissional" 
+                  <Select
+                    label="Cargo Profissional"
                     options={cargoOptions}
-                    icon={<Briefcase className="w-4 h-4 text-text-muted"/>}
-                    {...register('cargoId')} 
-                    disabled={isLocked} 
+                    icon={<Briefcase className="w-4 h-4 text-text-muted" />}
+                    {...register('cargoId')}
+                    disabled={isLocked}
                   />
                 </div>
 
                 <div>
-                  <Input 
-                    label="Nº da CNH" 
-                    placeholder="Registro" 
-                    icon={<CreditCard className="w-4 h-4 text-primary/70"/>} 
-                    {...register('cnhNumero')} 
-                    disabled={isLocked} 
-                    className="font-mono tracking-wider" 
+                  <Input
+                    label="Nº da CNH"
+                    placeholder="Registro"
+                    icon={<CreditCard className="w-4 h-4 text-primary/70" />}
+                    {...register('cnhNumero')}
+                    disabled={isLocked}
+                    className="font-mono tracking-wider"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Input 
-                        label="Categoria" 
-                        placeholder="AE" 
-                        {...register('cnhCategoria')} 
-                        disabled={isLocked} 
-                        className="text-center font-black text-lg uppercase text-primary tracking-widest" 
-                        maxLength={2} 
+                    <Input
+                      label="Categoria"
+                      placeholder="AE"
+                      {...register('cnhCategoria')}
+                      disabled={isLocked}
+                      className="text-center font-black text-lg uppercase text-primary tracking-widest"
+                      maxLength={2}
                     />
                   </div>
                   <div>
-                    <Input 
-                        label="Validade CNH" 
-                        type="date" 
-                        {...register('cnhValidade')} 
-                        disabled={isLocked} 
-                        className="text-sm text-text-secondary" 
+                    <Input
+                      label="Validade CNH"
+                      type="date"
+                      {...register('cnhValidade')}
+                      disabled={isLocked}
+                      className="text-sm text-text-secondary"
                     />
                   </div>
                 </div>
 
                 <div className="md:col-span-2">
-                  <Input 
-                    label="Data de Admissão (Contrato)" 
-                    type="date" 
-                    icon={<Calendar className="w-4 h-4 text-primary/70"/>} 
-                    {...register('dataAdmissao')} 
-                    disabled={isLocked} 
+                  <Input
+                    label="Data de Admissão (Contrato)"
+                    type="date"
+                    icon={<Calendar className="w-4 h-4 text-primary/70" />}
+                    {...register('dataAdmissao')}
+                    disabled={isLocked}
                   />
                 </div>
               </div>
@@ -394,22 +382,22 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
 
         {/* FOOTER PREMIUM */}
         <div className="px-6 sm:px-8 py-5 bg-surface-hover/30 border-t border-border/60 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
-          <Button 
-            type="button" 
-            variant="ghost" 
-            className="w-full sm:w-auto font-bold" 
-            disabled={isLocked} 
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full sm:w-auto font-bold"
+            disabled={isLocked}
             onClick={onCancelar}
           >
             Descartar Alterações
           </Button>
-          <Button 
-            type="submit" 
-            variant="primary" 
-            className="w-full sm:w-auto shadow-button hover:shadow-float-primary px-10 font-black uppercase tracking-tight" 
-            disabled={isLocked} 
+          <Button
+            type="submit"
+            variant="primary"
+            className="w-full sm:w-auto shadow-button hover:shadow-float-primary px-10 font-black uppercase tracking-tight"
+            disabled={isLocked}
             isLoading={isLocked}
-            icon={<Save className="w-4 h-4"/>}
+            icon={<Save className="w-4 h-4" />}
           >
             Salvar Perfil
           </Button>

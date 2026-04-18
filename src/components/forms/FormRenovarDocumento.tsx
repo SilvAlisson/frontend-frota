@@ -9,7 +9,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { DatePicker } from '../ui/DatePicker';
 import { FileText, RefreshCcw, UploadCloud, Loader2 } from 'lucide-react';
-import { supabase } from '../../supabaseClient';
+import { uploadToR2 } from '../../services/uploadService';
 
 const renovarDocumentoSchema = z.object({
   titulo: z.string().min(3, "O título precisa ter pelo menos 3 letras"),
@@ -70,19 +70,11 @@ export function FormRenovarDocumento({ documentoId, onSuccess, onCancel }: FormR
 
     setIsUploading(true);
     try {
-      const fileName = `${crypto.randomUUID()}-${file.name}`;
-      
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('documentos-frota')
-        .upload(`public/${fileName}`, file);
+      const fileExt = file.name.split('.').pop() || '';
+      const fileName = `documentos-renovacao-${crypto.randomUUID()}.${fileExt}`;
+      const publicUrlString = await uploadToR2(file, fileName, file.type || 'application/octet-stream');
 
-      if (uploadError) throw uploadError;
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('documentos-frota')
-        .getPublicUrl(uploadData.path);
-
-      setValue('arquivoUrl', publicUrl, { shouldValidate: true });
+      setValue('arquivoUrl', publicUrlString, { shouldValidate: true });
       toast.success('Novo arquivo anexado com sucesso na nuvem!');
     } catch (error) {
       console.error(error);

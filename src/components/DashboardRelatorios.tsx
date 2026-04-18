@@ -1,6 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import React, { Suspense } from 'react';
@@ -25,7 +24,7 @@ import {
   Droplets, TrendingUp, FileSpreadsheet, ChevronRight,
   BarChart2, LineChart
 } from 'lucide-react';
-import type { KpiData, DadosEvolucaoKm, Veiculo } from '../types';
+import type { Veiculo } from '../types';
 import { useSumarioKPIs, useEvolucaoKm, useEvolucaoCpk, usePerformanceFrota } from '../hooks/useDashboardRelatorios';
 
 const GraficoKmVeiculo = React.lazy(() => import('./GraficoKmVeiculo').then(module => ({ default: module.GraficoKmVeiculo })));
@@ -120,7 +119,7 @@ const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descr
       )}
     >
       <div className="flex justify-between items-start shrink-0 mb-2 relative z-10 p-2">
-        <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider mt-1.5 leading-snug">
+        <h4 className="font-header text-xs font-bold text-text-secondary uppercase tracking-wider mt-1.5 leading-snug">
           {titulo}
         </h4>
         {icon && (
@@ -278,9 +277,16 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
   const { data: dadosPerformance = [], isLoading: loadingPerformance } = usePerformanceFrota({ ano, mes });
 
   const handleNavigation = React.useCallback((rotaPadrao: string, tipoDrillDown: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => {
-    if (onDrillDown) onDrillDown(tipoDrillDown);
-    else navigate(rotaPadrao);
-  }, [navigate, onDrillDown]);
+    if (onDrillDown) {
+      onDrillDown(tipoDrillDown);
+    } else {
+      const qs = new URLSearchParams();
+      if (ano) qs.set('ano', String(ano));
+      if (mes) qs.set('mes', String(mes));
+      if (veiculoIdFiltro) qs.set('veiculoId', veiculoIdFiltro);
+      navigate(`${rotaPadrao}?${qs.toString()}`);
+    }
+  }, [navigate, onDrillDown, ano, mes, veiculoIdFiltro]);
 
   const handleExportar = () => {
     if (!kpis) return;
@@ -318,7 +324,7 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
       {/* HEADER E FILTROS */}
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 border-b border-border/60 pb-6 sticky top-0 bg-background/90 backdrop-blur-xl z-20 pt-2 -mt-2">
         <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-text-main tracking-tight leading-none">Inteligência Operacional</h2>
+          <h2 className="font-header text-2xl sm:text-3xl font-black text-text-main tracking-tight leading-none">Inteligência Operacional</h2>
           <p className="text-sm text-text-secondary font-medium mt-1.5 flex items-center gap-2">
             Métricas consolidadas de <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md font-bold border border-primary/20">{opcoesMeses.find((m: { value: number; label: string }) => m.value === mes)?.label} de {ano}</span>
           </p>
@@ -401,9 +407,9 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
       {veiculoIdFiltro && (
         <div className="animate-in fade-in zoom-in-95 duration-700">
           {loadingGrafico ? (
-            <Skeleton variant="card" className="h-[360px] w-full flex items-center justify-center border border-border/40 shadow-sm" />
+            <Skeleton variant="card" className="h-[360px] w-full" />
           ) : (
-            <Suspense fallback={<Skeleton variant="card" className="h-[360px] w-full flex items-center justify-center border border-border/40 shadow-sm" />}>
+            <Suspense fallback={<Skeleton variant="card" className="h-[360px] w-full" />}>
               <GraficoKmVeiculo dados={dadosGraficoKm} />
             </Suspense>
           )}
@@ -420,7 +426,7 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
 
           <div className="flex items-start justify-between mb-6 relative z-10">
             <div>
-              <h4 className="text-lg font-black text-text-main tracking-tight flex items-center gap-2">
+              <h4 className="font-header text-lg font-black text-text-main tracking-tight flex items-center gap-2">
                 <LineChart className="w-5 h-5 text-sky-500" />
                 Evolução de CPK
               </h4>
@@ -445,7 +451,7 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
 
           <div className="flex items-start justify-between mb-6 relative z-10">
             <div>
-              <h4 className="text-lg font-black text-text-main tracking-tight flex items-center gap-2">
+              <h4 className="font-header text-lg font-black text-text-main tracking-tight flex items-center gap-2">
                 <BarChart2 className="w-5 h-5 text-primary" />
                 Performance da Frota
               </h4>

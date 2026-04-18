@@ -4,7 +4,8 @@ import { api } from '../services/api';
 import { toast } from 'sonner';
 import { 
   AlertTriangle, CheckCircle2, Loader2, 
-  Wrench, FileText, Clock, ChevronRight 
+  Wrench, FileText, Clock, ChevronRight,
+  Timer, UserX, X, Bug, ShieldAlert, HeartPulse
 } from 'lucide-react';
 import type { Alerta } from '../types';
 
@@ -22,18 +23,46 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  // Estados para o Modal de Ociosidade Exclusivo
+  const [alertaOciosoSelecionado, setAlertaOciosoSelecionado] = useState<Alerta | null>(null);
+  
+  // Estados para o Modal de Auditoria (Logs/Erros)
+  const [logAuditSelecionado, setLogAuditSelecionado] = useState<Alerta | null>(null);
+
+  const [isResolvendo, setIsResolvendo] = useState(false);
+
   const handleAlertaClick = (alerta: Alerta) => {
     if (onAlertaClick) {
       onAlertaClick(alerta);
       return;
     }
     
+    if (alerta.tipo === 'VEICULO_OCIOSO' || alerta.tipo === 'OPERADOR_OCIOSO') {
+      setAlertaOciosoSelecionado(alerta);
+      return;
+    }
+
+    if (alerta.tipo === 'TENTATIVA_FRAUDE' || alerta.tipo === 'ERRO_SISTEMA') {
+      setLogAuditSelecionado(alerta);
+      return;
+    }
+
+    if (alerta.tipo === 'SST') {
+      navigate('/admin/sst?tab=treinamentos');
+      return;
+    }
+
     if (!alerta.veiculoId) return;
 
     if (alerta.tipo === 'DOCUMENTO') {
-      navigate(`/admin/veiculos/${alerta.veiculoId}`);
+      navigate(`/admin/veiculos/${alerta.veiculoId}?tab=documentos`);
     } else if (alerta.tipo === 'MANUTENCAO') {
-      navigate(`/admin/manutencoes/nova?veiculoId=${alerta.veiculoId}`);
+      // Se for vencido, pode ir para a aba de oficina para ver o histórico ou para a tela de lançamento
+      if (alerta.nivel === 'VENCIDO') {
+        navigate(`/admin/veiculos/${alerta.veiculoId}?tab=manutencoes`);
+      } else {
+        navigate(`/admin/manutencoes/nova?veiculoId=${alerta.veiculoId}`);
+      }
     }
   };
 
@@ -54,6 +83,50 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
     };
     fetchAlertas();
   }, []);
+
+  // --- FUNÇÕES DE RESOLUÇÃO INTERATIVA (OCIOSIDADE) ---
+  const resolverAlertaOcioso = async (isMotivoJustificado: boolean) => {
+    if (!alertaOciosoSelecionado) return;
+    
+    if (!isMotivoJustificado) {
+      toast.success('Cobrança Registrada. Oriente o responsável a abrir a jornada no celular.');
+      setAlertaOciosoSelecionado(null);
+      return;
+    }
+
+    setIsResolvendo(true);
+    try {
+      if (alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO') {
+        await api.put(`/veiculos/${alertaOciosoSelecionado.veiculoId}/status`, { status: 'EM_MANUTENCAO' });
+      } else {
+        await api.put(`/usuarios/${alertaOciosoSelecionado.usuarioId}/status`, { status: 'ATESTADO' });
+      }
+      toast.success('Status atualizado! O alerta não aparecerá mais até que voltem à ativa.');
+      // Remove do array visualmente para não precisar dar reload na página
+      setAlertas(prev => prev.filter(a => a !== alertaOciosoSelecionado));
+      setAlertaOciosoSelecionado(null);
+    } catch (e) {
+      toast.error('Ocorreu um erro ao atualizar o status.');
+    } finally {
+      setIsResolvendo(false);
+    }
+  };
+
+  // --- FUNÇÕES DE RESOLUÇÃO DE AUDITORIA/LOGS ---
+  const resolverLogAudit = async () => {
+    if (!logAuditSelecionado?.logId) return;
+    setIsResolvendo(true);
+    try {
+      await api.put(`/logs/${logAuditSelecionado.logId}/resolver`);
+      toast.success('Log Arquivado. Solução registrada na auditoria.');
+      setAlertas(prev => prev.filter(a => a !== logAuditSelecionado));
+      setLogAuditSelecionado(null);
+    } catch (e) {
+      toast.error('Erro ao arquivar log de sistema.');
+    } finally {
+      setIsResolvendo(false);
+    }
+  };
 
   // --- LOADING (Premium Skeleton) ---
   if (loading) {
@@ -123,6 +196,91 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
           <CardAlerta key={index} alerta={alerta} onClick={() => handleAlertaClick(alerta)} />
         ))}
       </div>
+
+      {/* --- MODAL DE TRIAGEM DE OCIOSIDADE --- */}
+      {alertaOciosoSelecionado && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-surface rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-border/60 animate-in zoom-in-95 duration-300">
+            <div className="p-6 relative">
+              <button 
+                onClick={() => setAlertaOciosoSelecionado(null)}
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-hover transition-colors text-text-muted"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+              <div className="w-14 h-14 bg-stone-500/10 rounded-full flex items-center justify-center mb-4 border border-stone-500/20">
+                {alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO' ? <Timer className="w-7 h-7 text-stone-600" /> : <UserX className="w-7 h-7 text-stone-600" />}
+              </div>
+              
+              <h2 className="text-xl font-black text-text-main tracking-tight mb-2">Triagem de Inatividade</h2>
+              <p className="text-text-secondary text-sm font-medium mb-6 leading-relaxed">
+                {alertaOciosoSelecionado.mensagem}
+              </p>
+
+              <div className="space-y-3">
+                <button
+                  disabled={isResolvendo}
+                  onClick={() => resolverAlertaOcioso(true)}
+                  className="w-full relative py-3 px-4 rounded-xl text-center bg-primary text-white font-black hover:bg-primary-hover shadow-lg hover:shadow-primary/30 transition-all duration-300 disabled:opacity-50"
+                >
+                  {isResolvendo ? 'Atualizando Banco...' : (alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO' ? 'Sim, está na Oficina (Em Manutenção)' : 'Sim, está de Atestado/Férias')}
+                </button>
+                <button
+                  disabled={isResolvendo}
+                  onClick={() => resolverAlertaOcioso(false)}
+                  className="w-full py-3 px-4 rounded-xl text-center bg-surface-hover text-text-main font-bold hover:bg-border/40 transition-colors duration-200 border border-border/60"
+                >
+                  {alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO' ? 'Não, vou alertar a Base para usar a máquina' : 'Não, devia estar rodando. Vou cobrar!'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- MODAL DE AUDITORIA DE SISTEMA E FRAUDES --- */}
+      {logAuditSelecionado && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-surface rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-border/60 animate-in zoom-in-95 duration-300">
+            <div className="p-6 relative">
+              <button 
+                onClick={() => setLogAuditSelecionado(null)}
+                className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-hover transition-colors text-text-muted"
+              >
+                <X className="w-5 h-5" />
+              </button>
+              
+              <div className="w-14 h-14 bg-error/10 rounded-full flex items-center justify-center mb-4 border border-error/20">
+                {logAuditSelecionado.tipo === 'TENTATIVA_FRAUDE' ? <ShieldAlert className="w-7 h-7 text-error" /> : <Bug className="w-7 h-7 text-error" />}
+              </div>
+              
+              <h2 className="text-xl font-black text-text-main tracking-tight mb-2">Auditoria de Sistema</h2>
+              <p className="text-text-secondary text-sm font-medium mb-6 leading-relaxed">
+                {logAuditSelecionado.mensagem}
+              </p>
+
+              <div className="space-y-3">
+                <button
+                  disabled={isResolvendo}
+                  onClick={resolverLogAudit}
+                  className="w-full relative py-3 px-4 rounded-xl text-center bg-error text-white font-black hover:bg-error-hover shadow-lg hover:shadow-error/30 transition-all duration-300 disabled:opacity-50"
+                >
+                  {isResolvendo ? 'Arquivando...' : 'Ciente, Marcar como Corrigido'}
+                </button>
+                <button
+                  disabled={isResolvendo}
+                  onClick={() => setLogAuditSelecionado(null)}
+                  className="w-full py-3 px-4 rounded-xl text-center bg-surface-hover text-text-main font-bold hover:bg-border/40 transition-colors duration-200 border border-border/60"
+                >
+                  Fechar para Análise
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
@@ -140,7 +298,7 @@ function CardAlerta({ alerta, onClick }: { alerta: Alerta, onClick: () => void }
     iconBg: 'bg-warning/10 text-warning border-warning/20',
     icon: AlertTriangle,
     category: 'Atenção',
-    badgeLabel: alerta.nivel
+    badgeLabel: alerta.nivel as string
   };
 
   // Sobrescrita para VENCIDO (Crítico - Error)
@@ -177,6 +335,46 @@ function CardAlerta({ alerta, onClick }: { alerta: Alerta, onClick: () => void }
     } else if (alerta.tipo === 'DOCUMENTO') {
       config.icon = FileText;
       config.category = 'Documentação';
+    } else if (alerta.tipo === 'VEICULO_OCIOSO') {
+      config.icon = Timer;
+      config.category = 'Máquina Parada';
+      config.badgeBg = 'bg-stone-500/10 text-stone-600 dark:text-stone-400 border-stone-500/20';
+      config.iconBg = 'bg-stone-500/10 text-stone-600 dark:text-stone-400 border-stone-500/20';
+      config.border = 'border-l-stone-500';
+      config.textTitle = 'text-stone-600 dark:text-stone-400';
+      config.badgeLabel = 'OCIOSO';
+    } else if (alerta.tipo === 'OPERADOR_OCIOSO') {
+      config.icon = UserX;
+      config.category = 'Falta de Rodagem';
+      config.badgeBg = 'bg-stone-500/10 text-stone-600 dark:text-stone-400 border-stone-500/20';
+      config.iconBg = 'bg-stone-500/10 text-stone-600 dark:text-stone-400 border-stone-500/20';
+      config.border = 'border-l-stone-500';
+      config.textTitle = 'text-stone-600 dark:text-stone-400';
+      config.badgeLabel = 'AUSENTE';
+    } else if (alerta.tipo === 'TENTATIVA_FRAUDE') {
+      config.icon = ShieldAlert;
+      config.category = 'Auditoria';
+      config.badgeBg = 'bg-error/10 text-error border-error/20';
+      config.iconBg = 'bg-error/10 text-error border-error/20';
+      config.border = 'border-l-error';
+      config.textTitle = 'text-error';
+      config.badgeLabel = 'FRAUDE';
+    } else if (alerta.tipo === 'ERRO_SISTEMA') {
+      config.icon = Bug;
+      config.category = 'App Crash';
+      config.badgeBg = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
+      config.iconBg = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
+      config.border = 'border-l-amber-500';
+      config.textTitle = 'text-amber-600 dark:text-amber-400';
+      config.badgeLabel = 'FALHA';
+    } else if (alerta.tipo === 'SST') {
+      config.icon = HeartPulse;
+      config.category = 'SST & Saúde';
+      config.badgeBg = 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20';
+      config.iconBg = 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20';
+      config.border = 'border-l-violet-500';
+      config.textTitle = 'text-violet-600 dark:text-violet-400';
+      config.badgeLabel = alerta.nivel === 'VENCIDO' ? 'VENCIDO' : 'ATENÇÃO';
     }
   }
 
