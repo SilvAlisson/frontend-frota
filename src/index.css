@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 /* 1. TIPOGRAFIA TÉCNICA E MODERNA */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @theme {
   /* --- 1. CORES ESTÁTICAS (Marca) --- */
@@ -50,6 +50,7 @@
 
   /* --- 4. CONFIGURAÇÕES GERAIS --- */
   --font-sans: "Inter", ui-sans-serif, system-ui;
+  --font-header: "Outfit", ui-sans-serif, system-ui;
   --font-mono: "JetBrains Mono", monospace;
 
   /* --- 5. AJUSTES DE RAIO (Refinamento do DESIGN.md) --- */
@@ -66,6 +67,13 @@
   /* --- 6. VARIÁVEIS DE ANIMAÇÃO --- */
   --animate-ghost-pulse: ghost-pulse 3s infinite ease-in-out;
   --animate-enter: enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  --animate-shimmer: shimmer 2s infinite;
+
+  @keyframes shimmer {
+    100% {
+      transform: translateX(100%);
+    }
+  }
 
   --transition-timing-function: ease-out;
   --transition-duration: 300ms;
@@ -89,17 +97,71 @@
       opacity: 0;
       transform: translateY(8px) scale(0.98);
     }
-
     to {
       opacity: 1;
       transform: translateY(0) scale(1);
     }
   }
+
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  @keyframes slide-in-from-bottom {
+    from { transform: translateY(var(--tw-enter-translate-y, 10px)); }
+    to { transform: translateY(0); }
+  }
+
+  @keyframes zoom-in {
+    from { transform: scale(var(--tw-enter-scale, 0.95)); }
+    to { transform: scale(1); }
+  }
 }
 
 /* --- CAMADA BASE (Variáveis de Tema) --- */
 @layer base {
+  :root {
+    --tw-enter-opacity: 0;
+    --tw-enter-translate-y: 10px;
+    --tw-enter-scale: 0.95;
+  }
+}
 
+/* --- UTILITÁRIOS DE ANIMAÇÃO (SHADCN/UI STYLE) --- */
+@layer utilities {
+  .animate-in {
+    animation-duration: var(--tw-animate-duration, 300ms);
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .fade-in {
+    --tw-enter-opacity: 0;
+    animation-name: fade-in;
+  }
+
+  .slide-in-from-bottom-2 {
+    --tw-enter-translate-y: 8px;
+    animation-name: slide-in-from-bottom;
+  }
+
+  .slide-in-from-bottom-4 {
+    --tw-enter-translate-y: 16px;
+    animation-name: slide-in-from-bottom;
+  }
+
+  .zoom-in-95 {
+    --tw-enter-scale: 0.95;
+    animation-name: zoom-in;
+  }
+
+  .duration-300 { --tw-animate-duration: 300ms; }
+  .duration-500 { --tw-animate-duration: 500ms; }
+}
+
+/* --- CAMADA BASE (Estilos Globais) --- */
+@layer base {
   /* TEMA CLARO (Default) */
   :root {
     --primary: var(--color-klin-500);
@@ -107,17 +169,17 @@
     --primary-hover: var(--color-klin-700);
     --primary-soft: var(--color-klin-50);
 
-    --background: oklch(0.985 0.002 240);
-    --surface: oklch(1 0 0);
+    --background: oklch(0.98 0.002 240); /* Branco gelo elegante */
+    --surface: oklch(1 0 0); /* Branco absoluto pros cards */
     --surface-hover: oklch(0.97 0.002 240);
 
-    --border: oklch(0.89 0.01 240);
-    --input: oklch(0.92 0.01 240);
+    --border: oklch(0.93 0.01 240);
+    --input: oklch(0.95 0.01 240);
     --ring: var(--color-klin-500);
 
-    --text-main: oklch(0.20 0.04 240);
-    --text-secondary: oklch(0.45 0.04 240);
-    --text-muted: oklch(0.65 0.02 240);
+    --text-main: oklch(0.22 0.02 240); /* Preto refinado 2A2A2A */
+    --text-secondary: oklch(0.40 0.02 240);
+    --text-muted: oklch(0.55 0.02 240);
 
     --error: oklch(0.63 0.22 29);
     --error-foreground: oklch(1 0 0);
@@ -126,9 +188,9 @@
     --success: oklch(0.62 0.14 175);
     --success-foreground: oklch(1 0 0);
 
-    --shadow-card-val: 0 1px 3px 0 color-mix(in srgb, var(--color-klin-900) 6%, transparent), 0 1px 2px -1px color-mix(in srgb, var(--color-klin-900) 4%, transparent);
-    --shadow-float-val: 0 10px 15px -3px color-mix(in srgb, var(--color-klin-900) 12%, transparent), 0 4px 6px -4px color-mix(in srgb, var(--color-klin-900) 8%, transparent);
-    --shadow-button-val: 0 1px 2px 0 color-mix(in srgb, var(--color-klin-900) 10%, transparent);
+    --shadow-card-val: 0 1px 2px 0 color-mix(in srgb, var(--color-klin-900) 4%, transparent), 0 0px 2px 0 color-mix(in srgb, var(--color-klin-900) 2%, transparent);
+    --shadow-float-val: 0 8px 16px -4px color-mix(in srgb, var(--color-klin-900) 8%, transparent), 0 2px 6px -2px color-mix(in srgb, var(--color-klin-900) 4%, transparent);
+    --shadow-button-val: 0 1px 2px 0 color-mix(in srgb, var(--color-klin-900) 8%, transparent);
   }
 
   /* TEMA ESCURO (Apple / Vercel style) */

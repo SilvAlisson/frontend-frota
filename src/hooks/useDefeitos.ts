@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export interface DefeitoVeiculo {
   id: string;
@@ -20,6 +21,8 @@ export interface DefeitoVeiculo {
 
 export function useDefeitos(status?: 'ABERTO' | 'EM_ANALISE' | 'RESOLVIDO') {
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const isGestor = !!user && (user.role === 'ADMIN' || user.role === 'ENCARREGADO');
 
   // Lista todos os defeitos (Operador = só os dele / Encarregado = todos)
   const query = useQuery<DefeitoVeiculo[]>({
@@ -39,7 +42,8 @@ export function useDefeitos(status?: 'ABERTO' | 'EM_ANALISE' | 'RESOLVIDO') {
       return response.data.count as number;
     },
     refetchInterval: 60000,
-    retry: false // Se não for encarregado dará 403 silencioso
+    retry: false, // Se não for encarregado dará 403 silencioso
+    enabled: isGestor && !query.isLoading // Só tenta o contador se for gestor e após a lista principal carregar (opcional, mas evita corridas)
   });
 
   // MUTAÇÕES

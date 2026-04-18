@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
-import { supabase } from '../../supabaseClient';
+import { uploadToR2 } from '../../services/uploadService';
 import DOMPurify from 'dompurify';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -90,17 +90,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       try {
         const fileExt = fotoFile.name.split('.').pop();
         const fileName = `perfil-${Date.now()}.${fileExt}`;
-        const { data: uploadData, error } = await supabase.storage
-          .from('fotos-frota')
-          .upload(`perfis/${fileName}`, fotoFile);
-
-        if (error) throw error;
-
-        const { data: publicUrlData } = supabase.storage
-          .from('fotos-frota')
-          .getPublicUrl(uploadData.path);
-
-        finalFotoUrl = publicUrlData.publicUrl;
+        finalFotoUrl = await uploadToR2(fotoFile, fileName, fotoFile.type || 'image/jpeg');
       } catch (err) {
         console.error("Erro upload:", err);
         toast.error("Falha ao enviar foto de perfil.");
@@ -166,7 +156,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
-        
+
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
 
           {/* Avatar Upload Redesenhado */}
@@ -192,7 +182,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
-            
+
             <div className="md:col-span-2 flex items-center gap-2 border-b border-border/50 pb-2">
               <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
               <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Dados de Acesso</label>
@@ -277,45 +267,45 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
                 </div>
 
                 <div>
-                  <Input 
+                  <Input
                     label="Nº da CNH"
                     icon={<CreditCard className="w-4 h-4 text-primary/70" />}
-                    {...register('cnhNumero')} 
-                    placeholder="Registro da Carteira" 
-                    disabled={isSubmitting} 
-                    className="font-mono tracking-wider" 
+                    {...register('cnhNumero')}
+                    placeholder="Registro da Carteira"
+                    disabled={isSubmitting}
+                    className="font-mono tracking-wider"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Input 
-                      label="Categoria" 
-                      {...register('cnhCategoria')} 
-                      placeholder="AE" 
-                      className="text-center font-black text-lg uppercase text-primary tracking-widest" 
-                      maxLength={2} 
-                      disabled={isSubmitting} 
+                    <Input
+                      label="Categoria"
+                      {...register('cnhCategoria')}
+                      placeholder="AE"
+                      className="text-center font-black text-lg uppercase text-primary tracking-widest"
+                      maxLength={2}
+                      disabled={isSubmitting}
                     />
                   </div>
                   <div>
-                    <Input 
-                      label="Validade CNH" 
-                      type="date" 
-                      {...register('cnhValidade')} 
-                      disabled={isSubmitting} 
-                      className="text-sm text-text-secondary" 
+                    <Input
+                      label="Validade CNH"
+                      type="date"
+                      {...register('cnhValidade')}
+                      disabled={isSubmitting}
+                      className="text-sm text-text-secondary"
                     />
                   </div>
                 </div>
 
                 <div className="md:col-span-2">
-                  <Input 
-                    label="Data de Admissão" 
-                    type="date" 
+                  <Input
+                    label="Data de Admissão"
+                    type="date"
                     icon={<Calendar className="w-4 h-4 text-primary/70" />}
-                    {...register('dataAdmissao')} 
-                    disabled={isSubmitting} 
+                    {...register('dataAdmissao')}
+                    disabled={isSubmitting}
                   />
                 </div>
               </div>

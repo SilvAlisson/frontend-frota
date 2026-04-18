@@ -34,7 +34,7 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
             K
           </div>
           <div>
-            <span className="block font-black text-[15px] text-text-main tracking-tight leading-none">FROTA <span className="text-primary">PRO</span></span>
+            <span className="block font-header font-black text-[16px] text-text-main tracking-tight leading-none">FROTA <span className="text-primary">KLIN</span></span>
             <span className="block text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-1 opacity-80">Workspace</span>
           </div>
         </div>
@@ -63,8 +63,8 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
             <nav className="space-y-1.5">
               {group.items.map((item) => {
                 const isActive = item.path === '/admin' 
-                  ? location.pathname === '/admin'
-                  : location.pathname.startsWith(item.path);
+                  ? location.pathname === '/admin' || location.pathname === '/admin/'
+                  : location.pathname === item.path || location.pathname.startsWith(item.path + '/');
 
                 return (
                   <Link
@@ -180,7 +180,7 @@ export function AdminLayout() {
               
               <div className="sr-only">
                 <Drawer.Title>Menu de Navegação</Drawer.Title>
-                <Drawer.Description>Acesse às seções e configurações do sistema FrotaPro.</Drawer.Description>
+                <Drawer.Description>Acesso às áreas da Frota KLIN.</Drawer.Description>
               </div>
               
               <SidebarContent 
@@ -212,7 +212,7 @@ export function AdminLayout() {
                           <Menu className="w-6 h-6" />
                       </button>
                       <div className="flex items-center gap-2">
-                         <span className="font-black text-lg text-text-main tracking-tight">FROTA<span className="text-primary">PRO</span></span>
+                         <span className="font-header font-black text-lg text-text-main tracking-tight">FROTA <span className="text-primary">KLIN</span></span>
                       </div>
                   </div>
                   

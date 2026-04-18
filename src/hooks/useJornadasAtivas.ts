@@ -1,4 +1,4 @@
-﻿import { useQuery } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,9 +11,10 @@ export function useJornadasAtivas() {
     queryKey: ['jornadas', 'ativas', user?.role],
     
     queryFn: async () => {
-      const endpoint = user?.role === 'OPERADOR'
-        ? '/jornadas/minhas-abertas-operador'
-        : '/jornadas/abertas';
+      const isGestor = !!user && (user.role === 'ADMIN' || user.role === 'ENCARREGADO');
+      const endpoint = isGestor
+        ? '/jornadas/abertas'
+        : '/jornadas/minhas-abertas-operador';
         
       const { data } = await api.get<Jornada[]>(endpoint);
       return data;

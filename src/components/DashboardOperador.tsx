@@ -118,7 +118,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
               </div>
             </button>
             <div className="leading-tight">
-              <h1 className="text-base sm:text-lg font-black text-text-main tracking-tight">
+              <h1 className="font-header text-base sm:text-lg font-black text-text-main tracking-tight">
                 Olá, <span className="text-primary">{user.nome.split(' ')[0]}</span>
               </h1>
               <p className="text-[9px] font-bold uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
@@ -167,7 +167,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
                   <Play className="w-7 h-7 fill-current" />
                 </div>
                 <div className="text-white">
-                  <h2 className="text-xl sm:text-2xl font-black tracking-tight drop-shadow-sm">Iniciar Turno</h2>
+                  <h2 className="font-header text-xl sm:text-2xl font-black tracking-tight drop-shadow-sm">Iniciar Turno</h2>
                   <p className="text-white/80 font-medium mt-1 text-sm">
                     Selecione a placa do <strong>veículo</strong> para começar o trabalho.
                   </p>
@@ -282,17 +282,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
 
       <Modal isOpen={modalDefeitoOpen} onClose={() => setModalDefeitoOpen(false)} title="Comunicação de Defeito" className="max-w-xl">
         <div className="p-2 sm:p-4">
-          {veiculoEmUsoId ? (
-            <FormRegistrarDefeito veiculoId={veiculoEmUsoId} onCancel={() => setModalDefeitoOpen(false)} onSuccess={() => setModalDefeitoOpen(false)} />
-          ) : (
-            <div className="py-6">
-              <EmptyState
-                icon={AlertTriangle}
-                title="Nenhum Veículo Vinculado"
-                description="Inicie seu turno primeiro para conseguirmos anexar e transmitir este defeito para a placa exata em que você está operando."
-              />
-            </div>
-          )}
+          <FormRegistrarDefeito veiculoId={veiculoEmUsoId} veiculosDisponiveis={veiculos} onCancel={() => setModalDefeitoOpen(false)} onSuccess={() => setModalDefeitoOpen(false)} />
         </div>
       </Modal>
 

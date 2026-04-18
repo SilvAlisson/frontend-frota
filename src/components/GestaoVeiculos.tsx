@@ -16,6 +16,7 @@ import { Badge } from './ui/Badge';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 import { Modal } from './ui/Modal';
 import { TableStyles } from '../styles/table';
+import { Skeleton } from './ui/Skeleton';
 import { SkeletonTable } from './skeletons/SkeletonTable';
 
 // ✨ Novos Componentes de Elite
@@ -222,7 +223,7 @@ export function GestaoVeiculos() {
         className="max-w-2xl"
       >
         <div className="p-2">
-          <Suspense fallback={<div className="p-8 text-center text-text-muted animate-pulse">Carregando formulário...</div>}>
+          <Suspense fallback={<div className="p-4 space-y-4"><Skeleton variant="title" /><Skeleton variant="tableRow" className="h-24" /><Skeleton variant="tableRow" className="h-24" /></div>}>
             <FormCadastrarVeiculo
               onSuccess={() => { setIsCadastroOpen(false); refetch(); }}
               onCancelar={() => setIsCadastroOpen(false)}
@@ -239,7 +240,7 @@ export function GestaoVeiculos() {
       >
         {veiculoParaEditar && (
           <div className="p-2">
-            <Suspense fallback={<div className="p-8 text-center text-text-muted animate-pulse">Carregando formulário...</div>}>
+            <Suspense fallback={<div className="p-4 space-y-4"><Skeleton variant="title" /><Skeleton variant="tableRow" className="h-24" /><Skeleton variant="tableRow" className="h-24" /></div>}>
               <FormEditarVeiculo
                 veiculoId={veiculoParaEditar.id}
                 onSuccess={() => { setVeiculoParaEditar(null); refetch(); }}

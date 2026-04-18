@@ -1,4 +1,4 @@
-﻿import { useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import DOMPurify from 'dompurify';
@@ -128,7 +128,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
       {/* HEADER PREMIUM */}
       <div className="bg-gradient-to-r from-background to-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex justify-between items-center shrink-0">
         <div>
-          <h3 className="text-xl font-black text-text-main tracking-tight flex items-center gap-2">
+          <h3 className="font-header text-xl font-black text-text-main tracking-tight flex items-center gap-2">
             <div className="p-1.5 bg-primary/10 rounded-lg text-primary shadow-sm">
                 <Truck className="w-5 h-5" />
             </div>

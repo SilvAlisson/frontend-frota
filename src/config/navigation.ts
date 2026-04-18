@@ -39,8 +39,6 @@ export const MENU_ITEMS: MenuGroup[] = [
   {
     title: 'Operacional',
     items: [
-      { icon: Wrench, label: 'Nova Manutenção', path: '/admin/manutencoes/nova', highlight: true },
-      { icon: Fuel, label: 'Novo Abastecimento', path: '/admin/abastecimentos/novo', highlight: true },
       { icon: ClipboardList, label: 'Hist. Manutenções', path: '/admin/manutencoes' },
       { icon: Fuel, label: 'Hist. Abastecimentos', path: '/admin/abastecimentos' },
       { icon: Truck, label: 'Hist. Jornadas', path: '/admin/jornadas' },
@@ -62,6 +60,13 @@ export const MENU_ITEMS: MenuGroup[] = [
     roles: ['ADMIN', 'COORDENADOR'],
     items: [
       { icon: ShieldCheck, label: 'Gestão de SST', path: '/admin/sst', highlight: true },
+    ]
+  },
+  {
+    title: 'Sistema',
+    roles: ['ADMIN'],
+    items: [
+      { icon: Wrench, label: 'Configurações (Em Breve)', path: '#', highlight: false }
     ]
   }
 ];

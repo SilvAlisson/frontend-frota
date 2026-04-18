@@ -122,21 +122,8 @@ export function Router() {
         <Route path="alertas" element={<PainelAlertas />} />
         <Route path="ranking" element={<RankingOperadores />} />
 
-        <Route path="manutencoes">
-          <Route index element={<HistoricoManutencoes userRole={user?.role || ''} />} />
-          <Route path="nova" element={<FormRegistrarManutencao onSuccess={() => navigate('/admin/manutencoes')} onClose={() => navigate('/admin/manutencoes')} />} />
-        </Route>
-
-        <Route path="abastecimentos">
-          <Route index element={<HistoricoAbastecimentos userRole={user?.role || ''} />} />
-          <Route path="novo" element={
-            <FormRegistrarAbastecimento
-              usuarioLogado={user || undefined}
-              onCancelar={() => navigate('/admin/abastecimentos')}
-              onSuccess={() => navigate('/admin/abastecimentos')}
-            />
-          } />
-        </Route>
+        <Route path="manutencoes" element={<HistoricoManutencoes userRole={user?.role || ''} />} />
+        <Route path="abastecimentos" element={<HistoricoAbastecimentos userRole={user?.role || ''} />} />
 
         <Route path="jornadas" element={<HistoricoJornadas userRole={user?.role} />} />
 
