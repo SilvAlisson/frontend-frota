@@ -6,6 +6,7 @@ import { Button } from './ui/Button';
 import { toast } from 'sonner';
 import { Printer, RefreshCw, X, Copy, QrCode, ShieldCheck, Download } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+// Removida a importação problemática do APP_URL do config
 import type { User } from '../types';
 
 interface ModalQrCodeProps {
@@ -31,12 +32,25 @@ const BackgroundPattern = () => (
 export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   const queryClient = useQueryClient();
   const [tokenAtual, setTokenAtual] = useState<string | null>(
-    (user as any).loginToken || null
+    (user as User & { loginToken?: string }).loginToken || null
   );
   const [loading, setLoading] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const loginUrl = tokenAtual ? `${window.location.origin}/login?magicToken=${tokenAtual}` : '';
+  /**
+   * ✨ Lógica de Link Protegido (Fix Vercel)
+   * 1. Deteta se estamos a rodar localmente.
+   * 2. Se sim, força o link de produção (Vercel) para que os celulares consigam ler o QR na tela do PC.
+   * 3. Se não, usa a origem real de onde o site está a ser acessado.
+   */
+  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const vercelUrl = "https://klinfrota.vercel.app";
+
+  // Tenta pegar a variável do Vite, senão aplica a nossa lógica inteligente
+  const baseUrl = import.meta.env.VITE_APP_URL || (isLocalhost ? vercelUrl : window.location.origin);
+
+  const tokenFinal = tokenAtual || user.matricula;
+  const loginUrl = tokenFinal ? `${baseUrl}/login?magicToken=${tokenFinal}` : '';
 
   // Bloqueio de scroll
   useEffect(() => {
@@ -138,12 +152,12 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
         <div className="relative flex flex-col items-center gap-8 w-full max-w-sm animate-in zoom-in-95 duration-300">
 
           {/* Botão Fechar */}
-          <button
-            onClick={onClose}
-            className="absolute -top-12 right-0 sm:-right-12 sm:top-0 p-2.5 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all border border-white/10 backdrop-blur-sm"
+          <Button
+            onClick={onClose} variant="ghost" size="icon"
+            className="absolute -top-12 right-0 sm:-right-12 sm:top-0 rounded-full p-2.5 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 transition-all border border-white/10 backdrop-blur-sm"
           >
             <X className="w-5 h-5" />
-          </button>
+          </Button>
 
           {/* === CRACHÁ PREMIUM === */}
           <div
@@ -163,7 +177,6 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
 
               <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
                 <div className="flex items-center gap-2 mb-1">
-                  {/* Placeholder do Logo da Klin - Substituir por <img /> se tiver o SVG */}
                   <div className="w-6 h-6 rounded bg-primary flex items-center justify-center text-white font-bold text-xs">K</div>
                   <span className="text-white font-bold tracking-wide text-sm">KLIN ENGENHARIA</span>
                 </div>
@@ -214,7 +227,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                   <div className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-primary rounded-bl-md"></div>
                   <div className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-primary rounded-br-md"></div>
 
-                  {tokenAtual ? (
+                  {tokenFinal ? (
                     <QRCodeSVG value={loginUrl} size={110} level="M" className="opacity-90 group-hover:opacity-100 transition-opacity" />
                   ) : (
                     <div className="w-[110px] h-[110px] flex flex-col items-center justify-center text-gray-300 gap-1 bg-gray-50 rounded">
@@ -233,7 +246,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
 
           {/* === AÇÕES EXTERNAS === */}
           <div className="w-full max-w-[320px] mx-4 flex flex-col gap-3">
-            {tokenAtual ? (
+            {tokenFinal ? (
               <>
                 <Button
                   onClick={handlePrint}
@@ -291,5 +304,3 @@ function UserIconPlaceholder() {
     </svg>
   );
 }
-
-

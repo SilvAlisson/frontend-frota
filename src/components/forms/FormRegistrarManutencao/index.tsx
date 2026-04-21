@@ -48,7 +48,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       tipo: planoManutencaoId ? 'PREVENTIVA' : 'CORRETIVA',
       data: new Date().toISOString().slice(0, 10),
       observacoes: '',
-      itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: '' } as any] 
+      itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: '' } as unknown as ManutencaoFormValues['itens'][0]] 
     },
     mode: 'onBlur'
   });

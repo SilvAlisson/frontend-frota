@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom'; // Removido o useNavigate daqui
 import { useAuth } from './contexts/AuthContext';
 
 // Telas de Acesso (Não-Lazy pois são os gatilhos iniciais)
@@ -25,10 +25,10 @@ const RankingOperadores = lazy(() => import('./components/RankingOperadores').th
 const HistoricoManutencoes = lazy(() => import('./components/HistoricoManutencoes').then(m => ({ default: m.HistoricoManutencoes })));
 const HistoricoAbastecimentos = lazy(() => import('./components/HistoricoAbastecimentos').then(m => ({ default: m.HistoricoAbastecimentos })));
 const HistoricoJornadas = lazy(() => import('./components/HistoricoJornadas').then(m => ({ default: m.HistoricoJornadas })));
-const FormRegistrarManutencao = lazy(() => import('./components/forms/FormRegistrarManutencao').then(m => ({ default: m.FormRegistrarManutencao })));
-const FormRegistrarAbastecimento = lazy(() => import('./components/forms/FormRegistrarAbastecimento').then(m => ({ default: m.FormRegistrarAbastecimento })));
-const FormPlanoManutencao = lazy(() => import('./components/forms/FormPlanoManutencao').then(m => ({ default: m.FormPlanoManutencao })));
 const GestaoSST = lazy(() => import('./components/GestaoSST').then(m => ({ default: m.GestaoSST })));
+
+// ✨ Novo Painel Importado
+const PainelPlanosPreventivos = lazy(() => import('./components/PainelPlanosPreventivos').then(m => ({ default: m.PainelPlanosPreventivos })));
 
 const LoadingScreen = () => (
   <div className="flex flex-col items-center justify-center h-screen bg-background">
@@ -55,8 +55,30 @@ function PrivateRoute({ children, allowedRoles }: { children: React.ReactNode, a
 }
 
 /**
+ * AdminIndex: Decide qual Dashboard carregar dentro do AdminLayout 
+ * com base no perfil do utilizador.
+ */
+function AdminIndex() {
+  const { user } = useAuth();
+
+  if (!user) return null;
+
+  switch (user.role) {
+    case 'RH':
+      return <DashboardRH user={user} />;
+    case 'ENCARREGADO':
+      return <DashboardEncarregado user={user} />;
+    case 'ADMIN':
+    case 'COORDENADOR':
+    default:
+      return <DashboardRelatorios />;
+  }
+}
+
+/**
  * RootDashboardRouter: Decide o que exibir na URL "/"
- * AGORA LIMPO: Não busca dados, apenas roteia!
+ * Apenas o OPERADOR fica na raiz sem o menu lateral.
+ * Todos os outros gestores são redirecionados para o painel Admin.
  */
 function RootDashboardRouter() {
   const { user, loading } = useAuth();
@@ -65,98 +87,85 @@ function RootDashboardRouter() {
 
   const containerStyle = "p-4 md:p-8 max-w-[1600px] mx-auto min-h-screen bg-background transition-colors duration-500";
 
-  switch (user.role) {
-    case 'OPERADOR':
-      return (
-        <div className={containerStyle}>
-          <DashboardOperador user={user} />
-        </div>
-      );
-    case 'ENCARREGADO':
-      return (
-        <div className={containerStyle}>
-          <DashboardEncarregado user={user} />
-        </div>
-      );
-    case 'RH':
-      return <div className={containerStyle}><DashboardRH user={user} /></div>;
-
-    case 'ADMIN':
-    case 'COORDENADOR':
-      return <Navigate to="/admin" replace />;
-
-    default:
-      return <Navigate to="/login" replace />;
+  if (user.role === 'OPERADOR') {
+    return (
+      <div className={containerStyle}>
+        <DashboardOperador user={user} />
+      </div>
+    );
   }
+
+  // Se não for operador (é Admin, Coordenador, RH ou Encarregado), vai para o layout com menu
+  return <Navigate to="/admin" replace />;
 }
 
 export function Router() {
   const { user } = useAuth();
-  const navigate = useNavigate();
+  // Removido o const navigate = useNavigate();
 
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
         <Route path="/login" element={<LoginScreen />} />
 
-      {/* ✨ ROTAS PÚBLICAS DE RECUPERAÇÃO DE SENHA ✨ */}
-      <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
-      <Route path="/redefinir-senha" element={<RedefinirSenha />} />
+        {/* ✨ ROTAS PÚBLICAS DE RECUPERAÇÃO DE SENHA ✨ */}
+        <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
+        <Route path="/redefinir-senha" element={<RedefinirSenha />} />
 
-      {/* Rota Raiz (Dashboards Operacionais) */}
-      <Route path="/" element={
-        <PrivateRoute>
-          <RootDashboardRouter />
-        </PrivateRoute>
-      } />
+        {/* Rota Raiz (Dashboards Operacionais) */}
+        <Route path="/" element={
+          <PrivateRoute>
+            <RootDashboardRouter />
+          </PrivateRoute>
+        } />
 
-      {/* Rotas de Admin */}
-      <Route path="/admin" element={
-        <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'ENCARREGADO']}>
-          {/* Removemos o AdminDataLayout que travava o sistema esperando veículos */}
-          <AdminLayout />
-        </PrivateRoute>
-      }>
-        <Route index element={<DashboardRelatorios />} />
+        {/* Rotas de Admin */}
+        <Route path="/admin" element={
+          <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'ENCARREGADO', 'RH']}>
+            <AdminLayout />
+          </PrivateRoute>
+        }>
 
-        <Route path="alertas" element={<PainelAlertas />} />
-        <Route path="ranking" element={<RankingOperadores />} />
+          <Route index element={<AdminIndex />} />
 
-        <Route path="manutencoes" element={<HistoricoManutencoes userRole={user?.role || ''} />} />
-        <Route path="abastecimentos" element={<HistoricoAbastecimentos userRole={user?.role || ''} />} />
+          <Route path="alertas" element={<PainelAlertas />} />
+          <Route path="ranking" element={<RankingOperadores />} />
 
-        <Route path="jornadas" element={<HistoricoJornadas userRole={user?.role} />} />
+          <Route path="manutencoes" element={<HistoricoManutencoes userRole={user?.role || ''} />} />
+          <Route path="abastecimentos" element={<HistoricoAbastecimentos userRole={user?.role || ''} />} />
 
-        <Route path="veiculos">
-          <Route index element={<GestaoVeiculos />} />
-          <Route path=":id" element={<VeiculoDetalhes />} />
+          <Route path="jornadas" element={<HistoricoJornadas userRole={user?.role} />} />
+
+          <Route path="veiculos">
+            <Route index element={<GestaoVeiculos />} />
+            <Route path=":id" element={<VeiculoDetalhes />} />
+          </Route>
+
+          <Route path="usuarios" element={
+            <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'RH']}>
+              <GestaoUsuarios adminUserId={user?.id || ''} />
+            </PrivateRoute>
+          } />
+
+          <Route path="produtos" element={<GestaoProdutos />} />
+          <Route path="fornecedores" element={<GestaoFornecedores />} />
+          <Route path="documentos" element={<GestaoDocumentos />} />
+
+          <Route path="planos" element={<PainelPlanosPreventivos />} />
+
+          <Route path="cargos" element={<GestaoCargos />} />
+
+          {/* SST — restrita a ADMIN e COORDENADOR */}
+          <Route path="sst" element={
+            <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR']}>
+              <GestaoSST />
+            </PrivateRoute>
+          } />
         </Route>
 
-        <Route path="usuarios" element={
-          <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR']}>
-            <GestaoUsuarios adminUserId={user?.id || ''} />
-          </PrivateRoute>
-        } />
-
-        <Route path="produtos" element={<GestaoProdutos />} />
-        <Route path="fornecedores" element={<GestaoFornecedores />} />
-        <Route path="documentos" element={<GestaoDocumentos />} />
-        <Route path="planos" element={<FormPlanoManutencao />} />
-        <Route path="cargos" element={<GestaoCargos />} />
-
-        {/* SST — restrita a ADMIN e COORDENADOR */}
-        <Route path="sst" element={
-          <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR']}>
-            <GestaoSST />
-          </PrivateRoute>
-        } />
-      </Route>
-
-      {/* Fallback 404 */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+        {/* Fallback 404 */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
   );
 }
-
-

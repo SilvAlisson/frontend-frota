@@ -1,12 +1,18 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
-import type { DadosEvolucaoKm } from '../types';
+import type { DadosEvolucaoKm, Veiculo, OrdemServico, Abastecimento } from '../types';
+
+export type VeiculoCompleto = Veiculo & {
+  resumoFinanceiro?: any;
+  ordensServico?: OrdemServico[];
+  abastecimentos?: Abastecimento[];
+};
 
 export function useVeiculoDetalhes(id?: string) {
   const navigate = useNavigate();
-  const [veiculo, setVeiculo] = useState<any>(null);
+  const [veiculo, setVeiculo] = useState<VeiculoCompleto | null>(null);
   const [dadosKm, setDadosKm] = useState<DadosEvolucaoKm[]>([]);
   const [loading, setLoading] = useState(true);
 

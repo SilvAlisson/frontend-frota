@@ -48,6 +48,13 @@ export interface Veiculo {
   vencimentoCiv?: string | null;
   vencimentoCipp?: string | null;
   ultimoKm?: number;
+
+  // Relacionamentos (Carregados em Detalhes)
+  ordensServico?: OrdemServico[];
+  abastecimentos?: Abastecimento[];
+
+  // DTOs de Relatório
+  resumoFinanceiro?: any;
 }
 
 export type TipoProduto = 'COMBUSTIVEL' | 'ADITIVO' | 'LAVAGEM' | 'PECA' | 'SERVICO' | 'OUTRO';
@@ -134,6 +141,9 @@ export interface Abastecimento {
   justificativa?: string | null;
   observacoes?: string | null;
   fotoNotaFiscalUrl: string | null;
+
+  // Campos calculados pela API
+  quantidade?: number | string;
 
   // Relacionamentos opcionais
   veiculo?: {

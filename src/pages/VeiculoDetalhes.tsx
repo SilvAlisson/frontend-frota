@@ -18,6 +18,7 @@ import {
     LayoutDashboard,
     FileText
 } from 'lucide-react';
+import type { OrdemServico, Abastecimento } from '../types';
 
 export function VeiculoDetalhes() {
     const { id } = useParams();
@@ -183,7 +184,7 @@ export function VeiculoDetalhes() {
                             </div>
                             <div className="divide-y divide-border/30 overflow-y-auto max-h-[500px] custom-scrollbar pr-2 relative">
                                 <div className="absolute left-6 top-0 bottom-0 w-px bg-border/40 -z-10" />
-                                {(veiculo.ordensServico || []).slice(0, limiteManutencoes).map((m: any, idx: number) => (
+                                {(veiculo.ordensServico || []).slice(0, limiteManutencoes).map((m: OrdemServico, idx: number) => (
                                     <div key={m.id} className={`py-4 flex justify-between items-center transition-colors group px-4 rounded-xl ml-2 hover-lift ${idx === 0 ? 'ghost-row bg-surface-hover/30' : 'hover:bg-surface-hover/50'}`}>
                                         <div className="flex items-center gap-4">
                                             <div className="w-8 h-8 rounded-full bg-surface border border-border/60 flex items-center justify-center shrink-0 z-10">
@@ -199,14 +200,14 @@ export function VeiculoDetalhes() {
                                         </span>
                                     </div>
                                 ))}
-                                {(veiculo.ordensServico?.length > limiteManutencoes) && (
+                                {(veiculo.ordensServico && veiculo.ordensServico.length > limiteManutencoes) && (
                                     <div className="pt-4 pb-2 flex justify-center">
                                         <Button variant="outline" onClick={() => setLimiteManutencoes(prev => prev + 10)} className="text-xs h-8">
                                             Carregar mais histórico
                                         </Button>
                                     </div>
                                 )}
-                                {(!veiculo.ordensServico?.length) && (
+                                {(!veiculo.ordensServico || veiculo.ordensServico.length === 0) && (
                                     <div className="py-8">
                                         <EmptyState
                                             title="Nenhuma Oficina"
@@ -229,7 +230,7 @@ export function VeiculoDetalhes() {
                             </div>
                             <div className="divide-y divide-border/30 overflow-y-auto max-h-[500px] custom-scrollbar pr-2 relative">
                                 <div className="absolute left-6 top-0 bottom-0 w-px bg-border/40 -z-10" />
-                                {(veiculo.abastecimentos || []).slice(0, limiteAbastecimentos).map((a: any, idx: number) => (
+                                {(veiculo.abastecimentos || []).slice(0, limiteAbastecimentos).map((a: Abastecimento, idx: number) => (
                                     <div key={a.id} className={`py-4 flex justify-between items-center transition-colors group px-4 rounded-xl ml-2 hover-lift ${idx === 0 ? 'ghost-row bg-surface-hover/30' : 'hover:bg-surface-hover/50'}`}>
                                         <div className="flex items-center gap-4">
                                             <div className="w-8 h-8 rounded-full bg-surface border border-border/60 flex items-center justify-center shrink-0 z-10">
@@ -254,14 +255,14 @@ export function VeiculoDetalhes() {
                                         </div>
                                     </div>
                                 ))}
-                                {(veiculo.abastecimentos?.length > limiteAbastecimentos) && (
+                                {(veiculo.abastecimentos && veiculo.abastecimentos.length > limiteAbastecimentos) && (
                                     <div className="pt-4 pb-2 flex justify-center">
                                         <Button variant="outline" onClick={() => setLimiteAbastecimentos(prev => prev + 10)} className="text-xs h-8">
                                             Carregar mais registros
                                         </Button>
                                     </div>
                                 )}
-                                {(!veiculo.abastecimentos?.length) && (
+                                {(!veiculo.abastecimentos || veiculo.abastecimentos.length === 0) && (
                                     <div className="py-8">
                                         <EmptyState
                                             title="Tanque Zerado"

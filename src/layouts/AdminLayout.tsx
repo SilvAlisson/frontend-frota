@@ -10,12 +10,13 @@ import { Button } from '../components/ui/Button';
 import { MENU_ITEMS } from '../config/navigation';
 
 import { useTheme } from '../contexts/ThemeContext';
+import type { User } from '../types';
 
 // --- COMPONENTES AUXILIARES ---
 
 interface SidebarContentProps {
   onClose?: () => void;
-  user: any;
+  user: User | null;
   onLogout: () => void;
   theme: 'light' | 'dark';
   toggleTheme: () => void;
@@ -41,20 +42,20 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
         
         {/* Botão de Fechar (Só aparece se existir a prop onClose - ou seja, no mobile) */}
         {onClose && (
-          <button 
+          <Button variant="ghost" size="icon"
             onClick={onClose} 
             className="lg:hidden p-2 -mr-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-lg transition-colors"
             aria-label="Fechar menu"
           >
             <X className="w-5 h-5" />
-          </button>
+          </Button>
         )}
       </div>
 
       {/* Lista de Navegação (Scrollável) */}
       <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8 custom-scrollbar">
         {MENU_ITEMS
-          .filter((group) => !group.roles || group.roles.includes(user?.role))
+          .filter((group) => !group.roles || (user?.role && group.roles.includes(user.role)))
           .map((group, idx) => (
           <div key={idx} className="animate-in slide-in-from-left-2 fade-in duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
             <h4 className="px-4 text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-3">
@@ -204,13 +205,13 @@ export function AdminLayout() {
             {!isShareMode && (
               <header className="lg:hidden flex items-center justify-between px-4 h-[72px] bg-surface/90 backdrop-blur-xl sticky top-0 z-30 border-b border-border/60 shadow-sm shrink-0">
                   <div className="flex items-center gap-3">
-                      <button 
+                      <Button variant="ghost" size="icon"
                           onClick={() => setIsSidebarOpen(true)}
                           className="p-2 -ml-2 text-text-main hover:bg-surface-hover rounded-xl active:scale-95 transition-all"
                           aria-label="Abrir menu"
                       >
                           <Menu className="w-6 h-6" />
-                      </button>
+                      </Button>
                       <div className="flex items-center gap-2">
                          <span className="font-header font-black text-lg text-text-main tracking-tight">FROTA <span className="text-primary">KLIN</span></span>
                       </div>
@@ -218,12 +219,12 @@ export function AdminLayout() {
                   
                   <div className="flex items-center gap-3">
                     {/* ✨ Botão de Tema também no Header Mobile */}
-                    <button 
+                    <Button variant="ghost" size="icon"
                       onClick={toggleTheme}
                       className="p-2 text-text-muted hover:text-primary transition-colors"
                     >
                       {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-                    </button>
+                    </Button>
 
                     {/* Avatar Mobile */}
                     <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black border border-primary/20 shadow-inner overflow-hidden">
