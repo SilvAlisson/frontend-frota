@@ -1,4 +1,4 @@
-﻿// src/components/forms/FormRegistrarManutencao/Step2ItensServicos.tsx
+// src/components/forms/FormRegistrarManutencao/Step2ItensServicos.tsx
 import { useState, useEffect, useMemo } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Plus, X, Package, Store } from 'lucide-react';
@@ -154,7 +154,7 @@ export function Step2ItensServicos() {
       <Button
         type="button"
         variant="outline"
-        onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: '' } as any)}
+        onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: '' } as unknown as ManutencaoFormValues['itens'][0])}
         className="w-full border-dashed border-2 hover:border-primary/50 hover:text-primary transition-all bg-background h-12 mt-2"
         icon={<Plus className="w-4 h-4" />}
       >

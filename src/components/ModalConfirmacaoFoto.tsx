@@ -153,7 +153,7 @@ export function ModalConfirmacaoFoto({
       const fileExt = foto.name.split('.').pop() || 'jpg';
       const fileName = `${fileType}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 
-      const publicUrlString = await uploadToR2(foto, fileName, foto.type || 'image/jpeg');
+      const publicUrlString = await uploadToR2(foto, fileName, foto.type || 'image/jpeg', fileType);
       const fotoUrl = publicUrlString;
 
       let dadosCompletos = { ...dadosJornada };
@@ -214,7 +214,7 @@ export function ModalConfirmacaoFoto({
       className="max-w-md" // Mantém a proporção elegante para fotos
     >
       <div className="flex flex-col h-full space-y-6">
-        
+
         {/* CONTEÚDO PRINCIPAL */}
         <div className="space-y-6">
           {/* Visor de Painel */}

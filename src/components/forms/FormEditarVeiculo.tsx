@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -99,8 +99,11 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
         const { data: veiculo } = await api.get(`/veiculos/${veiculoId}`);
         if (!isMounted) return;
 
-        const tipoVeiculoSafe = tiposDeVeiculo.includes(veiculo.tipoVeiculo as any) ? veiculo.tipoVeiculo : 'OUTRO';
-        const tipoCombustivelSafe = tiposDeCombustivel.includes(veiculo.tipoCombustivel as any) ? veiculo.tipoCombustivel : 'DIESEL_S10';
+        const isTipoVeiculo = (v: unknown): v is typeof tiposDeVeiculo[number] => typeof v === 'string' && tiposDeVeiculo.includes(v as typeof tiposDeVeiculo[number]);
+        const isTipoCombustivel = (v: unknown): v is typeof tiposDeCombustivel[number] => typeof v === 'string' && tiposDeCombustivel.includes(v as typeof tiposDeCombustivel[number]);
+
+        const tipoVeiculoSafe = isTipoVeiculo(veiculo.tipoVeiculo) ? veiculo.tipoVeiculo : 'OUTRO';
+        const tipoCombustivelSafe = isTipoCombustivel(veiculo.tipoCombustivel) ? veiculo.tipoCombustivel : 'DIESEL_S10';
         
         // Garante que a placa entra formatada com hífen no formulário caso venha sem do backend
         let placaFormatada = veiculo.placa || '';
@@ -113,8 +116,8 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
           marca: veiculo.marca || '',
           modelo: veiculo.modelo,
           ano: veiculo.ano,
-          tipoVeiculo: (tipoVeiculoSafe as any),
-          tipoCombustivel: (tipoCombustivelSafe as any),
+          tipoVeiculo: tipoVeiculoSafe,
+          tipoCombustivel: tipoCombustivelSafe,
           capacidadeTanque: veiculo.capacidadeTanque || 0,
           status: veiculo.status || 'ATIVO',
           ultimoKm: formatKmVisual(veiculo.ultimoKm),

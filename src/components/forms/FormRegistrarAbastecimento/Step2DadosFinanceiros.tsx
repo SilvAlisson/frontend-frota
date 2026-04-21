@@ -1,4 +1,4 @@
-﻿// src/components/forms/FormRegistrarAbastecimento/Step2DadosFinanceiros.tsx
+// src/components/forms/FormRegistrarAbastecimento/Step2DadosFinanceiros.tsx
 import { useEffect, useMemo } from 'react';
 import { useFormContext, useFieldArray } from 'react-hook-form';
 import { MapPin, Plus, X, Droplets } from 'lucide-react';
@@ -76,7 +76,7 @@ export function Step2DadosFinanceiros() {
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => append({ produtoId: '', quantidade: 0, valorUnitario: '' } as any)}
+            onClick={() => append({ produtoId: '', quantidade: 0, valorUnitario: '' } as unknown as AbastecimentoFormValues['itens'][0])}
             className="text-primary hover:bg-primary/10 h-8"
             icon={<Plus className="w-4 h-4" />}
             disabled={isLocked}

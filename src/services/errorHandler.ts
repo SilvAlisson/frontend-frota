@@ -1,10 +1,11 @@
-﻿/**
+/**
  * O-01: Serviço centralizado de tratamento de erros de API.
  * Elimina a duplicação de `handleApiError` em 5+ hooks.
  * Baseado em: clean-code (DRY), 007 (fail-secure messaging).
  */
 import { isAxiosError } from 'axios';
 import { toast } from 'sonner';
+import type { CustomAxiosError } from './api';
 
 /**
  * Trata erros de API de forma padronizada e amigável.
@@ -15,6 +16,10 @@ import { toast } from 'sonner';
  */
 export const handleApiError = (error: unknown, mensagemPadrao: string): void => {
   console.error(`[API Error] ${mensagemPadrao}:`, error);
+
+  if ((error as CustomAxiosError)?._toastHandled) {
+    return;
+  }
 
   if (isAxiosError(error)) {
     // Erro com resposta do servidor (4xx, 5xx)

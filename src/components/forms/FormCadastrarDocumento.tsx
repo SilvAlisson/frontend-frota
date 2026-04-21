@@ -82,7 +82,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
       setUploading(true);
       const fileExt = file.name.split('.').pop();
       const fileName = `documentos-legais-${Date.now()}.${fileExt}`;
-      const publicUrl = await uploadToR2(file, fileName, file.type || 'application/octet-stream');
+      const publicUrl = await uploadToR2(file, fileName, file.type || 'application/octet-stream', 'documentos');
 
       criarDocumento({
         titulo: data.titulo,

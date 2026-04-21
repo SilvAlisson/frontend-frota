@@ -12,6 +12,7 @@ import type { Alerta } from '../types';
 // ✨ Componentes Elite
 import { EmptyState } from './ui/EmptyState';
 import { Callout } from './ui/Callout';
+import { Button } from './ui/Button';
 
 interface PainelAlertasProps { 
   onAlertaClick?: (alerta: Alerta) => void;
@@ -144,12 +145,13 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
       <div className="pt-4 animate-in fade-in duration-300">
         <Callout variant="danger" title="Falha de Sincronização" icon={AlertTriangle}>
           <p className="mb-2">{error}</p>
-          <button
+          <Button
             onClick={() => window.location.reload()}
-            className="text-xs font-black uppercase tracking-widest hover:underline text-error"
+            variant="ghost" size="sm"
+            className="text-xs font-black uppercase tracking-widest text-error hover:text-error hover:bg-error/10 mt-2"
           >
             Tentar novamente
-          </button>
+          </Button>
         </Callout>
       </div>
     );
@@ -202,12 +204,13 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-surface rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-border/60 animate-in zoom-in-95 duration-300">
             <div className="p-6 relative">
-              <button 
+              <Button 
                 onClick={() => setAlertaOciosoSelecionado(null)}
-                className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-hover transition-colors text-text-muted"
+                variant="ghost" size="icon"
+                className="absolute top-4 right-4 rounded-full text-text-muted"
               >
                 <X className="w-5 h-5" />
-              </button>
+              </Button>
               
               <div className="w-14 h-14 bg-stone-500/10 rounded-full flex items-center justify-center mb-4 border border-stone-500/20">
                 {alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO' ? <Timer className="w-7 h-7 text-stone-600" /> : <UserX className="w-7 h-7 text-stone-600" />}
@@ -219,20 +222,22 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
               </p>
 
               <div className="space-y-3">
-                <button
-                  disabled={isResolvendo}
+                <Button
+                  disabled={isResolvendo} isLoading={isResolvendo}
                   onClick={() => resolverAlertaOcioso(true)}
-                  className="w-full relative py-3 px-4 rounded-xl text-center bg-primary text-white font-black hover:bg-primary-hover shadow-lg hover:shadow-primary/30 transition-all duration-300 disabled:opacity-50"
+                  variant="primary"
+                  className="w-full py-6 text-sm font-black shadow-lg"
                 >
-                  {isResolvendo ? 'Atualizando Banco...' : (alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO' ? 'Sim, está na Oficina (Em Manutenção)' : 'Sim, está de Atestado/Férias')}
-                </button>
-                <button
+                  {alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO' ? 'Sim, está na Oficina (Em Manutenção)' : 'Sim, está de Atestado/Férias'}
+                </Button>
+                <Button
                   disabled={isResolvendo}
                   onClick={() => resolverAlertaOcioso(false)}
-                  className="w-full py-3 px-4 rounded-xl text-center bg-surface-hover text-text-main font-bold hover:bg-border/40 transition-colors duration-200 border border-border/60"
+                  variant="secondary"
+                  className="w-full py-6 font-bold"
                 >
-                  {alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO' ? 'Não, vou alertar a Base para usar a máquina' : 'Não, devia estar rodando. Vou cobrar!'}
-                </button>
+                  {alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO' ? 'Não, vou enviar o aviso via Base' : 'Não, devia estar rodando. Vou cobrar!'}
+                </Button>
               </div>
             </div>
           </div>
@@ -244,12 +249,13 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-surface rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-border/60 animate-in zoom-in-95 duration-300">
             <div className="p-6 relative">
-              <button 
+              <Button 
                 onClick={() => setLogAuditSelecionado(null)}
-                className="absolute top-4 right-4 p-2 rounded-full hover:bg-surface-hover transition-colors text-text-muted"
+                variant="ghost" size="icon"
+                className="absolute top-4 right-4 rounded-full text-text-muted"
               >
                 <X className="w-5 h-5" />
-              </button>
+              </Button>
               
               <div className="w-14 h-14 bg-error/10 rounded-full flex items-center justify-center mb-4 border border-error/20">
                 {logAuditSelecionado.tipo === 'TENTATIVA_FRAUDE' ? <ShieldAlert className="w-7 h-7 text-error" /> : <Bug className="w-7 h-7 text-error" />}
@@ -261,20 +267,22 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
               </p>
 
               <div className="space-y-3">
-                <button
-                  disabled={isResolvendo}
+                <Button
+                  disabled={isResolvendo} isLoading={isResolvendo}
                   onClick={resolverLogAudit}
-                  className="w-full relative py-3 px-4 rounded-xl text-center bg-error text-white font-black hover:bg-error-hover shadow-lg hover:shadow-error/30 transition-all duration-300 disabled:opacity-50"
+                  variant="danger"
+                  className="w-full py-6 font-black shadow-lg"
                 >
-                  {isResolvendo ? 'Arquivando...' : 'Ciente, Marcar como Corrigido'}
-                </button>
-                <button
+                  Ciente, Marcar como Corrigido
+                </Button>
+                <Button
                   disabled={isResolvendo}
                   onClick={() => setLogAuditSelecionado(null)}
-                  className="w-full py-3 px-4 rounded-xl text-center bg-surface-hover text-text-main font-bold hover:bg-border/40 transition-colors duration-200 border border-border/60"
+                  variant="secondary"
+                  className="w-full py-6 font-bold"
                 >
                   Fechar para Análise
-                </button>
+                </Button>
               </div>
             </div>
           </div>

@@ -1,21 +1,26 @@
 import { api } from './api';
 
 /**
- * Faz o upload ponta-a-ponta de um arquivo (Upload Direto do Client-side pro Cloudflare R2).
- * Protege seu servidor Backend de vazamentos de RAM carregando buffers pesados.
+ * Faz o upload direto do cliente para o Cloudflare R2 usando uma URL pré-assinada.
+ * O parâmetro 'folder' define em qual pasta o arquivo será armazenado.
  */
-export async function uploadToR2(file: File | Blob, originalName: string, contentType: string): Promise<string> {
-  // 1. Pede permissão (Pre-signed URL) segura gerada pelo backend conectado com suas credenciais S3.
+export async function uploadToR2(
+  file: File | Blob,
+  originalName: string,
+  contentType: string,
+  folder: string = 'geral'
+): Promise<string> {
+
+  // 1. Solicita a URL assinada enviando a pasta de destino
   const { data } = await api.post('/r2/presign', {
     fileName: originalName,
     contentType: contentType,
+    folder: folder,
   });
 
   const { presignedUrl, publicUrl } = data;
 
-  // 2. Tendo o link mágico do Cloudflare, joga a foto diretão lá via PUT.
-  // IMPORTANTE: Foi usado fetch() nu e cru porque o `api` (Axios) possui interceptors
-  // que injetam headers (ex: Authorization Bearer) os quais corromperiam a restrita Assinatura de PUT/S3.
+  // 2. Realiza o upload direto via PUT (usando fetch para evitar interceptores do Axios)
   const response = await fetch(presignedUrl, {
     method: 'PUT',
     body: file,
@@ -25,9 +30,8 @@ export async function uploadToR2(file: File | Blob, originalName: string, conten
   });
 
   if (!response.ok) {
-    throw new Error('Falha no upload para o Storage R2.');
+    throw new Error('Erro ao enviar arquivo para o storage.');
   }
 
-  // 3. Tudo deu certo. Retorna pra chamar o Supabase Database pra gravar só o link públicozinho.
   return publicUrl;
 }

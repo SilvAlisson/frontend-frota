@@ -384,9 +384,9 @@ export function GestaoSST() {
     };
 
     if (acaoParaEditar) {
-      await atualizarAcao.mutateAsync({ id: acaoParaEditar.id, ...payload });
+      await atualizarAcao.mutateAsync({ id: acaoParaEditar.id, ...payload } as AcaoSST);
     } else {
-      await criarAcao.mutateAsync(payload as any);
+      await criarAcao.mutateAsync(payload as Omit<AcaoSST, 'id'>);
     }
     fecharModal();
   };
@@ -583,7 +583,7 @@ export function GestaoSST() {
                 </span>
               )}
             </h3>
-            <PainelAlertas alertas={alertas as any} />
+            <PainelAlertas alertas={alertas as (AcaoSST & { diffDias: number })[]} />
           </div>
         </div>
       )}

@@ -52,10 +52,10 @@ export function FormRegistrarAbastecimento({
       operadorId: (usuarioLogado?.role === 'OPERADOR' ? (usuarioLogado.id ?? '') : ''),
       fornecedorId: '',
       dataHora: new Date().toISOString().slice(0, 16),
-      itens: [{ produtoId: '', quantidade: 0, valorUnitario: '' } as any]
+      itens: [{ produtoId: '', quantidade: '0' as unknown as number, valorUnitario: '' }]
     },
     mode: 'onBlur',
-    reValidateMode: 'onChange', // 🐛 FIX: evita ghosting de erros de validação
+    reValidateMode: 'onBlur', // 🐛 FIX 007: evita travamento da CPU e ghosting
   });
 
   const { handleSubmit, trigger, formState: { isSubmitting } } = methods;
@@ -228,7 +228,6 @@ export function FormRegistrarAbastecimento({
           jornadaId={payload.veiculoId}
           apiEndpoint="/abastecimentos"
           apiMethod="POST"
-          nested={true}
           onClose={() => setModalConfirmacao(false)}
           onSuccess={() => {
             toast.success("Abastecimento e Nota Fiscal Registrados com sucesso!");

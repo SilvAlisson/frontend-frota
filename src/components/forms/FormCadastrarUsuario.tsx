@@ -90,7 +90,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       try {
         const fileExt = fotoFile.name.split('.').pop();
         const fileName = `perfil-${Date.now()}.${fileExt}`;
-        finalFotoUrl = await uploadToR2(fotoFile, fileName, fotoFile.type || 'image/jpeg');
+        finalFotoUrl = await uploadToR2(fotoFile, fileName, fotoFile.type || 'image/jpeg', 'usuarios');
       } catch (err) {
         console.error("Erro upload:", err);
         toast.error("Falha ao enviar foto de perfil.");

@@ -1,20 +1,22 @@
-import { 
-  LayoutDashboard, 
-  Truck, 
-  Users, 
-  FileText, 
-  Wrench, 
-  Package, 
-  AlertTriangle, 
-  Medal, 
-  ClipboardList, 
-  Fuel, 
+﻿import {
+  LayoutDashboard,
+  Truck,
+  Users,
+  FileText,
+  Package,
+  AlertTriangle,
+  Medal,
+  ClipboardList,
+  Fuel,
   FileBadge,
-  ShieldCheck
+  ShieldCheck,
+  Briefcase
 } from 'lucide-react';
 
+import React from 'react';
+
 export interface MenuItem {
-  icon: any;
+  icon: React.ElementType;
   label: string;
   path: string;
   highlight?: boolean;
@@ -22,7 +24,6 @@ export interface MenuItem {
 
 export interface MenuGroup {
   title: string;
-  /** Roles autorizados a ver este grupo. Se omitido, todos veem. */
   roles?: string[];
   items: MenuItem[];
 }
@@ -47,9 +48,12 @@ export const MENU_ITEMS: MenuGroup[] = [
   },
   {
     title: 'Cadastros',
+    // Todos os que acedem ao AdminLayout veem este grupo, 
+    // mas as permissões internas no Router.tsx (como GestãoUsuarios) barram acessos indevidos.
     items: [
       { icon: Truck, label: 'Veículos', path: '/admin/veiculos' },
       { icon: Users, label: 'Equipe', path: '/admin/usuarios' },
+      { icon: Briefcase, label: 'Cargos', path: '/admin/cargos' },
       { icon: FileBadge, label: 'Documentos Legais', path: '/admin/documentos' },
       { icon: Package, label: 'Produtos/Serviços', path: '/admin/produtos' },
       { icon: Users, label: 'Fornecedores', path: '/admin/fornecedores' },
@@ -61,14 +65,15 @@ export const MENU_ITEMS: MenuGroup[] = [
     items: [
       { icon: ShieldCheck, label: 'Gestão de SST', path: '/admin/sst', highlight: true },
     ]
-  },
+  }
+
+  /*  Ocultado temporariamente até a tela de configurações ser criada
   {
     title: 'Sistema',
     roles: ['ADMIN'],
     items: [
-      { icon: Wrench, label: 'Configurações (Em Breve)', path: '#', highlight: false }
+      { icon: Wrench, label: 'Configurações', path: '#', highlight: false }
     ]
   }
+  */
 ];
-
-

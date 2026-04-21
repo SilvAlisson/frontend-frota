@@ -1,4 +1,4 @@
-﻿import ExcelJS from 'exceljs';
+import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -133,10 +133,19 @@ export const exportarParaExcel = async (data: any[], nomeArquivo: string) => {
       const linhasProcessadas = data.map(row => {
         const novaLinha: any = {};
         for (const key in row) {
-          const valor = row[key];
-          // Se o valor for um Hyperlink (que enviamos do componente)
-          if (typeof valor === 'string' && valor.startsWith('=HYPERLINK')) {
-            novaLinha[key] = { formula: valor.substring(1) }; // O ExcelJS exige que remova o '=' inicial
+          let valor = row[key];
+          
+          if (typeof valor === 'string') {
+            // Se o valor for um Hyperlink (que enviamos do componente)
+            if (valor.startsWith('=HYPERLINK')) {
+              novaLinha[key] = { formula: valor.substring(1) }; // O ExcelJS exige que remova o '=' inicial
+            } else {
+              // 007 FIX: Prevenção contra CSV/XLS Formula Injection
+              if (/^[=\-+\@]/.test(valor)) {
+                valor = "'" + valor;
+              }
+              novaLinha[key] = valor;
+            }
           } else {
             novaLinha[key] = valor;
           }

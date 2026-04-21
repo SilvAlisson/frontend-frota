@@ -143,9 +143,23 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   // 3. Populate Form (Garantindo formatação de dinheiro)
   useEffect(() => {
     if (abastecimento) {
-      const abs = abastecimento as any;
+      const abs = abastecimento as unknown as {
+        veiculoId?: string; veiculo?: { id: string };
+        operadorId?: string; operador?: { nome: string };
+        fornecedorId?: string; fornecedor?: { nome: string };
+        kmOdometro: string | number;
+        dataHora: string;
+        placaCartaoUsado?: string;
+        justificativa?: string;
+        fotoNotaFiscalUrl?: string | null;
+        itens?: Array<{
+          produtoId?: string; produto?: { id: string; valorAtual: number };
+          quantidade: number;
+          valorPorUnidade?: string | number;
+        }>;
+      };
       reset({
-        veiculoId: abs.veiculoId || abs.veiculo?.id,
+        veiculoId: abs.veiculoId || abs.veiculo?.id || '',
         operadorId: abs.operadorId || usuarios.find(u => u.nome === abs.operador?.nome)?.id || '',
         fornecedorId: abs.fornecedorId || fornecedores.find(f => f.nome === abs.fornecedor?.nome)?.id || '',
         kmOdometro: Number(abs.kmOdometro),
@@ -154,11 +168,11 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         placaCartaoUsado: abs.placaCartaoUsado || '',
         justificativa: abs.justificativa || '',
         fotoNotaFiscalUrl: abs.fotoNotaFiscalUrl,
-        itens: abs.itens?.map((i: any) => ({
+        itens: abs.itens?.map(i => ({
           produtoId: i.produtoId || i.produto?.id || '',
           quantidade: i.quantidade,
           // ✨ CORREÇÃO: Converter para Number() antes do .toFixed()
-          valorPorUnidade: Number(i.valorPorUnidade || ((i.produto as any)?.valorAtual || 0)).toFixed(2).replace('.', ',')
+          valorPorUnidade: Number(i.valorPorUnidade || (i.produto?.valorAtual || 0)).toFixed(2).replace('.', ',')
         })) || []
       });
       if (abs.fotoNotaFiscalUrl) setPreviewFoto(abs.fotoNotaFiscalUrl);

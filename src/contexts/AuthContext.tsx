@@ -41,8 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const payloadBase64 = token.split('.')[1];
       if (!payloadBase64) return true;
-      // Decodifica Base64Url → JSON
-      const decoded = JSON.parse(atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/')));
+      // Decodifica Base64Url → JSON (com fallback seguro para UTF-8, previne crash com acedos no JWT)
+      const decoded = JSON.parse(decodeURIComponent(escape(atob(payloadBase64.replace(/-/g, '+').replace(/_/g, '/')))));
       // `exp` é em segundos (Unix timestamp); Date.now() em milissegundos
       return typeof decoded.exp === 'number' && Date.now() >= decoded.exp * 1000;
     } catch {

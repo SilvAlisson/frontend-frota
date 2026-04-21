@@ -106,8 +106,8 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
 
         setCargos(cargosData.data);
         const user = userData.data;
-        // Garante que a role vinda do banco é válida no nosso Enum
-        const roleValida = ROLES.includes(user.role as any) ? (user.role as typeof ROLES[number]) : 'ENCARREGADO';
+        const isRole = (r: unknown): r is typeof ROLES[number] => typeof r === 'string' && ROLES.includes(r as typeof ROLES[number]);
+        const roleValida = isRole(user.role) ? user.role : 'ENCARREGADO';
 
         setFotoAtualUrl(user.fotoUrl || null);
 
@@ -156,7 +156,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
       try {
         const fileExt = fotoFile.name.split('.').pop();
         const fileName = `perfil-${userId}-${Date.now()}.${fileExt}`;
-        finalFotoUrl = await uploadToR2(fotoFile, fileName, fotoFile.type || 'image/jpeg');
+        finalFotoUrl = await uploadToR2(fotoFile, fileName, fotoFile.type || 'image/jpeg', 'usuarios');
       } catch (err) {
         console.error(err);
         toast.error("Erro ao atualizar foto de perfil.");

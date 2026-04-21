@@ -1,5 +1,6 @@
-﻿import axios from 'axios';
+import axios from 'axios';
 import { toast } from 'sonner';
+import type { CustomAxiosError } from '../services/api';
 
 /**
  * Analisa um erro (da API ou Javascript) e retorna uma mensagem amigável.
@@ -10,7 +11,7 @@ export function handleApiError(error: unknown, defaultMessage = 'Ocorreu um erro
     let description = '';
 
     if (axios.isAxiosError(error)) {
-        const responseData = error.response?.data as any;
+        const responseData = error.response?.data as { error?: string, message?: string } | undefined;
 
         // 1. Prioridade: Mensagem explícita enviada pelo nosso Backend
         if (responseData?.error) {
@@ -66,11 +67,13 @@ export function handleApiError(error: unknown, defaultMessage = 'Ocorreu um erro
         // message = error.message; // Opcional
     }
 
-    // Dispara o Toast Visual
-    toast.error(message, {
-        description: description || undefined,
-        duration: 5000,
-    });
+    // Dispara o Toast Visual apenas se não tiver sido tratado pelo Interceptor da API
+    if (!(error as CustomAxiosError)?._toastHandled) {
+        toast.error(message, {
+            description: description || undefined,
+            duration: 5000,
+        });
+    }
 
     return message;
 }

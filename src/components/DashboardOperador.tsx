@@ -1,11 +1,11 @@
-import { useState, useMemo } from 'react';
-import { Fuel, History, FileText, Info, LogOut, Play, Navigation, AlertTriangle } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Fuel, History, FileText, Info, LogOut, Play, Navigation, AlertTriangle, WifiOff, RefreshCw } from 'lucide-react';
 import { IniciarJornada } from './IniciarJornada';
 import { JornadaCard } from './JornadaCard';
 import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
 import { FormRegistrarDefeito } from './forms/FormRegistrarDefeito';
 import { HistoricoJornadas } from './HistoricoJornadas';
-import { GestaoDocumentos } from './GestaoDocumentos'; 
+import { GestaoDocumentos } from './GestaoDocumentos';
 import { Modal } from './ui/Modal';
 import { ModalQrCode } from './ModalQrCode';
 
@@ -17,6 +17,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
 import type { User } from '../types';
 import { cn } from '../lib/utils';
+import { toast } from 'sonner';
 
 // Hooks Atômicos
 import { useUsuarios } from '../hooks/useUsuarios';
@@ -39,8 +40,8 @@ interface BottomNavItemProps {
 function BottomNavItem({ icon: Icon, label, onClick, accent = 'yellow', badge = false }: BottomNavItemProps) {
   const accentMap = {
     yellow: 'text-warning-600 dark:text-warning bg-warning/10 group-active:bg-warning/20',
-    red:    'text-error bg-error/10 group-active:bg-error/20',
-    sky:    'text-sky-600 dark:text-sky-400 bg-sky-500/10 group-active:bg-sky-500/20',
+    red: 'text-error bg-error/10 group-active:bg-error/20',
+    sky: 'text-sky-600 dark:text-sky-400 bg-sky-500/10 group-active:bg-sky-500/20',
     purple: 'text-purple-600 dark:text-purple-400 bg-purple-500/10 group-active:bg-purple-500/20',
   };
 
@@ -50,7 +51,6 @@ function BottomNavItem({ icon: Icon, label, onClick, accent = 'yellow', badge = 
       className="group relative flex flex-col items-center justify-center gap-1 flex-1 h-full min-h-[56px] transition-all active:scale-95 outline-none"
       aria-label={label}
     >
-      {/* Icon container — 44px min touch target */}
       <div className={cn(
         "w-11 h-11 rounded-2xl flex items-center justify-center transition-all duration-200 border border-transparent",
         accentMap[accent]
@@ -59,7 +59,6 @@ function BottomNavItem({ icon: Icon, label, onClick, accent = 'yellow', badge = 
       </div>
       <span className="text-[9px] font-black uppercase tracking-widest text-text-muted leading-none">{label}</span>
 
-      {/* Badge de urgência */}
       {badge && (
         <span className="absolute top-1 right-1/4 w-2 h-2 rounded-full bg-error animate-pulse border-2 border-background" />
       )}
@@ -71,7 +70,11 @@ function BottomNavItem({ icon: Icon, label, onClick, accent = 'yellow', badge = 
 export function DashboardOperador({ user }: DashboardOperadorProps) {
   const { logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  
+
+  // ✨ ESTADO DE CONEXÃO (Mobile-First)
+  const [isOffline, setIsOffline] = useState(!navigator.onLine);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
   const [modalAbastecimentoOpen, setModalAbastecimentoOpen] = useState(false);
   const [modalDefeitoOpen, setModalDefeitoOpen] = useState(false);
   const [modalHistoricoOpen, setModalHistoricoOpen] = useState(false);
@@ -79,14 +82,37 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
   const [modalQrCodeOpen, setModalQrCodeOpen] = useState(false);
 
   // 📡 BUSCA DOS DADOS COM CACHE
-  const { data: usuarios = [] } = useUsuarios();
-  const { data: veiculos = [] } = useVeiculos();
+  const { data: usuarios = [], refetch: refetchUsuarios } = useUsuarios();
+  const { data: veiculos = [], refetch: refetchVeiculos } = useVeiculos();
   const { data: jornadasAtivas = [], refetch: refetchJornadas } = useJornadasAtivas();
+
+  // Listener de Conexão
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOffline(false);
+      toast.success('Conexão restabelecida!', { position: 'top-center' });
+      handleManualRefresh();
+    };
+    const handleOffline = () => setIsOffline(true);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleManualRefresh = async () => {
+    setIsRefreshing(true);
+    await Promise.all([refetchUsuarios(), refetchVeiculos(), refetchJornadas()]);
+    setTimeout(() => setIsRefreshing(false), 800);
+  };
 
   // 🛡️ FILTRO BLINDADO — só minhas jornadas
   const minhasJornadas = useMemo(() => {
-    return jornadasAtivas.filter((j: any) => 
-      j.operador?.id === user.id || 
+    return jornadasAtivas.filter((j: any) =>
+      j.operador?.id === user.id ||
       j.operadorId === user.id ||
       j.motoristaId === user.id
     );
@@ -98,17 +124,21 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
   return (
     <div className="min-h-screen -mx-4 sm:-mx-8 px-0 relative overflow-hidden bg-background transition-colors duration-500 font-sans">
 
+      {/* ✨ BANNER OFFLINE */}
+      {isOffline && (
+        <div className="bg-error text-white text-xs font-bold text-center py-1.5 flex items-center justify-center gap-2 z-50 relative">
+          <WifiOff className="w-3.5 h-3.5" /> Sem Conexão de Internet. Envios pausados.
+        </div>
+      )}
+
       {/* ─── HEADER MOBILE CLEAN ──────────────────────────────────────────── */}
       <header className="sticky top-0 z-40 px-4 sm:px-8 py-3 backdrop-blur-xl bg-background/70 border-b border-border/40">
         <div className="max-w-2xl mx-auto flex justify-between items-center">
-          
-          {/* Avatar + Nome */}
+
           <div className="flex items-center gap-3">
             <button
               onClick={() => setModalQrCodeOpen(true)}
               className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-primary/60 p-0.5 shadow-lg shadow-primary/20 active:scale-95 transition-transform"
-              title="Meu QR Code"
-              aria-label="Ver meu QR Code"
             >
               <div className="w-full h-full bg-background/90 rounded-[14px] flex items-center justify-center overflow-hidden">
                 {user.fotoUrl
@@ -131,19 +161,26 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
             </div>
           </div>
 
-          {/* Controles de Header */}
           <div className="flex items-center gap-2">
+            {/* ✨ BOTÃO REFRESH MANUAL */}
+            <button
+              onClick={handleManualRefresh}
+              disabled={isRefreshing || isOffline}
+              className={`w-10 h-10 rounded-xl bg-surface/50 border border-border/40 hover:bg-surface flex items-center justify-center text-text-muted transition-all active:scale-90 ${isOffline ? 'opacity-30' : ''}`}
+            >
+              <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
+            </button>
+
             <button
               onClick={toggleTheme}
               className="w-10 h-10 rounded-xl bg-surface/50 border border-border/40 hover:bg-surface flex items-center justify-center text-text-muted transition-all"
-              aria-label="Alternar tema"
             >
               {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </button>
+
             <button
               onClick={logout}
               className="w-10 h-10 rounded-xl bg-error/5 border border-error/10 hover:bg-error/20 flex items-center justify-center text-error transition-all hover:rotate-12"
-              aria-label="Sair"
             >
               <LogOut className="w-4 h-4" />
             </button>
@@ -155,12 +192,11 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
       {/* ─── ÁREA PRINCIPAL ────────────────────────────────────────────────── */}
       <main className="max-w-2xl mx-auto px-4 sm:px-8 pt-6 pb-32 lg:pb-10 space-y-6">
 
-        {/* === BLOCO DE JORNADA (Centro de Atenção) === */}
+        {/* === BLOCO DE JORNADA === */}
         {!tenhoJornadaAtiva ? (
-          /* CARD INICIAR TURNO */
           <div className="bg-gradient-to-br from-primary to-primary-hover rounded-[2rem] p-6 sm:p-8 shadow-[0_20px_60px_-10px_rgba(var(--color-primary),0.5)] relative overflow-hidden group">
             <Navigation className="absolute -right-8 -bottom-8 w-48 h-48 text-white/10 -rotate-12 group-hover:scale-110 group-hover:rotate-0 transition-transform duration-700 pointer-events-none" />
-            
+
             <div className="relative z-10 flex flex-col gap-6">
               <div className="flex items-start gap-4">
                 <div className="p-4 bg-white/20 text-white rounded-2xl shadow-inner backdrop-blur-sm border border-white/20">
@@ -186,7 +222,6 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
             </div>
           </div>
         ) : (
-          /* JORNADA EM ANDAMENTO */
           <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
             <div className="flex items-center gap-2 text-xs font-black text-success uppercase tracking-widest bg-success/10 py-2 px-4 rounded-xl w-fit border border-success/20 shadow-sm">
               <span className="relative flex h-2.5 w-2.5">
@@ -206,7 +241,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
           </div>
         )}
 
-        {/* === ACESSO RÁPIDO (Visível apenas em DESKTOP como lista lateral) === */}
+        {/* === ACESSO RÁPIDO (Visível apenas em DESKTOP) === */}
         <div className="hidden lg:grid lg:grid-cols-2 gap-4 pt-2">
           <h2 className="lg:col-span-2 text-[10px] font-black text-text-secondary uppercase tracking-[0.2em]">
             Acesso Rápido
@@ -239,37 +274,16 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
 
       </main>
 
-      {/* ─── BOTTOM NAVIGATION BAR (apenas mobile) ────────────────────────── */}
+      {/* ─── BOTTOM NAVIGATION BAR (Mobile) ────────────────────────── */}
       <nav
         className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-2xl border-t border-border/50 shadow-[0_-8px_40px_rgba(0,0,0,0.15)] safe-bottom"
         aria-label="Navegação principal"
       >
         <div className="max-w-2xl mx-auto flex items-center justify-around h-20 px-2">
-          <BottomNavItem
-            icon={Fuel}
-            label="Abastecer"
-            accent="yellow"
-            onClick={() => setModalAbastecimentoOpen(true)}
-          />
-          <BottomNavItem
-            icon={AlertTriangle}
-            label="Defeito"
-            accent="red"
-            badge={false}
-            onClick={() => setModalDefeitoOpen(true)}
-          />
-          <BottomNavItem
-            icon={FileText}
-            label="Licenças"
-            accent="sky"
-            onClick={() => setModalDocumentosOpen(true)}
-          />
-          <BottomNavItem
-            icon={History}
-            label="Histórico"
-            accent="purple"
-            onClick={() => setModalHistoricoOpen(true)}
-          />
+          <BottomNavItem icon={Fuel} label="Abastecer" accent="yellow" onClick={() => setModalAbastecimentoOpen(true)} />
+          <BottomNavItem icon={AlertTriangle} label="Defeito" accent="red" badge={false} onClick={() => setModalDefeitoOpen(true)} />
+          <BottomNavItem icon={FileText} label="Licenças" accent="sky" onClick={() => setModalDocumentosOpen(true)} />
+          <BottomNavItem icon={History} label="Histórico" accent="purple" onClick={() => setModalHistoricoOpen(true)} />
         </div>
       </nav>
 
@@ -295,11 +309,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
           <GestaoDocumentos veiculoId={veiculoEmUsoId} somenteLeitura={true} />
         ) : (
           <div className="pt-6 pb-2">
-            <EmptyState
-              icon={Info}
-              title="Veículo Não Vinculado"
-              description="Inicie um turno de trabalho para conseguir acessar os documentos do veículo em uso."
-            />
+            <EmptyState icon={Info} title="Veículo Não Vinculado" description="Inicie um turno de trabalho para conseguir acessar os documentos do veículo em uso." />
           </div>
         )}
       </Modal>

@@ -1,11 +1,41 @@
 import axios, { type InternalAxiosRequestConfig, type AxiosError } from 'axios';
 import { RENDER_API_BASE_URL } from '../config';
 import { toast } from 'sonner';
+import { z } from 'zod';
+
+export interface CustomAxiosError extends AxiosError {
+  _toastHandled?: boolean;
+}
 
 const OFFLINE_QUEUE_KEY = 'frota_offline_queue';
 
+const filaOfflineSchema = z.array(z.object({
+  method: z.string(),
+  url: z.string(),
+  data: z.unknown().optional(),
+  headers: z.unknown().optional()
+}));
+
 export async function syncOfflineQueue() {
-  const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
+  const rawData = localStorage.getItem(OFFLINE_QUEUE_KEY);
+  if (!rawData) return;
+  
+  let parsedQueue;
+  try {
+    parsedQueue = JSON.parse(rawData);
+  } catch (err) {
+    localStorage.removeItem(OFFLINE_QUEUE_KEY);
+    return;
+  }
+
+  const validacao = filaOfflineSchema.safeParse(parsedQueue);
+  if (!validacao.success) {
+    if (import.meta.env.DEV) console.error('Fila offline corrompida. Limpando...');
+    localStorage.removeItem(OFFLINE_QUEUE_KEY);
+    return;
+  }
+
+  const queue = validacao.data;
   if (queue.length === 0) return;
 
   localStorage.removeItem(OFFLINE_QUEUE_KEY);
@@ -17,7 +47,7 @@ export async function syncOfflineQueue() {
         method: item.method,
         url: item.url,
         data: item.data,
-        headers: item.headers
+        headers: item.headers as Record<string, string>
       });
     } catch (e) {
       console.error('Falha ao sincronizar item offline', e);
@@ -76,18 +106,21 @@ api.interceptors.response.use(
         window.dispatchEvent(new Event('auth:unauthorized'));
         toast.error("Sua sessão expirou por segurança. Por favor, acesse novamente.");
       }
+      (error as CustomAxiosError)._toastHandled = true;
       return Promise.reject(error);
     }
 
     // 2. Erros de Autorização (403)
     if (error.response?.status === 403) {
       toast.error("Seu perfil atual não tem permissão para acessar este recurso.");
+      (error as CustomAxiosError)._toastHandled = true;
       return Promise.reject(error);
     }
 
     // 3. Rate Limiting (429)
     if (error.response?.status === 429) {
       toast.warning("O servidor está sobrecarregado no momento. Tente de novo em alguns segundos.");
+      (error as CustomAxiosError)._toastHandled = true;
       return Promise.reject(error);
     }
 
@@ -95,24 +128,35 @@ api.interceptors.response.use(
     if (error.code === "ERR_NETWORK" || (typeof window !== 'undefined' && !window.navigator.onLine)) {
       if (error.config?.method && error.config.method.toLowerCase() !== 'get') {
         // Frente 2: Peão-Mode (Salva operação localmente para tentar mais tarde)
-        const queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]');
+        
+        // Adicionando chave de idempotência para evitar que postagens lentas e offline se repitam
+        const headers = { ...error.config.headers };
+        if (!headers['X-Idempotency-Key']) {
+          headers['X-Idempotency-Key'] = crypto.randomUUID();
+        }
+        
+        let queue = [];
+        try { queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]'); } catch (e) { queue = []; }
+        
         queue.push({
           method: error.config.method,
           url: error.config.url,
           data: error.config.data,
-          headers: error.config.headers
+          headers: headers
         });
         localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
         toast.warning("Peão Mode 👷: Você perdeu sinal. Ação salva offline e será enviada automaticamente quando voltar a internet.");
       } else {
         toast.error("Parece que você está sem sinal. Verifique a internet e tente novamente.");
       }
+      (error as CustomAxiosError)._toastHandled = true;
       return Promise.reject(error);
     }
 
     // 5. Erros de Servidor (500+)
     if (error.response?.status && error.response.status >= 500) {
       toast.error("O sistema está momentaneamente instável. Já estamos atuando, tente novamente em alguns instantes.");
+      (error as CustomAxiosError)._toastHandled = true;
       return Promise.reject(error);
     }
 
@@ -125,6 +169,7 @@ api.interceptors.response.use(
       } else {
         toast.error("Não foi possível concluir a ação. Revise os dados informados.");
       }
+      (error as CustomAxiosError)._toastHandled = true;
       return Promise.reject(error);
     }
 

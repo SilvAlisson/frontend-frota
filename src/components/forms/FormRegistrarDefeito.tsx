@@ -12,7 +12,7 @@ import { uploadToR2 } from '../../services/uploadService';
 
 interface FormRegistrarDefeitoProps {
   veiculoId?: string;
-  veiculosDisponiveis?: any[]; // To pick a vehicle if not in a shift
+  veiculosDisponiveis?: any[];
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -69,7 +69,7 @@ export function FormRegistrarDefeito({ veiculoId, veiculosDisponiveis = [], onSu
     try {
       const extension = data.foto.name.split('.').pop();
       const fileName = `${crypto.randomUUID()}.${extension}`;
-      const publicUrlString = await uploadToR2(data.foto, fileName, data.foto.type || 'image/jpeg');
+      const publicUrlString = await uploadToR2(data.foto, fileName, data.foto.type || 'image/jpeg', 'avarias');
 
       await registrarDefeito.mutateAsync({
         veiculoId: data.veiculoId,
