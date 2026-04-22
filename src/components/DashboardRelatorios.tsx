@@ -65,7 +65,6 @@ interface DashboardRelatoriosProps {
   onDrillDown?: (tipo: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => void;
 }
 
-// ✨ Formatadores MOVIDOS PARA FORA para evitar re-criação a cada render
 const formatBRL = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 const formatNum = (val: number) => val.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 const formatDec = (val: number) => val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -86,7 +85,7 @@ interface KpiCardProps {
 const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descricao, onClick, loading, highlight, variant = 'default', icon }: KpiCardProps) {
   if (loading) {
     return (
-      <Card className={cn("flex flex-col justify-between overflow-hidden border-border/40 glass rounded-2xl", highlight ? "min-h-[160px]" : "min-h-[150px]")}>
+      <Card className={cn("flex flex-col justify-between overflow-hidden border-border/40 glass rounded-2xl", highlight ? "min-h-[160px]" : "min-h-[140px]")}>
         <div className="flex justify-between items-start w-full p-4 relative z-10">
           <Skeleton variant="text" className="w-24 mt-2" />
           <Skeleton variant="default" className="h-10 w-10 rounded-xl" />
@@ -115,38 +114,40 @@ const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descr
       className={cn(
         "relative flex flex-col justify-between h-full cursor-pointer overflow-hidden group glass hover-lift rounded-2xl",
         "border-l-[4px]", style.border, style.glow,
-        highlight ? "min-h-[160px]" : "min-h-[150px]"
+        highlight ? "min-h-[160px]" : "min-h-[140px]" // Reduzida altura mínima para telas menores
       )}
     >
-      <div className="flex justify-between items-start shrink-0 mb-2 relative z-10 p-2">
-        <h4 className="font-header text-xs font-bold text-text-secondary uppercase tracking-wider mt-1.5 leading-snug">
+      <div className="flex justify-between items-start shrink-0 mb-1 relative z-10 p-3 sm:p-4 pb-0">
+        <h4 className="font-header text-[10px] sm:text-xs font-bold text-text-secondary uppercase tracking-wider mt-1.5 leading-snug">
           {titulo}
         </h4>
         {icon && (
-          <div className={cn("p-2.5 rounded-xl transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-sm shrink-0 ml-2", style.iconBg, style.iconText)}>
+          <div className={cn("p-2 sm:p-2.5 rounded-xl transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 shadow-sm shrink-0 ml-2", style.iconBg, style.iconText)}>
             {icon}
           </div>
         )}
       </div>
 
-      <div className="flex flex-col justify-end flex-1 min-h-0 relative z-10 p-2">
+      <div className="flex flex-col justify-end flex-1 min-h-0 relative z-10 p-3 sm:p-4">
         <span
           className={cn(
             "text-data font-black text-text-main leading-none truncate transition-colors duration-300",
-            highlight ? "!text-4xl sm:!text-5xl" : "!text-2xl sm:!text-3xl"
+            // Tipografia ultra-fluida. Encolhe no notebook (lg), cresce no desktop (xl) e bomba no monitor (2xl)
+            highlight 
+              ? "!text-3xl sm:!text-4xl lg:!text-3xl xl:!text-4xl 2xl:!text-5xl" 
+              : "!text-xl sm:!text-2xl lg:!text-xl xl:!text-2xl 2xl:!text-3xl"
           )}
           title={formatter(valorRaw || 0)}
         >
-          {/* ✨ A MÁGICA ACONTECE AQUI */}
           <NumberTicker value={valorRaw || 0} formatter={formatter} duration={1.5} />
         </span>
 
-        <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between shrink-0">
-          <p className="text-xs font-bold uppercase text-text-muted truncate max-w-[90%] group-hover:text-text-main transition-colors tracking-wider">
+        <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-border/40 flex items-center justify-between shrink-0">
+          <p className="text-[9px] sm:text-[10px] font-bold uppercase text-text-muted truncate max-w-[90%] group-hover:text-text-main transition-colors tracking-wider">
             {descricao}
           </p>
           {onClick && (
-            <ChevronRight className="w-4 h-4 text-text-muted/40 group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
+            <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 text-text-muted/40 group-hover:text-primary group-hover:translate-x-1 transition-all shrink-0" />
           )}
         </div>
       </div>
@@ -319,21 +320,22 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
   }, [veiculos]);
 
   return (
-    <div className="space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
       {/* HEADER E FILTROS */}
-      <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 border-b border-border/60 pb-6 sticky top-0 bg-background/90 backdrop-blur-xl z-20 pt-2 -mt-2">
+      {/* ✨ CORREÇÃO AQUI: Mudamos de xl para lg. Em notebooks, o menu desktop já aparece! */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:gap-6 border-b border-border/60 pb-5 lg:pb-6 sticky top-0 bg-background/90 backdrop-blur-xl z-20 pt-2 -mt-2">
         <div>
           <h2 className="font-header text-2xl sm:text-3xl font-black text-text-main tracking-tight leading-none">Inteligência Operacional</h2>
-          <p className="text-sm text-text-secondary font-medium mt-1.5 flex items-center gap-2">
+          <p className="text-xs sm:text-sm text-text-secondary font-medium mt-1.5 flex items-center gap-2">
             Métricas consolidadas de <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md font-bold border border-primary/20">{opcoesMeses.find((m: { value: number; label: string }) => m.value === mes)?.label} de {ano}</span>
           </p>
         </div>
 
-        {/* FILTROS RESPONSIVOS (Accordão em Mobile, Inline em Desktop) */}
-        <div className="w-full xl:w-auto">
-          {/* Menu Mobile */}
-          <details className="group xl:hidden bg-surface rounded-2xl border border-border/60 shadow-sm overflow-hidden">
+        {/* FILTROS RESPONSIVOS */}
+        <div className="w-full lg:w-auto">
+          {/* Menu Mobile - Só visível em celulares/tablets pequenos */}
+          <details className="group lg:hidden bg-surface rounded-2xl border border-border/60 shadow-sm overflow-hidden">
             <summary className="flex items-center justify-between p-4 cursor-pointer list-none font-bold text-text-main touch-manipulation">
                <span className="flex items-center gap-2">
                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
@@ -352,25 +354,26 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
             </div>
           </details>
 
-          {/* Menu Desktop */}
-          <div className="hidden xl:flex gap-3 items-center bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
-            <div className="w-[130px]">
-              <Select value={mes} onChange={(e: { target: { value: string } }) => setMes(Number(e.target.value))} options={opcoesMeses} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
+          {/* Menu Desktop Flexível para Notebooks */}
+          {/* Usando lg:flex e removendo larguras fixas rígidas. Agora os campos respiram! */}
+          <div className="hidden lg:flex gap-2 xl:gap-3 items-center bg-surface p-2 rounded-2xl border border-border/60 shadow-sm w-full lg:w-auto overflow-hidden">
+            <div className="flex-1 min-w-[100px] xl:w-[120px]">
+              <Select value={mes} onChange={(e: { target: { value: string } }) => setMes(Number(e.target.value))} options={opcoesMeses} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
             </div>
-            <div className="w-[100px]">
-              <Select value={ano} onChange={(e: { target: { value: string } }) => setAno(Number(e.target.value))} options={opcoesAnos} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
+            <div className="w-[80px] xl:w-[90px]">
+              <Select value={ano} onChange={(e: { target: { value: string } }) => setAno(Number(e.target.value))} options={opcoesAnos} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
             </div>
-            <div className="w-px h-6 bg-border/60 mx-1"></div>
-            <div className="w-64">
-              <Select value={veiculoIdFiltro} onChange={(e: { target: { value: string } }) => setVeiculoIdFiltro(e.target.value)} options={opcoesVeiculos} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
+            <div className="w-px h-6 bg-border/60 mx-0.5 xl:mx-1"></div>
+            <div className="flex-1 min-w-[150px] lg:w-[180px] xl:w-56">
+              <Select value={veiculoIdFiltro} onChange={(e: { target: { value: string } }) => setVeiculoIdFiltro(e.target.value)} options={opcoesVeiculos} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
             </div>
-            <div className="flex justify-end">
+            <div className="flex justify-end pl-1 xl:pl-0">
               <Button
                 variant="secondary"
                 onClick={handleExportar}
                 className="h-10 w-10 p-0 rounded-xl bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 hover:text-emerald-700 border-emerald-500/20 shadow-none transition-colors"
                 title="Exportar Relatório Excel"
-                icon={<FileSpreadsheet className="w-5 h-5 mx-auto" />}
+                icon={<FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5 mx-auto" />}
               />
             </div>
           </div>
@@ -378,7 +381,8 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
       </div>
 
       {/* KPI GRID PREMIUM */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-5 sm:gap-6">
+      {/*  Breakpoint para grid no notebook (lg:grid-cols-4) para manter 4 colunas sem quebrar */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         <div className="sm:col-span-2">
           <KpiCard
             titulo="Custo Operacional Global"
@@ -388,22 +392,21 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
             loading={loading}
             highlight
             variant="default"
-            icon={<DollarSign className="w-6 h-6" />}
+            icon={<DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />}
             onClick={() => handleNavigation('/admin/veiculos', 'GERAL')}
           />
         </div>
 
-        <KpiCard titulo="Quilometragem Total" valorRaw={kpis?.kmTotalRodado} formatter={formatNum} descricao="Distância percorrida no período" loading={loading} variant="info" icon={<Activity className="w-5 h-5" />} onClick={() => handleNavigation('/admin/jornadas', 'JORNADA')} />
-        <KpiCard titulo="Eficiência de Consumo" valorRaw={kpis?.consumoMedioKML} formatter={formatDec} descricao="Média de consumo da frota (KM/L)" loading={loading} variant="success" icon={<TrendingUp className="w-5 h-5" />} onClick={() => handleNavigation('/admin/abastecimentos', 'ABASTECIMENTO')} />
-        <KpiCard titulo="Despesa em Combustível" valorRaw={kpis?.custoTotalCombustivel} formatter={formatBRL} descricao="Diesel, Gasolina e GNV" loading={loading} variant="default" icon={<Fuel className="w-5 h-5" />} onClick={() => handleNavigation('/admin/abastecimentos', 'ABASTECIMENTO')} />
-        <KpiCard titulo="Custos de Oficina" valorRaw={kpis?.custoTotalManutencao} formatter={formatBRL} descricao="Preventivas e Corretivas" loading={loading} variant="warning" icon={<Wrench className="w-5 h-5" />} onClick={() => handleNavigation('/admin/manutencoes', 'MANUTENCAO')} />
-        <KpiCard titulo="Aditivos e Fluidos" valorRaw={kpis?.custoTotalAditivo} formatter={formatBRL} descricao="Consumo de Arla 32 e Óleos" loading={loading} variant="info" icon={<Droplets className="w-5 h-5" />} onClick={() => handleNavigation('/admin/abastecimentos', 'ABASTECIMENTO')} />
-        <KpiCard titulo="Custo Médio / KM" valorRaw={kpis?.custoMedioPorKM} formatter={formatBRL} descricao="Indicador de rentabilidade" loading={loading} variant={(kpis?.custoMedioPorKM || 0) > 4 ? 'danger' : 'success'} icon={<Gauge className="w-5 h-5" />} onClick={() => handleNavigation('/admin/veiculos', 'GERAL')} />
+        <KpiCard titulo="Quilometragem Total" valorRaw={kpis?.kmTotalRodado} formatter={formatNum} descricao="Distância percorrida no período" loading={loading} variant="info" icon={<Activity className="w-4 h-4 sm:w-5 sm:h-5" />} onClick={() => handleNavigation('/admin/jornadas', 'JORNADA')} />
+        <KpiCard titulo="Eficiência de Consumo" valorRaw={kpis?.consumoMedioKML} formatter={formatDec} descricao="Média de consumo da frota (KM/L)" loading={loading} variant="success" icon={<TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />} onClick={() => handleNavigation('/admin/abastecimentos', 'ABASTECIMENTO')} />
+        <KpiCard titulo="Despesa em Combustível" valorRaw={kpis?.custoTotalCombustivel} formatter={formatBRL} descricao="Diesel, Gasolina e GNV" loading={loading} variant="default" icon={<Fuel className="w-4 h-4 sm:w-5 sm:h-5" />} onClick={() => handleNavigation('/admin/abastecimentos', 'ABASTECIMENTO')} />
+        <KpiCard titulo="Custos de Oficina" valorRaw={kpis?.custoTotalManutencao} formatter={formatBRL} descricao="Preventivas e Corretivas" loading={loading} variant="warning" icon={<Wrench className="w-4 h-4 sm:w-5 sm:h-5" />} onClick={() => handleNavigation('/admin/manutencoes', 'MANUTENCAO')} />
+        <KpiCard titulo="Aditivos e Fluidos" valorRaw={kpis?.custoTotalAditivo} formatter={formatBRL} descricao="Consumo de Arla 32 e Óleos" loading={loading} variant="info" icon={<Droplets className="w-4 h-4 sm:w-5 sm:h-5" />} onClick={() => handleNavigation('/admin/abastecimentos', 'ABASTECIMENTO')} />
+        <KpiCard titulo="Custo Médio / KM" valorRaw={kpis?.custoMedioPorKM} formatter={formatBRL} descricao="Indicador de rentabilidade" loading={loading} variant={(kpis?.custoMedioPorKM || 0) > 4 ? 'danger' : 'success'} icon={<Gauge className="w-4 h-4 sm:w-5 sm:h-5" />} onClick={() => handleNavigation('/admin/veiculos', 'GERAL')} />
       </div>
 
       {/* ─── SEÇÃO DE GRÁFICOS ──────────────────────────────────────────────────── */}
 
-      {/* Gráfico de Hodômetro — aparece apenas ao filtrar por veículo */}
       {veiculoIdFiltro && (
         <div className="animate-in fade-in zoom-in-95 duration-700">
           {loadingGrafico ? (
@@ -416,25 +419,23 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
         </div>
       )}
 
-      {/* Gráficos Globais — CPK Histórico + Performance da Frota (sempre visíveis) */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+      {/* Gráficos em grid de 2 colunas para notebooks tbm (lg:grid-cols-2 em vez de xl:grid-cols-2) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
 
-        {/* CPK Histórico — 6 meses */}
-        <div className="bg-surface rounded-[2rem] border border-border/60 shadow-sm p-6 sm:p-8 relative overflow-hidden group">
-          {/* Glow decorativo */}
+        <div className="bg-surface rounded-[2rem] border border-border/60 shadow-sm p-5 sm:p-6 lg:p-8 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-56 h-56 bg-sky-500/5 rounded-full blur-[80px] -z-0 pointer-events-none group-hover:bg-sky-500/10 transition-colors duration-700" />
 
-          <div className="flex items-start justify-between mb-6 relative z-10">
+          <div className="flex items-start justify-between mb-4 sm:mb-6 relative z-10">
             <div>
-              <h4 className="font-header text-lg font-black text-text-main tracking-tight flex items-center gap-2">
-                <LineChart className="w-5 h-5 text-sky-500" />
+              <h4 className="font-header text-base sm:text-lg font-black text-text-main tracking-tight flex items-center gap-2">
+                <LineChart className="w-4 h-4 sm:w-5 sm:h-5 text-sky-500" />
                 Evolução de CPK
               </h4>
-              <p className="text-xs font-medium text-text-secondary mt-0.5">
-                Custo por km — combustível vs manutenção (últimos 6 meses)
+              <p className="text-[10px] sm:text-xs font-medium text-text-secondary mt-0.5">
+                Custo por km — combustível vs manutenção
               </p>
             </div>
-            <span className="text-[10px] bg-sky-500/10 text-sky-600 border border-sky-500/20 px-3 py-1.5 rounded-lg font-black uppercase tracking-widest shadow-sm shrink-0">
+            <span className="text-[9px] sm:text-[10px] bg-sky-500/10 text-sky-600 border border-sky-500/20 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-black uppercase tracking-widest shadow-sm shrink-0">
               Histórico
             </span>
           </div>
@@ -444,22 +445,20 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
           </div>
         </div>
 
-        {/* Performance da Frota — custo por veículo no mês */}
-        <div className="bg-surface rounded-[2rem] border border-border/60 shadow-sm p-6 sm:p-8 relative overflow-hidden group">
-          {/* Glow decorativo */}
+        <div className="bg-surface rounded-[2rem] border border-border/60 shadow-sm p-5 sm:p-6 lg:p-8 relative overflow-hidden group">
           <div className="absolute top-0 right-0 w-56 h-56 bg-primary/5 rounded-full blur-[80px] -z-0 pointer-events-none group-hover:bg-primary/10 transition-colors duration-700" />
 
-          <div className="flex items-start justify-between mb-6 relative z-10">
+          <div className="flex items-start justify-between mb-4 sm:mb-6 relative z-10">
             <div>
-              <h4 className="font-header text-lg font-black text-text-main tracking-tight flex items-center gap-2">
-                <BarChart2 className="w-5 h-5 text-primary" />
+              <h4 className="font-header text-base sm:text-lg font-black text-text-main tracking-tight flex items-center gap-2">
+                <BarChart2 className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                 Performance da Frota
               </h4>
-              <p className="text-xs font-medium text-text-secondary mt-0.5">
+              <p className="text-[10px] sm:text-xs font-medium text-text-secondary mt-0.5">
                 Custo total por veículo no período selecionado
               </p>
             </div>
-            <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-lg font-black uppercase tracking-widest shadow-sm shrink-0">
+            <span className="text-[9px] sm:text-[10px] bg-primary/10 text-primary border border-primary/20 px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg font-black uppercase tracking-widest shadow-sm shrink-0">
               Top 10
             </span>
           </div>
@@ -474,5 +473,3 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
     </div>
   );
 }
-
-

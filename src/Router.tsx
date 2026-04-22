@@ -1,5 +1,5 @@
 import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom'; // Removido o useNavigate daqui
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 
 // Telas de Acesso (Não-Lazy pois são os gatilhos iniciais)
@@ -7,7 +7,7 @@ import { LoginScreen } from './pages/LoginScreen';
 import { EsqueceuSenha } from './pages/EsqueceuSenha';
 import { RedefinirSenha } from './pages/RedefinirSenha';
 
-// ✨ COMPONENTES DINÂMICOS (Lazy Loading) - Diminui Drasticamente o Payload
+// COMPONENTES DINÂMICOS (Lazy Loading)
 const AdminLayout = lazy(() => import('./layouts/AdminLayout').then(m => ({ default: m.AdminLayout })));
 const DashboardOperador = lazy(() => import('./components/DashboardOperador').then(m => ({ default: m.DashboardOperador })));
 const DashboardEncarregado = lazy(() => import('./components/DashboardEncarregado').then(m => ({ default: m.DashboardEncarregado })));
@@ -27,7 +27,6 @@ const HistoricoAbastecimentos = lazy(() => import('./components/HistoricoAbastec
 const HistoricoJornadas = lazy(() => import('./components/HistoricoJornadas').then(m => ({ default: m.HistoricoJornadas })));
 const GestaoSST = lazy(() => import('./components/GestaoSST').then(m => ({ default: m.GestaoSST })));
 
-// ✨ Novo Painel Importado
 const PainelPlanosPreventivos = lazy(() => import('./components/PainelPlanosPreventivos').then(m => ({ default: m.PainelPlanosPreventivos })));
 
 const LoadingScreen = () => (
@@ -56,29 +55,21 @@ function PrivateRoute({ children, allowedRoles }: { children: React.ReactNode, a
 
 /**
  * AdminIndex: Decide qual Dashboard carregar dentro do AdminLayout 
- * com base no perfil do utilizador.
  */
 function AdminIndex() {
   const { user } = useAuth();
 
   if (!user) return null;
 
-  switch (user.role) {
-    case 'RH':
-      return <DashboardRH user={user} />;
-    case 'ENCARREGADO':
-      return <DashboardEncarregado user={user} />;
-    case 'ADMIN':
-    case 'COORDENADOR':
-    default:
-      return <DashboardRelatorios />;
+  if (user.role === 'RH') {
+    return <DashboardRH user={user} />;
   }
+  
+  return <DashboardRelatorios />; // Default para ADMIN e COORDENADOR
 }
 
 /**
  * RootDashboardRouter: Decide o que exibir na URL "/"
- * Apenas o OPERADOR fica na raiz sem o menu lateral.
- * Todos os outros gestores são redirecionados para o painel Admin.
  */
 function RootDashboardRouter() {
   const { user, loading } = useAuth();
@@ -95,24 +86,29 @@ function RootDashboardRouter() {
     );
   }
 
-  // Se não for operador (é Admin, Coordenador, RH ou Encarregado), vai para o layout com menu
+  if (user.role === 'ENCARREGADO') {
+    return (
+      <div className={containerStyle}>
+        <DashboardEncarregado user={user} />
+      </div>
+    );
+  }
+
+  // ADMIN, COORDENADOR e RH vão para o layout com menu lateral
   return <Navigate to="/admin" replace />;
 }
 
 export function Router() {
   const { user } = useAuth();
-  // Removido o const navigate = useNavigate();
 
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
         <Route path="/login" element={<LoginScreen />} />
-
-        {/* ✨ ROTAS PÚBLICAS DE RECUPERAÇÃO DE SENHA ✨ */}
         <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
         <Route path="/redefinir-senha" element={<RedefinirSenha />} />
 
-        {/* Rota Raiz (Dashboards Operacionais) */}
+        {/* Rota Raiz (Dashboards Operacionais Isoladas) */}
         <Route path="/" element={
           <PrivateRoute>
             <RootDashboardRouter />
@@ -121,11 +117,11 @@ export function Router() {
 
         {/* Rotas de Admin */}
         <Route path="/admin" element={
-          <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'ENCARREGADO', 'RH']}>
+          <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'RH']}>
             <AdminLayout />
           </PrivateRoute>
         }>
-
+          
           <Route index element={<AdminIndex />} />
 
           <Route path="alertas" element={<PainelAlertas />} />
@@ -150,12 +146,11 @@ export function Router() {
           <Route path="produtos" element={<GestaoProdutos />} />
           <Route path="fornecedores" element={<GestaoFornecedores />} />
           <Route path="documentos" element={<GestaoDocumentos />} />
-
+          
           <Route path="planos" element={<PainelPlanosPreventivos />} />
-
+          
           <Route path="cargos" element={<GestaoCargos />} />
 
-          {/* SST — restrita a ADMIN e COORDENADOR */}
           <Route path="sst" element={
             <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR']}>
               <GestaoSST />
@@ -163,7 +158,6 @@ export function Router() {
           } />
         </Route>
 
-        {/* Fallback 404 */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Suspense>
