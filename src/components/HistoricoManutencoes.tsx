@@ -457,7 +457,7 @@ export function HistoricoManutencoes({
                       icon={<FileText className="w-4 h-4" />}
                       onClick={() => setViewingPhoto(os.fotoComprovanteUrl || '')}
                     >
-                      Acessar a Comprovativo Físico
+                      Visualizar Nota de Serviço
                     </Button>
                   )}
                 </div>
