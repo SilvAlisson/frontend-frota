@@ -493,7 +493,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                         icon={<Receipt className="w-4 h-4" />}
                         className="w-full bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 hover:bg-sky-500/20"
                       >
-                        Visualizar Nota Fiscal
+                        Visualizar Nota de Serviço
                       </Button>
                   )}
                 </div>
