@@ -318,6 +318,7 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
         ) : (
           <div className="flex flex-col h-full">
             <ListaResponsiva
+            virtualized={true}
               itens={historicoVisivel}
               emptyMessage="Nenhuma viagem encontrada neste período ou com os filtros atuais."
 

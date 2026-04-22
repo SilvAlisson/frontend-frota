@@ -378,6 +378,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
         ) : (
           <div className="flex flex-col h-full">
             <ListaResponsiva
+            virtualized={true}
               itens={historicoVisivel}
               emptyMessage="Nenhum abastecimento encontrado com estes filtros."
 

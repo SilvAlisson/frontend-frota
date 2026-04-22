@@ -336,6 +336,7 @@ export function HistoricoManutencoes({
         ) : (
           <div className="flex flex-col h-full">
             <ListaResponsiva
+            virtualized={true}
               itens={historicoVisivel}
               emptyMessage="Nenhum Registro encontrado com estes filtros."
 
