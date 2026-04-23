@@ -318,17 +318,18 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
         ) : (
           <div className="flex flex-col h-full">
             <ListaResponsiva
-              virtualized={true}
+            virtualized={true}
               itens={historicoVisivel}
               emptyMessage="Nenhuma viagem encontrada neste período ou com os filtros atuais."
+
               desktopHeader={
                 <>
-                  <th className={`${TableStyles.th} pl-8`}>Data e Estado</th>
-                  <th className={`${TableStyles.th} justify-center`}>Veículo</th>
-                  <th className={`${TableStyles.th} justify-center`}>Motorista</th>
-                  <th className={`${TableStyles.th} justify-center`}>Telemetria (KM)</th>
-                  <th className={`${TableStyles.th} justify-center`}>Comprovantes</th>
-                  {(canEdit || canDelete) && <th className={`${TableStyles.th} justify-end pr-8`}>Gestão</th>}
+                  <th className={`${TableStyles.th} pl-8 py-5 text-left`}>Data e Estado</th>
+                  <th className={`${TableStyles.th} text-center`}>Veículo</th>
+                  <th className={`${TableStyles.th} text-center`}>Motorista</th>
+                  <th className={`${TableStyles.th} text-center`}>Telemetria (KM)</th>
+                  <th className={`${TableStyles.th} text-center`}>Comprovantes</th>
+                  {(canEdit || canDelete) && <th className={`${TableStyles.th} text-right pr-8`}>Gestão</th>}
                 </>
               }
               renderDesktop={(j) => {
