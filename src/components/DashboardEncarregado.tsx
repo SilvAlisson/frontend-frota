@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { 
-  Key, Droplets, Users, History, LogOut, ChevronRight, 
+  Key, Droplets, Users, LogOut, ChevronRight, 
   Wrench, Activity, AlertTriangle, ShieldCheck, Navigation,
   BatteryCharging, Clock, CheckCircle2, QrCode
 } from 'lucide-react';
@@ -13,6 +13,7 @@ import { GestaoJornadas } from './GestaoJornadas';
 import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
 import { FormRegistrarManutencao } from './forms/FormRegistrarManutencao';
 import { HistoricoAbastecimentos } from './HistoricoAbastecimentos';
+import { HistoricoManutencoes } from './HistoricoManutencoes'; //  Importado
 import { MinhaEquipe } from './MinhaEquipe';
 import { IniciarJornada } from './IniciarJornada';
 import { ModalQrCode } from './ModalQrCode';
@@ -37,7 +38,8 @@ interface DashboardEncarregadoProps {
     user: User;
 }
 
-type ViewMode = 'DASHBOARD' | 'MONITORAMENTO' | 'MINHA_JORNADA' | 'HISTORICO' | 'EQUIPE' | 'DEFEITOS' | 'PLANOS';
+//  Adicionado HISTORICO_MANUTENCOES
+type ViewMode = 'DASHBOARD' | 'MONITORAMENTO' | 'MINHA_JORNADA' | 'HISTORICO' | 'HISTORICO_MANUTENCOES' | 'EQUIPE' | 'DEFEITOS' | 'PLANOS';
 
 // ─── COMPONENTES CLEAN-CODE ─────────────────────────────────────────────
 
@@ -186,7 +188,8 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                       badge={defeitosAtivos > 0 ? `${defeitosAtivos} AVISOS` : null} 
                                     />
                                     <SidebarActionButton icon={ShieldCheck} title="Planos Preventivos" onClick={() => setView('PLANOS')} />
-                                    <SidebarActionButton icon={Wrench} title="Ordens de Serviço" onClick={() => setIsManutencaoOpen(true)} />
+                                    {/*  Histórico de Manutenções no lugar correto */}
+                                    <SidebarActionButton icon={Wrench} title="Histórico de Manutenções" onClick={() => setView('HISTORICO_MANUTENCOES')} />
                                  </div>
                               </div>
 
@@ -195,9 +198,9 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                     <Users className="w-3.5 h-3.5" /> Administração
                                  </h2>
                                  <div className="space-y-3">
-                                    <SidebarActionButton icon={Droplets} title="Lançar Abastecimento" onClick={() => setModalAbastecimentoOpen(true)} />
+                                    {/*  Histórico de Abastecimentos corrigido */}
+                                    <SidebarActionButton icon={Droplets} title="Histórico de Abastecimentos" onClick={() => setView('HISTORICO')} />
                                     <SidebarActionButton icon={Users} title="Equipes Operacionais" onClick={() => setView('EQUIPE')} />
-                                    <SidebarActionButton icon={History} title="Histórico" onClick={() => setView('HISTORICO')} variant="subtle" />
                                     <SidebarActionButton icon={Key} title="Minha Jornada" onClick={() => setView('MINHA_JORNADA')} variant={!minhaJornadaAtiva ? "subtle" : "default"} badge={minhaJornadaAtiva ? 'ESTOU EM ROTA' : null} />
                                  </div>
                               </div>
@@ -279,8 +282,14 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                   
                                   <div className="flex-1 overflow-auto p-2 scrollbar-hide">
                                     <PainelAlertas onAlertaClick={(alerta) => {
-                                       if (alerta.tipo === 'MANUTENCAO') setIsManutencaoOpen(true);
-                                       else setView('PLANOS');
+                                       //  Rotas de alerta ajustadas para o dashboard do encarregado
+                                       if (alerta.mensagem.toUpperCase().includes('PREVISÃO')) {
+                                           setView('PLANOS');
+                                       } else if (alerta.tipo === 'MANUTENCAO') {
+                                           setView('HISTORICO_MANUTENCOES');
+                                       } else {
+                                           setView('PLANOS');
+                                       }
                                      }} />
                                   </div>
                                </div>
@@ -360,6 +369,11 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
         return <PageWrapper title="Histórico de Abastecimentos"><HistoricoAbastecimentos userRole={user.role} /></PageWrapper>;
     }
 
+    //  Rota Histórico de Manutenções Adicionada
+    if (view === 'HISTORICO_MANUTENCOES') {
+        return <PageWrapper title="Histórico de Manutenções"><HistoricoManutencoes userRole={user.role} /></PageWrapper>;
+    }
+
     if (view === 'EQUIPE') {
         return <PageWrapper title="Minha Equipe Operacional"><MinhaEquipe usuarios={usuarios} jornadasAbertas={jornadasAbertas} /></PageWrapper>;
     }
@@ -374,4 +388,3 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
 
     return null;
 }
-

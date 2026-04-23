@@ -1,10 +1,9 @@
-﻿// src/components/forms/FormRegistrarAbastecimento/Step1DadosOperacionais.tsx
-import { useEffect, useState, useMemo } from 'react';
+﻿import { useEffect, useState, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Fuel, User, Gauge, Calendar, AlertTriangle } from 'lucide-react';
 import { Select } from '../../ui/Select';
 import { Input } from '../../ui/Input';
-import { Callout } from '../../ui/Callout'; // ✨ Importando o Callout
+import { Callout } from '../../ui/Callout';
 import { formatKmVisual } from '../../../utils';
 import { useVeiculos } from '../../../hooks/useVeiculos';
 import { useUsuarios } from '../../../hooks/useUsuarios';
@@ -23,19 +22,34 @@ export function Step1DadosOperacionais() {
   const veiculoIdSelecionado = watch('veiculoId');
   const kmAtualVisual = watch('kmAtual');
 
-  // ✨ Lógica para disparar o Callout de aviso
+  //  Lógica para disparar o Callout de aviso
   const kmAtualNum = Number(kmAtualVisual?.replace(/\D/g, '')) || 0;
   const isKmInvalido = ultimoKm > 0 && kmAtualNum > 0 && kmAtualNum < ultimoKm;
-
-  const operadorOptions = useMemo(() =>
-    usuarios.filter(u => u.role === 'OPERADOR').map(u => ({ value: u.id, label: u.nome })),
-    [usuarios]
-  );
 
   const veiculoOptions = useMemo(() =>
     veiculos.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` })),
     [veiculos]
   );
+
+  //  IDENTIFICADOR DE VEÍCULO LEVE
+  const isVeiculoLeve = useMemo(() => {
+    const v = veiculos.find((veiculo: Veiculo) => veiculo.id === veiculoIdSelecionado);
+    return v && ['UTILITARIO', 'LEVE', 'OUTRO'].includes(v.tipoVeiculo || '');
+  }, [veiculoIdSelecionado, veiculos]);
+
+  //  FILTRO DINÂMICO DE RESPONSÁVEIS
+  const operadorOptions = useMemo(() => {
+    return usuarios
+      .filter(u => {
+        if (isVeiculoLeve) {
+           // Carros leves são dirigidos pela gestão/encarregados e NÃO pelos operadores
+           return ['ENCARREGADO', 'RH', 'COORDENADOR', 'ADMIN'].includes(u.role);
+        }
+        // Caminhões e pesados são dirigidos EXCLUSIVAMENTE pelos operadores
+        return u.role === 'OPERADOR';
+      })
+      .map(u => ({ value: u.id, label: u.nome }));
+  }, [usuarios, isVeiculoLeve]);
 
   useEffect(() => {
     if (veiculoIdSelecionado) {
@@ -67,7 +81,8 @@ export function Step1DadosOperacionais() {
         />
 
         <Select
-          label="Operador / Motorista"
+          //  Label Dinâmico
+          label={isVeiculoLeve ? "Responsável (Gestão/Encarregado)" : "Operador / Motorista"}
           options={operadorOptions}
           icon={<User className="w-4 h-4" />}
           {...register('operadorId')}
@@ -106,7 +121,7 @@ export function Step1DadosOperacionais() {
           />
         </div>
 
-        {/* ✨ CALLOUT DE AVISO DE KM INCONSISTENTE */}
+        {/*  CALLOUT DE AVISO DE KM INCONSISTENTE */}
         {isKmInvalido && (
           <div className="md:col-span-2 animate-in fade-in zoom-in-95 duration-300">
             <Callout variant="warning" title="Odómetro Inconsistente" icon={AlertTriangle}>
@@ -119,5 +134,3 @@ export function Step1DadosOperacionais() {
     </div>
   );
 }
-
-
