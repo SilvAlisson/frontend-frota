@@ -1,6 +1,6 @@
 ﻿import React, { useRef, useEffect } from 'react';
 import { Inbox } from 'lucide-react';
-import autoAnimate from '@formkit/auto-animate'; // ✨ A MAGIA ENTRA AQUI
+import autoAnimate from '@formkit/auto-animate'; 
 import { TableStyles } from '../../styles/table';
 
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -11,6 +11,7 @@ interface ListaResponsivaProps<T> {
   renderDesktop: (item: T, index: number) => React.ReactNode;
   renderMobile: (item: T, index: number) => React.ReactNode;
   desktopHeader: React.ReactNode;
+  desktopGridCols?: string;
   getRowClassName?: (item: T) => string;
   isInteractive?: boolean;
   virtualized?: boolean;
@@ -23,19 +24,20 @@ export function ListaResponsiva<T extends { id?: string | number }>({
   renderDesktop,
   renderMobile,
   desktopHeader,
+  desktopGridCols = "grid-flow-col auto-cols-fr", // Fallback de segurança
   getRowClassName,
   isInteractive = true,
   virtualized = false,
   virtualContainerHeight = "600px"
 }: ListaResponsivaProps<T>) {
 
-  // ✨ Refs para os contentores que vão receber os itens
+  //  Refs para os contentores que vão receber os itens
   const desktopParentRef = useRef<HTMLTableSectionElement>(null);
   const mobileParentRef = useRef<HTMLDivElement>(null);
   const virtualDesktopContainerRef = useRef<HTMLDivElement>(null);
   const virtualMobileContainerRef = useRef<HTMLDivElement>(null);
 
-  // ✨ Ativamos o auto-animate APENAS se não for virtualizado
+  //  Ativamos o auto-animate APENAS se não for virtualizado
   useEffect(() => {
     if (!virtualized) {
       if (desktopParentRef.current) autoAnimate(desktopParentRef.current);
@@ -76,21 +78,22 @@ export function ListaResponsiva<T extends { id?: string | number }>({
 
   return (
     <>
-      {/* ðŸ–¥ï¸ DESKTOP (Tabela Premium) */}
+      {/* 💻 DESKTOP (Tabela Premium - Agora blindada com CSS Grid) */}
       <div 
         ref={virtualized ? virtualDesktopContainerRef : null}
         className={`hidden md:block animate-in fade-in slide-in-from-bottom-2 duration-500 ${TableStyles.wrapper} ${virtualized ? 'overflow-y-auto custom-scrollbar' : ''}`}
         style={virtualized ? { height: virtualContainerHeight } : {}}
       >
         <div className="overflow-x-auto min-h-full">
-          <table className="w-full text-sm text-left border-collapse relative">
-            <thead className={virtualized ? "sticky top-0 z-10 bg-surface shadow-sm" : ""}>
-              <tr>{desktopHeader}</tr>
+          {/*  CORREÇÃO: Tabela forçada a block com largura mínima para proteger o Grid */}
+          <table className="w-full text-sm text-left border-collapse block min-w-[1050px]">
+            <thead className={`w-full block ${virtualized ? "sticky top-0 z-10 bg-surface shadow-sm" : ""}`}>
+              <tr className={`w-full grid ${desktopGridCols}`}>{desktopHeader}</tr>
             </thead>
             
             <tbody 
               ref={virtualized ? undefined : desktopParentRef} 
-              className="bg-surface"
+              className="bg-surface w-full block"
               style={virtualized ? { height: `${desktopVirtualizer.getTotalSize()}px`, position: 'relative' } : undefined}
             >
               {virtualized ? (
@@ -104,7 +107,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                   return (
                     <tr 
                       key={rowKey} 
-                      className={rowClass}
+                      className={`w-full grid ${desktopGridCols} ${rowClass}`}
                       style={{
                         position: 'absolute',
                         top: 0,
@@ -126,7 +129,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                   const rowKey = item.id ? String(item.id) : `row-${idx}`;
 
                   return (
-                    <tr key={rowKey} className={rowClass}>
+                    <tr key={rowKey} className={`w-full grid ${desktopGridCols} ${rowClass}`}>
                       {renderDesktop(item, idx)}
                     </tr>
                   );
@@ -137,7 +140,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
         </div>
       </div>
 
-      {/* 📱 MOBILE (Cards Flutuantes) */}
+      {/* 📱 MOBILE (Cards Flutuantes - Mantidos Intactos) */}
       <div 
         ref={virtualized ? virtualMobileContainerRef : mobileParentRef}
         className={`md:hidden space-y-4 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${virtualized ? 'overflow-y-auto custom-scrollbar relative' : ''}`}
@@ -208,5 +211,3 @@ export function ListaResponsiva<T extends { id?: string | number }>({
     </>
   );
 }
-
-
