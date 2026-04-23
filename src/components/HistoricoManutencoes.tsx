@@ -336,19 +336,18 @@ export function HistoricoManutencoes({
         ) : (
           <div className="flex flex-col h-full">
             <ListaResponsiva
-            virtualized={true}
+              virtualized={true}
               itens={historicoVisivel}
               emptyMessage="Nenhum Registro encontrado com estes filtros."
-
-              // --- DESKTOP ---
+              desktopGridCols="grid-cols-[1.2fr_2.5fr_1.2fr_1.2fr_1fr_80px]"
               desktopHeader={
                 <>
-                  <th className={`${TableStyles.th} pl-8 py-5 text-left`}>Data da OS</th>
-                  <th className={`${TableStyles.th} text-left`}>Informação Técnica</th>
-                  <th className={`${TableStyles.th} text-center`}>Status Geral</th>
-                  <th className={`${TableStyles.th} text-center`}>Custo Financeiro</th>
-                  <th className={`${TableStyles.th} text-center`}>Ticket Manutenção</th>
-                  <th className={`${TableStyles.th} text-right pr-8`}>Gestão</th>
+                  <th className={`${TableStyles.th} pl-8`}>Data da OS</th>
+                  <th className={`${TableStyles.th}`}>Informação Técnica</th>
+                  <th className={`${TableStyles.th} justify-center`}>Status Geral</th>
+                  <th className={`${TableStyles.th} justify-center`}>Custo Financeiro</th>
+                  <th className={`${TableStyles.th} justify-center`}>Ticket Manutenção</th>
+                  <th className={`${TableStyles.th} justify-end pr-8`}>Gestão</th>
                 </>
               }
               renderDesktop={(os) => (
