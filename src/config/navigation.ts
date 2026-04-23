@@ -10,7 +10,8 @@
   Fuel,
   FileBadge,
   ShieldCheck,
-  Briefcase
+  Briefcase,
+  Activity
 } from 'lucide-react';
 
 import React from 'react';
@@ -65,15 +66,14 @@ export const MENU_ITEMS: MenuGroup[] = [
     items: [
       { icon: ShieldCheck, label: 'Gestão de SST', path: '/admin/sst', highlight: true },
     ]
-  }
-
-  /*  Ocultado temporariamente até a tela de configurações ser criada
+  },
+  
+  // Grupo de Sistema focado em monitoramento e TI
   {
     title: 'Sistema',
-    roles: ['ADMIN'],
+    roles: ['ADMIN'], 
     items: [
-      { icon: Wrench, label: 'Configurações', path: '#', highlight: false }
+      { icon: Activity, label: 'Auditoria e Logs', path: '/admin/auditoria' }
     ]
   }
-  */
 ];
