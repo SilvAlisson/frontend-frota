@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import type { Alerta } from '../types';
 
-// ✨ Componentes Elite
+//  Componentes Elite
 import { EmptyState } from './ui/EmptyState';
 import { Callout } from './ui/Callout';
 import { Button } from './ui/Button';
@@ -33,11 +33,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
   const [isResolvendo, setIsResolvendo] = useState(false);
 
   const handleAlertaClick = (alerta: Alerta) => {
-    if (onAlertaClick) {
-      onAlertaClick(alerta);
-      return;
-    }
-    
+    //  1. Modais internos de triagem SEMPRE abrem primeiro, ignorando navegação externa
     if (alerta.tipo === 'VEICULO_OCIOSO' || alerta.tipo === 'OPERADOR_OCIOSO') {
       setAlertaOciosoSelecionado(alerta);
       return;
@@ -48,6 +44,13 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
       return;
     }
 
+    //  2. Se houver prop onAlertaClick (DashboardEncarregado), delega a navegação a ele
+    if (onAlertaClick) {
+      onAlertaClick(alerta);
+      return;
+    }
+
+    //  3. Comportamento padrão (Dashboard Admin)
     if (alerta.tipo === 'SST') {
       navigate('/admin/sst?tab=treinamentos');
       return;
@@ -58,8 +61,12 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
     if (alerta.tipo === 'DOCUMENTO') {
       navigate(`/admin/veiculos/${alerta.veiculoId}?tab=documentos`);
     } else if (alerta.tipo === 'MANUTENCAO') {
-      // Se for vencido, pode ir para a aba de oficina para ver o histórico ou para a tela de lançamento
-      if (alerta.nivel === 'VENCIDO') {
+      const isPrevisao = alerta.mensagem.toUpperCase().includes('PREVISÃO');
+      
+      // Correção do redirecionamento de PREVISÃO e VENCIDO
+      if (isPrevisao) {
+        navigate('/admin/planos');
+      } else if (alerta.nivel === 'VENCIDO') {
         navigate(`/admin/veiculos/${alerta.veiculoId}?tab=manutencoes`);
       } else {
         navigate(`/admin/manutencoes/nova?veiculoId=${alerta.veiculoId}`);
@@ -201,7 +208,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
 
       {/* --- MODAL DE TRIAGEM DE OCIOSIDADE --- */}
       {alertaOciosoSelecionado && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-surface rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-border/60 animate-in zoom-in-95 duration-300">
             <div className="p-6 relative">
               <Button 
@@ -423,5 +430,3 @@ function CardAlerta({ alerta, onClick }: { alerta: Alerta, onClick: () => void }
     </div>
   );
 }
-
-
