@@ -321,7 +321,6 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
               virtualized={true}
               itens={historicoVisivel}
               emptyMessage="Nenhuma viagem encontrada neste período ou com os filtros atuais."
-              desktopGridCols="grid-cols-[1.4fr_1.2fr_2fr_1.2fr_1.2fr_80px]"
               desktopHeader={
                 <>
                   <th className={`${TableStyles.th} pl-8`}>Data e Estado</th>
