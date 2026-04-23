@@ -339,7 +339,6 @@ export function HistoricoManutencoes({
               virtualized={true}
               itens={historicoVisivel}
               emptyMessage="Nenhum Registro encontrado com estes filtros."
-              desktopGridCols="grid-cols-[1.2fr_2.5fr_1.2fr_1.2fr_1fr_80px]"
               desktopHeader={
                 <>
                   <th className={`${TableStyles.th} pl-8`}>Data da OS</th>
