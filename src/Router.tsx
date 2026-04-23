@@ -157,14 +157,15 @@ export function Router() {
               <GestaoSST />
             </PrivateRoute>
           } />
-        </Route>
 
-        {/* Auditoria — restrita apenas a ADMIN */}
+          {/* Auditoria movida para DENTRO do /admin */}
           <Route path="auditoria" element={
             <PrivateRoute allowedRoles={['ADMIN']}>
               <GestaoAuditoria />
             </PrivateRoute>
           } />
+
+        </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
