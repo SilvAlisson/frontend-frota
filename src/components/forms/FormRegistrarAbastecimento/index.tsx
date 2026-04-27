@@ -38,13 +38,11 @@ export function FormRegistrarAbastecimento({
   const [step, setStep] = useState(1);
   const [modalConfirmacao, setModalConfirmacao] = useState(false);
   const [payload, setPayload] = useState<AbastecimentoPayload | null>(null);
-  // ✨ Estado de validação de anomalias
   const [anomalias, setAnomalias] = useState<AnomaliaAbastecimento[]>([]);
   const [payloadPendente, setPayloadPendente] = useState<AbastecimentoPayload | null>(null);
 
   const { data: veiculos = [] } = useVeiculos();
 
-  // O "methods" carrega todo o poder do React Hook Form
   const methods = useForm<AbastecimentoFormValues>({
     resolver: zodResolver(abastecimentoSchema),
     defaultValues: {
@@ -52,10 +50,11 @@ export function FormRegistrarAbastecimento({
       operadorId: (usuarioLogado?.role === 'OPERADOR' ? (usuarioLogado.id ?? '') : ''),
       fornecedorId: '',
       dataHora: new Date().toISOString().slice(0, 16),
+      observacoes: '', // ✨ Adicionado default value para observações
       itens: [{ produtoId: '', quantidade: '0' as unknown as number, valorUnitario: '' }]
     },
     mode: 'onBlur',
-    reValidateMode: 'onBlur', // 🐛 FIX 007: evita travamento da CPU e ghosting
+    reValidateMode: 'onBlur', 
   });
 
   const { handleSubmit, trigger, formState: { isSubmitting } } = methods;
@@ -84,6 +83,7 @@ export function FormRegistrarAbastecimento({
       fornecedorId: data.fornecedorId,
       kmOdometro:  kmInputFloat,
       dataHora:    new Date(data.dataHora).toISOString(),
+      observacoes: data.observacoes || undefined, // ✨ CORREÇÃO AQUI: Agora a observação vai para o Backend!
       itens: data.itens.map(i => {
         const qtd  = Number(i.quantidade);
         const unit = desformatarDinheiro(String(i.valorUnitario));
@@ -92,7 +92,6 @@ export function FormRegistrarAbastecimento({
       })
     };
 
-    // ✨ Verifica anomalias antes de avançar
     const custoTotal = payloadFinal.itens.reduce((acc, i) => acc + i.valorTotal, 0);
     const anomaliasDetectadas = validarAbastecimento(
       payloadFinal.itens.map(i => ({ quantidade: i.quantidade, valorPorUnidade: i.valorPorUnidade })),
@@ -100,11 +99,9 @@ export function FormRegistrarAbastecimento({
     );
 
     if (anomaliasDetectadas.length === 0) {
-      // Sem anomalias: segue fluxo normal
       setPayload(payloadFinal);
       setModalConfirmacao(true);
     } else {
-      // Com anomalias: guarda payload e abre modal de confirmação
       setPayloadPendente(payloadFinal);
       setAnomalias(anomaliasDetectadas);
     }
@@ -113,7 +110,6 @@ export function FormRegistrarAbastecimento({
   return (
     <div className="flex flex-col h-full bg-surface rounded-2xl overflow-hidden shadow-float">
 
-      {/* HEADER PROGRESSO */}
       <div className="px-6 sm:px-8 pt-6 pb-4 shrink-0 border-b border-border/50 bg-surface-hover/30">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
@@ -135,7 +131,6 @@ export function FormRegistrarAbastecimento({
         </div>
       </div>
 
-      {/* ðŸ”¥ MÁGICA DO PROVIDER */}
       <FormProvider {...methods}>
         <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 custom-scrollbar">
@@ -144,7 +139,6 @@ export function FormRegistrarAbastecimento({
             {step === 3 && <Step3Confirmacao />}
           </div>
 
-          {/* FOOTER NAVEGAÇÃO */}
           <div className="px-6 sm:px-8 py-5 border-t border-border/60 bg-surface-hover/30 flex gap-4 shrink-0">
             {step > 1 ? (
               <Button
@@ -194,7 +188,6 @@ export function FormRegistrarAbastecimento({
         </form>
       </FormProvider>
 
-      {/* ✨ MODAL DE ANOMALIA DE VALOR */}
       <ModalConfirmarAnomalia
         anomalias={anomalias}
         custoTotalFormatado={
@@ -217,9 +210,6 @@ export function FormRegistrarAbastecimento({
         }}
       />
 
-      {/* MODAL DE FOTO (Acesso de Câmera) */}
-      {/* 🔒 007 FIX: nested={true} → Vaul trata corretamente drawer-dentro-drawer no mobile
-          No desktop o Modal já usa createPortal para document.body, evitando overlay aninhado */}
       {modalConfirmacao && payload && (
         <ModalConfirmacaoFoto
           titulo="Comprovante e Finalização"
@@ -239,5 +229,3 @@ export function FormRegistrarAbastecimento({
     </div>
   );
 }
-
-
