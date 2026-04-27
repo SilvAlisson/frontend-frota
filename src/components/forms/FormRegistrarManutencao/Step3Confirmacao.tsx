@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { DollarSign, FileText } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
-import { Callout } from '../../ui/Callout'; // ✨
+import { Callout } from '../../ui/Callout'; 
 import { formatCurrency } from '../../../utils';
 import { desformatarDinheiro } from '../../../lib/formatters';
 import type { ManutencaoFormValues } from './schema';
@@ -42,30 +42,29 @@ export function Step3Confirmacao() {
               {tipoManutencao}
             </Badge>
             <Badge variant="neutral" className="bg-surface/10 text-surface border-surface/20 shadow-sm">
-              {alvoSelecionado === 'VEICULO' ? 'VEÍCULO' : 'EquipeMENTO'}
+              {/*  */}
+              {alvoSelecionado === 'VEICULO' ? 'VEÍCULO' : 'EQUIPAMENTO'}
             </Badge>
           </div>
         </div>
       </Card>
 
-      {/* ✨ O CALLOUT DE RESPONSABILIDADE FINANCEIRA */}
       <Callout variant="info" title="Auditoria Financeira" icon={FileText}>
         Confira os valores antes de salvar. Este montante será deduzido do orçamento operacional da frota no DRE deste mês.
       </Callout>
 
       <div className="bg-surface p-1 rounded-2xl">
+        {/*  Título atualizado para reforçar a função de observação */}
         <label className="block text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-2 ml-2 mt-2">
-          Parecer Técnico / Resumo
+          Parecer Técnico / Observações
         </label>
         <textarea
           {...register("observacoes")}
           className="w-full px-4 py-3 text-sm bg-background border border-border/60 rounded-xl focus:ring-2 focus:ring-primary/30 outline-none resize-none min-h-[100px] transition-all text-text-main"
-          placeholder="Opcional: Descreva a causa da falha ou notas da oficina..."
+          placeholder="Opcional: Descreva a causa da falha, anomalias identificadas ou anotações da oficina..."
           disabled={isSubmitting}
         />
       </div>
     </div>
   );
 }
-
-

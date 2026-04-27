@@ -3,7 +3,7 @@ import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { DollarSign, Info } from 'lucide-react';
 import { Card } from '../../ui/Card';
-import { Callout } from '../../ui/Callout'; // ✨ Importando o Callout
+import { Callout } from '../../ui/Callout'; 
 import { formatCurrency } from '../../../utils';
 import { desformatarDinheiro } from '../../../lib/formatters';
 import { useVeiculos } from '../../../hooks/useVeiculos';
@@ -11,7 +11,8 @@ import type { AbastecimentoFormValues } from './schema';
 import type { Veiculo } from '../../../types';
 
 export function Step3Confirmacao() {
-  const { watch } = useFormContext<AbastecimentoFormValues>();
+  // ✨ Extraído o register e isSubmitting do hook
+  const { watch, register, formState: { isSubmitting } } = useFormContext<AbastecimentoFormValues>();
   const { data: veiculos = [] } = useVeiculos();
 
   const veiculoIdSelecionado = watch('veiculoId');
@@ -55,13 +56,22 @@ export function Step3Confirmacao() {
         </div>
       </div>
 
-      {/* ✨ CALLOUT INFORMATIVO NO RESUMO */}
       <Callout variant="info" title="Auditoria Fiscal" icon={Info}>
         Verifique se o valor total e as quantidades coincidem exatamente com o cupão fiscal emitido pelo posto. Uma vez confirmado, este Registro irá impactar o <strong>Custo por KM (CPK)</strong> da frota imediatamente.
       </Callout>
 
+      {/* ✨ CAIXA DE OBSERVAÇÕES ADICIONADA */}
+      <div className="bg-surface p-1 rounded-2xl">
+        <label className="block text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-2 ml-2 mt-2">
+          Observações / Justificativa
+        </label>
+        <textarea
+          {...register("observacoes")}
+          className="w-full px-4 py-3 text-sm bg-background border border-border/60 rounded-xl focus:ring-2 focus:ring-primary/30 outline-none resize-none min-h-[100px] transition-all text-text-main"
+          placeholder="Opcional: Detalhe anomalias (ex: combustível em galão extra, erro na bomba, etc)..."
+          disabled={isSubmitting}
+        />
+      </div>
     </div>
   );
 }
-
-

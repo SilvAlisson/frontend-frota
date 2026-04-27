@@ -6,6 +6,7 @@ export const abastecimentoSchema = z.object({
   fornecedorId: z.string().min(1, "Selecione o posto"),
   kmAtual: z.string().min(1, "KM Obrigatório"),
   dataHora: z.string(),
+  observacoes: z.string().optional(),
   itens: z.array(z.object({
     produtoId: z.string().min(1, "Selecione o produto"),
     quantidade: z.any()
@@ -23,6 +24,7 @@ export interface AbastecimentoPayload {
   fornecedorId: string;
   kmOdometro: number;
   dataHora: string;
+  observacoes?: string;
   itens: {
     produtoId: string;
     quantidade: number;
@@ -30,5 +32,3 @@ export interface AbastecimentoPayload {
     valorPorUnidade: number;
   }[];
 }
-
-
