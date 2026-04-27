@@ -29,6 +29,16 @@ import { useSumarioKPIs, useEvolucaoKm, useEvolucaoCpk, usePerformanceFrota } fr
 
 const GraficoKmVeiculo = React.lazy(() => import('./GraficoKmVeiculo').then(module => ({ default: module.GraficoKmVeiculo })));
 
+// ✨ HELPER: Limpador Automático de Placas (Remove o prefixo da marca)
+const extrairPlaca = (placaBruta: string) => {
+  if (!placaBruta) return '---';
+  const match = placaBruta.match(/\(([^)]+)\)/);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  return placaBruta.trim();
+};
+
 // ─── TIPOS DOS ENDPOINTS ÓRFÃOS ─────────────────────────────────────────────
 
 interface DadoCpk {
@@ -69,7 +79,6 @@ const formatBRL = (val: number) => val.toLocaleString('pt-BR', { style: 'currenc
 const formatNum = (val: number) => val.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 const formatDec = (val: number) => val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// PROPS ATUALIZADAS PARA SUPORTAR O TICKER
 interface KpiCardProps {
   titulo: string;
   valorRaw?: number;
@@ -114,10 +123,9 @@ const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descr
       className={cn(
         "relative flex flex-col justify-between h-full cursor-pointer overflow-hidden group glass hover-lift rounded-2xl",
         "border-l-[4px]", style.border, style.glow,
-        highlight ? "min-h-[160px]" : "min-h-[140px]" // Reduzida altura mínima para telas menores
+        highlight ? "min-h-[160px]" : "min-h-[140px]"
       )}
     >
-      {/*  min-w-0 para evitar blowout */}
       <div className="flex justify-between items-start shrink-0 mb-1 relative z-10 p-3 sm:p-4 pb-0 min-w-0">
         <h4 className="font-header text-[10px] sm:text-xs font-bold text-text-secondary uppercase tracking-wider mt-1.5 leading-snug truncate">
           {titulo}
@@ -129,12 +137,10 @@ const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descr
         )}
       </div>
 
-      {/*  min-w-0 */}
       <div className="flex flex-col justify-end flex-1 min-h-0 relative z-10 p-3 sm:p-4 min-w-0">
         <span
           className={cn(
             "text-data font-black text-text-main leading-none truncate transition-colors duration-300",
-            // Tipografia ultra-fluida. Encolhe no notebook (lg), cresce no desktop (xl) e bomba no monitor (2xl)
             highlight 
               ? "!text-3xl sm:!text-4xl lg:!text-3xl xl:!text-4xl 2xl:!text-5xl" 
               : "!text-xl sm:!text-2xl lg:!text-xl xl:!text-2xl 2xl:!text-3xl"
@@ -144,7 +150,6 @@ const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descr
           <NumberTicker value={valorRaw || 0} formatter={formatter} duration={1.5} />
         </span>
 
-        {/*  min-w-0 */}
         <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-border/40 flex items-center justify-between shrink-0 min-w-0">
           <p className="text-[9px] sm:text-[10px] font-bold uppercase text-text-muted truncate max-w-[90%] group-hover:text-text-main transition-colors tracking-wider">
             {descricao}
@@ -192,7 +197,7 @@ const PerformanceTooltip = ({ active, payload, label }: any) => {
     const d = payload[0]?.payload;
     return (
       <div style={TOOLTIP_STYLE}>
-        <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-2">{label}</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-2">{extrairPlaca(label)}</p>
         <p className="text-lg font-black" style={{ color: d?.color }}>{formatBRL(d?.cost || 0)}</p>
         {d?.kmRodado > 0 && (
           <p className="text-xs text-text-muted mt-1">{formatNum(d.kmRodado)} km rodados</p>
@@ -274,11 +279,18 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
   const [mes, setMes] = useState(new Date().getMonth() + 1);
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState('');
 
-  // 🔥 PERFORMANCE OPTIMIZER: React Query para fetching paralelo + cache, zero waterfalls
   const { data: kpis, isLoading: loading } = useSumarioKPIs({ ano, mes, veiculoId: veiculoIdFiltro || undefined });
   const { data: dadosGraficoKm = [], isLoading: loadingGrafico } = useEvolucaoKm(veiculoIdFiltro || undefined, 7);
   const { data: dadosCpk = [], isLoading: loadingCpk } = useEvolucaoCpk(veiculoIdFiltro || undefined);
   const { data: dadosPerformance = [], isLoading: loadingPerformance } = usePerformanceFrota({ ano, mes });
+
+  // ✨ CORREÇÃO: Tipagem explícita para DadoPerformance
+  const dadosPerformanceLimpos = useMemo(() => {
+    return dadosPerformance.map((d: DadoPerformance) => ({
+      ...d,
+      name: extrairPlaca(d.name)
+    }));
+  }, [dadosPerformance]);
 
   const handleNavigation = React.useCallback((rotaPadrao: string, tipoDrillDown: 'ABASTECIMENTO' | 'MANUTENCAO' | 'JORNADA' | 'GERAL') => {
     if (onDrillDown) {
@@ -306,7 +318,6 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
     toast.success("Download do relatório iniciado!");
   };
 
-  //  Tipos como String para não bugar a visualização inicial do `<Select>` nativo
   const opcoesMeses = useMemo(() => Array.from({ length: 12 }, (_, i) => ({
     value: String(i + 1),
     label: new Date(0, i).toLocaleString('pt-BR', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())
@@ -319,7 +330,7 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
   ], []);
 
   const opcoesVeiculos = useMemo(() => {
-    const list = veiculos.map((v: Veiculo) => ({ value: v.id, label: `${v.placa} - ${v.modelo}` }));
+    const list = veiculos.map((v: Veiculo) => ({ value: v.id, label: `${extrairPlaca(v.placa)} - ${v.modelo}` }));
     return [{ value: '', label: 'Visão Global (Todas as Placas)' }, ...list];
   }, [veiculos]);
 
@@ -327,7 +338,6 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
     <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
       {/* HEADER E FILTROS */}
-      {/* Mudamos de xl para lg. Em notebooks, o menu desktop já aparece! */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:gap-6 border-b border-border/60 pb-5 lg:pb-6 sticky top-0 bg-background/90 backdrop-blur-xl z-20 pt-2 -mt-2">
         <div>
           <h2 className="font-header text-2xl sm:text-3xl font-black text-text-main tracking-tight leading-none">Inteligência Operacional</h2>
@@ -338,8 +348,7 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
 
         {/* FILTROS RESPONSIVOS */}
         <div className="w-full lg:w-auto">
-          {/* Menu Mobile - Só visível em celulares/tablets pequenos */}
-          {/*  overflow-hidden REMOVIDO para que as listas do Select nativo funcionem sem cortar */}
+          {/* Menu Mobile */}
           <details className="group lg:hidden bg-surface rounded-2xl border border-border/60 shadow-sm">
             <summary className="flex items-center justify-between p-4 cursor-pointer list-none font-bold text-text-main touch-manipulation">
                <span className="flex items-center gap-2">
@@ -359,8 +368,7 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
             </div>
           </details>
 
-          {/* Menu Desktop Flexível para Notebooks */}
-          {/*  overflow-hidden REMOVIDO também aqui para não cortar dropdowns visuais */}
+          {/* Menu Desktop Flexível */}
           <div className="hidden lg:flex gap-2 xl:gap-3 items-center bg-surface p-2 rounded-2xl border border-border/60 shadow-sm w-full lg:w-auto">
             <div className="flex-1 min-w-[100px] xl:w-[120px]">
               <Select value={String(mes)} onChange={(e: any) => setMes(Number(e.target.value))} options={opcoesMeses} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
@@ -386,7 +394,6 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
       </div>
 
       {/* KPI GRID PREMIUM */}
-      {/* Breakpoint para grid no notebook (lg:grid-cols-4) para manter 4 colunas sem quebrar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         <div className="sm:col-span-2">
           <KpiCard
@@ -424,7 +431,6 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
         </div>
       )}
 
-      {/* Gráficos em grid de 2 colunas para notebooks tbm (lg:grid-cols-2 em vez de xl:grid-cols-2) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
 
         <div className="bg-surface rounded-[2rem] border border-border/60 shadow-sm p-5 sm:p-6 lg:p-8 relative overflow-hidden group">
@@ -445,7 +451,6 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
             </span>
           </div>
 
-          {/*  Altura e largura blindadas (h-[280px] w-full) */}
           <div className="relative z-10 w-full h-[280px]">
             <GraficoCpk dados={dadosCpk} loading={loadingCpk} />
           </div>
@@ -469,9 +474,8 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
             </span>
           </div>
 
-          {/*  Altura e largura blindadas (h-[280px] w-full) */}
           <div className="relative z-10 w-full h-[280px]">
-            <GraficoPerformance dados={dadosPerformance} loading={loadingPerformance} />
+            <GraficoPerformance dados={dadosPerformanceLimpos} loading={loadingPerformance} />
           </div>
         </div>
 
