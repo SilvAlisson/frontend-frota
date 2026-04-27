@@ -4,7 +4,7 @@ import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import {
   Calendar, Filter, Download, ChevronDown,
-  CheckCircle2, AlertCircle, PlayCircle, FileText, FileX, DollarSign, Wrench, Store
+  CheckCircle2, AlertCircle, PlayCircle, FileText, FileX, DollarSign, Wrench, Store, Search, Truck
 } from 'lucide-react';
 import type { OrdemServico } from '../types';
 
@@ -22,6 +22,7 @@ import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 import { DatePicker } from './ui/DatePicker';
+import { Input } from './ui/Input';
 import { TableStyles } from '../styles/table';
 import { Lightbox } from './ui/Lightbox';
 
@@ -36,7 +37,17 @@ interface HistoricoManutencoesProps {
 
 const ITENS_POR_PAGINA = 20;
 
-// Fim do problema de Timezone e Estouro de Layout
+//  HELPER 1: Limpador Automático de Placas (Remove o prefixo da marca)
+const extrairPlaca = (placaBruta: string) => {
+  if (!placaBruta) return '---';
+  const match = placaBruta.match(/\(([^)]+)\)/);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  return placaBruta.trim();
+};
+
+//  HELPER 2: Fim do problema de Timezone e Estouro de Layout
 const DateHelper = {
   getDia: (isoDate: string) => {
     if (!isoDate) return '--';
@@ -90,14 +101,16 @@ export function HistoricoManutencoes({
   const [filtros, setFiltros] = useState({
     veiculoId: filtroInicial?.veiculoId || '',
     dataInicio: filtroInicial?.dataInicio || '',
-    dataFim: ''
+    dataFim: '',
+    busca: '',
+    status: ''
   });
 
   // --- ESTADO DE FILTRO LOCAL (FRONTEND) ---
   const [fornecedorIdFiltro, setFornecedorIdFiltro] = useState('');
 
-  const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
-  const canDelete = userRole === 'ADMIN';
+  const canEdit = ['ADMIN', 'ENCARREGADO', 'COORDENADOR'].includes(userRole);
+  const canDelete = ['ADMIN', 'COORDENADOR'].includes(userRole);
 
   // --- BUSCA DE FORNECEDORES PARA O SELECT DO BM ---
   useEffect(() => {
@@ -106,16 +119,11 @@ export function HistoricoManutencoes({
       .catch(err => console.error("Erro ao carregar fornecedores", err));
   }, []);
 
-  // --- FETCHING OTIMIZADO (SÓ VAI NA API QUANDO MUDA DATA OU VEÍCULO) ---
+  //  FETCHING OTIMIZADO (Correção do Erro 400 da API)
   const fetchHistorico = useCallback(async () => {
     setLoading(true);
     try {
-      const params: Record<string, string> = {};
-      if (filtros.veiculoId) params.veiculoId = filtros.veiculoId;
-      if (filtros.dataInicio) params.dataInicio = filtros.dataInicio;
-      if (filtros.dataFim) params.dataFim = filtros.dataFim;
-
-      const response = await api.get<OrdemServico[]>('/manutencoes/recentes', { params });
+      const response = await api.get<OrdemServico[]>('/manutencoes/recentes', { params: { limit: 'all' } });
       setHistorico(response.data);
       setVisibleCount(ITENS_POR_PAGINA);
     } catch (err) {
@@ -124,22 +132,36 @@ export function HistoricoManutencoes({
     } finally {
       setLoading(false);
     }
-  }, [filtros]);
+  }, []);
 
   useEffect(() => {
     fetchHistorico();
   }, [fetchHistorico]);
 
-  // FILTRO LOCAL INTELIGENTE
+  //  FILTRO LOCAL INTELIGENTE (Instantâneo na RAM)
   const historicoFiltrado = useMemo(() => {
     return historico.filter(os => {
-      if (!fornecedorIdFiltro) return true;
-      return os.fornecedor?.id === fornecedorIdFiltro || os.fornecedorId === fornecedorIdFiltro;
-    });
-  }, [historico, fornecedorIdFiltro]);
+      if (fornecedorIdFiltro && os.fornecedorId !== fornecedorIdFiltro) return false;
+      if (filtros.veiculoId && os.veiculoId !== filtros.veiculoId) return false;
+      if (filtros.status && os.status !== filtros.status) return false;
+      if (filtros.dataInicio && new Date(os.data) < new Date(`${filtros.dataInicio}T00:00:00`)) return false;
+      if (filtros.dataFim && new Date(os.data) > new Date(`${filtros.dataFim}T23:59:59`)) return false;
+      if (filtros.busca) {
+        const search = filtros.busca.toLowerCase();
+        const terms = `${os.veiculo?.placa} ${os.fornecedor?.nome} ${os.observacoes}`.toLowerCase();
+        if (!terms.includes(search)) return false;
+      }
+      return true;
+    }).sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+  }, [historico, fornecedorIdFiltro, filtros]);
 
   const totalGasto = useMemo(() => {
     return historicoFiltrado.reduce((acc, os) => acc + (Number(os.custoTotal) || 0), 0);
+  }, [historicoFiltrado]);
+
+  //  CORREÇÃO TYPESCRIPT: O tipo real é 'PENDENTE' (Agendada) ou 'EM_ANDAMENTO'
+  const osAbertas = useMemo(() => {
+    return historicoFiltrado.filter(m => m.status === 'PENDENTE' || m.status === 'EM_ANDAMENTO').length;
   }, [historicoFiltrado]);
 
   const historicoVisivel = useMemo(() => {
@@ -170,18 +192,16 @@ export function HistoricoManutencoes({
       try {
         // MAPA DE DADOS OTIMIZADO PARA O BM
         const dados = historicoFiltrado.map(os => ({
-          'Data da OS': DateHelper.getExcel(os.data), // Uso do helper pro Excel
+          'Data da OS': DateHelper.getExcel(os.data),
           'Oficina / Fornecedor': os.fornecedor?.nome || 'Não Registrada',
-          'Placa do Veículo': os.veiculo?.placa || 'N/A',
+          'Placa do Veículo': extrairPlaca(os.veiculo?.placa || ''),
           'Categoria de Serviço': os.tipo,
           'Serviços Realizados': (os.itens || []).map(i => `${i.quantidade}x ${i.produto.nome}`).join(' | '),
           'Valor Total (R$)': Number(os.custoTotal),
           'Comprovante': os.fotoComprovanteUrl ? `=HYPERLINK("${os.fotoComprovanteUrl}", "Visualizar Comprovante")` : 'Sem anexo'
         }));
 
-        // Nomeia o Arquivo com o nome da oficina se estiver filtrado
         let nomeArquivo = "BM_Manutencoes_Globais.xlsx";
-
         if (fornecedorIdFiltro) {
           const nomeFornecedor = fornecedores.find(f => f.id === fornecedorIdFiltro)?.nome?.replace(/[^a-zA-Z0-9]/g, '_');
           nomeArquivo = `BM_${nomeFornecedor}.xlsx`;
@@ -211,11 +231,11 @@ export function HistoricoManutencoes({
     return <Badge variant={map[tipo] || 'neutral'}>{tipo}</Badge>;
   };
 
+  //  CORREÇÃO TYPESCRIPT: Lógica de badge alinhada com os tipos corretos
   const getBadgeStatus = (status?: string) => {
     const s = status?.toUpperCase() || 'CONCLUIDA';
-
     switch (s) {
-      case 'AGENDADA': return <Badge variant="neutral" className="gap-1.5 py-1 px-2.5 shadow-sm"><Calendar className="w-3.5 h-3.5 opacity-70" /> Agendada</Badge>;
+      case 'PENDENTE': return <Badge variant="neutral" className="gap-1.5 py-1 px-2.5 shadow-sm"><Calendar className="w-3.5 h-3.5 opacity-70" /> Agendada</Badge>;
       case 'EM_ANDAMENTO': return <Badge variant="warning" className="gap-1.5 py-1 px-2.5 shadow-sm"><PlayCircle className="w-3.5 h-3.5 opacity-70" /> Na Oficina</Badge>;
       case 'CONCLUIDA':
       case 'CONCLUÍDA': return <Badge variant="success" className="gap-1.5 py-1 px-2.5 shadow-sm"><CheckCircle2 className="w-3.5 h-3.5 opacity-70" /> Concluída</Badge>;
@@ -226,7 +246,7 @@ export function HistoricoManutencoes({
 
   const veiculosOptions = useMemo(() => [
     { value: "", label: "Todos os Veículos" },
-    ...veiculos.map(v => ({ value: v.id, label: v.placa }))
+    ...veiculos.map(v => ({ value: v.id, label: `${extrairPlaca(v.placa)} - ${v.modelo}` }))
   ], [veiculos]);
 
   const fornecedoresOptions = useMemo(() => [
@@ -245,22 +265,56 @@ export function HistoricoManutencoes({
         onAction={canEdit ? () => setIsNovaOSOpen(true) : undefined}
         extraAction={
           <div className="flex flex-col xl:flex-row gap-3 w-full xl:w-auto items-end bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
-            <div className="flex gap-3 w-full">
-              <div className="flex-1">
-                <DatePicker disableFuture
-                  label="Data Inicial"
-                  placeholder="Início"
-                  date={filtros.dataInicio ? new Date(`${filtros.dataInicio}T12:00:00`) : undefined}
-                  onChange={date => setFiltros(prev => ({ ...prev, dataInicio: date ? date.toISOString().split('T')[0] : '' }))}
-                />
-              </div>
-              <div className="flex-1">
-                <DatePicker disableFuture
-                  label="Data Final"
-                  placeholder="Fim"
-                  date={filtros.dataFim ? new Date(`${filtros.dataFim}T12:00:00`) : undefined}
-                  onChange={date => setFiltros(prev => ({ ...prev, dataFim: date ? date.toISOString().split('T')[0] : '' }))}
-                />
+             <div className="flex flex-col sm:flex-row gap-3 w-full">
+               <div className="flex-1 min-w-[200px]">
+                  <Input
+                    label="Busca Rápida"
+                    placeholder="Peça, Placa ou Oficina..."
+                    value={filtros.busca}
+                    onChange={(e) => setFiltros(prev => ({ ...prev, busca: e.target.value }))}
+                    icon={<Search className="w-4 h-4" />}
+                    containerClassName="!mb-0"
+                  />
+               </div>
+               <div className="w-full sm:w-48">
+                 {/*  CORREÇÃO TypeScript: Filtro de status usa os Enums corretos */}
+                 <Select 
+                   label="Filtrar por Status"
+                   options={[
+                     { value: '', label: 'Todos os Status' },
+                     { value: 'PENDENTE', label: 'Agendadas' },
+                     { value: 'EM_ANDAMENTO', label: 'Em Oficina' },
+                     { value: 'CONCLUIDA', label: 'Concluídas' },
+                     { value: 'CANCELADA', label: 'Canceladas' }
+                   ]}
+                   value={filtros.status}
+                   onChange={(e) => setFiltros(prev => ({ ...prev, status: e.target.value }))}
+                   icon={<Filter className="w-4 h-4" />}
+                   containerClassName="!mb-0"
+                 />
+               </div>
+             </div>
+             
+             <div className="w-px h-10 bg-border/60 hidden xl:block mx-1"></div>
+
+            <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+              <div className="flex gap-3 w-full">
+                <div className="flex-1">
+                  <DatePicker disableFuture
+                    label="Data Inicial"
+                    placeholder="Início"
+                    date={filtros.dataInicio ? new Date(`${filtros.dataInicio}T12:00:00`) : undefined}
+                    onChange={date => setFiltros(prev => ({ ...prev, dataInicio: date ? date.toISOString().split('T')[0] : '' }))}
+                  />
+                </div>
+                <div className="flex-1">
+                  <DatePicker disableFuture
+                    label="Data Final"
+                    placeholder="Fim"
+                    date={filtros.dataFim ? new Date(`${filtros.dataFim}T12:00:00`) : undefined}
+                    onChange={date => setFiltros(prev => ({ ...prev, dataFim: date ? date.toISOString().split('T')[0] : '' }))}
+                  />
+                </div>
               </div>
             </div>
 
@@ -273,12 +327,11 @@ export function HistoricoManutencoes({
                   options={veiculosOptions}
                   value={filtros.veiculoId}
                   onChange={e => setFiltros(prev => ({ ...prev, veiculoId: e.target.value }))}
-                  icon={<Filter className="w-4 h-4" />}
+                  icon={<Truck className="w-4 h-4" />}
                   containerClassName="!mb-0"
                 />
               </div>
 
-              {/* FILTRO DE OFICINA PARA O BM (FRONTEND) */}
               <div className="w-full sm:w-56">
                 <Select
                   label="Oficina / Fornecedor"
@@ -322,12 +375,12 @@ export function HistoricoManutencoes({
             <Wrench className="w-4 h-4 text-amber-500 dark:text-amber-400" /> Ordens de Serviço (Fichas)
           </span>
           <span className="text-3xl font-mono font-black text-text-main truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-            {historicoFiltrado.length} <small className="text-lg font-bold opacity-60 uppercase tracking-widest ml-1">Fichas</small>
+            {osAbertas} <small className="text-lg font-bold opacity-60 uppercase tracking-widest ml-1">Em Oficina</small>
           </span>
         </Card>
       </div>
 
-      {/* 3. TABELA (CARD) */}
+      {/* 3. TABELA BLINDADA (CSS Grid + Limpeza de Placa) */}
       <Card padding="none" className="overflow-hidden border-border/60 shadow-sm rounded-3xl bg-surface">
         {loading ? (
           <div className="p-6 sm:p-8 space-y-4">
@@ -336,38 +389,42 @@ export function HistoricoManutencoes({
         ) : (
           <div className="flex flex-col h-full">
             <ListaResponsiva
-            virtualized={true}
+              virtualized={true}
               itens={historicoVisivel}
               emptyMessage="Nenhum Registro encontrado com estes filtros."
+              desktopGridCols="grid-cols-[1.2fr_2.5fr_1.2fr_1.2fr_1fr_80px]"
 
-              // --- DESKTOP ---
+              // --- DESKTOP HEADER ---
               desktopHeader={
                 <>
-                  <th className={`${TableStyles.th} pl-8 py-5 text-left`}>Data da OS</th>
-                  <th className={`${TableStyles.th} text-left`}>Informação Técnica</th>
-                  <th className={`${TableStyles.th} text-center`}>Status Geral</th>
-                  <th className={`${TableStyles.th} text-center`}>Custo Financeiro</th>
-                  <th className={`${TableStyles.th} text-center`}>Ticket Manutenção</th>
-                  <th className={`${TableStyles.th} text-right pr-8`}>Gestão</th>
+                  <th className={`${TableStyles.th} justify-start text-left pl-8 py-5`}>Data da OS</th>
+                  <th className={`${TableStyles.th} justify-start text-left`}>Informação Técnica</th>
+                  <th className={`${TableStyles.th} justify-center text-center whitespace-nowrap`}>Status Geral</th>
+                  <th className={`${TableStyles.th} justify-center text-center whitespace-nowrap`}>Custo Financeiro</th>
+                  <th className={`${TableStyles.th} justify-center text-center whitespace-nowrap`}>Ticket Manutenção</th>
+                  <th className={`${TableStyles.th} justify-end text-right pr-8`}>Gestão</th>
                 </>
               }
+              
+              // --- DESKTOP ROW ---
               renderDesktop={(os) => (
                 <>
-                  <td className={`${TableStyles.td} pl-8`}>
+                  <td className={`${TableStyles.td} justify-start text-left pl-8`}>
                     <div className="flex flex-col gap-2 items-start">
                       <span className="font-bold text-text-main flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-text-muted/60" />
-                        {/* AQUI: Uso do helper no desktop */}
                         {DateHelper.getCompleta(os.data)}
                       </span>
                       {getBadgeTipo(os.tipo)}
                     </div>
                   </td>
-                  <td className={TableStyles.td}>
-                    <div className="flex flex-col gap-1 max-w-[280px]">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono font-black text-primary text-base tracking-tight">{os.veiculo?.placa || 'N/D'}</span>
-                        <span className="text-[10px] bg-surface-hover px-1.5 py-0.5 rounded border border-border/60 font-bold uppercase tracking-widest text-text-secondary">{os.veiculo?.modelo}</span>
+
+                  <td className={`${TableStyles.td} justify-start text-left min-w-0`}>
+                    <div className="flex flex-col gap-1 max-w-[280px] min-w-0">
+                      <div className="flex items-center gap-2 min-w-0 truncate">
+                        {/*  Limpeza da Placa na Tabela Desktop */}
+                        <span className="font-mono font-black text-primary text-base tracking-tight truncate">{extrairPlaca(os.veiculo?.placa || 'N/D')}</span>
+                        <span className="text-[10px] bg-surface-hover px-1.5 py-0.5 rounded border border-border/60 font-bold uppercase tracking-widest text-text-secondary shrink-0">{os.veiculo?.modelo}</span>
                       </div>
                       <span className="text-xs text-text-secondary font-medium mt-1 truncate" title={os.fornecedor?.nome}>{os.fornecedor?.nome || 'Oficina Não Registrada'}</span>
                       <p className="text-[10px] text-text-muted uppercase tracking-wider font-bold mt-1.5 leading-snug line-clamp-2" title={(os.itens || []).map(i => i.produto.nome).join(', ')}>
@@ -375,18 +432,20 @@ export function HistoricoManutencoes({
                       </p>
                     </div>
                   </td>
-                  <td className={`${TableStyles.td} text-center`}>
+
+                  <td className={`${TableStyles.td} justify-center text-center`}>
                     <div className="w-full flex justify-center">
                       {getBadgeStatus(os.status)}
                     </div>
                   </td>
-                  <td className={`${TableStyles.td} text-center`}>
+
+                  <td className={`${TableStyles.td} justify-center text-center whitespace-nowrap`}>
                     <span className="font-mono font-black text-text-main text-base inline-block w-full">
                       {Number(os.custoTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                     </span>
                   </td>
 
-                  <td className={`${TableStyles.td} text-center`}>
+                  <td className={`${TableStyles.td} justify-center text-center`}>
                     {os.fotoComprovanteUrl ? (
                       <Button
                         variant="ghost"
@@ -404,7 +463,7 @@ export function HistoricoManutencoes({
                     )}
                   </td>
 
-                  <td className={`${TableStyles.td} text-right pr-8`}>
+                  <td className={`${TableStyles.td} justify-end text-right pr-8`}>
                     <DropdownAcoes
                       onEditar={canEdit ? () => setEditingOS(os) : undefined}
                       onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
@@ -418,19 +477,19 @@ export function HistoricoManutencoes({
                 <div className="p-5 flex flex-col gap-4 border-b border-border/60 hover:bg-surface-hover/30 transition-colors">
                   <div className="flex justify-between items-start">
                     <div className="flex gap-4">
-                      {/* AQUI: Uso do helper no Card Mobile (Nunca mais vai estourar) */}
                       <div className="bg-surface shadow-sm text-text-main p-2 rounded-xl border border-border/80 flex flex-col items-center justify-center w-14 h-14 shrink-0">
                         <span className="text-lg font-black leading-none">{DateHelper.getDia(os.data)}</span>
                         <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted mt-0.5">
                           {DateHelper.getMesCurto(os.data)}
                         </span>
                       </div>
-                      <div className="flex flex-col justify-center">
-                        <span className="font-mono font-black text-primary text-lg tracking-tight leading-none block mb-1">{os.veiculo?.placa || 'Sem Placa'}</span>
-                        <span className="text-xs text-text-secondary font-medium">{os.fornecedor?.nome || 'Oficina não registrada'}</span>
+                      <div className="flex flex-col justify-center min-w-0">
+                        {/*  Limpeza da Placa no Card Mobile */}
+                        <span className="font-mono font-black text-primary text-lg tracking-tight leading-none block mb-1 truncate">{extrairPlaca(os.veiculo?.placa || 'Sem Placa')}</span>
+                        <span className="text-xs text-text-secondary font-medium truncate">{os.fornecedor?.nome || 'Oficina não registrada'}</span>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-2">
+                    <div className="flex flex-col items-end gap-2 shrink-0">
                       {getBadgeStatus(os.status)}
                       <DropdownAcoes
                         onEditar={canEdit ? () => setEditingOS(os) : undefined}
@@ -481,8 +540,6 @@ export function HistoricoManutencoes({
       </Card>
 
       {/* --- MODAIS --- */}
-
-      {/* Novo Registro */}
       <Modal
         isOpen={isNovaOSOpen}
         onClose={() => setIsNovaOSOpen(false)}
@@ -497,7 +554,6 @@ export function HistoricoManutencoes({
         )}
       </Modal>
 
-      {/* Edição */}
       <Modal
         isOpen={!!editingOS}
         onClose={() => setEditingOS(null)}
@@ -513,7 +569,6 @@ export function HistoricoManutencoes({
         )}
       </Modal>
 
-      {/* Exclusão */}
       <ConfirmModal
         isOpen={!!deletingId}
         onCancel={() => setDeletingId(null)}
@@ -524,7 +579,6 @@ export function HistoricoManutencoes({
         confirmLabel="Sim, Apagar Registro"
       />
 
-      {/* Visualizar Foto Modal (In-App) */}
       <Lightbox
         src={viewingPhoto}
         alt="Comprovativo de Manutenção"
@@ -535,5 +589,3 @@ export function HistoricoManutencoes({
     </div>
   );
 }
-
-
