@@ -1,11 +1,11 @@
 // src/components/forms/FormRegistrarManutencao/Step2ItensServicos.tsx
 import { useState, useEffect, useMemo } from 'react';
-import { useFormContext, useFieldArray } from 'react-hook-form';
+import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
 import { Plus, X, Package, Store } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
-import { Callout } from '../../ui/Callout'; // ✨
+import { Callout } from '../../ui/Callout';
 import { ModalGerenciarServicos } from '../../ModalGerenciarServicos';
 import { formatCurrency } from '../../../utils';
 import { formatarDinheiro, desformatarDinheiro } from '../../../lib/formatters';
@@ -69,7 +69,6 @@ export function Step2ItensServicos() {
         </Button>
       </div>
 
-      {/* ✨ O AVISO DE FILTRO DA OFICINA AGORA USA CALLOUT */}
       {fornecedorIdSelecionado && produtosDisponiveis.length < listaProdutos.length && (
         <Callout variant="info" title="Filtro Ativo" icon={Store}>
           A exibir apenas os serviços e peças que estão Registrados como fornecidos pela oficina selecionada.
@@ -100,14 +99,22 @@ export function Step2ItensServicos() {
 
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
                 <div className="xl:col-span-6">
-                  <Select
-                    label="Item / Serviço do Catálogo"
-                    options={produtosOpcoes}
-                    {...register(`itens.${index}.produtoId`)}
-                    error={errors.itens?.[index]?.produtoId?.message}
-                    disabled={isLocked}
-                    icon={<Package className="w-4 h-4 text-text-muted" />}
-                    containerClassName="!mb-0"
+                  {/*  Select de Produto controlado via Controller */}
+                  <Controller
+                    control={control}
+                    name={`itens.${index}.produtoId`}
+                    render={({ field }) => (
+                      <Select
+                        label="Item / Serviço do Catálogo"
+                        options={produtosOpcoes}
+                        icon={<Package className="w-4 h-4 text-text-muted" />}
+                        value={field.value || ""}
+                        onChange={(e) => field.onChange(e.target.value)}
+                        error={errors.itens?.[index]?.produtoId?.message}
+                        disabled={isLocked}
+                        containerClassName="!mb-0"
+                      />
+                    )}
                   />
                 </div>
                 
@@ -170,5 +177,3 @@ export function Step2ItensServicos() {
     </div>
   );
 }
-
-

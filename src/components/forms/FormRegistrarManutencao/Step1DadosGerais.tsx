@@ -1,11 +1,11 @@
 ﻿// src/components/forms/FormRegistrarManutencao/Step1DadosGerais.tsx
 import { useEffect, useMemo, useState } from 'react';
-import { useFormContext, Controller } from 'react-hook-form'; // ✨ Adicionado Controller
-import { Wrench, Truck, Gauge, AlertTriangle } from 'lucide-react'; // Removido Calendar (já vem no DatePicker)
+import { useFormContext, Controller } from 'react-hook-form';
+import { Wrench, Truck, Gauge, AlertTriangle } from 'lucide-react';
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
 import { Callout } from '../../ui/Callout';
-import { DatePicker } from '../../ui/DatePicker'; // ✨ Nosso novo DatePicker
+import { DatePicker } from '../../ui/DatePicker';
 import { formatKmVisual } from '../../../utils';
 import { api } from '../../../services/api';
 import { useVeiculos } from '../../../hooks/useVeiculos';
@@ -14,7 +14,6 @@ import type { Veiculo } from '../../../types';
 import type { ManutencaoFormValues, TipoManutencao } from './schema';
 
 export function Step1DadosGerais() {
-  // ✨ Extraído o control do form context
   const { register, watch, setValue, control, formState: { errors, isSubmitting } } = useFormContext<ManutencaoFormValues>();
   
   const { data: veiculos = [], isLoading: loadV } = useVeiculos();
@@ -104,14 +103,23 @@ export function Step1DadosGerais() {
 
       {alvoSelecionado === 'VEICULO' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          <Select
-            label="Veículo"
-            options={veiculosOpcoes}
-            icon={<Truck className="w-4 h-4" />}
-            {...register("veiculoId")}
-            error={errors.veiculoId?.message}
-            disabled={isLocked}
+          {/*  Select de Veículo controlado via Controller */}
+          <Controller
+            control={control}
+            name="veiculoId"
+            render={({ field }) => (
+              <Select
+                label="Veículo"
+                options={veiculosOpcoes}
+                icon={<Truck className="w-4 h-4" />}
+                value={field.value || ""}
+                onChange={(e) => field.onChange(e.target.value)}
+                error={errors.veiculoId?.message}
+                disabled={isLocked}
+              />
+            )}
           />
+
           <div className="flex flex-col">
             <Input
               label="KM na entrada da oficina (Opcional)"
@@ -151,16 +159,24 @@ export function Step1DadosGerais() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <Select
-          label="Oficina / Fornecedor"
-          options={fornecedoresOpcoes}
-          icon={<Wrench className="w-4 h-4" />}
-          {...register("fornecedorId")}
-          error={errors.fornecedorId?.message}
-          disabled={isLocked}
+        {/*  Select de Fornecedor controlado via Controller */}
+        <Controller
+          control={control}
+          name="fornecedorId"
+          render={({ field }) => (
+            <Select
+              label="Oficina / Fornecedor"
+              options={fornecedoresOpcoes}
+              icon={<Wrench className="w-4 h-4" />}
+              value={field.value || ""}
+              onChange={(e) => field.onChange(e.target.value)}
+              error={errors.fornecedorId?.message}
+              disabled={isLocked}
+            />
+          )}
         />
         
-        {/* ✨ AQUI: Subistituído por DatePicker com Controller */}
+        {/* DatePicker com Controller (já estava correto) */}
         <Controller
           control={control}
           name="data"
@@ -168,10 +184,8 @@ export function Step1DadosGerais() {
             <DatePicker disableFuture
               label="Data do Serviço / Fatura"
               placeholder="Selecione a data"
-              // Convertendo de string para Date. O T12:00:00 blinda contra fuso horário anterior
               date={field.value ? new Date(`${field.value}T12:00:00`) : undefined}
               onChange={(newDate) => {
-                // Ao clicar no calendário, salva no form como YYYY-MM-DD
                 field.onChange(newDate ? newDate.toISOString().split('T')[0] : '');
               }}
               error={errors.data?.message}
@@ -183,5 +197,3 @@ export function Step1DadosGerais() {
     </div>
   );
 }
-
-
