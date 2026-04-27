@@ -21,6 +21,17 @@ interface VeiculoRanking {
   kml: number;
 }
 
+// ✨ HELPER: Limpador Automático de Placas Sujas da Base de Dados
+const extrairPlaca = (placaBruta: string) => {
+  if (!placaBruta) return '---';
+  // Procura por valores dentro de parênteses, ex: "VW/26.260 CRM 6X2 (RPZ6D58)" -> Pega "RPZ6D58"
+  const match = placaBruta.match(/\(([^)]+)\)/);
+  if (match && match[1]) {
+    return match[1].trim();
+  }
+  return placaBruta.trim();
+};
+
 export function RankingOperadores() {
   const [ano, setAno] = useState(new Date().getFullYear());
   const [mes, setMes] = useState(new Date().getMonth() + 1);
@@ -53,7 +64,7 @@ export function RankingOperadores() {
     const acaoExportar = async () => {
       const dados = ranking.map((v, i) => ({
         'Posição': `${i + 1}º`,
-        'Veículo': `${v.placa} - ${v.modelo}`,
+        'Veículo': `${extrairPlaca(v.placa)} - ${v.modelo}`,
         'Média (Km/L)': v.kml.toFixed(2).replace('.', ','),
         'KM Total': v.totalKM,
         'Consumo (L)': v.totalLitros
@@ -153,7 +164,7 @@ export function RankingOperadores() {
             </div>
           )}
 
-          {/* --- LISTA BLINDADA (CSS GRID + ALINHAMENTO DUPLO + WHITESPACE-NOWRAP) --- */}
+          {/* --- LISTA BLINDADA --- */}
           <Card padding="none" className="overflow-hidden border-border/60 shadow-sm rounded-3xl bg-surface">
             <ListaResponsiva
               itens={ranking}
@@ -191,7 +202,8 @@ export function RankingOperadores() {
                         <Truck className="w-5 h-5" />
                       </div>
                       <div className="flex flex-col truncate min-w-0">
-                        <span className="block font-black text-text-main text-base tracking-tight leading-none truncate">{v.placa}</span>
+                        {/* ✨ Limpeza da Placa Aplicada Aqui */}
+                        <span className="block font-black text-text-main text-base tracking-tight leading-none truncate">{extrairPlaca(v.placa)}</span>
                         <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mt-1 truncate">{v.modelo}</span>
                       </div>
                     </div>
@@ -242,7 +254,8 @@ export function RankingOperadores() {
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start mb-3">
                       <div>
-                        <h4 className="font-black text-text-main text-lg tracking-tight leading-none">{v.placa}</h4>
+                        {/* ✨ Limpeza da Placa Aplicada Aqui */}
+                        <h4 className="font-black text-text-main text-lg tracking-tight leading-none">{extrairPlaca(v.placa)}</h4>
                         <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mt-1 truncate max-w-[150px]">{v.modelo}</p>
                       </div>
                       {isConsumoRuim(v.kml) && <Badge variant="danger" className="text-[9px] px-1.5 shadow-sm">Crítico</Badge>}
@@ -335,8 +348,9 @@ function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoR
         </div>
       </div>
       
+      {/* ✨ Limpeza da Placa Aplicada Aqui */}
       <h3 className={`font-black truncate w-full px-2 text-2xl tracking-tight leading-none mb-1 ${config.text}`}>
-        {veiculo.placa}
+        {extrairPlaca(veiculo.placa)}
       </h3>
       <p className={`text-[11px] font-bold uppercase tracking-widest mb-4 opacity-80 ${config.text}`}>
         {veiculo.modelo}
