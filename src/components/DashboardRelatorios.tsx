@@ -117,8 +117,9 @@ const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descr
         highlight ? "min-h-[160px]" : "min-h-[140px]" // Reduzida altura mínima para telas menores
       )}
     >
-      <div className="flex justify-between items-start shrink-0 mb-1 relative z-10 p-3 sm:p-4 pb-0">
-        <h4 className="font-header text-[10px] sm:text-xs font-bold text-text-secondary uppercase tracking-wider mt-1.5 leading-snug">
+      {/*  min-w-0 para evitar blowout */}
+      <div className="flex justify-between items-start shrink-0 mb-1 relative z-10 p-3 sm:p-4 pb-0 min-w-0">
+        <h4 className="font-header text-[10px] sm:text-xs font-bold text-text-secondary uppercase tracking-wider mt-1.5 leading-snug truncate">
           {titulo}
         </h4>
         {icon && (
@@ -128,7 +129,8 @@ const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descr
         )}
       </div>
 
-      <div className="flex flex-col justify-end flex-1 min-h-0 relative z-10 p-3 sm:p-4">
+      {/*  min-w-0 */}
+      <div className="flex flex-col justify-end flex-1 min-h-0 relative z-10 p-3 sm:p-4 min-w-0">
         <span
           className={cn(
             "text-data font-black text-text-main leading-none truncate transition-colors duration-300",
@@ -142,7 +144,8 @@ const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descr
           <NumberTicker value={valorRaw || 0} formatter={formatter} duration={1.5} />
         </span>
 
-        <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-border/40 flex items-center justify-between shrink-0">
+        {/*  min-w-0 */}
+        <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-border/40 flex items-center justify-between shrink-0 min-w-0">
           <p className="text-[9px] sm:text-[10px] font-bold uppercase text-text-muted truncate max-w-[90%] group-hover:text-text-main transition-colors tracking-wider">
             {descricao}
           </p>
@@ -303,15 +306,16 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
     toast.success("Download do relatório iniciado!");
   };
 
+  //  Tipos como String para não bugar a visualização inicial do `<Select>` nativo
   const opcoesMeses = useMemo(() => Array.from({ length: 12 }, (_, i) => ({
-    value: i + 1,
+    value: String(i + 1),
     label: new Date(0, i).toLocaleString('pt-BR', { month: 'long' }).replace(/^\w/, c => c.toUpperCase())
   })), []);
 
   const opcoesAnos = useMemo(() => [
-    { value: new Date().getFullYear(), label: String(new Date().getFullYear()) },
-    { value: new Date().getFullYear() - 1, label: String(new Date().getFullYear() - 1) },
-    { value: new Date().getFullYear() - 2, label: String(new Date().getFullYear() - 2) }
+    { value: String(new Date().getFullYear()), label: String(new Date().getFullYear()) },
+    { value: String(new Date().getFullYear() - 1), label: String(new Date().getFullYear() - 1) },
+    { value: String(new Date().getFullYear() - 2), label: String(new Date().getFullYear() - 2) }
   ], []);
 
   const opcoesVeiculos = useMemo(() => {
@@ -323,19 +327,20 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
     <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
 
       {/* HEADER E FILTROS */}
-      {/* ✨ CORREÇÃO AQUI: Mudamos de xl para lg. Em notebooks, o menu desktop já aparece! */}
+      {/* Mudamos de xl para lg. Em notebooks, o menu desktop já aparece! */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 lg:gap-6 border-b border-border/60 pb-5 lg:pb-6 sticky top-0 bg-background/90 backdrop-blur-xl z-20 pt-2 -mt-2">
         <div>
           <h2 className="font-header text-2xl sm:text-3xl font-black text-text-main tracking-tight leading-none">Inteligência Operacional</h2>
           <p className="text-xs sm:text-sm text-text-secondary font-medium mt-1.5 flex items-center gap-2">
-            Métricas consolidadas de <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md font-bold border border-primary/20">{opcoesMeses.find((m: { value: number; label: string }) => m.value === mes)?.label} de {ano}</span>
+            Métricas consolidadas de <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md font-bold border border-primary/20">{opcoesMeses.find(m => m.value === String(mes))?.label} de {ano}</span>
           </p>
         </div>
 
         {/* FILTROS RESPONSIVOS */}
         <div className="w-full lg:w-auto">
           {/* Menu Mobile - Só visível em celulares/tablets pequenos */}
-          <details className="group lg:hidden bg-surface rounded-2xl border border-border/60 shadow-sm overflow-hidden">
+          {/*  overflow-hidden REMOVIDO para que as listas do Select nativo funcionem sem cortar */}
+          <details className="group lg:hidden bg-surface rounded-2xl border border-border/60 shadow-sm">
             <summary className="flex items-center justify-between p-4 cursor-pointer list-none font-bold text-text-main touch-manipulation">
                <span className="flex items-center gap-2">
                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
@@ -345,9 +350,9 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
             </summary>
             
             <div className="p-4 pt-0 flex flex-col gap-3 border-t border-border/50 bg-surface-hover/30">
-              <Select value={mes} onChange={(e: { target: { value: string } }) => setMes(Number(e.target.value))} options={opcoesMeses} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
-              <Select value={ano} onChange={(e: { target: { value: string } }) => setAno(Number(e.target.value))} options={opcoesAnos} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
-              <Select value={veiculoIdFiltro} onChange={(e: { target: { value: string } }) => setVeiculoIdFiltro(e.target.value)} options={opcoesVeiculos} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
+              <Select value={String(mes)} onChange={(e: any) => setMes(Number(e.target.value))} options={opcoesMeses} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
+              <Select value={String(ano)} onChange={(e: any) => setAno(Number(e.target.value))} options={opcoesAnos} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
+              <Select value={veiculoIdFiltro} onChange={(e: any) => setVeiculoIdFiltro(e.target.value)} options={opcoesVeiculos} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
               <Button variant="secondary" onClick={handleExportar} className="h-12 w-full mt-2 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 hover:text-emerald-700 border-emerald-500/20 shadow-none transition-colors" icon={<FileSpreadsheet className="w-5 h-5 ml-1" />}>
                 Exportar Relatório Excel
               </Button>
@@ -355,17 +360,17 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
           </details>
 
           {/* Menu Desktop Flexível para Notebooks */}
-          {/* Usando lg:flex e removendo larguras fixas rígidas. Agora os campos respiram! */}
-          <div className="hidden lg:flex gap-2 xl:gap-3 items-center bg-surface p-2 rounded-2xl border border-border/60 shadow-sm w-full lg:w-auto overflow-hidden">
+          {/*  overflow-hidden REMOVIDO também aqui para não cortar dropdowns visuais */}
+          <div className="hidden lg:flex gap-2 xl:gap-3 items-center bg-surface p-2 rounded-2xl border border-border/60 shadow-sm w-full lg:w-auto">
             <div className="flex-1 min-w-[100px] xl:w-[120px]">
-              <Select value={mes} onChange={(e: { target: { value: string } }) => setMes(Number(e.target.value))} options={opcoesMeses} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
+              <Select value={String(mes)} onChange={(e: any) => setMes(Number(e.target.value))} options={opcoesMeses} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
             </div>
             <div className="w-[80px] xl:w-[90px]">
-              <Select value={ano} onChange={(e: { target: { value: string } }) => setAno(Number(e.target.value))} options={opcoesAnos} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
+              <Select value={String(ano)} onChange={(e: any) => setAno(Number(e.target.value))} options={opcoesAnos} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
             </div>
             <div className="w-px h-6 bg-border/60 mx-0.5 xl:mx-1"></div>
             <div className="flex-1 min-w-[150px] lg:w-[180px] xl:w-56">
-              <Select value={veiculoIdFiltro} onChange={(e: { target: { value: string } }) => setVeiculoIdFiltro(e.target.value)} options={opcoesVeiculos} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
+              <Select value={veiculoIdFiltro} onChange={(e: any) => setVeiculoIdFiltro(e.target.value)} options={opcoesVeiculos} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
             </div>
             <div className="flex justify-end pl-1 xl:pl-0">
               <Button
@@ -381,7 +386,7 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
       </div>
 
       {/* KPI GRID PREMIUM */}
-      {/*  Breakpoint para grid no notebook (lg:grid-cols-4) para manter 4 colunas sem quebrar */}
+      {/* Breakpoint para grid no notebook (lg:grid-cols-4) para manter 4 colunas sem quebrar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
         <div className="sm:col-span-2">
           <KpiCard
@@ -440,7 +445,8 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
             </span>
           </div>
 
-          <div className="relative z-10">
+          {/*  Altura e largura blindadas (h-[280px] w-full) */}
+          <div className="relative z-10 w-full h-[280px]">
             <GraficoCpk dados={dadosCpk} loading={loadingCpk} />
           </div>
         </div>
@@ -463,7 +469,8 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
             </span>
           </div>
 
-          <div className="relative z-10">
+          {/*  Altura e largura blindadas (h-[280px] w-full) */}
+          <div className="relative z-10 w-full h-[280px]">
             <GraficoPerformance dados={dadosPerformance} loading={loadingPerformance} />
           </div>
         </div>
