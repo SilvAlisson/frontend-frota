@@ -219,7 +219,7 @@ export function GestaoVeiculos() {
       <Modal
         isOpen={isCadastroOpen}
         onClose={() => setIsCadastroOpen(false)}
-        title="Registar Novo Equipemento"
+        title="Registrar Novo Equipamento"
         className="max-w-2xl"
       >
         <div className="p-2">
@@ -235,7 +235,7 @@ export function GestaoVeiculos() {
       <Modal
         isOpen={!!veiculoParaEditar}
         onClose={() => setVeiculoParaEditar(null)}
-        title="Atualizar Equipemento"
+        title="Atualizar Equipamento"
         className="max-w-2xl"
       >
         {veiculoParaEditar && (
@@ -260,11 +260,11 @@ export function GestaoVeiculos() {
           <div className="space-y-4">
             <p className="text-text-secondary text-sm">Tem certeza que deseja remover definitivamente este veículo do diretório da frota?</p>
             <Callout variant="danger" title="Ação Irreversível" icon={AlertTriangle}>
-              A exclusão deste Registro pode corromper métricas, relatórios financeiros e históricos de viagens caso o Equipemento já tenha operado no sistema.
+              A exclusão deste Registro pode corromper métricas, relatórios financeiros e históricos de viagens caso o Equipamento já tenha operado no sistema.
             </Callout>
           </div>
         }
-        confirmLabel="Sim, Excluir Equipemento"
+        confirmLabel="Sim, Excluir Equipamento"
         variant="danger"
       />
 
