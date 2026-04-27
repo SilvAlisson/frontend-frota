@@ -73,16 +73,16 @@ export function RankingOperadores() {
   const isConsumoRuim = (kml: number) => kml < 2.0;
 
   const opcoesMes = useMemo(() => [
-    { value: '1', label: 'Janeiro' }, { value: '2', label: 'Fevereiro' }, { value: '3', label: 'Março' },
-    { value: '4', label: 'Abril' }, { value: '5', label: 'Maio' }, { value: '6', label: 'Junho' },
-    { value: '7', label: 'Julho' }, { value: '8', label: 'Agosto' }, { value: '9', label: 'Setembro' },
-    { value: '10', label: 'Outubro' }, { value: '11', label: 'Novembro' }, { value: '12', label: 'Dezembro' }
+    { value: 1, label: 'Janeiro' }, { value: 2, label: 'Fevereiro' }, { value: 3, label: 'Março' },
+    { value: 4, label: 'Abril' }, { value: 5, label: 'Maio' }, { value: 6, label: 'Junho' },
+    { value: 7, label: 'Julho' }, { value: 8, label: 'Agosto' }, { value: 9, label: 'Setembro' },
+    { value: 10, label: 'Outubro' }, { value: 11, label: 'Novembro' }, { value: 12, label: 'Dezembro' }
   ], []);
 
   const opcoesAno = useMemo(() => [
-    { value: String(new Date().getFullYear()), label: String(new Date().getFullYear()) },
-    { value: String(new Date().getFullYear() - 1), label: String(new Date().getFullYear() - 1) },
-    { value: String(new Date().getFullYear() - 2), label: String(new Date().getFullYear() - 2) }
+    { value: new Date().getFullYear(), label: String(new Date().getFullYear()) },
+    { value: new Date().getFullYear() - 1, label: String(new Date().getFullYear() - 1) },
+    { value: new Date().getFullYear() - 2, label: String(new Date().getFullYear() - 2) }
   ], []);
 
   return (
@@ -103,7 +103,7 @@ export function RankingOperadores() {
           <div className="w-full sm:w-44">
             <Select
               options={opcoesMes}
-              value={String(mes)}
+              value={mes}
               onChange={e => setMes(Number(e.target.value))}
               icon={<Calendar className="w-4 h-4" />}
               containerClassName="!mb-0"
@@ -112,7 +112,7 @@ export function RankingOperadores() {
           <div className="w-full sm:w-32">
             <Select
               options={opcoesAno}
-              value={String(ano)}
+              value={ano}
               onChange={e => setAno(Number(e.target.value))}
               containerClassName="!mb-0"
             />
@@ -153,28 +153,27 @@ export function RankingOperadores() {
             </div>
           )}
 
-          {/* --- LISTA BLINDADA (CSS GRID + ALINHAMENTO DUPLO + WHITESPACE-NOWRAP) --- */}
+          {/* --- LISTA COM ALINHAMENTO CORRIGIDO --- */}
           <Card padding="none" className="overflow-hidden border-border/60 shadow-sm rounded-3xl bg-surface">
             <ListaResponsiva
               itens={ranking}
               emptyMessage="Nenhum dado consolidado encontrado para este período."
-              desktopGridCols="grid-cols-[100px_2.5fr_1.2fr_1.2fr_1.2fr]"
 
               // HEADER
               desktopHeader={
                 <>
-                  <th className={`${TableStyles.th} justify-center text-center pl-8 py-5`}>Posição</th>
-                  <th className={`${TableStyles.th} justify-start text-left`}>Veículo</th>
-                  <th className={`${TableStyles.th} justify-end text-right whitespace-nowrap`}>Eficiência (Km/L)</th>
-                  <th className={`${TableStyles.th} justify-end text-right whitespace-nowrap`}>Distância (KM)</th>
-                  <th className={`${TableStyles.th} justify-end text-right pr-8 whitespace-nowrap`}>Consumo Total</th>
+                  <th className={`${TableStyles.th} pl-8 py-5 text-center`}>Posição</th>
+                  <th className={`${TableStyles.th} w-full text-left`}>Veículo</th>
+                  <th className={`${TableStyles.th} text-right whitespace-nowrap`}>Eficiência (Km/L)</th>
+                  <th className={`${TableStyles.th} text-right whitespace-nowrap`}>Distância (KM)</th>
+                  <th className={`${TableStyles.th} text-right pr-8 whitespace-nowrap`}>Consumo Total</th>
                 </>
               }
 
               // ROW
               renderDesktop={(v, idx) => (
                 <>
-                  <td className={`${TableStyles.td} justify-center text-center pl-8`}>
+                  <td className={`${TableStyles.td} text-center pl-8`}>
                     <span className={`inline-flex items-center justify-center w-8 h-8 rounded-xl text-sm font-black shadow-sm border ${
                         idx === 0 ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' :
                         idx === 1 ? 'bg-slate-500/10 text-slate-500 border-slate-500/30' :
@@ -185,19 +184,19 @@ export function RankingOperadores() {
                     </span>
                   </td>
 
-                  <td className={`${TableStyles.td} justify-start text-left min-w-0`}>
-                    <div className="flex items-center gap-4 min-w-0">
+                  <td className={`${TableStyles.td} w-full text-left`}>
+                    <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-inner shrink-0 group-hover:scale-105 transition-transform">
                         <Truck className="w-5 h-5" />
                       </div>
-                      <div className="flex flex-col truncate min-w-0">
+                      <div className="flex flex-col truncate">
                         <span className="block font-black text-text-main text-base tracking-tight leading-none truncate">{v.placa}</span>
                         <span className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mt-1 truncate">{v.modelo}</span>
                       </div>
                     </div>
                   </td>
 
-                  <td className={`${TableStyles.td} justify-end text-right whitespace-nowrap`}>
+                  <td className={`${TableStyles.td} text-right whitespace-nowrap`}>
                     <div className="flex flex-col items-end gap-1.5 w-full">
                       <div className="flex items-center justify-end gap-2 w-full">
                         {isConsumoRuim(v.kml) && (
@@ -218,11 +217,11 @@ export function RankingOperadores() {
                     </div>
                   </td>
 
-                  <td className={`${TableStyles.td} justify-end text-right font-mono font-bold text-text-secondary text-base whitespace-nowrap`}>
+                  <td className={`${TableStyles.td} text-right font-mono font-bold text-text-secondary text-base whitespace-nowrap`}>
                      {fmtNum(v.totalKM)} <span className="text-[10px] text-text-muted uppercase tracking-widest ml-0.5">km</span>
                   </td>
 
-                  <td className={`${TableStyles.td} justify-end text-right font-mono font-bold text-text-secondary text-base pr-8 whitespace-nowrap`}>
+                  <td className={`${TableStyles.td} text-right font-mono font-bold text-text-secondary text-base pr-8 whitespace-nowrap`}>
                      {fmtNum(v.totalLitros)} <span className="text-[10px] text-text-muted uppercase tracking-widest ml-0.5">L</span>
                   </td>
                 </>
@@ -273,59 +272,57 @@ export function RankingOperadores() {
   );
 }
 
-// Subcomponente Podium
+// Subcomponente Podium (100% Compatível com Dark Mode)
 function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoRanking, isWinner?: boolean }) {
   const config = {
-    1: { 
-      bg: 'bg-yellow-500/10', 
-      border: 'border-yellow-500/30', 
-      text: 'text-yellow-600 dark:text-yellow-500', 
-      icon: Trophy, 
-      label: 'Mais Econômico', 
-      labelBg: 'bg-yellow-500 text-white' 
+    1: {
+      bg: 'bg-yellow-500/10',
+      border: 'border-yellow-500/30',
+      text: 'text-yellow-600 dark:text-yellow-500',
+      icon: Trophy,
+      label: 'Mais Econômico',
+      labelBg: 'bg-yellow-500 text-white'
     },
-    2: { 
-      bg: 'bg-slate-500/10', 
-      border: 'border-slate-500/30', 
-      text: 'text-slate-600 dark:text-slate-400', 
-      icon: Medal, 
-      label: '2º Lugar', 
-      labelBg: 'bg-slate-500 text-white' 
+    2: {
+      bg: 'bg-slate-500/10',
+      border: 'border-slate-500/30',
+      text: 'text-slate-600 dark:text-slate-400',
+      icon: Medal,
+      label: '2º Lugar',
+      labelBg: 'bg-slate-500 text-white'
     },
-    3: { 
-      bg: 'bg-orange-500/10', 
-      border: 'border-orange-500/30', 
-      text: 'text-orange-600 dark:text-orange-500', 
-      icon: Award, 
-      label: '3º Lugar', 
-      labelBg: 'bg-orange-500 text-white' 
+    3: {
+      bg: 'bg-orange-500/10',
+      border: 'border-orange-500/30',
+      text: 'text-orange-600 dark:text-orange-500',
+      icon: Award,
+      label: '3º Lugar',
+      labelBg: 'bg-orange-500 text-white'
     }
   }[pos as 1 | 2 | 3];
 
   const Icon = config.icon;
 
   return (
-    <div 
-      className={`
-        relative rounded-[2rem] border p-6 flex flex-col items-center text-center 
-        transition-all duration-500 overflow-hidden group 
-        ${config.bg} ${config.border} backdrop-blur-sm 
-        ${isWinner 
-          ? 'h-72 justify-end ring-2 ring-yellow-500/30 z-10 transform sm:scale-105 shadow-xl bg-yellow-500/15' 
-          : 'h-64 justify-end opacity-95 hover:opacity-100 sm:hover:scale-105 shadow-md'
-        }
-      `}
-    >
+    <div className={`
+        relative rounded-[2rem] border p-6 flex flex-col items-center text-center transition-all duration-500 overflow-hidden group
+        ${config.bg} ${config.border} backdrop-blur-sm
+        ${isWinner ? 'h-72 justify-end ring-2 ring-yellow-500/30 z-10 transform sm:scale-105 shadow-xl bg-yellow-500/15' : 'h-64 justify-end opacity-95 hover:opacity-100 sm:hover:scale-105 shadow-md'}
+      `}>
+
+      {/* Reflexo / Brilho Sutil */}
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent dark:from-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-      
+
+      {/* Posição Gigante de Fundo (Mais discreto no dark mode) */}
       <div className={`absolute -top-4 -right-2 font-black text-9xl opacity-[0.07] dark:opacity-[0.04] select-none ${config.text} drop-shadow-md`}>
         {pos}
       </div>
-      
+
       <div className={`absolute top-5 left-5 p-2 bg-surface/80 rounded-xl backdrop-blur-md shadow-sm border border-border/50 ${config.text}`}>
         <Icon className="w-6 h-6" />
       </div>
-      
+
+      {/* Avatar do Veículo */}
       <div className="relative mb-5">
         <div className={`w-20 h-20 rounded-2xl border-2 border-surface shadow-lg flex items-center justify-center bg-surface/80 backdrop-blur-xl overflow-hidden transform group-hover:scale-110 transition-transform ${config.text}`}>
           <Truck className="w-10 h-10 drop-shadow-sm" />
@@ -334,19 +331,14 @@ function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoR
           {config.label}
         </div>
       </div>
-      
-      <h3 className={`font-black truncate w-full px-2 text-2xl tracking-tight leading-none mb-1 ${config.text}`}>
-        {veiculo.placa}
-      </h3>
-      <p className={`text-[11px] font-bold uppercase tracking-widest mb-4 opacity-80 ${config.text}`}>
-        {veiculo.modelo}
-      </p>
-      
+
+      <h3 className={`font-black truncate w-full px-2 text-2xl tracking-tight leading-none mb-1 ${config.text}`}>{veiculo.placa}</h3>
+      <p className={`text-[11px] font-bold uppercase tracking-widest mb-4 opacity-80 ${config.text}`}>{veiculo.modelo}</p>
+
+      {/* Stats Box */}
       <div className="w-full bg-surface/80 rounded-2xl p-3 backdrop-blur-xl border border-border/50 shadow-sm relative z-10">
         <div className="flex flex-col">
-          <span className={`text-[9px] uppercase tracking-[0.2em] font-black mb-0.5 opacity-80 ${config.text}`}>
-            Média de Consumo
-          </span>
+          <span className={`text-[9px] uppercase tracking-[0.2em] font-black mb-0.5 opacity-80 ${config.text}`}>Média de Consumo</span>
           <span className={`font-mono font-black text-3xl tracking-tighter ${config.text}`}>
             {veiculo.kml.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             <span className="text-[10px] uppercase tracking-widest font-bold ml-1 opacity-70">km/l</span>
@@ -356,3 +348,5 @@ function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoR
     </div>
   );
 }
+
+
