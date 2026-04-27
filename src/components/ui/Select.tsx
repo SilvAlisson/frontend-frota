@@ -52,11 +52,18 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         // Usa a label da opção vazia como Placeholder do Radix
         const displayPlaceholder = emptyOption ? emptyOption.label : (placeholder || "Selecione uma opção");
 
-        const [internalValue, setInternalValue] = useState<string>(value !== undefined ? String(value) : '');
+        //   A trava para evitar "uncontrolled to controlled". 
+        // Nunca deixamos a string vazia, se for null/undefined vira ''.
+        const [internalValue, setInternalValue] = useState<string>(
+            value !== undefined && value !== null ? String(value) : ''
+        );
 
         useEffect(() => {
-            if (value !== undefined) {
+            //   Atualização segura do ciclo de vida
+            if (value !== undefined && value !== null) {
                 setInternalValue(String(value));
+            } else {
+                setInternalValue(''); // Garante estado controlado mesmo limpando o input
             }
         }, [value]);
 
@@ -121,14 +128,14 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         <RadixSelect.Content
                             position="popper"
                             sideOffset={6}
-                            // ðŸ”¥ O SEGREDO DO SCROLL: Usamos var(--radix-select-content-available-height)
+                            // O SEGREDO DO SCROLL: Usamos var(--radix-select-content-available-height)
                             className="z-[9999] w-[var(--radix-select-trigger-width)] min-w-[200px] max-h-[var(--radix-select-content-available-height)] overflow-hidden bg-surface rounded-xl border border-border/60 shadow-float data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
                         >
                             <RadixSelect.ScrollUpButton className="flex items-center justify-center h-[25px] bg-surface text-text-muted cursor-default hover:bg-surface-hover transition-colors">
                                 <ChevronDown className="w-4 h-4 rotate-180" />
                             </RadixSelect.ScrollUpButton>
 
-                            {/* ðŸ”¥ Limitando o Viewport para forçar o scroll interno */}
+                            {/* Limitando o Viewport para forçar o scroll interno */}
                             <RadixSelect.Viewport className="p-1 max-h-[300px] overflow-y-auto custom-scrollbar">
                                 <RadixSelect.Group>
                                     {validOptions.map((opt) => (
@@ -159,6 +166,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 <select
                     ref={ref}
                     name={name}
+                    //  CORREÇÃO 3: Aqui o HTML nativo exige que não seja undefined
                     value={internalValue}
                     onChange={() => {}} 
                     className="sr-only pointer-events-none"
@@ -187,5 +195,3 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 );
 
 Select.displayName = 'Select';
-
-

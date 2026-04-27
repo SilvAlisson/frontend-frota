@@ -13,12 +13,10 @@ import './index.css';
 // Registro PWA Automático
 registerSW({ immediate: true });
 
-// Inicialização Hotjar
+// Inicialização Hotjar (Silenciosa se não configurado)
 const hotjarId = Number(import.meta.env.VITE_HOTJAR_ID) || 0;
 if (hotjarId) {
   Hotjar.init(hotjarId, 6);
-} else {
-  console.warn('VITE_HOTJAR_ID não configurado. Hotjar Inativo.');
 }
 
 // Inicialização do Sentry
@@ -73,5 +71,3 @@ createRoot(rootElement).render(
     </QueryClientProvider>
   </StrictMode>,
 );
-
-
