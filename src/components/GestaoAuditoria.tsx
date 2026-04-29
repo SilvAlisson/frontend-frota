@@ -6,7 +6,7 @@ import { ptBR } from 'date-fns/locale';
 import { 
   ShieldAlert, Bug, Activity, Terminal, CheckCircle2, 
   Search, Filter, Clock, AlertTriangle, ShieldCheck,
-  ServerCrash, Fingerprint
+  ServerCrash, Fingerprint, Truck, Camera, ExternalLink 
 } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -19,7 +19,9 @@ interface SystemLog {
   nivel: 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
   acao: string;
   detalhes?: string;
+  contexto?: any; // ✨ Novo campo para receber o objeto limpo do backend
   usuario?: { nome: string; role: string };
+  veiculo?: string; // ✨ Novo campo para a Placa
   resolvido: boolean;
   dataCriacao: string;
 }
@@ -29,11 +31,9 @@ export function GestaoAuditoria() {
   const [filtroNivel, setFiltroNivel] = useState('TODOS');
   const [filtroStatus, setFiltroStatus] = useState('PENDENTES');
 
-  // Fetching a cada 15 segundos para sensação de Real-Time
   const { data: logs = [], isLoading, refetch } = useQuery<SystemLog[]>({
     queryKey: ['system-logs'],
     queryFn: async () => {
-      //  Sincronizado com o endpoint do backend
       const { data } = await api.get('/logs');
       return data;
     },
@@ -42,7 +42,6 @@ export function GestaoAuditoria() {
 
   const resolverLog = async (id: string) => {
     try {
-      //  Sincronizado com o endpoint do backend
       await api.put(`/logs/${id}/resolver`);
       toast.success('Registo arquivado com sucesso.');
       refetch();
@@ -56,7 +55,8 @@ export function GestaoAuditoria() {
       const matchBusca = busca === '' || 
         log.acao.toLowerCase().includes(busca.toLowerCase()) ||
         log.detalhes?.toLowerCase().includes(busca.toLowerCase()) ||
-        log.usuario?.nome.toLowerCase().includes(busca.toLowerCase());
+        log.usuario?.nome.toLowerCase().includes(busca.toLowerCase()) ||
+        log.veiculo?.toLowerCase().includes(busca.toLowerCase()); // Permite buscar por placa
         
       const matchNivel = filtroNivel === 'TODOS' || 
         (filtroNivel === 'CRITICAL_ERROR' ? ['CRITICAL', 'ERROR'].includes(log.nivel) : log.nivel === filtroNivel);
@@ -68,7 +68,6 @@ export function GestaoAuditoria() {
     });
   }, [logs, busca, filtroNivel, filtroStatus]);
 
-  // KPIs
   const totalCriticosPendentes = logs.filter(l => !l.resolvido && ['CRITICAL', 'ERROR'].includes(l.nivel)).length;
   const taxaResolucao = logs.length ? Math.round((logs.filter(l => l.resolvido).length / logs.length) * 100) : 100;
 
@@ -185,7 +184,40 @@ export function GestaoAuditoria() {
                          </span>
                        </div>
                        
-                       <h4 className="font-bold text-base text-text-main mb-1.5 tracking-tight">{log.acao}</h4>
+                       <h4 className="font-bold text-base text-text-main mb-3 tracking-tight">
+                         {log.acao.replace(/_/g, ' ')}
+                       </h4>
+
+                       {/*  TRADUTOR DE CONTEXTO PARA LEIGOS */}
+                       {log.contexto && typeof log.contexto === 'object' && Object.keys(log.contexto).length > 0 && (
+                         <div className="flex flex-wrap gap-2 mb-3">
+                           {Object.entries(log.contexto).map(([key, value]) => {
+                             // Esconde IDs longos do banco de dados e IP
+                             if (key.toLowerCase().includes('id') || key.startsWith('_')) return null;
+                             if (!value) return null;
+
+                             // Se for URL de foto, vira botão!
+                             if (typeof value === 'string' && value.startsWith('http')) {
+                               return (
+                                 <a key={key} href={value} target="_blank" rel="noreferrer" 
+                                    className="flex items-center gap-1.5 text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded-lg hover:bg-primary/20 hover:scale-105 transition-all">
+                                   <Camera className="w-3.5 h-3.5" /> 
+                                   Ver Foto de Evidência <ExternalLink className="w-3 h-3 opacity-50" />
+                                 </a>
+                               );
+                             }
+
+                             // Etiquetas para KM e afins
+                             const labelAmigavel = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                             return (
+                               <span key={key} className="text-[10px] bg-surface-hover border border-border/50 text-text-secondary px-2 py-1 rounded-md flex items-center gap-1 shadow-sm">
+                                 <strong className="text-text-main">{labelAmigavel}:</strong> 
+                                 {String(value)}
+                               </span>
+                             );
+                           })}
+                         </div>
+                       )}
                        
                        {/* Bloco de Código/Detalhe Estilo Terminal */}
                        {log.detalhes && (
@@ -197,13 +229,23 @@ export function GestaoAuditoria() {
                          </div>
                        )}
 
-                       {log.usuario && (
-                         <div className="flex items-center gap-2 mt-4 text-[10px] uppercase font-bold text-text-secondary tracking-widest">
-                           <Fingerprint className="w-3.5 h-3.5 opacity-60" />
-                           Ator: <span className="text-text-main">{log.usuario.nome}</span> 
-                           <span className="bg-surface-hover px-1.5 py-0.5 rounded border border-border/50">{log.usuario.role}</span>
-                         </div>
-                       )}
+                       {/* Atores e Veículos */}
+                       <div className="flex flex-wrap items-center gap-4 mt-4">
+                         {log.usuario && (
+                           <div className="flex items-center gap-2 text-[10px] uppercase font-bold text-text-secondary tracking-widest">
+                             <Fingerprint className="w-3.5 h-3.5 opacity-60" />
+                             Ator: <span className="text-text-main">{log.usuario.nome}</span> 
+                             <span className="bg-surface-hover px-1.5 py-0.5 rounded border border-border/50">{log.usuario.role}</span>
+                           </div>
+                         )}
+                         
+                         {log.veiculo && (
+                           <div className="flex items-center gap-2 text-[10px] uppercase font-bold text-text-secondary tracking-widest">
+                             <Truck className="w-3.5 h-3.5 opacity-60 text-primary" />
+                             Placa: <span className="text-primary bg-primary/10 px-1.5 py-0.5 rounded border border-primary/20">{log.veiculo}</span>
+                           </div>
+                         )}
+                       </div>
                      </div>
                   </div>
 
