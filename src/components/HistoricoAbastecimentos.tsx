@@ -566,7 +566,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
       <Lightbox
         src={viewingPhoto}
         alt="Nota Fiscal do Abastecimento"
-        caption="Registro da Nota Fiscal"
+        caption="Nota Fiscal"
         onClose={() => setViewingPhoto(null)}
       />
 
