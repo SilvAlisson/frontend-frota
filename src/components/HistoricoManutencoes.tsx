@@ -582,7 +582,7 @@ export function HistoricoManutencoes({
       <Lightbox
         src={viewingPhoto}
         alt="Comprovativo de Manutenção"
-        caption="Nota Fiscal / Comprovativo Físico"
+        caption="Nota Fiscal"
         onClose={() => setViewingPhoto(null)}
       />
 
