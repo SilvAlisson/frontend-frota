@@ -34,7 +34,7 @@ export function GestaoAuditoria() {
     queryKey: ['system-logs'],
     queryFn: async () => {
       //  Sincronizado com o endpoint do backend
-      const { data } = await api.get('/system-logs');
+      const { data } = await api.get('/logs');
       return data;
     },
     refetchInterval: 15000 
@@ -43,7 +43,7 @@ export function GestaoAuditoria() {
   const resolverLog = async (id: string) => {
     try {
       //  Sincronizado com o endpoint do backend
-      await api.put(`/system-logs/${id}/resolver`);
+      await api.put(`/logs/${id}/resolver`);
       toast.success('Registo arquivado com sucesso.');
       refetch();
     } catch (error) {
