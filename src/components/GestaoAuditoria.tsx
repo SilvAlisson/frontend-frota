@@ -33,7 +33,8 @@ export function GestaoAuditoria() {
   const { data: logs = [], isLoading, refetch } = useQuery<SystemLog[]>({
     queryKey: ['system-logs'],
     queryFn: async () => {
-      const { data } = await api.get('/logs');
+      //  Sincronizado com o endpoint do backend
+      const { data } = await api.get('/system-logs');
       return data;
     },
     refetchInterval: 15000 
@@ -41,7 +42,8 @@ export function GestaoAuditoria() {
 
   const resolverLog = async (id: string) => {
     try {
-      await api.put(`/logs/${id}/resolver`);
+      //  Sincronizado com o endpoint do backend
+      await api.put(`/system-logs/${id}/resolver`);
       toast.success('Registo arquivado com sucesso.');
       refetch();
     } catch (error) {
