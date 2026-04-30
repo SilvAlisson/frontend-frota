@@ -562,7 +562,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
         variant="danger"
       />
 
-      {/* ✅ NC4 RESOLVIDA — Lightbox centralizado com focus trap, ESC e acessibilidade */}
+      {/* Lightbox centralizado com focus trap, ESC e acessibilidade */}
       <Lightbox
         src={viewingPhoto}
         alt="Nota Fiscal do Abastecimento"
