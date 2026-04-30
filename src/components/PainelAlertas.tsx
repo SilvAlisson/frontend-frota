@@ -243,7 +243,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
                   variant="secondary"
                   className="w-full py-6 font-bold"
                 >
-                  {alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO' ? 'Não, vou enviar o aviso via Base' : 'Não, devia estar rodando. Vou cobrar!'}
+                  {alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO' ? 'Não! Deveria estar rodando. Vou cobrar!' : 'Não! Deveria estar rodando. Vou cobrar!'}
                 </Button>
               </div>
             </div>
