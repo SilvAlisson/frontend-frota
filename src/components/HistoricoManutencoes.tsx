@@ -430,6 +430,11 @@ export function HistoricoManutencoes({
                       <p className="text-[10px] text-text-muted uppercase tracking-wider font-bold mt-1.5 leading-snug line-clamp-2" title={(os.itens || []).map(i => i.produto.nome).join(', ')}>
                         {(os.itens || []).map(i => i.produto.nome).join(', ')}
                       </p>
+                      {os.observacoes && (
+                        <div className="mt-1.5 text-[10px] text-text-muted italic line-clamp-2 max-w-[200px]" title={os.observacoes}>
+                          Obs: {os.observacoes}
+                        </div>
+                      )}
                     </div>
                   </td>
 
@@ -487,6 +492,11 @@ export function HistoricoManutencoes({
                         {/*  Limpeza da Placa no Card Mobile */}
                         <span className="font-mono font-black text-primary text-lg tracking-tight leading-none block mb-1 truncate">{extrairPlaca(os.veiculo?.placa || 'Sem Placa')}</span>
                         <span className="text-xs text-text-secondary font-medium truncate">{os.fornecedor?.nome || 'Oficina não registrada'}</span>
+                        {os.observacoes && (
+                           <span className="text-[10px] text-text-muted italic mt-1 line-clamp-2" title={os.observacoes}>
+                             Obs: {os.observacoes}
+                           </span>
+                        )}
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2 shrink-0">

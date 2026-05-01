@@ -107,7 +107,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
       if (alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO') {
         await api.put(`/veiculos/${alertaOciosoSelecionado.veiculoId}/status`, { status: 'EM_MANUTENCAO' });
       } else {
-        await api.put(`/usuarios/${alertaOciosoSelecionado.usuarioId}/status`, { status: 'ATESTADO' });
+        await api.put(`/users/${alertaOciosoSelecionado.usuarioId}/status`, { status: 'ATESTADO' });
       }
       toast.success('Status atualizado! O alerta não aparecerá mais até que voltem à ativa.');
       // Remove do array visualmente para não precisar dar reload na página

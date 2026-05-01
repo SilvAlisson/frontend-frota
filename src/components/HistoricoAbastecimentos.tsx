@@ -412,6 +412,11 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                       <div className="flex items-center gap-1.5 mt-1 text-[10px] text-text-main font-bold bg-surface-hover px-2 py-1 rounded-md w-fit border border-border/60">
                           <Gauge className="w-3.5 h-3.5 opacity-60" /> {ab.kmOdometro.toLocaleString('pt-BR')} KM
                       </div>
+                      {ab.observacoes && (
+                          <div className="mt-1 text-[10px] text-text-muted italic line-clamp-2 max-w-[200px]" title={ab.observacoes}>
+                            Obs: {ab.observacoes}
+                          </div>
+                      )}
                     </div>
                   </td>
                   <td className={`${TableStyles.td} text-center`}>
@@ -465,6 +470,11 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                       <div className="flex flex-col justify-center">
                         <span className="font-mono font-black text-primary text-lg tracking-tight leading-none">{ab.veiculo?.placa || 'Sem Placa'}</span>
                         <span className="text-xs text-text-secondary font-medium mt-1">{ab.fornecedor?.nome || 'Fornecedor Local'}</span>
+                        {ab.observacoes && (
+                           <span className="text-[10px] text-text-muted italic mt-1 line-clamp-2" title={ab.observacoes}>
+                             Obs: {ab.observacoes}
+                           </span>
+                        )}
                       </div>
                     </div>
 
