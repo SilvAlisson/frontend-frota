@@ -57,6 +57,38 @@ const queryClient = new QueryClient({
   },
 });
 
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { api } from './services/api';
+
+// Global Error Listeners para não deixar nada escapar
+window.addEventListener('error', (event) => {
+  api.post('/logs', {
+    level: 'CRITICAL',
+    source: 'FRONTEND',
+    message: event.message || 'Window Global Error',
+    stackTrace: event.error?.stack || null,
+    context: {
+      _type: 'WINDOW_ERROR',
+      _url: window.location.href,
+      _navigator: { userAgent: navigator.userAgent }
+    }
+  }).catch(() => null);
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+  api.post('/logs', {
+    level: 'ERROR',
+    source: 'FRONTEND',
+    message: 'Unhandled Promise Rejection: ' + (event.reason?.message || String(event.reason)),
+    stackTrace: event.reason?.stack || null,
+    context: {
+      _type: 'UNHANDLED_REJECTION',
+      _url: window.location.href,
+      _navigator: { userAgent: navigator.userAgent }
+    }
+  }).catch(() => null);
+});
+
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');
 
@@ -65,7 +97,9 @@ createRoot(rootElement).render(
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
-          <App />
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

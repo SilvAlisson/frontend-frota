@@ -11,6 +11,9 @@ import { MENU_ITEMS } from '../config/navigation';
 
 import { useTheme } from '../contexts/ThemeContext';
 import type { User } from '../types';
+import { useQuery } from '@tanstack/react-query';
+import { api } from '../services/api';
+import { toast } from 'sonner';
 
 // --- COMPONENTES AUXILIARES ---
 
@@ -151,6 +154,46 @@ export function AdminLayout() {
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [location.pathname]);
+
+  // ✨ BIG BROTHER ALERTS (Polling invisível de 15s para Admins)
+  const [lastSeenLogId, setLastSeenLogId] = useState<string | null>(null);
+  
+  const { data: latestLogs } = useQuery<any[]>({
+    queryKey: ['system-logs-alerts'],
+    queryFn: async () => {
+      const { data } = await api.get('/logs');
+      return data;
+    },
+    refetchInterval: 15000, 
+    enabled: !!user && ['ADMIN', 'COORDENADOR'].includes(user.role),
+  });
+
+  useEffect(() => {
+    if (latestLogs && latestLogs.length > 0) {
+      const latestLog = latestLogs[0];
+      
+      if (!lastSeenLogId) {
+        setLastSeenLogId(latestLog.id);
+        return;
+      }
+
+      if (latestLog.id !== lastSeenLogId) {
+        const newLogs = latestLogs.slice(0, latestLogs.findIndex(l => l.id === lastSeenLogId));
+        const criticalLogs = newLogs.filter(l => ['CRITICAL', 'FRAUD_ATTEMPT'].includes(l.nivel));
+        
+        if (criticalLogs.length > 0) {
+          criticalLogs.forEach(log => {
+             if (log.nivel === 'FRAUD_ATTEMPT') {
+               toast.error(`⚠️ ALERTA DE FRAUDE: ${log.acao.replace(/_/g, ' ')}`, { duration: 10000 });
+             } else {
+               toast.error(`🔥 ERRO CRÍTICO REPORTADO: ${log.acao.replace(/_/g, ' ')}`, { duration: 10000 });
+             }
+          });
+        }
+        setLastSeenLogId(latestLog.id);
+      }
+    }
+  }, [latestLogs, lastSeenLogId]);
 
   const handleLogout = () => {
     logout(); 
