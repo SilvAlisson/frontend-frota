@@ -77,6 +77,19 @@ export function LoginScreen() {
         if (import.meta.env.DEV) {
           console.error("Login QR Falhou:", err);
         }
+        
+        // BIG BROTHER: Auditoria Anti-Fraude
+        api.post('/logs', {
+          level: 'FRAUD_ATTEMPT',
+          source: 'FRONTEND',
+          message: `Falha de Autenticação via QR/Link Mágico`,
+          context: {
+            tentativaToken: magicToken,
+            erro: err.response?.data?.error || err.message,
+            _navigator: { userAgent: navigator.userAgent }
+          }
+        }).catch(() => null);
+
         toast.error(err.response?.data?.error || 'Crachá inválido.');
         setIsMagicLoggingIn(false);
         navigate('/login', { replace: true });
@@ -100,6 +113,17 @@ export function LoginScreen() {
       login(response.data);
       toast.success('Acesso Autorizado. Bem-vindo de volta!');
     } catch (err: any) {
+      // BIG BROTHER: Auditoria Anti-Fraude
+      api.post('/logs', {
+        level: 'WARNING',
+        source: 'FRONTEND',
+        message: `Falha de Autenticação de Credenciais`,
+        context: {
+          emailTentado: data.email,
+          _navigator: { userAgent: navigator.userAgent }
+        }
+      }).catch(() => null);
+
       toast.error('Credenciais inválidas.');
     }
   };
@@ -116,7 +140,19 @@ export function LoginScreen() {
       login(data);
       toast.dismiss(toastId);
       toast.success('Acesso Autorizado!');
-    } catch (err) {
+    } catch (err: any) {
+      // BIG BROTHER: Auditoria Anti-Fraude
+      api.post('/logs', {
+        level: 'FRAUD_ATTEMPT',
+        source: 'FRONTEND',
+        message: `Falha de Autenticação via QR Manual`,
+        context: {
+          tentativaToken: qrManualToken,
+          erro: err.response?.data?.error || err.message,
+          _navigator: { userAgent: navigator.userAgent }
+        }
+      }).catch(() => null);
+
       toast.dismiss(toastId);
       toast.error('Token inválido ou expirado.');
     }

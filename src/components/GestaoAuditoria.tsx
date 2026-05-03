@@ -16,12 +16,12 @@ import { toast } from 'sonner';
 
 interface SystemLog {
   id: string;
-  nivel: 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL';
+  nivel: 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL' | 'FRAUD_ATTEMPT';
   acao: string;
   detalhes?: string;
-  contexto?: any; // ✨ Novo campo para receber o objeto limpo do backend
+  contexto?: any;
   usuario?: { nome: string; role: string };
-  veiculo?: string; // ✨ Novo campo para a Placa
+  veiculo?: string;
   resolvido: boolean;
   dataCriacao: string;
 }
@@ -74,10 +74,16 @@ export function GestaoAuditoria() {
   const getNivelConfig = (nivel: string) => {
     switch (nivel) {
       case 'CRITICAL': return { bg: 'bg-error/10', border: 'border-error/20', text: 'text-error', label: 'CRÍTICO', icon: ServerCrash };
+      case 'FRAUD_ATTEMPT': return { bg: 'bg-purple-500/10', border: 'border-purple-500/20', text: 'text-purple-600', label: 'FRAUDE', icon: ShieldAlert };
       case 'ERROR': return { bg: 'bg-orange-500/10', border: 'border-orange-500/20', text: 'text-orange-600', label: 'ERRO', icon: Bug };
       case 'WARNING': return { bg: 'bg-warning/10', border: 'border-warning/20', text: 'text-warning', label: 'AVISO', icon: AlertTriangle };
       default: return { bg: 'bg-primary/10', border: 'border-primary/20', text: 'text-primary', label: 'INFO', icon: Activity };
     }
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success('Detalhes copiados para a área de transferência.');
   };
 
   return (
@@ -182,6 +188,16 @@ export function GestaoAuditoria() {
                            <Clock className="w-3 h-3" />
                            {format(new Date(log.dataCriacao), "dd MMM yyyy, HH:mm:ss", { locale: ptBR })}
                          </span>
+                         {log.contexto?._navigator?.userAgent && (
+                           <span className="text-[9px] px-1.5 py-0.5 bg-surface-hover border border-border/50 rounded text-text-muted truncate max-w-[120px]" title={log.contexto._navigator.userAgent}>
+                             🌐 {log.contexto._navigator.userAgent.split(' ')[0]}
+                           </span>
+                         )}
+                         {log.contexto?._url && (
+                           <span className="text-[9px] text-primary/70 truncate max-w-[150px]">
+                             📍 {log.contexto._url.replace(/^.*\/\/[^\/]+/, '')}
+                           </span>
+                         )}
                        </div>
                        
                        <h4 className="font-bold text-base text-text-main mb-3 tracking-tight">
@@ -221,11 +237,18 @@ export function GestaoAuditoria() {
                        
                        {/* Bloco de Código/Detalhe Estilo Terminal */}
                        {log.detalhes && (
-                         <div className="mt-3 bg-[#0D1117] border border-gray-800 rounded-xl p-3 relative overflow-hidden group-hover:border-gray-700 transition-colors">
+                         <div className="mt-3 bg-[#0D1117] border border-gray-800 rounded-xl p-3 relative overflow-hidden group-hover:border-gray-700 transition-colors group/terminal">
                             <div className="absolute top-0 left-0 w-1 h-full bg-gray-700" />
-                            <p className="text-xs text-gray-300 font-mono whitespace-pre-wrap break-words leading-relaxed ml-2">
+                            <p className="text-xs text-gray-300 font-mono whitespace-pre-wrap break-words leading-relaxed ml-2 max-h-40 overflow-y-auto custom-scrollbar">
                               <span className="text-primary/70 select-none">{'> '}</span>{log.detalhes}
                             </p>
+                            <button 
+                               onClick={() => copyToClipboard(log.detalhes || '')}
+                               className="absolute top-2 right-2 p-1.5 bg-gray-800 hover:bg-gray-700 text-gray-400 rounded-lg opacity-0 group-hover/terminal:opacity-100 transition-opacity"
+                               title="Copiar Log"
+                            >
+                               <Terminal className="w-3.5 h-3.5" />
+                            </button>
                          </div>
                        )}
 

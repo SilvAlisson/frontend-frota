@@ -16,6 +16,36 @@ const filaOfflineSchema = z.array(z.object({
   headers: z.unknown().optional()
 }));
 
+export const sanitizePayload = (payload: any): any => {
+  if (!payload) return payload;
+  if (typeof payload === 'string') {
+    try {
+      const parsed = JSON.parse(payload);
+      // Se conseguir dar parse, chama recursivamente
+      return sanitizePayload(parsed);
+    } catch {
+      return payload;
+    }
+  }
+  if (typeof payload !== 'object') return payload;
+
+  if (Array.isArray(payload)) {
+    return payload.map(sanitizePayload);
+  }
+
+  const sanitized = { ...payload };
+  const sensitiveKeys = ['password', 'senha', 'token', 'secret', 'magictoken'];
+  
+  for (const key in sanitized) {
+    if (sensitiveKeys.some(sk => key.toLowerCase().includes(sk))) {
+      sanitized[key] = '[REDACTED]';
+    } else if (typeof sanitized[key] === 'object') {
+      sanitized[key] = sanitizePayload(sanitized[key]);
+    }
+  }
+  return sanitized;
+};
+
 export async function syncOfflineQueue() {
   const rawData = localStorage.getItem(OFFLINE_QUEUE_KEY);
   if (!rawData) return;
@@ -173,16 +203,40 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // 7. BIG BROTHER (ENVIA OS ERROS 500+ SILENCIOSAMENTE PARA A AUDITORIA)
-    // Impede loop infinito
-    if (!erroDeLog && (error.response?.status && error.response.status >= 500)) {
-       // O uso da instância global sem await previne travamento do runtime do front.
+    // 7. BIG BROTHER (ENVIA OS ERROS 400+ SILENCIOSAMENTE PARA A AUDITORIA)
+    // Captura TODO TIPO de erro para auditoria (conforme pedido pelo admin), ocultando dados sensíveis
+    if (!erroDeLog && error.response?.status && error.response.status >= 400) {
+       let level = 'ERROR';
+       if (error.response.status >= 400 && error.response.status < 500) {
+         level = 'WARNING'; // 4xx são mais warnings do que errors de servidor
+       }
+       
+       let parsedConfigData = {};
+       try {
+         parsedConfigData = error.config?.data ? JSON.parse(error.config.data) : {};
+       } catch (e) {
+         parsedConfigData = { raw: error.config?.data };
+       }
+
+       const context = {
+         ...sanitizePayload(parsedConfigData),
+         _url: error.config?.url,
+         _method: error.config?.method?.toUpperCase(),
+         _status: error.response.status,
+         _navigator: {
+           userAgent: navigator.userAgent,
+           language: navigator.language,
+           platform: navigator.platform,
+           screen: `${window.screen.width}x${window.screen.height}`
+         }
+       };
+
        api.post('/logs', {
-          level: 'ERROR',
+          level: level,
           source: 'FRONTEND',
-          message: error.message,
+          message: error.message || `Erro HTTP ${error.response.status}`,
           stackTrace: JSON.stringify(error.response?.data) || null,
-          context: JSON.parse(error.config?.data || '{}')
+          context: context
        }).catch(() => null); 
     }
 
