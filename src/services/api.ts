@@ -2,6 +2,7 @@ import axios, { type InternalAxiosRequestConfig, type AxiosError } from 'axios';
 import { RENDER_API_BASE_URL } from '../config';
 import { toast } from 'sonner';
 import { z } from 'zod';
+import { getDeviceContext } from '../utils/errorHandler';
 
 export interface CustomAxiosError extends AxiosError {
   _toastHandled?: boolean;
@@ -21,7 +22,6 @@ export const sanitizePayload = (payload: any): any => {
   if (typeof payload === 'string') {
     try {
       const parsed = JSON.parse(payload);
-      // Se conseguir dar parse, chama recursivamente
       return sanitizePayload(parsed);
     } catch {
       return payload;
@@ -95,7 +95,7 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  timeout: 30000, // Timeout de 30s
 });
 
 // --- Interceptor de Requisição ---
@@ -103,13 +103,11 @@ api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = sessionStorage.getItem('authToken');
 
-    // Lista de rotas que NÃO devem enviar o Authorization header
     const isAuthRoute =
       config.url?.includes('/auth/login') ||
       config.url?.includes('/auth/login-token') ||
       config.url?.includes('/auth/register');
 
-    // Anexar o token APENAS se ele existir E NÃO for uma rota de autenticação
     if (token && !isAuthRoute) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -127,11 +125,12 @@ api.interceptors.response.use(
   (error: AxiosError) => {
 
     const erroDeLog = !!error.config?.url?.includes('/logs');
+    const method = error.config?.method?.toUpperCase() || 'HTTP';
+    const urlChamada = error.config?.url || 'Desconhecida';
 
     // 1. Tratamento de Sessão Expirada (401)
     if (error.response?.status === 401) {
       const isLoginPage = window.location.pathname.includes('/login');
-
       if (!isLoginPage) {
         window.dispatchEvent(new Event('auth:unauthorized'));
         toast.error("Sua sessão expirou por segurança. Por favor, acesse novamente.");
@@ -154,12 +153,26 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // 4. Tratamento de Erro de Rede (Offline / Sem Sinal)
-    if (error.code === "ERR_NETWORK" || (typeof window !== 'undefined' && !window.navigator.onLine)) {
+    // 4. Tratamento de Erro de Rede (Offline / Sem Sinal / Timeout)
+    if (error.code === "ERR_NETWORK" || error.code === "ECONNABORTED" || (typeof window !== 'undefined' && !window.navigator.onLine)) {
+      
+      // 🚀 Log silencioso de queda de rede para o auditoria (se não for a própria rota de log)
+      if (!erroDeLog) {
+         api.post('/logs', {
+           level: 'WARNING',
+           source: 'FRONTEND',
+           message: `[API NETWORK/TIMEOUT] Falha de conexão: ${method} ${urlChamada}`,
+           stackTrace: error.stack || error.message,
+           context: {
+             ...getDeviceContext(),
+             _tipoErro: 'NETWORK_ERROR',
+             _payloadTentado: error.config?.data ? sanitizePayload(error.config.data) : 'Nenhum'
+           }
+         }).catch(() => null);
+      }
+
       if (error.config?.method && error.config.method.toLowerCase() !== 'get') {
-        // Frente 2: Peão-Mode (Salva operação localmente para tentar mais tarde)
-        
-        // Adicionando chave de idempotência para evitar que postagens lentas e offline se repitam
+        // Peão-Mode
         const headers = { ...error.config.headers };
         if (!headers['X-Idempotency-Key']) {
           headers['X-Idempotency-Key'] = crypto.randomUUID();
@@ -175,7 +188,7 @@ api.interceptors.response.use(
           headers: headers
         });
         localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
-        toast.warning("Peão Mode 👷: Você perdeu sinal. Ação salva offline e será enviada automaticamente quando voltar a internet.");
+        toast.warning("Offline Mode 👷: Você perdeu sinal. Ação salva offline e será enviada automaticamente quando voltar a internet.");
       } else {
         toast.error("Parece que você está sem sinal. Verifique a internet e tente novamente.");
       }
@@ -187,11 +200,11 @@ api.interceptors.response.use(
     if (error.response?.status && error.response.status >= 500) {
       toast.error("O sistema está momentaneamente instável. Já estamos atuando, tente novamente em alguns instantes.");
       (error as CustomAxiosError)._toastHandled = true;
-      return Promise.reject(error);
+      // Não damos return aqui para que caia no BIG BROTHER abaixo e grave o log!
     }
 
     // 6. Erros 400 (Bad Request - Validações genéricas)
-    if (error.response?.status === 400) {
+    else if (error.response?.status === 400) {
       const responseData = error.response.data as { message?: string, error?: string };
       const msgAtrelada = responseData?.message || responseData?.error;
       if (msgAtrelada && typeof msgAtrelada === 'string') {
@@ -200,15 +213,17 @@ api.interceptors.response.use(
         toast.error("Não foi possível concluir a ação. Revise os dados informados.");
       }
       (error as CustomAxiosError)._toastHandled = true;
-      return Promise.reject(error);
+      // Não damos return aqui para que caia no BIG BROTHER abaixo e grave o log!
     }
 
-    // 7. BIG BROTHER (ENVIA OS ERROS 400+ SILENCIOSAMENTE PARA A AUDITORIA)
-    // Captura TODO TIPO de erro para auditoria (conforme pedido pelo admin), ocultando dados sensíveis
+    // 7. BIG BROTHER DEFINITIVO (ENVIA OS ERROS PARA A AUDITORIA)
     if (!erroDeLog && error.response?.status && error.response.status >= 400) {
        let level = 'ERROR';
        if (error.response.status >= 400 && error.response.status < 500) {
-         level = 'WARNING'; // 4xx são mais warnings do que errors de servidor
+         level = 'WARNING'; // 4xx são problemas de regra de negócio, não queda do servidor
+       }
+       if (error.response.status >= 500) {
+         level = 'CRITICAL'; // 5xx o servidor explodiu
        }
        
        let parsedConfigData = {};
@@ -218,23 +233,20 @@ api.interceptors.response.use(
          parsedConfigData = { raw: error.config?.data };
        }
 
+       // ✨ AQUI: Usamos nosso rastreador avançado que extrai tudo do ambiente
        const context = {
          ...sanitizePayload(parsedConfigData),
-         _url: error.config?.url,
-         _method: error.config?.method?.toUpperCase(),
+         ...getDeviceContext(),
+         _url: urlChamada,
+         _method: method,
          _status: error.response.status,
-         _navigator: {
-           userAgent: navigator.userAgent,
-           language: navigator.language,
-           platform: navigator.platform,
-           screen: `${window.screen.width}x${window.screen.height}`
-         }
+         _respostaServidor: JSON.stringify(error.response.data)
        };
 
        api.post('/logs', {
           level: level,
           source: 'FRONTEND',
-          message: error.message || `Erro HTTP ${error.response.status}`,
+          message: `[API ${error.response.status}] ${method} ${urlChamada}`,
           stackTrace: JSON.stringify(error.response?.data) || null,
           context: context
        }).catch(() => null); 
@@ -243,5 +255,3 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-

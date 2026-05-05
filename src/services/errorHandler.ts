@@ -5,7 +5,7 @@
  */
 import { isAxiosError } from 'axios';
 import { toast } from 'sonner';
-import type { CustomAxiosError } from './api';
+import type { CustomAxiosError } from '../services/api'; // Ajuste o caminho se necessário
 
 /**
  * Trata erros de API de forma padronizada e amigável.
@@ -41,4 +41,20 @@ export const handleApiError = (error: unknown, mensagemPadrao: string): void => 
   toast.error(mensagemPadrao);
 };
 
-
+/**
+ * 🕵️ Extrator de Contexto Rico (Device & Environment)
+ * Captura dados do dispositivo do usuário para enriquecer os logs de auditoria
+ * simulando o comportamento de ferramentas como o Sentry.
+ */
+export const getDeviceContext = () => {
+    return {
+        _navegador: navigator.userAgent,
+        _urlAtual: window.location.href,
+        _resolucao: `${window.innerWidth}x${window.innerHeight}`,
+        _idioma: navigator.language,
+        _plataforma: navigator.platform,
+        // Pegamos o tipo de conexão (ex: 3g, 4g, wifi) se o navegador suportar (Android/Chrome)
+        _conexao: (navigator as any).connection?.effectiveType || 'Desconhecida',
+        _horaLocal: new Date().toLocaleTimeString()
+    };
+};
