@@ -43,7 +43,7 @@ export function GestaoAuditoria() {
   const resolverLog = async (id: string) => {
     try {
       await api.put(`/logs/${id}/resolver`);
-      toast.success('Registo arquivado com sucesso.');
+      toast.success('Registro arquivado com sucesso.');
       refetch();
     } catch (error) {
       toast.error('Erro ao arquivar o log.');
@@ -163,7 +163,7 @@ export function GestaoAuditoria() {
           </div>
         ) : logsFiltrados.length === 0 ? (
           <div className="flex-1 flex flex-col justify-center p-12">
-            <EmptyState icon={CheckCircle2} title="Nenhum registo encontrado" description="O filtro atual não retornou nenhum evento no log do sistema." />
+            <EmptyState icon={CheckCircle2} title="Nenhum registro encontrado" description="O filtro atual não retornou nenhum evento no log do sistema." />
           </div>
         ) : (
           <div className="divide-y divide-border/40">
