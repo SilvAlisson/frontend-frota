@@ -60,7 +60,7 @@ export function handleApiError(error: unknown, defaultMessage = 'Ocorreu um erro
         }
     }
     else if (error instanceof Error) {
-        // CORREÇÃO: Uso de import.meta.env.DEV (padrão Vite) em vez de process.env
+        //  Uso de import.meta.env.DEV (padrão Vite) em vez de process.env
         if (import.meta.env.DEV) {
             console.error('[Non-Axios Error]', error);
         }
@@ -78,4 +78,20 @@ export function handleApiError(error: unknown, defaultMessage = 'Ocorreu um erro
     return message;
 }
 
-
+/**
+ * 🕵️ PASSO 2: Extrator de Contexto Rico (Device & Environment)
+ * Captura dados do dispositivo do usuário para enriquecer os logs de auditoria
+ * simulando o comportamento de ferramentas como o Sentry.
+ */
+export const getDeviceContext = () => {
+    return {
+        _navegador: navigator.userAgent,
+        _urlAtual: window.location.href,
+        _resolucao: `${window.innerWidth}x${window.innerHeight}`,
+        _idioma: navigator.language,
+        _plataforma: navigator.platform,
+        // Pegamos o tipo de conexão (ex: 3g, 4g, wifi) se o navegador suportar (Android/Chrome)
+        _conexao: (navigator as any).connection?.effectiveType || 'Desconhecida',
+        _horaLocal: new Date().toLocaleTimeString()
+    };
+};

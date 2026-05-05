@@ -10,14 +10,12 @@ import {
   AlertCircle,
   ChevronRight 
 } from 'lucide-react';
-import { api } from '../services/api';
 import autoAnimate from '@formkit/auto-animate';
 
 // --- DESIGN SYSTEM ---
 import { Input } from './ui/Input';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
-import { ConfirmModal } from './ui/ConfirmModal';
 import { Skeleton } from './ui/Skeleton';
 import { Modal } from './ui/Modal';
 import { FormEditarJornada } from './forms/FormEditarJornada';
@@ -48,11 +46,9 @@ export function GestaoJornadas({
   isLoading = false
 }: GestaoJornadasProps) {
   
-  // Alterado para guardar o objeto completo, permitindo acesso ao kmInicio no encerramento
   const [jornadaParaEncerrar, setJornadaParaEncerrar] = useState<any | null>(null);
   const [jornadaEditandoId, setJornadaEditandoId] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
-  const [encerrando, setEncerrando] = useState(false);
 
   //  Referência para a grelha animada
   const parentRef = useRef<HTMLDivElement>(null);
@@ -250,6 +246,7 @@ export function GestaoJornadas({
             <FinalizarJornada
               jornadaParaFinalizar={jornadaParaEncerrar}
               onJornadaFinalizada={handleSuccessEncerrar}
+              permitirGaleria={true}
             />
           </div>
         )}
@@ -258,5 +255,3 @@ export function GestaoJornadas({
     </div>
   );
 }
-
-
