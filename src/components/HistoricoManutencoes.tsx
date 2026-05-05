@@ -3,8 +3,8 @@ import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import {
-  Calendar, Filter, Download, ChevronDown,
-  CheckCircle2, AlertCircle, PlayCircle, FileText, FileX, DollarSign, Wrench, Store, Search, Truck
+  Calendar, Download, ChevronDown, CheckCircle2, AlertCircle, PlayCircle, 
+  FileText, FileX, DollarSign, Wrench, Store, Truck, FilterX
 } from 'lucide-react';
 import type { OrdemServico } from '../types';
 
@@ -22,7 +22,6 @@ import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 import { DatePicker } from './ui/DatePicker';
-import { Input } from './ui/Input';
 import { TableStyles } from '../styles/table';
 import { Lightbox } from './ui/Lightbox';
 
@@ -37,7 +36,7 @@ interface HistoricoManutencoesProps {
 
 const ITENS_POR_PAGINA = 20;
 
-//  HELPER 1: Limpador Automático de Placas (Remove o prefixo da marca)
+// HELPER 1: Limpador Automático de Placas (Remove o prefixo da marca)
 const extrairPlaca = (placaBruta: string) => {
   if (!placaBruta) return '---';
   const match = placaBruta.match(/\(([^)]+)\)/);
@@ -47,7 +46,7 @@ const extrairPlaca = (placaBruta: string) => {
   return placaBruta.trim();
 };
 
-//  HELPER 2: Fim do problema de Timezone e Estouro de Layout
+// HELPER 2: Fim do problema de Timezone e Estouro de Layout
 const DateHelper = {
   getDia: (isoDate: string) => {
     if (!isoDate) return '--';
@@ -102,12 +101,12 @@ export function HistoricoManutencoes({
     veiculoId: filtroInicial?.veiculoId || '',
     dataInicio: filtroInicial?.dataInicio || '',
     dataFim: '',
-    busca: '',
-    status: ''
   });
 
   // --- ESTADO DE FILTRO LOCAL (FRONTEND) ---
   const [fornecedorIdFiltro, setFornecedorIdFiltro] = useState('');
+
+  const hasFiltrosAtivos = Boolean(filtros.dataInicio || filtros.dataFim || filtros.veiculoId || fornecedorIdFiltro);
 
   const canEdit = ['ADMIN', 'ENCARREGADO', 'COORDENADOR'].includes(userRole);
   const canDelete = ['ADMIN', 'COORDENADOR'].includes(userRole);
@@ -119,7 +118,7 @@ export function HistoricoManutencoes({
       .catch(err => console.error("Erro ao carregar fornecedores", err));
   }, []);
 
-  //  FETCHING OTIMIZADO (Correção do Erro 400 da API)
+  // FETCHING OTIMIZADO (Correção do Erro 400 da API)
   const fetchHistorico = useCallback(async () => {
     setLoading(true);
     try {
@@ -138,19 +137,13 @@ export function HistoricoManutencoes({
     fetchHistorico();
   }, [fetchHistorico]);
 
-  //  FILTRO LOCAL INTELIGENTE (Instantâneo na RAM)
+  // FILTRO LOCAL INTELIGENTE (Instantâneo na RAM limpo e otimizado)
   const historicoFiltrado = useMemo(() => {
     return historico.filter(os => {
       if (fornecedorIdFiltro && os.fornecedorId !== fornecedorIdFiltro) return false;
       if (filtros.veiculoId && os.veiculoId !== filtros.veiculoId) return false;
-      if (filtros.status && os.status !== filtros.status) return false;
       if (filtros.dataInicio && new Date(os.data) < new Date(`${filtros.dataInicio}T00:00:00`)) return false;
       if (filtros.dataFim && new Date(os.data) > new Date(`${filtros.dataFim}T23:59:59`)) return false;
-      if (filtros.busca) {
-        const search = filtros.busca.toLowerCase();
-        const terms = `${os.veiculo?.placa} ${os.fornecedor?.nome} ${os.observacoes}`.toLowerCase();
-        if (!terms.includes(search)) return false;
-      }
       return true;
     }).sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
   }, [historico, fornecedorIdFiltro, filtros]);
@@ -159,7 +152,7 @@ export function HistoricoManutencoes({
     return historicoFiltrado.reduce((acc, os) => acc + (Number(os.custoTotal) || 0), 0);
   }, [historicoFiltrado]);
 
-  //  CORREÇÃO TYPESCRIPT: O tipo real é 'PENDENTE' (Agendada) ou 'EM_ANDAMENTO'
+  // CORREÇÃO TYPESCRIPT: O tipo real é 'PENDENTE' (Agendada) ou 'EM_ANDAMENTO'
   const osAbertas = useMemo(() => {
     return historicoFiltrado.filter(m => m.status === 'PENDENTE' || m.status === 'EM_ANDAMENTO').length;
   }, [historicoFiltrado]);
@@ -190,13 +183,13 @@ export function HistoricoManutencoes({
     }
     const exportPromise = new Promise((resolve, reject) => {
       try {
-        // MAPA DE DADOS OTIMIZADO PARA O BM
+        // MAPA DE DADOS OTIMIZADO PARA O BM (Com fallback seguro para produtos)
         const dados = historicoFiltrado.map(os => ({
           'Data da OS': DateHelper.getExcel(os.data),
           'Oficina / Fornecedor': os.fornecedor?.nome || 'Não Registrada',
           'Placa do Veículo': extrairPlaca(os.veiculo?.placa || ''),
           'Categoria de Serviço': os.tipo,
-          'Serviços Realizados': (os.itens || []).map(i => `${i.quantidade}x ${i.produto.nome}`).join(' | '),
+          'Serviços Realizados': (os.itens || []).map(i => `${i.quantidade}x ${i.produto?.nome || 'Serviço'}`).join(' | '),
           'Valor Total (R$)': Number(os.custoTotal),
           'Comprovante': os.fotoComprovanteUrl ? `=HYPERLINK("${os.fotoComprovanteUrl}", "Visualizar Comprovante")` : 'Sem anexo'
         }));
@@ -231,7 +224,6 @@ export function HistoricoManutencoes({
     return <Badge variant={map[tipo] || 'neutral'}>{tipo}</Badge>;
   };
 
-  //  CORREÇÃO TYPESCRIPT: Lógica de badge alinhada com os tipos corretos
   const getBadgeStatus = (status?: string) => {
     const s = status?.toUpperCase() || 'CONCLUIDA';
     switch (s) {
@@ -260,101 +252,79 @@ export function HistoricoManutencoes({
       {/* 1. HEADER & FILTROS */}
       <PageHeader
         title="Boletim de Manutenções"
-        subtitle="Controle de manutenções KLIN. Filtre por oficina pargerando o Boletim de Medição (BM)."
+        subtitle="Controle de manutenções KLIN. Filtre por oficina para gerar o Boletim de Medição (BM)."
         actionLabel={canEdit ? "Nova Manutenção" : undefined}
         onAction={canEdit ? () => setIsNovaOSOpen(true) : undefined}
         extraAction={
           <div className="flex flex-col xl:flex-row gap-3 w-full xl:w-auto items-end bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
-             <div className="flex flex-col sm:flex-row gap-3 w-full">
-               <div className="flex-1 min-w-[200px]">
-                  <Input
-                    label="Busca Rápida"
-                    placeholder="Peça, Placa ou Oficina..."
-                    value={filtros.busca}
-                    onChange={(e) => setFiltros(prev => ({ ...prev, busca: e.target.value }))}
-                    icon={<Search className="w-4 h-4" />}
-                    containerClassName="!mb-0"
-                  />
-               </div>
-               <div className="w-full sm:w-48">
-                 {/*  CORREÇÃO TypeScript: Filtro de status usa os Enums corretos */}
-                 <Select 
-                   label="Filtrar por Status"
-                   options={[
-                     { value: '', label: 'Todos os Status' },
-                     { value: 'PENDENTE', label: 'Agendadas' },
-                     { value: 'EM_ANDAMENTO', label: 'Em Oficina' },
-                     { value: 'CONCLUIDA', label: 'Concluídas' },
-                     { value: 'CANCELADA', label: 'Canceladas' }
-                   ]}
-                   value={filtros.status}
-                   onChange={(e) => setFiltros(prev => ({ ...prev, status: e.target.value }))}
-                   icon={<Filter className="w-4 h-4" />}
-                   containerClassName="!mb-0"
-                 />
-               </div>
-             </div>
-             
-             <div className="w-px h-10 bg-border/60 hidden xl:block mx-1"></div>
-
-            <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-              <div className="flex gap-3 w-full">
-                <div className="flex-1">
+             <div className="flex gap-3 w-full">
+               <div className="flex-1">
                   <DatePicker disableFuture
                     label="Data Inicial"
                     placeholder="Início"
                     date={filtros.dataInicio ? new Date(`${filtros.dataInicio}T12:00:00`) : undefined}
                     onChange={date => setFiltros(prev => ({ ...prev, dataInicio: date ? date.toISOString().split('T')[0] : '' }))}
                   />
-                </div>
-                <div className="flex-1">
+               </div>
+               <div className="flex-1">
                   <DatePicker disableFuture
                     label="Data Final"
                     placeholder="Fim"
                     date={filtros.dataFim ? new Date(`${filtros.dataFim}T12:00:00`) : undefined}
                     onChange={date => setFiltros(prev => ({ ...prev, dataFim: date ? date.toISOString().split('T')[0] : '' }))}
                   />
-                </div>
-              </div>
-            </div>
+               </div>
+             </div>
+             
+             <div className="w-px h-10 bg-border/60 hidden xl:block mx-1"></div>
+             
+             <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
+               <div className="w-full sm:w-48">
+                 <Select 
+                   label="Filtrar Veículo"
+                   options={veiculosOptions}
+                   value={filtros.veiculoId}
+                   onChange={e => setFiltros(prev => ({ ...prev, veiculoId: e.target.value }))}
+                   icon={<Truck className="w-4 h-4" />}
+                   containerClassName="!mb-0"
+                 />
+               </div>
+               <div className="w-full sm:w-56">
+                 <Select 
+                   label="Oficina / Fornecedor"
+                   options={fornecedoresOptions}
+                   value={fornecedorIdFiltro}
+                   onChange={e => setFornecedorIdFiltro(e.target.value)}
+                   icon={<Store className="w-4 h-4" />}
+                   containerClassName="!mb-0"
+                 />
+               </div>
+             </div>
 
-            <div className="w-px h-10 bg-border/60 hidden xl:block mx-1"></div>
-
-            <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto">
-              <div className="w-full sm:w-48">
-                <Select
-                  label="Filtrar Veículo"
-                  options={veiculosOptions}
-                  value={filtros.veiculoId}
-                  onChange={e => setFiltros(prev => ({ ...prev, veiculoId: e.target.value }))}
-                  icon={<Truck className="w-4 h-4" />}
-                  containerClassName="!mb-0"
-                />
-              </div>
-
-              <div className="w-full sm:w-56">
-                <Select
-                  label="Oficina / Fornecedor"
-                  options={fornecedoresOptions}
-                  value={fornecedorIdFiltro}
-                  onChange={e => setFornecedorIdFiltro(e.target.value)}
-                  icon={<Store className="w-4 h-4" />}
-                  containerClassName="!mb-0"
-                />
-              </div>
-            </div>
-
-            <div className="w-full xl:w-auto flex items-end pb-0.5 mt-2 xl:mt-0 xl:ml-auto">
-              <Button
-                variant="secondary"
-                onClick={handleExportar}
-                icon={<Download className="w-4 h-4" />}
-                disabled={historicoFiltrado.length === 0}
-                className="w-full xl:w-auto h-11 sm:h-12 bg-sky-500/10 text-sky-600 dark:text-sky-400 hover:bg-sky-500/20 border-sky-500/20"
-              >
-                Gerar BM (Excel)
-              </Button>
-            </div>
+             <div className="w-full xl:w-auto flex flex-row items-end gap-2 pb-0.5 mt-2 xl:mt-0 xl:ml-auto">
+               {hasFiltrosAtivos && (
+                 <Button 
+                   variant="ghost" 
+                   onClick={() => {
+                     setFiltros({ veiculoId: '', dataInicio: '', dataFim: '' });
+                     setFornecedorIdFiltro('');
+                   }} 
+                   icon={<FilterX className="w-4 h-4" />}
+                   className="flex-1 xl:flex-none h-11 sm:h-12 text-text-secondary hover:text-error hover:bg-error/10 transition-colors"
+                 >
+                   Limpar
+                 </Button>
+               )}
+               <Button 
+                 variant="secondary" 
+                 onClick={handleExportar} 
+                 disabled={historicoFiltrado.length === 0}
+                 icon={<Download className="w-4 h-4" />}
+                 className="flex-1 xl:flex-none h-11 sm:h-12 bg-sky-500/10 text-sky-600 dark:text-sky-400 hover:bg-sky-500/20 border-sky-500/20"
+               >
+                 Gerar BM (Excel)
+               </Button>
+             </div>
           </div>
         }
       />
@@ -422,7 +392,7 @@ export function HistoricoManutencoes({
                   <td className={`${TableStyles.td} justify-start text-left min-w-0`}>
                     <div className="flex flex-col gap-1 max-w-[280px] min-w-0">
                       <div className="flex items-center gap-2 min-w-0 truncate">
-                        {/*  Limpeza da Placa na Tabela Desktop */}
+                        {/* Limpeza da Placa na Tabela Desktop */}
                         <span className="font-mono font-black text-primary text-base tracking-tight truncate">{extrairPlaca(os.veiculo?.placa || 'N/D')}</span>
                         <span className="text-[10px] bg-surface-hover px-1.5 py-0.5 rounded border border-border/60 font-bold uppercase tracking-widest text-text-secondary shrink-0">{os.veiculo?.modelo}</span>
                       </div>
@@ -489,7 +459,7 @@ export function HistoricoManutencoes({
                         </span>
                       </div>
                       <div className="flex flex-col justify-center min-w-0">
-                        {/*  Limpeza da Placa no Card Mobile */}
+                        {/* Limpeza da Placa no Card Mobile */}
                         <span className="font-mono font-black text-primary text-lg tracking-tight leading-none block mb-1 truncate">{extrairPlaca(os.veiculo?.placa || 'Sem Placa')}</span>
                         <span className="text-xs text-text-secondary font-medium truncate">{os.fornecedor?.nome || 'Oficina não registrada'}</span>
                         {os.observacoes && (
