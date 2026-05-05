@@ -1,7 +1,26 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { api, sanitizePayload } from '../services/api';
+import { getDeviceContext } from '../utils/errorHandler';
 import { ServerCrash, RefreshCcw } from 'lucide-react';
 import { Button } from './ui/Button';
+
+// 🍞 SISTEMA DE BREADCRUMBS: Guarda os últimos 10 cliques do usuário silenciosamente
+const MAX_BREADCRUMBS = 10;
+const breadcrumbs: string[] = [];
+
+export const addBreadcrumb = (action: string) => {
+  breadcrumbs.push(`[${new Date().toLocaleTimeString()}] ${action}`);
+  if (breadcrumbs.length > MAX_BREADCRUMBS) breadcrumbs.shift();
+};
+
+// Rastreador global de cliques (Injeta no Window sem pesar o React)
+if (typeof window !== 'undefined') {
+  window.addEventListener('click', (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const text = (target.innerText || target.getAttribute('aria-label') || target.tagName || '').substring(0, 40);
+    if (text) addBreadcrumb(`Click em: ${text.replace(/\n/g, ' ').trim()}`);
+  }, true);
+}
 
 interface Props {
   children: ReactNode;
@@ -21,37 +40,55 @@ export class ErrorBoundary extends Component<Props, State> {
     return { hasError: true };
   }
 
+  // 1. CAPTURA DE ERROS DE RENDERIZAÇÃO (O Padrão do React)
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    this.logErrorToAuditoria(error, 'REACT_RENDER_CRASH', errorInfo?.componentStack);
+  }
+
+  // 2. CAPTURA DE ERROS GLOBAIS E ASSÍNCRONOS (A Mágica do Sentry)
+  public componentDidMount() {
+    window.onerror = (message, _source, _lineno, _colno, error) => {
+      const globalError = error instanceof Error ? error : new Error(String(message));
+      this.logErrorToAuditoria(globalError, 'WINDOW_ONERROR');
+    };
+
+    window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
+      const promiseError = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
+      this.logErrorToAuditoria(promiseError, 'UNHANDLED_PROMISE');
+    });
+  }
+
+  // 🚀 O MOTOR DE ENVIO: Centraliza a formatação para não repetir código
+  private logErrorToAuditoria = (error: Error, type: string, componentStack?: string | null) => {
+    if (error.message?.includes('logs')) return;
+
     const errorData = {
       message: error.message,
       stack: error.stack,
-      componentStack: errorInfo.componentStack
+      ...(componentStack ? { componentStack } : {})
     };
 
     const context = {
       ...sanitizePayload(errorData),
-      _navigator: {
-        userAgent: navigator.userAgent,
-        language: navigator.language,
-        platform: navigator.platform,
-        screen: `${window.screen.width}x${window.screen.height}`
-      },
-      _url: window.location.href,
-      _type: 'REACT_CRASH'
+      ...getDeviceContext(),
+      _tipoErro: type,
+      _breadcrumbs: [...breadcrumbs]
     };
 
     api.post('/logs', {
       level: 'CRITICAL',
       source: 'FRONTEND',
-      message: error.message || 'React UI Crash',
+      message: `[${type}] ${error.message || 'Falha Inesperada'}`,
       stackTrace: error.stack,
       context: context
     }).then(res => {
       if (res.data?.id) {
         this.setState({ errorId: res.data.id });
       }
-    }).catch(() => null);
-  }
+    }).catch(() => {
+      console.warn('Falha ao enviar telemetria para a Central de Auditoria.');
+    });
+  };
 
   public render() {
     if (this.state.hasError) {
@@ -74,7 +111,9 @@ export class ErrorBoundary extends Component<Props, State> {
             <Button 
               variant="primary" 
               className="w-full h-12 uppercase tracking-widest text-xs font-black shadow-lg"
-              onClick={() => window.location.reload()}
+              onClick={() => {
+                window.location.href = window.location.href; 
+              }}
             >
               <RefreshCcw className="w-4 h-4 mr-2" /> Recarregar Tela
             </Button>

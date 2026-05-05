@@ -3,7 +3,7 @@ import axios from 'axios';
 import { api } from '../services/api';
 import { uploadToR2 } from '../services/uploadService';
 import { Button } from './ui/Button';
-import { Modal } from './ui/Modal'; // ✨ USAMOS O NOSSO MODAL BLINDADO!
+import { Modal } from './ui/Modal';
 import { toast } from 'sonner';
 import { Camera, Loader2, Check, AlertCircle } from 'lucide-react';
 
@@ -21,6 +21,7 @@ interface ModalProps {
   onClose: () => void;
   onSuccess: (data: any) => void;
   nested?: boolean;
+  permitirGaleria?: boolean;
 }
 
 // --- FUNÇÃO DE COMPRESSÃO ---
@@ -92,7 +93,8 @@ export function ModalConfirmacaoFoto({
   apiMethod,
   onClose,
   onSuccess,
-  nested = false
+  nested = false,
+  permitirGaleria = false
 }: ModalProps) {
 
   const [foto, setFoto] = useState<File | null>(null);
@@ -243,13 +245,14 @@ export function ModalConfirmacaoFoto({
 
             <div className={`${fileInputContainer} ${previewUrl ? 'border-transparent p-0 bg-black/5' : ''}`}>
               <input
-                type="file"
-                accept="image/*"
-                capture="environment" // ðŸ“¸ Força a abrir a câmara traseira no mobile
-                className={hiddenInput}
-                onChange={handleFileChange}
-                disabled={loading || processandoFoto}
-              />
+  type="file"
+  accept="image/*"
+  //  Se permitirGaleria for true, o React remove o capture e o celular mostra a opção de Galeria!
+  capture={permitirGaleria ? undefined : "environment"} 
+  className={hiddenInput}
+  onChange={handleFileChange}
+  disabled={loading || processandoFoto}
+/>
 
               {processandoFoto ? (
                 <div className="flex flex-col items-center justify-center py-4">
@@ -278,8 +281,8 @@ export function ModalConfirmacaoFoto({
                     <Camera className="w-10 h-10" />
                   </div>
                   <p className="text-base font-black text-text-main tracking-tight">
-                    Toque para abrir a câmera
-                  </p>
+  {permitirGaleria ? 'Toque para escolher foto da galeria ou câmera' : 'Toque para abrir a câmera'}
+</p>
                   <div className="mt-3 inline-flex items-start gap-2 bg-surface-hover py-2 px-3 rounded-xl border border-border/60 max-w-[240px]">
                     <AlertCircle className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
                     <p className="text-xs text-text-secondary font-medium leading-relaxed text-left">

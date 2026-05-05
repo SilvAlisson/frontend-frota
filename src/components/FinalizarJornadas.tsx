@@ -12,11 +12,13 @@ import type { Jornada } from '../types';
 interface FinalizarJornadaProps {
   jornadaParaFinalizar: Jornada;
   onJornadaFinalizada: () => void;
+  permitirGaleria?: boolean;
 }
 
 export function FinalizarJornada({
   jornadaParaFinalizar,
-  onJornadaFinalizada
+  onJornadaFinalizada,
+  permitirGaleria = false
 }: FinalizarJornadaProps) {
 
   const [modalAberto, setModalAberto] = useState(false);
@@ -167,10 +169,10 @@ export function FinalizarJornada({
           }}
           onClose={() => setModalAberto(false)}
           onSuccess={handleModalSuccess}
+          //  Repassando a variável para o modal:
+          permitirGaleria={permitirGaleria} 
         />
       )}
     </>
   );
 }
-
-
