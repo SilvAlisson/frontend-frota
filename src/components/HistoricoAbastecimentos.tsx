@@ -6,7 +6,7 @@ import { FormEditarAbastecimento } from './forms/FormEditarAbastecimento';
 import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
 import { useAuth } from '../contexts/AuthContext';
 import type { Abastecimento } from '../types';
-import { FileDown, Calendar, Truck, Droplets, Receipt, Gauge, DollarSign, ChevronDown, Store } from 'lucide-react';
+import { FileDown, Calendar, Truck, Droplets, Receipt, Gauge, DollarSign, ChevronDown, Store, FilterX } from 'lucide-react';
 import { GraficoCurvaAbastecimento } from './ui/GraficosFlota';
 
 // --- HOOKS ATÔMICOS ---
@@ -94,6 +94,8 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
   const [dataFimFiltro, setDataFimFiltro] = useState('');
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState(filtroInicial?.veiculoId || '');
   const [fornecedorIdFiltro, setFornecedorIdFiltro] = useState('');
+
+  const hasFiltrosAtivos = Boolean(dataInicioFiltro || dataFimFiltro || veiculoIdFiltro || fornecedorIdFiltro);
 
   const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
 
@@ -322,17 +324,32 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                </div>
              </div>
 
-             <div className="w-full xl:w-auto flex items-end pb-0.5 mt-2 xl:mt-0 xl:ml-auto">
-               <Button 
-                 variant="secondary" 
-                 onClick={handleExportar} 
-                 disabled={historicoFiltrado.length === 0}
-                 icon={<FileDown className="w-4 h-4" />}
-                 className="w-full xl:w-auto h-11 sm:h-12 bg-emerald-500/10 text-emerald-700 dark:text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20"
-               >
-                 Gerar BM (Excel)
-               </Button>
-             </div>
+             <div className="w-full xl:w-auto flex flex-row items-end gap-2 pb-0.5 mt-2 xl:mt-0 xl:ml-auto">
+                 {hasFiltrosAtivos && (
+                   <Button 
+                     variant="ghost" 
+                     onClick={() => {
+                       setDataInicioFiltro('');
+                       setDataFimFiltro('');
+                       setVeiculoIdFiltro('');
+                       setFornecedorIdFiltro('');
+                     }} 
+                     icon={<FilterX className="w-4 h-4" />}
+                     className="flex-1 xl:flex-none h-11 sm:h-12 text-text-secondary hover:text-error hover:bg-error/10 transition-colors"
+                   >
+                     Limpar
+                   </Button>
+                 )}
+                 <Button 
+                   variant="secondary" 
+                   onClick={handleExportar} 
+                   disabled={historicoFiltrado.length === 0}
+                   icon={<FileDown className="w-4 h-4" />}
+                   className="flex-1 xl:flex-none h-11 sm:h-12 bg-emerald-500/10 text-emerald-700 dark:text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20"
+                 >
+                   Gerar BM (Excel)
+                 </Button>
+               </div>
           </div>
         }
       />
