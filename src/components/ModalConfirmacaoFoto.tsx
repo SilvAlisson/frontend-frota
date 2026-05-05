@@ -245,14 +245,14 @@ export function ModalConfirmacaoFoto({
 
             <div className={`${fileInputContainer} ${previewUrl ? 'border-transparent p-0 bg-black/5' : ''}`}>
               <input
-  type="file"
-  accept="image/*"
-  //  Se permitirGaleria for true, o React remove o capture e o celular mostra a opção de Galeria!
-  capture={permitirGaleria ? undefined : "environment"} 
-  className={hiddenInput}
-  onChange={handleFileChange}
-  disabled={loading || processandoFoto}
-/>
+                type="file"
+                accept="image/*"
+                // Se permitirGaleria for true, o React remove o capture e o celular mostra a opção de Galeria!
+                capture={permitirGaleria ? undefined : "environment"} 
+                className={hiddenInput}
+                onChange={handleFileChange}
+                disabled={loading || processandoFoto}
+              />
 
               {processandoFoto ? (
                 <div className="flex flex-col items-center justify-center py-4">
@@ -281,8 +281,8 @@ export function ModalConfirmacaoFoto({
                     <Camera className="w-10 h-10" />
                   </div>
                   <p className="text-base font-black text-text-main tracking-tight">
-  {permitirGaleria ? 'Toque para escolher foto da galeria ou câmera' : 'Toque para abrir a câmera'}
-</p>
+                    {permitirGaleria ? 'Toque para escolher foto da galeria ou câmera' : 'Toque para abrir a câmera'}
+                  </p>
                   <div className="mt-3 inline-flex items-start gap-2 bg-surface-hover py-2 px-3 rounded-xl border border-border/60 max-w-[240px]">
                     <AlertCircle className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
                     <p className="text-xs text-text-secondary font-medium leading-relaxed text-left">
@@ -295,7 +295,7 @@ export function ModalConfirmacaoFoto({
           </div>
         </div>
 
-        {/* ðŸ”¥ RODAPÉ STICKY (O truque -mx-5 -mb-5 cola-o aos limites do Modal) ðŸ”¥ */}
+        {/* 🔥 RODAPÉ STICKY (O truque -mx-5 -mb-5 cola-o aos limites do Modal) 🔥 */}
         <div className="mt-auto pt-5 border-t border-border/60 bg-surface flex gap-3 pb-safe -mx-5 -mb-5 p-5 sticky bottom-0 z-10 rounded-b-[2rem]">
           <Button
             type="button"
@@ -322,5 +322,3 @@ export function ModalConfirmacaoFoto({
     </Modal>
   );
 }
-
-
