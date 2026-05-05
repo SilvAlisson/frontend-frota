@@ -1,4 +1,3 @@
-// src/components/forms/FormRegistrarManutencao/index.tsx
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
@@ -12,7 +11,7 @@ import { parseDecimal } from '../../../utils';
 import { desformatarDinheiro } from '../../../lib/formatters';
 import { useVeiculos } from '../../../hooks/useVeiculos';
 
-// ðŸ”¥ CORREÇÃO: Importando tipos com a sintaxe 'type'
+// Importando tipos com a sintaxe 'type'
 import { manutencaoSchema } from './schema';
 import type { ManutencaoFormValues, PayloadOrdemServico } from './schema';
 
@@ -61,6 +60,16 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
     else if (step === 2) isValid = await trigger('itens');
     
     if (isValid) setStep(s => s + 1);
+  };
+
+  // 🛡️  Interceptador de Submit para evitar o "Atropelamento" do Passo 3
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Segura o ímpeto do navegador de enviar o form
+    if (step < 3) {
+      nextStep(); // Se apertou Enter ou um botão submeteu sem querer, apenas avança a etapa
+    } else {
+      handleSubmit(onSubmit)(e); // Se está no último passo, aí sim dispara a Câmera/API
+    }
   };
 
   const onSubmit = async (data: ManutencaoFormValues) => {
@@ -129,9 +138,10 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
         </div>
       </div>
 
-      {/* ðŸ”¥ MÁGICA: O FormProvider distribui o estado para todos os componentes filhos silenciosamente */}
+      {/* 🔥 MÁGICA: O FormProvider distribui o estado para todos os componentes filhos silenciosamente */}
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col min-h-0">
+        {/* Usamos o nosso interceptador no lugar do handleSubmit direto */}
+        <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 custom-scrollbar">
             {step === 1 && <Step1DadosGerais />}
             {step === 2 && <Step2ItensServicos />}
@@ -173,7 +183,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
           kmParaConfirmar={null}
           // 🔒 007 FIX: nested={true} → Vaul trata corretamente drawer-dentro-drawer no mobile
           nested={true}
-          // 🔥 CORREÇÃO: veiculoId já pode ser null pelo schema, então passamos direto!
+          //  veiculoId já pode ser null pelo schema, então passamos direto!
           jornadaId={formDataParaModal.veiculoId} 
           onClose={() => setModalAberto(false)}
           onSuccess={handleSuccess}
@@ -182,5 +192,3 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
     </div>
   );
 }
-
-

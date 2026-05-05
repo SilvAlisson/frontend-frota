@@ -50,7 +50,7 @@ export function FormRegistrarAbastecimento({
       operadorId: (usuarioLogado?.role === 'OPERADOR' ? (usuarioLogado.id ?? '') : ''),
       fornecedorId: '',
       dataHora: new Date().toISOString().slice(0, 16),
-      observacoes: '', // ✨ Adicionado default value para observações
+      observacoes: '',
       itens: [{ produtoId: '', quantidade: '0' as unknown as number, valorUnitario: '' }]
     },
     mode: 'onBlur',
@@ -68,6 +68,16 @@ export function FormRegistrarAbastecimento({
     if (isValid) setStep(s => s + 1);
   };
 
+  // 🛡️ Interceptador de Submit para evitar o "Atropelamento" do Passo 3
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault(); // Segura o ímpeto do navegador de enviar o form
+    if (step < 3) {
+      nextStep(); // Se apertou Enter ou um botão submeteu sem querer, apenas avança a etapa
+    } else {
+      handleSubmit(onSubmit)(e); // Se está no último passo, aí sim dispara a validação final e Câmera/API
+    }
+  };
+
   const onSubmit = async (data: AbastecimentoFormValues) => {
     const veiculo = veiculos.find((v: Veiculo) => v.id === data.veiculoId);
     const ultimoKm = veiculo?.ultimoKm || 0;
@@ -83,7 +93,7 @@ export function FormRegistrarAbastecimento({
       fornecedorId: data.fornecedorId,
       kmOdometro:  kmInputFloat,
       dataHora:    new Date(data.dataHora).toISOString(),
-      observacoes: data.observacoes || undefined, // ✨ CORREÇÃO AQUI: Agora a observação vai para o Backend!
+      observacoes: data.observacoes || undefined,
       itens: data.itens.map(i => {
         const qtd  = Number(i.quantidade);
         const unit = desformatarDinheiro(String(i.valorUnitario));
@@ -132,7 +142,8 @@ export function FormRegistrarAbastecimento({
       </div>
 
       <FormProvider {...methods}>
-        <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col min-h-0">
+        {/* 🔥 Form agora usa nosso Interceptador de Submit */}
+        <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 custom-scrollbar">
             {step === 1 && <Step1DadosOperacionais />}
             {step === 2 && <Step2DadosFinanceiros />}
