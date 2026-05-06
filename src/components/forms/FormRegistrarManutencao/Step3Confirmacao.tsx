@@ -1,7 +1,7 @@
 ﻿// src/components/forms/FormRegistrarManutencao/Step3Confirmacao.tsx
 import { useFormContext } from 'react-hook-form';
 import { useMemo } from 'react';
-import { DollarSign, FileText } from 'lucide-react';
+import { DollarSign, AlertTriangle } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { Callout } from '../../ui/Callout'; 
@@ -42,19 +42,28 @@ export function Step3Confirmacao() {
               {tipoManutencao}
             </Badge>
             <Badge variant="neutral" className="bg-surface/10 text-surface border-surface/20 shadow-sm">
-              {/*  */}
               {alvoSelecionado === 'VEICULO' ? 'VEÍCULO' : 'EQUIPAMENTO'}
             </Badge>
           </div>
         </div>
       </Card>
 
-      <Callout variant="info" title="Auditoria Financeira" icon={FileText}>
-        Confira os valores antes de salvar. Este montante será deduzido do orçamento operacional da frota no DRE deste mês.
+      {/* 🔥 CALLOUT ATUALIZADO COM EFEITO PULSE E DESTAQUE NO VALOR */}
+      <Callout variant="warning" title="Atenção: Auditoria Financeira" icon={AlertTriangle}>
+        <div className="flex flex-col gap-1.5 mt-1">
+          <span className="text-sm font-medium">Confira os valores antes de salvar.</span>
+          
+          <strong className="text-base sm:text-lg text-amber-700 dark:text-amber-500 animate-pulse flex items-center gap-1">
+            O valor total do serviço foi realmente <span className="bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/30">{formatCurrency(totalGeral)}</span>?
+          </strong>
+          
+          <span className="text-xs opacity-80 mt-1">
+            Este montante será deduzido do orçamento operacional da frota no DRE deste mês.
+          </span>
+        </div>
       </Callout>
 
       <div className="bg-surface p-1 rounded-2xl">
-        {/*  Título atualizado para reforçar a função de observação */}
         <label className="block text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-2 ml-2 mt-2">
           Parecer Técnico / Observações
         </label>

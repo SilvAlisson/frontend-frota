@@ -1,4 +1,3 @@
-// src/components/forms/FormRegistrarAbastecimento/index.tsx
 import { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -59,22 +58,19 @@ export function FormRegistrarAbastecimento({
 
   const { handleSubmit, trigger, formState: { isSubmitting } } = methods;
 
-  const nextStep = async () => {
-    const fieldsByStep: Record<number, (keyof AbastecimentoFormValues)[]> = {
-      1: ['veiculoId', 'operadorId', 'kmAtual', 'dataHora'],
-      2: ['fornecedorId', 'itens']
-    };
-    const isValid = await trigger(fieldsByStep[step]);
-    if (isValid) setStep(s => s + 1);
-  };
-
-  // 🛡️ Interceptador de Submit para evitar o "Atropelamento" do Passo 3
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); // Segura o ímpeto do navegador de enviar o form
-    if (step < 3) {
-      nextStep(); // Se apertou Enter ou um botão submeteu sem querer, apenas avança a etapa
-    } else {
-      handleSubmit(onSubmit)(e); // Se está no último passo, aí sim dispara a validação final e Câmera/API
+  // 🛡️ Interceptador Blindado (Controla tudo de forma síncrona e barra o clique fantasma)
+  const handleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault(); 
+    e.stopPropagation(); // 🔥 Mata o Event Bubbling na hora
+    
+    if (step === 1) {
+      const isValid = await trigger(['veiculoId', 'operadorId', 'kmAtual', 'dataHora']);
+      if (isValid) setStep(2);
+    } else if (step === 2) {
+      const isValid = await trigger(['fornecedorId', 'itens']);
+      if (isValid) setStep(3);
+    } else if (step === 3) {
+      await handleSubmit(onSubmit)(e); // Apenas no passo 3 a validação e envio final acontecem
     }
   };
 
@@ -142,7 +138,6 @@ export function FormRegistrarAbastecimento({
       </div>
 
       <FormProvider {...methods}>
-        {/* 🔥 Form agora usa nosso Interceptador de Submit */}
         <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 custom-scrollbar">
             {step === 1 && <Step1DadosOperacionais />}
@@ -174,10 +169,10 @@ export function FormRegistrarAbastecimento({
               </Button>
             )}
 
+            {/* O comentário problemático foi removido. Botão segue blindado como type="submit" */}
             {step < 3 ? (
               <Button
-                type="button"
-                onClick={nextStep}
+                type="submit"
                 className="flex-[2]"
                 icon={<ChevronRight className="w-5 h-5" />}
                 disabled={isSubmitting}
@@ -225,8 +220,8 @@ export function FormRegistrarAbastecimento({
         <ModalConfirmacaoFoto
           titulo="Comprovante e Finalização"
           dadosJornada={payload}
-          kmParaConfirmar={payload.kmOdometro}
-          jornadaId={payload.veiculoId}
+          kmParaConfirmar={payload!.kmOdometro}
+          jornadaId={payload!.veiculoId}
           apiEndpoint="/abastecimentos"
           apiMethod="POST"
           onClose={() => setModalConfirmacao(false)}
