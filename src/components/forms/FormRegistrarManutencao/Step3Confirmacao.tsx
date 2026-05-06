@@ -57,9 +57,6 @@ export function Step3Confirmacao() {
             O valor total do serviço foi realmente <span className="bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/30">{formatCurrency(totalGeral)}</span>?
           </strong>
           
-          <span className="text-xs opacity-80 mt-1">
-            Este montante será deduzido do orçamento operacional da frota no DRE deste mês.
-          </span>
         </div>
       </Callout>
 
