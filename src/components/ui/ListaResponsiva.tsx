@@ -24,20 +24,20 @@ export function ListaResponsiva<T extends { id?: string | number }>({
   renderDesktop,
   renderMobile,
   desktopHeader,
-  desktopGridCols = "grid-flow-col auto-cols-fr", // Fallback de segurança
+  desktopGridCols = "grid-flow-col auto-cols-fr",
   getRowClassName,
   isInteractive = true,
   virtualized = false,
   virtualContainerHeight = "600px"
 }: ListaResponsivaProps<T>) {
 
-  //  Refs para os contentores que vão receber os itens
+  // Refs para os contentores que vão receber os itens
   const desktopParentRef = useRef<HTMLTableSectionElement>(null);
   const mobileParentRef = useRef<HTMLDivElement>(null);
   const virtualDesktopContainerRef = useRef<HTMLDivElement>(null);
   const virtualMobileContainerRef = useRef<HTMLDivElement>(null);
 
-  //  Ativamos o auto-animate APENAS se não for virtualizado
+  // Ativamos o auto-animate APENAS se não for virtualizado
   useEffect(() => {
     if (!virtualized) {
       if (desktopParentRef.current) autoAnimate(desktopParentRef.current);
@@ -81,11 +81,13 @@ export function ListaResponsiva<T extends { id?: string | number }>({
       {/* 💻 DESKTOP (Tabela Premium - Agora blindada com CSS Grid) */}
       <div 
         ref={virtualized ? virtualDesktopContainerRef : null}
-        className={`hidden md:block animate-in fade-in slide-in-from-bottom-2 duration-500 ${TableStyles.wrapper} ${virtualized ? 'overflow-y-auto custom-scrollbar' : ''}`}
+        //  Adicionado min-w-0, w-full e max-w-full para impedir o estouro da página
+        className={`hidden md:block animate-in fade-in slide-in-from-bottom-2 duration-500 w-full max-w-full min-w-0 ${TableStyles.wrapper} ${virtualized ? 'overflow-y-auto custom-scrollbar' : ''}`}
         style={virtualized ? { height: virtualContainerHeight } : {}}
       >
-        <div className="overflow-x-auto min-h-full">
-          {/*  CORREÇÃO: Tabela forçada a block com largura mínima para proteger o Grid */}
+        {/*  Forçado w-full na div que gera o scroll horizontal */}
+        <div className="overflow-x-auto min-h-full w-full custom-scrollbar">
+          {/* CORREÇÃO: Tabela forçada a block com largura mínima para proteger o Grid */}
           <table className="w-full text-sm text-left border-collapse block min-w-[1050px]">
             <thead className={`w-full block ${virtualized ? "sticky top-0 z-10 bg-surface shadow-sm" : ""}`}>
               <tr className={`w-full grid ${desktopGridCols}`}>{desktopHeader}</tr>
@@ -143,7 +145,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
       {/* 📱 MOBILE (Cards Flutuantes - Mantidos Intactos) */}
       <div 
         ref={virtualized ? virtualMobileContainerRef : mobileParentRef}
-        className={`md:hidden space-y-4 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${virtualized ? 'overflow-y-auto custom-scrollbar relative' : ''}`}
+        className={`md:hidden space-y-4 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-full min-w-0 ${virtualized ? 'overflow-y-auto custom-scrollbar relative' : ''}`}
         style={virtualized ? { height: virtualContainerHeight } : {}}
       >
         {virtualized ? (
@@ -175,7 +177,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                   {!customClass.includes('ghost-row') && (
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/80 to-primary/40 rounded-l-[1.25rem] opacity-70" />
                   )}
-                  <div className="pl-2">
+                  <div className="pl-2 w-full min-w-0">
                     {renderMobile(item, idx)}
                   </div>
                 </div>
@@ -192,7 +194,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                 key={cardKey}
                 className={`
                   p-5 rounded-[1.25rem] shadow-sm border border-border/60 relative overflow-hidden 
-                  active:scale-[0.98] transition-all duration-300 bg-surface hover:shadow-md
+                  active:scale-[0.98] transition-all duration-300 bg-surface hover:shadow-md w-full max-w-full min-w-0
                   ${customClass} ${cursorClass}
                 `}
               >
@@ -200,7 +202,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                   <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/80 to-primary/40 rounded-l-[1.25rem] opacity-70" />
                 )}
 
-                <div className="pl-2">
+                <div className="pl-2 w-full min-w-0">
                   {renderMobile(item, idx)}
                 </div>
               </div>
