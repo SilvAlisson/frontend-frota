@@ -1,7 +1,7 @@
 ﻿// src/components/forms/FormRegistrarAbastecimento/Step3Confirmacao.tsx
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { DollarSign, Info } from 'lucide-react';
+import { DollarSign, AlertTriangle } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Callout } from '../../ui/Callout'; 
 import { formatCurrency } from '../../../utils';
@@ -11,7 +11,7 @@ import type { AbastecimentoFormValues } from './schema';
 import type { Veiculo } from '../../../types';
 
 export function Step3Confirmacao() {
-  // ✨ Extraído o register e isSubmitting do hook
+  //  Extraído o register e isSubmitting do hook
   const { watch, register, formState: { isSubmitting } } = useFormContext<AbastecimentoFormValues>();
   const { data: veiculos = [] } = useVeiculos();
 
@@ -56,11 +56,22 @@ export function Step3Confirmacao() {
         </div>
       </div>
 
-      <Callout variant="info" title="Auditoria Fiscal" icon={Info}>
-        Verifique se o valor total e as quantidades coincidem exatamente com o cupão fiscal emitido pelo posto. Uma vez confirmado, este Registro irá impactar o <strong>Custo por KM (CPK)</strong> da frota imediatamente.
+      {/* 🔥 CALLOUT ATUALIZADO COM EFEITO PULSE E DESTAQUE NO VALOR */}
+      <Callout variant="warning" title="Atenção: Auditoria Fiscal" icon={AlertTriangle}>
+        <div className="flex flex-col gap-1.5 mt-1">
+          <span className="text-sm font-medium">Verifique se os valores coincidem com o cupão fiscal.</span>
+          
+          <strong className="text-base sm:text-lg text-amber-700 dark:text-amber-500 animate-pulse flex items-center gap-1">
+            O valor total do abastecimento foi realmente <span className="bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/30">{formatCurrency(totalGeral)}</span>?
+          </strong>
+          
+          <span className="text-xs opacity-80 mt-1">
+            Uma vez confirmado, este registro irá impactar o <strong>Custo por KM (CPK)</strong> da frota imediatamente.
+          </span>
+        </div>
       </Callout>
 
-      {/* ✨ CAIXA DE OBSERVAÇÕES ADICIONADA */}
+      {/*  CAIXA DE OBSERVAÇÕES ADICIONADA */}
       <div className="bg-surface p-1 rounded-2xl">
         <label className="block text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-2 ml-2 mt-2">
           Observações / Justificativa
