@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -54,25 +54,50 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
 
   const { handleSubmit, trigger, reset, formState: { isSubmitting } } = methods;
 
+  // 🕵️ LOG 1: Observador de mudança de tela
+  useEffect(() => {
+    console.log(`[DEBUG_KLIN] 🔄 TELA RENDERIZADA: A variável 'step' agora é -> ${step}`);
+  }, [step]);
+
   const nextStep = async () => {
-    let isValid = false;
-    if (step === 1) isValid = await trigger(['alvo', 'veiculoId', 'fornecedorId', 'data', 'kmAtual', 'numeroCA', 'tipo']);
-    else if (step === 2) isValid = await trigger('itens');
+    console.log(`[DEBUG_KLIN] ⏩ 'nextStep' foi clicado/chamado. Step ANTES de validar: ${step}`);
     
-    if (isValid) setStep(s => s + 1);
+    let isValid = false;
+    if (step === 1) {
+      console.log("[DEBUG_KLIN] ⏳ ZOD: Disparando validação do Step 1...");
+      isValid = await trigger(['alvo', 'veiculoId', 'fornecedorId', 'data', 'kmAtual', 'numeroCA', 'tipo']);
+    } else if (step === 2) {
+      console.log("[DEBUG_KLIN] ⏳ ZOD: Disparando validação do Step 2...");
+      isValid = await trigger('itens');
+    }
+    
+    console.log(`[DEBUG_KLIN] 📊 Resultado da validação do Zod para o Step ${step}: ${isValid ? 'PASSOU ✅' : 'FALHOU ❌'}`);
+    
+    if (isValid) {
+      setStep(s => {
+        console.log(`[DEBUG_KLIN] 🔄 Atualizando a variável 'step' de ${s} para ${s + 1}`);
+        return s + 1;
+      });
+    }
   };
 
-  // 🛡️  Interceptador de Submit para evitar o "Atropelamento" do Passo 3
+  // 🛡️ Interceptador de Submit
   const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); // Segura o ímpeto do navegador de enviar o form
+    e.preventDefault(); 
+    console.log(`[DEBUG_KLIN] 🛑 'handleFormSubmit' interceptou um evento <form onSubmit>! Variável step atual: ${step}`);
+    
     if (step < 3) {
-      nextStep(); // Se apertou Enter ou um botão submeteu sem querer, apenas avança a etapa
+      console.log(`[DEBUG_KLIN] ➡️ Redirecionando evento nativo de envio para a função 'nextStep()'`);
+      nextStep(); 
     } else {
-      handleSubmit(onSubmit)(e); // Se está no último passo, aí sim dispara a Câmera/API
+      console.log(`[DEBUG_KLIN] 🚀 Tudo ok! Disparando handleSubmit(onSubmit) oficial do React Hook Form...`);
+      handleSubmit(onSubmit)(e); 
     }
   };
 
   const onSubmit = async (data: ManutencaoFormValues) => {
+    console.log("[DEBUG_KLIN] 🎯 'onSubmit' FINAL DA TELA 3 ALCANÇADO! Dados gerados:", data);
+    
     let kmInputFloat = null;
     
     if (data.alvo === 'VEICULO' && data.kmAtual) {
@@ -105,6 +130,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       }))
     };
 
+    console.log("[DEBUG_KLIN] 📸 Chamando abertura da Câmera (setModalAberto: true)");
     setFormDataParaModal(payload);
     setModalAberto(true);
   };
@@ -138,9 +164,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
         </div>
       </div>
 
-      {/* 🔥 MÁGICA: O FormProvider distribui o estado para todos os componentes filhos silenciosamente */}
       <FormProvider {...methods}>
-        {/* Usamos o nosso interceptador no lugar do handleSubmit direto */}
         <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 custom-scrollbar">
             {step === 1 && <Step1DadosGerais />}
@@ -181,9 +205,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
           apiEndpoint="/manutencoes"
           apiMethod="POST"
           kmParaConfirmar={null}
-          // 🔒 007 FIX: nested={true} → Vaul trata corretamente drawer-dentro-drawer no mobile
           nested={true}
-          //  veiculoId já pode ser null pelo schema, então passamos direto!
           jornadaId={formDataParaModal.veiculoId} 
           onClose={() => setModalAberto(false)}
           onSuccess={handleSuccess}
