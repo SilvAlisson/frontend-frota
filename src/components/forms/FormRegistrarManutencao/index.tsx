@@ -44,6 +44,8 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       alvo: finalVeiculoId ? 'VEICULO' : 'VEICULO',
       veiculoId: finalVeiculoId || '',
       planoManutencaoId: planoManutencaoId || '',
+      fornecedorId: '',
+      kmAtual: '',
       tipo: planoManutencaoId ? 'PREVENTIVA' : 'CORRETIVA',
       data: new Date().toISOString().slice(0, 10),
       observacoes: '',
@@ -84,6 +86,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
   // 🛡️ Interceptador de Submit
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault(); 
+    e.stopPropagation(); // 🔥 Corta a propagação do clique fantasma
     console.log(`[DEBUG_KLIN] 🛑 'handleFormSubmit' interceptou um evento <form onSubmit>! Variável step atual: ${step}`);
     
     if (step < 3) {
@@ -185,7 +188,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
             )}
 
             {step < 3 ? (
-              <Button type="button" onClick={nextStep} className="flex-[2]" icon={<ChevronRight className="w-5 h-5" />} disabled={isSubmitting}>
+              <Button type="submit" className="flex-[2]" icon={<ChevronRight className="w-5 h-5" />} disabled={isSubmitting}>
                 Continuar
               </Button>
             ) : (
