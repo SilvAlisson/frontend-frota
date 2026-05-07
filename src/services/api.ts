@@ -100,7 +100,18 @@ export const api = axios.create({
 
 // --- Interceptor de Requisição ---
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
+  (config: InternalAxiosRequestConfig & { metadata?: any }) => {
+    
+    // 🔥 MÁGICA DO OFFLINE-FIRST: Corte instantâneo sem esperar 30s de timeout!
+    if (typeof window !== 'undefined' && !window.navigator.onLine) {
+      // Se não for um GET, cancela agora mesmo e empurra pro erro de rede para salvar na fila
+      if (config.method && config.method.toUpperCase() !== 'GET') {
+        const controller = new AbortController();
+        config.signal = controller.signal;
+        controller.abort("USER_IS_OFFLINE");
+      }
+    }
+
     const token = sessionStorage.getItem('authToken');
 
     const isAuthRoute =
@@ -112,6 +123,9 @@ api.interceptors.request.use(
       config.headers.Authorization = `Bearer ${token}`;
     }
 
+    // ⏱️ Injeta o relógio para medir a latência exata
+    config.metadata = { startTime: new Date() };
+
     return config;
   },
   (error) => {
@@ -122,11 +136,28 @@ api.interceptors.request.use(
 // --- Interceptor de Resposta ---
 api.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  (error: AxiosError & { config: { metadata?: { startTime: Date } } }) => {
 
     const erroDeLog = !!error.config?.url?.includes('/logs');
     const method = error.config?.method?.toUpperCase() || 'HTTP';
     const urlChamada = error.config?.url || 'Desconhecida';
+
+    // ⏱️ Calcula a latência exata da falha
+    const endTime = new Date();
+    const duration = error.config?.metadata?.startTime 
+      ? endTime.getTime() - error.config.metadata.startTime.getTime() 
+      : 0;
+
+    // 👤 Busca o operador logado para enriquecer o log
+    let userLogadoInfo = "Deslogado / Desconhecido";
+    try {
+      // Procura por variações comuns de chave de usuário no localStorage/sessionStorage
+      const userStorage = localStorage.getItem('klin_user') || sessionStorage.getItem('klin_user') || localStorage.getItem('user');
+      if (userStorage) {
+        const user = JSON.parse(userStorage);
+        userLogadoInfo = `ID: ${user.id} | Nome: ${user.nome} | Cargo: ${user.role}`;
+      }
+    } catch (e) { /* Silencioso */ }
 
     // 1. Tratamento de Sessão Expirada (401)
     if (error.response?.status === 401) {
@@ -153,19 +184,29 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // 4. Tratamento de Erro de Rede (Offline / Sem Sinal / Timeout)
-    if (error.code === "ERR_NETWORK" || error.code === "ECONNABORTED" || (typeof window !== 'undefined' && !window.navigator.onLine)) {
+    // 4. Tratamento de Erro de Rede (Offline / Sem Sinal / Timeout / Abortado instantâneo)
+    if (
+      error.code === "ERR_NETWORK" || 
+      error.code === "ECONNABORTED" || 
+      error.code === "ERR_CANCELED" || // Captura o abort instantâneo do Offline-First
+      error.message === "USER_IS_OFFLINE" ||
+      (typeof window !== 'undefined' && !window.navigator.onLine)
+    ) {
       
-      // 🚀 Log silencioso de queda de rede para o auditoria (se não for a própria rota de log)
+      // 🚀 Log silencioso ENRIQUECIDO de queda de rede para a auditoria
       if (!erroDeLog) {
          api.post('/logs', {
            level: 'WARNING',
            source: 'FRONTEND',
-           message: `[API NETWORK/TIMEOUT] Falha de conexão: ${method} ${urlChamada}`,
+           message: `[API NETWORK_ERROR] Falha de conexão: ${method} ${urlChamada}`,
            stackTrace: error.stack || error.message,
            context: {
              ...getDeviceContext(),
              _tipoErro: 'NETWORK_ERROR',
+             _dataHoraBatida: new Date().toLocaleString('pt-BR'),
+             _usuarioLogado: userLogadoInfo,
+             _tempoTentandoConectarMs: duration,
+             _possivelMotivo: duration >= 30000 ? 'Timeout - Conexão Lenta/DB Travado' : 'Sem Internet / Queda Seca (Offline-First)',
              _payloadTentado: error.config?.data ? sanitizePayload(error.config.data) : 'Nenhum'
            }
          }).catch(() => null);
@@ -216,7 +257,7 @@ api.interceptors.response.use(
       // Não damos return aqui para que caia no BIG BROTHER abaixo e grave o log!
     }
 
-    // 7. BIG BROTHER DEFINITIVO (ENVIA OS ERROS PARA A AUDITORIA)
+    // 7. BIG BROTHER DEFINITIVO (ENVIA OS ERROS PARA A AUDITORIA COM LATÊNCIA)
     if (!erroDeLog && error.response?.status && error.response.status >= 400) {
        let level = 'ERROR';
        if (error.response.status >= 400 && error.response.status < 500) {
@@ -233,10 +274,12 @@ api.interceptors.response.use(
          parsedConfigData = { raw: error.config?.data };
        }
 
-       // ✨ AQUI: Usamos nosso rastreador avançado que extrai tudo do ambiente
        const context = {
          ...sanitizePayload(parsedConfigData),
          ...getDeviceContext(),
+         _dataHoraBatida: new Date().toLocaleString('pt-BR'),
+         _usuarioLogado: userLogadoInfo,
+         _tempoDeRespostaMs: duration,
          _url: urlChamada,
          _method: method,
          _status: error.response.status,
