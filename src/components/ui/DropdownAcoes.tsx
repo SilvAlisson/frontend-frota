@@ -2,13 +2,14 @@ import React from 'react';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 import { MoreVertical, Edit2, Trash2, Eye } from 'lucide-react';
 import { Button } from './Button';
+import { Tooltip, TooltipTrigger, TooltipContent } from './Tooltip';
 
 interface DropdownAcoesProps {
   onEditar?: () => void;
   onExcluir?: () => void;
   onVerDetalhes?: () => void;
   align?: 'start' | 'center' | 'end';
-  children?: React.ReactNode; // ðŸ”¥ Permite injetar opções extras em telas específicas!
+  children?: React.ReactNode; 
 }
 
 export function DropdownAcoes({ 
@@ -21,10 +22,12 @@ export function DropdownAcoes({
   
   return (
     <DropdownMenu.Root>
-      <DropdownMenu.Trigger asChild>
-        <Button 
-          variant="ghost" 
-          size="icon"
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DropdownMenu.Trigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon"
           // ðŸ›¡ï¸ Impede que o clique nos 3 pontinhos ative o clique da linha da tabela
           onClick={(e) => e.stopPropagation()} 
           className="md:h-9 md:w-9 h-11 w-11 p-0 flex items-center justify-center rounded-xl text-text-muted hover:text-primary hover:bg-primary/10"
@@ -33,6 +36,9 @@ export function DropdownAcoes({
           <MoreVertical className="w-5 h-5" />
         </Button>
       </DropdownMenu.Trigger>
+      </TooltipTrigger>
+      <TooltipContent side="left">Opções</TooltipContent>
+    </Tooltip>
 
       <DropdownMenu.Portal>
         <DropdownMenu.Content 
