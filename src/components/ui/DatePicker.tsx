@@ -1,4 +1,3 @@
-// src/components/ui/DatePicker.tsx
 import * as React from "react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -16,6 +15,7 @@ export interface DatePickerProps {
   placeholder?: string;
   disabled?: boolean;
   disableFuture?: boolean;
+  containerClassName?: string;
 }
 
 export function DatePicker({
@@ -26,11 +26,12 @@ export function DatePicker({
   placeholder = "Selecione uma data",
   disabled,
   disableFuture = false,
+  containerClassName,
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
 
   return (
-    <div className="flex flex-col gap-1.5 w-full">
+    <div className={cn("flex flex-col gap-1.5 w-full", containerClassName)}>
       {label && (
         <label className="text-xs font-bold text-text-secondary uppercase tracking-wider select-none ml-1">
           {label}
@@ -60,13 +61,12 @@ export function DatePicker({
             sideOffset={4}
             className="z-[9999] p-3 bg-surface rounded-2xl border border-border/60 shadow-float data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
           >
-            {/* O Calendário usando DayPicker */}
             <DayPicker
               mode="single"
               selected={date}
               onSelect={(newDate) => {
                 onChange?.(newDate);
-                setIsOpen(false); // Fecha o calendário ao selecionar
+                setIsOpen(false);
               }}
               disabled={disableFuture ? { after: new Date() } : undefined}
               locale={ptBR}
@@ -109,5 +109,3 @@ export function DatePicker({
     </div>
   );
 }
-
-
