@@ -1,5 +1,4 @@
-﻿// src/components/forms/FormRegistrarManutencao/Step1DadosGerais.tsx
-import { useEffect, useMemo, useState } from 'react';
+﻿import { useEffect, useMemo, useState } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { Wrench, Truck, Gauge, AlertTriangle } from 'lucide-react';
 import { Input } from '../../ui/Input';
@@ -61,9 +60,14 @@ export function Step1DadosGerais() {
   }, [veiculoIdSelecionado, alvoSelecionado]);
 
   return (
-    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
+    <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-2">
       
-      {/* SELEÇÃO DO TIPO (CORRETIVA / PREVENTIVA) */}
+      {/* SEÇÃO 1: NATUREZA DO SERVIÇO */}
+      <div className="flex items-center gap-2 border-b border-border/50 pb-2">
+        <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
+        <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Natureza do Serviço</label>
+      </div>
+
       <div className="grid grid-cols-2 gap-2 bg-surface-hover/80 p-1.5 rounded-[1rem] border border-border/60 shadow-inner">
         {['CORRETIVA', 'PREVENTIVA'].map((t) => (
           <button
@@ -83,7 +87,6 @@ export function Step1DadosGerais() {
         ))}
       </div>
 
-      {/* SELEÇÃO DO ALVO */}
       <div className="flex flex-col sm:flex-row gap-3">
         {['VEICULO', 'OUTROS'].map(alvo => (
           <label key={alvo} className={`flex items-center gap-3 cursor-pointer p-3.5 border rounded-2xl w-full transition-all duration-200 select-none ${alvoSelecionado === alvo ? 'border-primary bg-primary/5 shadow-sm' : 'border-border/60 hover:bg-surface-hover/50 hover:border-primary/30'}`}>
@@ -95,15 +98,21 @@ export function Step1DadosGerais() {
               className="accent-primary w-4 h-4 cursor-pointer"
             />
             <span className="text-sm font-black text-text-main tracking-wide">
-              {alvo === 'VEICULO' ? 'Veículo da Frota' : 'Equipemento Externo'}
+              {alvo === 'VEICULO' ? 'Veículo da Frota' : 'Equipamento Externo'}
             </span>
           </label>
         ))}
       </div>
 
+      {/* SEÇÃO 2: IDENTIFICAÇÃO DO ATIVO */}
+      <div className="flex items-center gap-2 mt-4 border-b border-border/50 pb-2">
+        <span className="w-1.5 h-4 bg-amber-500 rounded-full shadow-sm"></span>
+        <label className="text-[10px] font-black text-amber-600 tracking-[0.2em] uppercase">Identificação do Ativo</label>
+      </div>
+
       {alvoSelecionado === 'VEICULO' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/*  Select de Veículo controlado via Controller */}
+          {/* O Container do Grid deixará os itens lado a lado no Desktop perfeitamente */}
           <Controller
             control={control}
             name="veiculoId"
@@ -158,8 +167,13 @@ export function Step1DadosGerais() {
         </div>
       )}
 
+      {/* SEÇÃO 3: EXECUÇÃO */}
+      <div className="flex items-center gap-2 mt-4 border-b border-border/50 pb-2">
+        <span className="w-1.5 h-4 bg-blue-500 rounded-full shadow-sm"></span>
+        <label className="text-[10px] font-black text-blue-600 tracking-[0.2em] uppercase">Execução e Agendamento</label>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/*  Select de Fornecedor controlado via Controller */}
         <Controller
           control={control}
           name="fornecedorId"
@@ -176,7 +190,6 @@ export function Step1DadosGerais() {
           )}
         />
         
-        {/* DatePicker com Controller (já estava correto) */}
         <Controller
           control={control}
           name="data"

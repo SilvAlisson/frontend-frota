@@ -61,7 +61,7 @@ export function FormRegistrarAbastecimento({
   // 🛡️ Interceptador Blindado (Controla tudo de forma síncrona e barra o clique fantasma)
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); 
-    e.stopPropagation(); // 🔥 Mata o Event Bubbling na hora
+    e.stopPropagation();
     
     if (step === 1) {
       const isValid = await trigger(['veiculoId', 'operadorId', 'kmAtual', 'dataHora']);
@@ -169,7 +169,6 @@ export function FormRegistrarAbastecimento({
               </Button>
             )}
 
-            {/* O comentário problemático foi removido. Botão segue blindado como type="submit" */}
             {step < 3 ? (
               <Button
                 type="submit"
@@ -220,8 +219,8 @@ export function FormRegistrarAbastecimento({
         <ModalConfirmacaoFoto
           titulo="Comprovante e Finalização"
           dadosJornada={payload}
-          kmParaConfirmar={payload!.kmOdometro}
-          jornadaId={payload!.veiculoId}
+          kmParaConfirmar={payload.kmOdometro}
+          jornadaId={payload.veiculoId}
           apiEndpoint="/abastecimentos"
           apiMethod="POST"
           onClose={() => setModalConfirmacao(false)}

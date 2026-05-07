@@ -22,7 +22,7 @@ export function Step1DadosOperacionais() {
   const veiculoIdSelecionado = watch('veiculoId');
   const kmAtualVisual = watch('kmAtual');
 
-  //  Lógica para disparar o Callout de aviso
+  // Lógica para disparar o Callout de aviso
   const kmAtualNum = Number(kmAtualVisual?.replace(/\D/g, '')) || 0;
   const isKmInvalido = ultimoKm > 0 && kmAtualNum > 0 && kmAtualNum < ultimoKm;
 
@@ -31,13 +31,13 @@ export function Step1DadosOperacionais() {
     [veiculos]
   );
 
-  //  IDENTIFICADOR DE VEÍCULO LEVE
+  // IDENTIFICADOR DE VEÍCULO LEVE
   const isVeiculoLeve = useMemo(() => {
     const v = veiculos.find((veiculo: Veiculo) => veiculo.id === veiculoIdSelecionado);
     return v && ['UTILITARIO', 'LEVE', 'OUTRO'].includes(v.tipoVeiculo || '');
   }, [veiculoIdSelecionado, veiculos]);
 
-  //  FILTRO DINÂMICO DE RESPONSÁVEIS
+  // FILTRO DINÂMICO DE RESPONSÁVEIS
   const operadorOptions = useMemo(() => {
     return usuarios
       .filter(u => {
@@ -70,28 +70,28 @@ export function Step1DadosOperacionais() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        
+        {/*  containerClassName="md:col-span-2"  */}
         <Select
           label="Veículo da Frota"
           options={veiculoOptions}
           icon={<Fuel className="w-4 h-4" />}
           {...register('veiculoId')}
           error={errors.veiculoId?.message as string}
-          containerClassName="md:col-span-2"
           disabled={isLocked}
         />
 
+        {/*  containerClassName="md:col-span-2" */}
         <Select
-          //  Label Dinâmico
           label={isVeiculoLeve ? "Responsável (Gestão/Encarregado)" : "Operador / Motorista"}
           options={operadorOptions}
           icon={<User className="w-4 h-4" />}
           {...register('operadorId')}
           error={errors.operadorId?.message as string}
-          containerClassName="md:col-span-2"
           disabled={isLocked}
         />
 
-        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5">
+        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">
           <div className="flex flex-col">
             <Input
               label="KM do Painel (Hodômetro)"
@@ -121,7 +121,7 @@ export function Step1DadosOperacionais() {
           />
         </div>
 
-        {/*  CALLOUT DE AVISO DE KM INCONSISTENTE */}
+        {/* CALLOUT DE AVISO DE KM INCONSISTENTE */}
         {isKmInvalido && (
           <div className="md:col-span-2 animate-in fade-in zoom-in-95 duration-300">
             <Callout variant="warning" title="Odómetro Inconsistente" icon={AlertTriangle}>
