@@ -2,7 +2,6 @@ import React, { useRef, useEffect } from 'react';
 import { Inbox } from 'lucide-react';
 import autoAnimate from '@formkit/auto-animate'; 
 import { TableStyles } from '../../styles/table';
-
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface ListaResponsivaProps<T> {
@@ -31,13 +30,24 @@ export function ListaResponsiva<T extends { id?: string | number }>({
   virtualContainerHeight = "600px"
 }: ListaResponsivaProps<T>) {
 
-  //  Refs para os contentores que vão receber os itens
+  // Refs para os contentores que vão receber os itens
   const desktopParentRef = useRef<HTMLTableSectionElement>(null);
   const mobileParentRef = useRef<HTMLDivElement>(null);
   const virtualDesktopContainerRef = useRef<HTMLDivElement>(null);
   const virtualMobileContainerRef = useRef<HTMLDivElement>(null);
 
-  //  Ativamos o auto-animate APENAS se não for virtualizado
+  // 🛡️ BLINDAGEM ANTI-PURGE (MÁGICA DO CSS GRID)
+  // O Tailwind ignora classes dinâmicas como grid-cols-[1fr_2fr] no build.
+  // Nós capturamos essa classe e forçamos como estilo inline garantindo que a tela nunca empilhe!
+  const customGridMatch = desktopGridCols.match(/grid-cols-\[([^\]]+)\]/);
+  const gridTemplateColumns = customGridMatch ? customGridMatch[1].replace(/_/g, ' ') : undefined;
+  
+  // Remove a classe arbitrária da string para não sujar o DOM, mantendo o grid base
+  const safeGridClass = customGridMatch 
+    ? `grid w-full ${desktopGridCols.replace(customGridMatch[0], '')}`.trim()
+    : `grid w-full ${desktopGridCols}`;
+
+  // Ativamos o auto-animate APENAS se não for virtualizado
   useEffect(() => {
     if (!virtualized) {
       if (desktopParentRef.current) autoAnimate(desktopParentRef.current);
@@ -56,7 +66,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
   const mobileVirtualizer = useVirtualizer({
     count: itens.length,
     getScrollElement: () => virtualMobileContainerRef.current,
-    estimateSize: () => 140, // Height base de um card mobile do veículo
+    estimateSize: () => 140,
     overscan: 5,
   });
 
@@ -78,17 +88,22 @@ export function ListaResponsiva<T extends { id?: string | number }>({
 
   return (
     <>
-      {/* 💻 DESKTOP (Tabela Premium - Agora blindada com CSS Grid) */}
+      {/* 💻 DESKTOP (Tabela Premium) */}
       <div 
         ref={virtualized ? virtualDesktopContainerRef : null}
-        className={`hidden xl:block animate-in fade-in slide-in-from-bottom-2 duration-500 ${TableStyles.wrapper} ${virtualized ? 'overflow-y-auto custom-scrollbar' : ''}`}
+        className={`hidden xl:block animate-in fade-in slide-in-from-bottom-2 duration-500 w-full max-w-full min-w-0 ${TableStyles.wrapper} ${virtualized ? 'overflow-y-auto custom-scrollbar' : ''}`}
         style={virtualized ? { height: virtualContainerHeight } : {}}
       >
-        <div className="overflow-x-auto min-h-full">
-          {/*  CORREÇÃO: Largura mínima ajustada para caber melhor em telas sem gerar scroll enorme */}
+        <div className="overflow-x-auto min-h-full w-full custom-scrollbar">
           <table className="w-full text-sm text-left border-collapse block min-w-[800px]">
             <thead className={`w-full block ${virtualized ? "sticky top-0 z-10 bg-surface shadow-sm" : ""}`}>
-              <tr className={`w-full grid ${desktopGridCols}`}>{desktopHeader}</tr>
+              {/* Aplicando o Inline Style da Blindagem */}
+              <tr 
+                className={safeGridClass}
+                style={gridTemplateColumns ? { gridTemplateColumns } : undefined}
+              >
+                {desktopHeader}
+              </tr>
             </thead>
             
             <tbody 
@@ -107,13 +122,14 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                   return (
                     <tr 
                       key={rowKey} 
-                      className={`w-full grid ${desktopGridCols} ${rowClass}`}
+                      className={`${safeGridClass} ${rowClass}`}
                       style={{
                         position: 'absolute',
                         top: 0,
                         left: 0,
                         width: '100%',
                         transform: `translateY(${virtualRow.start}px)`,
+                        ...(gridTemplateColumns ? { gridTemplateColumns } : {}) // 🔥 Injetando colunas à força
                       }}
                       data-index={virtualRow.index}
                       ref={desktopVirtualizer.measureElement}
@@ -129,7 +145,11 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                   const rowKey = item.id ? String(item.id) : `row-${idx}`;
 
                   return (
-                    <tr key={rowKey} className={`w-full grid ${desktopGridCols} ${rowClass}`}>
+                    <tr 
+                      key={rowKey} 
+                      className={`${safeGridClass} ${rowClass}`}
+                      style={gridTemplateColumns ? { gridTemplateColumns } : undefined}
+                    >
                       {renderDesktop(item, idx)}
                     </tr>
                   );
@@ -140,10 +160,10 @@ export function ListaResponsiva<T extends { id?: string | number }>({
         </div>
       </div>
 
-      {/* 📱 MOBILE (Cards Flutuantes - Mantidos Intactos) */}
+      {/* 📱 MOBILE (Cards Flutuantes) */}
       <div 
         ref={virtualized ? virtualMobileContainerRef : mobileParentRef}
-        className={`xl:hidden space-y-4 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${virtualized ? 'overflow-y-auto custom-scrollbar relative' : ''}`}
+        className={`xl:hidden space-y-4 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-full min-w-0 ${virtualized ? 'overflow-y-auto custom-scrollbar relative' : ''}`}
         style={virtualized ? { height: virtualContainerHeight } : {}}
       >
         {virtualized ? (
@@ -161,7 +181,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                   ref={mobileVirtualizer.measureElement}
                   className={`
                     p-5 rounded-[1.25rem] shadow-sm border border-border/60 relative overflow-hidden 
-                    active:scale-[0.98] transition-all duration-300 bg-surface hover:shadow-md
+                    active:scale-[0.98] transition-all duration-300 bg-surface hover:shadow-md w-full max-w-full min-w-0
                     ${customClass} ${cursorClass}
                   `}
                   style={{
@@ -175,7 +195,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                   {!customClass.includes('ghost-row') && (
                     <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/80 to-primary/40 rounded-l-[1.25rem] opacity-70" />
                   )}
-                  <div className="pl-2">
+                  <div className="pl-2 w-full min-w-0">
                     {renderMobile(item, idx)}
                   </div>
                 </div>
@@ -192,7 +212,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                 key={cardKey}
                 className={`
                   p-5 rounded-[1.25rem] shadow-sm border border-border/60 relative overflow-hidden 
-                  active:scale-[0.98] transition-all duration-300 bg-surface hover:shadow-md
+                  active:scale-[0.98] transition-all duration-300 bg-surface hover:shadow-md w-full max-w-full min-w-0
                   ${customClass} ${cursorClass}
                 `}
               >
@@ -200,7 +220,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                   <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-primary/80 to-primary/40 rounded-l-[1.25rem] opacity-70" />
                 )}
 
-                <div className="pl-2">
+                <div className="pl-2 w-full min-w-0">
                   {renderMobile(item, idx)}
                 </div>
               </div>
