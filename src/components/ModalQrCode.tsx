@@ -7,7 +7,6 @@ import { Button } from './ui/Button';
 import { toast } from 'sonner';
 import { Printer, RefreshCw, X, Copy, QrCode, ShieldCheck, Download } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
-// Removida a importação problemática do APP_URL do config
 import type { User } from '../types';
 
 interface ModalQrCodeProps {

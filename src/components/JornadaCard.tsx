@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { toast } from 'sonner';
-import { Gauge, Route, Ghost, CheckCircle2, Navigation, AlertTriangle } from 'lucide-react';
+import { Gauge, Route, CheckCircle2, Navigation, AlertTriangle } from 'lucide-react';
 
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto';
 import { Button } from './ui/Button';
