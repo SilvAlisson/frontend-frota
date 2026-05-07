@@ -14,18 +14,14 @@ import { Input } from './ui/Input';
 import { DataTable, ColumnDef } from './ui/DataTable';
 import { Switch } from './ui/Switch';
 import { Badge } from './ui/Badge';
-import { Badge } from './ui/Badge';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 import { Modal } from './ui/Modal';
 import { TableStyles } from '../styles/table';
 import { Skeleton } from './ui/Skeleton';
 import { SkeletonTable } from './skeletons/SkeletonTable';
-
-// ✨ Novos Componentes de Elite
 import { ConfirmModal } from './ui/ConfirmModal';
 import { Callout } from './ui/Callout';
 import { EmptyState } from './ui/EmptyState';
-
 import { useFiltragemVeiculos } from '../hooks/useFiltragemVeiculos';
 import React, { Suspense } from 'react';
 
