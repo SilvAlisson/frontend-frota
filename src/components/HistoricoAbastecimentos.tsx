@@ -279,78 +279,84 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     actionLabel={canEdit ? "Novo Abastecimento" : undefined}
     onAction={canEdit ? () => setIsNovoAbastecimentoOpen(true) : undefined}
     extraAction={
-     <div className="flex flex-wrap xl:flex-nowrap gap-3 w-full xl:w-auto items-end bg-surface p-2 rounded-2xl border border-border/60 shadow-sm">
-       <div className="flex gap-3 w-full">
-        <div className="flex-1">
-         <DatePicker disableFuture
-          label="Data Inicial"
-          placeholder="Início"
-          date={dataInicioFiltro ? new Date(`${dataInicioFiltro}T12:00:00`) : undefined}
-          onChange={date => setDataInicioFiltro(date ? date.toISOString().split('T')[0] : '')}
-         />
+      // Mudamos para flex-col (duas linhas) com padding igual ao HistoricoJornadas
+      <div className="flex flex-col gap-3 w-full xl:w-auto bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
+        
+        {/* LINHA 1: Filtros de Seleção (Veículo e Fornecedor) */}
+        <div className="flex flex-col sm:flex-row gap-3 items-end">
+          <div className="w-full sm:w-56">
+            <Select 
+              label="Filtrar Veículo"
+              options={veiculosOptions}
+              value={veiculoIdFiltro}
+              onChange={(e) => setVeiculoIdFiltro(e.target.value)}
+              icon={<Truck className="w-4 h-4" />}
+              containerClassName="!mb-0"
+            />
+          </div>
+          <div className="w-full sm:w-64">
+            <Select 
+              label="Posto / Fornecedor"
+              options={fornecedoresOptions}
+              value={fornecedorIdFiltro}
+              onChange={(e) => setFornecedorIdFiltro(e.target.value)}
+              icon={<Store className="w-4 h-4" />}
+              containerClassName="!mb-0"
+            />
+          </div>
         </div>
-        <div className="flex-1">
-         <DatePicker disableFuture
-          label="Data Final"
-          placeholder="Fim"
-          date={dataFimFiltro ? new Date(`${dataFimFiltro}T12:00:00`) : undefined}
-          onChange={date => setDataFimFiltro(date ? date.toISOString().split('T')[0] : '')}
-         />
-        </div>
-       </div>
-       
-       <div className="w-px h-10 bg-border/60 hidden 2xl:block mx-1"></div>
-       
-       <div className="flex flex-col sm:flex-row gap-3 w-full xl:w-auto flex-1 min-w-[200px]">
-        <div className="w-full sm:w-1/2 xl:w-48">
-         <Select 
-          label="Filtrar Veículo"
-          options={veiculosOptions}
-          value={veiculoIdFiltro}
-          onChange={(e) => setVeiculoIdFiltro(e.target.value)}
-          icon={<Truck className="w-4 h-4" />}
-          containerClassName="!mb-0"
-         />
-        </div>
-        <div className="w-full sm:w-1/2 xl:w-56">
-         <Select 
-          label="Posto / Fornecedor"
-          options={fornecedoresOptions}
-          value={fornecedorIdFiltro}
-          onChange={(e) => setFornecedorIdFiltro(e.target.value)}
-          icon={<Store className="w-4 h-4" />}
-          containerClassName="!mb-0"
-         />
-        </div>
-       </div>
 
-       <div className="w-full xl:w-auto flex flex-row items-end gap-2 pb-0.5 mt-2 xl:mt-0 xl:ml-auto">
-         {hasFiltrosAtivos && (
-          <Button 
-           variant="ghost" 
-           onClick={() => {
-            setDataInicioFiltro('');
-            setDataFimFiltro('');
-            setVeiculoIdFiltro('');
-            setFornecedorIdFiltro('');
-           }} 
-           icon={<FilterX className="w-4 h-4" />}
-           className="h-11 sm:h-12 text-text-secondary hover:text-error hover:bg-error/10 transition-colors px-3"
-          >
-           Limpar
-          </Button>
-         )}
-         <Button 
-          variant="secondary" 
-          onClick={handleExportar} 
-          disabled={historicoFiltrado.length === 0}
-          icon={<FileDown className="w-4 h-4" />}
-          className="flex-1 xl:flex-none h-11 sm:h-12 bg-emerald-500/10 text-emerald-700 dark:text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20"
-         >
-          Gerar BM (Excel)
-         </Button>
+        {/* LINHA 2: Filtros de Data e Botões de Ação */}
+        <div className="flex flex-col sm:flex-row gap-3 items-end sm:justify-between xl:justify-start">
+          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+            <div className="w-full sm:w-40">
+              <DatePicker disableFuture
+                label="Data Inicial"
+                placeholder="Início"
+                date={dataInicioFiltro ? new Date(`${dataInicioFiltro}T12:00:00`) : undefined}
+                onChange={date => setDataInicioFiltro(date ? date.toISOString().split('T')[0] : '')}
+              />
+            </div>
+            <div className="w-full sm:w-40">
+              <DatePicker disableFuture
+                label="Data Final"
+                placeholder="Fim"
+                date={dataFimFiltro ? new Date(`${dataFimFiltro}T12:00:00`) : undefined}
+                onChange={date => setDataFimFiltro(date ? date.toISOString().split('T')[0] : '')}
+              />
+            </div>
+          </div>
+          
+          {/* Botões empurrados para a direita no Desktop */}
+          <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 xl:ml-auto">
+            {hasFiltrosAtivos && (
+              <Button 
+                variant="ghost" 
+                onClick={() => {
+                  setDataInicioFiltro('');
+                  setDataFimFiltro('');
+                  setVeiculoIdFiltro('');
+                  setFornecedorIdFiltro('');
+                }} 
+                icon={<FilterX className="w-4 h-4" />}
+                className="h-11 sm:h-12 text-text-secondary hover:text-error hover:bg-error/10 transition-colors px-3"
+              >
+                Limpar
+              </Button>
+            )}
+            <Button 
+              variant="secondary" 
+              onClick={handleExportar} 
+              disabled={historicoFiltrado.length === 0}
+              icon={<FileDown className="w-4 h-4" />}
+              className="flex-1 xl:flex-none h-11 sm:h-12 bg-emerald-500/10 text-emerald-700 dark:text-emerald-500 hover:bg-emerald-500/20 border-emerald-500/20"
+            >
+              Gerar BM (Excel)
+            </Button>
+          </div>
         </div>
-     </div>
+
+      </div>
     }
    />
 
