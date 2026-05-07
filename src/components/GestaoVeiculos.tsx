@@ -11,7 +11,9 @@ import { useVeiculos } from '../hooks/useVeiculos';
 // --- DESIGN SYSTEM KLIN ---
 import { PageHeader } from './ui/PageHeader';
 import { Input } from './ui/Input';
-import { ListaResponsiva } from './ui/ListaResponsiva';
+import { DataTable, ColumnDef } from './ui/DataTable';
+import { Switch } from './ui/Switch';
+import { Badge } from './ui/Badge';
 import { Badge } from './ui/Badge';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 import { Modal } from './ui/Modal';
@@ -41,8 +43,16 @@ export function GestaoVeiculos() {
   // 📡 BUSCA INDEPENDENTE COM CACHE
   const { data: veiculos = [], isLoading, refetch } = useVeiculos();
 
+  // --- CONTROLE DE SWITCH DE ATIVOS ---
+  const [apenasAtivos, setApenasAtivos] = useState(false);
+
   // --- FILTRAGEM (HOOK REUTILIZÁVEL) ---
   const { busca, setBusca, veiculosFiltrados } = useFiltragemVeiculos(veiculos as Veiculo[]);
+
+  // Aplica o filtro extra localmente
+  const veiculosFinais = apenasAtivos 
+    ? veiculosFiltrados.filter(v => v.status === 'ATIVO') 
+    : veiculosFiltrados;
 
   // --- ACTIONS ---
   const handleExecuteDelete = async () => {
@@ -90,15 +100,24 @@ export function GestaoVeiculos() {
           actionLabel="Novo Veículo"
           onAction={() => setIsCadastroOpen(true)}
           extraAction={
-            <div className="w-full md:w-72">
-              <Input
-                placeholder="Procurar por placa ou modelo..."
-                value={busca}
-                onChange={e => setBusca(e.target.value)}
-                icon={<Search className="w-4 h-4 text-text-muted" />}
-                className="bg-surface-hover/50 border-none focus:ring-1 focus:ring-primary/30 font-medium h-11"
-                containerClassName="!mb-0"
-              />
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
+              <div className="flex items-center gap-3 px-4 h-11 bg-surface-hover/50 rounded-xl border border-border/60 shrink-0">
+                <Switch 
+                  checked={apenasAtivos} 
+                  onCheckedChange={setApenasAtivos} 
+                />
+                <span className="text-xs font-bold text-text-muted select-none cursor-pointer" onClick={() => setApenasAtivos(!apenasAtivos)}>Apenas Ativos</span>
+              </div>
+              <div className="w-full sm:w-72">
+                <Input
+                  placeholder="Procurar por placa ou modelo..."
+                  value={busca}
+                  onChange={e => setBusca(e.target.value)}
+                  icon={<Search className="w-4 h-4 text-text-muted" />}
+                  className="bg-surface-hover/50 border-none focus:ring-1 focus:ring-primary/30 font-medium h-11"
+                  containerClassName="!mb-0"
+                />
+              </div>
             </div>
           }
         />
@@ -109,34 +128,26 @@ export function GestaoVeiculos() {
         <div className="bg-surface rounded-3xl shadow-sm border border-border/60 p-6">
           <SkeletonTable />
         </div>
-      ) : veiculosFiltrados.length === 0 ? (
+      ) : veiculosFinais.length === 0 ? (
         <EmptyState
           icon={Truck}
-          title={busca ? "Nenhum veículo encontrado" : "Frota Vazia"}
-          description={busca ? "Verifique se a placa ou modelo estão corretos." : "Registre o primeiro Equipamento para iniciar o controle."}
+          title={busca || apenasAtivos ? "Nenhum veículo encontrado" : "Frota Vazia"}
+          description={busca || apenasAtivos ? "Verifique os filtros aplicados." : "Registre o primeiro Equipamento para iniciar o controle."}
         />
       ) : (
         <div className="bg-surface rounded-3xl shadow-sm border border-border/60 overflow-hidden">
-          <ListaResponsiva
-            itens={veiculosFiltrados}
+          <DataTable
+            data={veiculosFinais}
             emptyMessage=""
+            desktopGridCols="grid-cols-[2fr_2fr_1.5fr_1.5fr_1fr]"
 
-            // CABEÇALHO DESKTOP
-            desktopHeader={
-              <>
-                <th className={`${TableStyles.th} pl-8 text-left`}>Veículo / Placa</th>
-                <th className={`${TableStyles.th} text-center`}>Especificações</th>
-                <th className={`${TableStyles.th} text-center`}>Combustível</th>
-                <th className={`${TableStyles.th} text-center`}>Status Operacional</th>
-                <th className={`${TableStyles.th} text-right pr-8`}>Ações</th>
-              </>
-            }
-
-            // LINHA DESKTOP
-            renderDesktop={(v) => (
-              <>
-                <td className={`${TableStyles.td} pl-8 py-5 hover-lift`}>
-                  {/* ✨ POLIMENTO: Placa como componente físico e tactile */}
+            // CONFIGURAÇÃO DE COLUNAS DESKTOP
+            columns={[
+              {
+                header: 'Veículo / Placa',
+                headerClassName: 'pl-8 text-left',
+                className: 'pl-8 py-5 hover-lift',
+                cell: (v: Veiculo) => (
                   <button
                     onClick={() => navigate(`/admin/veiculos/${v.id}`)}
                     className="flex items-center gap-3 group outline-none"
@@ -145,41 +156,60 @@ export function GestaoVeiculos() {
                     <div className="p-2.5 bg-surface-hover rounded-xl border border-border/60 text-text-muted group-hover:bg-primary/5 group-hover:text-primary transition-all shadow-sm">
                       <Truck className="w-4 h-4" />
                     </div>
-                    {/* Visual de placa cinza com borda física */}
                     <span className="text-data text-[13px] bg-surface-hover/80 px-2.5 py-1 rounded-md border border-border/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_1px_2px_rgba(0,0,0,0.05)] text-text-main group-hover:border-primary/40 transition-colors">
                       {v.placa}
                     </span>
                   </button>
-                </td>
-                <td className={`${TableStyles.td} py-5 text-center`}>
+                )
+              },
+              {
+                header: 'Especificações',
+                headerClassName: 'text-center',
+                className: 'py-5 text-center',
+                cell: (v: Veiculo) => (
                   <div className="w-full flex flex-col gap-1 items-center justify-center text-center">
                     <span className="text-sm font-bold text-text-main leading-tight block w-full">{v.modelo}</span>
                     <span className="text-xs text-text-secondary font-bold uppercase tracking-wider block w-full">{v.ano} • <span className="text-data">{v.id.substring(0, 6).toUpperCase()}</span></span>
                   </div>
-                </td>
-                <td className={`${TableStyles.td} py-5 text-center`}>
+                )
+              },
+              {
+                header: 'Combustível',
+                headerClassName: 'text-center',
+                className: 'py-5 text-center',
+                cell: (v: Veiculo) => (
                   <div className="w-full flex justify-center">
                     <span className="text-xs font-bold text-text-muted uppercase tracking-widest bg-surface-hover px-2 py-1 rounded-md border border-border/50 inline-block">
                       {v.tipoCombustivel.replace(/_/g, ' ')}
                     </span>
                   </div>
-                </td>
-                <td className={`${TableStyles.td} py-5 text-center`}>
+                )
+              },
+              {
+                header: 'Status Operacional',
+                headerClassName: 'text-center',
+                className: 'py-5 text-center',
+                cell: (v: Veiculo) => (
                   <div className="w-full flex justify-center">
                     <div className="glass inline-block rounded-md overflow-hidden">
                       {getStatusBadge(v.status)}
                     </div>
                   </div>
-                </td>
-                <td className={`${TableStyles.td} text-right pr-8 py-5`}>
+                )
+              },
+              {
+                header: 'Ações',
+                headerClassName: 'text-right pr-8',
+                className: 'text-right pr-8 py-5',
+                cell: (v: Veiculo) => (
                   <DropdownAcoes
                     onVerDetalhes={() => navigate(`/admin/veiculos/${v.id}`)}
                     onEditar={() => setVeiculoParaEditar(v)}
                     onExcluir={() => setVeiculoParaExcluir(v.id)}
                   />
-                </td>
-              </>
-            )}
+                )
+              }
+            ]}
 
             // CARD MOBILE
             renderMobile={(v) => (

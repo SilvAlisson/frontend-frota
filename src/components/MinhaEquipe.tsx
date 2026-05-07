@@ -1,9 +1,10 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from './ui/Button';
 import { ModalQrCode } from './ModalQrCode';
 import { EmptyState } from './ui/EmptyState';
 import { QrCode, Users } from 'lucide-react';
 import type { User, Jornada } from '../types';
+import { Avatar } from './ui/Avatar';
 import autoAnimate from '@formkit/auto-animate'; // ✨ A MAGIA DA ANIMAÇÃO APLICADA AQUI
 
 interface MinhaEquipeProps {
@@ -60,13 +61,11 @@ export function MinhaEquipe({ usuarios, jornadasAbertas, onUpdate }: MinhaEquipe
 
               {/* Info Motorista COM FOTO */}
               <div className="flex items-center gap-4">
-                <div className="relative h-12 w-12 rounded-2xl bg-surface-hover/80 flex items-center justify-center text-lg font-black text-text-muted border border-border/60 shadow-inner group-hover:border-primary/30 group-hover:text-primary transition-all overflow-hidden shrink-0">
-                  {op.fotoUrl ? (
-                    <img src={op.fotoUrl} alt={op.nome} className="w-full h-full object-cover" />
-                  ) : (
-                    <span>{op.nome.charAt(0).toUpperCase()}</span>
-                  )}
-                </div>
+                <Avatar 
+                  nome={op.nome} 
+                  url={op.fotoUrl} 
+                  className="w-12 h-12 text-lg group-hover:border-primary/40 group-hover:shadow-md transition-all" 
+                />
 
                 <div className="min-w-0">
                   <h4 className="font-black text-text-main truncate text-base tracking-tight leading-none">{op.nome}</h4>

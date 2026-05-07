@@ -52,6 +52,16 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
 
+    // Acessibilidade: Fechar via ESC
+    useEffect(() => {
+        if (!isOpen) return;
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') onClose();
+        };
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose]);
+
     if (!mounted || !isOpen) return null;
 
     // --- MODO MOBILE (GAVETA / DRAWER - VAUL) ---

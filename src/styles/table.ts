@@ -2,9 +2,9 @@ export const TableStyles = {
   // Container principal: Bordas arredondadas e sombra de card
   wrapper: "w-full overflow-x-auto rounded-2xl border border-border shadow-sm bg-surface custom-scrollbar",
 
-  // Cabeçalho: Fonte menor, mais espaçada (tracking) e super negrito (black)
+  // Cabeçalho: Fonte mais legível, responsiva e com contraste aprimorado
   // Transformado em Flex item com min-w-0 para respeitar o CSS Grid e px-4 para melhor encaixe
-  th: "px-4 py-4 text-[10px] font-black text-text-muted uppercase tracking-[0.15em] bg-surface-hover/40 border-b border-border/60 flex items-center min-w-0 first:pl-6 last:pr-6",
+  th: "px-4 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider bg-surface-hover/40 border-b border-border/60 flex items-center min-w-0 first:pl-6 last:pr-6",
 
   // Células: Texto base com contraste alto
   //  Transformado em Flex item com min-w-0 para acompanhar o cabeçalho e px-4 para melhor encaixe

@@ -41,10 +41,14 @@ function AppContent() {
   );
 }
 
+import { TooltipProvider } from './components/ui/Tooltip';
+
 function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <TooltipProvider delayDuration={300}>
+        <AppContent />
+      </TooltipProvider>
     </ThemeProvider>
   );
 }

@@ -103,7 +103,7 @@ export class ErrorBoundary extends Component<Props, State> {
               Encontramos uma instabilidade nesta tela. A nossa equipe de engenharia já foi notificada automaticamente com os detalhes.
             </p>
             {this.state.errorId && (
-              <div className="bg-[#0D1117] p-3 rounded-xl border border-border/50 mb-6">
+              <div className="bg-surface-hover/80 p-3 rounded-xl border border-border/50 mb-6">
                  <p className="text-[10px] font-mono text-text-muted uppercase tracking-widest">Protocolo do Erro</p>
                  <p className="text-xs font-mono font-bold text-primary">{this.state.errorId}</p>
               </div>

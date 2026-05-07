@@ -1,4 +1,4 @@
-﻿import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { Inbox } from 'lucide-react';
 import autoAnimate from '@formkit/auto-animate'; 
 import { TableStyles } from '../../styles/table';
@@ -81,12 +81,12 @@ export function ListaResponsiva<T extends { id?: string | number }>({
       {/* 💻 DESKTOP (Tabela Premium - Agora blindada com CSS Grid) */}
       <div 
         ref={virtualized ? virtualDesktopContainerRef : null}
-        className={`hidden md:block animate-in fade-in slide-in-from-bottom-2 duration-500 ${TableStyles.wrapper} ${virtualized ? 'overflow-y-auto custom-scrollbar' : ''}`}
+        className={`hidden xl:block animate-in fade-in slide-in-from-bottom-2 duration-500 ${TableStyles.wrapper} ${virtualized ? 'overflow-y-auto custom-scrollbar' : ''}`}
         style={virtualized ? { height: virtualContainerHeight } : {}}
       >
         <div className="overflow-x-auto min-h-full">
-          {/*  CORREÇÃO: Tabela forçada a block com largura mínima para proteger o Grid */}
-          <table className="w-full text-sm text-left border-collapse block min-w-[1050px]">
+          {/*  CORREÇÃO: Largura mínima ajustada para caber melhor em telas sem gerar scroll enorme */}
+          <table className="w-full text-sm text-left border-collapse block min-w-[800px]">
             <thead className={`w-full block ${virtualized ? "sticky top-0 z-10 bg-surface shadow-sm" : ""}`}>
               <tr className={`w-full grid ${desktopGridCols}`}>{desktopHeader}</tr>
             </thead>
@@ -143,7 +143,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
       {/* 📱 MOBILE (Cards Flutuantes - Mantidos Intactos) */}
       <div 
         ref={virtualized ? virtualMobileContainerRef : mobileParentRef}
-        className={`md:hidden space-y-4 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${virtualized ? 'overflow-y-auto custom-scrollbar relative' : ''}`}
+        className={`xl:hidden space-y-4 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${virtualized ? 'overflow-y-auto custom-scrollbar relative' : ''}`}
         style={virtualized ? { height: virtualContainerHeight } : {}}
       >
         {virtualized ? (

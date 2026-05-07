@@ -19,6 +19,7 @@ import { IniciarJornada } from './IniciarJornada';
 import { ModalQrCode } from './ModalQrCode';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
+import { Avatar } from './ui/Avatar';
 
 // Hooks & Contexts
 import { useAuth } from '../contexts/AuthContext';
@@ -137,11 +138,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                     <header className="sticky top-0 z-40 -mx-4 sm:-mx-8 px-4 sm:px-8 py-3 backdrop-blur-xl bg-background/60 border-b border-border/40 safe-top">
                         <div className="max-w-7xl mx-auto flex justify-between items-center">
                             <div className="flex items-center gap-4">
-                                <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-primary-hover/50 p-0.5 shadow-lg shadow-primary/20">
-                                   <div className="w-full h-full bg-background/80 rounded-[14px] flex items-center justify-center overflow-hidden">
-                                       {user.fotoUrl ? <img src={user.fotoUrl} alt={user.nome} className="w-full h-full object-cover" /> : <span className="font-black text-primary">{user.nome.charAt(0)}</span>}
-                                   </div>
-                                </div>
+                                <Avatar url={user.fotoUrl} nome={user.nome} className="shadow-lg shadow-primary/20" />
                                 <div className="leading-tight">
                                     <h1 className="text-base sm:text-lg font-black text-text-main tracking-tight uppercase">Olá, <span className="text-primary">{user.nome.split(' ')[0]}</span></h1>
                                     <p className="text-[9px] font-bold text-success uppercase tracking-widest flex items-center gap-1.5 mt-0.5">

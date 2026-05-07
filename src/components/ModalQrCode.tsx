@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 import { api } from '../services/api';
+import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
 import { Printer, RefreshCw, X, Copy, QrCode, ShieldCheck, Download } from 'lucide-react';
@@ -140,29 +141,27 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[99999] overflow-y-auto">
-
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-gray-900/90 backdrop-blur-md transition-opacity"
-        onClick={onClose}
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+      {/* Overlay Dark */}
+      <div 
+        className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity animate-in fade-in duration-300" 
+        onClick={onClose} 
       />
 
-      <div className="flex min-h-full items-center justify-center p-4 py-10">
-        <div className="relative flex flex-col items-center gap-8 w-full max-w-sm animate-in zoom-in-95 duration-300">
+      <div className="relative flex flex-col items-center gap-8 w-full max-w-sm animate-in zoom-in-95 duration-300">
+        
+        {/* Botão Fechar */}
+        <Button
+          onClick={onClose} variant="ghost" size="icon"
+          className="absolute -top-12 right-0 sm:-right-12 sm:top-0 rounded-full p-2.5 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 transition-all border border-white/10 backdrop-blur-sm z-50"
+        >
+          <X className="w-5 h-5" />
+        </Button>
 
-          {/* Botão Fechar */}
-          <Button
-            onClick={onClose} variant="ghost" size="icon"
-            className="absolute -top-12 right-0 sm:-right-12 sm:top-0 rounded-full p-2.5 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 transition-all border border-white/10 backdrop-blur-sm"
-          >
-            <X className="w-5 h-5" />
-          </Button>
-
-          {/* === CRACHÁ PREMIUM === */}
+        {/* === CRACHÁ PREMIUM === */}
           <div
             ref={cardRef}
-            className="w-full max-w-[320px] mx-4 h-[520px] bg-[#F8FAFC] rounded-[24px] shadow-2xl overflow-hidden relative flex flex-col select-none border border-white/50"
+            className="w-full max-w-[320px] mx-4 h-[520px] bg-surface rounded-[24px] shadow-2xl overflow-hidden relative flex flex-col select-none border border-border/50"
             style={{
               boxShadow: '0 20px 40px -10px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.5) inset'
             }}
@@ -173,7 +172,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             {/* Cabeçalho Institucional */}
             <div className="h-28 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 relative z-10">
               {/* Pattern sutil no header */}
-              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(#fff 1px, transparent 1px)', backgroundSize: '10px 10px' }}></div>
+              <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(var(--color-text-main) 1px, transparent 1px)', backgroundSize: '10px 10px' }}></div>
 
               <div className="absolute inset-0 flex flex-col items-center justify-center pt-2">
                 <div className="flex items-center gap-2 mb-1">
@@ -189,20 +188,16 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
 
               {/* Foto com Borda Premium */}
               <div className="relative group">
-                <div className="w-32 h-32 rounded-2xl bg-white p-1 shadow-lg ring-1 ring-black/5 rotate-3 transition-transform group-hover:rotate-0 duration-500">
-                  <div className="w-full h-full rounded-xl overflow-hidden bg-gray-100 relative">
-                    {user.fotoUrl ? (
-                      <img src={user.fotoUrl} className="w-full h-full object-cover" alt="" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
-                        <UserIconPlaceholder />
-                      </div>
-                    )}
-                  </div>
+                <div className="w-32 h-32 rounded-full bg-surface p-1 shadow-lg ring-1 ring-border/50 rotate-3 transition-transform group-hover:rotate-0 duration-500">
+                  <Avatar 
+                    nome={user.nome} 
+                    url={user.fotoUrl} 
+                    className="w-full h-full text-4xl shadow-none border-none" 
+                  />
                 </div>
                 {/* Selo de Verificado */}
-                <div className="absolute -bottom-2 -right-2 bg-green-500 text-white p-1 rounded-full border-[3px] border-[#F8FAFC] shadow-sm">
-                  <ShieldCheck className="w-4 h-4" />
+                <div className="absolute bottom-0 right-0 bg-success text-white p-1.5 rounded-full border-[3px] border-surface shadow-sm">
+                  <ShieldCheck className="w-5 h-5" />
                 </div>
               </div>
 
@@ -290,17 +285,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           </div>
 
         </div>
-      </div>
-    </div>,
+      </div>,
     document.body
-  );
-}
-
-// Icone Placeholder caso não tenha foto
-function UserIconPlaceholder() {
-  return (
-    <svg className="w-12 h-12 opacity-30" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M24 20.993V24H0v-2.996A14.977 14.977 0 0112.004 15c4.904 0 9.26 2.354 11.996 5.993zM16.002 8.999a4 4 0 11-8 0 4 4 0 018 0z" />
-    </svg>
   );
 }

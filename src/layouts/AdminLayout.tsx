@@ -7,7 +7,9 @@ import { Drawer } from 'vaul';
 import { useAuth } from '../contexts/AuthContext';
 import { ConfirmModal } from '../components/ui/ConfirmModal'; 
 import { Button } from '../components/ui/Button';
+import { Avatar } from '../components/ui/Avatar';
 import { MENU_ITEMS } from '../config/navigation';
+import { Tooltip, TooltipTrigger, TooltipContent } from '../components/ui/Tooltip';
 
 import { useTheme } from '../contexts/ThemeContext';
 import type { User } from '../types';
@@ -43,11 +45,11 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
           </div>
         </div>
         
-        {/* Botão de Fechar (Só aparece se existir a prop onClose - ou seja, no mobile) */}
+        {/* Botão de Fechar (Só aparece se existir a prop onClose - ou seja, no mobile/notebook) */}
         {onClose && (
           <Button variant="ghost" size="icon"
             onClick={onClose} 
-            className="lg:hidden p-2 -mr-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-lg transition-colors"
+            className="xl:hidden p-2 -mr-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-lg transition-colors"
             aria-label="Fechar menu"
           >
             <X className="w-5 h-5" />
@@ -98,13 +100,7 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
 
         <div className="flex items-center gap-2 px-1 pt-2">
           {/* Avatar */}
-          <div className="w-10 h-10 rounded-full bg-surface border-2 border-border/60 flex items-center justify-center text-text-main font-black text-sm shadow-sm overflow-hidden shrink-0">
-             {user?.fotoUrl ? (
-                <img src={user.fotoUrl} alt="Perfil" className="w-full h-full object-cover" />
-             ) : (
-                user?.nome?.trim().charAt(0).toUpperCase() || 'U'
-             )}
-          </div>
+          <Avatar url={user?.fotoUrl} nome={user?.nome} size="md" className="border-2" />
           
           {/* Info */}
           <div className="overflow-hidden flex-1 px-1">
@@ -113,19 +109,29 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
           </div>
 
           {/* ✨ Botão de Tema */}
-          <Button 
-            variant="ghost" 
-            onClick={toggleTheme} 
-            className="!p-2 w-10 h-10 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl transition-colors shrink-0"
-            title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
-          >
-            {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="ghost" 
+                onClick={toggleTheme} 
+                className="!p-2 w-10 h-10 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl transition-colors shrink-0"
+                aria-label={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
+              >
+                {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top">Alterar Tema</TooltipContent>
+          </Tooltip>
 
           {/* Logout */}
-          <Button variant="ghost" onClick={onLogout} className="!p-2 w-10 h-10 text-text-muted hover:text-error hover:bg-error/10 rounded-xl transition-colors shrink-0">
-            <LogOut className="w-5 h-5" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" onClick={onLogout} className="!p-2 w-10 h-10 text-text-muted hover:text-error hover:bg-error/10 rounded-xl transition-colors shrink-0" aria-label="Sair">
+                <LogOut className="w-5 h-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="top" className="bg-error/10 text-error border-error/20">Sair do Sistema</TooltipContent>
+          </Tooltip>
         </div>
       </div>
     </>
@@ -203,9 +209,9 @@ export function AdminLayout() {
   return (
     <div className="flex h-[100dvh] bg-background w-full overflow-hidden selection:bg-primary/20 selection:text-primary">
       
-      {/* 💻 VISÃO DESKTOP: Sidebar Estática (Só aparece em lg+) */}
+      {/* 💻 VISÃO DESKTOP: Sidebar Estática (Só aparece em xl+) */}
       {!isShareMode && (
-        <aside className="hidden lg:flex w-[280px] flex-col bg-surface/95 backdrop-blur-xl border-r border-border/60 h-full relative z-10 shrink-0">
+        <aside className="hidden xl:flex w-[280px] flex-col bg-surface/95 backdrop-blur-xl border-r border-border/60 h-full relative z-10 shrink-0">
            <SidebarContent 
               user={user}
               onLogout={() => setIsLogoutModalOpen(true)}
@@ -215,12 +221,12 @@ export function AdminLayout() {
         </aside>
       )}
 
-      {/* 📱 VISÃO MOBILE: Sidebar em Gaveta (Vaul Drawer) (Escondido em lg+) */}
+      {/* 📱 VISÃO MOBILE: Sidebar em Gaveta (Vaul Drawer) (Escondido em xl+) */}
       {!isShareMode && (
         <Drawer.Root direction="left" open={isShareMode ? false : isSidebarOpen} onOpenChange={setIsSidebarOpen}>
           <Drawer.Portal>
-            <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden" />
-            <Drawer.Content className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-surface/95 backdrop-blur-xl border-r border-border/60 outline-none lg:hidden">
+            <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 xl:hidden" />
+            <Drawer.Content className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-surface/95 backdrop-blur-xl border-r border-border/60 outline-none xl:hidden">
               
               <div className="sr-only">
                 <Drawer.Title>Menu de Navegação</Drawer.Title>
@@ -244,9 +250,9 @@ export function AdminLayout() {
         
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background custom-scrollbar scroll-smooth relative flex flex-col">
             
-            {/* Header Mobile (Aparece só em < lg) */}
+            {/* Header Mobile (Aparece só em < xl) */}
             {!isShareMode && (
-              <header className="lg:hidden flex items-center justify-between px-4 h-[72px] bg-surface/90 backdrop-blur-xl sticky top-0 z-30 border-b border-border/60 shadow-sm shrink-0">
+              <header className="xl:hidden flex items-center justify-between px-4 h-[72px] bg-surface/90 backdrop-blur-xl sticky top-0 z-30 border-b border-border/60 shadow-sm shrink-0">
                   <div className="flex items-center gap-3">
                       <Button variant="ghost" size="icon"
                           onClick={() => setIsSidebarOpen(true)}
@@ -270,13 +276,7 @@ export function AdminLayout() {
                     </Button>
 
                     {/* Avatar Mobile */}
-                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black border border-primary/20 shadow-inner overflow-hidden">
-                        {user?.fotoUrl ? (
-                            <img src={user.fotoUrl} alt="Perfil" className="w-full h-full object-cover" />
-                        ) : (
-                            user?.nome?.trim().charAt(0).toUpperCase() || 'U'
-                        )}
-                    </div>
+                    <Avatar url={user?.fotoUrl} nome={user?.nome} size="sm" className="w-9 h-9" />
                   </div>
               </header>
             )}

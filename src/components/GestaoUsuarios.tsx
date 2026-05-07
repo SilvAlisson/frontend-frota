@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import type { User, UserRole } from '../types';
 import { Button } from './ui/Button';
+import { Avatar } from './ui/Avatar';
 import { Input } from './ui/Input';
 import { ListaResponsiva } from './ui/ListaResponsiva';
 import { Badge } from './ui/Badge'; 
@@ -331,20 +332,6 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 }
 
 // --- Componentes Auxiliares (Design System Local) ---
-
-function Avatar({ nome, url, size = 'md' }: { nome: string, url?: string | null, size?: 'md' | 'lg' }) {
-  const initials = nome.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
-  const dims = size === 'md' ? 'w-10 h-10 text-xs' : 'w-14 h-14 text-sm';
-
-  if (url) return <img src={url} alt={nome} className={`${dims} rounded-2xl object-cover border border-border/60 shadow-sm`} />;
-
-  // ✨ Adicionado um gradiente suave para Avatares sem foto (fica muito mais premium no Dark Mode)
-  return (
-    <div className={`${dims} rounded-2xl bg-gradient-to-br from-surface-hover to-border/40 text-text-main flex items-center justify-center font-black border border-border/60 shadow-inner`}>
-      {initials}
-    </div>
-  );
-}
 
 // Wrapper para usar o Badge oficial com mapeamento de roles
 function BadgeRole({ role }: { role: UserRole }) {
