@@ -11,12 +11,12 @@ import { useVeiculos } from '../hooks/useVeiculos';
 // --- DESIGN SYSTEM KLIN ---
 import { PageHeader } from './ui/PageHeader';
 import { Input } from './ui/Input';
-import { DataTable, ColumnDef } from './ui/DataTable';
+import { DataTable } from './ui/DataTable'; // 🔥 Removido o ColumnDef não utilizado
 import { Switch } from './ui/Switch';
 import { Badge } from './ui/Badge';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 import { Modal } from './ui/Modal';
-import { TableStyles } from '../styles/table';
+// 🔥 Removido o TableStyles que não era mais utilizado
 import { Skeleton } from './ui/Skeleton';
 import { SkeletonTable } from './skeletons/SkeletonTable';
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -36,6 +36,7 @@ export function GestaoVeiculos() {
   const [isCadastroOpen, setIsCadastroOpen] = useState(false);
   const [veiculoParaEditar, setVeiculoParaEditar] = useState<Veiculo | null>(null);
   const [veiculoParaExcluir, setVeiculoParaExcluir] = useState<string | null>(null);
+  
   // 📡 BUSCA INDEPENDENTE COM CACHE
   const { data: veiculos = [], isLoading, refetch } = useVeiculos();
 
@@ -297,5 +298,3 @@ export function GestaoVeiculos() {
     </div>
   );
 }
-
-

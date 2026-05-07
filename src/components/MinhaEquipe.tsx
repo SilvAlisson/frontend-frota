@@ -5,7 +5,7 @@ import { EmptyState } from './ui/EmptyState';
 import { QrCode, Users } from 'lucide-react';
 import type { User, Jornada } from '../types';
 import { Avatar } from './ui/Avatar';
-import autoAnimate from '@formkit/auto-animate'; // ✨ A MAGIA DA ANIMAÇÃO APLICADA AQUI
+import autoAnimate from '@formkit/auto-animate';
 
 interface MinhaEquipeProps {
   usuarios: User[];

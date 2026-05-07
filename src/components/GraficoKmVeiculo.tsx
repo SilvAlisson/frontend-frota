@@ -9,7 +9,7 @@ interface GraficoKmVeiculoProps {
     dados: DadosEvolucaoKm[];
 }
 
-// ðŸŽ¨ TOOLTIP CUSTOMIZADA (O Segredo do visual "Elite")
+// TOOLTIP CUSTOMIZADA (O Segredo do visual "Elite")
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
