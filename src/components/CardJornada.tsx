@@ -31,7 +31,7 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [imageModal, setImageModal] = useState<string | null>(null);
   
-  // ✨ Estados para os Modais de UI Elite
+  //  Estados para os Modais de UI Elite
   const [deletingId, setDeletingId] = useState<boolean>(false);
   const [forceFinishModal, setForceFinishModal] = useState<boolean>(false);
   const [kmFimManual, setKmFimManual] = useState('');
@@ -101,7 +101,7 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
     }
   };
 
-  // ✨ Variações semânticas para o Modo Escuro e Claro
+  //  Variações semânticas para o Modo Escuro e Claro
   const statusColor = jornada.dataFim 
     ? 'border-l-4 border-l-success' 
     : 'border-l-4 border-l-info';
@@ -238,7 +238,7 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
         )}
       </div>
 
-      {/* ✨ VISUALIZADOR DE FOTOS PADRONIZADO E CHIQUE */}
+      {/*  VISUALIZADOR DE FOTOS PADRONIZADO E CHIQUE */}
       {imageModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-8 animate-in fade-in duration-300" onClick={() => setImageModal(null)}>
           <div className="relative w-full h-full flex flex-col items-center justify-center">
@@ -253,7 +253,7 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
         </div>
       )}
 
-      {/* ✨ MODAIS SUBSTITUTOS DOS ALERTAS NATIVOS */}
+      {/*  MODAIS SUBSTITUTOS DOS ALERTAS NATIVOS */}
       <ConfirmModal 
         isOpen={deletingId}
         onCancel={() => setDeletingId(false)}
