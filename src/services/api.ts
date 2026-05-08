@@ -68,8 +68,9 @@ export async function syncOfflineQueue() {
   const queue = validacao.data;
   if (queue.length === 0) return;
 
-  localStorage.removeItem(OFFLINE_QUEUE_KEY);
   toast.info(`Sincronizando ${queue.length} ações salvas offline...`);
+  
+  const novaFila = [];
 
   for (const item of queue) {
     try {
@@ -79,9 +80,26 @@ export async function syncOfflineQueue() {
         data: item.data,
         headers: item.headers as Record<string, string>
       });
-    } catch (e) {
-      console.error('Falha ao sincronizar item offline', e);
+    } catch (error: any) {
+      console.error('Falha ao sincronizar item offline', error);
+      // Mantém na fila se for erro de rede (offline ou servidor instável)
+      if (
+        error.code === "ERR_NETWORK" || 
+        error.code === "ECONNABORTED" || 
+        error.code === "ERR_CANCELED" ||
+        (error.response?.status && error.response.status >= 500)
+      ) {
+         novaFila.push(item);
+      }
     }
+  }
+  
+  if (novaFila.length > 0) {
+    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(novaFila));
+    toast.error(`Falha ao sincronizar ${novaFila.length} ações. Tentaremos novamente depois.`);
+  } else {
+    localStorage.removeItem(OFFLINE_QUEUE_KEY);
+    toast.success("Sincronização offline concluída com sucesso!");
   }
 }
 
@@ -135,7 +153,22 @@ api.interceptors.request.use(
 
 // --- Interceptor de Resposta ---
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // CACHE OFFLINE PARA LOGIN
+    if (response.config.url?.includes('/auth/login') || response.config.url?.includes('/auth/login-token')) {
+      if (response.data && response.data.token && response.data.user) {
+         try {
+           const usersMapRaw = localStorage.getItem('klin_offline_users') || '{}';
+           const usersMap = JSON.parse(usersMapRaw);
+           if (response.data.user.loginToken) {
+             usersMap[response.data.user.loginToken] = response.data;
+           }
+           localStorage.setItem('klin_offline_users', JSON.stringify(usersMap));
+         } catch(e) {}
+      }
+    }
+    return response;
+  },
   (error: AxiosError & { config: { metadata?: { startTime: Date } } }) => {
 
     const erroDeLog = !!error.config?.url?.includes('/logs');
@@ -219,13 +252,24 @@ api.interceptors.response.use(
           headers['X-Idempotency-Key'] = crypto.randomUUID();
         }
         
+        let dataPayload = error.config.data;
+        if (dataPayload) {
+           try {
+              let parsedObj = typeof dataPayload === 'string' ? JSON.parse(dataPayload) : dataPayload;
+              if (typeof parsedObj === 'object' && !parsedObj.actionCreatedAt) {
+                 parsedObj.actionCreatedAt = new Date().toISOString();
+                 dataPayload = JSON.stringify(parsedObj);
+              }
+           } catch(e){}
+        }
+
         let queue = [];
         try { queue = JSON.parse(localStorage.getItem(OFFLINE_QUEUE_KEY) || '[]'); } catch (e) { queue = []; }
         
         queue.push({
           method: error.config.method,
           url: error.config.url,
-          data: error.config.data,
+          data: dataPayload,
           headers: headers
         });
         localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));

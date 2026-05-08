@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Menu, X, LogOut, Sun, Moon
+  Menu, X, LogOut, Sun, Moon, WifiOff, RefreshCw
 } from 'lucide-react';
 import { Drawer } from 'vaul'; 
 import { useAuth } from '../contexts/AuthContext';
@@ -144,6 +144,38 @@ export function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   
+  // ✨ MODO OFFLINE / PWA
+  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? window.navigator.onLine : true);
+  const [queueSize, setQueueSize] = useState(0);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  useEffect(() => {
+    const checkQueue = () => {
+      try {
+        const q = JSON.parse(localStorage.getItem('frota_offline_queue') || '[]');
+        setQueueSize(q.length);
+      } catch (e) {
+        setQueueSize(0);
+      }
+    };
+    
+    checkQueue();
+    const interval = setInterval(checkQueue, 2000);
+    return () => clearInterval(interval);
+  }, [isOnline]);
+
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -248,6 +280,17 @@ export function AdminLayout() {
       {/* Área Principal */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
         
+        {/* ✨ BANNER OFFLINE GLOBAL */}
+        {!isShareMode && (!isOnline || queueSize > 0) && (
+          <div className={`w-full py-1.5 px-4 text-xs font-bold text-center flex items-center justify-center gap-2 shrink-0 ${!isOnline ? 'bg-amber-500/20 text-amber-500' : 'bg-primary/20 text-primary'}`}>
+             {!isOnline ? (
+               <><WifiOff className="w-3.5 h-3.5" /> MODO OFFLINE ATIVO - Trabalho Local. ({queueSize} pendentes)</>
+             ) : (
+               <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> SINCRONIZANDO {queueSize} AÇÕES PENDENTES...</>
+             )}
+          </div>
+        )}
+
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background custom-scrollbar scroll-smooth relative flex flex-col">
             
             {/* Header Mobile (Aparece só em < xl) */}
