@@ -1,5 +1,6 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
+import { db } from '../services/db';
 import { toast } from 'sonner';
 import { handleApiError } from '../services/errorHandler';
 import { useAuth } from '../contexts/AuthContext';
@@ -23,8 +24,19 @@ export function useVeiculos() {
                 ? '/veiculos/operacao'
                 : '/veiculos';
 
-            const { data } = await api.get<Veiculo[]>(endpoint);
-            return data;
+            try {
+               const { data } = await api.get<Veiculo[]>(endpoint);
+               db.masterData.put({ key: 'veiculos_' + endpoint, data, updatedAt: Date.now() }).catch(() => null);
+               return data;
+            } catch (error: any) {
+               if (!window.navigator.onLine || error.code === "ERR_NETWORK" || error.code === "ECONNABORTED" || error.code === "ERR_CANCELED") {
+                  const cached = await db.masterData.get('veiculos_' + endpoint);
+                  if (cached && cached.data) {
+                     return cached.data as Veiculo[];
+                  }
+               }
+               throw error;
+            }
         },
         staleTime: 1000 * 60 * 5, // 5 minutos de cache
         enabled: !!user,

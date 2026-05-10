@@ -30,7 +30,7 @@ export default defineConfig({
         navigateFallback: '/index.html',
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/.*?\/api\/(veiculos|users|fornecedores|produtos|cargos).*/i,
+            urlPattern: /^https:\/\/.*?\/api\/(veiculos|users|fornecedores|produtos|cargos|jornadas).*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',

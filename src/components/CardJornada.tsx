@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -108,7 +108,7 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
 
   return (
     <>
-      <div className={`bg-surface rounded-2xl shadow-sm border border-border/60 p-5 hover:shadow-md transition-all duration-300 group ${statusColor}`}>
+      <div className={`glass-premium rounded-2xl shadow-sm border border-border/30 p-5 hover:shadow-md transition-all duration-300 group ${statusColor}`}>
 
         {/* HEADER: Motorista e Veículo */}
         <div className="flex justify-between items-start mb-5">

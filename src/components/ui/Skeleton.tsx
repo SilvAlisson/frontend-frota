@@ -3,7 +3,7 @@ import { cn } from '../../lib/utils';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 const skeletonVariants = cva(
-  "relative overflow-hidden bg-surface-hover/80 before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/10 before:to-transparent",
+  "relative overflow-hidden bg-border/40 dark:bg-surface-hover/80 before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_2s_infinite] before:bg-gradient-to-r before:from-transparent before:via-black/5 dark:before:via-white/10 before:to-transparent",
   {
     variants: {
       variant: {
@@ -28,6 +28,9 @@ interface SkeletonProps
 function Skeleton({ className, variant, ...props }: SkeletonProps) {
   return (
     <div
+      role="status"
+      aria-label="Carregando..."
+      aria-busy="true"
       className={cn(skeletonVariants({ variant, className }))}
       {...props}
     />

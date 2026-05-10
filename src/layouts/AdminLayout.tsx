@@ -10,12 +10,13 @@ import { Button } from '../components/ui/Button';
 import { Avatar } from '../components/ui/Avatar';
 import { MENU_ITEMS } from '../config/navigation';
 import { Tooltip, TooltipTrigger, TooltipContent } from '../components/ui/Tooltip';
-
 import { useTheme } from '../contexts/ThemeContext';
-import type { User } from '../types';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
+import { useOfflineSyncStatus } from '../hooks/useOfflineSyncStatus';
+import type { User } from '../types';
+import { seedOfflineData } from '../utils/dataSeeder';
 
 // --- COMPONENTES AUXILIARES ---
 
@@ -96,7 +97,7 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
       </div>
 
       {/* Rodapé da Sidebar (User Profile) */}
-      <div className="p-4 border-t border-border/60 bg-surface-hover/30 shrink-0 space-y-3 pb-safe">
+      <div className="p-4 border-t border-border/30 bg-surface-hover/10 shrink-0 space-y-3 pb-safe">
 
         <div className="flex items-center gap-2 px-1 pt-2">
           {/* Avatar */}
@@ -144,37 +145,8 @@ export function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   
-  // ✨ MODO OFFLINE / PWA
-  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? window.navigator.onLine : true);
-  const [queueSize, setQueueSize] = useState(0);
-
-  useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
-
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, []);
-
-  useEffect(() => {
-    const checkQueue = () => {
-      try {
-        const q = JSON.parse(localStorage.getItem('frota_offline_queue') || '[]');
-        setQueueSize(q.length);
-      } catch (e) {
-        setQueueSize(0);
-      }
-    };
-    
-    checkQueue();
-    const interval = setInterval(checkQueue, 2000);
-    return () => clearInterval(interval);
-  }, [isOnline]);
+  // ✨ MODO OFFLINE / PWA abstraído
+  const { isOnline, queueSize } = useOfflineSyncStatus();
 
   const { logout, user } = useAuth();
   const navigate = useNavigate();
@@ -182,6 +154,13 @@ export function AdminLayout() {
   
   // ✨ Instancia o Hook do Tema
   const { theme, toggleTheme } = useTheme();
+
+  // 🔥 PRÉ-CARREGAMENTO DE DADOS OFFLINE (SEEDER)
+  useEffect(() => {
+    if (user && isOnline) {
+      seedOfflineData();
+    }
+  }, [user, isOnline]);
 
   // Detecção robusta de Share Mode (suporta BrowserRouter e HashRouter)
   const isShareMode = 
@@ -243,7 +222,7 @@ export function AdminLayout() {
       
       {/* 💻 VISÃO DESKTOP: Sidebar Estática (Só aparece em xl+) */}
       {!isShareMode && (
-        <aside className="hidden xl:flex w-[280px] flex-col bg-surface/95 backdrop-blur-xl border-r border-border/60 h-full relative z-10 shrink-0">
+        <aside className="hidden xl:flex w-[280px] flex-col glass-premium border-r-0 border-r-border/30 h-full relative z-10 shrink-0">
            <SidebarContent 
               user={user}
               onLogout={() => setIsLogoutModalOpen(true)}
@@ -258,7 +237,7 @@ export function AdminLayout() {
         <Drawer.Root direction="left" open={isShareMode ? false : isSidebarOpen} onOpenChange={setIsSidebarOpen}>
           <Drawer.Portal>
             <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 xl:hidden" />
-            <Drawer.Content className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-surface/95 backdrop-blur-xl border-r border-border/60 outline-none xl:hidden">
+            <Drawer.Content className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col glass-premium border-r-0 border-r-border/30 outline-none xl:hidden">
               
               <div className="sr-only">
                 <Drawer.Title>Menu de Navegação</Drawer.Title>
@@ -295,7 +274,7 @@ export function AdminLayout() {
             
             {/* Header Mobile (Aparece só em < xl) */}
             {!isShareMode && (
-              <header className="xl:hidden flex items-center justify-between px-4 h-[72px] bg-surface/90 backdrop-blur-xl sticky top-0 z-30 border-b border-border/60 shadow-sm shrink-0">
+              <header className="xl:hidden flex items-center justify-between px-4 h-[72px] glass-premium sticky top-0 z-30 border-b-0 border-border/30 shadow-sm shrink-0">
                   <div className="flex items-center gap-3">
                       <Button variant="ghost" size="icon"
                           onClick={() => setIsSidebarOpen(true)}

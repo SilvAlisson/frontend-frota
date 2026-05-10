@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import axios from 'axios';
+// axios import removed
 import { api } from '../services/api';
 import { uploadToR2 } from '../services/uploadService';
 import { Button } from './ui/Button';
@@ -151,23 +151,50 @@ export function ModalConfirmacaoFoto({
     setLoading(true);
 
     const fluxoCompleto = async () => {
+      const isOffline = typeof window !== 'undefined' && !window.navigator.onLine;
       const fileType = apiEndpoint.split('/')[1] || 'geral';
       const fileExt = foto.name.split('.').pop() || 'jpg';
       const fileName = `${fileType}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 
-      const publicUrlString = await uploadToR2(foto, fileName, foto.type || 'image/jpeg', fileType);
-      const fotoUrl = publicUrlString;
-
       let dadosCompletos = { ...dadosJornada };
 
-      if (apiEndpoint.includes('abastecimentos')) {
-        dadosCompletos.fotoNotaFiscalUrl = fotoUrl;
-      } else if (apiEndpoint.includes('manutencoes')) {
-        dadosCompletos.fotoComprovanteUrl = fotoUrl;
-      } else if (apiMethod === 'POST') {
-        dadosCompletos.fotoInicioUrl = fotoUrl;
+      if (isOffline) {
+        // Fallback offline -> Base64
+        const { fileToBase64 } = await import('../utils/imageCompressor');
+        const base64Image = await fileToBase64(foto);
+        
+        dadosCompletos._offlineFile_ = {
+          base64: base64Image,
+          fileName: fileName,
+          fileType: fileType,
+          originalType: foto.type || 'image/jpeg',
+          targetField: apiEndpoint.includes('abastecimentos') ? 'fotoNotaFiscalUrl' : 
+                       apiEndpoint.includes('manutencoes') ? 'fotoComprovanteUrl' : 
+                       apiMethod === 'POST' ? 'fotoInicioUrl' : 'fotoFimUrl'
+        };
+
+        const sizeInMb = (base64Image.length * 0.75) / (1024 * 1024);
+        try {
+          await api.post('/logs', {
+            level: 'INFO',
+            source: 'FRONTEND',
+            message: `[ANALYTICS] offline_photo_captured`,
+            context: { size_mb: sizeInMb.toFixed(2), fileType }
+          });
+        } catch (e) {}
       } else {
-        dadosCompletos.fotoFimUrl = fotoUrl;
+        const publicUrlString = await uploadToR2(foto, fileName, foto.type || 'image/jpeg', fileType);
+        const fotoUrl = publicUrlString;
+
+        if (apiEndpoint.includes('abastecimentos')) {
+          dadosCompletos.fotoNotaFiscalUrl = fotoUrl;
+        } else if (apiEndpoint.includes('manutencoes')) {
+          dadosCompletos.fotoComprovanteUrl = fotoUrl;
+        } else if (apiMethod === 'POST') {
+          dadosCompletos.fotoInicioUrl = fotoUrl;
+        } else {
+          dadosCompletos.fotoFimUrl = fotoUrl;
+        }
       }
 
       let response;
@@ -178,26 +205,28 @@ export function ModalConfirmacaoFoto({
         response = await api.put(endpoint, dadosCompletos);
       }
 
-      return response.data;
+      return response?.data;
     };
 
-    toast.promise(fluxoCompleto(), {
-      loading: 'Enviando comprovante e registrando...',
-      success: (data) => {
-        onSuccess(data);
-        return 'Registro confirmado com sucesso!';
-      },
-      error: (err) => {
-        setLoading(false);
-        if (import.meta.env.DEV) {
-          console.error(err);
-        }
-        if (axios.isAxiosError(err) && err.response?.data?.error) {
-          return err.response.data.error;
-        }
-        return 'Ocorreu um erro no processo. Tente novamente.';
+    try {
+      const data = await fluxoCompleto();
+      toast.success('Informações gravadas com sucesso!');
+      onSuccess(data);
+      safeOnClose();
+    } catch (error: any) {
+      if (error.message === 'USER_IS_OFFLINE' || error.code === 'ERR_NETWORK') {
+        toast.success('Offline Mode: Ação salva com sucesso na fila local.');
+        onSuccess(dadosJornada);
+        safeOnClose();
+      } else if (error.message === 'OFFLINE_LOG_SKIPPED') {
+         // ignore
+      } else {
+        console.error('Erro ao confirmar foto:', error);
+        toast.error('Erro ao processar imagem.');
       }
-    });
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Trava de segurança extra para impedir fecho acidental no "X"

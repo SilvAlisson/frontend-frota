@@ -23,7 +23,7 @@ export function PageHeader({
     breadcrumbs
 }: PageHeaderProps) {
     return (
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-border pb-6 animate-enter">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-border/30 pb-6 animate-enter">
             <div className="space-y-1">
                 {breadcrumbs && breadcrumbs.length > 0 && (
                     <nav className="flex items-center gap-1.5 text-[11px] font-bold text-text-muted uppercase tracking-wider mb-2">
@@ -41,7 +41,7 @@ export function PageHeader({
                         ))}
                     </nav>
                 )}
-                <h1 className="text-2xl font-bold text-text-main tracking-tight font-sans flex items-center gap-3">
+                <h1 className="text-3xl font-black text-text-main tracking-tight font-header flex items-center gap-3">
                     {title}
                 </h1>
                 {subtitle && (

@@ -117,7 +117,7 @@ export function JornadaCard({
   // --- FORMULÁRIO "EM OPERAÇÃO" ---
   return (
     <>
-      <Card className="border-emerald-500/30 bg-gradient-to-br from-emerald-50/50 to-surface p-5 sm:p-7 shadow-card relative overflow-hidden">
+      <Card className="glass-premium border-emerald-500/30 bg-gradient-to-br from-emerald-500/5 to-surface p-5 sm:p-7 shadow-card relative overflow-hidden">
         {/* Marca d'água visual de operação */}
         <Navigation className="absolute -right-6 -bottom-6 w-40 h-40 text-emerald-500/5 -rotate-12 pointer-events-none" />
 
@@ -125,7 +125,7 @@ export function JornadaCard({
 
           {/* Cabeçalho */}
           <div className="flex flex-col mb-2">
-            <h3 className="text-2xl font-black text-text-main tracking-tight">
+            <h3 className="text-3xl font-black font-header text-text-main tracking-tight drop-shadow-sm">
               Encerrar Jornada
             </h3>
             <p className="text-sm text-text-secondary font-medium mt-1">
@@ -135,7 +135,7 @@ export function JornadaCard({
 
           {/* Cards de Informação */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-surface p-4 rounded-2xl border border-border/60 shadow-sm flex flex-col justify-center">
+            <div className="glass-premium p-4 rounded-[1.5rem] border border-border/20 shadow-sm flex flex-col justify-center">
               <span className="text-[10px] text-text-muted font-black uppercase tracking-widest mb-1 flex items-center gap-1.5">
                 <Gauge className="w-3.5 h-3.5 text-primary" /> KM Inicial
               </span>
@@ -144,8 +144,8 @@ export function JornadaCard({
               </span>
             </div>
 
-            <div className={`p-4 rounded-2xl border flex flex-col justify-center transition-all ${
-              distanciaPercorrida > 0 ? 'bg-emerald-500/10 border-emerald-500/20 shadow-sm' : 'bg-surface border-border/60'
+            <div className={`p-4 rounded-[1.5rem] border flex flex-col justify-center transition-all ${
+              distanciaPercorrida > 0 ? 'glass-premium border-emerald-500/30 shadow-sm' : 'glass-premium border-border/20'
             }`}>
               <span className={`text-[10px] font-black uppercase tracking-widest mb-1 flex items-center gap-1.5 ${
                  distanciaPercorrida > 0 ? 'text-emerald-700' : 'text-text-muted'
@@ -179,7 +179,7 @@ export function JornadaCard({
             />
 
             {/* Aviso de Auditoria (Substitui aquele item de "Responsável" simples) */}
-            <div className="flex items-start gap-2.5 p-3.5 bg-surface-hover rounded-xl border border-border/60">
+            <div className="flex items-start gap-2.5 p-4 glass-premium rounded-[1.5rem] border border-border/20">
               <AlertTriangle className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
               <div className="text-xs text-text-secondary leading-relaxed">
                 Este encerramento será auditado por <strong className="text-text-main">{nomeEncarregado}</strong>. Prepare-se para tirar a foto do painel a seguir.

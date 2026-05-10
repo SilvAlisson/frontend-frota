@@ -1,16 +1,13 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { api } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { toast } from 'sonner';
 import { QrCode, Mail, Lock, ArrowRight, Truck, Loader2, Sun, Moon } from 'lucide-react';
-import type { UserRole } from '../types';
+import { useOfflineLogin } from '../hooks/useOfflineLogin';
 
 // --- SCHEMAS DE VALIDAÇÃO (ZOD) ---
 const loginSchema = z.object({
@@ -22,174 +19,34 @@ type LoginFormValues = z.input<typeof loginSchema>;
 
 export function LoginScreen() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const { login, logout, isAuthenticated, user, loading: authLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  
+  // Custom Hook com a lógica isolada (Single Responsibility)
+  const { isMagicLoggingIn, authLoading, loginWithCredentials, loginWithManualQr } = useOfflineLogin();
 
   // Estado visual
   const [mode, setMode] = useState<'CREDENTIALS' | 'QR'>('CREDENTIALS');
   const [qrManualToken, setQrManualToken] = useState('');
-
-  // Lógica do Login Mágico (URL)
-  const magicToken = searchParams.get('magicToken');
-  const [isMagicLoggingIn, setIsMagicLoggingIn] = useState(!!magicToken);
-  const loginTokenProcessed = useRef(false);
 
   // Hook Form
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema)
   });
 
-  // --- 1. ROTEAMENTO SEGURO ---
-  const handleRedirect = useCallback((role: UserRole) => {
-    const target = (role === 'ADMIN' || role === 'COORDENADOR') ? '/admin' : '/';
-    navigate(target, { replace: true });
-  }, [navigate]);
-
-  // --- 2. LÓGICA DE LOGIN VIA URL ---
-  useEffect(() => {
-    if (!magicToken) return;
-    if (loginTokenProcessed.current) return;
-
-    loginTokenProcessed.current = true;
-    setIsMagicLoggingIn(true);
-
-    const processMagicLogin = async () => {
-      try {
-        if (isAuthenticated) {
-          logout();
-          await new Promise(resolve => setTimeout(resolve, 50));
-        }
-
-        let loginData;
-        try {
-          const { data } = await api.post('/auth/login-token', { loginToken: magicToken });
-          loginData = data;
-        } catch (err: any) {
-           if (!window.navigator.onLine || err.code === "ERR_NETWORK" || err.code === "ECONNABORTED" || err.code === "ERR_CANCELED") {
-             const usersMapRaw = localStorage.getItem('klin_offline_users') || '{}';
-             const usersMap = JSON.parse(usersMapRaw);
-             if (usersMap[magicToken]) {
-                loginData = usersMap[magicToken];
-                toast.success('Login offline realizado com sucesso!');
-             } else {
-                throw new Error("Primeiro acesso neste dispositivo? Conecte-se à internet para entrar.");
-             }
-           } else {
-             throw err;
-           }
-        }
-
-        login(loginData);
-        toast.success(`Bem-vindo, ${loginData.user.nome.split(' ')[0]}!`);
-
-        setIsMagicLoggingIn(false);
-        const role = loginData.user.role;
-        const target = (role === 'ADMIN' || role === 'COORDENADOR') ? '/admin' : '/';
-        navigate(target, { replace: true });
-        // 🔒 007 FIX: Remove o token da URL imediatamente após uso (evita exposição no histórico)
-        window.history.replaceState({}, document.title, target);
-
-      } catch (err: any) {
-        if (import.meta.env.DEV) {
-          console.error("Login QR Falhou:", err);
-        }
-        
-        // BIG BROTHER: Auditoria Anti-Fraude
-        api.post('/logs', {
-          level: 'FRAUD_ATTEMPT',
-          source: 'FRONTEND',
-          message: `Falha de Autenticação via QR/Link Mágico`,
-          context: {
-            tentativaToken: magicToken,
-            erro: err.response?.data?.error || err.message,
-            _navigator: { userAgent: navigator.userAgent }
-          }
-        }).catch(() => null);
-
-        toast.error(err.response?.data?.error || err.message || 'Crachá inválido.');
-        setIsMagicLoggingIn(false);
-        navigate('/login', { replace: true });
-      }
-    };
-
-    processMagicLogin();
-  }, [magicToken, navigate, isAuthenticated, login, logout]);
-
-  // --- 3. BLINDAGEM ---
-  useEffect(() => {
-    if (!authLoading && isAuthenticated && user?.role && !isMagicLoggingIn) {
-      handleRedirect(user.role);
-    }
-  }, [isAuthenticated, user, authLoading, isMagicLoggingIn, handleRedirect]);
-
-  // --- 4. SUBMIT LOGIN SENHA ---
   const onCredentialsSubmit = async (data: LoginFormValues) => {
     try {
-      const response = await api.post('/auth/login', data);
-      login(response.data);
-      toast.success('Acesso Autorizado. Bem-vindo de volta!');
+      await loginWithCredentials(data);
     } catch (err: any) {
-      // BIG BROTHER: Auditoria Anti-Fraude
-      api.post('/logs', {
-        level: 'WARNING',
-        source: 'FRONTEND',
-        message: `Falha de Autenticação de Credenciais`,
-        context: {
-          emailTentado: data.email,
-          _navigator: { userAgent: navigator.userAgent }
-        }
-      }).catch(() => null);
-
-      toast.error('Credenciais inválidas.');
+      // toast já foi disparado no hook ou pode ser disparado aqui
     }
   };
 
-  // --- 5. SUBMIT LOGIN QR MANUAL ---
   const onManualQrSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!qrManualToken.trim()) return toast.warning('Digite o token.');
-
-    const toastId = toast.loading('A validar credenciais seguras...');
-
     try {
-      let loginData;
-      try {
-        const { data } = await api.post('/auth/login-token', { loginToken: qrManualToken });
-        loginData = data;
-      } catch (err: any) {
-        if (!window.navigator.onLine || err.code === "ERR_NETWORK" || err.code === "ECONNABORTED" || err.code === "ERR_CANCELED") {
-           const usersMapRaw = localStorage.getItem('klin_offline_users') || '{}';
-           const usersMap = JSON.parse(usersMapRaw);
-           if (usersMap[qrManualToken]) {
-              loginData = usersMap[qrManualToken];
-              toast.success('Login offline realizado com sucesso!');
-           } else {
-              throw new Error("Primeiro acesso neste dispositivo? Conecte-se à internet para entrar.");
-           }
-        } else {
-           throw err;
-        }
-      }
-
-      login(loginData);
-      toast.dismiss(toastId);
-      toast.success('Acesso Autorizado!');
+      await loginWithManualQr(qrManualToken);
     } catch (err: any) {
-      // BIG BROTHER: Auditoria Anti-Fraude
-      api.post('/logs', {
-        level: 'FRAUD_ATTEMPT',
-        source: 'FRONTEND',
-        message: `Falha de Autenticação via QR Manual`,
-        context: {
-          tentativaToken: qrManualToken,
-          erro: err.response?.data?.error || err.message,
-          _navigator: { userAgent: navigator.userAgent }
-        }
-      }).catch(() => null);
-
-      toast.dismiss(toastId);
-      toast.error(err.response?.data?.error || err.message || 'Token inválido ou expirado.');
+      // erros tratados no hook
     }
   };
 
@@ -270,9 +127,11 @@ export function LoginScreen() {
             <p className="text-sm font-medium text-text-secondary mt-1.5">Acesso ao Workspace Seguro</p>
           </div>
 
-          {/* Abas de Navegação (Segmented Control) */}
-          <div className="grid grid-cols-2 gap-1.5 p-1.5 bg-surface-hover/50 border border-border/60 rounded-2xl">
+          {/* Abas de Navegação (Segmented Control com Acessibilidade) */}
+          <div role="tablist" aria-label="Modo de autenticação" className="grid grid-cols-2 gap-1.5 p-1.5 bg-surface-hover/50 border border-border/60 rounded-2xl">
             <button
+              role="tab"
+              aria-selected={mode === 'CREDENTIALS'}
               onClick={() => setMode('CREDENTIALS')}
               className={`py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${mode === 'CREDENTIALS'
                 ? 'bg-surface text-primary shadow-sm border border-border/40'
@@ -282,6 +141,8 @@ export function LoginScreen() {
               Credenciais
             </button>
             <button
+              role="tab"
+              aria-selected={mode === 'QR'}
               onClick={() => setMode('QR')}
               className={`py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${mode === 'QR'
                 ? 'bg-surface text-primary shadow-sm border border-border/40'

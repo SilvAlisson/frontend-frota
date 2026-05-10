@@ -133,7 +133,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
    )}
 
    {/* ─── HEADER MOBILE CLEAN ──────────────────────────────────────────── */}
-   <header className="sticky top-0 z-40 px-4 sm:px-8 py-3 backdrop-blur-xl bg-background/70 border-b border-border/40">
+   <header className="sticky top-0 z-40 px-4 sm:px-8 py-3 glass-premium border-b-0 border-border/30">
     <div className="max-w-2xl mx-auto flex justify-between items-center">
 
      <div className="flex items-center gap-3">
@@ -206,7 +206,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
         </div>
        </div>
 
-       <div className="bg-surface rounded-2xl p-4 sm:p-6 shadow-lg border border-border/60">
+       <div className="glass-premium rounded-[2rem] p-4 sm:p-6 shadow-lg border-0 border-white/5">
         <IniciarJornada
          usuarios={usuarios}
          veiculos={veiculos}
@@ -253,7 +253,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
        key={label}
        onClick={onClick}
        className={cn(
-        "flex items-center gap-4 bg-surface border border-border/60 p-5 rounded-3xl shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left group",
+        "flex items-center gap-4 glass-premium border border-border/20 p-5 rounded-[2rem] shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left group",
         border
        )}
       >
@@ -272,7 +272,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
 
    {/* ─── BOTTOM NAVIGATION BAR (Mobile) ────────────────────────── */}
    <nav
-    className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface/80 backdrop-blur-2xl border-t border-border/50 shadow-[0_-8px_40px_rgba(0,0,0,0.15)] safe-bottom"
+    className="lg:hidden fixed bottom-0 left-0 right-0 z-50 glass-premium border-t-0 border-t-border/30 shadow-[0_-8px_40px_rgba(0,0,0,0.15)] safe-bottom"
     aria-label="Navegação principal"
    >
     <div className="max-w-2xl mx-auto flex items-center justify-around h-20 px-2">
