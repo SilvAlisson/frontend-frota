@@ -24,6 +24,7 @@ import { toast } from 'sonner';
 import { useUsuarios } from '../hooks/useUsuarios';
 import { useVeiculos } from '../hooks/useVeiculos';
 import { useJornadasAtivas } from '../hooks/useJornadasAtivas';
+import { useHaptics } from '../hooks/useHaptics';
 
 interface DashboardOperadorProps {
  user: User;
@@ -39,6 +40,7 @@ interface BottomNavItemProps {
 }
 
 function BottomNavItem({ icon: Icon, label, onClick, accent = 'yellow', badge = false }: BottomNavItemProps) {
+ const { vibrateLight } = useHaptics();
  const accentMap = {
   yellow: 'text-warning-600 dark:text-warning bg-warning/10 group-active:bg-warning/20',
   red: 'text-error bg-error/10 group-active:bg-error/20',
@@ -46,10 +48,15 @@ function BottomNavItem({ icon: Icon, label, onClick, accent = 'yellow', badge = 
   purple: 'text-purple-600 dark:text-purple-400 bg-purple-500/10 group-active:bg-purple-500/20',
  };
 
+ const handleClick = () => {
+  vibrateLight();
+  onClick();
+ };
+
  return (
   <button
-   onClick={onClick}
-   className="group relative flex flex-col items-center justify-center gap-1 flex-1 h-full min-h-[56px] transition-all active:scale-95 outline-none"
+   onClick={handleClick}
+   className="group relative flex flex-col items-center justify-center gap-1 flex-1 h-full touch-target transition-all active:scale-95 focus-ring rounded-xl"
    aria-label={label}
   >
    <div className={cn(
@@ -71,6 +78,7 @@ function BottomNavItem({ icon: Icon, label, onClick, accent = 'yellow', badge = 
 export function DashboardOperador({ user }: DashboardOperadorProps) {
  const { logout } = useAuth();
  const { theme, toggleTheme } = useTheme();
+ const { vibrateLight, vibrateMedium, vibrateSuccess } = useHaptics();
 
  // ✨ ESTADO DE CONEXÃO (Mobile-First)
  const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -105,6 +113,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
  }, []);
 
  const handleManualRefresh = async () => {
+  vibrateLight();
   setIsRefreshing(true);
   await Promise.all([refetchUsuarios(), refetchVeiculos(), refetchJornadas()]);
   setTimeout(() => setIsRefreshing(false), 800);
@@ -138,8 +147,12 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
 
      <div className="flex items-center gap-3">
       <button
-       onClick={() => setModalQrCodeOpen(true)}
-       className="w-11 h-11 rounded-full p-0.5 shadow-lg shadow-primary/20 active:scale-95 transition-transform bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shrink-0"
+       onClick={() => {
+        vibrateMedium();
+        setModalQrCodeOpen(true);
+       }}
+       className="w-11 h-11 rounded-full p-0.5 shadow-lg shadow-primary/20 active:scale-95 transition-transform bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shrink-0 touch-target focus-ring"
+       aria-label="Abrir QrCode do Perfil"
       >
        <Avatar url={user.fotoUrl} nome={user.nome} className="w-10 h-10 border-none shadow-none" />
       </button>
@@ -162,21 +175,30 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
       <button
        onClick={handleManualRefresh}
        disabled={isRefreshing || isOffline}
-       className={`w-10 h-10 rounded-xl bg-surface/50 border border-border/40 hover:bg-surface flex items-center justify-center text-text-muted transition-all active:scale-90 ${isOffline ? 'opacity-30' : ''}`}
+       className={`w-10 h-10 touch-target rounded-xl bg-surface/50 border border-border/40 hover:bg-surface flex items-center justify-center text-text-muted transition-all active:scale-90 focus-ring ${isOffline ? 'opacity-30' : ''}`}
+       aria-label="Atualizar Dados"
       >
        <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
       </button>
 
       <button
-       onClick={toggleTheme}
-       className="w-10 h-10 rounded-xl bg-surface/50 border border-border/40 hover:bg-surface flex items-center justify-center text-text-muted transition-all"
+       onClick={() => {
+        vibrateLight();
+        toggleTheme();
+       }}
+       className="w-10 h-10 touch-target rounded-xl bg-surface/50 border border-border/40 hover:bg-surface flex items-center justify-center text-text-muted transition-all focus-ring"
+       aria-label="Alterar Tema"
       >
        {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
       </button>
 
       <button
-       onClick={logout}
-       className="w-10 h-10 rounded-xl bg-error/5 border border-error/10 hover:bg-error/20 flex items-center justify-center text-error transition-all hover:rotate-12"
+       onClick={() => {
+        vibrateMedium();
+        logout();
+       }}
+       className="w-10 h-10 touch-target rounded-xl bg-error/5 border border-error/10 hover:bg-error/20 flex items-center justify-center text-error transition-all hover:rotate-12 focus-ring"
+       aria-label="Sair"
       >
        <LogOut className="w-4 h-4" />
       </button>
@@ -251,9 +273,12 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
      ].map(({ icon: Icon, label, sub, accent, border, onClick }) => (
       <button
        key={label}
-       onClick={onClick}
+       onClick={() => {
+        vibrateLight();
+        onClick();
+       }}
        className={cn(
-        "flex items-center gap-4 glass-premium border border-border/20 p-5 rounded-[2rem] shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left group",
+        "flex items-center gap-4 glass-premium border border-border/20 p-5 rounded-[2rem] shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left group focus-ring touch-target",
         border
        )}
       >

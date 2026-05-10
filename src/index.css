@@ -331,6 +331,16 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+
+  /* --- ACESSIBILIDADE E UX (A11Y) --- */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-shadow;
+  }
+
+  /* Área mínima de clique recomendada (48x48px) para evitar Fat Finger */
+  .touch-target {
+    @apply min-h-[48px] min-w-[48px];
+  }
 }
 
 

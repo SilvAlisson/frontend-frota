@@ -50,7 +50,7 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
         {onClose && (
           <Button variant="ghost" size="icon"
             onClick={onClose} 
-            className="xl:hidden p-2 -mr-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-lg transition-colors"
+            className="xl:hidden p-2 -mr-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-lg transition-colors touch-target focus-ring"
             aria-label="Fechar menu"
           >
             <X className="w-5 h-5" />
@@ -115,7 +115,7 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
               <Button 
                 variant="ghost" 
                 onClick={toggleTheme} 
-                className="!p-2 w-10 h-10 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl transition-colors shrink-0"
+                className="!p-2 w-10 h-10 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl transition-colors shrink-0 touch-target focus-ring"
                 aria-label={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
               >
                 {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
@@ -127,7 +127,7 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
           {/* Logout */}
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" onClick={onLogout} className="!p-2 w-10 h-10 text-text-muted hover:text-error hover:bg-error/10 rounded-xl transition-colors shrink-0" aria-label="Sair">
+              <Button variant="ghost" onClick={onLogout} className="!p-2 w-10 h-10 text-text-muted hover:text-error hover:bg-error/10 rounded-xl transition-colors shrink-0 touch-target focus-ring" aria-label="Sair">
                 <LogOut className="w-5 h-5" />
               </Button>
             </TooltipTrigger>
@@ -278,7 +278,7 @@ export function AdminLayout() {
                   <div className="flex items-center gap-3">
                       <Button variant="ghost" size="icon"
                           onClick={() => setIsSidebarOpen(true)}
-                          className="p-2 -ml-2 text-text-main hover:bg-surface-hover rounded-xl active:scale-95 transition-all"
+                          className="p-2 -ml-2 text-text-main hover:bg-surface-hover rounded-xl active:scale-95 transition-all touch-target focus-ring"
                           aria-label="Abrir menu"
                       >
                           <Menu className="w-6 h-6" />
@@ -292,7 +292,8 @@ export function AdminLayout() {
                     {/* ✨ Botão de Tema também no Header Mobile */}
                     <Button variant="ghost" size="icon"
                       onClick={toggleTheme}
-                      className="p-2 text-text-muted hover:text-primary transition-colors"
+                      className="p-2 text-text-muted hover:text-primary transition-colors touch-target focus-ring"
+                      aria-label="Alternar Tema"
                     >
                       {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
                     </Button>
