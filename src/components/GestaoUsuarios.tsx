@@ -69,7 +69,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
       setUserToDelete(null); // Fecha o modal após o sucesso
     },
     onError: (err: any) => {
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
       toast.error('Erro ao remover colaborador.');
       setUserToDelete(null);
     }

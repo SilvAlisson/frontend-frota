@@ -1,8 +1,9 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 import { useAuth } from '../contexts/AuthContext';
+import { handleApiError } from '../utils/errorHandler';
 
 export interface Jornada {
     id: string;
@@ -33,15 +34,6 @@ interface FinalizarJornadaParams {
     fotoFimUrl?: string;
 }
 
-const handleApiError = (error: unknown, mensagemPadrao: string) => {
-    console.error(`[API Error] ${mensagemPadrao}:`, error);
-    if (isAxiosError(error)) {
-        const msg = error.response?.data?.error || error.response?.data?.message;
-        if (msg) return toast.error(msg);
-        if (error.code === 'ERR_NETWORK') return toast.error("Sem conexão. Verifique sua rede.");
-    }
-    toast.error(mensagemPadrao);
-};
 
 // 1. Listar Jornadas Abertas (GET)
 export function useJornadasAbertas() {

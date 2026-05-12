@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
+import { DateHelper } from '../lib/dateHelper';
+import { formatCurrency } from '../lib/utils';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import { FormEditarAbastecimento } from './forms/FormEditarAbastecimento';
@@ -36,37 +38,6 @@ interface HistoricoAbastecimentosProps {
 
 const ITENS_POR_PAGINA = 20;
 
-// ✨ HELPER DE DATAS BLINDADO PARA ABASTECIMENTOS (Fim do problema de Timezone)
-const DateHelper = {
- getDia: (isoDate: string) => {
-  if (!isoDate) return '--';
-  return isoDate.split('T')[0].split('-')[2];
- },
- getMesCurto: (isoDate: string) => {
-  if (!isoDate) return '---';
-  const mesIndex = parseInt(isoDate.split('T')[0].split('-')[1], 10) - 1;
-  const meses = ['Jan.', 'Fev.', 'Mar.', 'Abr.', 'Mai.', 'Jun.', 'Jul.', 'Ago.', 'Set.', 'Out.', 'Nov.', 'Dez.'];
-  return meses[mesIndex];
- },
- getCompleta: (isoDate: string) => {
-  if (!isoDate) return '---';
-  const partes = isoDate.split('T')[0].split('-');
-  const dia = partes[2];
-  const ano = partes[0];
-  const mesIndex = parseInt(partes[1], 10) - 1;
-  const meses = ['Jan.', 'Fev.', 'Mar.', 'Abr.', 'Mai.', 'Jun.', 'Jul.', 'Ago.', 'Set.', 'Out.', 'Nov.', 'Dez.'];
-  return `${dia} ${meses[mesIndex]} ${ano}`;
- },
- getHora: (isoDate: string) => {
-  if (!isoDate || !isoDate.includes('T')) return '--:--';
-  return isoDate.split('T')[1].substring(0, 5); // Pega apenas HH:mm
- },
- getExcel: (isoDate: string) => {
-  if (!isoDate) return '';
-  const dataPart = isoDate.split('T')[0].split('-');
-  return `${dataPart[2]}/${dataPart[1]}/${dataPart[0]}`;
- }
-};
 
 export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAbastecimentosProps) {
  
@@ -106,7 +77,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
  useEffect(() => {
   api.get('/fornecedores')
     .then(res => setFornecedores(res.data))
-    .catch(err => console.error("Erro ao carregar fornecedores", err));
+    .catch(err => { if (import.meta.env.DEV) console.error("Erro ao carregar fornecedores", err); });
  }, []);
 
  const fetchHistorico = useCallback(async () => {
@@ -121,7 +92,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
    setHistorico(response.data);
    setVisibleCount(ITENS_POR_PAGINA); 
   } catch (err) {
-   console.error("Erro ao buscar histórico:", err);
+   if (import.meta.env.DEV) console.error("Erro ao buscar histórico:", err);
    toast.error('Falha ao carregar abastecimentos.');
   } finally {
    setLoading(false);
@@ -238,11 +209,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
    success: 'Boletim de Medição exportado com sucesso!',
    error: 'Erro na exportação.'
   });
- };
-
- const formatCurrency = (value: number | string) => {
-  const num = Number(value) || 0;
-  return `R$ ${num.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
  };
 
  const getCombustivelBadge = (ab: Abastecimento) => {

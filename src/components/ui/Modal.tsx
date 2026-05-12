@@ -1,13 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-import { twMerge } from 'tailwind-merge';
-import { clsx, type ClassValue } from 'clsx';
+import { cn } from '../../lib/utils';
 import { Drawer } from 'vaul';
 
-function cn(...inputs: ClassValue[]) {
-    return twMerge(clsx(inputs));
-}
+
 
 function useMediaQuery(query: string) {
   const [matches, setMatches] = useState(false);
@@ -75,11 +72,11 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
                 dismissible={false} // ✨ CORREÇÃO: Desativa o fecho por arraste!
             >
                 <Drawer.Portal>
-                    <Drawer.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-md z-[9999]" />
+                    <Drawer.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-md z-overlay" />
                     
                     <Drawer.Content 
                         className={cn(
-                            "bg-surface flex flex-col rounded-t-[2rem] fixed bottom-0 left-0 right-0 z-[9999] outline-none border-t border-white/10 shadow-[0_-10px_50px_rgba(0,0,0,0.5)]",
+                            "bg-surface flex flex-col rounded-t-[2rem] fixed bottom-0 left-0 right-0 z-modal outline-none border-t border-white/10 shadow-[0_-10px_50px_rgba(0,0,0,0.5)]",
                             className
                         )}
                         style={{ 
@@ -117,7 +114,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
 
     // --- MODO DESKTOP (PORTAL + MODAL FIXO) ---
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
+        <div className="fixed inset-0 z-modal flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
             
             <div 
                 className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity animate-in fade-in duration-300"

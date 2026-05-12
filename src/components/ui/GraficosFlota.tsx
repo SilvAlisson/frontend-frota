@@ -7,6 +7,7 @@ import {
   AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
 } from 'recharts';
+import { CHART_COLORS as PALETTE } from '../../config/chartColors';
 
 // ─── TEMA COMPARTILHADO ───────────────────────────────────────────────────────
 const CHART_COLORS = {
@@ -16,9 +17,9 @@ const CHART_COLORS = {
   error:    'var(--color-error)',
   muted:    'var(--color-text-muted)',
   surface:  'var(--color-surface)',
-  sky:      '#38bdf8',
-  purple:   '#a78bfa',
-  emerald:  '#34d399',
+  sky:      PALETTE.sky,
+  purple:   PALETTE.purple,
+  emerald:  PALETTE.emerald,
 };
 
 const TOOLTIP_STYLE = {

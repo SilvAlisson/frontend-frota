@@ -120,7 +120,7 @@ export function Step2DadosFinanceiros() {
          <div className="grid grid-cols-2 sm:col-span-6 gap-4">
           <Input
            label="Quantidade (L)"
-           type="number"
+           type="number" inputMode="decimal"
            step="0.001"
            icon={<Droplets className="w-4 h-4 text-info" />}
            {...register(`itens.${index}.quantidade`)}

@@ -3,21 +3,14 @@ import { isAxiosError } from 'axios';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 import type { DocumentoLegal, CreateDocumentoDTO } from '../types';
+import { handleApiError } from '../utils/errorHandler';
+import { FILTRO_TODOS } from '../config/constants';
 
 interface FiltrosDocumentos {
     categoria?: string;
     veiculoId?: string;
 }
 
-const handleApiError = (error: unknown, mensagemPadrao: string) => {
-    console.error(`[API Error] ${mensagemPadrao}:`, error);
-    if (isAxiosError(error)) {
-        const msg = error.response?.data?.error || error.response?.data?.message;
-        if (msg) return toast.error(msg);
-        if (error.code === 'ERR_NETWORK') return toast.error("Erro de conexão com o servidor.");
-    }
-    toast.error(mensagemPadrao);
-};
 
 // --- LISTAR ---
 export function useDocumentosLegais(filtros?: FiltrosDocumentos) {
@@ -25,7 +18,7 @@ export function useDocumentosLegais(filtros?: FiltrosDocumentos) {
         queryKey: ['documentos-legais', filtros],
         queryFn: async () => {
             const params = new URLSearchParams();
-            if (filtros?.categoria && filtros.categoria !== 'TODOS') {
+            if (filtros?.categoria && filtros.categoria !== FILTRO_TODOS) {
                 params.append('categoria', filtros.categoria);
             }
             if (filtros?.veiculoId) {

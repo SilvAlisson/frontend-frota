@@ -121,7 +121,7 @@ export function Step2ItensServicos() {
                 <div className="grid grid-cols-2 xl:col-span-6 gap-4">
                   <Input
                     label="Quantidade"
-                    type="number"
+                    type="number" inputMode="decimal"
                     step="0.1"
                     {...register(`itens.${index}.quantidade`)}
                     error={errors.itens?.[index]?.quantidade?.message}

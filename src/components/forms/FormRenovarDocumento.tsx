@@ -77,7 +77,7 @@ export function FormRenovarDocumento({ documentoId, onSuccess, onCancel }: FormR
       setValue('arquivoUrl', publicUrlString, { shouldValidate: true });
       toast.success('Novo arquivo anexado com sucesso na nuvem!');
     } catch (error) {
-      console.error(error);
+      if (import.meta.env.DEV) console.error(error);
       toast.error('Erro ao fazer upload do arquivo para o Supabase.');
     } finally {
       setIsUploading(false);

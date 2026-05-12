@@ -125,7 +125,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
           vencimentoCipp: veiculo.vencimentoCipp ? new Date(veiculo.vencimentoCipp).toISOString().split('T')[0] : ''
         });
       } catch (err) {
-        console.error(err);
+        if (import.meta.env.DEV) console.error(err);
         if (isMounted) {
             toast.error('Erro ao Acessar à ficha do veículo.');
             onCancelar();
@@ -164,7 +164,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
       toast.success('Registro do Veículo atualizado com sucesso!');
       onSuccess();
     } catch (e: any) {
-      console.error(e);
+      if (import.meta.env.DEV) console.error(e);
       const msg = e.response?.data?.error || 'Falha ao salvar as alterações. Verifique os dados.';
       toast.error(msg);
     }
@@ -235,7 +235,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Ano Fabrico"
-                  type="number"
+                  type="number" inputMode="numeric"
                   {...register('ano')}
                   error={errors.ano?.message}
                   disabled={isSubmitting}
@@ -310,7 +310,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
               <div className="relative">
                 <Input
                     label="Capacidade do Tanque"
-                    type="number"
+                    type="number" inputMode="numeric"
                     {...register('capacidadeTanque')}
                     error={errors.capacidadeTanque?.message}
                     disabled={isSubmitting}

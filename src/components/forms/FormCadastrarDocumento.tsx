@@ -97,7 +97,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
       });
 
     } catch (error) {
-      console.error(error);
+      if (import.meta.env.DEV) console.error(error);
       toast.error("Erro ao fazer upload do arquivo.");
     } finally {
       setUploading(false);

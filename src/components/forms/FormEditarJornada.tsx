@@ -109,7 +109,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
 
         reset(formData);
       } catch (err) {
-        console.error("Erro ao carregar dados:", err);
+        if (import.meta.env.DEV) console.error("Erro ao carregar dados:", err);
         if (isMounted) {
             toast.error("Falha ao carregar o Registro da jornada.");
             onCancelar();
@@ -165,7 +165,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
       toast.success('Jornada retificada com sucesso!');
       onSuccess();
     } catch (err: any) {
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
       toast.error(err.response?.data?.error || 'Ocorreu um erro ao gravar as alterações.');
     } finally {
       setLoading(false);

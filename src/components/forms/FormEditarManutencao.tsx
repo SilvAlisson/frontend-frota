@@ -212,7 +212,7 @@ export function FormEditarManutencao({
    setPreviewFoto(publicUrlString);
    toast.success("Foto atualizada com sucesso!");
   } catch (error) {
-   console.error(error);
+   if (import.meta.env.DEV) console.error(error);
    toast.error("Erro ao enviar foto.");
   } finally {
    setUploading(false);
@@ -243,7 +243,7 @@ export function FormEditarManutencao({
    toast.success("Ordem de Serviço atualizada!");
    onSuccess();
   } catch (error) {
-   console.error(error);
+   if (import.meta.env.DEV) console.error(error);
    toast.error("Erro ao atualizar registro.");
   }
  };
@@ -343,7 +343,7 @@ export function FormEditarManutencao({
          ) : previewFoto ? (
           <>
            <img src={previewFoto} alt="Nota Fiscal" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
+           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 backdrop-blur-sm pointer-events-none">
             <ImageIcon className="w-8 h-8 text-white" />
             <span className="text-white text-[10px] font-black bg-white/20 px-3 py-1.5 rounded-lg uppercase tracking-widest backdrop-blur-md">Trocar Imagem</span>
            </div>
@@ -466,7 +466,7 @@ export function FormEditarManutencao({
              size="icon"
              onClick={() => remove(index)}
              disabled={isLocked}
-             className="absolute -top-3 -right-3 w-8 h-8 rounded-full shadow-md z-10 transition-all opacity-0 group-hover:opacity-100"
+             className="absolute -top-3 -right-3 w-8 h-8 rounded-full shadow-md z-10 transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
             >
              <Trash2 className="w-4 h-4" />
             </Button>
@@ -486,7 +486,7 @@ export function FormEditarManutencao({
             <div className="md:col-span-3">
              <Input
               label="Qtd"
-              type="number"
+              type="number" inputMode="decimal"
               step="any"
               {...register(`itens.${index}.quantidade` as const)}
               className="text-center font-mono font-bold"

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import { toast } from 'sonner';
@@ -11,6 +11,7 @@ import type { Alerta } from '../types';
 
 // Componentes Elite
 import { EmptyState } from './ui/EmptyState';
+import { Modal } from './ui/Modal';
 import { Callout } from './ui/Callout';
 import { Button } from './ui/Button';
 
@@ -74,23 +75,24 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
   }
  };
 
- useEffect(() => {
-  const fetchAlertas = async () => {
-   setLoading(true);
-   setError('');
-   try {
-    const response = await api.get('/relatorios/alertas');
-    setAlertas(response.data);
-   } catch (err) {
-    console.error("Erro ao buscar alertas:", err);
-    setError('Não foi possível verificar o estado da frota.');
-    toast.error('Falha ao carregar alertas.');
-   } finally {
-    setLoading(false);
-   }
-  };
-  fetchAlertas();
+ const fetchAlertas = useCallback(async () => {
+  setLoading(true);
+  setError('');
+  try {
+   const response = await api.get('/relatorios/alertas');
+   setAlertas(response.data);
+  } catch (err) {
+   if (import.meta.env.DEV) console.error("Erro ao buscar alertas:", err);
+   setError('Não foi possível verificar o estado da frota.');
+   toast.error('Falha ao carregar alertas.');
+  } finally {
+   setLoading(false);
+  }
  }, []);
+
+ useEffect(() => {
+  fetchAlertas();
+ }, [fetchAlertas]);
 
  // --- FUNÇÕES DE RESOLUÇÃO INTERATIVA (OCIOSIDADE) ---
  const resolverAlertaOcioso = async (isMotivoJustificado: boolean) => {
@@ -153,7 +155,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
     <Callout variant="danger" title="Falha de Sincronização" icon={AlertTriangle}>
      <p className="mb-2">{error}</p>
      <Button
-      onClick={() => window.location.reload()}
+      onClick={fetchAlertas}
       variant="ghost" size="sm"
       className="text-xs font-black uppercase tracking-widest text-error hover:text-error hover:bg-error/10 mt-2"
      >
@@ -201,41 +203,35 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
 
    {/* Grid de Cartões */}
    <div className="grid gap-4 auto-rows-max">
-    {alertas.map((alerta, index) => (
-     <CardAlerta key={index} alerta={alerta} onClick={() => handleAlertaClick(alerta)} />
+    {alertas.map((alerta) => (
+     <CardAlerta key={alerta.id} alerta={alerta} onClick={() => handleAlertaClick(alerta)} />
     ))}
    </div>
 
    {/* --- MODAL DE TRIAGEM DE OCIOSIDADE --- */}
-   {alertaOciosoSelecionado && (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-     <div className="bg-surface rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-border/60 animate-in zoom-in-95 duration-300">
-      <div className="p-6 relative">
-       <Button 
-        onClick={() => setAlertaOciosoSelecionado(null)}
-        variant="ghost" size="icon"
-        className="absolute top-4 right-4 rounded-full text-text-muted"
-       >
-        <X className="w-5 h-5" />
-       </Button>
-       
+   <Modal
+     isOpen={!!alertaOciosoSelecionado}
+     onClose={() => setAlertaOciosoSelecionado(null)}
+     title="Triagem de Inatividade"
+     className="max-w-md"
+   >
+      <div className="flex flex-col items-center pt-2">
        <div className="w-14 h-14 bg-stone-500/10 rounded-full flex items-center justify-center mb-4 border border-stone-500/20">
-        {alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO' ? <Timer className="w-7 h-7 text-stone-600" /> : <UserX className="w-7 h-7 text-stone-600" />}
+        {alertaOciosoSelecionado?.tipo === 'VEICULO_OCIOSO' ? <Timer className="w-7 h-7 text-stone-600" /> : <UserX className="w-7 h-7 text-stone-600" />}
        </div>
        
-       <h2 className="text-xl font-black text-text-main tracking-tight mb-2">Triagem de Inatividade</h2>
-       <p className="text-text-secondary text-sm font-medium mb-6 leading-relaxed">
-        {alertaOciosoSelecionado.mensagem}
+       <p className="text-text-secondary text-sm font-medium mb-6 leading-relaxed text-center">
+        {alertaOciosoSelecionado?.mensagem}
        </p>
 
-       <div className="space-y-3">
+       <div className="space-y-3 w-full">
         <Button
          disabled={isResolvendo} isLoading={isResolvendo}
          onClick={() => resolverAlertaOcioso(true)}
          variant="primary"
          className="w-full py-6 text-sm font-black shadow-lg"
         >
-         {alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO' ? 'Sim, está na Oficina (Em Manutenção)' : 'Sim, está de Atestado/Férias'}
+         {alertaOciosoSelecionado?.tipo === 'VEICULO_OCIOSO' ? 'Sim, está na Oficina (Em Manutenção)' : 'Sim, está de Atestado/Férias'}
         </Button>
         <Button
          disabled={isResolvendo}
@@ -243,37 +239,29 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
          variant="secondary"
          className="w-full py-6 font-bold"
         >
-         {alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO' ? 'Não! Deveria estar rodando. Vou cobrar!' : 'Não! Deveria estar rodando. Vou cobrar!'}
+         Não! Deveria estar rodando. Vou cobrar!
         </Button>
        </div>
       </div>
-     </div>
-    </div>
-   )}
+   </Modal>
 
    {/* --- MODAL DE AUDITORIA DE SISTEMA E FRAUDES --- */}
-   {logAuditSelecionado && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-     <div className="bg-surface rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-border/60 animate-in zoom-in-95 duration-300">
-      <div className="p-6 relative">
-       <Button 
-        onClick={() => setLogAuditSelecionado(null)}
-        variant="ghost" size="icon"
-        className="absolute top-4 right-4 rounded-full text-text-muted"
-       >
-        <X className="w-5 h-5" />
-       </Button>
-       
+   <Modal
+     isOpen={!!logAuditSelecionado}
+     onClose={() => setLogAuditSelecionado(null)}
+     title="Auditoria de Sistema"
+     className="max-w-md"
+   >
+      <div className="flex flex-col items-center pt-2">
        <div className="w-14 h-14 bg-error/10 rounded-full flex items-center justify-center mb-4 border border-error/20">
-        {logAuditSelecionado.tipo === 'TENTATIVA_FRAUDE' ? <ShieldAlert className="w-7 h-7 text-error" /> : <Bug className="w-7 h-7 text-error" />}
+        {logAuditSelecionado?.tipo === 'TENTATIVA_FRAUDE' ? <ShieldAlert className="w-7 h-7 text-error" /> : <Bug className="w-7 h-7 text-error" />}
        </div>
        
-       <h2 className="text-xl font-black text-text-main tracking-tight mb-2">Auditoria de Sistema</h2>
-       <p className="text-text-secondary text-sm font-medium mb-6 leading-relaxed">
-        {logAuditSelecionado.mensagem}
+       <p className="text-text-secondary text-sm font-medium mb-6 leading-relaxed text-center">
+        {logAuditSelecionado?.mensagem}
        </p>
 
-       <div className="space-y-3">
+       <div className="space-y-3 w-full">
         <Button
          disabled={isResolvendo} isLoading={isResolvendo}
          onClick={resolverLogAudit}
@@ -292,9 +280,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
         </Button>
        </div>
       </div>
-     </div>
-    </div>
-   )}
+   </Modal>
 
   </div>
  );
@@ -396,9 +382,12 @@ function CardAlerta({ alerta, onClick }: { alerta: Alerta, onClick: () => void }
  const IconComponent = config.icon;
 
  return (
-  <div 
+  <button 
+   type="button"
+   role="button"
    onClick={onClick}
    className={`
+   text-left w-full
    group relative overflow-hidden bg-surface p-5 rounded-2xl shadow-sm border border-border/60 
    hover:shadow-md transition-all duration-300 flex items-start gap-4 border-l-[4px] hover:border-l-[8px] cursor-pointer
    ${config.border}
@@ -427,6 +416,6 @@ function CardAlerta({ alerta, onClick }: { alerta: Alerta, onClick: () => void }
    <div className="self-center text-border group-hover:text-text-muted transition-colors opacity-0 lg:group-hover:opacity-100">
     <ChevronRight className="w-5 h-5" />
    </div>
-  </div>
+  </button>
  );
 }

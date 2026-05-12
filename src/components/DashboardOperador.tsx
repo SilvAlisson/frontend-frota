@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect } from 'react';
-import { Fuel, History, FileText, Info, LogOut, Play, Navigation, AlertTriangle, WifiOff, RefreshCw } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Fuel, History, FileText, Info, LogOut, Play, Navigation, AlertTriangle, RefreshCw } from 'lucide-react';
 import { IniciarJornada } from './IniciarJornada';
 import { JornadaCard } from './JornadaCard';
 import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
@@ -18,7 +18,6 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
 import type { User } from '../types';
 import { cn } from '../lib/utils';
-import { toast } from 'sonner';
 
 // Hooks Atômicos
 import { useUsuarios } from '../hooks/useUsuarios';
@@ -80,8 +79,6 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
  const { theme, toggleTheme } = useTheme();
  const { vibrateLight, vibrateMedium, vibrateSuccess } = useHaptics();
 
- // ✨ ESTADO DE CONEXÃO (Mobile-First)
- const [isOffline, setIsOffline] = useState(!navigator.onLine);
  const [isRefreshing, setIsRefreshing] = useState(false);
 
  const [modalAbastecimentoOpen, setModalAbastecimentoOpen] = useState(false);
@@ -95,37 +92,23 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
  const { data: veiculos = [], refetch: refetchVeiculos } = useVeiculos();
  const { data: jornadasAtivas = [], refetch: refetchJornadas } = useJornadasAtivas();
 
- // Listener de Conexão
- useEffect(() => {
-  const handleOnline = () => {
-   setIsOffline(false);
-   toast.success('Conexão restabelecida!', { position: 'top-center' });
-   handleManualRefresh();
-  };
-  const handleOffline = () => setIsOffline(true);
-
-  window.addEventListener('online', handleOnline);
-  window.addEventListener('offline', handleOffline);
-  return () => {
-   window.removeEventListener('online', handleOnline);
-   window.removeEventListener('offline', handleOffline);
-  };
- }, []);
 
  const handleManualRefresh = async () => {
   vibrateLight();
   setIsRefreshing(true);
   await Promise.all([refetchUsuarios(), refetchVeiculos(), refetchJornadas()]);
+  vibrateSuccess();
   setTimeout(() => setIsRefreshing(false), 800);
  };
 
  // 🛡️ FILTRO BLINDADO — só minhas jornadas
  const minhasJornadas = useMemo(() => {
-  return jornadasAtivas.filter((j: any) =>
+  const result = jornadasAtivas.filter((j: any) =>
    j.operador?.id === user.id ||
    j.operadorId === user.id ||
    j.motoristaId === user.id
   );
+  return result;
  }, [jornadasAtivas, user.id]);
 
  const tenhoJornadaAtiva = minhasJornadas.length > 0;
@@ -133,13 +116,6 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
 
  return (
   <div className="min-h-screen -mx-4 sm:-mx-8 px-0 relative overflow-hidden bg-background transition-colors duration-500 font-sans">
-
-   {/* ✨ BANNER OFFLINE */}
-   {isOffline && (
-    <div className="bg-error text-white text-xs font-bold text-center py-1.5 flex items-center justify-center gap-2 z-50 relative">
-     <WifiOff className="w-3.5 h-3.5" /> Sem Conexão de Internet. Envios pausados.
-    </div>
-   )}
 
    {/* ─── HEADER MOBILE CLEAN ──────────────────────────────────────────── */}
    <header className="sticky top-0 z-40 px-4 sm:px-8 py-3 glass-premium border-b-0 border-border/30">
@@ -174,8 +150,8 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
       {/* ✨ BOTÃO REFRESH MANUAL */}
       <button
        onClick={handleManualRefresh}
-       disabled={isRefreshing || isOffline}
-       className={`w-10 h-10 touch-target rounded-xl bg-surface/50 border border-border/40 hover:bg-surface flex items-center justify-center text-text-muted transition-all active:scale-90 focus-ring ${isOffline ? 'opacity-30' : ''}`}
+       disabled={isRefreshing}
+       className="w-10 h-10 touch-target rounded-xl bg-surface/50 border border-border/40 hover:bg-surface flex items-center justify-center text-text-muted transition-all active:scale-90 focus-ring"
        aria-label="Atualizar Dados"
       >
        <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
@@ -322,7 +298,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
    </Modal>
 
    <Modal isOpen={modalHistoricoOpen} onClose={() => setModalHistoricoOpen(false)} title="Meu Histórico de Viagens" className="max-w-5xl">
-    <HistoricoJornadas userRole={user.role} />
+    <HistoricoJornadas userRole={user.role} isReadOnly={true} />
    </Modal>
 
    <Modal isOpen={modalDocumentosOpen} onClose={() => setModalDocumentosOpen(false)} title="Pasta de Documentos" className="max-w-4xl">

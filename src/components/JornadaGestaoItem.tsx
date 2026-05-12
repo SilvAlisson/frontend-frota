@@ -1,4 +1,4 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 import { parseDecimal } from '../utils';
@@ -79,7 +79,7 @@ export function JornadaGestaoItem({
       toast.success('Jornada encerrada com sucesso.');
       onFinalizada(jornada.id);
     } catch (err: any) {
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
       setError(err.response?.data?.error || 'Falha ao finalizar.');
       toast.error('Erro ao finalizar jornada.');
     } finally {
@@ -95,7 +95,7 @@ export function JornadaGestaoItem({
       if (onExcluida) onExcluida(deletingId);
       else onFinalizada(deletingId);
     } catch (err) {
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
       toast.error('Erro ao excluir jornada.');
     } finally {
       setDeletingId(null);
@@ -164,7 +164,7 @@ export function JornadaGestaoItem({
               <div className="flex-1">
                 <Input
                   label={`KM Final (> ${jornada.kmInicio})`}
-                  type="number"
+                  type="number" inputMode="numeric"
                   placeholder="000000"
                   value={kmFim}
                   onChange={(e) => {

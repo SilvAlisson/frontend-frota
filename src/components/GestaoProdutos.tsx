@@ -83,7 +83,7 @@ export function GestaoProdutos() {
    const response = await api.get('/produtos');
    setProdutos(response.data);
   } catch (err) {
-   console.error(err);
+   if (import.meta.env.DEV) console.error(err);
    toast.error('Falha ao carregar catálogo.');
   } finally {
    setLoading(false);

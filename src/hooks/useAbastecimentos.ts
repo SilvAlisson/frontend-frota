@@ -1,8 +1,8 @@
-﻿import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { api } from '../services/api';
 import { toast } from 'sonner';
-import { handleApiError } from '../services/errorHandler';
+import { handleApiError } from '../utils/errorHandler';
 import { useAuth } from '../contexts/AuthContext';
 
 export interface AbastecimentoItem {

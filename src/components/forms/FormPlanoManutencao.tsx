@@ -127,7 +127,7 @@ export function FormPlanoManutencao({ onSuccess, onCancel }: FormPlanoManutencao
           <div className="relative">
             <Input
               label="Intervalo"
-              type="number"
+              type="number" inputMode="numeric"
               placeholder={tipoIntervalo === 'KM' ? '10000' : '6'}
               {...register('valorIntervalo')}
               error={errors.valorIntervalo?.message}

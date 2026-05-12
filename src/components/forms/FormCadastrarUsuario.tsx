@@ -92,7 +92,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
         const fileName = `perfil-${Date.now()}.${fileExt}`;
         finalFotoUrl = await uploadToR2(fotoFile, fileName, fotoFile.type || 'image/jpeg', 'usuarios');
       } catch (err) {
-        console.error("Erro upload:", err);
+        if (import.meta.env.DEV) console.error("Erro upload:", err);
         toast.error("Falha ao enviar foto de perfil.");
         return;
       }
@@ -124,7 +124,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
         return 'Colaborador cadastrado com sucesso!';
       },
       error: (err) => {
-        console.error(err);
+        if (import.meta.env.DEV) console.error(err);
         return err.response?.data?.error || 'Erro ao cadastrar. Verifique o email.';
       }
     });
@@ -174,7 +174,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
                   <User className="w-12 h-12 opacity-40 group-hover:scale-110 transition-transform" />
                 </div>
               )}
-              <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+              <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
                 <Camera className="w-6 h-6 text-white mb-1" />
                 <span className="text-[10px] font-bold text-white uppercase tracking-wider">Alterar</span>
               </div>

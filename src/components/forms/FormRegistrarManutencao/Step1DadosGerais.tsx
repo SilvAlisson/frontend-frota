@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFormContext, Controller } from 'react-hook-form';
 import { Wrench, Truck, Gauge, AlertTriangle } from 'lucide-react';
 import { Input } from '../../ui/Input';
@@ -53,7 +53,7 @@ export function Step1DadosGerais() {
       try {
         const { data } = await api.get<Veiculo>(`/veiculos/${veiculoIdSelecionado}`);
         if (isMounted) setUltimoKmRegistrado(data.ultimoKm || 0);
-      } catch (err) { console.error(err); }
+      } catch (err) { if (import.meta.env.DEV) console.error(err); }
     };
     fetchInfo();
     return () => { isMounted = false; };
@@ -132,7 +132,7 @@ export function Step1DadosGerais() {
           <div className="flex flex-col">
             <Input
               label="KM na entrada da oficina (Opcional)"
-              icon={<Gauge className="w-4 h-4 text-primary" />}
+              icon={<Gauge className="w-4 h-4 text-primary" />} inputMode="numeric"
               {...register("kmAtual")}
               onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
               placeholder={ultimoKmRegistrado > 0 ? `Ref: ${ultimoKmRegistrado}` : "Ex: 15.000"}

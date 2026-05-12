@@ -30,8 +30,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signOut = () => {
     storage.removeItem('authToken');
     storage.removeItem('authUser');
-
-    // Ao setar para nulo, o Router detecta a mudança e redireciona para o /login na hora
     setUser(null);
   };
 
@@ -77,7 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } catch (error) {
           // 🔒 007: console.error só em DEV — não vazamos stack traces em produção
           if (import.meta.env.DEV) {
-            console.error("Sessão inválida encontrada. Limpando dados.", error);
+            if (import.meta.env.DEV) console.error("Sessão inválida encontrada. Limpando dados.", error);
           }
           signOut();
         }
@@ -106,6 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // 2. Atualização do Estado
     setUser(data.user);
+
   };
 
   const logout = () => {

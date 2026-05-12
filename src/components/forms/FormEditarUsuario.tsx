@@ -125,7 +125,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
           dataAdmissao: user.dataAdmissao ? user.dataAdmissao.split('T')[0] : '',
         });
       } catch (err) {
-        console.error(err);
+        if (import.meta.env.DEV) console.error(err);
         if (isMounted) {
           toast.error("Erro ao carregar os dados de perfil.");
           onCancelar();
@@ -158,7 +158,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
         const fileName = `perfil-${userId}-${Date.now()}.${fileExt}`;
         finalFotoUrl = await uploadToR2(fotoFile, fileName, fotoFile.type || 'image/jpeg', 'usuarios');
       } catch (err) {
-        console.error(err);
+        if (import.meta.env.DEV) console.error(err);
         toast.error("Erro ao atualizar foto de perfil.");
         return;
       }
@@ -190,7 +190,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
         return 'Perfil do colaborador atualizado!';
       },
       error: (err) => {
-        console.error(err);
+        if (import.meta.env.DEV) console.error(err);
         return err.response?.data?.error || 'Falha ao atualizar dados.';
       }
     });
@@ -242,7 +242,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
                   <User className="w-12 h-12 opacity-40 group-hover:scale-110 transition-transform" />
                 </div>
               )}
-              <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm">
+              <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm pointer-events-none">
                 <Camera className="w-6 h-6 text-white mb-1" />
                 <span className="text-[10px] font-bold text-white uppercase tracking-wider">Mudar Foto</span>
               </div>

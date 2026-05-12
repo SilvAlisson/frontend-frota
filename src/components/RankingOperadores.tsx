@@ -38,7 +38,7 @@ export function RankingOperadores() {
         const res = await api.get('/relatorios/ranking-veiculos', { params: { ano, mes } });
         setRanking(res.data);
       } catch (err) {
-        console.error(err);
+        if (import.meta.env.DEV) console.error(err);
         toast.error('Erro ao carregar ranking da frota.');
       } finally {
         setLoading(false);

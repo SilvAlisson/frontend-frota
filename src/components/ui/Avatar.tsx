@@ -1,10 +1,7 @@
 import React from 'react';
-import { twMerge } from 'tailwind-merge';
-import { clsx, type ClassValue } from 'clsx';
+import { cn } from '../../lib/utils';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+
 
 export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   nome?: string;

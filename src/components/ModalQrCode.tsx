@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
+import { Modal } from './ui/Modal';
 import { QRCodeSVG } from 'qrcode.react';
 import { api } from '../services/api';
 import { Avatar } from './ui/Avatar';
@@ -52,16 +52,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   const tokenFinal = tokenAtual || user.matricula;
   const loginUrl = tokenFinal ? `${baseUrl}/login?magicToken=${tokenFinal}` : '';
 
-  // Bloqueio de scroll
-  useEffect(() => {
-    document.body.style.overflow = 'hidden';
-    const handleEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    window.addEventListener('keydown', handleEsc);
-    return () => {
-      document.body.style.overflow = 'unset';
-      window.removeEventListener('keydown', handleEsc);
-    };
-  }, [onClose]);
+  // Bloqueio de scroll removido, pois o componente Modal já gerencia isso nativamente
 
   const handleGerarNovo = async () => {
     if (tokenAtual && !window.confirm("ATENÇÃO: Gerar um novo código invalidará o crachá anterior. Continuar?")) return;
@@ -74,7 +65,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
       toast.success("Credencial atualizada com sucesso!");
       if (onUpdate) onUpdate();
     } catch (error) {
-      console.error(error);
+      if (import.meta.env.DEV) console.error(error);
       toast.error("Erro ao gerar credencial.");
     } finally {
       setLoading(false);
@@ -139,32 +130,17 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
     return map[role] || 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
-  return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
-      {/* Overlay Dark */}
-      <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity animate-in fade-in duration-300" 
-        onClick={onClose} 
-      />
-
-      <div className="relative flex flex-col items-center gap-8 w-full max-w-sm animate-in zoom-in-95 duration-300">
-        
-        {/* Botão Fechar */}
-        <Button
-          onClick={onClose} variant="ghost" size="icon"
-          className="absolute -top-12 right-0 sm:-right-12 sm:top-0 rounded-full p-2.5 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 transition-all border border-white/10 backdrop-blur-sm z-50"
-        >
-          <X className="w-5 h-5" />
-        </Button>
-
+  return (
+    <Modal isOpen={true} onClose={onClose} title="Identidade Funcional" className="max-w-[380px]">
+      <div className="flex flex-col items-center gap-6">
         {/* === CRACHÁ PREMIUM === */}
-          <div
-            ref={cardRef}
-            className="w-full max-w-[320px] mx-4 h-[520px] bg-surface rounded-[24px] shadow-2xl overflow-hidden relative flex flex-col select-none border border-border/50"
-            style={{
-              boxShadow: '0 20px 40px -10px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.5) inset'
-            }}
-          >
+        <div
+          ref={cardRef}
+          className="w-full h-[520px] bg-surface rounded-[24px] shadow-lg overflow-hidden relative flex flex-col select-none border border-border/50"
+          style={{
+            boxShadow: '0 20px 40px -10px rgba(0,0,0,0.1), 0 0 0 1px rgba(255,255,255,0.5) inset'
+          }}
+        >
             {/* Background Texture */}
             <BackgroundPattern />
 
@@ -239,12 +215,12 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           </div>
 
           {/* === AÇÕES EXTERNAS === */}
-          <div className="w-full max-w-[320px] mx-4 flex flex-col gap-3">
+          <div className="w-full flex flex-col gap-3">
             {tokenFinal ? (
               <>
                 <Button
                   onClick={handlePrint}
-                  className="w-full h-12 text-base font-bold shadow-xl bg-white hover:bg-gray-50 text-gray-900 border-none transition-transform active:scale-95"
+                  className="w-full h-11 text-base font-bold bg-surface-hover hover:bg-border text-text-main border-none transition-transform active:scale-95"
                   variant="secondary"
                   icon={<Printer className="w-5 h-5 text-primary" />}
                 >
@@ -255,7 +231,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                   <Button
                     variant="secondary"
                     onClick={handleCopyLink}
-                    className="h-11 bg-white/10 hover:bg-white/20 text-white border border-white/20 backdrop-blur-md"
+                    className="h-11 bg-surface-hover hover:bg-border text-text-main border border-border/40"
                     icon={<Copy className="w-4 h-4" />}
                   >
                     Copiar
@@ -264,7 +240,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                     variant="ghost"
                     onClick={handleGerarNovo}
                     isLoading={loading}
-                    className="h-11 bg-white/5 hover:bg-red-500/20 text-red-200 hover:text-red-100 border border-white/10 backdrop-blur-md"
+                    className="h-11 bg-error/10 hover:bg-error/20 text-error border border-error/20"
                     icon={<RefreshCw className="w-4 h-4" />}
                   >
                     Renovar
@@ -274,17 +250,16 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             ) : (
               <Button
                 onClick={handleGerarNovo}
-                className="w-full h-14 text-lg shadow-xl bg-primary hover:bg-primary-hover text-white border-none font-bold"
+                className="w-full h-12 text-base shadow-xl bg-primary hover:bg-primary-hover text-white border-none font-bold"
                 isLoading={loading}
-                icon={<Download className="w-6 h-6" />}
+                icon={<Download className="w-5 h-5" />}
               >
                 Gerar Acesso Inicial
               </Button>
             )}
           </div>
 
-        </div>
-      </div>,
-    document.body
+      </div>
+    </Modal>
   );
 }

@@ -5,7 +5,7 @@ import * as z from 'zod';
 import { AlertTriangle, Camera, Info, CarFront, Wrench, Zap, CircleDashed } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Textarea';
-import { handleApiError } from '../../services/errorHandler';
+import { handleApiError } from '../../utils/errorHandler';
 import { useDefeitos } from '../../hooks/useDefeitos';
 import { cn } from '../../lib/utils';
 import { uploadToR2 } from '../../services/uploadService';

@@ -189,7 +189,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
       setPreviewFoto(publicUrlString);
       toast.success("Foto atualizada!");
     } catch (error) {
-      console.error(error);
+      if (import.meta.env.DEV) console.error(error);
       toast.error("Erro ao enviar foto.");
     } finally {
       setUploading(false);
@@ -288,7 +288,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
               ) : previewFoto ? (
                 <>
                   <img src={previewFoto} alt="Nota Fiscal" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 backdrop-blur-sm">
+                  <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 backdrop-blur-sm pointer-events-none">
                     <ImageIcon className="w-10 h-10 text-white" />
                     <span className="text-white text-[11px] font-black uppercase tracking-widest bg-white/20 px-3 py-1.5 rounded-lg backdrop-blur-md">Substituir Imagem</span>
                   </div>
@@ -326,7 +326,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
               </div>
 
               <div className="md:col-span-4">
-                <Input label="Hodômetro Atual" type="number" {...register('kmOdometro')} error={errors.kmOdometro?.message as string} disabled={isLocked} className="font-mono font-bold text-lg text-primary" />
+                <Input label="Hodômetro Atual" type="number" inputMode="numeric" {...register('kmOdometro')} error={errors.kmOdometro?.message as string} disabled={isLocked} className="font-mono font-bold text-lg text-primary" />
               </div>
 
               <div className="md:col-span-4">
@@ -356,7 +356,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
           <div className="space-y-4">
             {fields.map((field, index) => (
               <div key={field.id} className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end bg-surface-hover/20 p-5 rounded-2xl border border-border/60 shadow-sm relative group hover:border-primary/40 transition-colors duration-300">
-                <Button type="button" variant="danger" size="icon" onClick={() => remove(index)} disabled={isLocked} className="absolute -top-3 -right-3 rounded-full w-8 h-8 shadow-md z-10 opacity-0 group-hover:opacity-100 transition-all">
+                <Button type="button" variant="danger" size="icon" onClick={() => remove(index)} disabled={isLocked} className="absolute -top-3 -right-3 rounded-full w-8 h-8 shadow-md z-10 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all">
                   <X className="w-4 h-4" />
                 </Button>
 
@@ -365,7 +365,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
                 </div>
 
                 <div className="md:col-span-3">
-                  <Input label="Litros / Qtd" type="number" step="any" {...register(`itens.${index}.quantidade`)} error={errors.itens?.[index]?.quantidade?.message as string} className="text-center font-mono font-bold" containerClassName="!mb-0" disabled={isLocked} />
+                  <Input label="Litros / Qtd" type="number" step="any" inputMode="decimal" {...register(`itens.${index}.quantidade`)} error={errors.itens?.[index]?.quantidade?.message as string} className="text-center font-mono font-bold" containerClassName="!mb-0" disabled={isLocked} />
                 </div>
 
                 <div className="md:col-span-3">

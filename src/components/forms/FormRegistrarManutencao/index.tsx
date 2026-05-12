@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useForm, FormProvider } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -56,50 +56,31 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
 
   const { handleSubmit, trigger, reset, formState: { isSubmitting } } = methods;
 
-  // 🕵️ LOG 1: Observador de mudança de tela
-  useEffect(() => {
-    console.log(`[DEBUG_KLIN] 🔄 TELA RENDERIZADA: A variável 'step' agora é -> ${step}`);
-  }, [step]);
 
   const nextStep = async () => {
-    console.log(`[DEBUG_KLIN] ⏩ 'nextStep' foi clicado/chamado. Step ANTES de validar: ${step}`);
-    
     let isValid = false;
     if (step === 1) {
-      console.log("[DEBUG_KLIN] ⏳ ZOD: Disparando validação do Step 1...");
       isValid = await trigger(['alvo', 'veiculoId', 'fornecedorId', 'data', 'kmAtual', 'numeroCA', 'tipo']);
     } else if (step === 2) {
-      console.log("[DEBUG_KLIN] ⏳ ZOD: Disparando validação do Step 2...");
       isValid = await trigger('itens');
     }
-    
-    console.log(`[DEBUG_KLIN] 📊 Resultado da validação do Zod para o Step ${step}: ${isValid ? 'PASSOU ✅' : 'FALHOU ❌'}`);
-    
     if (isValid) {
-      setStep(s => {
-        console.log(`[DEBUG_KLIN] 🔄 Atualizando a variável 'step' de ${s} para ${s + 1}`);
-        return s + 1;
-      });
+      setStep(s => s + 1);
     }
   };
 
   // 🛡️ Interceptador de Submit
   const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault(); 
-    e.stopPropagation(); // 🔥 Corta a propagação do clique fantasma
-    console.log(`[DEBUG_KLIN] 🛑 'handleFormSubmit' interceptou um evento <form onSubmit>! Variável step atual: ${step}`);
-    
+    e.preventDefault();
+    e.stopPropagation();
     if (step < 3) {
-      console.log(`[DEBUG_KLIN] ➡️ Redirecionando evento nativo de envio para a função 'nextStep()'`);
-      nextStep(); 
+      nextStep();
     } else {
-      console.log(`[DEBUG_KLIN] 🚀 Tudo ok! Disparando handleSubmit(onSubmit) oficial do React Hook Form...`);
-      handleSubmit(onSubmit)(e); 
+      handleSubmit(onSubmit)(e);
     }
   };
 
   const onSubmit = async (data: ManutencaoFormValues) => {
-    console.log("[DEBUG_KLIN] 🎯 'onSubmit' FINAL DA TELA 3 ALCANÇADO! Dados gerados:", data);
     
     let kmInputFloat = null;
     
@@ -133,7 +114,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       }))
     };
 
-    console.log("[DEBUG_KLIN] 📸 Chamando abertura da Câmera (setModalAberto: true)");
+
     setFormDataParaModal(payload);
     setModalAberto(true);
   };

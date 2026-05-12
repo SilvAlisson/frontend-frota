@@ -62,7 +62,7 @@ export function handleApiError(error: unknown, defaultMessage = 'Ocorreu um erro
     else if (error instanceof Error) {
         //  Uso de import.meta.env.DEV (padrão Vite) em vez de process.env
         if (import.meta.env.DEV) {
-            console.error('[Non-Axios Error]', error);
+            if (import.meta.env.DEV) console.error('[Non-Axios Error]', error);
         }
         // message = error.message; // Opcional
     }

@@ -1,4 +1,4 @@
-﻿import { type ClassValue, clsx } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 /**
@@ -12,11 +12,12 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // Formatadores centralizados (Dry Principle)
-export const formatCurrency = (value: number) => {
+export const formatCurrency = (value: number | string) => {
+  const num = Number(value) || 0;
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
-  }).format(value);
+  }).format(num);
 };
 
 export const formatNumber = (value: number) => {

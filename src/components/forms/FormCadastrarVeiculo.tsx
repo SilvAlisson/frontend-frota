@@ -102,7 +102,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
       setTimeout(onSuccess, 500);
 
     } catch (error: any) {
-      console.error(error);
+      if (import.meta.env.DEV) console.error(error);
       const msg = error.response?.data?.error || 'Erro ao cadastrar. Verifique a placa.';
       toast.error(msg);
     }
@@ -166,7 +166,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
         <div className="md:col-span-3">
           <Input
             label="Ano"
-            type="number"
+            type="number" inputMode="numeric"
             {...register('ano')}
             placeholder="2024"
             disabled={isSubmitting}
@@ -215,7 +215,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
         <div className="md:col-span-6">
           <Input
             label="Capacidade do Tanque (LITROS)"
-            type="number"
+            type="number" inputMode="numeric"
             {...register('capacidadeTanque')}
             placeholder="Ex: 270"
             disabled={isSubmitting}
@@ -227,7 +227,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
         <div className="md:col-span-6">
           <Input
             label="Média Alvo de Consumo (KM/L)"
-            type="number"
+            type="number" inputMode="numeric"
             step="0.1"
             {...register('mediaEstimada')}
             placeholder="Ex: 3.5"
@@ -240,7 +240,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
         <div className="md:col-span-12 pt-2">
           <Input
             label="KM Inicial (Hodômetro de Entrada)"
-            type="number"
+            type="number" inputMode="numeric"
             {...register('kmAtual')}
             placeholder="0"
             disabled={isSubmitting}

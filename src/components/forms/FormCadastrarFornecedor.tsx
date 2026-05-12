@@ -64,7 +64,7 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormProps) {
       .then(res => {
         if(isMounted) setProdutosDisponiveis(res.data);
       })
-      .catch(err => console.error("Erro ao carregar produtos", err))
+      .catch(err => { if (import.meta.env.DEV) console.error("Erro ao carregar produtos", err); })
       .finally(() => {
         if(isMounted) setLoadingProdutos(false);
       });
@@ -101,7 +101,7 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormProps) {
             error: (err) => err.response?.data?.error || 'Erro ao cadastrar fornecedor.'
         });
     } catch(e) {
-        console.error(e);
+        if (import.meta.env.DEV) console.error(e);
         toast.error('Ocorreu um erro ao processar os dados.');
     }
   };

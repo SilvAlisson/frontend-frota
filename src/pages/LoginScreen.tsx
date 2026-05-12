@@ -7,7 +7,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { QrCode, Mail, Lock, ArrowRight, Truck, Loader2, Sun, Moon } from 'lucide-react';
-import { useOfflineLogin } from '../hooks/useOfflineLogin';
+import { useLogin } from '../hooks/useLogin';
 
 // --- SCHEMAS DE VALIDAÇÃO (ZOD) ---
 const loginSchema = z.object({
@@ -22,7 +22,7 @@ export function LoginScreen() {
   const { theme, toggleTheme } = useTheme();
   
   // Custom Hook com a lógica isolada (Single Responsibility)
-  const { isMagicLoggingIn, authLoading, loginWithCredentials, loginWithManualQr } = useOfflineLogin();
+  const { isMagicLoggingIn, authLoading, loginWithCredentials, loginWithManualQr } = useLogin();
 
   // Estado visual
   const [mode, setMode] = useState<'CREDENTIALS' | 'QR'>('CREDENTIALS');

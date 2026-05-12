@@ -1,14 +1,13 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
-import { checkOfflineLoginEligibility } from '../services/db';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import type { UserRole } from '../types';
 
-export function useOfflineLogin() {
+export function useLogin() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { login, logout, isAuthenticated, user, loading: authLoading } = useAuth();
   
   const magicToken = searchParams.get('magicToken');
@@ -33,29 +32,13 @@ export function useOfflineLogin() {
           await new Promise(resolve => setTimeout(resolve, 50));
         }
 
-        let loginData;
-        try {
-          const { data } = await api.post('/auth/login-token', { loginToken: magicToken });
-          loginData = data;
-        } catch (err: any) {
-           if (!window.navigator.onLine || err.code === "ERR_NETWORK" || err.code === "ECONNABORTED" || err.code === "ERR_CANCELED") {
-             const check = await checkOfflineLoginEligibility(magicToken);
-             if (check.eligible && check.user) {
-                loginData = check.user;
-                toast.success('Login offline realizado com sucesso!');
-             } else {
-                throw new Error(check.message || "Primeiro acesso neste dispositivo? Conecte-se à internet para entrar.");
-             }
-           } else {
-             throw err;
-           }
-        }
+        const { data } = await api.post('/auth/login-token', { loginToken: magicToken });
 
-        login(loginData);
-        toast.success(`Bem-vindo, ${loginData.user.nome.split(' ')[0]}!`);
+        login(data);
+        toast.success(`Bem-vindo, ${data.user.nome.split(' ')[0]}!`);
 
         setIsMagicLoggingIn(false);
-        const role = loginData.user.role;
+        const role = data.user.role;
         const target = (role === 'ADMIN' || role === 'COORDENADOR') ? '/admin' : '/';
         navigate(target, { replace: true });
         window.history.replaceState({}, document.title, target);
@@ -74,12 +57,13 @@ export function useOfflineLogin() {
 
         toast.error(err.response?.data?.error || err.message || 'Crachá inválido.');
         setIsMagicLoggingIn(false);
+        setSearchParams({});
         navigate('/login', { replace: true });
       }
     };
 
     processMagicLogin();
-  }, [magicToken, navigate, isAuthenticated, login, logout]);
+  }, [magicToken, navigate, isAuthenticated, login, logout, setSearchParams]);
 
   useEffect(() => {
     if (!authLoading && isAuthenticated && user?.role && !isMagicLoggingIn) {
@@ -112,25 +96,8 @@ export function useOfflineLogin() {
     const toastId = toast.loading('A validar credenciais seguras...');
 
     try {
-      let loginData;
-      try {
-        const { data } = await api.post('/auth/login-token', { loginToken: qrManualToken });
-        loginData = data;
-      } catch (err: any) {
-        if (!window.navigator.onLine || err.code === "ERR_NETWORK" || err.code === "ECONNABORTED" || err.code === "ERR_CANCELED") {
-           const check = await checkOfflineLoginEligibility(qrManualToken);
-           if (check.eligible && check.user) {
-              loginData = check.user;
-              toast.success('Login offline realizado com sucesso!');
-           } else {
-              throw new Error(check.message || "Primeiro acesso neste dispositivo? Conecte-se à internet para entrar.");
-           }
-        } else {
-           throw err;
-        }
-      }
-
-      login(loginData);
+      const { data } = await api.post('/auth/login-token', { loginToken: qrManualToken });
+      login(data);
       toast.dismiss(toastId);
       toast.success('Acesso Autorizado!');
     } catch (err: any) {

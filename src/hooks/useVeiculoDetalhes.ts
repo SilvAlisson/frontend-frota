@@ -34,7 +34,7 @@ export function useVeiculoDetalhes(id?: string) {
         }
 
       } catch (err) {
-        console.error("Erro crítico na API:", err);
+        if (import.meta.env.DEV) console.error("Erro crítico na API:", err);
         toast.error("Não foi possível carregar o prontuário.");
         navigate('/admin/veiculos');
       } finally {

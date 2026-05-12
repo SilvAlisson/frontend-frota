@@ -38,14 +38,14 @@ const queryClient = new QueryClient({
     onError: (error) => {
       // Captura erros de buscas (GET) automaticamente
       Sentry.captureException(error);
-      console.error('Erro capturado pelo React Query (Query):', error);
+      if (import.meta.env.DEV) console.error('Erro capturado pelo React Query (Query):', error);
     },
   }),
   mutationCache: new MutationCache({
     onError: (error) => {
       // Captura erros de mutações (POST, PUT, DELETE) automaticamente
       Sentry.captureException(error);
-      console.error('Erro capturado pelo React Query (Mutation):', error);
+      if (import.meta.env.DEV) console.error('Erro capturado pelo React Query (Mutation):', error);
     },
   }),
   defaultOptions: {

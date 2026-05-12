@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { Fuel, User, Gauge, Calendar, AlertTriangle } from 'lucide-react';
 import { Select } from '../../ui/Select';
@@ -95,7 +95,7 @@ export function Step1DadosOperacionais() {
           <div className="flex flex-col">
             <Input
               label="KM do Painel (Hodômetro)"
-              icon={<Gauge className="w-4 h-4 text-primary" />}
+              icon={<Gauge className="w-4 h-4 text-primary" />} inputMode="numeric"
               {...register('kmAtual')}
               onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
               placeholder={ultimoKm > 0 ? `Ref: ${ultimoKm}` : "Ex: 15.000"}

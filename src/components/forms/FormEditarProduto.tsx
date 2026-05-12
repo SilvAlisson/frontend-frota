@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -104,7 +104,7 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
           valorReferencia: data.valorReferencia || 0
         });
       } catch (err) {
-        console.error(err);
+        if (import.meta.env.DEV) console.error(err);
         if (isMounted) {
             toast.error("Falha ao carregar os detalhes do produto.");
             onCancelar();
@@ -229,7 +229,7 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
               <div className="relative group">
                 <Input
                   label="Quantidade em Armazém"
-                  type="number"
+                  type="number" inputMode="numeric"
                   icon={<Archive className="w-4 h-4 text-text-muted group-focus-within:text-primary transition-colors" />}
                   {...register('estoqueAtual')}
                   placeholder="0"
@@ -242,7 +242,7 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
               <div className="relative group">
                 <Input
                   label="Alerta de Reposição (Mínimo)"
-                  type="number"
+                  type="number" inputMode="numeric"
                   icon={<AlertTriangle className="w-4 h-4 text-warning-500/70 group-focus-within:text-warning-500 transition-colors" />}
                   {...register('estoqueMinimo')}
                   placeholder="5"

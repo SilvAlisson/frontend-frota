@@ -39,7 +39,7 @@ export function GestaoFornecedores() {
    const response = await api.get<Fornecedor[]>('/fornecedores');
    setFornecedores(response.data);
   } catch (err) {
-   console.error(err);
+   if (import.meta.env.DEV) console.error(err);
    toast.error('Não foi possível carregar a lista de parceiros.');
   } finally {
    setLoading(false);

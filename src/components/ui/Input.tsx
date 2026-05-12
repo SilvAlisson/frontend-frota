@@ -1,12 +1,9 @@
 import React, { forwardRef } from 'react';
-import { twMerge } from 'tailwind-merge';
-import { clsx, type ClassValue } from 'clsx';
+import { cn } from '../../lib/utils';
 import { AlertCircle } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+
 
 //  Sistema de Variantes
 const inputVariants = cva(
@@ -37,6 +34,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     const generatedId = React.useId();
     const inputId = id || generatedId;
+    const errorId = error ? `${inputId}-error` : undefined;
 
     return (
       <div className={cn("w-full flex flex-col gap-1.5", containerClassName)}>
@@ -74,6 +72,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               className
             )}
             aria-invalid={!!error}
+            aria-describedby={errorId}
             {...rest}
           />
 
@@ -87,7 +86,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         {/* Mensagem de Erro Textual */}
         {error && (
-          <p className="text-xs text-error font-bold flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 ml-1 mt-0.5">
+          <p id={errorId} className="text-xs text-error font-bold flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 ml-1 mt-0.5">
             {error}
           </p>
         )}

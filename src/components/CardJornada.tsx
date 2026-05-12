@@ -61,7 +61,7 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
       setIsEditing(false);
       onUpdate();
     } catch (err: any) {
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
       toast.error(err.response?.data?.error || "Erro ao editar jornada.");
     }
   };
@@ -157,11 +157,11 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
           <form onSubmit={handleSubmit(onSaveEdit)} className="space-y-4 bg-surface-hover/30 p-4 rounded-xl border border-border/60 animate-in fade-in zoom-in-95 duration-200 shadow-inner">
             <div className="grid grid-cols-2 gap-3">
               <Input label="Saída (Data/Hora)" type="datetime-local" {...register('dataInicio')} error={errors.dataInicio?.message} containerClassName="!mb-0" className="text-xs" />
-              <Input label="KM Inicial" type="number" {...register('kmInicio')} error={errors.kmInicio?.message} containerClassName="!mb-0" className="font-mono text-xs" />
+              <Input label="KM Inicial" type="number" inputMode="numeric" {...register('kmInicio')} error={errors.kmInicio?.message} containerClassName="!mb-0" className="font-mono text-xs" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <Input label="Chegada (Data/Hora)" type="datetime-local" {...register('dataFim')} containerClassName="!mb-0" className="text-xs" />
-              <Input label="KM Final" type="number" {...register('kmFim')} containerClassName="!mb-0" className="font-mono text-xs" />
+              <Input label="KM Final" type="number" inputMode="numeric" {...register('kmFim')} containerClassName="!mb-0" className="font-mono text-xs" />
             </div>
             <div className="pt-2">
                 <Button type="submit" variant="primary" className="w-full h-10 text-xs font-bold shadow-sm" isLoading={isSubmitting}>
@@ -240,7 +240,7 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
 
       {/*  VISUALIZADOR DE FOTOS PADRONIZADO E CHIQUE */}
       {imageModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-8 animate-in fade-in duration-300" onClick={() => setImageModal(null)}>
+        <div className="fixed inset-0 z-max flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-8 animate-in fade-in duration-300" onClick={() => setImageModal(null)}>
           <div className="relative w-full h-full flex flex-col items-center justify-center">
             <button className="absolute top-4 right-4 sm:top-8 sm:right-8 text-white hover:text-error bg-white/10 hover:bg-white/20 rounded-full p-2.5 transition-all z-50 shadow-lg cursor-pointer" onClick={() => setImageModal(null)}>
               <X className="w-6 h-6 sm:w-8 sm:h-8" />
@@ -276,7 +276,7 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
             </div>
             <Input 
                 label="Odómetro Final (KM)" 
-                type="number" 
+                type="number" inputMode="numeric" 
                 placeholder="Ex: 15400"
                 value={kmFimManual}
                 onChange={(e) => setKmFimManual(e.target.value)}

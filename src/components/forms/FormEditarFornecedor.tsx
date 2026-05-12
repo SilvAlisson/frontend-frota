@@ -102,7 +102,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
         });
 
       } catch (error) {
-        console.error(error);
+        if (import.meta.env.DEV) console.error(error);
         if (isMounted) {
             toast.error('Erro ao carregar dados do parceiro.');
             onCancelar();
@@ -145,7 +145,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
             error: (err) => err.response?.data?.error || 'Falha ao atualizar.'
         });
     } catch(e) {
-        console.error(e);
+        if (import.meta.env.DEV) console.error(e);
         toast.error('Ocorreu um erro ao processar os dados.');
     }
   };

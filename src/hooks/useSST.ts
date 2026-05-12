@@ -3,6 +3,7 @@ import { isAxiosError } from 'axios';
 import { useMemo } from 'react';
 import { api } from '../services/api';
 import { toast } from 'sonner';
+import { handleApiError } from '../utils/errorHandler';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -35,15 +36,6 @@ const DIAS_ALERTA = 15;
 
 // ─── Utilitário de erro ───────────────────────────────────────────────────────
 
-function handleApiError(error: unknown, mensagem: string) {
-  console.error(`[SST] ${mensagem}:`, error);
-  if (isAxiosError(error)) {
-    const serverMsg = error.response?.data?.error || error.response?.data?.message;
-    if (serverMsg) return toast.error(serverMsg);
-    if (error.code === 'ERR_NETWORK') return toast.error('Sem conexão. Verifique sua rede.');
-  }
-  toast.error(mensagem);
-}
 
 // ─── Hook Principal ───────────────────────────────────────────────────────────
 

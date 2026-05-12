@@ -48,7 +48,7 @@ export function ModalConfirmarAnomalia({
   return (
     /* Overlay */
     <div
-      className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+      className="fixed inset-0 z-max flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
       role="alertdialog"
       aria-modal="true"
       aria-labelledby="anomalia-titulo"

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Menu, X, LogOut, Sun, Moon, WifiOff, RefreshCw
+  Menu, X, LogOut, Sun, Moon
 } from 'lucide-react';
 import { Drawer } from 'vaul'; 
 import { useAuth } from '../contexts/AuthContext';
@@ -14,9 +14,15 @@ import { useTheme } from '../contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
-import { useOfflineSyncStatus } from '../hooks/useOfflineSyncStatus';
 import type { User } from '../types';
-import { seedOfflineData } from '../utils/dataSeeder';
+
+// Tipo local para os logs de auditoria do polling
+interface SystemLog {
+  id: string;
+  nivel: 'INFO' | 'WARNING' | 'ERROR' | 'CRITICAL' | 'FRAUD_ATTEMPT';
+  acao: string;
+  resolvido: boolean;
+}
 
 // --- COMPONENTES AUXILIARES ---
 
@@ -36,7 +42,7 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
     <>
       {/* Header da Sidebar */}
       <div className="flex h-[72px] items-center justify-between px-6 border-b border-border/60 shrink-0">
-        <div className="flex items-center gap-3 group cursor-pointer">
+        <Link to="/admin" className="flex items-center gap-3 group cursor-pointer">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-hover text-white flex items-center justify-center font-black text-lg shadow-inner group-hover:scale-105 transition-transform duration-300">
             K
           </div>
@@ -44,7 +50,7 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
             <span className="block font-header font-black text-[16px] text-text-main tracking-tight leading-none">FROTA <span className="text-primary">KLIN</span></span>
             <span className="block text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-1 opacity-80">Workspace</span>
           </div>
-        </div>
+        </Link>
         
         {/* Botão de Fechar (Só aparece se existir a prop onClose - ou seja, no mobile/notebook) */}
         {onClose && (
@@ -145,22 +151,12 @@ export function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   
-  // ✨ MODO OFFLINE / PWA abstraído
-  const { isOnline, queueSize } = useOfflineSyncStatus();
-
   const { logout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
   // ✨ Instancia o Hook do Tema
   const { theme, toggleTheme } = useTheme();
-
-  // 🔥 PRÉ-CARREGAMENTO DE DADOS OFFLINE (SEEDER)
-  useEffect(() => {
-    if (user && isOnline) {
-      seedOfflineData();
-    }
-  }, [user, isOnline]);
 
   // Detecção robusta de Share Mode (suporta BrowserRouter e HashRouter)
   const isShareMode = 
@@ -175,7 +171,7 @@ export function AdminLayout() {
   // ✨ BIG BROTHER ALERTS (Polling invisível de 15s para Admins)
   const [lastSeenLogId, setLastSeenLogId] = useState<string | null>(null);
   
-  const { data: latestLogs } = useQuery<any[]>({
+  const { data: latestLogs } = useQuery<SystemLog[]>({
     queryKey: ['system-logs-alerts'],
     queryFn: async () => {
       const { data } = await api.get('/logs');
@@ -201,9 +197,9 @@ export function AdminLayout() {
         if (criticalLogs.length > 0) {
           criticalLogs.forEach(log => {
              if (log.nivel === 'FRAUD_ATTEMPT') {
-               toast.error(`⚠️ ALERTA DE FRAUDE: ${log.acao.replace(/_/g, ' ')}`, { duration: 10000 });
+               toast.error(`ALERTA DE FRAUDE: ${log.acao.replace(/_/g, ' ')}`, { duration: 10000 });
              } else {
-               toast.error(`🔥 ERRO CRÍTICO REPORTADO: ${log.acao.replace(/_/g, ' ')}`, { duration: 10000 });
+               toast.error(`ERRO CRÍTICO REPORTADO: ${log.acao.replace(/_/g, ' ')}`, { duration: 10000 });
              }
           });
         }
@@ -259,17 +255,6 @@ export function AdminLayout() {
       {/* Área Principal */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
         
-        {/* ✨ BANNER OFFLINE GLOBAL */}
-        {!isShareMode && (!isOnline || queueSize > 0) && (
-          <div className={`w-full py-1.5 px-4 text-xs font-bold text-center flex items-center justify-center gap-2 shrink-0 ${!isOnline ? 'bg-amber-500/20 text-amber-500' : 'bg-primary/20 text-primary'}`}>
-             {!isOnline ? (
-               <><WifiOff className="w-3.5 h-3.5" /> MODO OFFLINE ATIVO - Trabalho Local. ({queueSize} pendentes)</>
-             ) : (
-               <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> SINCRONIZANDO {queueSize} AÇÕES PENDENTES...</>
-             )}
-          </div>
-        )}
-
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background custom-scrollbar scroll-smooth relative flex flex-col">
             
             {/* Header Mobile (Aparece só em < xl) */}

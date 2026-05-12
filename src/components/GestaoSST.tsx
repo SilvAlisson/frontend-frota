@@ -33,7 +33,7 @@ const PROGRAMAS: { value: ProgramaSST | ''; label: string }[] = [
  { value: 'PGR', label: 'PGR — Gerenciamento de Riscos' },
 ];
 
-const PROGRAMAS_FILTRO = PROGRAMAS;
+
 
 const STATUS_CONFIG: Record<StatusSST, { label: string; variant: 'success' | 'danger' | 'warning' | 'neutral' }> = {
  REALIZADO: { label: 'Realizado', variant: 'success' },
@@ -246,7 +246,7 @@ function FormAcaoSST({
    </div>
 
    {/* Linha: Unidade + Programa */}
-   <div className="grid grid-cols-2 gap-4">
+   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <Input
      label="Unidade *"
      id={`${formId}-unidade`}
@@ -266,7 +266,7 @@ function FormAcaoSST({
    </div>
 
    {/* Linha: Responsáveis + Vencimento */}
-   <div className="grid grid-cols-2 gap-4">
+   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <Input
      label="Responsável(is) *"
      id={`${formId}-responsaveis`}
@@ -415,7 +415,7 @@ export function GestaoSST() {
   return (
    <div className="space-y-6 animate-in fade-in duration-500">
     <div className="h-10 w-72 bg-surface-hover/50 rounded-2xl animate-pulse" />
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
      {[1, 2, 3, 4].map((i) => (
       <div key={i} className="h-24 bg-surface-hover/50 rounded-2xl animate-pulse" />
      ))}
@@ -440,7 +440,7 @@ export function GestaoSST() {
        Gestão de SST
       </h1>
      </div>
-     <p className="text-text-secondary font-medium mt-2 opacity-90 ml-13 pl-[52px]">
+     <p className="text-text-secondary font-medium mt-2 opacity-90 pl-[52px]">
       Saúde e Segurança do Trabalho — Objetivos e Plano de Ação 2026.
      </p>
     </div>
@@ -518,7 +518,7 @@ export function GestaoSST() {
      </div>
 
      {/* KPIs */}
-     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <KpiCard
        label="Total de Ações"
        value={estatisticas.total}
@@ -597,7 +597,7 @@ export function GestaoSST() {
       <div className="w-full sm:w-72">
        <Select
         label="Filtrar por Programa"
-        options={PROGRAMAS_FILTRO}
+        options={PROGRAMAS}
         value={filtroPrograma}
         onChange={(e) => setFiltroPrograma(e.target.value as ProgramaSST | '')}
         icon={<Filter className="w-4 h-4" />}
@@ -683,7 +683,7 @@ export function GestaoSST() {
                <p className="text-xs text-text-muted line-clamp-2" title={acao.observacao ?? ''}>{acao.observacao || '—'}</p>
               </td>
               <td className="px-4 py-4">
-               <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+               <div className="flex gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                 <Button
                  variant="ghost"
                  size="icon"
@@ -740,7 +740,7 @@ export function GestaoSST() {
 
           <p className="text-sm font-medium text-text-main leading-relaxed">{acao.acao}</p>
 
-          <div className="grid grid-cols-2 gap-3 bg-surface-hover/40 rounded-xl p-3 border border-border/40 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-surface-hover/40 rounded-xl p-3 border border-border/40 text-xs">
            <div>
             <span className="text-text-muted font-bold uppercase tracking-wider block text-[9px] mb-0.5">Responsável</span>
             <span className="text-text-main font-bold">{acao.responsaveis}</span>

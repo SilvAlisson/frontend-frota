@@ -82,7 +82,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
             error: (err: any) => err.response?.data?.error || 'Erro ao salvar cargo.'
         });
     } catch (e) {
-        console.error(e);
+        if (import.meta.env.DEV) console.error(e);
         toast.error("Erro inesperado ao salvar cargo.");
     }
   };
@@ -157,7 +157,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                 variant="secondary"
                 onClick={() => append({ nome: '', validadeMeses: 12, diasAntecedenciaAlerta: 30 })}
                 disabled={isSubmitting}
-                className="h-9 px-4 text-xs font-black uppercase tracking-tighter shadow-sm border-amber-200 hover:bg-amber-50"
+                className="h-11 md:h-9 px-4 text-xs font-black uppercase tracking-tighter shadow-sm border-amber-200 hover:bg-amber-50"
               >
                 + Adicionar Requisito
               </Button>
@@ -175,7 +175,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                     size="icon"
                     onClick={() => remove(index)}
                     disabled={isSubmitting}
-                    className="absolute -top-2 -right-2 rounded-full w-8 h-8 shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200"
+                    className="absolute -top-2 -right-2 rounded-full w-8 h-8 shadow-lg opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200"
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -195,7 +195,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                     <div className="lg:col-span-3">
                       <Input
                         label="Reciclagem (Meses)"
-                        type="number"
+                        type="number" inputMode="decimal"
                         {...register(`requisitos.${index}.validadeMeses` as const)}
                         disabled={isSubmitting}
                         error={errors.requisitos?.[index]?.validadeMeses?.message}
@@ -206,7 +206,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                     <div className="lg:col-span-3">
                       <Input
                         label="Aviso Antecipado"
-                        type="number"
+                        type="number" inputMode="decimal"
                         {...register(`requisitos.${index}.diasAntecedenciaAlerta` as const)}
                         disabled={isSubmitting}
                         error={errors.requisitos?.[index]?.diasAntecedenciaAlerta?.message}

@@ -8,8 +8,9 @@ import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useDefeitos } from '../hooks/useDefeitos';
 import type { DefeitoVeiculo } from '../hooks/useDefeitos';
-import { handleApiError } from '../services/errorHandler';
+import { handleApiError } from '../utils/errorHandler';
 import { cn } from '../lib/utils';
+import { CHART_COLORS_DEFEITOS } from '../config/chartColors';
 
 // Constantes de estilo e ícones
 const ICONS: Record<string, any> = { PNEU: Cog, FREIO: AlertCircle, MOTOR: Wrench, ILUMINACAO: Zap, CARROCERIA: CarFront, OLEO: Droplets, OUTRO: Info };
@@ -65,13 +66,13 @@ export function PainelDefeitosEncarregado() {
   // Dados do Donut Chart — distribuição por categoria
   const dadosDonut = useMemo(() => {
     const categorias: Record<string, { count: number; color: string }> = {
-      FREIO: { count: 0, color: '#ef4444' },
-      MOTOR: { count: 0, color: '#f97316' },
-      PNEU: { count: 0, color: '#eab308' },
-      OLEO: { count: 0, color: '#38bdf8' },
-      ILUMINACAO: { count: 0, color: '#a78bfa' },
-      CARROCERIA: { count: 0, color: '#34d399' },
-      OUTRO: { count: 0, color: '#94a3b8' },
+      FREIO:      { count: 0, color: CHART_COLORS_DEFEITOS.FREIO },
+      MOTOR:      { count: 0, color: CHART_COLORS_DEFEITOS.MOTOR },
+      PNEU:       { count: 0, color: CHART_COLORS_DEFEITOS.PNEU },
+      OLEO:       { count: 0, color: CHART_COLORS_DEFEITOS.OLEO },
+      ILUMINACAO: { count: 0, color: CHART_COLORS_DEFEITOS.ILUMINACAO },
+      CARROCERIA: { count: 0, color: CHART_COLORS_DEFEITOS.CARROCERIA },
+      OUTRO:      { count: 0, color: CHART_COLORS_DEFEITOS.OUTRO },
     };
     ativos.forEach(d => {
       const cat = d.categoria in categorias ? d.categoria : 'OUTRO';
@@ -221,7 +222,7 @@ export function PainelDefeitosEncarregado() {
 
       {/* 🔮 Visualizador Cinemático de Perícia Fotográfica */}
       {fotoExpandida && (
-        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-3xl p-4 sm:p-8 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-max bg-black/80 backdrop-blur-3xl p-4 sm:p-8 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-300">
 
           {/* Top Navigation Bar HUD */}
           <div className="absolute top-0 left-0 w-full flex justify-between items-center p-6 bg-gradient-to-b from-black/80 to-transparent z-50">

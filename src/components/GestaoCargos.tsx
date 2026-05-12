@@ -26,7 +26,7 @@ export function GestaoCargos() {
       const { data } = await api.get<Cargo[]>('/cargos');
       setCargos(data);
     } catch (err) {
-      console.error("Erro ao carregar cargos:", err);
+      if (import.meta.env.DEV) console.error("Erro ao carregar cargos:", err);
       toast.error("Não foi possível carregar o diretório de cargos.");
     } finally {
       setLoading(false);
@@ -56,7 +56,7 @@ export function GestaoCargos() {
       error: (err) => {
         setDeletingId(null);
         setCargoParaExcluir(null);
-        console.error("Erro ao deletar cargo:", err);
+        if (import.meta.env.DEV) console.error("Erro ao deletar cargo:", err);
         return 'Erro: Não é possível remover cargos com colaboradores ou treinos ativos vinculados.';
       }
     });

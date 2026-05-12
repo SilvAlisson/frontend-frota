@@ -70,7 +70,7 @@ export function ConfirmModal({
 
     return (
         <div
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-0 animate-in fade-in duration-300"
+            className="fixed inset-0 z-max flex items-center justify-center p-4 sm:p-0 animate-in fade-in duration-300"
             role="dialog"
             aria-modal="true"
         >

@@ -66,6 +66,15 @@
   --radius-md: 0.5rem;
   --radius-sm: 0.25rem;
 
+  /* --- 6. ESCALA DE Z-INDEX OFICIAL --- */
+  --z-base: 0;
+  --z-floating: 10;
+  --z-dropdown: 40;
+  --z-overlay: 50;
+  --z-modal: 60;
+  --z-toast: 70;
+  --z-max: 9999;
+
   /* --- 6. VARIÁVEIS DE ANIMAÇÃO --- */
   --animate-ghost-pulse: ghost-pulse 3s infinite ease-in-out;
   --animate-enter: enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;

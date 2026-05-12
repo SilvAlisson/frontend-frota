@@ -25,6 +25,7 @@ import { DatePicker } from './ui/DatePicker';
 import { TableStyles } from '../styles/table';
 import { Lightbox } from './ui/Lightbox';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/Tooltip';
+import { DateHelper } from '../lib/dateHelper';
 
 // --- FORMS ---
 import { FormEditarManutencao } from './forms/FormEditarManutencao';
@@ -47,33 +48,6 @@ const extrairPlaca = (placaBruta: string) => {
  return placaBruta.trim();
 };
 
-// HELPER 2: Fim do problema de Timezone e Estouro de Layout
-const DateHelper = {
- getDia: (isoDate: string) => {
-  if (!isoDate) return '--';
-  return isoDate.split('T')[0].split('-')[2];
- },
- getMesCurto: (isoDate: string) => {
-  if (!isoDate) return '---';
-  const mesIndex = parseInt(isoDate.split('T')[0].split('-')[1], 10) - 1;
-  const meses = ['Jan.', 'Fev.', 'Mar.', 'Abr.', 'Mai.', 'Jun.', 'Jul.', 'Ago.', 'Set.', 'Out.', 'Nov.', 'Dez.'];
-  return meses[mesIndex];
- },
- getCompleta: (isoDate: string) => {
-  if (!isoDate) return '---';
-  const partes = isoDate.split('T')[0].split('-');
-  const dia = partes[2];
-  const ano = partes[0];
-  const mesIndex = parseInt(partes[1], 10) - 1;
-  const meses = ['Jan.', 'Fev.', 'Mar.', 'Abr.', 'Mai.', 'Jun.', 'Jul.', 'Ago.', 'Set.', 'Out.', 'Nov.', 'Dez.'];
-  return `${dia} ${meses[mesIndex]} ${ano}`;
- },
- getExcel: (isoDate: string) => {
-  if (!isoDate) return '';
-  const partes = isoDate.split('T')[0].split('-');
-  return `${partes[2]}/${partes[1]}/${partes[0]}`;
- }
-};
 
 export function HistoricoManutencoes({
  userRole,
@@ -116,7 +90,7 @@ export function HistoricoManutencoes({
  useEffect(() => {
   api.get('/fornecedores')
    .then(res => setFornecedores(res.data))
-   .catch(err => console.error("Erro ao carregar fornecedores", err));
+   .catch(err => { if (import.meta.env.DEV) console.error("Erro ao carregar fornecedores", err); });
  }, []);
 
  // FETCHING OTIMIZADO (Correção do Erro 400 da API)
@@ -127,7 +101,7 @@ export function HistoricoManutencoes({
    setHistorico(response.data);
    setVisibleCount(ITENS_POR_PAGINA);
   } catch (err) {
-   console.error(err);
+   if (import.meta.env.DEV) console.error(err);
    toast.error('Erro ao carregar o histórico financeiro da oficina.');
   } finally {
    setLoading(false);

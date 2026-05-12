@@ -6,14 +6,15 @@ import { Input } from './ui/Input';
 import { format, differenceInDays } from 'date-fns';
 import { usePlanosManutencao } from '../hooks/usePlanosManutencao';
 import type { PlanoManutencao } from '../hooks/usePlanosManutencao';
-import { handleApiError } from '../services/errorHandler';
+import { handleApiError } from '../utils/errorHandler';
 import { GraficoBarraPlanos } from './ui/GraficosFlota';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 import { FormPlanoManutencao } from './forms/FormPlanoManutencao';
+import { CHART_COLORS_STATUS } from '../config/chartColors';
 
 export function PainelPlanosPreventivos() {
-  const { planos, isLoading, registrarExecucao } = usePlanosManutencao();
+  const { planos, isLoading, refetch, registrarExecucao } = usePlanosManutencao();
 
   // Controles de Modais
   const [planoAberto, setPlanoAberto] = useState<PlanoManutencao | null>(null);
@@ -113,8 +114,8 @@ export function PainelPlanosPreventivos() {
     try {
       await api.delete(`/planos-manutencao/${id}`);
       toast.success("Plano desativado e removido.");
-      // Recarrega a página para atualizar a lista através do hook global
-      window.location.reload();
+      // Recarrega a lista através do hook global
+      refetch();
     } catch (err) {
       handleApiError(err, "Falha ao tentar remover o plano.");
     } finally {
@@ -167,7 +168,11 @@ export function PainelPlanosPreventivos() {
             }))}
           />
           <div className="flex items-center gap-4 justify-center mt-3">
-            {[{ color: '#34d399', label: 'Normal' }, { color: '#eab308', label: 'Atenção' }, { color: '#ef4444', label: 'Vencido' }].map(l => (
+            {[
+              { color: CHART_COLORS_STATUS.normal,  label: 'Normal' },
+              { color: CHART_COLORS_STATUS.atencao, label: 'Atenção' },
+              { color: CHART_COLORS_STATUS.vencido, label: 'Vencido' },
+            ].map(l => (
               <span key={l.label} className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-wider text-text-muted">
                 <span className="w-2.5 h-2.5 rounded" style={{ backgroundColor: l.color }} />{l.label}
               </span>
@@ -273,7 +278,7 @@ export function PainelPlanosPreventivos() {
         <FormPlanoManutencao
           onSuccess={() => {
             setIsCriandoPlano(false);
-            window.location.reload(); // Atualiza os cards
+            refetch(); // Atualiza os cards
           }}
           onCancel={() => setIsCriandoPlano(false)}
         />
@@ -293,7 +298,7 @@ export function PainelPlanosPreventivos() {
               <div className="space-y-2">
                 <label className="text-sm font-bold text-text-main flex gap-1">KM do Veículo na execução: <span className="text-error">*</span></label>
                 <Input
-                  type="number"
+                  type="number" inputMode="numeric"
                   placeholder="Ex: 85200"
                   value={kmAtualConfirmacao}
                   onChange={(e) => setKmAtualConfirmacao(e.target.value)}

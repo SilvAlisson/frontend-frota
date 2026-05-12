@@ -1,33 +1,8 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { type ClassValue, clsx } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { toast } from 'sonner';
 
-// --- FUNÇÕES DE ESTILO (DESIGN SYSTEM) ---
 
-/**
- * Função CN (ClassNames):
- * Remove conflitos do Tailwind e junta classes condicionalmente.
- * Essencial para os componentes visuais (Button, Card, Input).
- */
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
-
-// --- FORMATADORES FINANCEIROS ---
-
-export const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
-};
-
-export const formatNumber = (value: number) => {
-  return new Intl.NumberFormat("pt-BR").format(value);
-};
-
-// --- FORMATAÇÃO INTELIGENTE DE KM ---
 
 /**
  * A MÁGICA DO SISTEMA:
@@ -45,7 +20,6 @@ export const parseKmInteligente = (inputStr: string, ultimoKmHistorico?: number)
     if (tentativaCorrecao >= ultimoKmHistorico) {
       const diferenca = tentativaCorrecao - ultimoKmHistorico;
       if (diferenca < 5000) {
-        console.log(`🔮 Auto-correção de KM ativada: ${valorDigitado} -> ${tentativaCorrecao}`);
         return tentativaCorrecao;
       }
     }
@@ -185,8 +159,8 @@ export const exportarParaExcel = async (data: any[], nomeArquivo: string) => {
     saveAs(blob, fileNameFull);
 
   } catch (error) {
-    console.error("Erro ao exportar para Excel:", error);
-    alert("Ocorreu um erro ao gerar o arquivo Excel.");
+    if (import.meta.env.DEV) console.error("Erro ao exportar para Excel:", error);
+    toast.error("Ocorreu um erro ao gerar o arquivo Excel.");
   }
 };
 

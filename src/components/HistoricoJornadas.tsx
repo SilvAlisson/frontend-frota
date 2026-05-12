@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
+import { DateHelper } from '../lib/dateHelper';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import { Edit, Trash2, Camera, X, ImageOff, Download, Filter, Calendar, Activity, ChevronDown, MapPin } from 'lucide-react';
@@ -31,44 +32,13 @@ interface JornadaHistorico extends Jornada {
 
 interface HistoricoJornadasProps {
  userRole?: string;
+ isReadOnly?: boolean;
 }
 
 const ITENS_POR_PAGINA = 20;
 
-// ✨ HELPER DE DATAS BLINDADO (Fim do problema de Timezone e Estouro de Layout)
-const DateHelper = {
- getDia: (isoDate: string) => {
-  if (!isoDate) return '--';
-  return isoDate.split('T')[0].split('-')[2];
- },
- getMesCurto: (isoDate: string) => {
-  if (!isoDate) return '---';
-  const mesIndex = parseInt(isoDate.split('T')[0].split('-')[1], 10) - 1;
-  const meses = ['Jan.', 'Fev.', 'Mar.', 'Abr.', 'Mai.', 'Jun.', 'Jul.', 'Ago.', 'Set.', 'Out.', 'Nov.', 'Dez.'];
-  return meses[mesIndex];
- },
- getCompleta: (isoDate: string) => {
-  if (!isoDate) return '---';
-  const partes = isoDate.split('T')[0].split('-');
-  const dia = partes[2];
-  const ano = partes[0];
-  const mesIndex = parseInt(partes[1], 10) - 1;
-  const meses = ['Jan.', 'Fev.', 'Mar.', 'Abr.', 'Mai.', 'Jun.', 'Jul.', 'Ago.', 'Set.', 'Out.', 'Nov.', 'Dez.'];
-  return `${dia} ${meses[mesIndex]} ${ano}`;
- },
- getHora: (isoDate: string) => {
-  if (!isoDate || !isoDate.includes('T')) return '--:--';
-  return isoDate.split('T')[1].substring(0, 5); // Retorna HH:mm
- },
- getExcelDataHora: (isoDate: string) => {
-  if (!isoDate) return '';
-  const partesData = isoDate.split('T')[0].split('-');
-  const hora = isoDate.includes('T') ? isoDate.split('T')[1].substring(0, 5) : '';
-  return `${partesData[2]}/${partesData[1]}/${partesData[0]} ${hora}`.trim();
- }
-};
 
-export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasProps) {
+export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }: HistoricoJornadasProps) {
  
  const { data: veiculos = [] } = useVeiculos();
 
@@ -106,7 +76,7 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
    setHistorico(response.data);
    setVisibleCount(ITENS_POR_PAGINA); 
   } catch (err) {
-   console.error('Erro no fetch de histórico:', err);
+   if (import.meta.env.DEV) console.error('Erro no fetch de histórico:', err);
    toast.error('Não foi possível carregar o histórico.');
   } finally {
    setLoading(false);
@@ -140,7 +110,7 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
    setHistorico(prev => prev.filter(item => item.id !== deletingId));
    toast.success('Registro excluído com sucesso.');
   } catch (err) {
-   console.error("Erro ao excluir:", err);
+   if (import.meta.env.DEV) console.error("Erro ao excluir:", err);
    toast.error('Erro ao excluir jornada.');
   } finally {
    setDeletingId(null);
@@ -208,8 +178,9 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
  return (
   <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
    
-   <PageHeader 
-    title="Histórico de Viagens"
+   {!isReadOnly && (
+    <PageHeader 
+     title="Histórico de Viagens"
     subtitle="Consulte a quilometragem dos veículos, com provas fotográficas dos hodômetros dia a dia."
     extraAction={
      <div className="flex flex-col gap-3 w-full xl:w-auto bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
@@ -287,10 +258,12 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
       </div>
      </div>
     }
-   />
+    />
+   )}
 
    {/* KPIs Premium Interativos */}
-   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+   {!isReadOnly && (
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
     <Card className="bg-surface border-border/60 flex flex-col justify-center gap-2 p-6 shadow-sm hover:shadow-md transition-shadow group">
      <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
       <Activity className="w-4 h-4 text-primary" /> Distância Total Percorrida
@@ -308,7 +281,8 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
       {historico.length} <small className="text-lg font-bold opacity-60 uppercase tracking-widest ml-1">Registros</small>
      </span>
     </Card>
-   </div>
+    </div>
+   )}
 
    <Card padding="none" className="overflow-hidden border-border/60 shadow-sm rounded-3xl bg-surface">
     {loading ? (
@@ -563,7 +537,7 @@ export function HistoricoJornadas({ userRole = 'OPERADOR' }: HistoricoJornadasPr
 
    {viewingPhoto && (
     <div 
-     className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-8 animate-in fade-in duration-300"
+     className="fixed inset-0 z-max flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-8 animate-in fade-in duration-300"
      onClick={() => setViewingPhoto(null)}
     >
      <div className="relative w-full h-full flex flex-col items-center justify-center">

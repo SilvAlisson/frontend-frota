@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
-import { handleApiError } from '../services/errorHandler';
+
 
 interface Params {
     ano?: number;

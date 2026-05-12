@@ -76,7 +76,7 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
 
       setServicos(filtrados);
     } catch (err) {
-      console.error(err);
+      if (import.meta.env.DEV) console.error(err);
       toast.error('Falha ao Acessar ao catálogo de serviços.');
     } finally {
       setLoading(false);

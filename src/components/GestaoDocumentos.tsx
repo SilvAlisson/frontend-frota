@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useDocumentosLegais, useDeleteDocumento } from '../hooks/useDocumentosLegais';
+import { FILTRO_TODOS } from '../config/constants';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { FormCadastrarDocumento } from './forms/FormCadastrarDocumento';
@@ -94,7 +95,7 @@ interface GestaoDocumentosProps {
 
 export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDocumentosProps) {
   const [modoAdicionar, setModoAdicionar] = useState(false);
-  const [filtroCategoria, setFiltroCategoria] = useState('TODOS');
+  const [filtroCategoria, setFiltroCategoria] = useState<string>(FILTRO_TODOS);
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [docParaExcluir, setDocParaExcluir] = useState<{ id: string, titulo: string } | null>(null);
@@ -116,7 +117,7 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
       const res = await api.get(`/planos-manutencao?veiculoId=${veiculoId}`);
       return res.data;
     },
-    enabled: !!veiculoId && filtroCategoria === 'TODOS'
+    enabled: !!veiculoId && filtroCategoria === FILTRO_TODOS
   });
 
   const { mutateAsync: deletarDoc } = useDeleteDocumento();
@@ -136,7 +137,7 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
     }
   };
 
-  const isLoading = isLoadingDocs || (!!veiculoId && filtroCategoria === 'TODOS' && isLoadingPlanos);
+  const isLoading = isLoadingDocs || (!!veiculoId && filtroCategoria === FILTRO_TODOS && isLoadingPlanos);
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 relative">
@@ -207,7 +208,7 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 auto-rows-max">
 
-              {planos && planos.length > 0 && filtroCategoria === 'TODOS' && (
+              {planos && planos.length > 0 && filtroCategoria === FILTRO_TODOS && (
                 <div className="bg-gradient-to-br from-info/5 to-info/10 p-6 rounded-3xl border border-info/20 shadow-sm relative group cursor-pointer hover:shadow-float hover:border-info/40 transition-all">
                   <div className="absolute top-4 right-4">
                     <span className="w-2.5 h-2.5 rounded-full bg-info animate-pulse shadow-[0_0_8px_rgba(56,189,248,0.8)] flex"></span>
@@ -234,7 +235,7 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
                 </div>
               )}
 
-              {documentos?.length === 0 && (!planos || planos.length === 0 || filtroCategoria !== 'TODOS') && (
+              {documentos?.length === 0 && (!planos || planos.length === 0 || filtroCategoria !== FILTRO_TODOS) && (
                 <div className="col-span-full pt-8">
                   <EmptyState
                     icon={FileText}

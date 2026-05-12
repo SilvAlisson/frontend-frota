@@ -131,7 +131,7 @@ export function ModalConfirmacaoFoto({
 
       } catch (error) {
         if (import.meta.env.DEV) {
-          console.error("Erro ao processar imagem:", error);
+          if (import.meta.env.DEV) console.error("Erro ao processar imagem:", error);
         }
         toast.error("Erro ao processar a foto. Tente novamente.");
         setFoto(null);
@@ -151,50 +151,23 @@ export function ModalConfirmacaoFoto({
     setLoading(true);
 
     const fluxoCompleto = async () => {
-      const isOffline = typeof window !== 'undefined' && !window.navigator.onLine;
       const fileType = apiEndpoint.split('/')[1] || 'geral';
       const fileExt = foto.name.split('.').pop() || 'jpg';
       const fileName = `${fileType}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
 
+      const publicUrlString = await uploadToR2(foto, fileName, foto.type || 'image/jpeg', fileType);
+      const fotoUrl = publicUrlString;
+
       let dadosCompletos = { ...dadosJornada };
 
-      if (isOffline) {
-        // Fallback offline -> Base64
-        const { fileToBase64 } = await import('../utils/imageCompressor');
-        const base64Image = await fileToBase64(foto);
-        
-        dadosCompletos._offlineFile_ = {
-          base64: base64Image,
-          fileName: fileName,
-          fileType: fileType,
-          originalType: foto.type || 'image/jpeg',
-          targetField: apiEndpoint.includes('abastecimentos') ? 'fotoNotaFiscalUrl' : 
-                       apiEndpoint.includes('manutencoes') ? 'fotoComprovanteUrl' : 
-                       apiMethod === 'POST' ? 'fotoInicioUrl' : 'fotoFimUrl'
-        };
-
-        const sizeInMb = (base64Image.length * 0.75) / (1024 * 1024);
-        try {
-          await api.post('/logs', {
-            level: 'INFO',
-            source: 'FRONTEND',
-            message: `[ANALYTICS] offline_photo_captured`,
-            context: { size_mb: sizeInMb.toFixed(2), fileType }
-          });
-        } catch (e) {}
+      if (apiEndpoint.includes('abastecimentos')) {
+        dadosCompletos.fotoNotaFiscalUrl = fotoUrl;
+      } else if (apiEndpoint.includes('manutencoes')) {
+        dadosCompletos.fotoComprovanteUrl = fotoUrl;
+      } else if (apiMethod === 'POST') {
+        dadosCompletos.fotoInicioUrl = fotoUrl;
       } else {
-        const publicUrlString = await uploadToR2(foto, fileName, foto.type || 'image/jpeg', fileType);
-        const fotoUrl = publicUrlString;
-
-        if (apiEndpoint.includes('abastecimentos')) {
-          dadosCompletos.fotoNotaFiscalUrl = fotoUrl;
-        } else if (apiEndpoint.includes('manutencoes')) {
-          dadosCompletos.fotoComprovanteUrl = fotoUrl;
-        } else if (apiMethod === 'POST') {
-          dadosCompletos.fotoInicioUrl = fotoUrl;
-        } else {
-          dadosCompletos.fotoFimUrl = fotoUrl;
-        }
+        dadosCompletos.fotoFimUrl = fotoUrl;
       }
 
       let response;
@@ -214,16 +187,8 @@ export function ModalConfirmacaoFoto({
       onSuccess(data);
       safeOnClose();
     } catch (error: any) {
-      if (error.message === 'USER_IS_OFFLINE' || error.code === 'ERR_NETWORK') {
-        toast.success('Offline Mode: Ação salva com sucesso na fila local.');
-        onSuccess(dadosJornada);
-        safeOnClose();
-      } else if (error.message === 'OFFLINE_LOG_SKIPPED') {
-         // ignore
-      } else {
-        console.error('Erro ao confirmar foto:', error);
-        toast.error('Erro ao processar imagem.');
-      }
+      if (import.meta.env.DEV) console.error('Erro ao confirmar foto:', error);
+      toast.error('Erro ao processar imagem. Verifique sua conexão e tente novamente.');
     } finally {
       setLoading(false);
     }

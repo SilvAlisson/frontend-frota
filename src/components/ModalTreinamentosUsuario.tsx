@@ -78,7 +78,7 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
             if (err.response?.status === 404) {
                 setTreinamentos([]);
             } else {
-                console.error(err);
+                if (import.meta.env.DEV) console.error(err);
                 toast.error("Erro ao carregar histórico de certificações.");
             }
         } finally {
@@ -228,7 +228,7 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
     };
 
     return (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300" onClick={onClose}>
+        <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300" onClick={onClose}>
             <div
                 className="bg-background rounded-[2.5rem] shadow-float border border-border/60 w-full max-w-5xl h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 slide-in-from-bottom-8 duration-500"
                 onClick={e => e.stopPropagation()}

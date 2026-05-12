@@ -63,7 +63,7 @@ export function GestaoVeiculos() {
       });
       refetch();
     } catch (error) {
-      console.error('[DELETE_VEICULO_ERROR]', error);
+      if (import.meta.env.DEV) console.error('[DELETE_VEICULO_ERROR]', error);
     } finally {
       setVeiculoParaExcluir(null);
     }

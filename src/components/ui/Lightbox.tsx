@@ -57,7 +57,7 @@ export function Lightbox({ src, alt, caption, onClose, imageClassName }: Lightbo
          */}
         <Dialog.Overlay
           className={cn(
-            'fixed inset-0 z-[200] bg-black/90 backdrop-blur-md',
+            'fixed inset-0 z-overlay bg-black/90 backdrop-blur-md',
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
             'data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0',
             'duration-200'
@@ -71,7 +71,7 @@ export function Lightbox({ src, alt, caption, onClose, imageClassName }: Lightbo
          */}
         <Dialog.Content
           className={cn(
-            'fixed inset-0 z-[201] flex flex-col items-center justify-center p-4 sm:p-8',
+            'fixed inset-0 z-max flex flex-col items-center justify-center p-4 sm:p-8',
             'focus:outline-none',
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
             'data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
