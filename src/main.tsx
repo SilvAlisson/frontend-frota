@@ -4,14 +4,10 @@ import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
 import * as Sentry from "@sentry/react";
 import Hotjar from '@hotjar/browser';
-import { registerSW } from 'virtual:pwa-register';
 
 import { AuthProvider } from './contexts/AuthContext';
 import App from './App';
 import './index.css';
-
-// Registro PWA Automático
-registerSW({ immediate: true });
 
 // Inicialização Hotjar (Silenciosa se não configurado)
 const hotjarId = Number(import.meta.env.VITE_HOTJAR_ID) || 0;
