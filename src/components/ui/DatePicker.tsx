@@ -75,8 +75,8 @@ export function DatePicker({
               showOutsideDays={false}
               className="p-1"
               labels={{
-                labelPrevious: "Mês anterior",
-                labelNext: "Próximo mês",
+                labelPrevious: () => "Mês anterior",
+                labelNext: () => "Próximo mês",
               }}
               classNames={{
                 months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",

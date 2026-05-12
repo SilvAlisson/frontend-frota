@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Button } from '../ui/Button';
 import { AlertTriangle, Info, CheckCircle2, X } from 'lucide-react';
-import { cn } from '../../lib/utils'; // ðŸª„ Nosso utilitário de classes
+import { cn } from '../../lib/utils';
 
 type ModalVariant = 'danger' | 'primary' | 'warning' | 'success';
 
