@@ -5,7 +5,6 @@ import { MapPin, Plus, X, Droplets } from 'lucide-react';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
-import { formatCurrency } from '../../../utils';
 import { formatarDinheiro, desformatarDinheiro } from '../../../lib/formatters';
 import { useFornecedores } from '../../../hooks/useFornecedores';
 import { useProdutos } from '../../../hooks/useProdutos';
@@ -148,7 +147,7 @@ export function Step2DadosFinanceiros() {
         <div className="mt-4 pt-3 flex justify-end border-t border-border/40">
          <div className="px-4 py-1.5 rounded-lg border border-border/50 bg-background text-sm font-medium flex gap-2 shadow-sm">
           <span className="text-text-muted uppercase tracking-wider text-[10px] self-center">Subtotal:</span>
-          <span className="font-mono font-black text-text-main">{formatCurrency(Number(totalItem))}</span>
+          <span className="font-mono font-black text-text-main">{formatarDinheiro(Number(totalItem))}</span>
          </div>
         </div>
        </div>
