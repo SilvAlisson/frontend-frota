@@ -7,7 +7,6 @@ import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
 import { Callout } from '../../ui/Callout';
 import { ModalGerenciarServicos } from '../../ModalGerenciarServicos';
-import { formatCurrency } from '../../../utils';
 import { formatarDinheiro, desformatarDinheiro } from '../../../lib/formatters';
 import { useProdutos } from '../../../hooks/useProdutos';
 import { useFornecedores } from '../../../hooks/useFornecedores';
@@ -150,7 +149,7 @@ export function Step2ItensServicos() {
               <div className="mt-5 pt-4 flex justify-end border-t border-border/40">
                 <div className="px-4 py-2 rounded-xl bg-surface-hover/80 text-sm font-medium flex items-center gap-3 border border-border/60">
                   <span className="text-text-muted uppercase tracking-[0.2em] text-[9px] font-black">Subtotal:</span>
-                  <span className="font-mono font-black text-text-main text-lg tracking-tight leading-none">{formatCurrency(Number(totalItem))}</span>
+                  <span className="font-mono font-black text-text-main text-lg tracking-tight leading-none">{formatarDinheiro(Number(totalItem))}</span>
                 </div>
               </div>
             </div>

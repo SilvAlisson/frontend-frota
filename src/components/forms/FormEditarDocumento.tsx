@@ -8,8 +8,8 @@ import { api } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
-import { DatePicker } from '../ui/DatePicker'; // ✨ Adicionado DatePicker
-import { FileText, Save, Tag } from 'lucide-react'; // Removido Calendar nativo dos ícones aqui pois o DatePicker já tem
+import { DatePicker } from '../ui/DatePicker';
+import { FileText, Save, Tag } from 'lucide-react';
 
 const editDocumentoSchema = z.object({
   titulo: z.string().min(3, "O título precisa ter pelo menos 3 letras"),

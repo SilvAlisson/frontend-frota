@@ -4,8 +4,7 @@ import { useFormContext } from 'react-hook-form';
 import { DollarSign, AlertTriangle } from 'lucide-react';
 import { Card } from '../../ui/Card';
 import { Callout } from '../../ui/Callout'; 
-import { formatCurrency } from '../../../utils';
-import { desformatarDinheiro } from '../../../lib/formatters';
+import { formatarDinheiro, desformatarDinheiro } from '../../../lib/formatters';
 import { useVeiculos } from '../../../hooks/useVeiculos';
 import type { AbastecimentoFormValues } from './schema';
 import type { Veiculo } from '../../../types';
@@ -38,7 +37,7 @@ export function Step3Confirmacao() {
         <div className="relative z-10 py-8">
           <p className="text-[10px] font-black uppercase tracking-[0.3em] text-primary/80 mb-3">Valor Total Estimado</p>
           <p className="text-5xl sm:text-6xl font-mono font-black tracking-tighter truncate text-primary">
-            {formatCurrency(totalGeral)}
+            {formatarDinheiro(totalGeral)}
           </p>
         </div>
       </Card>
@@ -62,7 +61,7 @@ export function Step3Confirmacao() {
           <span className="text-sm font-medium">Verifique se os valores coincidem com o cupão fiscal.</span>
           
           <strong className="text-base sm:text-lg text-amber-700 dark:text-amber-500 animate-pulse flex items-center gap-1">
-            O valor total do abastecimento foi realmente <span className="bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/30">{formatCurrency(totalGeral)}</span>?
+            O valor total do abastecimento foi realmente <span className="bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/30">{formatarDinheiro(totalGeral)}</span>?
           </strong>
           
           <span className="text-xs opacity-80 mt-1">
