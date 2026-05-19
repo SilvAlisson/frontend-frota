@@ -124,37 +124,41 @@ export function Step2ItensServicos() {
                 
                 {/*  CADEADO 2: Protege o Grid interno de Quantidade e Preço */}
                 <div className="grid grid-cols-2 xl:col-span-6 gap-4 min-w-0">
-                  <div className="min-w-0">
-                    <Input
-                      label="Quantidade"
-                      type="number" inputMode="decimal"
-                      step="0.1"
-                      {...register(`itens.${index}.quantidade`)}
-                      error={errors.itens?.[index]?.quantidade?.message}
-                      className="font-mono font-black text-center"
-                      disabled={isLocked}
-                      containerClassName="!mb-0"
-                    />
-                  </div>
+  <div className="min-w-0">
+    <Input
+      label="Quantidade"
+      // 🔥 Para aceitar decimais (ex: 1,5), usamos text + decimal
+      type="text" 
+      inputMode="decimal"
+      {...register(`itens.${index}.quantidade`)}
+      error={errors.itens?.[index]?.quantidade?.message}
+      className="font-mono font-black text-center"
+      disabled={isLocked}
+      containerClassName="!mb-0"
+    />
+  </div>
 
-                  <div className="min-w-0">
-                    <Input
-                      label="Preço Unitário"
-                      inputMode="numeric" // Adicionado para facilitar no iOS/Android
-                      {...register(`itens.${index}.valorPorUnidade`, {
-                        onChange: (e) => {
-                          e.target.value = formatarDinheiro(e.target.value);
-                          setValue(`itens.${index}.valorPorUnidade`, e.target.value);
-                        }
-                      })}
-                      error={errors.itens?.[index]?.valorPorUnidade?.message}
-                      className="font-mono font-black text-emerald-600 tracking-tight"
-                      placeholder="R$ 0,00"
-                      disabled={isLocked}
-                      containerClassName="!mb-0"
-                    />
-                  </div>
-                </div>
+  <div className="min-w-0">
+    <Input
+      label="Preço Unitário"
+      // 🔥 O COMBO NUCLEAR: Ignora o "R$" da máscara e abre os botões grandes
+      type="tel"
+      inputMode="numeric"
+      pattern="[0-9]*"
+      {...register(`itens.${index}.valorPorUnidade`, {
+        onChange: (e) => {
+          e.target.value = formatarDinheiro(e.target.value);
+          setValue(`itens.${index}.valorPorUnidade`, e.target.value);
+        }
+      })}
+      error={errors.itens?.[index]?.valorPorUnidade?.message}
+      className="font-mono font-black text-emerald-600 tracking-tight"
+      placeholder="R$ 0,00"
+      disabled={isLocked}
+      containerClassName="!mb-0"
+    />
+  </div>
+</div>
               </div>
 
               <div className="mt-5 pt-4 flex justify-end border-t border-border/40 min-w-0">

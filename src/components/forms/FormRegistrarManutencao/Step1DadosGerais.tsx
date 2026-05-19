@@ -131,25 +131,31 @@ export function Step1DadosGerais() {
             />
           </div>
 
-          {/* ✨ CADEADO DE RESPONSIVIDADE: flex flex-col min-w-0 */}
+          {/*  CADEADO DE RESPONSIVIDADE: flex flex-col min-w-0 */}
           <div className="flex flex-col min-w-0">
-            <Input
-              label="KM na entrada da oficina (Opcional)"
-              icon={<Gauge className="w-4 h-4 text-primary" />} inputMode="numeric"
-              {...register("kmAtual")}
-              onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
-              placeholder={ultimoKmRegistrado > 0 ? `Ref: ${ultimoKmRegistrado}` : "Ex: 15.000"}
-              error={errors.kmAtual?.message}
-              className="font-mono font-black text-primary"
-              disabled={isLocked}
-              containerClassName="!mb-1"
-            />
-            {ultimoKmRegistrado > 0 && (
-              <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-1.5 ml-1 truncate">
-                Último Registro: <strong className="text-text-main font-mono">{ultimoKmRegistrado.toLocaleString('pt-BR')} km</strong>
-              </p>
-            )}
-          </div>
+  <Input
+    label="KM na entrada da oficina (Opcional)"
+    icon={<Gauge className="w-4 h-4 text-primary" />}
+    
+    // 🔥 O COMBO NUCLEAR: Força o teclado numérico ignorando o ponto da máscara
+    type="tel" 
+    inputMode="numeric"
+    pattern="[0-9]*"
+    
+    {...register("kmAtual")}
+    onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
+    placeholder={ultimoKmRegistrado > 0 ? `Ref: ${ultimoKmRegistrado}` : "Ex: 15.000"}
+    error={errors.kmAtual?.message}
+    className="font-mono font-black text-primary"
+    disabled={isLocked}
+    containerClassName="!mb-1"
+  />
+  {ultimoKmRegistrado > 0 && (
+    <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-1.5 ml-1 truncate">
+      Último Registro: <strong className="text-text-main font-mono">{ultimoKmRegistrado.toLocaleString('pt-BR')} km</strong>
+    </p>
+  )}
+</div>
         </div>
       ) : (
         <div className="min-w-0">
@@ -179,7 +185,7 @@ export function Step1DadosGerais() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* ✨ CADEADO DE RESPONSIVIDADE: min-w-0 */}
+        {/*  CADEADO DE RESPONSIVIDADE: min-w-0 */}
         <div className="min-w-0">
           <Controller
             control={control}
@@ -198,7 +204,7 @@ export function Step1DadosGerais() {
           />
         </div>
         
-        {/* ✨ CADEADO DE RESPONSIVIDADE: min-w-0 */}
+        {/*  CADEADO DE RESPONSIVIDADE: min-w-0 */}
         <div className="min-w-0">
           <Controller
             control={control}
