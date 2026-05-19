@@ -1,9 +1,10 @@
-﻿// src/components/forms/FormRegistrarAbastecimento/Step3Confirmacao.tsx
+// src/components/forms/FormRegistrarAbastecimento/Step3Confirmacao.tsx
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
 import { DollarSign, AlertTriangle } from 'lucide-react';
 import { Card } from '../../ui/Card';
-import { Callout } from '../../ui/Callout'; 
+import { Callout } from '../../ui/Callout';
+import { Textarea } from '../../ui/Textarea';
 import { formatarDinheiro, desformatarDinheiro } from '../../../lib/formatters';
 import { useVeiculos } from '../../../hooks/useVeiculos';
 import type { AbastecimentoFormValues } from './schema';
@@ -70,18 +71,15 @@ export function Step3Confirmacao() {
         </div>
       </Callout>
 
-      {/*  CAIXA DE OBSERVAÇÕES ADICIONADA */}
-      <div className="bg-surface p-1 rounded-2xl">
-        <label className="block text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] mb-2 ml-2 mt-2">
-          Observações / Justificativa
-        </label>
-        <textarea
-          {...register("observacoes")}
-          className="w-full px-4 py-3 text-sm bg-background border border-border/60 rounded-xl focus:ring-2 focus:ring-primary/30 outline-none resize-none min-h-[100px] transition-all text-text-main"
-          placeholder="Opcional: Detalhe anomalias (ex: combustível em galão extra, erro na bomba, etc)..."
-          disabled={isSubmitting}
-        />
-      </div>
+      {/* CAIXA DE OBSERVAÇÕES */}
+      <Textarea
+        label="Observações / Justificativa"
+        {...register("observacoes")}
+        rows={4}
+        placeholder="Opcional: Detalhe anomalias (ex: combustível em galão extra, erro na bomba, etc)..."
+        disabled={isSubmitting}
+        autoResize={false}
+      />
     </div>
   );
 }

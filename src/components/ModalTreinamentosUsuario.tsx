@@ -6,6 +6,7 @@ import ExcelJS from 'exceljs';
 import { api } from '../services/api';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { Textarea } from './ui/Textarea';
 import { toast } from 'sonner';
 import {
     X, Trash2, ExternalLink, Calendar, AlertTriangle, Loader2,
@@ -289,15 +290,14 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
                                 className="bg-background"
                             />
 
-                            <div className="space-y-1">
-                                <label className="text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary ml-1">Observações Adicionais</label>
-                                <textarea
-                                    {...register('descricao')}
-                                    disabled={isSubmitting}
-                                    className="w-full px-4 py-3 text-sm font-medium border border-border/60 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary h-24 resize-none bg-background transition-all placeholder:text-text-muted/60"
-                                    placeholder="Carga horária, entidade formadora..."
-                                />
-                            </div>
+                            <Textarea
+                                label="Observações Adicionais"
+                                {...register('descricao')}
+                                disabled={isSubmitting}
+                                rows={3}
+                                placeholder="Carga horária, entidade formadora..."
+                                autoResize={false}
+                            />
 
                             <Button
                                 type="submit"

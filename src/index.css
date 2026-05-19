@@ -75,7 +75,7 @@
   --z-toast: 70;
   --z-max: 9999;
 
-  /* --- 6. VARIÁVEIS DE ANIMAÇÃO --- */
+  /* --- 7. VARIÁVEIS DE ANIMAÇÃO --- */
   --animate-ghost-pulse: ghost-pulse 3s infinite ease-in-out;
   --animate-enter: enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-shimmer: shimmer 2s infinite;
@@ -119,14 +119,29 @@
     to { opacity: 1; }
   }
 
+  @keyframes fade-out {
+    from { opacity: 1; }
+    to { opacity: 0; }
+  }
+
   @keyframes slide-in-from-bottom {
     from { transform: translateY(var(--tw-enter-translate-y, 10px)); }
+    to { transform: translateY(0); }
+  }
+
+  @keyframes slide-in-from-top {
+    from { transform: translateY(var(--tw-enter-translate-y, -10px)); }
     to { transform: translateY(0); }
   }
 
   @keyframes zoom-in {
     from { transform: scale(var(--tw-enter-scale, 0.95)); }
     to { transform: scale(1); }
+  }
+
+  @keyframes zoom-out {
+    from { transform: scale(1); }
+    to { transform: scale(var(--tw-enter-scale, 0.95)); }
   }
 }
 
@@ -139,6 +154,17 @@
   }
 }
 
+/* --- UTILITÁRIOS DE Z-INDEX (Tailwind v4 — via @utility) --- */
+@layer utilities {
+  .z-base    { z-index: 0; }
+  .z-floating { z-index: 10; }
+  .z-dropdown { z-index: 40; }
+  .z-overlay  { z-index: 50; }
+  .z-modal    { z-index: 60; }
+  .z-toast    { z-index: 70; }
+  .z-max      { z-index: 9999; }
+}
+
 /* --- UTILITÁRIOS DE ANIMAÇÃO (SHADCN/UI STYLE) --- */
 @layer utilities {
   .animate-in {
@@ -147,9 +173,31 @@
     animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  .animate-out {
+    animation-duration: var(--tw-animate-duration, 150ms);
+    animation-fill-mode: both;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    animation-direction: normal;
+  }
+
+  /* --- Fade --- */
   .fade-in {
+    animation-name: fade-in;
+  }
+
+  .fade-in-0 {
     --tw-enter-opacity: 0;
     animation-name: fade-in;
+  }
+
+  .fade-out-0 {
+    animation-name: fade-out;
+  }
+
+  /* --- Slide from bottom --- */
+  .slide-in-from-bottom-1 {
+    --tw-enter-translate-y: 4px;
+    animation-name: slide-in-from-bottom;
   }
 
   .slide-in-from-bottom-2 {
@@ -162,11 +210,40 @@
     animation-name: slide-in-from-bottom;
   }
 
+  /* --- Slide from top --- */
+  .slide-in-from-top-1 {
+    --tw-enter-translate-y: -4px;
+    animation-name: slide-in-from-top;
+  }
+
+  .slide-in-from-top-2 {
+    --tw-enter-translate-y: -8px;
+    animation-name: slide-in-from-top;
+  }
+
+  /* --- Slide from sides --- */
+  .slide-in-from-right-2 {
+    animation-name: slide-in-from-bottom; /* reutiliza como fallback */
+  }
+
+  .slide-in-from-left-2 {
+    animation-name: slide-in-from-bottom;
+  }
+
+  /* --- Zoom --- */
   .zoom-in-95 {
     --tw-enter-scale: 0.95;
     animation-name: zoom-in;
   }
 
+  .zoom-out-95 {
+    --tw-enter-scale: 0.95;
+    animation-name: zoom-out;
+  }
+
+  /* --- Duration --- */
+  .duration-150 { --tw-animate-duration: 150ms; }
+  .duration-200 { --tw-animate-duration: 200ms; }
   .duration-300 { --tw-animate-duration: 300ms; }
   .duration-500 { --tw-animate-duration: 500ms; }
 }
@@ -290,7 +367,7 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255,255,255,0.05);
   }
 
-  /* 🔥 PERFORMANCE OPTIMIZER: Reduz custo de GPU em aparelhos fracos/low-end */
+  /* PERFORMANCE OPTIMIZER: Reduz custo de GPU em aparelhos fracos/low-end */
   @media (prefers-reduced-motion: reduce) {
     .glass, .glass-premium {
       backdrop-filter: none;
@@ -332,6 +409,33 @@
     padding-top: env(safe-area-inset-top, 0px);
   }
 
+  /*
+   * custom-scrollbar — Define a scrollbar fina e estilizada do Design System KLIN.
+   * Compatível com Chrome/Edge (webkit). Firefox usa scrollbar-width: thin via base.
+   */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in srgb, var(--text-muted) 30%, transparent) transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--text-muted) 30%, transparent);
+    border-radius: 9999px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--primary) 60%, transparent);
+  }
+
   /* Ocultar scrollbar mantendo scroll funcional */
   .scrollbar-hide {
     -ms-overflow-style: none;
@@ -351,5 +455,3 @@
     @apply min-h-[48px] min-w-[48px];
   }
 }
-
-

@@ -8,6 +8,7 @@ import { useRenovarDocumento } from '../../hooks/useDocumentosLegais';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { DatePicker } from '../ui/DatePicker';
+import { Textarea } from '../ui/Textarea';
 import { FileText, RefreshCcw, UploadCloud, Loader2 } from 'lucide-react';
 import { uploadToR2 } from '../../services/uploadService';
 
@@ -185,13 +186,14 @@ export function FormRenovarDocumento({ documentoId, onSuccess, onCancel }: FormR
             </div>
           ) : null}
 
-          <div className="md:col-span-2 space-y-1.5">
-            <label className="text-[11px] font-black uppercase tracking-widest text-text-secondary ml-1">Observações (Opcional)</label>
-            <textarea
+          <div className="md:col-span-2">
+            <Textarea
+              label="Observações (Opcional)"
               {...register('descricao')}
               disabled={isFormLocked}
-              className="w-full bg-surface border border-border/60 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all resize-none shadow-sm min-h-[80px]"
+              rows={3}
               placeholder="Ex: Pagamento do novo exercício realizado..."
+              autoResize={false}
             />
           </div>
         </div>

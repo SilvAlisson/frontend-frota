@@ -1,7 +1,9 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { Select } from './ui/Select';
+import { ConfirmModal } from './ui/ConfirmModal';
 import { parseDecimal, formatKmVisual } from '../utils';
 import { toast } from 'sonner';
 import { Gauge, Play, AlertTriangle } from 'lucide-react';
@@ -31,6 +33,11 @@ export function IniciarJornada({
 
   const [modalAberto, setModalAberto] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
+
+  // ConfirmModal de conflito de veículo
+  const [showConflictConfirm, setShowConflictConfirm] = useState(false);
+  const [conflictMsg, setConflictMsg] = useState('');
+  const [pendingDados, setPendingDados] = useState<any>(null);
 
   // Calcula o último KM do veículo selecionado
   const ultimoKmReferencia = useMemo(() => {
@@ -81,27 +88,22 @@ export function IniciarJornada({
       toast.warning(`Atenção: O KM informado (${kmInicioFloat}) é MENOR que o último registrado (${ultimoKmReferencia}). Verifique o painel.`);
     }
 
-    const jornadaConflitante = jornadasAtivas.find(j => j.veiculo?.id === veiculoId);
-
-    if (jornadaConflitante) {
-      const confirmar = window.confirm(
-        `AVISO CRÍTICO:\n\n` +
-        `O veículo selecionado já consta como EM ROTA com o motorista: ${jornadaConflitante.operador?.nome}.\n\n` +
-        `Tem certeza que selecionou o veículo correto e deseja iniciar uma nova jornada mesmo assim?`
-      );
-
-      if (!confirmar) {
-        setLoading(false);
-        return;
-      }
-    }
-
     const dadosForm = {
       veiculoId,
       operadorId: operadorLogadoId,
       encarregadoId,
       kmInicio: kmInicioFloat,
     };
+
+    const jornadaConflitante = jornadasAtivas.find(j => j.veiculo?.id === veiculoId);
+
+    if (jornadaConflitante) {
+      setConflictMsg(`O veículo selecionado já consta como EM ROTA com o motorista: ${jornadaConflitante.operador?.nome}. Tem certeza que selecionou o veículo correto e deseja iniciar uma nova jornada?`);
+      setPendingDados(dadosForm);
+      setShowConflictConfirm(true);
+      setLoading(false);
+      return;
+    }
 
     setFormDataParaModal(dadosForm);
     setModalAberto(true);
@@ -135,26 +137,16 @@ export function IniciarJornada({
 
         {/* Veículo */}
         <div>
-          <label className="block mb-1.5 text-xs font-bold text-text-muted uppercase tracking-wider ml-1">Veículo</label>
-          <div className="relative group">
-            <select
-              className="w-full h-11 px-3 bg-surface border border-input rounded-input text-sm text-text-main focus:border-ring focus:ring-2 focus:ring-ring/20 outline-none transition-all appearance-none cursor-pointer font-medium disabled:bg-surface-hover shadow-sm"
-              value={veiculoId}
-              onChange={(e) => handleVeiculoChange(e.target.value)}
-              disabled={loading}
-            >
-              <option value="">Selecione o veículo...</option>
-              {veiculos.map(v => (
-                <option key={v.id} value={v.id}>
-                  {v.placa} - {v.modelo}
-                </option>
-              ))}
-            </select>
-            {/* Ícone Chevron */}
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted group-hover:text-primary transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-          </div>
+          <Select
+            label="Veículo"
+            value={veiculoId}
+            onChange={(e) => handleVeiculoChange(e.target.value)}
+            disabled={loading}
+            options={[
+              { value: '', label: 'Selecione o veículo...' },
+              ...veiculos.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` }))
+            ]}
+          />
 
           {avisoVeiculo && (
             <div className="mt-3 flex items-start gap-3 p-3 rounded-lg bg-warning-500/10 border border-warning-500/20 text-warning-700 text-xs font-medium animate-in slide-in-from-top-1">
@@ -169,27 +161,18 @@ export function IniciarJornada({
 
         {/* Encarregado */}
         <div>
-          <label className="block mb-1.5 text-xs font-bold text-text-muted uppercase tracking-wider ml-1">Encarregado</label>
-          <div className="relative group">
-            <select
-              className="w-full h-11 px-3 bg-surface border border-input rounded-input text-sm text-text-main focus:border-ring focus:ring-2 focus:ring-ring/20 outline-none transition-all appearance-none cursor-pointer font-medium disabled:bg-surface-hover shadow-sm"
-              value={encarregadoId}
-              onChange={(e) => setEncarregadoId(e.target.value)}
-              disabled={loading}
-            >
-              <option value="">Selecione o Encarregado...</option>
-              {usuarios
+          <Select
+            label="Encarregado"
+            value={encarregadoId}
+            onChange={(e) => setEncarregadoId(e.target.value)}
+            disabled={loading}
+            options={[
+              { value: '', label: 'Selecione o Encarregado...' },
+              ...usuarios
                 .filter(u => u.role === 'ENCARREGADO' || u.role === 'ADMIN')
-                .map(u => (
-                  <option key={u.id} value={u.id}>
-                    {u.nome}
-                  </option>
-                ))}
-            </select>
-            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-text-muted group-hover:text-primary transition-colors">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
-            </div>
-          </div>
+                .map(u => ({ value: u.id, label: u.nome }))
+            ]}
+          />
         </div>
 
         {/* KM Inicial */}
@@ -244,6 +227,27 @@ export function IniciarJornada({
           onSuccess={handleModalSuccess}
         />
       )}
+
+      {/* Confirm Modal de conflito de veículo */}
+      <ConfirmModal
+        isOpen={showConflictConfirm}
+        title="Veículo em Uso"
+        description={conflictMsg}
+        variant="warning"
+        confirmLabel="Confirmar Mesmo Assim"
+        onConfirm={() => {
+          setShowConflictConfirm(false);
+          if (pendingDados) {
+            setFormDataParaModal(pendingDados);
+            setModalAberto(true);
+            setPendingDados(null);
+          }
+        }}
+        onCancel={() => {
+          setShowConflictConfirm(false);
+          setPendingDados(null);
+        }}
+      />
     </>
   );
 }

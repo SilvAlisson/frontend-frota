@@ -1,4 +1,4 @@
-﻿import { useEffect } from 'react';
+import { useEffect } from 'react';
 import { useForm, Controller } from 'react-hook-form'; // ✨ Adicionado Controller
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { Button } from '../ui/Button';
+import { Textarea } from '../ui/Textarea';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { DatePicker } from '../ui/DatePicker';
@@ -140,13 +141,14 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
           </div>
         )}
 
-        <div className="md:col-span-2 space-y-1.5">
-          <label className="text-[11px] font-black uppercase tracking-widest text-text-secondary ml-1">Observações (Opcional)</label>
-          <textarea 
-            {...register('descricao')} 
+        <div className="md:col-span-2">
+          <Textarea
+            label="Observações (Opcional)"
+            {...register('descricao')}
             disabled={isFormLocked}
-            className="w-full bg-surface border border-border/60 rounded-xl px-4 py-3 text-sm focus:border-primary focus:ring-4 focus:ring-primary/10 outline-none transition-all resize-none shadow-sm min-h-[80px]"
+            rows={3}
             placeholder="Anotações internas sobre este documento..."
+            autoResize={false}
           />
         </div>
       </div>

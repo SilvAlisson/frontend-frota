@@ -1,15 +1,16 @@
-﻿import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
 import { toast } from 'sonner';
-import { Truck, User, CheckCircle2, FileText, Save, MapPin, Flag, Loader2 } from 'lucide-react';
+import { Truck, User, CheckCircle2, Save, MapPin, Flag, Loader2 } from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { Select } from '../ui/Select'; 
+import { Select } from '../ui/Select';
+import { Textarea } from '../ui/Textarea';
 
 // --- UTILS ---
 import { formatKmVisual, parseKmInteligente } from '../../utils';
@@ -323,15 +324,14 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
 
           {/* 4. OBSERVAÇÕES */}
           <div className="pt-2">
-             <label className="flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase tracking-wider ml-1 mb-1.5">
-               <FileText className="w-3.5 h-3.5" /> Motivo da Edição / Justificativa
-             </label>
-             <textarea
-               {...register('observacoes')}
-               disabled={isLocked}
-               className="w-full px-4 py-3 text-sm text-text-main bg-surface border border-border/60 rounded-xl transition-all duration-300 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 placeholder:text-text-muted disabled:bg-background/50 disabled:cursor-not-allowed resize-none shadow-sm h-24"
-               placeholder="Ex: O motorista inseriu 150000 em vez de 15000. Registro corrigido manualmente por validação."
-             />
+            <Textarea
+              label="Motivo da Edição / Justificativa"
+              {...register('observacoes')}
+              disabled={isLocked}
+              rows={3}
+              placeholder="Ex: O motorista inseriu 150000 em vez de 15000. Registro corrigido manualmente por validação."
+              autoResize={false}
+            />
           </div>
 
         </div>

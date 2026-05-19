@@ -12,6 +12,9 @@ import { api } from '../services/api';
 import { toast } from 'sonner';
 import { FormPlanoManutencao } from './forms/FormPlanoManutencao';
 import { CHART_COLORS_STATUS } from '../config/chartColors';
+import { ConfirmModal } from './ui/ConfirmModal';
+import { EmptyState } from './ui/EmptyState';
+import { Skeleton } from './ui/Skeleton';
 
 export function PainelPlanosPreventivos() {
   const { planos, isLoading, refetch, registrarExecucao } = usePlanosManutencao();
@@ -20,6 +23,7 @@ export function PainelPlanosPreventivos() {
   const [planoAberto, setPlanoAberto] = useState<PlanoManutencao | null>(null);
   const [isCriandoPlano, setIsCriandoPlano] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [planoParaDeletar, setPlanoParaDeletar] = useState<string | null>(null);
 
   // Campos do Formulário de Baixa
   const [kmAtualConfirmacao, setKmAtualConfirmacao] = useState<string>('');
@@ -108,23 +112,29 @@ export function PainelPlanosPreventivos() {
     }
   };
 
-  const handleDeletePlano = async (id: string) => {
-    if (!window.confirm("Deseja realmente remover este plano de manutenção? Esta ação apagará os alertas futuros.")) return;
-    setDeletingId(id);
+  const handleDeletePlano = (id: string) => setPlanoParaDeletar(id);
+
+  const executarDeletePlano = async () => {
+    if (!planoParaDeletar) return;
+    setDeletingId(planoParaDeletar);
     try {
-      await api.delete(`/planos-manutencao/${id}`);
+      await api.delete(`/planos-manutencao/${planoParaDeletar}`);
       toast.success("Plano desativado e removido.");
-      // Recarrega a lista através do hook global
       refetch();
     } catch (err) {
       handleApiError(err, "Falha ao tentar remover o plano.");
     } finally {
       setDeletingId(null);
+      setPlanoParaDeletar(null);
     }
   };
 
   if (isLoading) {
-    return <div className="p-8 text-center text-text-muted animate-pulse font-mono tracking-widest text-xs uppercase">Buscando rastreabilidade da frota...</div>;
+    return (
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6 p-2">
+        {[1, 2, 3].map(i => <Skeleton key={i} className="h-64 w-full rounded-[2rem]" />)}
+      </div>
+    );
   }
 
   const ordenados = [...planosProcessados].sort((a, b) => {
@@ -184,8 +194,17 @@ export function PainelPlanosPreventivos() {
       {/* ─── CARDS DOS PLANOS ─── */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
         {ordenados.length === 0 && (
-          <div className="col-span-full py-12 text-center text-text-muted">
-            Nenhum plano ativo. Clique em "Novo Plano" para começar.
+          <div className="col-span-full">
+            <EmptyState
+              icon={Wrench}
+              title="Nenhum Plano Ativo"
+              description='Clique em "Novo Plano" para começar a monitorar a frota.'
+              action={
+                <Button variant="primary" onClick={() => setIsCriandoPlano(true)} icon={<Plus className="w-4 h-4" />}>
+                  Novo Plano
+                </Button>
+              }
+            />
           </div>
         )}
 
@@ -329,6 +348,15 @@ export function PainelPlanosPreventivos() {
           </form>
         )}
       </Modal>
+      <ConfirmModal
+        isOpen={!!planoParaDeletar}
+        title="Remover Plano de Manutenção"
+        description="Esta ação apagará os alertas futuros e não poderá ser desfeita."
+        variant="danger"
+        confirmLabel="Sim, Remover"
+        onConfirm={executarDeletePlano}
+        onCancel={() => setPlanoParaDeletar(null)}
+      />
     </div>
   );
 }

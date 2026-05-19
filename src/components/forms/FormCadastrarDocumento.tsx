@@ -6,13 +6,14 @@ import { uploadToR2 } from '../../services/uploadService';
 import { useCreateDocumento } from '../../hooks/useDocumentosLegais';
 import { useVeiculos } from '../../hooks/useVeiculos';
 import { toast } from 'sonner';
-import { UploadCloud, FileText, Truck, Save, AlertTriangle, Loader2, Info } from 'lucide-react';
+import { UploadCloud, FileText, Truck, Save, AlertTriangle, Loader2 } from 'lucide-react';
 
 // Componentes UI
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { DatePicker } from '../ui/DatePicker';
+import { Textarea } from '../ui/Textarea';
 
 // Schema
 const docSchema = z.object({
@@ -280,15 +281,14 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
             </div>
 
             {/* DESCRIÇÃO */}
-            <div className="space-y-1.5">
-              <label className="flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase tracking-wider ml-1">
-                <Info className="w-3.5 h-3.5" /> Detalhes ou Observações
-              </label>
-              <textarea
+            <div>
+              <Textarea
+                label="Detalhes ou Observações"
                 {...register('descricao')}
                 disabled={isFormLocked}
-                className="w-full px-4 py-3 text-sm text-text-main bg-surface border border-border/60 rounded-xl transition-all duration-300 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 placeholder:text-text-muted disabled:bg-background/50 disabled:cursor-not-allowed resize-none shadow-sm h-24"
+                rows={3}
                 placeholder="Insira detalhes adicionais sobre as regras deste documento..."
+                autoResize={false}
               />
             </div>
           </div>

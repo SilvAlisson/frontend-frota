@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -22,13 +22,14 @@ interface ModalProps {
   title?: string;
   children: React.ReactNode;
   className?: string;
-  nested?: boolean; 
+  nested?: boolean;
 }
 
 export function Modal({ isOpen, onClose, title, children, className, nested = false }: ModalProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
-  
-  // Bloqueia o scroll do body quando o modal abre
+  const titleId = useId();
+
+  // Bloqueia o scroll do body quando o modal desktop abre
   useEffect(() => {
     if (isOpen && isDesktop) {
       const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
@@ -62,46 +63,47 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
   // --- MODO MOBILE (GAVETA / DRAWER - VAUL) ---
   if (!isDesktop) {
     return (
-      <Drawer.Root 
-        open={isOpen} 
-        onOpenChange={(open) => !open && onClose()} 
+      <Drawer.Root
+        open={isOpen}
+        onOpenChange={(open) => !open && onClose()}
         shouldScaleBackground
-        nested={nested} 
-        dismissible={false} // Desativa o fecho por arraste
+        nested={nested}
+        dismissible={false}
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-md z-overlay" />
-          
-          <Drawer.Content 
+
+          <Drawer.Content
             className={cn(
               "bg-surface flex flex-col rounded-t-[2rem] fixed bottom-0 left-0 right-0 z-modal outline-none border-t border-white/10 shadow-[0_-10px_50px_rgba(0,0,0,0.5)]",
               className
             )}
-            style={{ 
-              maxHeight: 'calc(100svh - 2rem)', 
-              paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' 
+            style={{
+              maxHeight: 'calc(100svh - 2rem)',
+              paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))'
             }}
+            aria-labelledby={title ? titleId : undefined}
           >
             {/* Pega-mão (Handle) */}
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-border/80 mt-4 mb-2" />
-            
+
             {title && (
               <div className="px-6 pb-4 flex items-center justify-between border-b border-border/50 shrink-0">
-                <Drawer.Title className="font-black text-xl text-text-main tracking-tight">
+                <Drawer.Title id={titleId} className="font-black text-xl text-text-main tracking-tight">
                   {title}
                 </Drawer.Title>
                 <button
                   onClick={onClose}
-                  className="p-3 -mr-2 touch-target flex items-center justify-center rounded-xl text-text-muted hover:text-text-main hover:bg-surface-hover transition-all active:scale-95 bg-surface-hover/50"
+                  className="p-3 -mr-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-text-main hover:bg-surface-hover transition-all active:scale-95 bg-surface-hover/50"
                   aria-label="Fechar modal"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
             )}
-            
-            {/* ✨ CORREÇÃO AQUI: data-vaul-no-drag impede o Vaul de roubar o toque na tela */}
-            <div 
+
+            {/* data-vaul-no-drag impede o Vaul de roubar o toque na área de scroll */}
+            <div
               data-vaul-no-drag
               className="flex-1 overflow-y-auto overflow-x-hidden p-5 custom-scrollbar min-h-0 relative overscroll-contain"
             >
@@ -115,39 +117,50 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
 
   // --- MODO DESKTOP (PORTAL + MODAL FIXO) ---
   return createPortal(
-    <div className="fixed inset-0 z-modal flex items-center justify-center p-4 sm:p-6" role="dialog" aria-modal="true">
-      
-      <div 
+    <div
+      className="fixed inset-0 z-modal flex items-center justify-center p-3 sm:p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby={title ? titleId : undefined}
+    >
+      {/* Backdrop */}
+      <div
         className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity animate-in fade-in duration-300"
         onClick={onClose}
         aria-hidden="true"
       />
 
+      {/* Card do Modal — viewport-safe: nunca ultrapassa a tela */}
       <div
         className={cn(
-          "relative bg-surface rounded-[2rem] shadow-2xl shadow-black/60 border border-white/10 w-full max-w-lg flex flex-col",
-          "max-h-[90vh]", 
+          "relative bg-surface rounded-[2rem] shadow-2xl shadow-black/60 border border-white/10 flex flex-col",
+          // Largura: ocupa quase tudo em mobile, máx lg em desktop
+          "w-full max-w-lg",
+          // Altura: máximo 92dvh para garantir espaço em qualquer viewport
+          "max-h-[92dvh]",
           "transform transition-all animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 ease-out",
           className
         )}
       >
-        <div className="flex items-center justify-between px-6 py-5 border-b border-border/50 shrink-0 bg-surface/95 backdrop-blur rounded-t-[2rem] z-10">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 sm:px-6 py-4 sm:py-5 border-b border-border/50 shrink-0 bg-surface/95 backdrop-blur rounded-t-[2rem] z-10">
           {title ? (
-            <h3 className="text-xl font-black text-text-main tracking-tight">
+            <h3 id={titleId} className="text-lg sm:text-xl font-black text-text-main tracking-tight">
               {title}
             </h3>
           ) : (
-            <div /> 
+            <div />
           )}
           <button
             onClick={onClose}
-            className="p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-text-main hover:bg-surface-hover transition-all active:scale-95 ml-auto"
+            className="p-2 sm:p-3 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-text-main hover:bg-surface-hover transition-all active:scale-95 ml-auto"
             aria-label="Fechar modal"
           >
-            <X className="w-6 h-6" />
+            <X className="w-5 h-5 sm:w-6 sm:h-6" />
           </button>
         </div>
 
+        {/* Corpo com scroll interno */}
         <div className="flex-1 overflow-y-auto overflow-x-hidden relative w-full rounded-b-[2rem] bg-surface custom-scrollbar min-h-0">
           <div className="p-5">
             {children}

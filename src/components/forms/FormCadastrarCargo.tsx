@@ -4,11 +4,12 @@ import { z } from 'zod';
 import { api } from '../../services/api';
 import DOMPurify from 'dompurify';
 import { toast } from 'sonner';
-import { Briefcase, Save, X, GraduationCap, Info, AlertTriangle, Clock } from 'lucide-react';
+import { Briefcase, Save, X, GraduationCap, AlertTriangle, Clock } from 'lucide-react';
 
 // --- COMPONENTES DO DESIGN SYSTEM ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
+import { Textarea } from '../ui/Textarea';
 
 // --- SCHEMA ZOD V4 COMPATÍVEL ---
 // Usamos a união string/number no input para evitar o erro de "unknown" do Zod v4,
@@ -128,19 +129,14 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                 disabled={isSubmitting}
               />
 
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-xs font-bold text-text-secondary uppercase tracking-wider ml-1">
-                  <Info className="w-3.5 h-3.5 text-primary/60" />
-                  Escopo da Função
-                </label>
-                <textarea
-                  {...register('descricao')}
-                  rows={3}
-                  className="w-full px-4 py-3 text-sm text-text-main bg-surface border border-border/60 rounded-xl transition-all duration-300 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 placeholder:text-text-muted disabled:bg-background/50 resize-none shadow-sm"
-                  placeholder="Quais as principais responsabilidades deste colaborador?"
-                  disabled={isSubmitting}
-                />
-              </div>
+              <Textarea
+                label="Escopo da Função"
+                {...register('descricao')}
+                rows={3}
+                placeholder="Quais as principais responsabilidades deste colaborador?"
+                disabled={isSubmitting}
+                autoResize={false}
+              />
             </div>
           </section>
 

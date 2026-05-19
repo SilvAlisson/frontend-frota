@@ -1,3 +1,5 @@
+import { useEffect, useId } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, ShieldCheck, XCircle } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Button } from './Button';
@@ -24,13 +26,8 @@ interface ModalConfirmarAnomaliaProps {
  * **ModalConfirmarAnomalia** — Modal de confirmação para abastecimentos com
  * valores atípicos.
  *
- * Apresenta ao usuário as anomalias detectadas e pergunta "É isso mesmo?",
- * evitando registros com erro de digitação (ex: R$700.000 por engano).
- *
- * - Anomalias `warning` → permitem confirmar ou corrigir.
- * - Anomalias `error`   → apenas mostram o bloqueio e permitem corrigir.
- *
- * Acessibilidade: role="alertdialog" + foco gerenciado conforme WCAG 2.1.
+ * Acessibilidade: role="alertdialog" + aria-labelledby/describedby conforme WCAG 2.1.
+ * Renderizado via createPortal para isolamento correto de z-index.
  */
 export function ModalConfirmarAnomalia({
   anomalias,
@@ -39,31 +36,49 @@ export function ModalConfirmarAnomalia({
   onCorrigir,
   isLoading = false,
 }: ModalConfirmarAnomaliaProps) {
-  if (anomalias.length === 0) return null;
+  const titleId = useId();
+  const descId = useId();
 
   const temBloqueio = anomalias.some((a) => a.nivel === 'error');
   const avisos      = anomalias.filter((a) => a.nivel === 'warning');
   const erros       = anomalias.filter((a) => a.nivel === 'error');
 
-  return (
+  // Lock de scroll do body
+  useEffect(() => {
+    if (anomalias.length > 0) {
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
+      document.body.style.paddingRight = `${scrollbarWidth}px`;
+      document.body.style.overflow = 'hidden';
+    }
+    return () => {
+      document.body.style.overflow = '';
+      document.body.style.paddingRight = '';
+    };
+  }, [anomalias.length]);
+
+  if (anomalias.length === 0) return null;
+
+  return createPortal(
     /* Overlay */
     <div
       className="fixed inset-0 z-max flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
       role="alertdialog"
       aria-modal="true"
-      aria-labelledby="anomalia-titulo"
-      aria-describedby="anomalia-descricao"
+      aria-labelledby={titleId}
+      aria-describedby={descId}
     >
       <div
         className={cn(
           'relative w-full max-w-lg bg-surface rounded-3xl border shadow-2xl animate-in zoom-in-95 duration-200',
+          // Altura máxima segura com scroll interno para não ultrapassar a viewport
+          'max-h-[92dvh] flex flex-col',
           temBloqueio ? 'border-error/50' : 'border-warning/50'
         )}
       >
-        {/* ── Cabeçalho ── */}
+        {/* ── Cabeçalho (fixo, não scrollável) ── */}
         <div
           className={cn(
-            'flex items-center gap-4 px-6 py-5 border-b rounded-t-3xl',
+            'flex items-center gap-3 sm:gap-4 px-5 sm:px-6 py-4 sm:py-5 border-b rounded-t-3xl shrink-0',
             temBloqueio
               ? 'bg-error/10 border-error/20'
               : 'bg-warning/10 border-warning/20'
@@ -71,7 +86,7 @@ export function ModalConfirmarAnomalia({
         >
           <div
             className={cn(
-              'h-12 w-12 rounded-2xl flex items-center justify-center shrink-0 border shadow-sm',
+              'h-11 w-11 sm:h-12 sm:w-12 rounded-2xl flex items-center justify-center shrink-0 border shadow-sm',
               temBloqueio
                 ? 'bg-error/10 border-error/30 text-error'
                 : 'bg-warning/10 border-warning/30 text-warning'
@@ -79,15 +94,15 @@ export function ModalConfirmarAnomalia({
             aria-hidden="true"
           >
             {temBloqueio
-              ? <XCircle className="w-6 h-6" />
-              : <AlertTriangle className="w-6 h-6" />
+              ? <XCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+              : <AlertTriangle className="w-5 h-5 sm:w-6 sm:h-6" />
             }
           </div>
-          <div>
+          <div className="min-w-0">
             <h2
-              id="anomalia-titulo"
+              id={titleId}
               className={cn(
-                'text-lg font-black tracking-tight leading-tight',
+                'text-base sm:text-lg font-black tracking-tight leading-tight',
                 temBloqueio ? 'text-error' : 'text-warning'
               )}
             >
@@ -99,14 +114,14 @@ export function ModalConfirmarAnomalia({
           </div>
         </div>
 
-        {/* ── Corpo ── */}
-        <div className="px-6 py-5 space-y-4" id="anomalia-descricao">
-          {/* Destaque do custo total */}
-          <div className="flex items-center justify-between bg-surface-hover/50 border border-border/60 rounded-2xl px-5 py-4">
-            <span className="text-sm font-bold text-text-secondary">Custo Total Calculado:</span>
+        {/* ── Corpo (scrollável se conteúdo for grande) ── */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar px-5 sm:px-6 py-4 sm:py-5 space-y-4 min-h-0" id={descId}>
+          {/* Destaque do custo total — flex-wrap para valores longos */}
+          <div className="flex flex-wrap items-center justify-between gap-2 bg-surface-hover/50 border border-border/60 rounded-2xl px-4 sm:px-5 py-3 sm:py-4">
+            <span className="text-sm font-bold text-text-secondary shrink-0">Custo Total Calculado:</span>
             <span
               className={cn(
-                'text-2xl font-black font-mono',
+                'text-xl sm:text-2xl font-black font-mono break-all',
                 temBloqueio ? 'text-error' : 'text-warning'
               )}
               aria-label={`Valor total: ${custoTotalFormatado}`}
@@ -148,8 +163,8 @@ export function ModalConfirmarAnomalia({
           )}
         </div>
 
-        {/* ── Rodapé com ações ── */}
-        <div className="px-6 pb-6 flex flex-col-reverse sm:flex-row gap-3">
+        {/* ── Rodapé com ações (fixo, não scrollável) ── */}
+        <div className="px-5 sm:px-6 pb-5 sm:pb-6 pt-3 flex flex-col-reverse sm:flex-row gap-3 shrink-0 border-t border-border/30">
           <Button
             variant="secondary"
             onClick={onCorrigir}
@@ -176,6 +191,7 @@ export function ModalConfirmarAnomalia({
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

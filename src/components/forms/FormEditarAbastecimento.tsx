@@ -8,11 +8,12 @@ import { uploadToR2 } from '../../services/uploadService';
 import { toast } from 'sonner';
 import {
    Save, Plus, X, User as UserIcon, Truck,
-  MapPin, Calendar, CreditCard, Image as ImageIcon, Loader2, Info
+  MapPin, Calendar, CreditCard, Image as ImageIcon, Loader2
 } from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
 import { Button } from '../ui/Button';
+import { Textarea } from '../ui/Textarea';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { ModalConfirmarAnomalia } from '../ui/ModalConfirmarAnomalia';
@@ -392,15 +393,14 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
           </Button>
         </div>
 
-        <div className="pt-4 mt-6 border-t border-border/50 space-y-1.5">
-          <label className="flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase tracking-wider ml-1">
-            <Info className="w-3.5 h-3.5" /> Motivo da Edição (Auditoria)
-          </label>
-          <textarea
+        <div className="pt-4 mt-6 border-t border-border/50">
+          <Textarea
+            label="Motivo da Edição (Auditoria)"
             {...register('justificativa')}
             disabled={isLocked}
-            className="w-full px-4 py-3 text-sm text-text-main bg-surface border border-border/60 rounded-xl transition-all duration-300 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 placeholder:text-text-muted disabled:bg-background/50 disabled:cursor-not-allowed resize-none shadow-sm h-20"
+            rows={3}
             placeholder="Explique o motivo de estar alterando o registro original..."
+            autoResize={false}
           />
         </div>
 

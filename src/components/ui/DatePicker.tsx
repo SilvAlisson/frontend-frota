@@ -45,7 +45,7 @@ export function DatePicker({
             id={datePickerId}
             disabled={disabled}
             className={cn(
-              "flex items-center w-full px-4 h-11 md:h-9 text-sm bg-surface border rounded-xl transition-all duration-200 outline-none text-left",
+              "flex items-center w-full px-4 h-11 text-sm bg-surface border rounded-xl transition-all duration-200 outline-none text-left",
               "focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-background focus:border-primary shadow-sm",
               "disabled:bg-surface-hover/50 disabled:text-text-muted disabled:cursor-not-allowed",
               !date && "text-text-muted",
@@ -61,7 +61,9 @@ export function DatePicker({
           <PopoverPrimitive.Content
             align="start"
             sideOffset={4}
-            className="z-dropdown p-3 bg-surface rounded-2xl border border-border/60 shadow-float data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+            avoidCollisions={true}
+            collisionPadding={8}
+            className="z-dropdown p-3 w-auto bg-surface rounded-2xl border border-border/60 shadow-float data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
           >
             <DayPicker
               mode="single"

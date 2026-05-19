@@ -9,7 +9,7 @@ const inputVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-surface border border-border/60 rounded-xl h-11 focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-background focus:border-primary shadow-sm hover:border-border disabled:bg-surface-hover/50 disabled:border-border/40 text-text-main",
+        default: "bg-surface border border-border/60 rounded-xl h-11 min-h-[44px] focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-background focus:border-primary shadow-sm hover:border-border disabled:bg-surface-hover/50 disabled:border-border/40 text-text-main",
         ghost: "bg-transparent border-transparent rounded-xl h-11 hover:bg-surface-hover/80 focus:bg-surface-hover shadow-none focus:ring-0 text-text-main",
       }
     },

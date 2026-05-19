@@ -38,8 +38,8 @@ export function DropdownAcoes({
         <DropdownMenu.Content 
           align={align}
           sideOffset={8}
-          collisionPadding={10}
-          // ðŸŽ¬ Adicionado animate-out para o menu sumir suavemente ao fechar e design em vidro
+          avoidCollisions={true}
+          collisionPadding={8}
           className="z-dropdown min-w-[180px] bg-surface/90 backdrop-blur-md rounded-xl p-1.5 shadow-2xl shadow-black/40 border border-white/10 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 duration-200"
         >
           

@@ -1,13 +1,14 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { Modal } from './ui/Modal';
 import { QRCodeSVG } from 'qrcode.react';
 import { api } from '../services/api';
 import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
-import { Printer, RefreshCw, X, Copy, QrCode, ShieldCheck, Download } from 'lucide-react';
+import { Printer, RefreshCw, Copy, QrCode, ShieldCheck, Download } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { User } from '../types';
+import { ConfirmModal } from './ui/ConfirmModal';
 
 interface ModalQrCodeProps {
   user: User;
@@ -35,6 +36,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
     (user as User & { loginToken?: string }).loginToken || null
   );
   const [loading, setLoading] = useState(false);
+  const [confirmRegenerar, setConfirmRegenerar] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   /**
@@ -55,8 +57,14 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   // Bloqueio de scroll removido, pois o componente Modal já gerencia isso nativamente
 
   const handleGerarNovo = async () => {
-    if (tokenAtual && !window.confirm("ATENÇÃO: Gerar um novo código invalidará o crachá anterior. Continuar?")) return;
+    if (tokenAtual) {
+      setConfirmRegenerar(true);
+      return;
+    }
+    await executarGerarToken();
+  };
 
+  const executarGerarToken = async () => {
     setLoading(true);
     try {
       const { data } = await api.post(`/auth/user/${user.id}/generate-token`);
@@ -260,6 +268,16 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           </div>
 
       </div>
+
+      <ConfirmModal
+        isOpen={confirmRegenerar}
+        title="Renovar QR Code"
+        description="Gerar um novo código invalidará o cachá anterior permanentemente. O colaborador precisará de um novo cachá impresso."
+        variant="warning"
+        confirmLabel="Sim, Renovar"
+        onConfirm={() => { setConfirmRegenerar(false); executarGerarToken(); }}
+        onCancel={() => setConfirmRegenerar(false)}
+      />
     </Modal>
   );
 }

@@ -20,7 +20,7 @@ export function Tabs({ tabs, activeTab, onChange, className, variant = 'segmente
   
   if (variant === 'underline') {
     return (
-      <div className={cn("flex gap-6 sm:gap-10 min-w-max border-b border-border/40 overflow-x-auto custom-scrollbar", className)}>
+      <div className={cn("flex gap-6 sm:gap-10 border-b border-border/40 overflow-x-auto scrollbar-hide", className)}>
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;
           const Icon = tab.icon;
@@ -47,7 +47,7 @@ export function Tabs({ tabs, activeTab, onChange, className, variant = 'segmente
 
   // Variante Padrão: Segmented Control (Apple Style)
   return (
-    <div className={cn("bg-surface-hover/50 p-1.5 rounded-2xl border border-border/60 inline-flex overflow-x-auto custom-scrollbar shadow-inner w-full sm:w-auto", className)}>
+    <div className={cn("bg-surface-hover/50 p-1.5 rounded-2xl border border-border/60 inline-flex overflow-x-auto scrollbar-hide shadow-inner w-full sm:w-auto", className)}>
       <div className="flex space-x-1 min-w-max w-full sm:w-auto">
         {tabs.map((tab) => {
           const isActive = activeTab === tab.id;

@@ -5,7 +5,7 @@ import { cn } from '../../lib/utils';
 
 const buttonVariants = cva(
   // --- Base Elite (Adicionado cursor-pointer, ring offset focado) ---
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-bold transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] select-none cursor-pointer",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-bold transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 active:scale-[0.98] select-none cursor-pointer overflow-hidden",
   {
     variants: {
       variant: {
@@ -25,10 +25,10 @@ const buttonVariants = cva(
           "bg-surface/50 backdrop-blur-md border border-border/50 text-text-main hover:bg-surface/80 shadow-sm",
       },
       size: {
-        default: "h-11 px-5",
-        sm: "h-11 md:h-9 rounded-lg px-4 text-xs",
-        lg: "h-14 rounded-xl px-8 text-base",
-        icon: "h-10 w-10 p-0",
+        default: "h-11 min-h-[44px] px-5",
+        sm: "h-9 min-h-[44px] rounded-lg px-4 text-xs",
+        lg: "h-14 min-h-[44px] rounded-xl px-8 text-base",
+        icon: "h-11 w-11 min-h-[44px] min-w-[44px] p-0",
       },
     },
     defaultVariants: {

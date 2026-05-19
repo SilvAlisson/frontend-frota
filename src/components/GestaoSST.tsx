@@ -13,7 +13,9 @@ import { useUsuarios } from '../hooks/useUsuarios';
 import type { User } from '../types';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
+import { Textarea } from './ui/Textarea';
 import { Select } from './ui/Select';
+import { Tabs, type TabItem } from './ui/Tabs';
 import { Modal } from './ui/Modal';
 import { ModalTreinamentosUsuario } from './ModalTreinamentosUsuario';
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -219,30 +221,16 @@ function FormAcaoSST({
   >
    {/* Ação */}
    <div className="flex flex-col gap-1.5">
-    <label htmlFor={`${formId}-acao`} className="text-xs font-bold text-text-secondary uppercase tracking-wider ml-1">
-     Descrição da Ação *
-    </label>
-    <textarea
+    <Textarea
      id={`${formId}-acao`}
+     label="Descrição da Ação *"
      {...register('acao')}
      rows={3}
      disabled={isLoading}
      aria-invalid={!!errors.acao}
-     aria-describedby={errors.acao ? `${formId}-acao-error` : undefined}
+     error={errors.acao?.message}
      placeholder="Descreva a ação de SST a ser executada..."
-     className={cn(
-      'flex w-full text-sm bg-surface border rounded-xl px-4 py-3 resize-none transition-all duration-200 outline-none',
-      'placeholder:text-text-muted/60 text-text-main',
-      'focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-background focus:border-primary shadow-sm',
-      'disabled:cursor-not-allowed disabled:opacity-60',
-      errors.acao ? 'border-error focus:ring-error/20' : 'border-border/60 hover:border-border'
-     )}
     />
-    {errors.acao && (
-     <p id={`${formId}-acao-error`} role="alert" className="text-xs text-error font-bold ml-1">
-      {errors.acao.message}
-     </p>
-    )}
    </div>
 
    {/* Linha: Unidade + Programa */}
@@ -316,19 +304,15 @@ function FormAcaoSST({
    )}
 
    {/* Observação */}
-   <div className="flex flex-col gap-1.5">
-    <label htmlFor={`${formId}-obs`} className="text-xs font-bold text-text-secondary uppercase tracking-wider ml-1">
-     Observação
-    </label>
-    <textarea
-     id={`${formId}-obs`}
-     {...register('observacao')}
-     rows={2}
-     disabled={isLoading}
-     placeholder="Anotações adicionais..."
-     className="flex w-full text-sm bg-surface border border-border/60 rounded-xl px-4 py-3 resize-none transition-all duration-200 outline-none placeholder:text-text-muted/60 text-text-main focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-background focus:border-primary shadow-sm disabled:cursor-not-allowed disabled:opacity-60"
-    />
-   </div>
+   <Textarea
+    id={`${formId}-obs`}
+    label="Observação"
+    {...register('observacao')}
+    rows={2}
+    disabled={isLoading}
+    placeholder="Anotações adicionais..."
+    autoResize={false}
+   />
 
    {/* Ações do Form */}
    <div className="flex gap-3 pt-2">
@@ -466,33 +450,19 @@ export function GestaoSST() {
     </div>
    </div>
 
-   {/* ── ALERTA DE CONSTRUÇÃO REMOVIDO ──────────────────────────────────────── */}
+   {/* ── TABS (Design System) ─────────────────────────────────────────────── */}
    <>
-     <div className="flex gap-1 bg-surface-hover/50 p-1 rounded-xl border border-border/60 w-fit overflow-x-auto max-w-full" role="tablist" aria-label="Seções de SST">
-      {([
-       { key: 'dashboard', label: 'Dashboard de Metas', icon: Target },
-       { key: 'plano',   label: 'Plano de Ação',   icon: ShieldCheck },
-       { key: 'treinamentos', label: 'Treinamentos & Saúde', icon: HeartPulse },
-      ] as const).map(({ key, label, icon: Icon }) => (
-       <button
-        key={key}
-        role="tab"
-        aria-selected={aba === key}
-        aria-controls={`sst-tab-${key}`}
-        onClick={() => setAba(key)}
-        className={cn(
-         'flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-bold transition-all duration-200 outline-none',
-         'focus-visible:ring-2 focus-visible:ring-primary/60',
-         aba === key
-          ? 'bg-surface text-text-main shadow-sm border border-border/60'
-          : 'text-text-muted hover:text-text-main'
-        )}
-       >
-        <Icon className="w-4 h-4" aria-hidden="true" />
-        {label}
-       </button>
-      ))}
-     </div>
+     <Tabs
+      variant="segmented"
+      activeTab={aba}
+      onChange={(id) => setAba(id as typeof aba)}
+      className="w-full sm:w-auto"
+      tabs={[
+       { id: 'dashboard', label: 'Dashboard de Metas',    icon: Target },
+       { id: 'plano',    label: 'Plano de Ação',       icon: ShieldCheck },
+       { id: 'treinamentos', label: 'Treinamentos & Saúde', icon: HeartPulse },
+      ] satisfies TabItem[]}
+     />
 
    {/* ── ABA: DASHBOARD ───────────────────────────────────────────────── */}
    {aba === 'dashboard' && (

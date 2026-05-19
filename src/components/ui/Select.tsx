@@ -125,21 +125,27 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         <RadixSelect.Content
                             position="popper"
                             sideOffset={6}
-                            // O SEGREDO DO SCROLL: Usamos var(--radix-select-content-available-height)
+                            // avoidCollisions faz o popover virar para cima se não couber abaixo
+                            avoidCollisions={true}
+                            collisionPadding={8}
                             className="z-dropdown w-[var(--radix-select-trigger-width)] min-w-[200px] max-h-[var(--radix-select-content-available-height)] overflow-hidden bg-surface rounded-xl border border-border/60 shadow-float data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
                         >
                             <RadixSelect.ScrollUpButton className="flex items-center justify-center h-[25px] bg-surface text-text-muted cursor-default hover:bg-surface-hover transition-colors">
                                 <ChevronDown className="w-4 h-4 rotate-180" />
                             </RadixSelect.ScrollUpButton>
 
-                            {/* Limitando o Viewport para forçar o scroll interno */}
-                            <RadixSelect.Viewport className="p-1 max-h-[300px] overflow-y-auto custom-scrollbar">
+                            {/*
+                             * Viewport: usa a variável CSS do Radix que representa o espaço realmente
+                             * disponível (considerando a posição do trigger + colisões de viewport).
+                             * O max-h de 280px serve como teto absoluto para listas muito longas.
+                             */}
+                            <RadixSelect.Viewport className="p-1 max-h-[min(280px,var(--radix-select-content-available-height))] overflow-y-auto custom-scrollbar">
                                 <RadixSelect.Group>
                                     {validOptions.map((opt) => (
                                         <RadixSelect.Item
                                             key={opt.value}
                                             value={String(opt.value)}
-                                            className="relative flex items-center w-full px-8 py-2.5 text-sm font-bold text-text-main rounded-lg outline-none cursor-pointer select-none focus:bg-primary/10 focus:text-primary data-[disabled]:text-text-muted data-[disabled]:pointer-events-none transition-colors"
+                                            className="relative flex items-center w-full px-8 py-2.5 min-h-[40px] text-sm font-bold text-text-main rounded-lg outline-none cursor-pointer select-none focus:bg-primary/10 focus:text-primary data-[disabled]:text-text-muted data-[disabled]:pointer-events-none transition-colors"
                                         >
                                             <span className="absolute left-2 flex items-center justify-center w-4 h-4">
                                                 <RadixSelect.ItemIndicator>

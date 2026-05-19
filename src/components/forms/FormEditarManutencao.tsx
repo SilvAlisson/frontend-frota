@@ -7,15 +7,16 @@ import { uploadToR2 } from '../../services/uploadService';
 import { toast } from 'sonner';
 import {
  Trash2, Plus, AlertTriangle, Wrench, Truck, Gauge,
- Check, Image as ImageIcon, Loader2, Info
-} from 'lucide-react'; // Removido Calendar nativo
+ Check, Image as ImageIcon, Loader2
+} from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Badge } from '../ui/Badge';
-import { DatePicker } from '../ui/DatePicker'; // ✨ Adicionado DatePicker
+import { DatePicker } from '../ui/DatePicker';
+import { Textarea } from '../ui/Textarea';
 
 // --- HOOKS ATÔMICOS ---
 import { useVeiculos } from '../../hooks/useVeiculos';
@@ -529,15 +530,14 @@ export function FormEditarManutencao({
        </div>
 
        {/* 4. OBSERVAÇÕES */}
-       <div className="pt-2 space-y-1.5">
-        <label className="flex items-center gap-1.5 text-xs font-bold text-text-secondary uppercase tracking-wider ml-1">
-         <Info className="w-3.5 h-3.5" /> Parecer Técnico / Justificativa
-        </label>
-        <textarea
+       <div className="pt-2">
+        <Textarea
+         label="Parecer Técnico / Justificativa"
          {...register("observacoes")}
-         className="w-full px-4 py-3 text-sm bg-surface border border-border/60 rounded-xl focus:ring-4 focus:ring-primary/10 focus:border-primary outline-none resize-none h-24 transition-all shadow-sm text-text-main placeholder:text-text-muted"
+         rows={3}
          placeholder="Relatório do problema, peças substituídas ou motivo da edição..."
          disabled={isLocked}
+         autoResize={false}
         />
        </div>
 
