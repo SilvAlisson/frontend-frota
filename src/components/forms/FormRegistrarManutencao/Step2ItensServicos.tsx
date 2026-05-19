@@ -141,10 +141,8 @@ export function Step2ItensServicos() {
   <div className="min-w-0">
     <Input
       label="Preço Unitário"
-      // 🔥 O COMBO NUCLEAR: Ignora o "R$" da máscara e abre os botões grandes
-      type="tel"
-      inputMode="numeric"
-      pattern="[0-9]*"
+      type="text"
+      inputMode="decimal"
       {...register(`itens.${index}.valorPorUnidade`, {
         onChange: (e) => {
           e.target.value = formatarDinheiro(e.target.value);
