@@ -372,6 +372,8 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
                 <div className="md:col-span-3">
                   <Input
                     label="Preço Un."
+                    type="text"
+                    inputMode="decimal"
                     {...register(`itens.${index}.valorPorUnidade`, {
                       onChange: (e) => {
                         e.target.value = formatarDinheiro(e.target.value);
