@@ -1,4 +1,3 @@
-// src/components/forms/FormRegistrarManutencao/Step2ItensServicos.tsx
 import { useState, useEffect, useMemo } from 'react';
 import { useFormContext, useFieldArray, Controller } from 'react-hook-form';
 import { Plus, X, Package, Store } from 'lucide-react';
@@ -54,15 +53,18 @@ export function Step2ItensServicos() {
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-      <div className="flex justify-between items-center pb-3 border-b border-border/60">
-        <h4 className="text-[10px] font-black text-text-secondary uppercase tracking-[0.2em]">Relação de Peças e Serviços</h4>
+      <div className="flex justify-between items-center pb-3 border-b border-border/60 gap-4">
+        <h4 className="text-[10px] font-black text-text-secondary uppercase tracking-[0.2em] truncate min-w-0">
+          Relação de Peças
+        </h4>
         <Button
           type="button"
           variant="ghost"
           size="sm"
           onClick={() => setModalServicosOpen(true)}
-          className="text-primary hover:bg-primary/10 h-8"
-          icon={<Plus className="w-3 h-3" />}
+          // UX Mobile: h-10 no celular (touch-target), volta para h-8 no desktop
+          className="text-primary hover:bg-primary/10 h-10 sm:h-8 px-3 shrink-0"
+          icon={<Plus className="w-4 h-4 sm:w-3 sm:h-3" />}
         >
           Criar no Catálogo
         </Button>
@@ -88,17 +90,20 @@ export function Step2ItensServicos() {
                       type="button"
                       onClick={() => remove(index)}
                       disabled={isLocked}
-                      className="h-8 w-8 rounded-full bg-surface border border-border/60 text-text-muted hover:text-white hover:border-error hover:bg-error shadow-sm flex items-center justify-center transition-all disabled:opacity-50"
+                      // UX Mobile: Touch-target maior (h-10 w-10) para dedos, e h-8 no mouse/desktop
+                      className="h-10 w-10 sm:h-8 sm:w-8 rounded-full bg-surface border border-border/60 text-text-muted hover:text-white hover:border-error hover:bg-error shadow-sm flex items-center justify-center transition-all disabled:opacity-50"
                       title="Remover linha"
                     >
-                      <X className="w-4 h-4" />
+                      <X className="w-5 h-5 sm:w-4 sm:h-4" />
                     </button>
                 </div>
               )}
 
-              <div className="grid grid-cols-1 xl:grid-cols-12 gap-5">
-                <div className="xl:col-span-6">
-                  {/*  Select de Produto controlado via Controller */}
+              {/* O container grid raiz dos itens */}
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 min-w-0">
+                
+                {/*  CADEADO 1: Impede nomes de peças muito longos de estourar a tela */}
+                <div className="xl:col-span-6 min-w-0">
                   <Controller
                     control={control}
                     name={`itens.${index}.produtoId`}
@@ -117,39 +122,47 @@ export function Step2ItensServicos() {
                   />
                 </div>
                 
-                <div className="grid grid-cols-2 xl:col-span-6 gap-4">
-                  <Input
-                    label="Quantidade"
-                    type="number" inputMode="decimal"
-                    step="0.1"
-                    {...register(`itens.${index}.quantidade`)}
-                    error={errors.itens?.[index]?.quantidade?.message}
-                    className="font-mono font-black text-center"
-                    disabled={isLocked}
-                    containerClassName="!mb-0"
-                  />
+                {/*  CADEADO 2: Protege o Grid interno de Quantidade e Preço */}
+                <div className="grid grid-cols-2 xl:col-span-6 gap-4 min-w-0">
+                  <div className="min-w-0">
+                    <Input
+                      label="Quantidade"
+                      type="number" inputMode="decimal"
+                      step="0.1"
+                      {...register(`itens.${index}.quantidade`)}
+                      error={errors.itens?.[index]?.quantidade?.message}
+                      className="font-mono font-black text-center"
+                      disabled={isLocked}
+                      containerClassName="!mb-0"
+                    />
+                  </div>
 
-                  <Input
-                    label="Preço Unitário"
-                    {...register(`itens.${index}.valorPorUnidade`, {
-                      onChange: (e) => {
-                        e.target.value = formatarDinheiro(e.target.value);
-                        setValue(`itens.${index}.valorPorUnidade`, e.target.value);
-                      }
-                    })}
-                    error={errors.itens?.[index]?.valorPorUnidade?.message}
-                    className="font-mono font-black text-emerald-600 tracking-tight"
-                    placeholder="R$ 0,00"
-                    disabled={isLocked}
-                    containerClassName="!mb-0"
-                  />
+                  <div className="min-w-0">
+                    <Input
+                      label="Preço Unitário"
+                      inputMode="numeric" // Adicionado para facilitar no iOS/Android
+                      {...register(`itens.${index}.valorPorUnidade`, {
+                        onChange: (e) => {
+                          e.target.value = formatarDinheiro(e.target.value);
+                          setValue(`itens.${index}.valorPorUnidade`, e.target.value);
+                        }
+                      })}
+                      error={errors.itens?.[index]?.valorPorUnidade?.message}
+                      className="font-mono font-black text-emerald-600 tracking-tight"
+                      placeholder="R$ 0,00"
+                      disabled={isLocked}
+                      containerClassName="!mb-0"
+                    />
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-5 pt-4 flex justify-end border-t border-border/40">
-                <div className="px-4 py-2 rounded-xl bg-surface-hover/80 text-sm font-medium flex items-center gap-3 border border-border/60">
-                  <span className="text-text-muted uppercase tracking-[0.2em] text-[9px] font-black">Subtotal:</span>
-                  <span className="font-mono font-black text-text-main text-lg tracking-tight leading-none">{formatarDinheiro(Number(totalItem))}</span>
+              <div className="mt-5 pt-4 flex justify-end border-t border-border/40 min-w-0">
+                <div className="px-4 py-2 rounded-xl bg-surface-hover/80 text-sm font-medium flex items-center gap-3 border border-border/60 max-w-full truncate">
+                  <span className="text-text-muted uppercase tracking-[0.2em] text-[9px] font-black shrink-0">Subtotal:</span>
+                  <span className="font-mono font-black text-text-main text-lg tracking-tight leading-none truncate">
+                    {formatarDinheiro(Number(totalItem))}
+                  </span>
                 </div>
               </div>
             </div>
@@ -161,7 +174,8 @@ export function Step2ItensServicos() {
         type="button"
         variant="outline"
         onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: '' } as unknown as ManutencaoFormValues['itens'][0])}
-        className="w-full border-dashed border-2 hover:border-primary/50 hover:text-primary transition-all bg-background h-12 mt-2"
+        // Aplicada a classe touch-target via h-12 para garantir a área de clique
+        className="w-full border-dashed border-2 hover:border-primary/50 hover:text-primary transition-all bg-background touch-target h-12 mt-2"
         icon={<Plus className="w-4 h-4" />}
       >
         Adicionar outra Peça ou Serviço

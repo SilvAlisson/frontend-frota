@@ -3,9 +3,7 @@ import { cn } from '../../lib/utils';
 import { AlertCircle } from 'lucide-react';
 import { cva, type VariantProps } from 'class-variance-authority';
 
-
-
-//  Sistema de Variantes
+// Sistema de Variantes
 const inputVariants = cva(
   "flex w-full text-sm transition-all duration-200 outline-none placeholder:text-text-muted/80 disabled:cursor-not-allowed disabled:opacity-60 file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-primary",
   {
@@ -30,11 +28,25 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, icon, className, containerClassName, id, variant, ...rest }, ref) => {
+  ({ label, error, icon, className, containerClassName, id, variant, onFocus, ...rest }, ref) => {
 
     const generatedId = React.useId();
     const inputId = id || generatedId;
     const errorId = error ? `${inputId}-error` : undefined;
+
+    // 🌟 UX Mobile: Auto-scroll ao focar no input
+    const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+      // 1. Aciona o scroll suave nativo do navegador
+      setTimeout(() => {
+        // 'block: center' tenta posicionar o input no meio da área visível que sobrou
+        e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300); // 300ms é o tempo médio que o teclado nativo leva para abrir completamente
+
+      // 2. Chama a função original (se existir) para não quebrar o React Hook Form ou outras lógicas
+      if (onFocus) {
+        onFocus(e);
+      }
+    };
 
     return (
       <div className={cn("w-full flex flex-col gap-1.5", containerClassName)}>
@@ -58,6 +70,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             id={inputId}
+            onFocus={handleFocus} // Injeta nosso manipulador inteligente
             className={cn(
               // Aplica a variante (default ou ghost)
               inputVariants({ variant }),
@@ -96,5 +109,3 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 );
 
 Input.displayName = 'Input';
-
-

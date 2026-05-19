@@ -4,8 +4,6 @@ import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Drawer } from 'vaul';
 
-
-
 function useMediaQuery(query: string) {
   const [matches, setMatches] = useState(false);
   useEffect(() => {
@@ -69,7 +67,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
                 onOpenChange={(open) => !open && onClose()} 
                 shouldScaleBackground
                 nested={nested} 
-                dismissible={false} // ✨ CORREÇÃO: Desativa o fecho por arraste!
+                dismissible={false} // Desativa o fecho por arraste
             >
                 <Drawer.Portal>
                     <Drawer.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-md z-overlay" />
@@ -80,11 +78,12 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
                             className
                         )}
                         style={{ 
-                            maxHeight: '88dvh', 
+                            //  CADEADO 1: svh ignora a abertura do teclado e evita esmagamento
+                            maxHeight: 'calc(100svh - 2rem)', 
                             paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' 
                         }}
                     >
-                        {/* Pega-mão (Handle) - Mantido apenas pela estética, mesmo sem arraste */}
+                        {/* Pega-mão (Handle) */}
                         <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-border/80 mt-4 mb-2" />
                         
                         {title && (
@@ -92,10 +91,10 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
                                 <Drawer.Title className="font-black text-xl text-text-main tracking-tight">
                                     {title}
                                 </Drawer.Title>
-                                {/* ✨ NOVO: Botão de fechar visível no Mobile com Touch Target (44x44px) */}
+                                {/*  CADEADO 2: touch-target global (48x48) ao invés de fixar 44px */}
                                 <button
                                     onClick={onClose}
-                                    className="p-3 -mr-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-text-main hover:bg-surface-hover transition-all active:scale-95 bg-surface-hover/50"
+                                    className="p-3 -mr-2 touch-target flex items-center justify-center rounded-xl text-text-muted hover:text-text-main hover:bg-surface-hover transition-all active:scale-95 bg-surface-hover/50"
                                     aria-label="Fechar modal"
                                 >
                                     <X className="w-5 h-5" />
@@ -103,7 +102,8 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
                             </div>
                         )}
                         
-                        <div className="flex-1 overflow-y-auto overflow-x-hidden p-5 custom-scrollbar min-h-0 relative">
+                        {/*  CADEADO 3: overscroll-contain isola o scroll deste componente */}
+                        <div className="flex-1 overflow-y-auto overflow-x-hidden p-5 custom-scrollbar min-h-0 relative overscroll-contain">
                             {children}
                         </div>
                     </Drawer.Content>
@@ -157,5 +157,3 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
         document.body
     );
 }
-
-

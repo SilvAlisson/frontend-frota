@@ -76,7 +76,7 @@ export function Step1DadosGerais() {
             onClick={() => setValue('tipo', t as TipoManutencao)}
             disabled={isLocked}
             className={`
-              py-3 text-xs font-black tracking-widest uppercase rounded-xl transition-all duration-300
+              py-3 text-xs font-black tracking-widest uppercase rounded-xl transition-all duration-300 truncate min-w-0
               ${tipoManutencao === t 
                 ? (t === 'CORRETIVA' ? 'bg-error text-white shadow-md' : 'bg-success text-white shadow-md')
                 : 'text-text-muted hover:text-text-main hover:bg-surface/80'}
@@ -89,15 +89,15 @@ export function Step1DadosGerais() {
 
       <div className="flex flex-col sm:flex-row gap-3">
         {['VEICULO', 'OUTROS'].map(alvo => (
-          <label key={alvo} className={`flex items-center gap-3 cursor-pointer p-3.5 border rounded-2xl w-full transition-all duration-200 select-none ${alvoSelecionado === alvo ? 'border-primary bg-primary/5 shadow-sm' : 'border-border/60 hover:bg-surface-hover/50 hover:border-primary/30'}`}>
+          <label key={alvo} className={`flex items-center gap-3 cursor-pointer p-3.5 border rounded-2xl w-full transition-all duration-200 select-none min-w-0 ${alvoSelecionado === alvo ? 'border-primary bg-primary/5 shadow-sm' : 'border-border/60 hover:bg-surface-hover/50 hover:border-primary/30'}`}>
             <input
               type="radio"
               value={alvo}
               {...register('alvo')}
               disabled={isLocked}
-              className="accent-primary w-4 h-4 cursor-pointer"
+              className="accent-primary w-4 h-4 cursor-pointer shrink-0"
             />
-            <span className="text-sm font-black text-text-main tracking-wide">
+            <span className="text-sm font-black text-text-main tracking-wide truncate">
               {alvo === 'VEICULO' ? 'Veículo da Frota' : 'Equipamento Externo'}
             </span>
           </label>
@@ -112,24 +112,27 @@ export function Step1DadosGerais() {
 
       {alvoSelecionado === 'VEICULO' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* O Container do Grid deixará os itens lado a lado no Desktop perfeitamente */}
-          <Controller
-            control={control}
-            name="veiculoId"
-            render={({ field }) => (
-              <Select
-                label="Veículo"
-                options={veiculosOpcoes}
-                icon={<Truck className="w-4 h-4" />}
-                value={field.value || ""}
-                onChange={(e) => field.onChange(e.target.value)}
-                error={errors.veiculoId?.message}
-                disabled={isLocked}
-              />
-            )}
-          />
+          {/* ✨ CADEADO DE RESPONSIVIDADE: min-w-0 */}
+          <div className="min-w-0">
+            <Controller
+              control={control}
+              name="veiculoId"
+              render={({ field }) => (
+                <Select
+                  label="Veículo"
+                  options={veiculosOpcoes}
+                  icon={<Truck className="w-4 h-4" />}
+                  value={field.value || ""}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  error={errors.veiculoId?.message}
+                  disabled={isLocked}
+                />
+              )}
+            />
+          </div>
 
-          <div className="flex flex-col">
+          {/* ✨ CADEADO DE RESPONSIVIDADE: flex flex-col min-w-0 */}
+          <div className="flex flex-col min-w-0">
             <Input
               label="KM na entrada da oficina (Opcional)"
               icon={<Gauge className="w-4 h-4 text-primary" />} inputMode="numeric"
@@ -142,25 +145,27 @@ export function Step1DadosGerais() {
               containerClassName="!mb-1"
             />
             {ultimoKmRegistrado > 0 && (
-              <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-1.5 ml-1">
+              <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-1.5 ml-1 truncate">
                 Último Registro: <strong className="text-text-main font-mono">{ultimoKmRegistrado.toLocaleString('pt-BR')} km</strong>
               </p>
             )}
           </div>
         </div>
       ) : (
-        <Input 
-          label="Identificação (Série / CA / Património)"
-          {...register("numeroCA")}
-          placeholder="Ex: BETONEIRA-01 ou CA-12345"
-          error={errors.numeroCA?.message}
-          disabled={isLocked}
-        />
+        <div className="min-w-0">
+          <Input 
+            label="Identificação (Série / CA / Património)"
+            {...register("numeroCA")}
+            placeholder="Ex: BETONEIRA-01 ou CA-12345"
+            error={errors.numeroCA?.message}
+            disabled={isLocked}
+          />
+        </div>
       )}
 
       {/* CALLOUT DE AVISO DE KM INCONSISTENTE */}
       {alvoSelecionado === 'VEICULO' && isKmInvalido && (
-        <div className="animate-in fade-in zoom-in-95 duration-300">
+        <div className="animate-in fade-in zoom-in-95 duration-300 min-w-0">
           <Callout variant="warning" title="Odómetro Inconsistente" icon={AlertTriangle}>
             O valor digitado (<strong className="font-mono">{kmAtualNum.toLocaleString('pt-BR')}</strong>) é <strong>menor</strong> que o último KM conhecido do veículo. Por favor, confirme se houve substituição de painel ou erro de digitação.
           </Callout>
@@ -174,38 +179,44 @@ export function Step1DadosGerais() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <Controller
-          control={control}
-          name="fornecedorId"
-          render={({ field }) => (
-            <Select
-              label="Oficina / Fornecedor"
-              options={fornecedoresOpcoes}
-              icon={<Wrench className="w-4 h-4" />}
-              value={field.value || ""}
-              onChange={(e) => field.onChange(e.target.value)}
-              error={errors.fornecedorId?.message}
-              disabled={isLocked}
-            />
-          )}
-        />
+        {/* ✨ CADEADO DE RESPONSIVIDADE: min-w-0 */}
+        <div className="min-w-0">
+          <Controller
+            control={control}
+            name="fornecedorId"
+            render={({ field }) => (
+              <Select
+                label="Oficina / Fornecedor"
+                options={fornecedoresOpcoes}
+                icon={<Wrench className="w-4 h-4" />}
+                value={field.value || ""}
+                onChange={(e) => field.onChange(e.target.value)}
+                error={errors.fornecedorId?.message}
+                disabled={isLocked}
+              />
+            )}
+          />
+        </div>
         
-        <Controller
-          control={control}
-          name="data"
-          render={({ field }) => (
-            <DatePicker disableFuture
-              label="Data do Serviço / Fatura"
-              placeholder="Selecione a data"
-              date={field.value ? new Date(`${field.value}T12:00:00`) : undefined}
-              onChange={(newDate) => {
-                field.onChange(newDate ? newDate.toISOString().split('T')[0] : '');
-              }}
-              error={errors.data?.message}
-              disabled={isLocked}
-            />
-          )}
-        />
+        {/* ✨ CADEADO DE RESPONSIVIDADE: min-w-0 */}
+        <div className="min-w-0">
+          <Controller
+            control={control}
+            name="data"
+            render={({ field }) => (
+              <DatePicker disableFuture
+                label="Data do Serviço / Fatura"
+                placeholder="Selecione a data"
+                date={field.value ? new Date(`${field.value}T12:00:00`) : undefined}
+                onChange={(newDate) => {
+                  field.onChange(newDate ? newDate.toISOString().split('T')[0] : '');
+                }}
+                error={errors.data?.message}
+                disabled={isLocked}
+              />
+            )}
+          />
+        </div>
       </div>
     </div>
   );

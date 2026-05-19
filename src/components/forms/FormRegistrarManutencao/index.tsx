@@ -11,7 +11,6 @@ import { parseDecimal } from '../../../utils';
 import { desformatarDinheiro } from '../../../lib/formatters';
 import { useVeiculos } from '../../../hooks/useVeiculos';
 
-// Importando tipos com a sintaxe 'type'
 import { manutencaoSchema } from './schema';
 import type { ManutencaoFormValues, PayloadOrdemServico } from './schema';
 
@@ -37,7 +36,6 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
 
   const { data: veiculos = [] } = useVeiculos();
 
-  // O "methods" carrega todo o poder do React Hook Form
   const methods = useForm<ManutencaoFormValues>({
     resolver: zodResolver(manutencaoSchema),
     defaultValues: {
@@ -56,7 +54,6 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
 
   const { handleSubmit, trigger, reset, formState: { isSubmitting } } = methods;
 
-
   const nextStep = async () => {
     let isValid = false;
     if (step === 1) {
@@ -69,7 +66,6 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
     }
   };
 
-  // 🛡️ Interceptador de Submit
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -81,7 +77,6 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
   };
 
   const onSubmit = async (data: ManutencaoFormValues) => {
-    
     let kmInputFloat = null;
     
     if (data.alvo === 'VEICULO' && data.kmAtual) {
@@ -114,7 +109,6 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       }))
     };
 
-
     setFormDataParaModal(payload);
     setModalAberto(true);
   };
@@ -128,52 +122,84 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
   };
 
   return (
-    <div className="flex flex-col h-full bg-surface rounded-2xl overflow-hidden shadow-float">
+    // ✨ CORREÇÃO 1: Removido o h-[85dvh]. Usamos h-full w-full para preencher o Modal sem brigar com ele.
+    // O arredondamento do topo já é feito pelo Drawer do Vaul, então mantemos apenas a estrutura de coluna.
+    <div className="flex flex-col h-full w-full bg-surface overflow-hidden">
       
-      {/* HEADER PROGRESSO */}
-      <div className="px-6 sm:px-8 pt-6 pb-4 shrink-0 border-b border-border/50 bg-surface-hover/30">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* HEADER FIXO: shrink-0 garante que não seja esmagado */}
+      <div className="px-4 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 shrink-0 border-b border-border/50 bg-surface-hover/30 z-10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h3 className="text-xl font-black text-text-main tracking-tight flex items-center gap-2">
+            <h3 className="font-header text-lg sm:text-2xl font-black text-text-main tracking-tight flex items-center gap-2">
               <div className="p-1.5 bg-primary/10 rounded-lg text-primary"><Wrench className="w-5 h-5"/></div>
               Nova OS Manutenção
             </h3>
-            <p className="text-xs text-text-secondary font-bold uppercase tracking-widest mt-2">Etapa {step} de 3</p>
+            <p className="text-[11px] text-text-secondary font-bold uppercase tracking-widest mt-1">
+              Etapa {step} de 3 {step === 1 ? '- Dados Iniciais' : step === 2 ? '- Itens e Serviços' : '- Revisão Final'}
+            </p>
           </div>
           <div className="flex gap-2 w-full sm:w-auto">
             {[1, 2, 3].map(s => (
-              <div key={s} className={`h-2 rounded-full transition-all duration-500 ease-out flex-1 sm:w-10 ${s <= step ? 'bg-primary' : 'bg-border/60'}`} />
+              <div key={s} className={`h-1.5 sm:h-2 rounded-full transition-all duration-500 ease-out flex-1 sm:w-10 ${s <= step ? 'bg-primary' : 'bg-border/60'}`} />
             ))}
           </div>
         </div>
       </div>
 
       <FormProvider {...methods}>
-        <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col min-h-0">
-          <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 custom-scrollbar">
+        <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col min-h-0 relative">
+          
+          {/* ✨ CORREÇÃO 2: Removido o pb-[15vh]. Adicionado overscroll-contain.
+              A classe flex-1 faz essa div ocupar o espaço do meio, e o overflow-y-auto gera a barra de rolagem. */}
+          <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 custom-scrollbar pb-6 relative scroll-smooth overscroll-contain">
             {step === 1 && <Step1DadosGerais />}
             {step === 2 && <Step2ItensServicos />}
             {step === 3 && <Step3Confirmacao />}
           </div>
 
-          {/* FOOTER NAVEGAÇÃO */}
-          <div className="px-6 sm:px-8 py-5 border-t border-border/60 bg-surface-hover/30 flex gap-4 shrink-0">
+          {/* ✨ CORREÇÃO 3: FOOTER FIXO. O shrink-0 protege os botões. 
+              Substituí as alturas fixas pesadas pela lógica touch-target nativa. */}
+          <div className="px-4 sm:px-8 py-3 sm:py-5 border-t border-border/60 bg-surface flex flex-col-reverse sm:flex-row gap-3 shrink-0 safe-bottom shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-10">
             {step > 1 ? (
-              <Button type="button" variant="secondary" onClick={() => setStep(s => s - 1)} className="flex-1" icon={<ChevronLeft className="w-5 h-5" />} disabled={isSubmitting}>
+              <Button 
+                type="button" 
+                variant="secondary" 
+                onClick={() => setStep(s => s - 1)} 
+                className="w-full sm:flex-1 touch-target" 
+                icon={<ChevronLeft className="w-5 h-5" />} 
+                disabled={isSubmitting}
+              >
                 Voltar
               </Button>
             ) : (
-              <Button type="button" variant="ghost" onClick={onClose} className="flex-1 text-text-secondary hover:text-text-main" disabled={isSubmitting}>
+              <Button 
+                type="button" 
+                variant="ghost" 
+                onClick={onClose} 
+                className="w-full sm:flex-1 touch-target text-text-secondary hover:text-text-main" 
+                disabled={isSubmitting}
+              >
                 Cancelar
               </Button>
             )}
 
             {step < 3 ? (
-              <Button type="submit" className="flex-[2]" icon={<ChevronRight className="w-5 h-5" />} disabled={isSubmitting}>
+              <Button 
+                type="submit" 
+                className="w-full sm:flex-[2] touch-target font-black" 
+                icon={<ChevronRight className="w-5 h-5" />} 
+                disabled={isSubmitting}
+              >
                 Continuar
               </Button>
             ) : (
-              <Button type="submit" isLoading={isSubmitting} variant="success" className="flex-[2] text-lg py-6" icon={<Check className="w-5 h-5" />}>
+              <Button 
+                type="submit" 
+                isLoading={isSubmitting} 
+                variant="success" 
+                className="w-full sm:flex-[2] touch-target text-lg" 
+                icon={<Check className="w-5 h-5" />}
+              >
                 Finalizar OS
               </Button>
             )}

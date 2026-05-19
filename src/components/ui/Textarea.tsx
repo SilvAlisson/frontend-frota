@@ -84,6 +84,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       id,
       variant,
       onChange,
+      onFocus, // ✨ EXTRAÍDO: Tiramos do rest para interceptar
       style,
       rows = 3,
       ...rest
@@ -143,6 +144,17 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       [adjustHeight, onChange]
     );
 
+    // ✨ UX Mobile: Auto-scroll ao focar no Textarea
+    const handleFocus = useCallback((e: React.FocusEvent<HTMLTextAreaElement>) => {
+      setTimeout(() => {
+        e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 300);
+      
+      if (onFocus) {
+        onFocus(e);
+      }
+    }, [onFocus]);
+
     return (
       <div className={cn('w-full flex flex-col gap-1.5', containerClassName)}>
 
@@ -163,6 +175,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             id={textareaId}
             rows={autoResize ? undefined : rows}
             onChange={handleChange}
+            onFocus={handleFocus} // ✨ INJETADO
             aria-invalid={!!error}
             aria-describedby={ariaDescribedBy}
             className={cn(
