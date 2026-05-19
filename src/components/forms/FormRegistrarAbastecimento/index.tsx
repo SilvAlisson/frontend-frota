@@ -58,7 +58,6 @@ export function FormRegistrarAbastecimento({
 
   const { handleSubmit, trigger, formState: { isSubmitting } } = methods;
 
-  // 🛡️ Interceptador Blindado (Controla tudo de forma síncrona e barra o clique fantasma)
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); 
     e.stopPropagation();
@@ -70,7 +69,7 @@ export function FormRegistrarAbastecimento({
       const isValid = await trigger(['fornecedorId', 'itens']);
       if (isValid) setStep(3);
     } else if (step === 3) {
-      await handleSubmit(onSubmit)(e); // Apenas no passo 3 a validação e envio final acontecem
+      await handleSubmit(onSubmit)(e);
     }
   };
 
@@ -114,23 +113,28 @@ export function FormRegistrarAbastecimento({
   };
 
   return (
-    <div className="flex flex-col h-full bg-surface rounded-2xl overflow-hidden shadow-float">
+    // 1. Uso de 85dvh no pai garante que o teclado não empurre o layout e cria o feeling de Bottom Sheet
+    <div className="flex flex-col h-[85dvh] md:h-full bg-surface rounded-t-2xl md:rounded-2xl overflow-hidden shadow-float">
 
-      <div className="px-6 sm:px-8 pt-6 pb-4 shrink-0 border-b border-border/50 bg-surface-hover/30">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      {/* 2. HEADER FIXO - Densidade visual reduzida no mobile (px-4, py-4) */}
+      <div className="px-4 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 shrink-0 border-b border-border/50 bg-surface-hover/30 z-10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h3 className="font-header text-xl sm:text-2xl font-black text-text-main tracking-tight flex items-center gap-2">
+            <h3 className="font-header text-lg sm:text-2xl font-black text-text-main tracking-tight flex items-center gap-2">
               <div className="p-1.5 bg-primary/10 rounded-lg text-primary"><Fuel className="w-5 h-5"/></div>
               Novo Abastecimento
             </h3>
-            <p className="text-xs text-text-secondary font-bold uppercase tracking-widest mt-2">Etapa {step} de 3</p>
+            {/* Navegação Contextual Clara */}
+            <p className="text-[11px] text-text-secondary font-bold uppercase tracking-widest mt-1">
+              Etapa {step} de 3 {step === 1 ? '- Operacional' : step === 2 ? '- Financeiro' : '- Revisão'}
+            </p>
           </div>
           
           <div className="flex gap-2 w-full sm:w-auto">
             {[1, 2, 3].map(s => (
               <div 
                 key={s} 
-                className={`h-2 rounded-full transition-all duration-500 ease-out flex-1 sm:w-10 ${s <= step ? 'bg-primary' : 'bg-border/60'}`} 
+                className={`h-1.5 sm:h-2 rounded-full transition-all duration-500 ease-out flex-1 sm:w-10 ${s <= step ? 'bg-primary' : 'bg-border/60'}`} 
               />
             ))}
           </div>
@@ -138,20 +142,23 @@ export function FormRegistrarAbastecimento({
       </div>
 
       <FormProvider {...methods}>
-        <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col min-h-0">
-          <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 custom-scrollbar">
+        <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col min-h-0 relative">
+          
+          {/* 3. SCROLL APENAS ONDE PRECISA - Body ganha um pb-[15vh] para o último input não ficar escondido pelo teclado */}
+          <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 custom-scrollbar pb-[15vh] md:pb-6 relative scroll-smooth">
             {step === 1 && <Step1DadosOperacionais />}
             {step === 2 && <Step2DadosFinanceiros />}
             {step === 3 && <Step3Confirmacao />}
           </div>
 
-          <div className="px-6 sm:px-8 py-5 border-t border-border/60 bg-surface-hover/30 flex gap-4 shrink-0">
+          {/* 4. FOOTER FIXO E EMPILHADO NO MOBILE */}
+          <div className="px-4 sm:px-8 py-3 sm:py-5 border-t border-border/60 bg-surface flex flex-col-reverse sm:flex-row gap-3 shrink-0 safe-bottom shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-10">
             {step > 1 ? (
               <Button
                 type="button"
                 variant="secondary"
                 onClick={() => setStep(s => s - 1)}
-                className="flex-1"
+                className="w-full sm:flex-1 h-12 sm:h-auto"
                 icon={<ChevronLeft className="w-5 h-5" />}
                 disabled={isSubmitting}
               >
@@ -162,7 +169,7 @@ export function FormRegistrarAbastecimento({
                 type="button"
                 variant="ghost"
                 onClick={onCancelar}
-                className="flex-1"
+                className="w-full sm:flex-1 h-12 sm:h-auto"
                 disabled={isSubmitting}
               >
                 Cancelar
@@ -172,7 +179,7 @@ export function FormRegistrarAbastecimento({
             {step < 3 ? (
               <Button
                 type="submit"
-                className="flex-[2]"
+                className="w-full sm:flex-[2] h-14 sm:h-auto font-black"
                 icon={<ChevronRight className="w-5 h-5" />}
                 disabled={isSubmitting}
               >
@@ -183,7 +190,7 @@ export function FormRegistrarAbastecimento({
                 type="submit"
                 isLoading={isSubmitting}
                 variant="success"
-                className="flex-[2] text-lg py-6"
+                className="w-full sm:flex-[2] h-14 sm:h-auto text-lg"
                 icon={<Check className="w-5 h-5" />}
               >
                 Confirmar
@@ -193,6 +200,7 @@ export function FormRegistrarAbastecimento({
         </form>
       </FormProvider>
 
+      {/* MODAIS: Por enquanto mantidos, mas a estrutura flex-col principal garantirá que o z-index e layout fiquem firmes */}
       <ModalConfirmarAnomalia
         anomalias={anomalias}
         custoTotalFormatado={
