@@ -9,6 +9,62 @@ import { AuthProvider } from './contexts/AuthContext';
 import App from './App';
 import './index.css';
 
+// ============================================================
+// 🔒 007 — LIMPEZA AUTOMÁTICA DO LEGADO OFFLINE-FIRST (PWA)
+// Remove Service Workers, caches e chaves residuais da
+// implementação offline-first que foi revertida.
+// Roda apenas uma vez por versão de limpeza (chave versionada).
+// ============================================================
+const CLEANUP_VERSION = 'klin-cleanup-v2';
+if (!sessionStorage.getItem(CLEANUP_VERSION)) {
+  sessionStorage.setItem(CLEANUP_VERSION, '1');
+
+  // 1. Desregistra todos os Service Workers registrados
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      registrations.forEach(sw => {
+        sw.unregister();
+        if (import.meta.env.DEV) console.info('[Cleanup] Service Worker desregistrado:', sw.scope);
+      });
+    });
+  }
+
+  // 2. Limpa todos os caches do browser (workbox, precache, etc.)
+  if ('caches' in window) {
+    caches.keys().then(cacheNames => {
+      cacheNames.forEach(cacheName => {
+        caches.delete(cacheName);
+        if (import.meta.env.DEV) console.info('[Cleanup] Cache removido:', cacheName);
+      });
+    });
+  }
+
+  // 3. Remove chaves residuais do localStorage do sistema offline
+  const OFFLINE_KEYS = [
+    'offline-queue', 'offline_queue', 'sync-queue', 'syncQueue',
+    'pendingActions', 'pending-actions', 'offlineActions',
+    'workbox-expiration', 'klin-offline', 'pwa-install-prompt',
+    'sw-registered', 'offline-mode', 'last-sync'
+  ];
+  OFFLINE_KEYS.forEach(key => {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  });
+
+  // 4. Remove IndexedDB residuais (workbox, background-sync)
+  if ('indexedDB' in window) {
+    const DB_NAMES = ['workbox-background-sync', 'klin-offline-db', 'offline-queue-db'];
+    DB_NAMES.forEach(dbName => {
+      try {
+        indexedDB.deleteDatabase(dbName);
+        if (import.meta.env.DEV) console.info('[Cleanup] IndexedDB removido:', dbName);
+      } catch { /* Silencioso — banco pode não existir */ }
+    });
+  }
+}
+
+
+
 // Inicialização Hotjar (Silenciosa se não configurado)
 const hotjarId = Number(import.meta.env.VITE_HOTJAR_ID) || 0;
 if (hotjarId) {
