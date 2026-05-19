@@ -25,6 +25,11 @@ export function useLogin() {
     loginTokenProcessed.current = true;
     setIsMagicLoggingIn(true);
 
+    // 🔒 007 — Remove o token da URL IMEDIATAMENTE antes de qualquer await.
+    // Antes ficava exposto durante toda a duração da API call (~200-500ms).
+    // window.history.replaceState não causa re-render, apenas limpa a URL visível e o histórico.
+    window.history.replaceState({}, document.title, window.location.pathname);
+
     const processMagicLogin = async () => {
       try {
         if (isAuthenticated) {
@@ -41,7 +46,6 @@ export function useLogin() {
         const role = data.user.role;
         const target = (role === 'ADMIN' || role === 'COORDENADOR') ? '/admin' : '/';
         navigate(target, { replace: true });
-        window.history.replaceState({}, document.title, target);
 
       } catch (err: any) {
         api.post('/logs', {
@@ -49,7 +53,8 @@ export function useLogin() {
           source: 'FRONTEND',
           message: `Falha de Autenticação via QR/Link Mágico`,
           context: {
-            tentativaToken: magicToken,
+            // 🔒 007 — Não logamos o token em si, apenas o tipo de erro.
+            // O token já foi removido da URL no início do processamento.
             erro: err.response?.data?.error || err.message,
             _navigator: { userAgent: navigator.userAgent }
           }
@@ -57,7 +62,6 @@ export function useLogin() {
 
         toast.error(err.response?.data?.error || err.message || 'Crachá inválido.');
         setIsMagicLoggingIn(false);
-        setSearchParams({});
         navigate('/login', { replace: true });
       }
     };
