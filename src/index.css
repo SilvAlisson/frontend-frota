@@ -69,7 +69,7 @@
   /* --- 6. ESCALA DE Z-INDEX OFICIAL --- */
   --z-base: 0;
   --z-floating: 10;
-  --z-dropdown: 40;
+  --z-dropdown: 65;
   --z-overlay: 50;
   --z-modal: 60;
   --z-toast: 70;

@@ -114,7 +114,7 @@ export function FormRegistrarAbastecimento({
 
   return (
     // 1. Uso de 85dvh no pai garante que o teclado não empurre o layout e cria o feeling de Bottom Sheet
-    <div className="flex flex-col h-[85dvh] md:h-full bg-surface rounded-t-2xl md:rounded-2xl overflow-hidden shadow-float">
+    <div className="flex flex-col h-full w-full bg-surface rounded-t-2xl md:rounded-2xl shadow-float">
 
       {/* 2. HEADER FIXO - Densidade visual reduzida no mobile (px-4, py-4) */}
       <div className="px-4 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 shrink-0 border-b border-border/50 bg-surface-hover/30 z-10">

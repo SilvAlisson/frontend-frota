@@ -124,7 +124,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
   return (
     // ✨ CORREÇÃO 1: Removido o h-[85dvh]. Usamos h-full w-full para preencher o Modal sem brigar com ele.
     // O arredondamento do topo já é feito pelo Drawer do Vaul, então mantemos apenas a estrutura de coluna.
-    <div className="flex flex-col h-full w-full bg-surface overflow-hidden">
+    <div className="flex flex-col h-full w-full bg-surface">
       
       {/* HEADER FIXO: shrink-0 garante que não seja esmagado */}
       <div className="px-4 sm:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4 shrink-0 border-b border-border/50 bg-surface-hover/30 z-10">
