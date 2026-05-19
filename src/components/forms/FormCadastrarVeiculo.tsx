@@ -135,6 +135,9 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
         <div className="md:col-span-4 group">
           <Input
             label="Placa do Veículo"
+            autoCapitalize="characters"
+            autoCorrect="off"
+            spellCheck={false}
             {...register('placa', {
               onChange: (e) => {
                 const formatado = formatarPlaca(e.target.value);

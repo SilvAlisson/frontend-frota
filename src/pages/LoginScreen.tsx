@@ -160,6 +160,12 @@ export function LoginScreen() {
               <Input
                 label="E-mail Corporativo"
                 type="email"
+                inputMode="email"
+                autoComplete="email"
+                enterKeyHint="next"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 placeholder="nome@klinambiental.com.br"
                 {...register('email')}
                 error={errors.email?.message}
@@ -172,6 +178,8 @@ export function LoginScreen() {
                 <Input
                   label="Senha de Acesso"
                   type="password"
+                  autoComplete="current-password"
+                  enterKeyHint="done"
                   placeholder="••••••••"
                   {...register('password')}
                   error={errors.password?.message}
@@ -229,6 +237,10 @@ export function LoginScreen() {
                 value={qrManualToken}
                 onChange={(e) => setQrManualToken(e.target.value)}
                 icon={<QrCode className="w-5 h-5 text-text-muted" />}
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
+                enterKeyHint="done"
                 className="font-mono text-sm tracking-widest font-bold bg-surface/40 border-border/40 text-center rounded-xl"
                 autoFocus
               />
