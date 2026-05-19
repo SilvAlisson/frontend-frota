@@ -149,16 +149,14 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       <FormProvider {...methods}>
         <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col min-h-0 relative">
           
-          {/* ✨ CORREÇÃO 2: Removido o pb-[15vh]. Adicionado overscroll-contain.
-              A classe flex-1 faz essa div ocupar o espaço do meio, e o overflow-y-auto gera a barra de rolagem. */}
-          <div className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 custom-scrollbar pb-6 relative scroll-smooth overscroll-contain">
+          {/* A classe flex-1 faz essa div ocupar o espaço do meio, e o overflow-y-auto gera a barra de rolagem. */}
+          <div data-vaul-no-drag className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 custom-scrollbar pb-6 relative scroll-smooth overscroll-contain">
             {step === 1 && <Step1DadosGerais />}
             {step === 2 && <Step2ItensServicos />}
             {step === 3 && <Step3Confirmacao />}
           </div>
 
-          {/* ✨ CORREÇÃO 3: FOOTER FIXO. O shrink-0 protege os botões. 
-              Substituí as alturas fixas pesadas pela lógica touch-target nativa. */}
+          {/* Substituí as alturas fixas pesadas pela lógica touch-target nativa. */}
           <div className="px-4 sm:px-8 py-3 sm:py-5 border-t border-border/60 bg-surface flex flex-col-reverse sm:flex-row gap-3 shrink-0 safe-bottom shadow-[0_-10px_20px_rgba(0,0,0,0.03)] z-10">
             {step > 1 ? (
               <Button 
