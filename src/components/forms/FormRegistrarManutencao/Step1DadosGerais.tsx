@@ -137,8 +137,8 @@ export function Step1DadosGerais() {
     label="KM na entrada da oficina (Opcional)"
     icon={<Gauge className="w-4 h-4 text-primary" />}
     
-    // 🔥 O COMBO NUCLEAR: Força o teclado numérico ignorando o ponto da máscara
-    type="tel" 
+    // 🔥 O COMBO NUCLEAR: Força o teclado numérico
+    type="text" 
     inputMode="numeric"
     pattern="[0-9]*"
     

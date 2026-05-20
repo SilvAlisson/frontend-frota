@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { api } from '../services/api';
 import type { Veiculo } from '../types';
 import { toast } from 'sonner';
-import { Search, Truck, AlertTriangle } from 'lucide-react';
+import { Search, Truck } from 'lucide-react';
 
 // --- HOOKS ATÔMICOS ---
 import { useVeiculos } from '../hooks/useVeiculos';
@@ -20,7 +20,6 @@ import { Modal } from './ui/Modal';
 import { Skeleton } from './ui/Skeleton';
 import { SkeletonTable } from './skeletons/SkeletonTable';
 import { ConfirmModal } from './ui/ConfirmModal';
-import { Callout } from './ui/Callout';
 import { EmptyState } from './ui/EmptyState';
 import { useFiltragemVeiculos } from '../hooks/useFiltragemVeiculos';
 import React, { Suspense } from 'react';
@@ -36,7 +35,7 @@ export function GestaoVeiculos() {
   const [isCadastroOpen, setIsCadastroOpen] = useState(false);
   const [veiculoParaEditar, setVeiculoParaEditar] = useState<Veiculo | null>(null);
   const [veiculoParaExcluir, setVeiculoParaExcluir] = useState<string | null>(null);
-  
+
   // 📡 BUSCA INDEPENDENTE COM CACHE
   const { data: veiculos = [], isLoading, refetch } = useVeiculos();
 
@@ -47,8 +46,8 @@ export function GestaoVeiculos() {
   const { busca, setBusca, veiculosFiltrados } = useFiltragemVeiculos(veiculos as Veiculo[]);
 
   // Aplica o filtro extra localmente
-  const veiculosFinais = apenasAtivos 
-    ? veiculosFiltrados.filter(v => v.status === 'ATIVO') 
+  const veiculosFinais = apenasAtivos
+    ? veiculosFiltrados.filter(v => v.status === 'ATIVO')
     : veiculosFiltrados;
 
   // --- ACTIONS ---
@@ -99,9 +98,9 @@ export function GestaoVeiculos() {
           extraAction={
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
               <div className="flex items-center gap-3 px-4 h-11 bg-surface-hover/50 rounded-xl border border-border/60 shrink-0">
-                <Switch 
-                  checked={apenasAtivos} 
-                  onCheckedChange={setApenasAtivos} 
+                <Switch
+                  checked={apenasAtivos}
+                  onCheckedChange={setApenasAtivos}
                 />
                 <span className="text-xs font-bold text-text-muted select-none cursor-pointer" onClick={() => setApenasAtivos(!apenasAtivos)}>Apenas Ativos</span>
               </div>
@@ -282,16 +281,13 @@ export function GestaoVeiculos() {
         isOpen={!!veiculoParaExcluir}
         onCancel={() => setVeiculoParaExcluir(null)}
         onConfirm={handleExecuteDelete}
-        title="Atenção: Exclusão de Veículo"
+        title="Inativar ou Remover Equipamento"
         description={
           <div className="space-y-4">
-            <p className="text-text-secondary text-sm">Tem certeza que deseja remover definitivamente este veículo do diretório da frota?</p>
-            <Callout variant="danger" title="Ação Irreversível" icon={AlertTriangle}>
-              A exclusão deste Registro pode corromper métricas, relatórios financeiros e históricos de viagens caso o Equipamento já tenha operado no sistema.
-            </Callout>
+            <p className="text-text-secondary text-sm">Tem certeza que deseja remover este veículo do diretório da frota? Se ele possuir histórico de rodagem, será apenas inativado para proteger o banco de dados e as métricas do BI.</p>
           </div>
         }
-        confirmLabel="Sim, Excluir Equipamento"
+        confirmLabel="Sim, Confirmar Ação"
         variant="danger"
       />
 

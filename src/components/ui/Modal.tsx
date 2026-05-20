@@ -45,6 +45,15 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
     };
   }, [isOpen, isDesktop]);
 
+  // Restaura o scroll do Viewport mobile ao fechar (Bug de teclado vazio do iOS)
+  useEffect(() => {
+    if (!isOpen && !isDesktop) {
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 100);
+    }
+  }, [isOpen, isDesktop]);
+
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
@@ -69,6 +78,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
         shouldScaleBackground
         nested={nested}
         dismissible={false}
+        repositionInputs={false} // Evita que o Vaul empurre a tela e cause o bug do espaço vazio
       >
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-md z-overlay" />

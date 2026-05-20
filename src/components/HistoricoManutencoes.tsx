@@ -443,8 +443,8 @@ export function HistoricoManutencoes({
        // --- MOBILE ---
        renderMobile={(os) => (
         <div className="p-5 flex flex-col gap-4 border-b border-border/60 hover:bg-surface-hover/30 transition-colors">
-         <div className="flex justify-between items-start">
-          <div className="flex gap-4">
+         <div className="flex justify-between items-start gap-2">
+          <div className="flex gap-3 min-w-0 flex-1">
            <div className="bg-surface shadow-sm text-text-main p-2 rounded-xl border border-border/80 flex flex-col items-center justify-center w-14 h-14 shrink-0">
             <span className="text-lg font-black leading-none">{DateHelper.getDia(os.data)}</span>
             <span className="text-[10px] font-bold uppercase tracking-wider text-text-muted mt-0.5">
@@ -462,7 +462,8 @@ export function HistoricoManutencoes({
             )}
            </div>
           </div>
-          <div className="flex flex-col items-end gap-2 shrink-0">
+          <div className="flex flex-col items-end gap-2 shrink-0 max-w-[120px]">
+           <div className="w-full flex justify-end truncate">
            {getBadgeStatus(os.status)}
            <DropdownAcoes
             onEditar={canEdit ? () => setEditingOS(os) : undefined}
@@ -563,4 +564,6 @@ export function HistoricoManutencoes({
   </PullToRefresh>
  );
 }
+
+
 

@@ -281,7 +281,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                   </div>
                 </div>
 
-                <div className="flex justify-end gap-2 border-t border-dashed border-border/60 pt-4">
+                <div className="flex flex-wrap justify-end gap-2 border-t border-dashed border-border/60 pt-4">
                   <Button variant="secondary" className="text-xs h-9 px-3 bg-surface border-border/60 shadow-sm" onClick={() => setUsuarioParaTreinamento(u)}>Treinos</Button>
                   <Button variant="secondary" className="text-xs h-9 px-3 bg-surface border-border/60 shadow-sm" onClick={() => setUsuarioParaEditar(u)}>Editar</Button>
 
@@ -289,7 +289,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                     <Button variant="secondary" className="text-xs h-9 px-3 bg-success/10 text-success border-success/20 hover:bg-success/20" onClick={() => handleAbrirQrModal(u)}>QR</Button>
                   )}
 
-                  <Button variant="secondary" className="text-xs h-9 px-3 bg-error/10 text-error border-error/20 hover:bg-error/20" onClick={() => handleDeleteRequest(u)}>Excluir</Button>
+                  <Button variant="secondary" className="text-xs h-9 px-3 bg-error/10 text-error border-error/20 hover:bg-error/20" onClick={() => handleDeleteRequest(u)}>Inativar/Excluir</Button>
                 </div>
               </div>
             )}
@@ -304,10 +304,10 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
         isOpen={!!userToDelete}
         onCancel={() => setUserToDelete(null)}
         onConfirm={handleConfirmDelete}
-        title="Remover Colaborador"
-        description={`Tem certeza que deseja remover as credenciais de acesso de ${userToDelete?.nome}? Esta ação é irreversível.`}
+        title="Inativar ou Remover Colaborador"
+        description={`Tem certeza que deseja inativar ou remover as credenciais de acesso de ${userToDelete?.nome}? Se o usuário possuir histórico, ele será apenas inativado para manter o histórico da frota.`}
         variant="danger"
-        confirmLabel={deleteMutation.isPending ? "A remover..." : "Sim, Remover Acesso"}
+        confirmLabel={deleteMutation.isPending ? "A processar..." : "Sim, Confirmar Ação"}
       />
 
       {usuarioParaQr && (

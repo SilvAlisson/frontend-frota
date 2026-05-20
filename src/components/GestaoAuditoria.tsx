@@ -188,9 +188,23 @@ export function GestaoAuditoria() {
                            <Clock className="w-3 h-3" />
                            {format(new Date(log.dataCriacao), "dd MMM yyyy, HH:mm:ss", { locale: ptBR })}
                          </span>
+                         
+                         {log.usuario && (
+                           <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-md border border-primary/20 flex items-center gap-1.5 font-bold shadow-sm">
+                             <Fingerprint className="w-3 h-3" />
+                             {log.usuario.nome.split(' ')[0]} <span className="opacity-70 font-normal">({log.usuario.role})</span>
+                           </span>
+                         )}
+
+                         {log.contexto?._auditIp && (
+                           <span className="text-[9px] font-mono bg-surface-hover px-1.5 py-0.5 border border-border/50 rounded text-text-muted truncate">
+                             🌐 {log.contexto._auditIp}
+                           </span>
+                         )}
+
                          {log.contexto?._navigator?.userAgent && (
                            <span className="text-[9px] px-1.5 py-0.5 bg-surface-hover border border-border/50 rounded text-text-muted truncate max-w-[120px]" title={log.contexto._navigator.userAgent}>
-                             🌐 {log.contexto._navigator.userAgent.split(' ')[0]}
+                             📱 {log.contexto._navigator.userAgent.split(' ')[0]}
                            </span>
                          )}
                          {log.contexto?._url && (

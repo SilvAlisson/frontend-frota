@@ -75,7 +75,7 @@ export function Step2DadosFinanceiros() {
       type="button"
       variant="ghost"
       size="sm"
-      onClick={() => append({ produtoId: '', quantidade: 0, valorUnitario: '' } as unknown as AbastecimentoFormValues['itens'][0])}
+      onClick={() => append({ produtoId: '', quantidade: '' as any, valorUnitario: '' } as unknown as AbastecimentoFormValues['itens'][0])}
       className="text-primary hover:bg-primary/10 h-8"
       icon={<Plus className="w-4 h-4" />}
       disabled={isLocked}
@@ -131,7 +131,8 @@ export function Step2DadosFinanceiros() {
           <Input
            label="Valor Unitário"
            type="text"
-           inputMode="decimal"
+           inputMode="numeric"
+           pattern="[0-9]*"
            {...register(`itens.${index}.valorUnitario`, {
             onChange: (e) => {
              e.target.value = formatarDinheiro(e.target.value);
