@@ -111,17 +111,20 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
     const { data: jornadasAbertas = [], refetch: refetchJornadas } = useJornadasAtivas();
     const { contagemAtiva: defeitosAtivos } = useDefeitos();
 
-    const veiculosLeves = veiculos.filter(v =>
+    const veiculosAtivos = veiculos.filter(v => v.status !== 'INATIVO');
+    const usuariosAtivos = usuarios.filter(u => !u.nome.startsWith('[INATIVO]'));
+
+    const veiculosLeves = veiculosAtivos.filter(v =>
         ['UTILITARIO', 'LEVE', 'OUTRO'].includes(v.tipoVeiculo || '')
     );
 
     const minhaJornadaAtiva = jornadasAbertas.find(j => j.operador?.id === user.id);
-    const totalEquipe = usuarios.filter(u => u.role === 'OPERADOR').length;
+    const totalEquipe = usuariosAtivos.filter(u => u.role === 'OPERADOR').length;
     const equipeNaRua = jornadasAbertas.length;
 
     // Métricas HUD
-    const frotaDisponivel = Math.max(veiculos.length - equipeNaRua, 0);
-    const frotaUsoPercent = veiculos.length ? Math.round((equipeNaRua / veiculos.length) * 100) : 0;
+    const frotaDisponivel = Math.max(veiculosAtivos.length - equipeNaRua, 0);
+    const frotaUsoPercent = veiculosAtivos.length ? Math.round((equipeNaRua / veiculosAtivos.length) * 100) : 0;
 
 
     // --- VIEW: DASHBOARD TÁTICO BENTO-GRID ---

@@ -144,7 +144,9 @@ export function IniciarJornada({
             disabled={loading}
             options={[
               { value: '', label: 'Selecione o veículo...' },
-              ...veiculos.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` }))
+              ...veiculos
+                .filter(v => v.status !== 'INATIVO')
+                .map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` }))
             ]}
           />
 
@@ -169,7 +171,7 @@ export function IniciarJornada({
             options={[
               { value: '', label: 'Selecione o Encarregado...' },
               ...usuarios
-                .filter(u => u.role === 'ENCARREGADO' || u.role === 'ADMIN')
+                .filter(u => (u.role === 'ENCARREGADO' || u.role === 'ADMIN') && !u.nome.startsWith('[INATIVO]'))
                 .map(u => ({ value: u.id, label: u.nome }))
             ]}
           />

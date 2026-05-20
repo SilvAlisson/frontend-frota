@@ -16,6 +16,8 @@ import { TableStyles } from '../styles/table';
 import { toast } from 'sonner';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
+import { DropdownAcoes } from './ui/DropdownAcoes';
+import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 import { 
   Trash2, Edit2, QrCode, GraduationCap, 
@@ -269,8 +271,8 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
             // --- MOBILE (Cards) ---
             renderMobile={(u) => (
-              <div className="p-5 border-b border-border/50 hover:bg-surface-hover/30 transition-colors">
-                <div className="flex items-start justify-between mb-4">
+              <div className="p-5 border-b border-border/50 hover:bg-surface-hover/30 transition-colors cursor-pointer hover-lift rounded-2xl m-2 glass" onClick={() => setUsuarioParaEditar(u)}>
+                <div className="flex items-start justify-between">
                   <div className="flex items-start gap-4">
                     <Avatar nome={u.nome} url={u.fotoUrl} size="lg" />
                     <div className="flex flex-col gap-0.5">
@@ -279,17 +281,32 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                       <BadgeRole role={u.role} />
                     </div>
                   </div>
-                </div>
 
-                <div className="flex flex-wrap justify-end gap-2 border-t border-dashed border-border/60 pt-4">
-                  <Button variant="secondary" className="text-xs h-9 px-3 bg-surface border-border/60 shadow-sm" onClick={() => setUsuarioParaTreinamento(u)}>Treinos</Button>
-                  <Button variant="secondary" className="text-xs h-9 px-3 bg-surface border-border/60 shadow-sm" onClick={() => setUsuarioParaEditar(u)}>Editar</Button>
+                  <div onClick={e => e.stopPropagation()} className="shrink-0 -mr-2 -mt-2">
+                    <DropdownAcoes
+                      onEditar={() => setUsuarioParaEditar(u)}
+                      onExcluir={() => handleDeleteRequest(u)}
+                      excluirLabel="Inativar"
+                    >
+                      <DropdownMenu.Item 
+                        onSelect={(e) => { e.preventDefault(); setUsuarioParaTreinamento(u); }}
+                        className="flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-text-main rounded-lg cursor-pointer outline-none hover:bg-surface-hover focus:bg-surface-hover transition-colors group"
+                      >
+                        <GraduationCap className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" />
+                        Treinos
+                      </DropdownMenu.Item>
 
-                  {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') && (
-                    <Button variant="secondary" className="text-xs h-9 px-3 bg-success/10 text-success border-success/20 hover:bg-success/20" onClick={() => handleAbrirQrModal(u)}>QR</Button>
-                  )}
-
-                  <Button variant="secondary" className="text-xs h-9 px-3 bg-error/10 text-error border-error/20 hover:bg-error/20" onClick={() => handleDeleteRequest(u)}>Inativar</Button>
+                      {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') && (
+                        <DropdownMenu.Item 
+                          onSelect={(e) => { e.preventDefault(); handleAbrirQrModal(u); }}
+                          className="flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-success rounded-lg cursor-pointer outline-none hover:bg-success/10 focus:bg-success/10 transition-colors group"
+                        >
+                          <QrCode className="w-4 h-4 text-success/70 group-hover:text-success transition-colors" />
+                          Acesso QR
+                        </DropdownMenu.Item>
+                      )}
+                    </DropdownAcoes>
+                  </div>
                 </div>
               </div>
             )}

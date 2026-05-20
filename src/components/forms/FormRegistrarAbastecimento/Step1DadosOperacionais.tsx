@@ -27,7 +27,9 @@ export function Step1DadosOperacionais() {
   const isKmInvalido = ultimoKm > 0 && kmAtualNum > 0 && kmAtualNum < ultimoKm;
 
   const veiculoOptions = useMemo(() =>
-    veiculos.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` })),
+    veiculos
+      .filter(v => v.status !== 'INATIVO')
+      .map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` })),
     [veiculos]
   );
 
@@ -40,6 +42,7 @@ export function Step1DadosOperacionais() {
   // FILTRO DINÂMICO DE RESPONSÁVEIS
   const operadorOptions = useMemo(() => {
     return usuarios
+      .filter(u => !u.nome.startsWith('[INATIVO]'))
       .filter(u => {
         if (isVeiculoLeve) {
            // Carros leves são dirigidos pela gestão/encarregados e NÃO pelos operadores
