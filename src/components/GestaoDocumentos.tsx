@@ -100,10 +100,13 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [docParaExcluir, setDocParaExcluir] = useState<{ id: string, titulo: string } | null>(null);
 
-
   // Estado para a Edição e Renovação
   const [editingId, setEditingId] = useState<string | null>(null);
   const [renewingId, setRenewingId] = useState<string | null>(null);
+
+  // Estado para o Visualizador Cinemático
+  const [docParaVisualizar, setDocParaVisualizar] = useState<{ url: string, titulo: string } | null>(null);
+  const [zoomNivel, setZoomNivel] = useState(1);
 
   const { data: documentos, isLoading: isLoadingDocs } = useDocumentosLegais({
     categoria: filtroCategoria,
@@ -340,14 +343,13 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
                         {doc.status === 'ARQUIVADO' ? 'Histórico' : status.text}
                       </div>
 
-                      <a
-                        href={doc.arquivoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[11px] font-black uppercase tracking-widest text-primary hover:text-white bg-primary/10 hover:bg-primary px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm"
+                      <button
+                        onClick={() => { setDocParaVisualizar({ url: doc.arquivoUrl, titulo: doc.titulo }); setZoomNivel(1); }}
+                        className="text-[11px] font-black uppercase tracking-widest text-primary hover:text-white bg-primary/10 hover:bg-primary px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm focus-ring touch-target"
+                        title="Visualizar Documento"
                       >
                         Visualizar<ExternalLink className="w-3.5 h-3.5" />
-                      </a>
+                      </button>
                     </div>
                   </div>
                 );
@@ -407,6 +409,73 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
         variant="danger"
         confirmLabel={deletingId ? "A Remover..." : "Sim, Excluir Documento"}
       />
+
+      {/* 🔮 Visualizador Cinemático de Perícia Documental */}
+      {docParaVisualizar && (
+        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-3xl p-4 sm:p-8 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-300">
+          
+          {/* Top Navigation Bar HUD */}
+          <div className="absolute top-0 left-0 w-full flex justify-between items-center p-6 bg-gradient-to-b from-black/80 to-transparent z-50">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-info/20 flex items-center justify-center rounded-lg border border-info/30 text-info">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-white font-black uppercase text-sm tracking-widest block">{docParaVisualizar.titulo}</span>
+                <span className="text-info font-medium text-[10px] uppercase tracking-wider block">Visualizador de Documentos Legais</span>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                className="bg-white/10 hover:bg-white/20 text-white rounded-xl h-11 w-11 touch-target focus-ring"
+                onClick={() => setZoomNivel(prev => prev < 4 ? prev + 0.5 : prev)}
+                title="Aumentar Zoom"
+              >
+                <ZoomIn className="w-5 h-5" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                className="bg-white/10 hover:bg-white/20 text-white rounded-xl h-11 w-11 touch-target focus-ring"
+                onClick={() => { setDocParaVisualizar(null); setZoomNivel(1); }}
+                title="Fechar Visualizador"
+              >
+                <X className="w-6 h-6" />
+              </Button>
+            </div>
+          </div>
+
+          {/* Imagem/PDF Viewer usando zoom nativo em v4 */}
+          <div className="w-full max-w-5xl h-full flex items-center justify-center overflow-auto rounded-3xl mt-16 sm:mt-0 cursor-move scrollbar-thin">
+            {docParaVisualizar.url.toLowerCase().includes('.pdf') ? (
+              <iframe
+                src={`${docParaVisualizar.url}#toolbar=0`}
+                className="w-full h-[85vh] rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10"
+                style={{ zoom: zoomNivel }}
+                title={docParaVisualizar.titulo}
+              />
+            ) : (
+              <img
+                src={docParaVisualizar.url}
+                alt={docParaVisualizar.titulo}
+                style={{ zoom: zoomNivel }}
+                className="max-h-[85vh] max-w-full object-contain pointer-events-auto rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] filter contrast-125 transition-transform duration-300"
+                onDoubleClick={() => setZoomNivel(prev => prev > 1 ? 1 : 2.5)}
+                title="Clique duplo para Zoom Rápido"
+                draggable={false}
+              />
+            )}
+          </div>
+
+          {/* Dica Floating Bar */}
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/60 border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest px-6 py-3 rounded-full flex gap-3 backdrop-blur shadow-2xl items-center pointer-events-none">
+            <span className="w-2 h-2 rounded-full bg-info animate-pulse"></span>
+            Toque no botão de lupa ou dê duplo-clique na imagem para Inspecionar
+          </div>
+        </div>
+      )}
 
     </div>
   );

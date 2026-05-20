@@ -260,8 +260,8 @@ export function PainelDefeitosEncarregado() {
             <img
               src={fotoExpandida}
               alt="Zoom Avançado"
-              style={{ transform: `scale(${zoomNivel})`, transition: 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' }}
-              className="max-h-[85vh] max-w-full object-contain pointer-events-auto rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] filter brightness-110 contrast-125"
+              style={{ zoom: zoomNivel }}
+              className="max-h-[85vh] max-w-full object-contain pointer-events-auto rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] filter brightness-110 contrast-125 transition-all duration-300"
               onDoubleClick={() => setZoomNivel(prev => prev > 1 ? 1 : 2.5)}
               title="Clique duplo para Zoom Rápido"
               draggable={false}
