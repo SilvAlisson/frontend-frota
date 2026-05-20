@@ -162,7 +162,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={textareaId}
-            className="text-xs font-bold text-text-secondary uppercase tracking-wider select-none ml-1"
+            className="text-xs font-bold text-text-secondary uppercase tracking-wider select-none ms-1"
           >
             {label}
           </label>
@@ -183,7 +183,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
               // Padding padrão (horizontal confortável, vertical generoso)
               'px-4 py-3',
               // Espaço para o ícone de erro não sobrepor o texto
-              error ? 'pr-11 border-error border text-error focus:border-error focus:ring-error/20 placeholder:text-error/50' : '',
+              error ? 'pe-11 border-error border text-error focus:border-error focus:ring-error/20 placeholder:text-error/50' : '',
               // Esconde resize handle quando autoResize está ativo
               autoResize ? 'overflow-hidden' : 'resize-y',
               className

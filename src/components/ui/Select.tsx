@@ -83,7 +83,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 {label && (
                     <label
                         htmlFor={selectId}
-                        className="text-xs font-bold text-text-secondary uppercase tracking-wider select-none ml-1"
+                        className="text-xs font-bold text-text-secondary uppercase tracking-wider select-none ms-1"
                     >
                         {label}
                     </label>
@@ -97,7 +97,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 >
                     <div className="relative group w-full">
                         {icon && (
-                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none z-10 [&>svg]:w-5 [&>svg]:h-5 transition-colors group-focus-within:text-primary">
+                            <div className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none z-10 [&>svg]:w-5 [&>svg]:h-5 transition-colors group-focus-within:text-primary">
                                 {icon}
                             </div>
                         )}
@@ -109,7 +109,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                                 "focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-background focus:border-primary shadow-sm",
                                 "disabled:bg-surface-hover/50 disabled:text-text-muted disabled:cursor-not-allowed",
                                 "data-[placeholder]:text-text-muted",
-                                icon ? "pl-10 pr-4" : "px-4",
+                                icon ? "ps-10 pe-4" : "px-4",
                                 !error ? "border-border/60 hover:border-border" : "border-error focus:border-error focus:ring-error/20 text-error",
                                 className
                             )}
@@ -145,9 +145,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                                         <RadixSelect.Item
                                             key={opt.value}
                                             value={String(opt.value)}
-                                            className="relative flex items-center w-full px-8 py-2.5 min-h-[40px] text-sm font-bold text-text-main rounded-lg outline-none cursor-pointer select-none focus:bg-primary/10 focus:text-primary data-[disabled]:text-text-muted data-[disabled]:pointer-events-none transition-colors"
+                                            className="relative flex items-center w-full ps-8 pe-2 py-2.5 min-h-[40px] text-sm font-bold text-text-main rounded-lg outline-none cursor-pointer select-none focus:bg-primary/10 focus:text-primary data-[disabled]:text-text-muted data-[disabled]:pointer-events-none transition-colors"
                                         >
-                                            <span className="absolute left-2 flex items-center justify-center w-4 h-4">
+                                            <span className="absolute inset-s-2 flex items-center justify-center w-4 h-4">
                                                 <RadixSelect.ItemIndicator>
                                                     <Check className="w-4 h-4 text-primary" />
                                                 </RadixSelect.ItemIndicator>

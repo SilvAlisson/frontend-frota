@@ -53,7 +53,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-xs font-bold text-text-secondary uppercase tracking-wider select-none ml-1"
+            className="text-xs font-bold text-text-secondary uppercase tracking-wider select-none ms-1"
           >
             {label}
           </label>
@@ -62,7 +62,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <div className="relative group w-full">
           {/* Ícone à Esquerda */}
           {icon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none z-10 [&>svg]:w-5 [&>svg]:h-5 transition-colors group-focus-within:text-primary">
+            <div className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none z-10 [&>svg]:w-5 [&>svg]:h-5 transition-colors group-focus-within:text-primary">
               {icon}
             </div>
           )}
@@ -76,11 +76,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               inputVariants({ variant }),
               
               // Padding da esquerda (abre espaço para o ícone, se houver)
-              icon ? "pl-10" : (variant === 'ghost' ? "pl-3" : "pl-4"),
+              icon ? "ps-10" : (variant === 'ghost' ? "ps-3" : "ps-4"),
               
               error 
-                ? "pr-12 text-ellipsis border-error border text-error focus:border-error focus:ring-error/20 placeholder:text-error/50" 
-                : (variant === 'default' ? "pr-4" : "pr-3"),
+                ? "pe-12 text-ellipsis border-error border text-error focus:border-error focus:ring-error/20 placeholder:text-error/50" 
+                : (variant === 'default' ? "pe-4" : "pe-3"),
 
               className
             )}
@@ -91,7 +91,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
           {/* Ícone de Erro embutido no Input (Estilo Material/Apple) */}
           {error && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-error pointer-events-none animate-in zoom-in-95 duration-200">
+            <div className="absolute inset-e-3 top-1/2 -translate-y-1/2 text-error pointer-events-none animate-in zoom-in-95 duration-200">
                <AlertCircle className="w-5 h-5 opacity-80" />
             </div>
           )}
@@ -99,7 +99,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         {/* Mensagem de Erro Textual */}
         {error && (
-          <p id={errorId} className="text-xs text-error font-bold flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 ml-1 mt-0.5">
+          <p id={errorId} className="text-xs text-error font-bold flex items-center gap-1.5 animate-in fade-in slide-in-from-top-1 ms-1 mt-0.5">
             {error}
           </p>
         )}

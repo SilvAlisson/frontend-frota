@@ -135,7 +135,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-md transition-opacity animate-in fade-in duration-300"
+        className="fixed inset-0 bg-black/60 backdrop-blur-md transition-all duration-300 starting:opacity-0 starting:backdrop-blur-none"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -148,7 +148,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
           "w-full max-w-lg",
           // Altura: máximo 92dvh para garantir espaço em qualquer viewport
           "max-h-[92dvh]",
-          "transform transition-all animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 ease-out",
+          "transform transition-all duration-300 ease-out starting:opacity-0 starting:scale-95 starting:translate-y-4",
           className
         )}
       >

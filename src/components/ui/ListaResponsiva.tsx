@@ -169,6 +169,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                   className={`
                     p-4 rounded-[1.25rem] shadow-sm border border-border/60 relative overflow-hidden
                     active:scale-[0.98] transition-all duration-300 bg-surface hover:shadow-md
+                    has-[button:hover]:shadow-lg has-[:focus-visible]:bg-primary/5 focus-within:ring-2 focus-within:ring-primary/50 focus-within:ring-offset-2
                     ${customClass} ${cursorClass}
                   `}
                   style={{
@@ -180,9 +181,9 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                   }}
                 >
                   {!customClass.includes('ghost-row') && (
-                    <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary/80 to-primary/40 rounded-l-[1.25rem] opacity-70" />
+                    <div className="absolute inset-s-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary/80 to-primary/40 rounded-s-[1.25rem] opacity-70" />
                   )}
-                  <div className="pl-2 min-w-0">
+                  <div className="ps-2 min-w-0">
                     {renderMobile(item, idx)}
                   </div>
                 </div>
@@ -200,15 +201,16 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                 className={`
                   p-4 rounded-[1.25rem] shadow-sm border border-border/60 relative overflow-hidden
                   active:scale-[0.98] transition-all duration-300 bg-surface hover:shadow-md
+                  has-[button:hover]:shadow-lg has-[:focus-visible]:bg-primary/5 focus-within:ring-2 focus-within:ring-primary/50 focus-within:ring-offset-2
                   ${customClass} ${cursorClass}
                 `}
               >
                 {!customClass.includes('ghost-row') && (
-                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary/80 to-primary/40 rounded-l-[1.25rem] opacity-70" />
+                  <div className="absolute inset-s-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary/80 to-primary/40 rounded-s-[1.25rem] opacity-70" />
                 )}
 
                 {/* min-w-0 garante que textos longos truncam dentro do card */}
-                <div className="pl-2 min-w-0">
+                <div className="ps-2 min-w-0">
                   {renderMobile(item, idx)}
                 </div>
               </div>

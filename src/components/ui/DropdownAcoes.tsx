@@ -42,7 +42,7 @@ export function DropdownAcoes({
           sideOffset={8}
           avoidCollisions={true}
           collisionPadding={8}
-          className="z-[9999] min-w-[180px] bg-surface/90 backdrop-blur-md rounded-xl p-1.5 shadow-2xl shadow-black/40 border border-white/10 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=top]:slide-in-from-bottom-2 duration-200"
+          className="z-[9999] min-w-[180px] bg-surface/90 backdrop-blur-md rounded-xl p-1.5 shadow-2xl shadow-black/40 border border-white/10 transition-all duration-200 starting:opacity-0 starting:scale-95"
         >
           
           {onVerDetalhes && (
