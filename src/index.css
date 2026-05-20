@@ -445,7 +445,15 @@
     display: none;
   }
 
-  /* --- ACESSIBILIDADE E UX (A11Y) --- */
+  /* --- ACESSIBILIDADE E UX (A11Y & MOBILE) --- */
+  * {
+    -webkit-tap-highlight-color: transparent; /* Remove piscar azul/cinza no Android ao tocar botões */
+  }
+
+  a, button, input, select, textarea, [role="button"] {
+    touch-action: manipulation; /* Remove delay de 300ms no clique e previne zoom por duplo-toque (Fat Finger Zoom) */
+  }
+
   .focus-ring {
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-shadow;
   }

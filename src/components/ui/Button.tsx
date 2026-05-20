@@ -46,11 +46,21 @@ export interface ButtonProps
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, isLoading = false, icon, children, disabled, ...props }, ref) => {
+  ({ className, variant, size, isLoading = false, icon, children, disabled, onPointerDown, ...props }, ref) => {
+    
+    // 📳 HAPTICS: Vibração sutil ao pressionar o botão no Mobile (Feedback Físico)
+    const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+      if (!disabled && !isLoading && typeof window !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate(10); } catch (err) { /* Silencioso se não suportado */ }
+      }
+      if (onPointerDown) onPointerDown(e);
+    };
+
     return (
       <button
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
+        onPointerDown={handlePointerDown}
         // ðŸ›¡ï¸ TRAVA DUPLO-CLIQUE: Fica disabled se estiver carregando
         disabled={disabled || isLoading}
         {...props}
