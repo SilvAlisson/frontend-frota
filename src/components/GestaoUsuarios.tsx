@@ -17,6 +17,12 @@ import { toast } from 'sonner';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
 
+function getFirstAndLastName(fullName: string) {
+  const parts = fullName.trim().split(' ');
+  if (parts.length <= 1) return fullName;
+  return `${parts[0]} ${parts[parts.length - 1]}`;
+}
+
 import { 
   Trash2, Edit2, QrCode, GraduationCap, 
   Search, Download, Plus, Users
@@ -223,7 +229,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                 <td className={`${TableStyles.td} pl-8`}>
                   <div className="flex items-center gap-4">
                     <Avatar nome={u.nome} url={u.fotoUrl} />
-                    <span className="font-bold text-text-main text-base tracking-tight">{u.nome}</span>
+                    <span className="font-bold text-text-main text-base tracking-tight">{getFirstAndLastName(u.nome)}</span>
                   </div>
                 </td>
                 <td className={`${TableStyles.td} text-center`}>
@@ -258,7 +264,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                       className="h-9 w-9 !p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-xl" 
                       onClick={() => handleDeleteRequest(u)} 
                       disabled={deleteMutation.isPending || u.id === adminUserId} 
-                      title="Remover Colaborador"
+                      title="Inativar Colaborador"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -273,9 +279,8 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                 <div className="flex flex-col">
                   <div className="flex items-start gap-4">
                     <Avatar nome={u.nome} url={u.fotoUrl} size="lg" />
-                    <div className="flex flex-col gap-0.5">
-                      <h3 className="font-black text-text-main text-lg tracking-tight leading-none">{u.nome}</h3>
-                      <p className="text-xs text-text-secondary font-medium mb-1.5">{u.email}</p>
+                    <div className="flex flex-col gap-0.5 justify-center mt-1">
+                      <h3 className="font-black text-text-main text-lg tracking-tight leading-none mb-1.5">{getFirstAndLastName(u.nome)}</h3>
                       <BadgeRole role={u.role} />
                     </div>
                   </div>
