@@ -142,7 +142,6 @@ export function Step1DadosGerais() {
     // 🔥 O COMBO NUCLEAR: Força o teclado numérico
     type="text" 
     inputMode="numeric"
-    pattern="[0-9]*"
     
     {...register("kmAtual")}
     onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
