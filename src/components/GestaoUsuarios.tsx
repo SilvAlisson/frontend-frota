@@ -218,41 +218,37 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
             // --- DESKTOP ---
             desktopHeader={
               <>
-                <th className={`${TableStyles.th} pl-8 text-left`}>Colaborador</th>
-                <th className={`${TableStyles.th} text-center`}>Estatuto Operacional</th>
-                <th className={`${TableStyles.th} text-center`}>Contacto</th>
-                <th className={`${TableStyles.th} text-right pr-8`}>Ações de Gestão</th>
+                <th className={`${TableStyles.th} pl-8 text-left w-2/5`}>Colaborador</th>
+                <th className={`${TableStyles.th} text-center w-1/4`}>Estatuto Operacional</th>
+                <th className={`${TableStyles.th} text-right pr-8 w-1/4`}>Gestão</th>
               </>
             }
             renderDesktop={(u) => (
               <>
                 <td className={`${TableStyles.td} pl-8`}>
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-4 min-w-0">
                     <Avatar nome={u.nome} url={u.fotoUrl} />
-                    <span className="font-bold text-text-main text-base tracking-tight">{getFirstAndLastName(u.nome)}</span>
+                    <span className="font-bold text-text-main text-base tracking-tight truncate" title={u.nome}>{getFirstAndLastName(u.nome)}</span>
                   </div>
                 </td>
                 <td className={`${TableStyles.td} text-center`}>
                   <div className="w-full flex flex-col items-center justify-center gap-1.5 text-center">
                     <BadgeRole role={u.role} />
-                    {u.matricula && <span className="text-[10px] text-text-muted font-mono font-bold uppercase tracking-widest bg-surface-hover px-1.5 py-0.5 rounded border border-border/50 block w-fit">ID: {u.matricula}</span>}
-                  </div>
-                </td>
-                <td className={`${TableStyles.td} text-sm font-medium text-text-secondary text-center`}>
-                  <div className="w-full text-center">
-                    {u.email}
+                    {u.matricula && <span className="text-[10px] text-text-muted font-mono font-bold uppercase tracking-widest bg-surface-hover px-1.5 py-0.5 rounded border border-border/50 block w-fit truncate">ID: {u.matricula}</span>}
                   </div>
                 </td>
                 <td className={`${TableStyles.td} text-right pr-8`}>
-                  <div className="flex justify-end gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                  <div className="grid grid-cols-2 gap-1.5 w-fit ml-auto opacity-60 group-hover:opacity-100 transition-opacity">
                     <Button variant="ghost" className="h-9 w-9 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => setUsuarioParaTreinamento(u)} title="Registro de Treinamentos">
                       <GraduationCap className="w-4 h-4" />
                     </Button>
 
-                    {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') && (
+                    {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') ? (
                       <Button variant="ghost" className="h-9 w-9 !p-0 text-text-muted hover:text-success hover:bg-success/10 rounded-xl" onClick={() => handleAbrirQrModal(u)} title="Acesso por QR Code">
                         <QrCode className="w-4 h-4" />
                       </Button>
+                    ) : (
+                      <div /> /* Empty div to keep the grid layout aligned */
                     )}
 
                     <Button variant="ghost" className="h-9 w-9 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => setUsuarioParaEditar(u)} title="Editar Ficha">
