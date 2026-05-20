@@ -127,10 +127,19 @@ export function Step2ItensServicos() {
   <div className="min-w-0">
     <Input
       label="Quantidade"
-      // 🔥 Para aceitar decimais (ex: 1,5), usamos text + decimal
-      type="text" 
+      type="number" 
       inputMode="decimal"
-      {...register(`itens.${index}.quantidade`)}
+      step="0.001"
+      {...register(`itens.${index}.quantidade`, {
+        onChange: (e) => {
+          let val = e.target.value;
+          if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+            val = val.replace(/^0+/, '');
+          }
+          e.target.value = val;
+          setValue(`itens.${index}.quantidade`, val);
+        }
+      })}
       error={errors.itens?.[index]?.quantidade?.message}
       className="font-mono font-black text-center"
       disabled={isLocked}
@@ -142,8 +151,7 @@ export function Step2ItensServicos() {
     <Input
       label="Preço Unitário"
       type="text"
-      inputMode="numeric"
-      pattern="[0-9]*"
+      inputMode="decimal"
       {...register(`itens.${index}.valorPorUnidade`, {
         onChange: (e) => {
           e.target.value = formatarDinheiro(e.target.value);

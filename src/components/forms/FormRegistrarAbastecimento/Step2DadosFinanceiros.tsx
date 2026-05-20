@@ -122,7 +122,16 @@ export function Step2DadosFinanceiros() {
            type="number" inputMode="decimal"
            step="0.001"
            icon={<Droplets className="w-4 h-4 text-info" />}
-           {...register(`itens.${index}.quantidade`)}
+           {...register(`itens.${index}.quantidade`, {
+             onChange: (e) => {
+               let val = e.target.value;
+               if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+                 val = val.replace(/^0+/, '');
+               }
+               e.target.value = val;
+               setValue(`itens.${index}.quantidade`, val);
+             }
+           })}
            error={errors.itens?.[index]?.quantidade?.message as string}
            className="font-mono font-bold"
            disabled={isLocked}
@@ -131,8 +140,7 @@ export function Step2DadosFinanceiros() {
           <Input
            label="Valor Unitário"
            type="text"
-           inputMode="numeric"
-           pattern="[0-9]*"
+           inputMode="decimal"
            {...register(`itens.${index}.valorUnitario`, {
             onChange: (e) => {
              e.target.value = formatarDinheiro(e.target.value);
