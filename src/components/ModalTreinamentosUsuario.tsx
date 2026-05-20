@@ -235,7 +235,7 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
                 onClick={e => e.stopPropagation()}
             >
                 {/* ESQUERDA: FORMULÁRIO */}
-                <div className="w-full md:w-[420px] bg-surface p-5 sm:p-8 border-r border-border/60 overflow-y-auto flex flex-col custom-scrollbar">
+                <div className="w-full md:w-[420px] bg-surface p-5 sm:p-8 border-r border-border/60 overflow-y-auto flex flex-col scrollbar-thin">
                     
                     {/* Perfil do Colaborador */}
                     <div className="mb-8 flex items-center gap-4 pb-6 border-b border-border/60">
@@ -346,7 +346,7 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
                         </Button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-6 sm:p-8 bg-background custom-scrollbar">
+                    <div className="flex-1 overflow-y-auto p-6 sm:p-8 bg-background scrollbar-thin">
                         {loading ? (
                             <div className="grid gap-4 auto-rows-max">
                                 {[1, 2, 3].map(i => (

@@ -139,7 +139,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                              * disponível (considerando a posição do trigger + colisões de viewport).
                              * O max-h de 280px serve como teto absoluto para listas muito longas.
                              */}
-                            <RadixSelect.Viewport className="p-1 max-h-[min(280px,var(--radix-select-content-available-height))] overflow-y-auto custom-scrollbar">
+                            <RadixSelect.Viewport className="p-1 max-h-[min(280px,var(--radix-select-content-available-height))] overflow-y-auto scrollbar-thin">
                                 <RadixSelect.Group>
                                     {validOptions.map((opt) => (
                                         <RadixSelect.Item

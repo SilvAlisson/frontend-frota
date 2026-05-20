@@ -94,7 +94,7 @@ export function PullToRefresh({ onRefresh, children }: PullToRefreshProps) {
       {/* Container que Desliza */}
       <div 
         ref={scrollRef}
-        className="flex-1 w-full overflow-y-auto custom-scrollbar relative z-10 bg-background transition-transform duration-300"
+        className="flex-1 w-full overflow-y-auto scrollbar-thin relative z-10 bg-background transition-transform duration-300"
         style={{ 
           transform: `translateY(${refreshing ? MAX_PULL : pullDistance}px)`,
           // Se estiver puxando, remove a duração da transição para seguir o dedo instantaneamente

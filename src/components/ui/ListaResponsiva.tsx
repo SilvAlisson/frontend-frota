@@ -86,10 +86,10 @@ export function ListaResponsiva<T extends { id?: string | number }>({
        */}
       <div
         ref={virtualized ? virtualDesktopContainerRef : null}
-        className={`hidden lg:block animate-in fade-in slide-in-from-bottom-2 duration-500 ${TableStyles.wrapper} ${virtualized ? 'overflow-y-auto custom-scrollbar' : ''}`}
+        className={`hidden lg:block animate-in fade-in slide-in-from-bottom-2 duration-500 ${TableStyles.wrapper} ${virtualized ? 'overflow-y-auto scrollbar-thin' : ''}`}
         style={virtualized ? { height: virtualContainerHeight } : {}}
       >
-        <div className="overflow-x-auto min-h-full custom-scrollbar">
+        <div className="overflow-x-auto min-h-full scrollbar-thin">
           <table className="w-full text-sm text-left border-collapse block min-w-[800px]">
             <thead className={`w-full block ${virtualized ? "sticky top-0 z-10 bg-surface shadow-sm" : ""}`}>
               <tr className={`w-full grid ${desktopGridCols}`}>{desktopHeader}</tr>
@@ -150,7 +150,7 @@ export function ListaResponsiva<T extends { id?: string | number }>({
        */}
       <div
         ref={virtualized ? virtualMobileContainerRef : mobileParentRef}
-        className={`lg:hidden space-y-3 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${virtualized ? 'overflow-y-auto custom-scrollbar relative' : ''}`}
+        className={`lg:hidden space-y-3 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${virtualized ? 'overflow-y-auto scrollbar-thin relative' : ''}`}
         style={virtualized ? { height: virtualContainerHeight } : {}}
       >
         {virtualized ? (

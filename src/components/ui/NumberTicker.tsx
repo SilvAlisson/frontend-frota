@@ -1,4 +1,4 @@
-Ôªø// src/components/ui/NumberTicker.tsx
+// src/components/ui/NumberTicker.tsx
 import { useEffect, useState } from 'react';
 import { cn } from '../../lib/utils';
 
@@ -25,7 +25,7 @@ export function NumberTicker({
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / (duration * 1000), 1);
       
-      // Curva de Anima√ß√£o (EaseOutExpo): Come√ßa r√°pido e desacelera suavemente no fim
+      // Curva de AnimaÁ„o (EaseOutExpo): ComeÁa r·pido e desacelera suavemente no fim
       const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       
       setCurrent(value * easeProgress);
@@ -43,11 +43,11 @@ export function NumberTicker({
     return () => cancelAnimationFrame(animationFrameId);
   }, [value, duration]);
 
-  // Se o Usu√°rio fornecer um formatador (ex: R$), usamos. Sen√£o, formata√ß√£o padr√£o.
+  // Se o Usu·rio fornecer um formatador (ex: R$), usamos. Sen„o, formataÁ„o padr„o.
   const displayValue = formatter ? formatter(current) : current.toLocaleString('pt-BR');
 
   return (
-    // tabular-nums garante que os n√∫meros ocupam a mesma largura, evitando tremores (layout shift)
+    // tabular-nums garante que os n˙meros ocupam a mesma largura, evitando tremores (layout shift)
     <span className={cn("inline-block tabular-nums", className)}>
       {displayValue}
     </span>

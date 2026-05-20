@@ -65,7 +65,7 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
       </div>
 
       {/* Lista de Navegação (Scrollável) */}
-      <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto py-6 px-4 space-y-8 scrollbar-thin">
         {MENU_ITEMS
           .filter((group) => !group.roles || (user?.role && group.roles.includes(user.role)))
           .map((group, idx) => (
@@ -255,7 +255,7 @@ export function AdminLayout() {
       {/* Área Principal */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
         
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background custom-scrollbar scroll-smooth relative flex flex-col">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background scrollbar-thin scroll-smooth relative flex flex-col">
             
             {/* Header Mobile (Aparece só em < xl) */}
             {!isShareMode && (

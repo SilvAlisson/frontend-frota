@@ -239,7 +239,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                      </Button>
                                   </div>
 
-                                  <div className="flex-1 rounded-2xl bg-surface/50 border border-border/40 p-2 overflow-y-auto max-h-[350px] space-y-2 custom-scrollbar">
+                                  <div className="flex-1 rounded-2xl bg-surface/50 border border-border/40 p-2 overflow-y-auto max-h-[350px] space-y-2 scrollbar-thin">
                                      {jornadasAbertas.length === 0 ? (
                                         <div className="h-full flex flex-col items-center justify-center p-8 text-center opacity-70">
                                           <CheckCircle2 className="w-12 h-12 text-success/60 mb-3" />

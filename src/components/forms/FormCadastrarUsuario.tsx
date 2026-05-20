@@ -157,7 +157,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
 
-        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
+        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto scrollbar-thin">
 
           {/* Avatar Upload Redesenhado */}
           <div className="flex flex-col items-center mb-2">

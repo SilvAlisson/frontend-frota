@@ -151,7 +151,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
       <button
        onClick={handleManualRefresh}
        disabled={isRefreshing}
-       className="w-10 h-10 touch-target rounded-xl bg-surface/50 border border-border/40 hover:bg-surface flex items-center justify-center text-text-muted transition-all active:scale-90 focus-ring"
+       className="w-11 h-11 touch-target rounded-xl bg-surface/50 border border-border/40 hover:bg-surface flex items-center justify-center text-text-muted transition-all active:scale-90 focus-ring"
        aria-label="Atualizar Dados"
       >
        <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
@@ -162,7 +162,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
         vibrateLight();
         toggleTheme();
        }}
-       className="w-10 h-10 touch-target rounded-xl bg-surface/50 border border-border/40 hover:bg-surface flex items-center justify-center text-text-muted transition-all focus-ring"
+       className="w-11 h-11 touch-target rounded-xl bg-surface/50 border border-border/40 hover:bg-surface flex items-center justify-center text-text-muted transition-all focus-ring"
        aria-label="Alterar Tema"
       >
        {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
@@ -173,7 +173,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
         vibrateMedium();
         logout();
        }}
-       className="w-10 h-10 touch-target rounded-xl bg-error/5 border border-error/10 hover:bg-error/20 flex items-center justify-center text-error transition-all hover:rotate-12 focus-ring"
+       className="w-11 h-11 touch-target rounded-xl bg-error/5 border border-error/10 hover:bg-error/20 flex items-center justify-center text-error transition-all hover:rotate-12 focus-ring"
        aria-label="Sair"
       >
        <LogOut className="w-4 h-4" />
@@ -184,7 +184,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
    </header>
 
    {/* ─── ÁREA PRINCIPAL ────────────────────────────────────────────────── */}
-   <main className="max-w-2xl mx-auto px-4 sm:px-8 pt-6 pb-32 lg:pb-10 space-y-6">
+   <main className="max-w-2xl mx-auto px-4 sm:px-8 pt-6 pb-32 lg:pb-10 space-y-6 @container">
 
     {/* === BLOCO DE JORNADA === */}
     {!tenhoJornadaAtiva ? (
@@ -236,7 +236,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
     )}
 
     {/* === ACESSO RÁPIDO (Visível apenas em DESKTOP) === */}
-    <div className="hidden lg:grid lg:grid-cols-2 gap-4 pt-2">
+    <div className="hidden lg:grid @max-md:grid-cols-1 @md:grid-cols-2 gap-4 pt-2">
      <h2 className="lg:col-span-2 text-[10px] font-black text-text-secondary uppercase tracking-[0.2em]">
       Acesso Rápido
      </h2>
@@ -261,9 +261,9 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
        <div className={cn("p-3.5 rounded-2xl border border-transparent shadow-inner group-hover:scale-110 transition-transform duration-300", accent)}>
         <Icon className="w-6 h-6" />
        </div>
-       <div className="flex-1 min-w-0">
-        <span className="block font-black text-text-main tracking-tight mb-0.5">{label}</span>
-        <span className="text-xs font-bold text-text-secondary opacity-80">{sub}</span>
+       <div className="flex-1 min-w-0 flex flex-col justify-center">
+        <span className="block font-black text-text-main tracking-tight mb-0.5 truncate">{label}</span>
+        <span className="block text-xs font-bold text-text-secondary opacity-80 truncate">{sub}</span>
        </div>
       </button>
      ))}

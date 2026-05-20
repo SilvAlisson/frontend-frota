@@ -150,7 +150,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
         <form onSubmit={handleFormSubmit} className="flex-1 flex flex-col min-h-0 relative">
           
           {/* A classe flex-1 faz essa div ocupar o espaço do meio, e o overflow-y-auto gera a barra de rolagem. */}
-          <div data-vaul-no-drag className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 custom-scrollbar pb-[15vh] md:pb-6 relative scroll-smooth">
+          <div data-vaul-no-drag className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 scrollbar-thin pb-[15vh] md:pb-6 relative scroll-smooth">
             {step === 1 && <Step1DadosGerais />}
             {step === 2 && <Step2ItensServicos />}
             {step === 3 && <Step3Confirmacao />}

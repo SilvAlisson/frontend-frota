@@ -170,7 +170,7 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
 
       <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSubmit(onSubmit)}>
         
-        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
+        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto scrollbar-thin">
 
           {/* SECÇÃO 1: INFORMAÇÕES BÁSICAS */}
           <section className="space-y-5">

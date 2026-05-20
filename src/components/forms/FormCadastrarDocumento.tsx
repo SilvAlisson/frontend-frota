@@ -152,7 +152,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
 
       <form onSubmit={handleSubmit(handleUploadAndSubmit)} className="flex flex-col flex-1 min-h-0">
 
-        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
+        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto scrollbar-thin">
 
           {/* ÁREA DE UPLOAD */}
           <div className="space-y-2">

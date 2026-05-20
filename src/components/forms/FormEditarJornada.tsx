@@ -201,7 +201,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
-        <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-8 space-y-8 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-8 space-y-8 scrollbar-thin">
 
           {/* 1. VÍNCULOS */}
           <div className="space-y-5">

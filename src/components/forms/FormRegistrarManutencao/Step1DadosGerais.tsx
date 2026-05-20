@@ -14,7 +14,7 @@ import type { ManutencaoFormValues, TipoManutencao } from './schema';
 
 export function Step1DadosGerais() {
   const { register, watch, setValue, control, formState: { errors, isSubmitting } } = useFormContext<ManutencaoFormValues>();
-  
+
   const { data: veiculos = [], isLoading: loadV } = useVeiculos();
   const { data: fornecedores = [], isLoading: loadF } = useFornecedores();
 
@@ -29,16 +29,16 @@ export function Step1DadosGerais() {
   const kmAtualNum = Number(kmAtualVisual?.replace(/\D/g, '')) || 0;
   const isKmInvalido = ultimoKmRegistrado > 0 && kmAtualNum > 0 && kmAtualNum < ultimoKmRegistrado;
 
-  const fornecedoresOpcoes = useMemo(() => 
+  const fornecedoresOpcoes = useMemo(() =>
     fornecedores.filter(f => {
-        if (['OFICINA', 'MECANICA', 'OUTRO'].includes(f.tipo)) return true;
-        if (['LAVA_JATO', 'POSTO'].includes(f.tipo)) return tipoManutencao === 'PREVENTIVA';
-        return false;
-      }).map(f => ({ value: f.id, label: f.nome })),
+      if (['OFICINA', 'MECANICA', 'OUTRO'].includes(f.tipo)) return true;
+      if (['LAVA_JATO', 'POSTO'].includes(f.tipo)) return tipoManutencao === 'PREVENTIVA';
+      return false;
+    }).map(f => ({ value: f.id, label: f.nome })),
     [fornecedores, tipoManutencao]
   );
 
-  const veiculosOpcoes = useMemo(() => 
+  const veiculosOpcoes = useMemo(() =>
     veiculos
       .filter(v => v.status !== 'INATIVO')
       .map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` })),
@@ -63,7 +63,7 @@ export function Step1DadosGerais() {
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-2">
-      
+
       {/* SEÇÃO 1: NATUREZA DO SERVIÇO */}
       <div className="flex items-center gap-2 border-b border-border/50 pb-2">
         <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
@@ -79,7 +79,7 @@ export function Step1DadosGerais() {
             disabled={isLocked}
             className={`
               py-3 text-xs font-black tracking-widest uppercase rounded-xl transition-all duration-300 truncate min-w-0
-              ${tipoManutencao === t 
+              ${tipoManutencao === t
                 ? (t === 'CORRETIVA' ? 'bg-error text-white shadow-md' : 'bg-success text-white shadow-md')
                 : 'text-text-muted hover:text-text-main hover:bg-surface/80'}
             `}
@@ -135,32 +135,32 @@ export function Step1DadosGerais() {
 
           {/*  CADEADO DE RESPONSIVIDADE: flex flex-col min-w-0 */}
           <div className="flex flex-col min-w-0">
-  <Input
-    label="KM na entrada da oficina (Opcional)"
-    icon={<Gauge className="w-4 h-4 text-primary" />}
-    
-    // 🔥 O COMBO NUCLEAR: Força o teclado numérico
-    type="text" 
-    inputMode="numeric"
-    
-    {...register("kmAtual")}
-    onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
-    placeholder={ultimoKmRegistrado > 0 ? `Ref: ${ultimoKmRegistrado}` : "Ex: 15.000"}
-    error={errors.kmAtual?.message}
-    className="font-mono font-black text-primary"
-    disabled={isLocked}
-    containerClassName="!mb-1"
-  />
-  {ultimoKmRegistrado > 0 && (
-    <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-1.5 ml-1 truncate">
-      Último Registro: <strong className="text-text-main font-mono">{ultimoKmRegistrado.toLocaleString('pt-BR')} km</strong>
-    </p>
-  )}
-</div>
+            <Input
+              label="KM na entrada da oficina (Opcional)"
+              icon={<Gauge className="w-4 h-4 text-primary" />}
+
+              //  Força o teclado numérico
+              type="text"
+              inputMode="numeric"
+
+              {...register("kmAtual")}
+              onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
+              placeholder={ultimoKmRegistrado > 0 ? `Ref: ${ultimoKmRegistrado}` : "Ex: 15.000"}
+              error={errors.kmAtual?.message}
+              className="font-mono font-black text-primary"
+              disabled={isLocked}
+              containerClassName="!mb-1"
+            />
+            {ultimoKmRegistrado > 0 && (
+              <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-1.5 ml-1 truncate">
+                Último Registro: <strong className="text-text-main font-mono">{ultimoKmRegistrado.toLocaleString('pt-BR')} km</strong>
+              </p>
+            )}
+          </div>
         </div>
       ) : (
         <div className="min-w-0">
-          <Input 
+          <Input
             label="Identificação (Série / CA / Património)"
             {...register("numeroCA")}
             placeholder="Ex: BETONEIRA-01 ou CA-12345"
@@ -204,7 +204,7 @@ export function Step1DadosGerais() {
             )}
           />
         </div>
-        
+
         {/*  CADEADO DE RESPONSIVIDADE: min-w-0 */}
         <div className="min-w-0">
           <Controller

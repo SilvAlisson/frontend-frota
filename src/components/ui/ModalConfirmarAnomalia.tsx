@@ -115,7 +115,7 @@ export function ModalConfirmarAnomalia({
         </div>
 
         {/* ── Corpo (scrollável se conteúdo for grande) ── */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar px-5 sm:px-6 py-4 sm:py-5 space-y-4 min-h-0" id={descId}>
+        <div className="flex-1 overflow-y-auto scrollbar-thin px-5 sm:px-6 py-4 sm:py-5 space-y-4 min-h-0" id={descId}>
           {/* Destaque do custo total — flex-wrap para valores longos */}
           <div className="flex flex-wrap items-center justify-between gap-2 bg-surface-hover/50 border border-border/60 rounded-2xl px-4 sm:px-5 py-3 sm:py-4">
             <span className="text-sm font-bold text-text-secondary shrink-0">Custo Total Calculado:</span>

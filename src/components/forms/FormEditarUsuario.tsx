@@ -225,7 +225,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
 
       <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSubmit(onSubmit)}>
 
-        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
+        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto scrollbar-thin">
 
           {/* AVATAR UPLOAD (Redesenhado) */}
           <div className="flex flex-col items-center mb-2">

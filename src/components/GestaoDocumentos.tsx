@@ -177,7 +177,7 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
       ) : (
         <>
           <div className="relative group">
-            <div className="flex gap-2 overflow-x-auto pb-3 custom-scrollbar">
+            <div className="flex gap-2 overflow-x-auto pb-3 scrollbar-thin">
               {CATEGORIAS.map(cat => (
                 <Button
                   key={cat.id}

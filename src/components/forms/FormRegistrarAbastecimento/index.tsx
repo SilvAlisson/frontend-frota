@@ -146,7 +146,7 @@ export function FormRegistrarAbastecimento({
           
           {/* 3. SCROLL APENAS ONDE PRECISA - Body ganha um pb-[15vh] para o último input não ficar escondido pelo teclado */}
           <div
-          data-vaul-no-drag className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 custom-scrollbar pb-[15vh] md:pb-6 relative scroll-smooth">
+          data-vaul-no-drag className="flex-1 overflow-y-auto px-4 sm:px-8 py-4 sm:py-6 scrollbar-thin pb-[15vh] md:pb-6 relative scroll-smooth">
             {step === 1 && <Step1DadosOperacionais />}
             {step === 2 && <Step2DadosFinanceiros />}
             {step === 3 && <Step3Confirmacao />}

@@ -1,4 +1,4 @@
-Ôªøimport { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { toast } from 'sonner';
@@ -18,7 +18,7 @@ export function RedefinirSenha() {
 
   useEffect(() => {
     if (!token) {
-      toast.error('Link de recupera√ß√£o inv√°lido ou ausente.');
+      toast.error('Link de recuperaÁ„o inv·lido ou ausente.');
     }
   }, [token]);
 
@@ -26,7 +26,7 @@ export function RedefinirSenha() {
     e.preventDefault();
 
     if (password !== confirmPassword) {
-      toast.error('As palavras-passes n√£o coincidem!');
+      toast.error('As palavras-passes n„o coincidem!');
       return;
     }
     if (password.length < 6) {
@@ -49,7 +49,7 @@ export function RedefinirSenha() {
   if (!token) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4">
-        <p className="text-error font-bold mb-4">Link inv√°lido. Por favor, solicite a recupera√ß√£o novamente.</p>
+        <p className="text-error font-bold mb-4">Link inv·lido. Por favor, solicite a recuperaÁ„o novamente.</p>
         <Button onClick={() => navigate('/login')} variant="secondary">Ir para Login</Button>
       </div>
     );
@@ -104,14 +104,14 @@ export function RedefinirSenha() {
           <div className="flex flex-col gap-4 mt-2">
             <div className="bg-success/10 border border-success/20 p-4 rounded-xl text-center">
               <p className="text-success font-bold text-sm">
-                A sua palavra-passe foi atualizada com seguran√ßa!
+                A sua palavra-passe foi atualizada com seguranÁa!
               </p>
             </div>
             <Button 
               onClick={() => navigate('/login')} 
               className="w-full h-12"
             >
-              Iniciar Sess√£o Agora
+              Iniciar Sess„o Agora
             </Button>
           </div>
         )}

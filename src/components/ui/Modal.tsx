@@ -115,7 +115,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
             {/* data-vaul-no-drag impede o Vaul de roubar o toque na área de scroll */}
             <div
               data-vaul-no-drag
-              className="flex-1 overflow-y-auto overflow-x-hidden p-5 custom-scrollbar min-h-0 relative overscroll-contain"
+              className="flex-1 overflow-y-auto overflow-x-hidden p-5 scrollbar-thin min-h-0 relative overscroll-contain"
             >
               {children}
             </div>
@@ -171,7 +171,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
         </div>
 
         {/* Corpo com scroll interno */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden relative w-full rounded-b-[2rem] bg-surface custom-scrollbar min-h-0">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden relative w-full rounded-b-[2rem] bg-surface scrollbar-thin min-h-0">
           <div className="p-5">
             {children}
           </div>

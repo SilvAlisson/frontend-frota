@@ -1,4 +1,4 @@
-ï»¿import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
@@ -52,9 +52,9 @@ export function RankingOperadores() {
     
     const acaoExportar = async () => {
       const dados = ranking.map((v, i) => ({
-        'PosiÃ§Ã£o': `${i + 1}Âº`,
-        'VeÃ­culo': `${v.placa} - ${v.modelo}`,
-        'MÃ©dia (Km/L)': v.kml.toFixed(2).replace('.', ','),
+        'Posição': `${i + 1}º`,
+        'Veículo': `${v.placa} - ${v.modelo}`,
+        'Média (Km/L)': v.kml.toFixed(2).replace('.', ','),
         'KM Total': v.totalKM,
         'Consumo (L)': v.totalLitros
       }));
@@ -62,7 +62,7 @@ export function RankingOperadores() {
     };
 
     toast.promise(acaoExportar(), {
-      loading: 'Gerando relatÃ³rio...',
+      loading: 'Gerando relatório...',
       success: 'Ranking exportado com sucesso!',
       error: 'Erro ao gerar planilha.'
     });
@@ -73,7 +73,7 @@ export function RankingOperadores() {
   const isConsumoRuim = (kml: number) => kml < 2.0;
 
   const opcoesMes = useMemo(() => [
-    { value: 1, label: 'Janeiro' }, { value: 2, label: 'Fevereiro' }, { value: 3, label: 'MarÃ§o' },
+    { value: 1, label: 'Janeiro' }, { value: 2, label: 'Fevereiro' }, { value: 3, label: 'Março' },
     { value: 4, label: 'Abril' }, { value: 5, label: 'Maio' }, { value: 6, label: 'Junho' },
     { value: 7, label: 'Julho' }, { value: 8, label: 'Agosto' }, { value: 9, label: 'Setembro' },
     { value: 10, label: 'Outubro' }, { value: 11, label: 'Novembro' }, { value: 12, label: 'Dezembro' }
@@ -92,10 +92,10 @@ export function RankingOperadores() {
       <div className="flex flex-col xl:flex-row justify-between items-start xl:items-end gap-4 border-b border-border/60 pb-6">
         <div>
           <h2 className="text-2xl font-black text-text-main tracking-tight flex items-center gap-2">
-            <Trophy className="w-6 h-6 text-yellow-500 drop-shadow-sm" /> EficiÃªncia da Frota
+            <Trophy className="w-6 h-6 text-yellow-500 drop-shadow-sm" /> Eficiência da Frota
           </h2>
           <p className="text-sm font-medium text-text-secondary mt-1">
-            AnÃ¡lise de consumo por ativo (VeÃ­culo).
+            Análise de consumo por ativo (Veículo).
           </p>
         </div>
 
@@ -157,15 +157,15 @@ export function RankingOperadores() {
           <Card padding="none" className="overflow-hidden border-border/60 shadow-sm rounded-3xl bg-surface">
             <ListaResponsiva
               itens={ranking}
-              emptyMessage="Nenhum dado consolidado encontrado para este perÃ­odo."
+              emptyMessage="Nenhum dado consolidado encontrado para este período."
 
               // HEADER
               desktopHeader={
                 <>
-                  <th className={`${TableStyles.th} pl-8 py-5 text-center`}>PosiÃ§Ã£o</th>
-                  <th className={`${TableStyles.th} w-full text-left`}>VeÃ­culo</th>
-                  <th className={`${TableStyles.th} text-right whitespace-nowrap`}>EficiÃªncia (Km/L)</th>
-                  <th className={`${TableStyles.th} text-right whitespace-nowrap`}>DistÃ¢ncia (KM)</th>
+                  <th className={`${TableStyles.th} pl-8 py-5 text-center`}>Posição</th>
+                  <th className={`${TableStyles.th} w-full text-left`}>Veículo</th>
+                  <th className={`${TableStyles.th} text-right whitespace-nowrap`}>Eficiência (Km/L)</th>
+                  <th className={`${TableStyles.th} text-right whitespace-nowrap`}>Distância (KM)</th>
                   <th className={`${TableStyles.th} text-right pr-8 whitespace-nowrap`}>Consumo Total</th>
                 </>
               }
@@ -180,7 +180,7 @@ export function RankingOperadores() {
                         idx === 2 ? 'bg-orange-500/10 text-orange-600 border-orange-500/30' :
                         'bg-surface-hover text-text-muted border-border/60'
                       }`}>
-                      {idx + 1}Âº
+                      {idx + 1}º
                     </span>
                   </td>
 
@@ -200,7 +200,7 @@ export function RankingOperadores() {
                     <div className="flex flex-col items-end gap-1.5 w-full">
                       <div className="flex items-center justify-end gap-2 w-full">
                         {isConsumoRuim(v.kml) && (
-                          <span title="Consumo CrÃ­tico - Alerta de ManutenÃ§Ã£o">
+                          <span title="Consumo Crítico - Alerta de Manutenção">
                              <AlertTriangle className="w-4 h-4 text-error animate-pulse" />
                           </span>
                         )}
@@ -236,7 +236,7 @@ export function RankingOperadores() {
                       idx === 2 ? 'bg-orange-500/10 text-orange-600 border-orange-500/30' :
                       'bg-surface-hover text-text-muted border-border/60'
                     }`}>
-                    {idx + 1}Âº
+                    {idx + 1}º
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start mb-3">
@@ -244,12 +244,12 @@ export function RankingOperadores() {
                         <h4 className="font-black text-text-main text-lg tracking-tight leading-none">{v.placa}</h4>
                         <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mt-1 truncate max-w-[150px]">{v.modelo}</p>
                       </div>
-                      {isConsumoRuim(v.kml) && <Badge variant="danger" className="text-[9px] px-1.5 shadow-sm">CrÃ­tico</Badge>}
+                      {isConsumoRuim(v.kml) && <Badge variant="danger" className="text-[9px] px-1.5 shadow-sm">Crítico</Badge>}
                     </div>
                     
                     <div className="grid grid-cols-3 gap-2 bg-surface-hover/50 p-2.5 rounded-xl border border-border/40">
                       <div className="flex flex-col items-center justify-center p-1 bg-surface rounded-lg border border-border/50">
-                        <span className="text-[9px] uppercase text-text-muted font-black tracking-widest mb-0.5">MÃ©dia</span>
+                        <span className="text-[9px] uppercase text-text-muted font-black tracking-widest mb-0.5">Média</span>
                         <span className={`font-mono font-black text-sm tracking-tighter ${isConsumoRuim(v.kml) ? 'text-error' : 'text-primary'}`}>{fmtKml(v.kml)}</span>
                       </div>
                       <div className="flex flex-col items-center justify-center p-1 bg-surface rounded-lg border border-border/50">
@@ -272,7 +272,7 @@ export function RankingOperadores() {
   );
 }
 
-// Subcomponente Podium (100% CompatÃ­vel com Dark Mode)
+// Subcomponente Podium (100% Compatível com Dark Mode)
 function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoRanking, isWinner?: boolean }) {
   const config = {
     1: {
@@ -280,7 +280,7 @@ function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoR
       border: 'border-yellow-500/30',
       text: 'text-yellow-600 dark:text-yellow-500',
       icon: Trophy,
-      label: 'Mais EconÃ´mico',
+      label: 'Mais Econômico',
       labelBg: 'bg-yellow-500 text-white'
     },
     2: {
@@ -288,7 +288,7 @@ function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoR
       border: 'border-slate-500/30',
       text: 'text-slate-600 dark:text-slate-400',
       icon: Medal,
-      label: '2Âº Lugar',
+      label: '2º Lugar',
       labelBg: 'bg-slate-500 text-white'
     },
     3: {
@@ -296,7 +296,7 @@ function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoR
       border: 'border-orange-500/30',
       text: 'text-orange-600 dark:text-orange-500',
       icon: Award,
-      label: '3Âº Lugar',
+      label: '3º Lugar',
       labelBg: 'bg-orange-500 text-white'
     }
   }[pos as 1 | 2 | 3];
@@ -313,7 +313,7 @@ function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoR
       {/* Reflexo / Brilho Sutil */}
       <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent dark:from-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
 
-      {/* PosiÃ§Ã£o Gigante de Fundo (Mais discreto no dark mode) */}
+      {/* Posição Gigante de Fundo (Mais discreto no dark mode) */}
       <div className={`absolute -top-4 -right-2 font-black text-9xl opacity-[0.07] dark:opacity-[0.04] select-none ${config.text} drop-shadow-md`}>
         {pos}
       </div>
@@ -322,7 +322,7 @@ function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoR
         <Icon className="w-6 h-6" />
       </div>
 
-      {/* Avatar do VeÃ­culo */}
+      {/* Avatar do Veículo */}
       <div className="relative mb-5">
         <div className={`w-20 h-20 rounded-2xl border-2 border-surface shadow-lg flex items-center justify-center bg-surface/80 backdrop-blur-xl overflow-hidden transform group-hover:scale-110 transition-transform ${config.text}`}>
           <Truck className="w-10 h-10 drop-shadow-sm" />
@@ -338,7 +338,7 @@ function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoR
       {/* Stats Box */}
       <div className="w-full bg-surface/80 rounded-2xl p-3 backdrop-blur-xl border border-border/50 shadow-sm relative z-10">
         <div className="flex flex-col">
-          <span className={`text-[9px] uppercase tracking-[0.2em] font-black mb-0.5 opacity-80 ${config.text}`}>MÃ©dia de Consumo</span>
+          <span className={`text-[9px] uppercase tracking-[0.2em] font-black mb-0.5 opacity-80 ${config.text}`}>Média de Consumo</span>
           <span className={`font-mono font-black text-3xl tracking-tighter ${config.text}`}>
             {veiculo.kml.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             <span className="text-[10px] uppercase tracking-widest font-bold ml-1 opacity-70">km/l</span>

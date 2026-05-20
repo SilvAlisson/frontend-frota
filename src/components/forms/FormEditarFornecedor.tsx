@@ -177,7 +177,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
         
-        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto custom-scrollbar">
+        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto scrollbar-thin">
 
           <div className="space-y-6">
               <div className="flex items-center gap-2 border-b border-border/50 pb-2">

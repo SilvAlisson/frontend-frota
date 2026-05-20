@@ -253,7 +253,7 @@ export function GestaoAuditoria() {
                        {log.detalhes && (
                          <div className="mt-3 bg-surface-hover/80 border border-border/60 rounded-xl p-3 relative overflow-hidden group-hover:border-primary/50 transition-colors group/terminal">
                             <div className="absolute top-0 left-0 w-1 h-full bg-border" />
-                            <p className="text-xs text-text-muted font-mono whitespace-pre-wrap break-words leading-relaxed ml-2 max-h-40 overflow-y-auto custom-scrollbar">
+                            <p className="text-xs text-text-muted font-mono whitespace-pre-wrap break-words leading-relaxed ml-2 max-h-40 overflow-y-auto scrollbar-thin">
                               <span className="text-primary/70 select-none">{'> '}</span>{log.detalhes}
                             </p>
                             <button 

@@ -101,7 +101,7 @@ export function ConfirmModal({
             />
 
             {/* Card do Modal — viewport-safe */}
-            <div className="relative bg-surface rounded-2xl shadow-2xl shadow-black/60 border border-white/10 w-full max-w-sm max-h-[92dvh] overflow-y-auto custom-scrollbar p-5 sm:p-6 transform transition-all animate-in zoom-in-95 slide-in-from-bottom-2 duration-300">
+            <div className="relative bg-surface rounded-2xl shadow-2xl shadow-black/60 border border-white/10 w-full max-w-sm max-h-[92dvh] overflow-y-auto scrollbar-thin p-5 sm:p-6 transform transition-all animate-in zoom-in-95 slide-in-from-bottom-2 duration-300">
 
                 {/* Botão fechar */}
                 <button

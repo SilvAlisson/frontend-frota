@@ -139,7 +139,7 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
       title="Catálogo de Manutenção" 
       className="max-w-5xl"
     >
-      <div className="flex flex-col md:flex-row gap-8 p-2 max-h-[75vh] overflow-y-auto custom-scrollbar">
+      <div className="flex flex-col md:flex-row gap-8 p-2 max-h-[75vh] overflow-y-auto scrollbar-thin">
 
         {/* COLUNA 1: FORMULÁRIO */}
         <div className="w-full md:w-1/3 flex flex-col gap-6 h-fit shrink-0 md:sticky md:top-0">

@@ -135,7 +135,7 @@ export function VeiculoDetalhes() {
             </div>
 
             {/* ✨ NAVEGAÇÃO POR ABAS (TABS) */}
-            <div className="flex justify-center md:justify-start w-full overflow-x-auto pb-4 custom-scrollbar">
+            <div className="flex justify-center md:justify-start w-full overflow-x-auto pb-4 scrollbar-thin">
                 <Tabs
                     tabs={abasProntuario}
                     activeTab={abaAtiva}
@@ -182,7 +182,7 @@ export function VeiculoDetalhes() {
                                 </div>
                                 <h3 className="font-black text-text-main text-lg tracking-tight">Histórico de Oficina</h3>
                             </div>
-                            <div className="divide-y divide-border/30 overflow-y-auto max-h-[500px] custom-scrollbar pr-2 relative">
+                            <div className="divide-y divide-border/30 overflow-y-auto max-h-[500px] scrollbar-thin pr-2 relative">
                                 <div className="absolute left-6 top-0 bottom-0 w-px bg-border/40 -z-10" />
                                 {(veiculo.ordensServico || []).slice(0, limiteManutencoes).map((m: OrdemServico, idx: number) => (
                                     <div key={m.id} className={`py-4 flex justify-between items-center transition-colors group px-4 rounded-xl ml-2 hover-lift ${idx === 0 ? 'ghost-row bg-surface-hover/30' : 'hover:bg-surface-hover/50'}`}>
@@ -228,7 +228,7 @@ export function VeiculoDetalhes() {
                                 </div>
                                 <h3 className="font-black text-text-main text-lg tracking-tight">Registros de Combustível</h3>
                             </div>
-                            <div className="divide-y divide-border/30 overflow-y-auto max-h-[500px] custom-scrollbar pr-2 relative">
+                            <div className="divide-y divide-border/30 overflow-y-auto max-h-[500px] scrollbar-thin pr-2 relative">
                                 <div className="absolute left-6 top-0 bottom-0 w-px bg-border/40 -z-10" />
                                 {(veiculo.abastecimentos || []).slice(0, limiteAbastecimentos).map((a: Abastecimento, idx: number) => (
                                     <div key={a.id} className={`py-4 flex justify-between items-center transition-colors group px-4 rounded-xl ml-2 hover-lift ${idx === 0 ? 'ghost-row bg-surface-hover/30' : 'hover:bg-surface-hover/50'}`}>
