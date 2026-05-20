@@ -42,11 +42,13 @@ function AppContent() {
 }
 
 import { TooltipProvider } from './components/ui/Tooltip';
+import { NetworkStatus } from './components/ui/NetworkStatus';
 
 function App() {
   return (
     <ThemeProvider>
       <TooltipProvider delayDuration={300}>
+        <NetworkStatus />
         <AppContent />
       </TooltipProvider>
     </ThemeProvider>

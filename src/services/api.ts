@@ -2,6 +2,7 @@ import axios, { type InternalAxiosRequestConfig, type AxiosError } from 'axios';
 import { RENDER_API_BASE_URL } from '../config';
 import { toast } from 'sonner';
 import { getDeviceContext } from '../utils/errorHandler';
+import { hapticSuccess } from '../lib/haptics';
 
 export interface CustomAxiosError extends AxiosError {
   _toastHandled?: boolean;
@@ -113,6 +114,14 @@ function logToAuditTracker(error: AxiosError, duration: number, userLogadoInfo: 
 // --- Interceptor de Resposta ---
 api.interceptors.response.use(
   (response) => {
+    // 📳 HAPTICS: Se for uma operação de escrita (Salvar, Editar, Apagar), vibrar em comemoração
+    const method = response.config?.method?.toLowerCase();
+    if (method && ['post', 'put', 'patch', 'delete'].includes(method)) {
+      // Evita vibrar apenas ao enviar logs
+      if (!response.config?.url?.includes('logs') && response.status >= 200 && response.status < 300) {
+        hapticSuccess();
+      }
+    }
     return response;
   },
   (error: AxiosError & { config: { metadata?: { startTime: Date } } }) => {

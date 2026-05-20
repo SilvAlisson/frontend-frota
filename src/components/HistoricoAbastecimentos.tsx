@@ -27,6 +27,7 @@ import { ConfirmModal } from './ui/ConfirmModal';
 import { DatePicker } from './ui/DatePicker';
 import { Lightbox } from './ui/Lightbox';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/Tooltip';
+import { PullToRefresh } from './ui/PullToRefresh';
 
 interface HistoricoAbastecimentosProps {
  userRole: string;
@@ -237,7 +238,8 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
  ], [fornecedores]);
 
  return (
-  <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+  <PullToRefresh onRefresh={fetchHistorico}>
+   <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
    <PageHeader 
     title="Boletim de Abastecimentos"
@@ -589,8 +591,10 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
    />
 
   </div>
+  </PullToRefresh>
  );
 }
+
 
 
 

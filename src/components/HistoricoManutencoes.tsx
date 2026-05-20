@@ -26,6 +26,7 @@ import { TableStyles } from '../styles/table';
 import { Lightbox } from './ui/Lightbox';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/Tooltip';
 import { DateHelper } from '../lib/dateHelper';
+import { PullToRefresh } from './ui/PullToRefresh';
 
 // --- FORMS ---
 import { FormEditarManutencao } from './forms/FormEditarManutencao';
@@ -222,7 +223,8 @@ export function HistoricoManutencoes({
  ], [fornecedores]);
 
  return (
-  <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+  <PullToRefresh onRefresh={fetchHistorico}>
+   <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
    {/* 1. HEADER & FILTROS */}
    <PageHeader
@@ -558,5 +560,7 @@ export function HistoricoManutencoes({
    />
 
   </div>
+  </PullToRefresh>
  );
 }
+
