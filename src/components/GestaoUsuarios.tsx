@@ -16,8 +16,6 @@ import { TableStyles } from '../styles/table';
 import { toast } from 'sonner';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
-import { DropdownAcoes } from './ui/DropdownAcoes';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
 
 import { 
   Trash2, Edit2, QrCode, GraduationCap, 
@@ -272,7 +270,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
             // --- MOBILE (Cards) ---
             renderMobile={(u) => (
               <div className="p-5 border-b border-border/50 hover:bg-surface-hover/30 transition-colors cursor-pointer hover-lift rounded-2xl m-2 glass" onClick={() => setUsuarioParaEditar(u)}>
-                <div className="flex items-start justify-between">
+                <div className="flex flex-col">
                   <div className="flex items-start gap-4">
                     <Avatar nome={u.nome} url={u.fotoUrl} size="lg" />
                     <div className="flex flex-col gap-0.5">
@@ -282,30 +280,20 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                     </div>
                   </div>
 
-                  <div onClick={e => e.stopPropagation()} className="shrink-0 -mr-2 -mt-2">
-                    <DropdownAcoes
-                      onEditar={() => setUsuarioParaEditar(u)}
-                      onExcluir={() => handleDeleteRequest(u)}
-                      excluirLabel="Inativar"
-                    >
-                      <DropdownMenu.Item 
-                        onSelect={(e) => { e.preventDefault(); setUsuarioParaTreinamento(u); }}
-                        className="flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-text-main rounded-lg cursor-pointer outline-none hover:bg-surface-hover focus:bg-surface-hover transition-colors group"
-                      >
-                        <GraduationCap className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" />
-                        Treinos
-                      </DropdownMenu.Item>
+                  <div className="mt-5 grid grid-cols-2 gap-2 border-t border-dashed border-border/60 pt-4" onClick={e => e.stopPropagation()}>
+                    <Button variant="secondary" className="text-[11px] h-10 w-full bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => setUsuarioParaTreinamento(u)}>Treinos</Button>
+                    <Button variant="secondary" className="text-[11px] h-10 w-full bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => setUsuarioParaEditar(u)}>Editar</Button>
 
-                      {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') && (
-                        <DropdownMenu.Item 
-                          onSelect={(e) => { e.preventDefault(); handleAbrirQrModal(u); }}
-                          className="flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-success rounded-lg cursor-pointer outline-none hover:bg-success/10 focus:bg-success/10 transition-colors group"
-                        >
-                          <QrCode className="w-4 h-4 text-success/70 group-hover:text-success transition-colors" />
-                          Acesso QR
-                        </DropdownMenu.Item>
-                      )}
-                    </DropdownAcoes>
+                    {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') ? (
+                      <>
+                        <Button variant="secondary" className="text-[11px] h-10 w-full bg-success/10 text-success border-success/20 hover:bg-success/20 rounded-xl justify-center" onClick={() => handleAbrirQrModal(u)}>Acesso QR</Button>
+                        <Button variant="secondary" className="text-[11px] h-10 w-full bg-error/10 text-error border-error/20 hover:bg-error/20 rounded-xl justify-center" onClick={() => handleDeleteRequest(u)}>Inativar</Button>
+                      </>
+                    ) : (
+                      <div className="col-span-2">
+                        <Button variant="secondary" className="text-[11px] h-10 w-full bg-error/10 text-error border-error/20 hover:bg-error/20 rounded-xl justify-center" onClick={() => handleDeleteRequest(u)}>Inativar</Button>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
