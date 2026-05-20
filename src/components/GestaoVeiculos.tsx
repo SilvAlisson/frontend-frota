@@ -202,6 +202,7 @@ export function GestaoVeiculos() {
                     onVerDetalhes={() => navigate(`/admin/veiculos/${v.id}`)}
                     onEditar={() => setVeiculoParaEditar(v)}
                     onExcluir={() => setVeiculoParaExcluir(v.id)}
+                    excluirLabel="Inativar"
                   />
                 )
               }

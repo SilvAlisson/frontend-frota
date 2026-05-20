@@ -462,15 +462,17 @@ export function HistoricoManutencoes({
             )}
            </div>
           </div>
-          <div className="flex flex-col items-end gap-2 shrink-0 max-w-[120px]">
-           <div className="w-full flex justify-end truncate">
-           {getBadgeStatus(os.status)}
-           <DropdownAcoes
-            onEditar={canEdit ? () => setEditingOS(os) : undefined}
-            onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
-           />
+          <div className="flex flex-col items-end gap-1 shrink-0 ml-auto">
+           <div className="flex items-center justify-end gap-1 flex-wrap">
+            <div className="scale-90 origin-right">
+             {getBadgeStatus(os.status)}
+            </div>
+            <DropdownAcoes
+             onEditar={canEdit ? () => setEditingOS(os) : undefined}
+             onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
+            />
+           </div>
           </div>
-         </div>
          </div>
          <div className="flex justify-between items-center bg-surface-hover/50 p-3 rounded-xl border border-border/40">
           <div className="flex flex-col gap-1.5 items-start">

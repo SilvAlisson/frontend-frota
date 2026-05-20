@@ -7,6 +7,7 @@ interface DropdownAcoesProps {
   onEditar?: () => void;
   onExcluir?: () => void;
   onVerDetalhes?: () => void;
+  excluirLabel?: string;
   align?: 'start' | 'center' | 'end';
   children?: React.ReactNode; 
 }
@@ -15,6 +16,7 @@ export function DropdownAcoes({
   onEditar, 
   onExcluir, 
   onVerDetalhes,
+  excluirLabel = 'Excluir',
   align = 'end',
   children
 }: DropdownAcoesProps) {
@@ -82,7 +84,7 @@ export function DropdownAcoes({
               className="flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-error rounded-lg cursor-pointer outline-none hover:bg-error/10 focus:bg-error/10 transition-colors group"
             >
               <Trash2 className="w-4 h-4 text-error/70 group-hover:text-error transition-colors" />
-              Excluir
+              {excluirLabel}
             </DropdownMenu.Item>
           )}
 

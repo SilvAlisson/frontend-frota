@@ -289,7 +289,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                     <Button variant="secondary" className="text-xs h-9 px-3 bg-success/10 text-success border-success/20 hover:bg-success/20" onClick={() => handleAbrirQrModal(u)}>QR</Button>
                   )}
 
-                  <Button variant="secondary" className="text-xs h-9 px-3 bg-error/10 text-error border-error/20 hover:bg-error/20" onClick={() => handleDeleteRequest(u)}>Inativar/Excluir</Button>
+                  <Button variant="secondary" className="text-xs h-9 px-3 bg-error/10 text-error border-error/20 hover:bg-error/20" onClick={() => handleDeleteRequest(u)}>Inativar</Button>
                 </div>
               </div>
             )}
