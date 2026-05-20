@@ -471,6 +471,7 @@ export function HistoricoManutencoes({
            />
           </div>
          </div>
+         </div>
          <div className="flex justify-between items-center bg-surface-hover/50 p-3 rounded-xl border border-border/40">
           <div className="flex flex-col gap-1.5 items-start">
            <span className="text-[9px] text-text-muted uppercase font-black tracking-widest">Serviço</span>
