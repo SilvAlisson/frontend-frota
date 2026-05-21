@@ -29,7 +29,7 @@ import { useSumarioKPIs, useEvolucaoKm, useEvolucaoCpk, usePerformanceFrota } fr
 
 const GraficoKmVeiculo = React.lazy(() => import('./GraficoKmVeiculo').then(module => ({ default: module.GraficoKmVeiculo })));
 
-// ✨ HELPER: Limpador Automático de Placas (Remove o prefixo da marca)
+//  HELPER: Limpador Automático de Placas (Remove o prefixo da marca)
 const extrairPlaca = (placaBruta: string) => {
  if (!placaBruta) return '---';
  const match = placaBruta.match(/\(([^)]+)\)/);
@@ -140,14 +140,20 @@ const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descr
    <div className="flex flex-col justify-end flex-1 min-h-0 relative z-10 p-3 sm:p-4 min-w-0">
     <span
      className={cn(
-      "text-data font-black text-text-main leading-none truncate transition-colors duration-300",
+      //  As classes que garantem o alinhamento à esquerda, ocupação total e truncamento inteligente
+      "block w-full text-left font-black text-text-main leading-none truncate transition-colors duration-300 tracking-tighter max-w-full",
       highlight 
-       ? "!text-3xl sm:!text-4xl lg:!text-3xl xl:!text-4xl 2xl:!text-5xl" 
-       : "!text-xl sm:!text-2xl lg:!text-xl xl:!text-2xl 2xl:!text-3xl"
+       ? "!text-2xl sm:!text-3xl lg:!text-3xl xl:!text-4xl 2xl:!text-5xl" 
+       : "!text-lg sm:!text-xl lg:!text-lg xl:!text-xl 2xl:!text-2xl"
      )}
      title={formatter(valorRaw || 0)}
     >
-     <NumberTicker value={valorRaw || 0} formatter={formatter} duration={1.5} />
+     <NumberTicker 
+        value={valorRaw || 0} 
+        formatter={formatter} 
+        duration={1.5} 
+        className="max-w-full truncate" 
+     />
     </span>
 
     <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-border/40 flex items-center justify-between shrink-0 min-w-0">

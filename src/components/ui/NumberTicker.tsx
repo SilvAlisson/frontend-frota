@@ -25,7 +25,6 @@ export function NumberTicker({
       if (!startTimestamp) startTimestamp = timestamp;
       const progress = Math.min((timestamp - startTimestamp) / (duration * 1000), 1);
       
-      // Curva de Animação (EaseOutExpo): Começa rápido e desacelera suavemente no fim
       const easeProgress = progress === 1 ? 1 : 1 - Math.pow(2, -10 * progress);
       
       setCurrent(value * easeProgress);
@@ -33,7 +32,7 @@ export function NumberTicker({
       if (progress < 1) {
         animationFrameId = requestAnimationFrame(step);
       } else {
-        setCurrent(value); // Garante que termina exatamente no valor final
+        setCurrent(value);
       }
     };
 
@@ -43,15 +42,16 @@ export function NumberTicker({
     return () => cancelAnimationFrame(animationFrameId);
   }, [value, duration]);
 
-  // Se o Usuário fornecer um formatador (ex: R$), usamos. Senão, formatação padrão.
   const displayValue = formatter ? formatter(current) : current.toLocaleString('pt-BR');
 
   return (
-    // tabular-nums garante que os números ocupam a mesma largura, evitando tremores (layout shift)
-    <span className={cn("inline-block tabular-nums", className)}>
+    // Adicionamos 'max-w-full overflow-hidden text-ellipsis' 
+    // Isso força o componente a nunca ser maior que o pai, cortando com ... se necessário.
+    <span className={cn(
+      "inline-block tabular-nums max-w-full overflow-hidden text-ellipsis whitespace-nowrap", 
+      className
+    )}>
       {displayValue}
     </span>
   );
 }
-
-
