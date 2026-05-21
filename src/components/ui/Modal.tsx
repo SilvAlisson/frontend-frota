@@ -93,9 +93,13 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
               paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))'
             }}
             aria-labelledby={title ? titleId : undefined}
+            aria-describedby={undefined} // 🚨 Correção do Warning de Descrição
           >
             {/* Pega-mão (Handle) */}
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-border/80 mt-4 mb-2" />
+
+            {/*  Renderiza oculto se não for fornecido */}
+            {!title && <Drawer.Title className="sr-only">Modal Padrão</Drawer.Title>}
 
             {title && (
               <div className="px-6 pb-4 flex items-center justify-between border-b border-border/50 shrink-0">
@@ -132,6 +136,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? titleId : undefined}
+      aria-describedby={undefined} 
     >
       {/* Backdrop */}
       <div
@@ -140,13 +145,11 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
         aria-hidden="true"
       />
 
-      {/* Card do Modal — viewport-safe: nunca ultrapassa a tela */}
+      {/* Card do Modal */}
       <div
         className={cn(
           "relative bg-surface rounded-[2rem] shadow-2xl shadow-black/60 border border-white/10 flex flex-col",
-          // Largura: ocupa quase tudo em mobile, máx lg em desktop
           "w-full max-w-lg",
-          // Altura: máximo 92dvh para garantir espaço em qualquer viewport
           "max-h-[92dvh]",
           "transform transition-all duration-300 ease-out starting:opacity-0 starting:scale-95 starting:translate-y-4",
           className
@@ -159,7 +162,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
               {title}
             </h3>
           ) : (
-            <div />
+            <div /> // Elemento vazio para manter o botão "X" alinhado à direita
           )}
           <button
             onClick={onClose}
