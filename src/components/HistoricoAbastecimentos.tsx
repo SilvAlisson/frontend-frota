@@ -8,7 +8,7 @@ import { FormEditarAbastecimento } from './forms/FormEditarAbastecimento';
 import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
 import { useAuth } from '../contexts/AuthContext';
 import type { Abastecimento } from '../types';
-import { FileDown, Calendar, Truck, Droplets, Receipt, Gauge, DollarSign, ChevronDown, Store, FilterX } from 'lucide-react';
+import { FileDown, Calendar, Truck, Droplets, Receipt, Gauge, DollarSign, ChevronDown, Store, FilterX, ZoomIn, X, FileText } from 'lucide-react';
 import { GraficoCurvaAbastecimento } from './ui/GraficosFlota';
 
 // --- HOOKS ATÔMICOS ---
@@ -56,7 +56,8 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
  // --- ESTADOS DE INTERAÇÃO ---
  const [editingId, setEditingId] = useState<string | null>(null);
  const [deletingId, setDeletingId] = useState<string | null>(null);
- const [viewingPhoto, setViewingPhoto] = useState<string | null>(null);
+ const [docParaVisualizar, setDocParaVisualizar] = useState<{ url: string, titulo: string } | null>(null);
+ const [zoomNivel, setZoomNivel] = useState(1);
  const [isNovoAbastecimentoOpen, setIsNovoAbastecimentoOpen] = useState(false);
 
  const { user } = useAuth();
@@ -425,7 +426,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                <Button
                  variant="ghost"
                  size="icon"
-                 onClick={() => setViewingPhoto(ab.fotoNotaFiscalUrl || '')}
+                 onClick={() => { setDocParaVisualizar({ url: ab.fotoNotaFiscalUrl || '', titulo: `Abastecimento - ${ab.veiculo?.placa || 'Veículo'}` }); setZoomNivel(1); }}
                  aria-label="Visualizar nota fiscal"
                  className="h-10 w-10 text-info hover:text-info bg-info/10 hover:bg-info/20 border border-info/20 mx-auto transition-all shadow-sm group"
                >
@@ -508,7 +509,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
          {ab.fotoNotaFiscalUrl && (
            <Button
             variant="ghost"
-            onClick={() => setViewingPhoto(ab.fotoNotaFiscalUrl || '')}
+            onClick={() => { setDocParaVisualizar({ url: ab.fotoNotaFiscalUrl || '', titulo: `Abastecimento - ${ab.veiculo?.placa || 'Veículo'}` }); setZoomNivel(1); }}
             aria-label={`Visualizar nota fiscal do abastecimento de ${ab.veiculo?.placa || 'veículo'}`}
             icon={<Receipt className="w-4 h-4" />}
             className="w-full bg-info/10 text-info border border-info/20 hover:bg-info/20"
@@ -582,19 +583,77 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     variant="danger"
    />
 
-   {/* Lightbox centralizado com focus trap, ESC e acessibilidade */}
-   <Lightbox
-    src={viewingPhoto}
-    alt="Nota Fiscal do Abastecimento"
-    caption="Nota Fiscal"
-    onClose={() => setViewingPhoto(null)}
-   />
+   {/* 🔮 Visualizador Cinemático de Perícia Documental */}
+   {docParaVisualizar && (
+    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-3xl p-4 sm:p-8 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-300">
+     
+     {/* Top Navigation Bar HUD */}
+     <div className="absolute top-0 left-0 w-full flex justify-between items-center p-6 bg-gradient-to-b from-black/80 to-transparent z-50">
+      <div className="flex items-center gap-3">
+       <div className="w-10 h-10 bg-info/20 flex items-center justify-center rounded-lg border border-info/30 text-info">
+        <FileText className="w-5 h-5" />
+       </div>
+       <div>
+        <span className="text-white font-black uppercase text-sm tracking-widest block">{docParaVisualizar.titulo}</span>
+        <span className="text-info font-medium text-[10px] uppercase tracking-wider block">Visualizador de Comprovantes</span>
+       </div>
+      </div>
+      <div className="flex gap-2">
+       <Button
+        type="button"
+        variant="ghost"
+        className="bg-white/10 hover:bg-white/20 text-white rounded-xl h-11 w-11 touch-target focus-ring"
+        onClick={() => setZoomNivel(prev => prev < 4 ? prev + 0.5 : prev)}
+        title="Aumentar Zoom"
+       >
+        <ZoomIn className="w-5 h-5" />
+       </Button>
+       <Button
+        type="button"
+        variant="ghost"
+        className="bg-white/10 hover:bg-white/20 text-white rounded-xl h-11 w-11 touch-target focus-ring"
+        onClick={() => { setDocParaVisualizar(null); setZoomNivel(1); }}
+        title="Fechar Visualizador"
+       >
+        <X className="w-6 h-6" />
+       </Button>
+      </div>
+     </div>
+
+     {/* Imagem/PDF Viewer usando zoom nativo em v4 */}
+     <div className="w-full max-w-5xl h-full flex items-center justify-center overflow-auto rounded-3xl mt-16 sm:mt-0 cursor-move scrollbar-thin">
+      {docParaVisualizar.url.toLowerCase().includes('.pdf') ? (
+       <iframe
+        src={`${docParaVisualizar.url}#toolbar=0`}
+        className="w-full h-[85vh] rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10"
+        style={{ zoom: zoomNivel }}
+        title={docParaVisualizar.titulo}
+       />
+      ) : (
+       <img
+        src={docParaVisualizar.url}
+        alt={docParaVisualizar.titulo}
+        style={{ zoom: zoomNivel }}
+        className="max-h-[85vh] max-w-full object-contain pointer-events-auto rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] filter contrast-125 transition-transform duration-300"
+        onDoubleClick={() => setZoomNivel(prev => prev > 1 ? 1 : 2.5)}
+        title="Clique duplo para Zoom Rápido"
+        draggable={false}
+       />
+      )}
+     </div>
+
+     {/* Dica Floating Bar */}
+     <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/60 border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest px-6 py-3 rounded-full flex gap-3 backdrop-blur shadow-2xl items-center pointer-events-none">
+      <span className="w-2 h-2 rounded-full bg-info animate-pulse"></span>
+      Toque no botão de lupa ou dê duplo-clique na imagem para Inspecionar
+     </div>
+    </div>
+   )}
 
   </div>
   </PullToRefresh>
  );
 }
-
 
 
 

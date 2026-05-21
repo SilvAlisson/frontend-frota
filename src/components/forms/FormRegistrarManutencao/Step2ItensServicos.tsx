@@ -151,7 +151,8 @@ export function Step2ItensServicos() {
     <Input
       label="Preço Unitário"
       type="text"
-      inputMode="decimal"
+      inputMode="numeric"
+      pattern="[0-9]*"
       {...register(`itens.${index}.valorPorUnidade`, {
         onChange: (e) => {
           e.target.value = formatarDinheiro(e.target.value);

@@ -137,10 +137,11 @@ export function Step2DadosFinanceiros() {
            disabled={isLocked}
           />
 
-          <Input
-           label="Valor Unitário"
-           type="text"
-           inputMode="decimal"
+           <Input
+            label="Valor Unitário"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
            {...register(`itens.${index}.valorUnitario`, {
             onChange: (e) => {
              e.target.value = formatarDinheiro(e.target.value);
