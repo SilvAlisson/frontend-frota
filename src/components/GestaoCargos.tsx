@@ -16,7 +16,7 @@ export function GestaoCargos() {
   const [modo, setModo] = useState<'listando' | 'adicionando'>('listando');
   const [loading, setLoading] = useState(true);
   
-  // Estados para a Exclus„o Segura
+  // Estados para a Exclus√£o Segura
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [cargoParaExcluir, setCargoParaExcluir] = useState<Cargo | null>(null);
 
@@ -27,7 +27,7 @@ export function GestaoCargos() {
       setCargos(data);
     } catch (err) {
       if (import.meta.env.DEV) console.error("Erro ao carregar cargos:", err);
-      toast.error("N„o foi possÌvel carregar o diretÛrio de cargos.");
+      toast.error("N√£o foi poss√≠vel carregar o diret√≥rio de cargos.");
     } finally {
       setLoading(false);
     }
@@ -37,7 +37,7 @@ export function GestaoCargos() {
     fetchCargos();
   }, []);
 
-  // --- NOVA L”GICA DE EXCLUS√O (ConfirmModal) ---
+  // --- NOVA L√ìGICA DE EXCLUS√ÉO (ConfirmModal) ---
   const handleExecuteDelete = async () => {
     if (!cargoParaExcluir) return;
 
@@ -57,7 +57,7 @@ export function GestaoCargos() {
         setDeletingId(null);
         setCargoParaExcluir(null);
         if (import.meta.env.DEV) console.error("Erro ao deletar cargo:", err);
-        return 'Erro: N„o È possÌvel remover cargos com colaboradores ou treinos ativos vinculados.';
+        return 'Erro: N√£o √© poss√≠vel remover cargos com colaboradores ou treinos ativos vinculados.';
       }
     });
   };
@@ -70,7 +70,7 @@ export function GestaoCargos() {
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-10">
 
-      {/* CABE«ALHO */}
+      {/* CABE√áALHO */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/60 pb-6">
         <div>
           <h3 className="text-2xl font-black text-text-main tracking-tight flex items-center gap-3">
@@ -80,7 +80,7 @@ export function GestaoCargos() {
             Cargos & Requisitos
           </h3>
           <p className="text-sm text-text-secondary font-medium mt-2">
-            Estruture as funÁıes da Equipe e defina os treinamentos obrigatÛrios (Matriz de QualificaÁ„o).
+            Estruture as fun√ß√µes da Equipe e defina os treinamentos obrigat√≥rios (Matriz de Qualifica√ß√£o).
           </p>
         </div>
 
@@ -95,7 +95,7 @@ export function GestaoCargos() {
         )}
       </div>
 
-      {/* FORMUL¡RIO DE CADASTRO COM TRANSI«√O */}
+      {/* FORMUL√ÅRIO DE CADASTRO COM TRANSI√á√ÉO */}
       {modo === 'adicionando' && (
         <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-2xl mx-auto transform transition-all animate-in slide-in-from-right-8 duration-300">
            <div className="mb-6 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit" onClick={() => setModo('listando')}>
@@ -114,12 +114,12 @@ export function GestaoCargos() {
             </div>
           ) : cargos.length === 0 ? (
             
-            // ? NOSSO EMPTY STATE SUBSTITUINDO O C”DIGO MANUAL
+            // ? NOSSO EMPTY STATE SUBSTITUINDO O C√ìDIGO MANUAL
             <div className="pt-8">
                 <EmptyState 
                     icon={Briefcase} 
                     title="Nenhum cargo estruturado" 
-                    description="Comece a estruturar a sua Equipe definindo as funÁıes e as respetivas exigÍncias de formaÁ„o."
+                    description="Comece a estruturar a sua Equipe definindo as fun√ß√µes e as respetivas exig√™ncias de forma√ß√£o."
                     action={
                         <Button variant="secondary" onClick={() => setModo('adicionando')} icon={<Plus className="w-4 h-4"/>}>
                             Estruturar Primeiro Cargo
@@ -140,7 +140,7 @@ export function GestaoCargos() {
                         {cargo.nome}
                       </h4>
                       <p className="text-xs font-medium text-text-secondary line-clamp-2 min-h-[2.5em] mt-1 opacity-90">
-                        {cargo.descricao || 'Sem descriÁ„o definida.'}
+                        {cargo.descricao || 'Sem descri√ß√£o definida.'}
                       </p>
                     </div>
 
@@ -156,11 +156,11 @@ export function GestaoCargos() {
                     </div>
                   </div>
 
-                  {/* Lista de Requisitos (Matriz de QualificaÁ„o) */}
+                  {/* Lista de Requisitos (Matriz de Qualifica√ß√£o) */}
                   <div className="flex-1 bg-surface-hover/50 rounded-2xl p-4 border border-border/40 mt-2 shadow-inner">
                     <p className="text-[9px] font-black text-text-muted uppercase mb-3 pl-1 tracking-[0.2em] flex items-center gap-1.5">
                       <GraduationCap className="w-3.5 h-3.5" />
-                      Matriz de QualificaÁ„o
+                      Matriz de Qualifica√ß√£o
                     </p>
 
                     {cargo.requisitos && cargo.requisitos.length > 0 ? (
@@ -171,19 +171,19 @@ export function GestaoCargos() {
                               {req.nome}
                             </span>
                             <span className="text-[9px] bg-info/10 text-info px-2 py-1 rounded-md font-black uppercase tracking-widest border border-info/20 shrink-0">
-                              {req.validadeMeses > 0 ? `${req.validadeMeses} M` : 'VitalÌcio'}
+                              {req.validadeMeses > 0 ? `${req.validadeMeses} M` : 'Vital√≠cio'}
                             </span>
                           </li>
                         ))}
                       </ul>
                     ) : (
                       <div className="text-center py-5 text-text-muted/60 text-xs font-bold uppercase tracking-widest bg-surface/30 rounded-xl border border-dashed border-border/50">
-                        Isento de ExigÍncias
+                        Isento de Exig√™ncias
                       </div>
                     )}
                   </div>
 
-                  {/* RodapÈ do Card */}
+                  {/* Rodap√© do Card */}
                   <div className="mt-5 pt-4 border-t border-border/60 flex justify-between items-center">
                     <span className="text-[10px] font-black text-text-secondary uppercase tracking-[0.1em]">Colaboradores Alocados</span>
                     <div className="flex items-center gap-2 bg-success/10 text-success px-3 py-1 rounded-lg text-xs font-black border border-success/20 shadow-sm">
@@ -207,15 +207,15 @@ export function GestaoCargos() {
         description={
           <div className="space-y-4">
              <p className="text-text-secondary text-sm">
-                 Tem certeza que deseja remover a funÁ„o <strong className="text-text-main font-black">"{cargoParaExcluir?.nome}"</strong> da estrutura da empresa?
+                 Tem certeza que deseja remover a fun√ß√£o <strong className="text-text-main font-black">"{cargoParaExcluir?.nome}"</strong> da estrutura da empresa?
              </p>
              <Callout variant="warning" title="Impacto Estrutural" icon={AlertTriangle}>
-                 Se houverem colaboradores atualmente vinculados a este cargo, a exclus„o ser· bloqueada pela base de dados. Caso contr·rio, todos os requisitos e matrizes de qualificaÁ„o desta funÁ„o ser„o perdidos.
+                 Se houverem colaboradores atualmente vinculados a este cargo, a exclus√£o ser√° bloqueada pela base de dados. Caso contr√°rio, todos os requisitos e matrizes de qualifica√ß√£o desta fun√ß√£o ser√°o perdidos.
              </Callout>
           </div>
         }
         variant="danger"
-        confirmLabel={deletingId ? "A remover..." : "Sim, Excluir FunÁ„o"}
+        confirmLabel={deletingId ? "A remover..." : "Sim, Excluir Fun√ß√£o"}
       />
 
     </div>

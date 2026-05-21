@@ -43,10 +43,10 @@ export function DashboardRH({ user }: DashboardRHProps) {
              <div className="p-2.5 bg-primary/10 rounded-2xl text-primary shadow-inner border border-primary/20">
                 <ShieldCheck className="w-7 h-7" />
              </div>
-             Gest„o de Pessoas
+             Gest√£o de Pessoas
           </h2>
           <p className="text-sm text-text-secondary font-medium mt-2">
-             AdministraÁ„o de Equipes, cargos operacionais e documentaÁ„o legal.
+             Administra√ß√£o de Equipes, cargos operacionais e documenta√ß√£o legal.
           </p>
         </div>
 
@@ -59,10 +59,10 @@ export function DashboardRH({ user }: DashboardRHProps) {
         />
       </div>
 
-      {/* ¡REA DE CONTE⁄DO COM TRANSI«√O SUAVE */}
+      {/* √ÅREA DE CONTE√öDO COM TRANSI√á√ÉO SUAVE */}
       <div className="bg-surface shadow-sm hover:shadow-md rounded-[2rem] p-6 sm:p-8 border border-border/60 min-h-[600px] relative overflow-hidden transition-all duration-500">
         
-        {/* Usamos a chave (key) no wrapper de animaÁ„o para forÁar o React a re-renderizar a animaÁ„o de entrada quando a aba muda */}
+        {/* Usamos a chave (key) no wrapper de anima√ß√£o para for√ßar o React a re-renderizar a anima√ß√£o de entrada quando a aba muda */}
         <div key={abaAtiva} className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">
             {abaAtiva === 'alertas' && <PainelAlertas />}
             {abaAtiva === 'usuarios' && <GestaoUsuarios adminUserId={user.id} />}

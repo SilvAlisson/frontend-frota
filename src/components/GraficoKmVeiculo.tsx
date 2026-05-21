@@ -2,7 +2,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import type { DadosEvolucaoKm } from '../types';
 import { Activity } from 'lucide-react';
 
-// Cor Prim�ria em HEX
+// Cor Primária em HEX
 const PRIMARY_COLOR = '#10b981'; 
 
 interface GraficoKmVeiculoProps {
@@ -34,7 +34,7 @@ export function GraficoKmVeiculo({ dados }: GraficoKmVeiculoProps) {
                 <div className="w-12 h-12 bg-surface-hover rounded-full flex items-center justify-center mb-3">
                     <Activity className="w-6 h-6 text-text-muted/50" />
                 </div>
-                <p className="text-text-secondary text-sm font-bold tracking-tight">Sem dados de rodagem para o per�odo.</p>
+                <p className="text-text-secondary text-sm font-bold tracking-tight">Sem dados de rodagem para o período.</p>
             </div>
         );
     }
@@ -42,24 +42,24 @@ export function GraficoKmVeiculo({ dados }: GraficoKmVeiculoProps) {
     return (
         <div className="h-[340px] w-full bg-surface p-6 sm:p-8 rounded-[2rem] shadow-sm border border-border/60 flex flex-col relative overflow-hidden group">
             
-            {/* Header do Gr�fico */}
+            {/* Header do Gráfico */}
             <div className="flex items-start justify-between mb-8 shrink-0 relative z-10">
                 <div>
-                    <h4 className="text-lg font-black text-text-main tracking-tight">Evolu��o de Hod�metro</h4>
-                    <p className="text-xs font-medium text-text-secondary mt-0.5">Leituras registradas nas jornadas di�rias</p>
+                    <h4 className="text-lg font-black text-text-main tracking-tight">Evolução de Hodômetro</h4>
+                    <p className="text-xs font-medium text-text-secondary mt-0.5">Leituras registradas nas jornadas diárias</p>
                 </div>
                 <span className="text-[10px] bg-primary/10 text-primary border border-primary/20 px-3 py-1.5 rounded-lg font-black uppercase tracking-widest shadow-sm">
-                    �ltimos 7 dias
+                    Últimos 7 dias
                 </span>
             </div>
 
-            {/* Container do Gr�fico */}
+            {/* Container do Gráfico */}
             <div className="flex-1 w-full min-h-[240px] relative z-10 -ml-4 sm:-ml-2">
                 <ResponsiveContainer width="100%" height="100%">
                     {/* Mudamos de LineChart para AreaChart para usar o gradiente */}
                     <AreaChart data={dados} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                         
-                        {/* 🌈 Defini��o do Gradiente */}
+                        {/* 🌈 Definição do Gradiente */}
                         <defs>
                             <linearGradient id="colorKm" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor={PRIMARY_COLOR} stopOpacity={0.4} />
