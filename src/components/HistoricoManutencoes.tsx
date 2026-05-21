@@ -3,7 +3,7 @@ import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import {
- Calendar, Download, ChevronDown, CheckCircle2, AlertCircle, PlayCircle, 
+ Calendar, Download, ChevronDown, 
  FileText, FileX, DollarSign, Wrench, Store, Truck, FilterX, ZoomIn, X
 } from 'lucide-react';
 import type { OrdemServico } from '../types';
@@ -23,7 +23,6 @@ import { ConfirmModal } from './ui/ConfirmModal';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 import { DatePicker } from './ui/DatePicker';
 import { TableStyles } from '../styles/table';
-import { Lightbox } from './ui/Lightbox';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/Tooltip';
 import { DateHelper } from '../lib/dateHelper';
 import { PullToRefresh } from './ui/PullToRefresh';
@@ -129,7 +128,6 @@ export function HistoricoManutencoes({
   return historicoFiltrado.reduce((acc, os) => acc + (Number(os.custoTotal) || 0), 0);
  }, [historicoFiltrado]);
 
- // CORREÇÃO TYPESCRIPT: O tipo real é 'PENDENTE' (Agendada) ou 'EM_ANDAMENTO'
  const osAbertas = useMemo(() => {
   return historicoFiltrado.filter(m => m.status === 'PENDENTE' || m.status === 'EM_ANDAMENTO').length;
  }, [historicoFiltrado]);
@@ -199,18 +197,6 @@ export function HistoricoManutencoes({
    'LAVAGEM': 'success'
   };
   return <Badge variant={map[tipo] || 'neutral'}>{tipo}</Badge>;
- };
-
- const getBadgeStatus = (status?: string) => {
-  const s = status?.toUpperCase() || 'CONCLUIDA';
-  switch (s) {
-   case 'PENDENTE': return <Badge variant="neutral" className="gap-1.5 py-1 px-2.5 shadow-sm"><Calendar className="w-3.5 h-3.5 opacity-70" /> Agendada</Badge>;
-   case 'EM_ANDAMENTO': return <Badge variant="warning" className="gap-1.5 py-1 px-2.5 shadow-sm"><PlayCircle className="w-3.5 h-3.5 opacity-70" /> Na Oficina</Badge>;
-   case 'CONCLUIDA':
-   case 'CONCLUÍDA': return <Badge variant="success" className="gap-1.5 py-1 px-2.5 shadow-sm"><CheckCircle2 className="w-3.5 h-3.5 opacity-70" /> Concluída</Badge>;
-   case 'CANCELADA': return <Badge variant="danger" className="gap-1.5 py-1 px-2.5 shadow-sm"><AlertCircle className="w-3.5 h-3.5 opacity-70" /> Cancelada</Badge>;
-   default: return <Badge variant="neutral">{s}</Badge>;
-  }
  };
 
  const veiculosOptions = useMemo(() => [
@@ -346,14 +332,15 @@ export function HistoricoManutencoes({
        virtualized={true}
        itens={historicoVisivel}
        emptyMessage="Nenhum Registro encontrado com estes filtros."
-       desktopGridCols="grid-cols-[1.2fr_2.5fr_1.2fr_1.2fr_1fr_80px]"
+       // 🚨 NOVO GRID SEM A COLUNA STATUS: Espaço extra para Informação Técnica e Custo
+       desktopGridCols="grid-cols-[1.2fr_3fr_1.5fr_1fr_80px]"
 
        // --- DESKTOP HEADER ---
        desktopHeader={
         <>
          <th className={`${TableStyles.th} justify-start text-left pl-8 py-5`}>Data da OS</th>
          <th className={`${TableStyles.th} justify-start text-left`}>Informação Técnica</th>
-         <th className={`${TableStyles.th} justify-center text-center whitespace-nowrap`}>Status Geral</th>
+         {/* Status Removido Daqui */}
          <th className={`${TableStyles.th} justify-center text-center whitespace-nowrap`}>Custo Financeiro</th>
          <th className={`${TableStyles.th} justify-center text-center whitespace-nowrap`}>Ticket Manutenção</th>
          <th className={`${TableStyles.th} justify-end text-right pr-8`}>Gestão</th>
@@ -392,11 +379,7 @@ export function HistoricoManutencoes({
           </div>
          </td>
 
-         <td className={`${TableStyles.td} justify-center text-center`}>
-          <div className="w-full flex justify-center">
-           {getBadgeStatus(os.status)}
-          </div>
-         </td>
+         {/* Status Removido Daqui */}
 
          <td className={`${TableStyles.td} justify-center text-center whitespace-nowrap`}>
           <span className="font-mono font-black text-text-main text-base inline-block w-full">
@@ -465,9 +448,7 @@ export function HistoricoManutencoes({
           </div>
           <div className="flex flex-col items-end gap-1 shrink-0 ml-auto">
            <div className="flex items-center justify-end gap-1 flex-wrap">
-            <div className="scale-90 origin-right">
-             {getBadgeStatus(os.status)}
-            </div>
+            {/* Status Removido Daqui também */}
             <DropdownAcoes
              onEditar={canEdit ? () => setEditingOS(os) : undefined}
              onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
@@ -628,6 +609,3 @@ export function HistoricoManutencoes({
   </PullToRefresh>
  );
 }
-
-
-
