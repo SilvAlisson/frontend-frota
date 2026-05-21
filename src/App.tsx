@@ -4,7 +4,6 @@ import { Toaster } from 'sonner';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { TooltipProvider } from './components/ui/Tooltip';
 import { NetworkStatus } from './components/ui/NetworkStatus';
-import { ReloadPrompt } from './components/ui/ReloadPrompt'; // 🚨 Componente do PWA adicionado aqui!
 
 // 🛠️ DevTools: Carregado dinamicamente APENAS em desenvolvimento.
 // Em produção, o Vite faz tree-shaking e ZERO bytes desta lib vão para o bundle.
@@ -48,8 +47,6 @@ function App() {
     <ThemeProvider>
       <TooltipProvider delayDuration={300}>
         <NetworkStatus />
-        {/* 🚨 Pop-up de atualização posicionado globalmente */}
-        <ReloadPrompt /> 
         <AppContent />
       </TooltipProvider>
     </ThemeProvider>
