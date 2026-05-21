@@ -119,15 +119,23 @@ export function Step2DadosFinanceiros() {
          <div className="grid grid-cols-2 sm:col-span-6 gap-4">
           <Input
            label="Quantidade (L)"
-           type="number" inputMode="decimal"
+           type="text" // 🚨 Ajuste crucial: Trocado de 'number' para 'text'
+           inputMode="decimal"
            step="0.001"
            icon={<Droplets className="w-4 h-4 text-info" />}
            {...register(`itens.${index}.quantidade`, {
              onChange: (e) => {
-               let val = e.target.value;
+               // 🚨 Lógica robusta para tratar a digitação da vírgula no mobile
+               let val = e.target.value.replace(/[^0-9.,]/g, '');
+               val = val.replace(',', '.');
+               
+               const parts = val.split('.');
+               if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
+               
                if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
                  val = val.replace(/^0+/, '');
                }
+               
                e.target.value = val;
                setValue(`itens.${index}.quantidade`, val);
              }
@@ -139,9 +147,9 @@ export function Step2DadosFinanceiros() {
 
            <Input
             label="Valor Unitário"
-            type="text"
+            type="tel" // 🚨 Ajuste crucial: Trocado para 'tel' para ignorar o "R$" da máscara no iOS
             inputMode="numeric"
-            pattern="[0-9]*"
+            // 🚨 pattern removido para evitar conflito com a máscara
            {...register(`itens.${index}.valorUnitario`, {
             onChange: (e) => {
              e.target.value = formatarDinheiro(e.target.value);
@@ -170,6 +178,3 @@ export function Step2DadosFinanceiros() {
   </div>
  );
 }
-
-
-

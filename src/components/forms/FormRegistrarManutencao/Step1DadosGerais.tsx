@@ -133,14 +133,14 @@ export function Step1DadosGerais() {
             />
           </div>
 
-          {/*  CADEADO DE RESPONSIVIDADE: flex flex-col min-w-0 */}
+          {/* CADEADO DE RESPONSIVIDADE: flex flex-col min-w-0 */}
           <div className="flex flex-col min-w-0">
             <Input
               label="KM na entrada da oficina (Opcional)"
               icon={<Gauge className="w-4 h-4 text-primary" />}
 
-              //  Força o teclado numérico
-              type="text"
+              // 🚨 Ajuste crucial: 'tel' garante o teclado numérico sem quebrar por causa do ponto de milhar
+              type="tel"
               inputMode="numeric"
 
               {...register("kmAtual")}
@@ -186,7 +186,7 @@ export function Step1DadosGerais() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/*  CADEADO DE RESPONSIVIDADE: min-w-0 */}
+        {/* CADEADO DE RESPONSIVIDADE: min-w-0 */}
         <div className="min-w-0">
           <Controller
             control={control}
@@ -205,7 +205,7 @@ export function Step1DadosGerais() {
           />
         </div>
 
-        {/*  CADEADO DE RESPONSIVIDADE: min-w-0 */}
+        {/* CADEADO DE RESPONSIVIDADE: min-w-0 */}
         <div className="min-w-0">
           <Controller
             control={control}

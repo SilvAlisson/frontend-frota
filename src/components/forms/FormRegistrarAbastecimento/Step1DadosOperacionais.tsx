@@ -74,7 +74,7 @@ export function Step1DadosOperacionais() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         
-        {/*  containerClassName="md:col-span-2"  */}
+        {/* containerClassName="md:col-span-2"  */}
         <Select
           label="Veículo da Frota"
           options={veiculoOptions}
@@ -84,7 +84,7 @@ export function Step1DadosOperacionais() {
           disabled={isLocked}
         />
 
-        {/*  containerClassName="md:col-span-2" */}
+        {/* containerClassName="md:col-span-2" */}
         <Select
           label={isVeiculoLeve ? "Responsável (Gestão/Encarregado)" : "Operador / Motorista"}
           options={operadorOptions}
@@ -98,7 +98,9 @@ export function Step1DadosOperacionais() {
           <div className="flex flex-col">
             <Input
               label="KM do Painel (Hodômetro)"
-              icon={<Gauge className="w-4 h-4 text-primary" />} inputMode="numeric"
+              type="tel" // 🚨 Ajuste crucial: Trocado para 'tel' para garantir o teclado numérico inquebrável
+              icon={<Gauge className="w-4 h-4 text-primary" />} 
+              inputMode="numeric"
               {...register('kmAtual')}
               onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
               placeholder={ultimoKm > 0 ? `Ref: ${ultimoKm}` : "Ex: 15.000"}

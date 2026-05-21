@@ -102,7 +102,7 @@ export function Step2ItensServicos() {
               {/* O container grid raiz dos itens */}
               <div className="grid grid-cols-1 xl:grid-cols-12 gap-5 min-w-0">
                 
-                {/*  CADEADO 1: Impede nomes de peças muito longos de estourar a tela */}
+                {/* CADEADO 1: Impede nomes de peças muito longos de estourar a tela */}
                 <div className="xl:col-span-6 min-w-0">
                   <Controller
                     control={control}
@@ -122,51 +122,58 @@ export function Step2ItensServicos() {
                   />
                 </div>
                 
-                {/*  CADEADO 2: Protege o Grid interno de Quantidade e Preço */}
+                {/* CADEADO 2: Protege o Grid interno de Quantidade e Preço */}
                 <div className="grid grid-cols-2 xl:col-span-6 gap-4 min-w-0">
-  <div className="min-w-0">
-    <Input
-      label="Quantidade"
-      type="number" 
-      inputMode="decimal"
-      step="0.001"
-      {...register(`itens.${index}.quantidade`, {
-        onChange: (e) => {
-          let val = e.target.value;
-          if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
-            val = val.replace(/^0+/, '');
-          }
-          e.target.value = val;
-          setValue(`itens.${index}.quantidade`, val);
-        }
-      })}
-      error={errors.itens?.[index]?.quantidade?.message}
-      className="font-mono font-black text-center"
-      disabled={isLocked}
-      containerClassName="!mb-0"
-    />
-  </div>
+                  <div className="min-w-0">
+                    <Input
+                      label="Quantidade"
+                      type="text" // 🚨 Ajuste crucial: Trocado de 'number' para 'text'
+                      inputMode="decimal"
+                      step="0.001"
+                      {...register(`itens.${index}.quantidade`, {
+                        onChange: (e) => {
+                          // 🚨 Lógica robusta para tratar a digitação da vírgula no mobile
+                          let val = e.target.value.replace(/[^0-9.,]/g, '');
+                          val = val.replace(',', '.');
+                          
+                          const parts = val.split('.');
+                          if (parts.length > 2) val = parts[0] + '.' + parts.slice(1).join('');
+                          
+                          if (val.length > 1 && val.startsWith('0') && val[1] !== '.') {
+                            val = val.replace(/^0+/, '');
+                          }
+                          
+                          e.target.value = val;
+                          setValue(`itens.${index}.quantidade`, val);
+                        }
+                      })}
+                      error={errors.itens?.[index]?.quantidade?.message}
+                      className="font-mono font-black text-center"
+                      disabled={isLocked}
+                      containerClassName="!mb-0"
+                    />
+                  </div>
 
-  <div className="min-w-0">
-    <Input
-      label="Preço Unitário"
-      type="text"
-      inputMode="numeric"
-      pattern="[0-9]*"
-      {...register(`itens.${index}.valorPorUnidade`, {
-        onChange: (e) => {
-          e.target.value = formatarDinheiro(e.target.value);
-          setValue(`itens.${index}.valorPorUnidade`, e.target.value);
-        }
-      })}
-      error={errors.itens?.[index]?.valorPorUnidade?.message}
-      className="font-mono font-black text-emerald-600 tracking-tight"
-      placeholder="R$ 0,00"
-      disabled={isLocked}
-      containerClassName="!mb-0"
-    />
-  </div>
-</div>
+                  <div className="min-w-0">
+                    <Input
+                      label="Preço Unitário"
+                      type="tel" // 🚨 Ajuste crucial: Trocado para 'tel' para ignorar o "R$"
+                      inputMode="numeric"
+                      // 🚨 pattern removido para evitar conflito com a máscara
+                      {...register(`itens.${index}.valorPorUnidade`, {
+                        onChange: (e) => {
+                          e.target.value = formatarDinheiro(e.target.value);
+                          setValue(`itens.${index}.valorPorUnidade`, e.target.value);
+                        }
+                      })}
+                      error={errors.itens?.[index]?.valorPorUnidade?.message}
+                      className="font-mono font-black text-emerald-600 tracking-tight"
+                      placeholder="R$ 0,00"
+                      disabled={isLocked}
+                      containerClassName="!mb-0"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div className="mt-5 pt-4 flex justify-end border-t border-border/40 min-w-0">
