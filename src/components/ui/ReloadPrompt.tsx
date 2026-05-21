@@ -8,9 +8,18 @@ export function ReloadPrompt() {
     updateServiceWorker,
   } = useRegisterSW({
     onRegistered(r) {
-      // Verifica se há atualização a cada 1 hora silenciosamente
       if (r) {
-        setInterval(() => { r.update(); }, 60 * 60 * 1000);
+        // 1. Quando o utilizador regressa ao separador (troca de app ou desbloqueia o ecrã)
+        document.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            r.update(); // Verifica imediatamente no servidor se há uma nova versão
+          }
+        });
+
+        // 2. Quando a janela ganha foco (clique no PC ou toque no telemóvel)
+        window.addEventListener('focus', () => {
+          r.update();
+        });
       }
     },
   });
@@ -26,7 +35,7 @@ export function ReloadPrompt() {
         <div className="flex-1">
           <h3 className="font-header font-black text-text-main tracking-tight">Nova Atualização</h3>
           <p className="text-xs text-text-muted mt-1 mb-4">
-            Uma nova versão do sistema KLIN está disponível. Atualize para continuar com as melhorias.
+            Uma nova versão do sistema está disponível. Atualize para aceder às melhorias.
           </p>
           <div className="flex gap-2">
             <Button 
@@ -38,9 +47,9 @@ export function ReloadPrompt() {
             <Button 
               variant="ghost" 
               onClick={() => setNeedRefresh(false)}
-              className="h-10 w-10 p-0 text-text-muted hover:bg-surface-hover rounded-xl"
+              className="h-10 w-10 p-0 flex items-center justify-center text-text-muted hover:bg-surface-hover rounded-xl"
             >
-              <X className="w-4 h-4 mx-auto" />
+              <X className="w-4 h-4" />
             </Button>
           </div>
         </div>
