@@ -52,7 +52,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
       OPERADOR: { bg: 'rgba(16,185,129,.15)', border: 'rgba(16,185,129,.3)' },
       RH: { bg: 'rgba(168,85,247,.15)', border: 'rgba(168,85,247,.3)' },
     };
-    return map[role] || { bg: 'rgba(100,116,139,.15)', border: 'rgba(100,116,139,.3)' };
+    return map[role] || { bg: 'rgba(255,255,255,.1)', border: 'rgba(255,255,255,.2)' };
   };
   const roleBadge = getRoleBadge(user.role);
 
@@ -93,7 +93,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
 
   /**
    * =========================================================
-   * IMPRESSÃO BLINDADA (CARREGAMENTO DE FOTO GARANTIDO)
+   * IMPRESSÃO BLINDADA
    * =========================================================
    */
   const handlePrint = () => {
@@ -121,11 +121,11 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                 -webkit-print-color-adjust: exact !important; 
                 print-color-adjust: exact !important; 
               }
-              .print-card { box-shadow: none !important; border: 1px dashed #cbd5e1 !important; transform: scale(1.0); }
+              .print-card { box-shadow: none !important; border: 1px dashed #cbd5e1 !important; transform: scale(0.95); }
             </style>
           </head>
           <body>
-            <div class="print-card" style="width: 325px; height: 540px; position: relative; border-radius: 24px; overflow: hidden; background: white;">
+            <div class="print-card" style="width: 325px; height: 720px; position: relative; border-radius: 34px; overflow: hidden; background: white;">
               ${printContent.innerHTML}
             </div>
             <script>
@@ -133,7 +133,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                 setTimeout(() => {
                   window.print();
                   window.close();
-                }, 500); // Garante que a foto e a logo estarão totalmente renderizadas
+                }, 500);
               };
             </script>
           </body>
@@ -148,20 +148,21 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
       <div className="flex flex-col items-center gap-6">
 
         {/* ================================================================= */}
-        {/* CRACHÁ PREMIUM (CAMADAS ABSOLUTAS E VETORES DE ALTA FIDELIDADE)   */}
+        {/* COMPOSIÇÃO EDITORIAL PREMIUM (MOCKUP IDÊNTICO)                    */}
         {/* ================================================================= */}
         <div
           ref={cardRef}
           style={{
-            position: 'relative', width: '325px', height: '540px',
-            backgroundColor: '#ffffff', overflow: 'hidden', borderRadius: '34px',
+            position: 'relative', width: '325px', height: '720px',
+            background: 'radial-gradient(circle at top right, rgba(255,255,255,0.9), rgba(241,245,249,1))',
+            overflow: 'hidden', borderRadius: '34px',
             boxShadow: '0 25px 80px rgba(15,23,42,0.18)', userSelect: 'none'
           }}
         >
-          {/* LAYER 0: VETOR BACKGROUND (MÚLTIPLAS ONDAS E CURVAS BÉZIER) */}
+          {/* LAYER 0: SHAPES VETORIAIS (A ONDA PERFEITA) */}
           <svg 
             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', zIndex: 0 }}
-            viewBox="0 0 325 540" 
+            viewBox="0 0 325 720" 
             preserveAspectRatio="none"
             xmlns="http://www.w3.org/2000/svg"
           >
@@ -174,101 +175,110 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                 <stop offset="0%" stopColor="#3FB26B" />
                 <stop offset="100%" stopColor="#67D38F" />
               </linearGradient>
+              <filter id="shadow">
+                <feDropShadow dx="0" dy="-8" stdDeviation="12" floodOpacity="0.15" />
+              </filter>
             </defs>
 
-            {/* ONDA SUPERIOR */}
-            <path d="M0 0 L325 0 L325 80 C240 50 140 60 0 35 Z" fill="url(#blueGradient)" />
-            {/* DESTAQUE VERDE SUPERIOR */}
-            <path d="M0 42 C110 60 210 42 325 72" stroke="url(#greenGradient)" strokeWidth="5" fill="none" />
-
-            {/* ONDA CENTRAL GIGANTE */}
-            <path d="M0 285 C80 215 205 355 325 270 L325 430 C220 470 110 470 0 405 Z" fill="url(#blueGradient)" />
+            {/* ONDA CENTRAL (CURVA S PERFEITA COM SOMBRA) */}
+            <path 
+              d="M0 330 C90 250 170 250 325 315 L325 470 C220 505 120 505 0 455 Z" 
+              fill="url(#blueGradient)" 
+              filter="url(#shadow)"
+            />
             {/* DESTAQUE VERDE CENTRAL */}
-            <path d="M0 280 C80 210 205 350 325 265" stroke="url(#greenGradient)" strokeWidth="7" fill="none" />
+            <path 
+              d="M0 320 C90 240 170 245 325 305" 
+              stroke="url(#greenGradient)" 
+              strokeWidth="6" 
+              fill="none" 
+            />
 
             {/* ONDA RODAPÉ */}
-            <path d="M0 515 C100 480 220 495 325 460 L325 540 L0 540 Z" fill="url(#blueGradient)" />
-
-            {/* LINHAS DECORATIVAS SUTIS DE PROFUNDIDADE */}
-            <g opacity="0.08">
-              <path d="M140 0 C260 40 260 90 325 140" stroke="#0B4C8C" strokeWidth="1" fill="none" />
-              <path d="M150 0 C270 40 270 90 325 150" stroke="#0B4C8C" strokeWidth="1" fill="none" />
-              <path d="M160 0 C280 40 280 90 325 160" stroke="#0B4C8C" strokeWidth="1" fill="none" />
-            </g>
+            <path d="M0 680 C100 640 220 655 325 620 L325 720 L0 720 Z" fill="url(#blueGradient)" />
           </svg>
 
-          {/* LAYER 1: LOGO KLIN */}
-          <div style={{ position: 'absolute', top: '20px', left: '0', width: '100%', display: 'flex', justifyContent: 'center', zIndex: 10 }}>
+          {/* LAYER 1: LOGO KLIN (COM RESPIRO GIGANTE) */}
+          <div style={{ position: 'absolute', top: '68px', left: '0', width: '100%', display: 'flex', justifyContent: 'center', zIndex: 10 }}>
             <img 
               src="/assets/klin-logo.png" 
               alt="Klin Engenharia" 
-              style={{ height: '36px', objectFit: 'contain' }}
+              style={{ height: '72px', objectFit: 'contain' }}
               onError={(e) => {
                 e.currentTarget.style.display = 'none';
-                e.currentTarget.parentElement!.innerHTML = '<div style="font-weight:900;font-size:22px;color:#ffffff;letter-spacing:-1px;">KLIN <span style="font-weight:300;font-size:14px;">Engenharia</span></div>';
+                e.currentTarget.parentElement!.innerHTML = '<div style="font-weight:900;font-size:32px;color:#0F172A;letter-spacing:-2px;">KLIN <span style="font-weight:300;font-size:18px;">Engenharia</span></div>';
               }}
             />
           </div>
 
-          {/* LAYER 2: AVATAR COM ANÉIS VETORIAIS ROTACIONADOS */}
-          <div style={{ position: 'absolute', top: '75px', left: '50%', transform: 'translateX(-50%)', zIndex: 20 }}>
-            {/* Anéis Externos Desalinhados */}
-            <svg style={{ position: 'absolute', top: '-16px', left: '-16px', width: '160px', height: '160px', transform: 'rotate(-12deg)' }} viewBox="0 0 160 160">
-              <circle cx="80" cy="80" r="72" stroke="#062B5B" strokeWidth="4" fill="none" strokeDasharray="280 180" strokeLinecap="round" />
-              <circle cx="80" cy="80" r="72" stroke="#3FB26B" strokeWidth="4" fill="none" strokeDasharray="80 400" strokeDashoffset="-220" strokeLinecap="round" />
+          {/* LAYER 2: AVATAR GIGANTE CORTANDO A ONDA */}
+          <div style={{ position: 'absolute', top: '145px', left: '50%', transform: 'translateX(-50%)', zIndex: 20 }}>
+            {/* Anéis Externos Expandidos */}
+            <svg style={{ position: 'absolute', top: '-17.5px', left: '-17.5px', width: '205px', height: '205px', transform: 'rotate(-12deg)' }} viewBox="0 0 205 205">
+              <circle cx="102.5" cy="102.5" r="98" stroke="#062B5B" strokeWidth="4" fill="none" strokeDasharray="350 250" strokeLinecap="round" />
+              <circle cx="102.5" cy="102.5" r="98" stroke="#3FB26B" strokeWidth="4" fill="none" strokeDasharray="120 500" strokeDashoffset="-300" strokeLinecap="round" />
             </svg>
             
-            {/* Foto Base */}
-            <div style={{ position: 'relative', width: '128px', height: '128px', borderRadius: '50%', backgroundColor: '#ffffff', border: '6px solid #ffffff', overflow: 'hidden', boxShadow: '0 20px 50px rgba(15,23,42,0.22)' }}>
-              <Avatar nome={user.nome} url={user.fotoUrl} className="w-full h-full border-none shadow-none text-4xl" />
+            {/* Foto Base Gigante */}
+            <div style={{ position: 'relative', width: '170px', height: '170px', borderRadius: '50%', backgroundColor: '#ffffff', border: '6px solid #ffffff', overflow: 'hidden', boxShadow: '0 25px 50px rgba(15,23,42,0.22)' }}>
+              <Avatar nome={user.nome} url={user.fotoUrl} className="w-full h-full border-none shadow-none text-6xl" />
             </div>
 
-            {/* Selo de Verificado */}
-            <div style={{ position: 'absolute', bottom: '4px', right: '4px', width: '36px', height: '36px', borderRadius: '50%', backgroundColor: '#10b981', border: '4px solid #ffffff', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.1)' }}>
-              <ShieldCheck size={20} color="#ffffff" strokeWidth={2.5} />
+            {/* Selo de Verificado Proporcional */}
+            <div style={{ position: 'absolute', bottom: '6px', right: '6px', width: '44px', height: '44px', borderRadius: '50%', backgroundColor: '#10b981', border: '5px solid #ffffff', display: 'flex', justifyContent: 'center', alignItems: 'center', boxShadow: '0 4px 15px rgba(0,0,0,0.15)' }}>
+              <ShieldCheck size={26} color="#ffffff" strokeWidth={2.5} />
             </div>
           </div>
 
-          {/* LAYER 3: NOME DO INTEGRANTE (Posicionado na área branca) */}
-          <div style={{ position: 'absolute', top: '225px', left: '0', width: '100%', textAlign: 'center', padding: '0 20px', zIndex: 20 }}>
-            <h2 style={{ fontSize: '28px', fontWeight: 900, color: '#0F172A', margin: 0, textTransform: 'uppercase', letterSpacing: '-1px', lineHeight: 1 }}>{primeiroNome}</h2>
-            <p style={{ fontSize: '13px', fontWeight: 600, color: '#64748B', margin: '4px 0 0 0', textTransform: 'uppercase', letterSpacing: '1.5px' }}>{sobrenome}</p>
+          {/* LAYER 3: NOME EDITORIAL (Pesado e Condensado) */}
+          <div style={{ position: 'absolute', top: '345px', left: '0', width: '100%', textAlign: 'center', padding: '0 10px', zIndex: 30, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            <h2 
+              style={{ 
+                fontSize: '56px', fontWeight: 900, color: '#ffffff', margin: 0, textTransform: 'uppercase', 
+                letterSpacing: '-3px', lineHeight: 0.9, maxWidth: '100%', whiteSpace: 'nowrap', overflow: 'hidden' 
+              }}
+            >
+              {primeiroNome}
+            </h2>
+            <p style={{ fontSize: '18px', fontWeight: 500, color: '#67D38F', margin: '4px 0 0 0', textTransform: 'uppercase', letterSpacing: '6px' }}>
+              {sobrenome}
+            </p>
           </div>
 
-          {/* LAYER 4: TAG DE FUNÇÃO (Sobrepondo a onda central azul) */}
-          <div style={{ position: 'absolute', top: '300px', left: '0', width: '100%', display: 'flex', justifyContent: 'center', zIndex: 20 }}>
-            <div style={{ backgroundColor: roleBadge.bg, border: `1px solid ${roleBadge.border}`, padding: '8px 24px', borderRadius: '99px', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span style={{ color: '#ffffff', fontSize: '12px', fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase' }}>{user.role}</span>
+          {/* LAYER 4: TAG DE FUNÇÃO */}
+          <div style={{ position: 'absolute', top: '445px', left: '0', width: '100%', display: 'flex', justifyContent: 'center', zIndex: 30 }}>
+            <div style={{ backgroundColor: roleBadge.bg, border: `1px solid ${roleBadge.border}`, padding: '6px 20px', borderRadius: '99px', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', gap: '8px', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}>
+              <span style={{ color: '#ffffff', fontSize: '14px', fontWeight: 900, letterSpacing: '2px', textTransform: 'uppercase' }}>{user.role}</span>
               {user.matricula && (
-                <span style={{ borderLeft: '1px solid rgba(255,255,255,0.3)', paddingLeft: '8px', color: 'rgba(255,255,255,0.8)', fontSize: '10px', fontWeight: 700, letterSpacing: '1px' }}>ID: {user.matricula}</span>
+                <span style={{ borderLeft: '1px solid rgba(255,255,255,0.3)', paddingLeft: '8px', color: 'rgba(255,255,255,0.9)', fontSize: '12px', fontWeight: 700, letterSpacing: '1px' }}>Matrícula: {user.matricula}</span>
               )}
             </div>
           </div>
 
-          {/* LAYER 5: QR CODE (Com cantoneiras vetoriais cruzando fundo branco e onda azul) */}
-          <div style={{ position: 'absolute', bottom: '40px', left: '50%', transform: 'translateX(-50%)', zIndex: 20 }}>
-            <div style={{ position: 'relative', backgroundColor: '#ffffff', padding: '16px', borderRadius: '24px', boxShadow: '0 15px 40px rgba(15,23,42,0.20)' }}>
-              {/* CANTONEIRAS */}
-              <div style={{ position: 'absolute', top: 0, left: 0, width: '24px', height: '24px', borderLeft: '3px solid #3FB26B', borderTop: '3px solid #3FB26B', borderTopLeftRadius: '24px' }} />
-              <div style={{ position: 'absolute', top: 0, right: 0, width: '24px', height: '24px', borderRight: '3px solid #062B5B', borderTop: '3px solid #062B5B', borderTopRightRadius: '24px' }} />
-              <div style={{ position: 'absolute', bottom: 0, left: 0, width: '24px', height: '24px', borderLeft: '3px solid #062B5B', borderBottom: '3px solid #062B5B', borderBottomLeftRadius: '24px' }} />
-              <div style={{ position: 'absolute', bottom: 0, right: 0, width: '24px', height: '24px', borderRight: '3px solid #3FB26B', borderBottom: '3px solid #3FB26B', borderBottomRightRadius: '24px' }} />
+          {/* LAYER 5: QR CODE GIGANTE ("Flutuando") */}
+          <div style={{ position: 'absolute', top: '500px', left: '50%', transform: 'translateX(-50%) translateY(-8px)', zIndex: 40 }}>
+            <div style={{ position: 'relative', backgroundColor: '#ffffff', padding: '20px', borderRadius: '32px', boxShadow: '0 20px 40px rgba(15,23,42,0.20)' }}>
+              {/* CANTONEIRAS VETORIAIS DE CORTE */}
+              <div style={{ position: 'absolute', top: 0, left: 0, width: '32px', height: '32px', borderLeft: '4px solid #3FB26B', borderTop: '4px solid #3FB26B', borderTopLeftRadius: '32px' }} />
+              <div style={{ position: 'absolute', top: 0, right: 0, width: '32px', height: '32px', borderRight: '4px solid #062B5B', borderTop: '4px solid #062B5B', borderTopRightRadius: '32px' }} />
+              <div style={{ position: 'absolute', bottom: 0, left: 0, width: '32px', height: '32px', borderLeft: '4px solid #062B5B', borderBottom: '4px solid #062B5B', borderBottomLeftRadius: '32px' }} />
+              <div style={{ position: 'absolute', bottom: 0, right: 0, width: '32px', height: '32px', borderRight: '4px solid #3FB26B', borderBottom: '4px solid #3FB26B', borderBottomRightRadius: '32px' }} />
 
               {tokenFinal ? (
-                <QRCodeSVG value={loginUrl} size={110} level="M" />
+                <QRCodeSVG value={loginUrl} size={138} level="M" />
               ) : (
-                <div style={{ width: '110px', height: '110px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9', borderRadius: '12px' }}>
-                  <QrCode size={36} color="#94a3b8" />
-                  <span style={{ fontSize: '10px', color: '#64748b', marginTop: '4px', fontWeight: 600 }}>Inativo</span>
+                <div style={{ width: '138px', height: '138px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9', borderRadius: '16px' }}>
+                  <QrCode size={48} color="#94a3b8" />
+                  <span style={{ fontSize: '11px', color: '#64748b', marginTop: '6px', fontWeight: 700, letterSpacing: '1px' }}>INATIVO</span>
                 </div>
               )}
             </div>
           </div>
 
           {/* LAYER 6: ASSINATURA DE RODAPÉ */}
-          <div style={{ position: 'absolute', bottom: '12px', left: '0', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '6px', zIndex: 20 }}>
-            <ShieldCheck size={14} color="#67D38F" />
-            <span style={{ fontSize: '9px', fontWeight: 800, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '2px' }}>Identidade Funcional</span>
+          <div style={{ position: 'absolute', bottom: '16px', left: '0', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', zIndex: 30 }}>
+            <ShieldCheck size={16} color="#67D38F" />
+            <span style={{ fontSize: '10px', fontWeight: 800, color: '#ffffff', textTransform: 'uppercase', letterSpacing: '2.5px' }}>Identidade Funcional</span>
           </div>
 
         </div>
@@ -280,7 +290,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           {tokenFinal ? (
             <>
               <Button onClick={handlePrint} className="w-full h-12 text-base font-bold bg-slate-100 hover:bg-slate-200 text-slate-900 border-none transition-transform active:scale-95" variant="secondary" icon={<Printer className="w-5 h-5 text-blue-600" />}>
-                Imprimir Documento Oficial
+                Imprimir Crachá 
               </Button>
               <div className="grid grid-cols-2 gap-3">
                 <Button variant="secondary" onClick={handleCopyLink} className="h-11 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200" icon={<Copy className="w-4 h-4" />}>Copiar Link</Button>
