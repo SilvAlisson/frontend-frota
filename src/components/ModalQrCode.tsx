@@ -114,9 +114,6 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
     <Modal isOpen={true} onClose={onClose} title="Identidade Funcional" className="max-w-[400px]">
       <div className="flex flex-col items-center gap-6">
 
-        {/* ================================================================= */}
-        {/* CARTÃO – DESIGN CORPORATIVO PREMIUM                               */}
-        {/* ================================================================= */}
         <div
           ref={cardRef}
           style={{
@@ -125,102 +122,104 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             height: '540px',
             borderRadius: '32px',
             overflow: 'hidden',
-            background: 'linear-gradient(160deg, #fafbfc 0%, #f0f2f5 100%)',
-            boxShadow: '0 20px 50px rgba(0,0,0,0.08), 0 6px 16px rgba(0,0,0,0.04)',
+            background: 'linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%)',
+            boxShadow: '0 15px 35px rgba(0,0,0,0.07), 0 3px 10px rgba(0,0,0,0.04)',
             userSelect: 'none',
           }}
         >
-          {/* SVG decorativo de fundo – curvas orgânicas e textura sutil */}
           <svg
             viewBox="0 0 325 540"
             preserveAspectRatio="none"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }}
           >
             <defs>
-              <linearGradient id="gradBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="blue" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#0B2B4F" />
                 <stop offset="100%" stopColor="#0F4477" />
               </linearGradient>
-              <linearGradient id="gradGreen" x1="0%" y1="0%" x2="100%" y2="0%">
+              <linearGradient id="green" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#2E8B57" />
                 <stop offset="100%" stopColor="#5CBF7B" />
               </linearGradient>
-              <pattern id="noise" patternUnits="userSpaceOnUse" width="100" height="100">
-                <image href="data:image/svg+xml;base64,..." width="100" height="100" />
-              </pattern>
             </defs>
 
-            {/* Linhas de elegância – traços finos e suaves */}
-            <g opacity="0.04" fill="none" stroke="#1A365D" strokeWidth="1.2">
-              <path d="M180 -10 Q280 140 60 560" />
-              <path d="M210 -10 Q310 160 90 570" />
-              <path d="M240 -10 Q340 180 120 580" />
+            {/* Linhas decorativas ultra sutis (apenas um leve toque) */}
+            <g opacity="0.03" fill="none" stroke="#0B2B4F" strokeWidth="1">
+              <path d="M170 -10 Q220 140 10 540" />
+              <path d="M200 -10 Q260 160 30 550" />
             </g>
 
-            {/* Onda superior azul (altura sutil) */}
+            {/* Onda superior (leve, apenas no topo direito) */}
+            <path d="M0 0 L325 0 L325 45 Q280 10 0 10 Z" fill="url(#blue)" />
+
+            {/* Linha verde superior fina */}
+            <path d="M0 12 Q180 28 325 42" stroke="url(#green)" strokeWidth="4" fill="none" />
+
+            {/* Onda principal (limpa, atrás do nome e foto, sem exageros) */}
             <path
-              d="M0 0 L325 0 L325 55 Q220 0 0 20 Z"
-              fill="url(#gradBlue)"
+              d="M0 310 C100 240 200 240 325 290 L325 420 C220 450 110 450 0 410 Z"
+              fill="url(#blue)"
             />
 
-            {/* Linha verde superior */}
+            {/* Linha verde sobre a onda principal */}
             <path
-              d="M0 18 Q180 40 325 50"
-              stroke="url(#gradGreen)"
-              strokeWidth="6"
-              fill="none"
-            />
-
-            {/* Onda principal – forma orgânica abraçando a área do nome */}
-            <path
-              d="M0 310 C120 230 220 230 325 290 L325 430 C230 460 100 460 0 410 Z"
-              fill="url(#gradBlue)"
-            />
-
-            {/* Linha verde principal sobreposta à onda */}
-            <path
-              d="M0 295 C120 215 220 215 325 280"
-              stroke="url(#gradGreen)"
-              strokeWidth="7"
+              d="M0 295 C100 225 200 225 325 280"
+              stroke="url(#green)"
+              strokeWidth="5"
               fill="none"
             />
           </svg>
 
-          {/* Furo superior */}
+          {/* Furo */}
           <div
             style={{
               position: 'absolute',
-              top: '18px',
+              top: '16px',
               left: '50%',
               transform: 'translateX(-50%)',
-              width: '92px',
-              height: '22px',
+              width: '90px',
+              height: '20px',
               borderRadius: '999px',
               background: '#e5e7eb',
-              boxShadow: 'inset 0 4px 6px rgba(0,0,0,0.08), 0 1px 3px rgba(255,255,255,0.9)',
+              boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.08)',
               zIndex: 5,
             }}
           />
 
-          {/* Logo com respiro */}
+          {/* Nome da empresa em vez da logo */}
           <div
             style={{
               position: 'absolute',
-              top: '72px',
+              top: '66px',
               width: '100%',
-              display: 'flex',
-              justifyContent: 'center',
+              textAlign: 'center',
               zIndex: 10,
             }}
           >
-            <img
-              src="/assets/klin-logo.png"
-              alt="Klin"
-              style={{ width: '150px', objectFit: 'contain', opacity: 0.95 }}
+            <span
+              style={{
+                fontFamily: 'Inter, system-ui, sans-serif',
+                fontSize: '18px',
+                fontWeight: 700,
+                letterSpacing: '2px',
+                color: '#0F4477',
+                textTransform: 'uppercase',
+              }}
+            >
+              Klin Engenharia
+            </span>
+            <div
+              style={{
+                width: '32px',
+                height: '2px',
+                background: '#5CBF7B',
+                margin: '6px auto 0',
+                borderRadius: '1px',
+              }}
             />
           </div>
 
-          {/* Foto e anel segmentado */}
+          {/* Foto */}
           <div
             style={{
               position: 'absolute',
@@ -230,31 +229,30 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               zIndex: 15,
             }}
           >
-            {/* Anel externo (círculo segmentado) */}
+            {/* Anel minimalista */}
             <svg
-              viewBox="0 0 170 170"
+              viewBox="0 0 160 160"
               style={{
                 position: 'absolute',
-                width: '170px',
-                height: '170px',
-                top: '-12px',
-                left: '-12px',
-                transform: 'rotate(-15deg)',
+                width: '160px',
+                height: '160px',
+                top: '-10px',
+                left: '-10px',
+                transform: 'rotate(-12deg)',
               }}
             >
-              <circle cx="85" cy="85" r="77" stroke="#0F4477" strokeWidth="4" fill="none" strokeDasharray="240 200" strokeLinecap="round" />
-              <circle cx="85" cy="85" r="77" stroke="#2E8B57" strokeWidth="4" fill="none" strokeDasharray="70 500" strokeDashoffset="-220" strokeLinecap="round" />
+              <circle cx="80" cy="80" r="72" stroke="#0F4477" strokeWidth="3" fill="none" strokeDasharray="200 160" strokeLinecap="round" />
+              <circle cx="80" cy="80" r="72" stroke="#2E8B57" strokeWidth="3" fill="none" strokeDasharray="50 400" strokeDashoffset="-200" strokeLinecap="round" />
             </svg>
 
-            {/* Moldura da foto */}
             <div
               style={{
-                width: '145px',
-                height: '145px',
+                width: '140px',
+                height: '140px',
                 borderRadius: '50%',
                 overflow: 'hidden',
                 border: '5px solid white',
-                boxShadow: '0 16px 32px rgba(0,0,0,0.12)',
+                boxShadow: '0 12px 28px rgba(0,0,0,0.10)',
                 background: '#fff',
               }}
             >
@@ -262,11 +260,11 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             </div>
           </div>
 
-          {/* Nome e sobrenome */}
+          {/* Nome do usuário */}
           <div
             style={{
               position: 'absolute',
-              top: '345px',
+              top: '340px',
               width: '100%',
               textAlign: 'center',
               padding: '0 20px',
@@ -277,9 +275,9 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               style={{
                 margin: 0,
                 color: 'white',
-                fontSize: '44px',
+                fontSize: '40px',
                 fontWeight: 900,
-                letterSpacing: '-2.5px',
+                letterSpacing: '-2px',
                 lineHeight: 1,
                 textTransform: 'uppercase',
               }}
@@ -288,33 +286,23 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             </h2>
             <div
               style={{
-                marginTop: '8px',
-                color: '#A7E0C3',
+                marginTop: '4px',
+                color: '#BCE0CA',
                 fontSize: '13px',
                 fontWeight: 500,
-                letterSpacing: '2.2px',
+                letterSpacing: '2px',
                 textTransform: 'uppercase',
               }}
             >
               {sobrenome}
             </div>
-            {/* Linha decorativa */}
-            <div
-              style={{
-                width: '48px',
-                height: '3px',
-                borderRadius: '999px',
-                background: 'linear-gradient(90deg, #5CBF7B, #8DE0A8)',
-                margin: '14px auto 0',
-              }}
-            />
           </div>
 
           {/* Tag da função */}
           <div
             style={{
               position: 'absolute',
-              top: '432px',
+              top: '424px',
               width: '100%',
               display: 'flex',
               justifyContent: 'center',
@@ -323,26 +311,26 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           >
             <div
               style={{
-                background: 'linear-gradient(135deg, #2E8B57 0%, #4CAF7A 100%)',
+                background: 'linear-gradient(135deg, #2E8B57, #4CAF7A)',
                 color: 'white',
-                padding: '9px 26px',
+                padding: '8px 24px',
                 borderRadius: '999px',
                 fontWeight: 700,
                 fontSize: '11px',
                 letterSpacing: '2px',
                 textTransform: 'uppercase',
-                boxShadow: '0 6px 14px rgba(46,139,87,0.25)',
+                boxShadow: '0 4px 12px rgba(46,139,87,0.2)',
               }}
             >
               {user.role}
             </div>
           </div>
 
-          {/* QR Code com cantoneiras sutis */}
+          {/* QR Code */}
           <div
             style={{
               position: 'absolute',
-              bottom: '52px',
+              bottom: '48px',
               width: '100%',
               display: 'flex',
               justifyContent: 'center',
@@ -353,22 +341,22 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               style={{
                 position: 'relative',
                 background: 'white',
-                padding: '10px',
-                borderRadius: '20px',
-                boxShadow: '0 12px 30px rgba(0,0,0,0.08)',
+                padding: '8px',
+                borderRadius: '16px',
+                boxShadow: '0 8px 20px rgba(0,0,0,0.06)',
               }}
             >
-              {/* Cantoneiras (24x24, borda 3px) */}
-              <div style={{ position:'absolute', top:0, left:0, width:'24px', height:'24px', borderTop:'3px solid #2E8B57', borderLeft:'3px solid #2E8B57', borderTopLeftRadius:'20px' }} />
-              <div style={{ position:'absolute', top:0, right:0, width:'24px', height:'24px', borderTop:'3px solid #0F4477', borderRight:'3px solid #0F4477', borderTopRightRadius:'20px' }} />
-              <div style={{ position:'absolute', bottom:0, left:0, width:'24px', height:'24px', borderBottom:'3px solid #2E8B57', borderLeft:'3px solid #2E8B57', borderBottomLeftRadius:'20px' }} />
-              <div style={{ position:'absolute', bottom:0, right:0, width:'24px', height:'24px', borderBottom:'3px solid #0F4477', borderRight:'3px solid #0F4477', borderBottomRightRadius:'20px' }} />
+              {/* Cantoneiras sutis */}
+              <div style={{ position:'absolute', top:0, left:0, width:'22px', height:'22px', borderTop:'2px solid #2E8B57', borderLeft:'2px solid #2E8B57', borderTopLeftRadius:'16px' }} />
+              <div style={{ position:'absolute', top:0, right:0, width:'22px', height:'22px', borderTop:'2px solid #0F4477', borderRight:'2px solid #0F4477', borderTopRightRadius:'16px' }} />
+              <div style={{ position:'absolute', bottom:0, left:0, width:'22px', height:'22px', borderBottom:'2px solid #2E8B57', borderLeft:'2px solid #2E8B57', borderBottomLeftRadius:'16px' }} />
+              <div style={{ position:'absolute', bottom:0, right:0, width:'22px', height:'22px', borderBottom:'2px solid #0F4477', borderRight:'2px solid #0F4477', borderBottomRightRadius:'16px' }} />
 
               {tokenFinal ? (
-                <QRCodeSVG value={loginUrl} size={108} level="M" />
+                <QRCodeSVG value={loginUrl} size={100} level="M" />
               ) : (
-                <div style={{ width:'108px', height:'108px', display:'flex', alignItems:'center', justifyContent:'center', background:'#f8fafc', borderRadius:'14px' }}>
-                  <QrCode size={42} color="#94a3b8" />
+                <div style={{ width:'100px', height:'100px', display:'flex', alignItems:'center', justifyContent:'center', background:'#f8fafc', borderRadius:'12px' }}>
+                  <QrCode size={40} color="#94a3b8" />
                 </div>
               )}
             </div>
@@ -383,17 +371,17 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
+              gap: '5px',
               zIndex: 20,
             }}
           >
-            <ShieldCheck size={13} color="#2E8B57" />
+            <ShieldCheck size={12} color="#2E8B57" />
             <span
               style={{
                 color: '#0A2540',
-                fontSize: '9px',
+                fontSize: '8px',
                 fontWeight: 700,
-                letterSpacing: '3.5px',
+                letterSpacing: '3px',
                 textTransform: 'uppercase',
               }}
             >
@@ -402,7 +390,6 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           </div>
         </div>
 
-        {/* Botões de ação */}
         <div className="flex flex-wrap justify-center gap-3 w-full">
           <Button onClick={handleGerarNovo} disabled={loading} isLoading={loading} variant="outline">
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -418,7 +405,6 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           </Button>
         </div>
 
-        {/* Modal de confirmação */}
         <ConfirmModal
           isOpen={confirmRegenerar}
           title="Regenerar credencial?"
