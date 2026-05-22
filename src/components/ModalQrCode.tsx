@@ -123,66 +123,110 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             borderRadius: '28px',
             overflow: 'hidden',
             background: '#F8FAFC',
-            boxShadow: '0 10px 30px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)',
+            boxShadow: '0 12px 32px rgba(0,0,0,0.06), 0 3px 10px rgba(0,0,0,0.04)',
             userSelect: 'none',
           }}
         >
-          {/* SVG com ondas estilizadas */}
+          {/* ====================================================== */}
+          {/* CAMADA DE FUNDO COM ONDAS DIAGONAIS CRUZADAS            */}
+          {/* ====================================================== */}
           <svg
             viewBox="0 0 325 540"
             preserveAspectRatio="none"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }}
           >
             <defs>
-              <linearGradient id="azul" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="azulMarinho" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#062B5B" />
-                <stop offset="100%" stopColor="#0F4477" />
+                <stop offset="100%" stopColor="#0A3A6E" />
               </linearGradient>
-              <linearGradient id="verde" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#2E8B57" />
-                <stop offset="100%" stopColor="#5CBF7B" />
+              <linearGradient id="verdePrincipal" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#1E6B3E" />
+                <stop offset="100%" stopColor="#3B9E5C" />
               </linearGradient>
-              <linearGradient id="azulClaro" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="verdeSuave" x1="100%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#4CAF7A" />
+                <stop offset="100%" stopColor="#7DD4A0" />
+              </linearGradient>
+              <linearGradient id="azulClaro" x1="0%" y1="100%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#0F4477" />
-                <stop offset="100%" stopColor="#1A5BA0" />
+                <stop offset="100%" stopColor="#1E6BA8" />
               </linearGradient>
             </defs>
 
-            {/* Onda superior principal – com ponta no meio */}
+            {/* Onda 1 – diagonal descendente da esquerda para direita (azul marinho) */}
             <path
-              d="M0 0 L325 0 L325 90 Q280 120 240 80 Q200 40 160 100 Q120 160 80 90 Q40 20 0 60 Z"
-              fill="url(#azul)"
+              d="M-20 80 C60 60 140 120 200 80 C260 40 300 100 345 60 L345 160 C290 200 240 140 180 180 C120 220 60 160 -20 190 Z"
+              fill="url(#azulMarinho)"
+              opacity="0.95"
             />
 
-            {/* Onda verde sobre a azul (efeito de camada) */}
+            {/* Onda 2 – diagonal ascendente da direita para esquerda (verde) */}
             <path
-              d="M0 0 L325 0 L325 85 Q290 110 250 78 Q210 46 170 95 Q130 145 90 85 Q50 25 0 55 Z"
-              fill="url(#verde)"
-              opacity="0.3"
+              d="M345 200 C280 170 220 230 160 190 C100 150 40 210 -20 170 L-20 280 C40 320 100 260 160 300 C220 340 280 280 345 320 Z"
+              fill="url(#verdePrincipal)"
+              opacity="0.90"
             />
 
-            {/* Onda inferior – com duas pontas */}
+            {/* Onda 3 – diagonal descendente (verde suave, mais transparência) */}
             <path
-              d="M0 420 L0 370 Q40 340 80 380 Q120 420 160 370 Q200 320 240 380 Q280 440 325 390 L325 540 L0 540 Z"
+              d="M-20 310 C60 290 140 350 200 310 C260 270 300 330 345 290 L345 390 C290 430 240 370 180 410 C120 450 60 390 -20 430 Z"
+              fill="url(#verdeSuave)"
+              opacity="0.70"
+            />
+
+            {/* Onda 4 – diagonal ascendente (azul claro) */}
+            <path
+              d="M345 410 C280 380 220 440 160 400 C100 360 40 420 -20 380 L-20 470 C40 510 100 450 160 490 C220 530 280 470 345 510 Z"
               fill="url(#azulClaro)"
+              opacity="0.85"
             />
 
-            {/* Onda verde na base */}
+            {/* Onda 5 – faixa final na base (azul marinho sólido) */}
             <path
-              d="M0 430 L0 385 Q45 350 85 390 Q125 430 165 380 Q205 330 245 390 Q285 450 325 400 L325 540 L0 540 Z"
-              fill="url(#verde)"
-              opacity="0.25"
+              d="M-20 480 C60 460 140 520 200 480 C260 440 300 500 345 460 L345 550 L-20 550 Z"
+              fill="url(#azulMarinho)"
+              opacity="0.95"
             />
 
-            {/* Detalhes decorativos: círculos vazados sutis */}
-            <circle cx="60" cy="50" r="25" fill="none" stroke="white" strokeWidth="0.8" opacity="0.15" />
-            <circle cx="280" cy="380" r="18" fill="none" stroke="white" strokeWidth="0.8" opacity="0.12" />
-            <circle cx="30" cy="410" r="30" fill="none" stroke="white" strokeWidth="0.6" opacity="0.08" />
-            <circle cx="300" cy="40" r="14" fill="none" stroke="white" strokeWidth="0.6" opacity="0.10" />
+            {/* Linhas finas de contorno acompanhando as ondas (textura) */}
+            <path
+              d="M-20 80 C60 60 140 120 200 80 C260 40 300 100 345 60"
+              fill="none"
+              stroke="white"
+              strokeWidth="0.6"
+              opacity="0.15"
+            />
+            <path
+              d="M345 200 C280 170 220 230 160 190 C100 150 40 210 -20 170"
+              fill="none"
+              stroke="white"
+              strokeWidth="0.6"
+              opacity="0.12"
+            />
+            <path
+              d="M-20 310 C60 290 140 350 200 310 C260 270 300 330 345 290"
+              fill="none"
+              stroke="white"
+              strokeWidth="0.6"
+              opacity="0.10"
+            />
+            <path
+              d="M345 410 C280 380 220 440 160 400 C100 360 40 420 -20 380"
+              fill="none"
+              stroke="white"
+              strokeWidth="0.6"
+              opacity="0.12"
+            />
 
-            {/* Pequenos triângulos/ondas pontiagudas no canto */}
-            <path d="M310 60 L320 50 L330 65 Z" fill="white" opacity="0.08" />
-            <path d="M15 380 L5 370 L-5 385 Z" fill="white" opacity="0.06" />
+            {/* Linhas finas na borda inferior */}
+            <path
+              d="M-20 480 C60 460 140 520 200 480 C260 440 300 500 345 460"
+              fill="none"
+              stroke="white"
+              strokeWidth="0.6"
+              opacity="0.15"
+            />
           </svg>
 
           {/* ====================================================== */}
@@ -191,7 +235,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           <div
             style={{
               position: 'absolute',
-              top: '24px',
+              top: '28px',
               width: '100%',
               textAlign: 'center',
               zIndex: 10,
@@ -204,37 +248,37 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                 fontWeight: 700,
                 letterSpacing: '4px',
                 textTransform: 'uppercase',
-                textShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                textShadow: '0 1px 4px rgba(0,0,0,0.3)',
               }}
             >
               Klin Engenharia
             </span>
             <div
               style={{
-                width: '24px',
+                width: '30px',
                 height: '2px',
-                background: '#5CBF7B',
-                margin: '4px auto 0',
+                background: '#7DD4A0',
+                margin: '5px auto 0',
                 borderRadius: '1px',
               }}
             />
           </div>
 
           {/* ====================================================== */}
-          {/* FOTO */}
+          {/* FOTO DO COLABORADOR */}
           {/* ====================================================== */}
           <div
             style={{
               position: 'absolute',
-              top: '72px',
+              top: '80px',
               left: '50%',
               transform: 'translateX(-50%)',
-              width: '110px',
-              height: '110px',
+              width: '105px',
+              height: '105px',
               borderRadius: '50%',
               overflow: 'hidden',
               border: '4px solid white',
-              boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+              boxShadow: '0 8px 20px rgba(0,0,0,0.18)',
               background: '#fff',
               zIndex: 10,
             }}
@@ -243,12 +287,12 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           </div>
 
           {/* ====================================================== */}
-          {/* NOME DO USUÁRIO */}
+          {/* NOME DO COLABORADOR */}
           {/* ====================================================== */}
           <div
             style={{
               position: 'absolute',
-              top: '200px',
+              top: '205px',
               width: '100%',
               textAlign: 'center',
               padding: '0 24px',
@@ -259,7 +303,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               style={{
                 margin: 0,
                 color: '#062B5B',
-                fontSize: '38px',
+                fontSize: '37px',
                 fontWeight: 900,
                 letterSpacing: '-1.5px',
                 lineHeight: 1.1,
@@ -271,7 +315,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             <div
               style={{
                 marginTop: '2px',
-                color: '#64748B',
+                color: '#475569',
                 fontSize: '13px',
                 fontWeight: 500,
                 letterSpacing: '2.5px',
@@ -280,13 +324,11 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             >
               {sobrenome}
             </div>
-
-            {/* Linha decorativa abaixo do nome */}
             <div
               style={{
-                width: '40px',
+                width: '36px',
                 height: '3px',
-                background: 'linear-gradient(90deg, #2E8B57, #5CBF7B)',
+                background: 'linear-gradient(90deg, #1E6B3E, #4CAF7A)',
                 margin: '10px auto 0',
                 borderRadius: '2px',
               }}
@@ -294,12 +336,12 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           </div>
 
           {/* ====================================================== */}
-          {/* FUNÇÃO */}
+          {/* CARGO / FUNÇÃO */}
           {/* ====================================================== */}
           <div
             style={{
               position: 'absolute',
-              top: '285px',
+              top: '290px',
               width: '100%',
               display: 'flex',
               justifyContent: 'center',
@@ -308,15 +350,16 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           >
             <div
               style={{
-                background: 'linear-gradient(135deg, #0F4477, #1A5BA0)',
+                background: 'linear-gradient(135deg, #062B5B, #0F4477)',
                 color: 'white',
-                padding: '7px 20px',
+                padding: '7px 22px',
                 borderRadius: '20px',
                 fontWeight: 700,
                 fontSize: '10px',
                 letterSpacing: '2px',
                 textTransform: 'uppercase',
-                boxShadow: '0 3px 10px rgba(15,68,119,0.25)',
+                boxShadow: '0 3px 12px rgba(6,43,91,0.3)',
+                border: '1px solid rgba(255,255,255,0.15)',
               }}
             >
               {user.role}
@@ -329,7 +372,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           <div
             style={{
               position: 'absolute',
-              top: '340px',
+              top: '348px',
               width: '100%',
               display: 'flex',
               justifyContent: 'center',
@@ -339,45 +382,19 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             <div
               style={{
                 background: 'white',
-                padding: '12px',
+                padding: '10px',
                 borderRadius: '16px',
-                boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
-                border: '1px solid #E2E8F0',
+                boxShadow: '0 4px 14px rgba(0,0,0,0.07)',
+                border: '1px solid rgba(30,107,62,0.2)',
               }}
             >
-              {/* Cantoneiras sutis */}
-              <div style={{
-                position: 'absolute', top: 0, left: 0,
-                width: '20px', height: '20px',
-                borderTop: '2px solid #2E8B57', borderLeft: '2px solid #2E8B57',
-                borderTopLeftRadius: '16px'
-              }} />
-              <div style={{
-                position: 'absolute', top: 0, right: 0,
-                width: '20px', height: '20px',
-                borderTop: '2px solid #0F4477', borderRight: '2px solid #0F4477',
-                borderTopRightRadius: '16px'
-              }} />
-              <div style={{
-                position: 'absolute', bottom: 0, left: 0,
-                width: '20px', height: '20px',
-                borderBottom: '2px solid #2E8B57', borderLeft: '2px solid #2E8B57',
-                borderBottomLeftRadius: '16px'
-              }} />
-              <div style={{
-                position: 'absolute', bottom: 0, right: 0,
-                width: '20px', height: '20px',
-                borderBottom: '2px solid #0F4477', borderRight: '2px solid #0F4477',
-                borderBottomRightRadius: '16px'
-              }} />
-
               {tokenFinal ? (
-                <QRCodeSVG value={loginUrl} size={105} level="M" />
+                <QRCodeSVG value={loginUrl} size={100} level="M" />
               ) : (
                 <div
                   style={{
-                    width: '105px',
-                    height: '105px',
+                    width: '100px',
+                    height: '100px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -386,19 +403,19 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                     border: '1px dashed #CBD5E1',
                   }}
                 >
-                  <QrCode size={42} color="#94a3b8" />
+                  <QrCode size={40} color="#94a3b8" />
                 </div>
               )}
             </div>
           </div>
 
           {/* ====================================================== */}
-          {/* RODAPÉ */}
+          {/* RODAPÉ – IDENTIDADE FUNCIONAL */}
           {/* ====================================================== */}
           <div
             style={{
               position: 'absolute',
-              bottom: '16px',
+              bottom: '14px',
               width: '100%',
               display: 'flex',
               alignItems: 'center',
@@ -407,7 +424,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               zIndex: 10,
             }}
           >
-            <ShieldCheck size={12} color="white" />
+            <ShieldCheck size={12} color="#7DD4A0" />
             <span
               style={{
                 color: 'white',
@@ -415,8 +432,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                 fontWeight: 600,
                 letterSpacing: '3px',
                 textTransform: 'uppercase',
-                opacity: 0.9,
-                textShadow: '0 1px 2px rgba(0,0,0,0.2)',
+                textShadow: '0 1px 3px rgba(0,0,0,0.25)',
               }}
             >
               Identidade Funcional
