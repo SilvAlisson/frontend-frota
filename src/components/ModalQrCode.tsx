@@ -1,13 +1,23 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { Modal } from './ui/Modal';
 import { QRCodeSVG } from 'qrcode.react';
 import { api } from '../services/api';
 import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
-import { Printer, RefreshCw, Copy, QrCode, ShieldCheck, Download } from 'lucide-react';
+import {
+  Printer,
+  RefreshCw,
+  Copy,
+  QrCode,
+  ShieldCheck,
+  Download,
+} from 'lucide-react';
+
 import { useQueryClient } from '@tanstack/react-query';
+
 import type { User } from '../types';
+
 import { ConfirmModal } from './ui/ConfirmModal';
 
 interface ModalQrCodeProps {
@@ -16,249 +26,760 @@ interface ModalQrCodeProps {
   onUpdate?: () => void;
 }
 
-// === COMPONENTE: Logo Institucional ===
-const KlinLogo = ({ textClass = "text-text-main", size = "small" }) => (
-  <div className={`flex items-center ${size === 'small' ? 'gap-1.5' : 'gap-2.5'}`}>
-    <div className={`rounded-full flex items-center justify-center text-white font-bold ${size === 'small' ? 'w-5 h-5 text-[9px]' : 'w-8 h-8 text-[13px]'}`} style={{ backgroundColor: '#2563eb' /* primary */ }}>
-      K
-    </div>
-    <div className={`font-header font-black tracking-tighter ${textClass} ${size === 'small' ? 'text-xs' : 'text-lg'}`}>
-      KLIN<span className="font-light"> Engenharia</span>
-    </div>
-  </div>
-);
+/**
+ * =========================================================
+ * CONFIG
+ * =========================================================
+ */
 
-export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
+export function ModalQrCode({
+  user,
+  onClose,
+  onUpdate,
+}: ModalQrCodeProps) {
   const queryClient = useQueryClient();
+
   const [tokenAtual, setTokenAtual] = useState<string | null>(
     (user as User & { loginToken?: string }).loginToken || null
   );
+
   const [loading, setLoading] = useState(false);
+
   const [confirmRegenerar, setConfirmRegenerar] = useState(false);
+
   const cardRef = useRef<HTMLDivElement>(null);
 
   /**
-   * ✨ Lógica de Link Protegido
+   * =========================================================
+   * URL
+   * =========================================================
    */
-  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const vercelUrl = "https://klinfrota.vercel.app";
-  const baseUrl = import.meta.env.VITE_APP_URL || (isLocalhost ? vercelUrl : window.location.origin);
+
+  const isLocalhost =
+    window.location.hostname === 'localhost' ||
+    window.location.hostname === '127.0.0.1';
+
+  const vercelUrl = 'https://klinfrota.vercel.app';
+
+  const baseUrl =
+    import.meta.env.VITE_APP_URL ||
+    (isLocalhost ? vercelUrl : window.location.origin);
 
   const tokenFinal = tokenAtual || user.matricula;
-  const loginUrl = tokenFinal ? `${baseUrl}/login?magicToken=${tokenFinal}` : '';
+
+  const loginUrl = tokenFinal
+    ? `${baseUrl}/login?magicToken=${tokenFinal}`
+    : '';
+
+  /**
+   * =========================================================
+   * USER
+   * =========================================================
+   */
+
+  const nameParts = useMemo(
+    () => (user.nome || '').trim().split(' '),
+    [user.nome]
+  );
+
+  const primeiroNome = nameParts[0] || '';
+
+  const sobrenome = nameParts.slice(1).join(' ');
+
+  /**
+   * =========================================================
+   * ROLE BADGE
+   * =========================================================
+   */
+
+  const getRoleBadge = (role: string) => {
+    const map: Record<
+      string,
+      {
+        bg: string;
+        border: string;
+        text: string;
+      }
+    > = {
+      ADMIN: {
+        bg: 'rgba(244,63,94,.12)',
+        border: 'rgba(244,63,94,.2)',
+        text: '#E11D48',
+      },
+
+      ENCARREGADO: {
+        bg: 'rgba(59,130,246,.12)',
+        border: 'rgba(59,130,246,.2)',
+        text: '#2563EB',
+      },
+
+      OPERADOR: {
+        bg: 'rgba(16,185,129,.12)',
+        border: 'rgba(16,185,129,.2)',
+        text: '#059669',
+      },
+
+      RH: {
+        bg: 'rgba(168,85,247,.12)',
+        border: 'rgba(168,85,247,.2)',
+        text: '#9333EA',
+      },
+    };
+
+    return (
+      map[role] || {
+        bg: '#F8FAFC',
+        border: '#E2E8F0',
+        text: '#334155',
+      }
+    );
+  };
+
+  const roleBadge = getRoleBadge(user.role);
+
+  /**
+   * =========================================================
+   * GENERATE TOKEN
+   * =========================================================
+   */
 
   const handleGerarNovo = async () => {
     if (tokenAtual) {
       setConfirmRegenerar(true);
       return;
     }
+
     await executarGerarToken();
   };
 
   const executarGerarToken = async () => {
     setLoading(true);
+
     try {
-      const { data } = await api.post(`/auth/user/${user.id}/generate-token`);
+      const { data } = await api.post(
+        `/auth/user/${user.id}/generate-token`
+      );
+
       setTokenAtual(data.loginToken);
-      await queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success("Credencial atualizada com sucesso!");
+
+      await queryClient.invalidateQueries({
+        queryKey: ['users'],
+      });
+
+      toast.success('Credencial atualizada com sucesso!');
+
       if (onUpdate) onUpdate();
     } catch (error) {
-      if (import.meta.env.DEV) console.error(error);
-      toast.error("Erro ao gerar credencial.");
+      console.error(error);
+
+      toast.error('Erro ao gerar credencial.');
     } finally {
       setLoading(false);
     }
   };
 
+  /**
+   * =========================================================
+   * COPY
+   * =========================================================
+   */
+
   const handleCopyLink = () => {
     if (!loginUrl) return;
+
     navigator.clipboard.writeText(loginUrl);
-    toast.success("Link de acesso copiado!");
+
+    toast.success('Link copiado!');
   };
 
   /**
-   * ✨ Lógica de Impressão (Blindada com medidas exatas)
+   * =========================================================
+   * PRINT
+   * =========================================================
    */
+
   const handlePrint = () => {
     const printContent = cardRef.current;
+
     if (!printContent) return;
 
-    const printWindow = window.open('', '', 'width=800,height=900');
+    const printWindow = window.open(
+      '',
+      '',
+      'width=900,height=900'
+    );
+
     if (printWindow) {
-      const styles = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
-        .map(style => style.outerHTML)
+      const styles = Array.from(
+        document.head.querySelectorAll(
+          'style, link[rel="stylesheet"]'
+        )
+      )
+        .map((style) => style.outerHTML)
         .join('\n');
 
       printWindow.document.write(`
         <!DOCTYPE html>
         <html>
           <head>
-            <base href="${window.location.origin}">
-            <title>Crachá Funcional - ${user.nome}</title>
+            <title>Crachá - ${user.nome}</title>
+
             ${styles}
+
             <style>
-              @page { size: portrait; margin: 0mm; }
-              body { 
-                display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0;
-                background: white; 
-                -webkit-print-color-adjust: exact !important; 
-                print-color-adjust: exact !important;
-                color-adjust: exact !important;
+              @page {
+                size: auto;
+                margin: 0;
               }
-              /* Força a remoção da sombra na impressão e adiciona a linha de corte */
-              .no-print-shadow { 
-                box-shadow: none !important; 
-                border: 1px dashed #cbd5e1 !important; 
+
+              body {
+                margin: 0;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                min-height: 100vh;
+                background: white;
+
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+
+              .card-print {
+                transform: scale(1);
               }
             </style>
           </head>
+
           <body>
-            <div style="transform: scale(1.0); transform-origin: center; padding: 20px;">
+            <div class="card-print">
               ${printContent.outerHTML}
             </div>
+
             <script>
               window.onload = () => {
-                setTimeout(() => { window.print(); window.close(); }, 400);
+                setTimeout(() => {
+                  window.print();
+                  window.close();
+                }, 400);
               };
             </script>
           </body>
         </html>
       `);
+
       printWindow.document.close();
     }
   };
 
   /**
-   * ✨ Formatação do Nome e Cores
+   * =========================================================
+   * COMPONENT
+   * =========================================================
    */
-  const nameParts = (user.nome || '').trim().split(' ');
-  const primeiroNome = nameParts[0] || '';
-  const sobrenome = nameParts.slice(1).join(' ');
-
-  const getRoleBadgeColor = (role: string) => {
-    const map: Record<string, string> = {
-      'ADMIN': 'bg-rose-100 text-rose-700 border-rose-200',
-      'ENCARREGADO': 'bg-blue-100 text-blue-700 border-blue-200',
-      'OPERADOR': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-      'RH': 'bg-purple-100 text-purple-700 border-purple-200',
-    };
-    return map[role] || 'bg-gray-100 text-gray-700 border-gray-200';
-  };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Identidade Funcional" className="max-w-[390px]">
+    <Modal
+      isOpen={true}
+      onClose={onClose}
+      title="Identidade Funcional"
+      className="max-w-[420px]"
+    >
       <div className="flex flex-col items-center gap-6">
-        
-        {/* === CRACHÁ PREMIUM (MODELO LIMPO 100% FIEL) === */}
+
+        {/* ================================================= */}
+        {/* CARD */}
+        {/* ================================================= */}
+
         <div
           ref={cardRef}
-          className="no-print-shadow w-[320px] bg-white rounded-[32px] shadow-2xl overflow-hidden relative flex flex-col select-none border border-border/50"
-          style={{ height: '520px' }} // Altura fixa para garantir a proporção na impressão
+          className="
+            relative
+            w-[325px]
+            h-[540px]
+            overflow-hidden
+            rounded-[34px]
+            bg-white
+            border
+            border-slate-200
+            shadow-[0_25px_80px_rgba(15,23,42,0.18)]
+            select-none
+          "
         >
-          {/* === HEADER AZUL === */}
-          {/* Usamos backgroundColor inline para garantir que a impressora SEMPRE pinte o fundo */}
-          <div className="h-32 relative flex items-center justify-center pt-2" style={{ backgroundColor: '#1a2333' }}>
-            {/* Efeito Arqueado Inferior */}
-            <div className="absolute -bottom-10 left-0 right-0 h-20 rounded-b-[50%] z-0" style={{ backgroundColor: '#1a2333' }}></div>
-            
-            <div className="relative z-10 flex flex-col items-center">
-              <KlinLogo textClass="text-white" size="large" />
+          {/* ================================================= */}
+          {/* BACKGROUND */}
+          {/* ================================================= */}
+
+          <div className="absolute inset-0 bg-white" />
+
+          {/* ================================================= */}
+          {/* TOP WAVES */}
+          {/* ================================================= */}
+
+          <svg
+            className="absolute inset-0"
+            viewBox="0 0 325 540"
+            preserveAspectRatio="none"
+          >
+            <defs>
+              <linearGradient
+                id="blueGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="100%"
+              >
+                <stop offset="0%" stopColor="#062B5B" />
+                <stop offset="100%" stopColor="#0B4C8C" />
+              </linearGradient>
+
+              <linearGradient
+                id="greenGradient"
+                x1="0%"
+                y1="0%"
+                x2="100%"
+                y2="100%"
+              >
+                <stop offset="0%" stopColor="#3FB26B" />
+                <stop offset="100%" stopColor="#67D38F" />
+              </linearGradient>
+            </defs>
+
+            {/* TOP */}
+            <path
+              d="
+                M0 0
+                L325 0
+                L325 80
+                C240 50 140 60 0 35
+                Z
+              "
+              fill="url(#blueGradient)"
+            />
+
+            {/* GREEN LINE */}
+            <path
+              d="
+                M0 42
+                C110 60 210 42 325 72
+              "
+              stroke="url(#greenGradient)"
+              strokeWidth="5"
+              fill="none"
+            />
+
+            {/* MAIN BLUE WAVE */}
+            <path
+              d="
+                M0 285
+                C80 215 205 355 325 270
+                L325 430
+                C220 470 110 470 0 405
+                Z
+              "
+              fill="url(#blueGradient)"
+            />
+
+            {/* GREEN STROKE */}
+            <path
+              d="
+                M0 280
+                C80 210 205 350 325 265
+              "
+              stroke="url(#greenGradient)"
+              strokeWidth="7"
+              fill="none"
+            />
+
+            {/* FOOTER */}
+            <path
+              d="
+                M0 515
+                C100 480 220 495 325 460
+                L325 540
+                L0 540
+                Z
+              "
+              fill="url(#blueGradient)"
+            />
+
+            {/* DECORATIVE LINES */}
+            <g opacity="0.12">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <path
+                  key={i}
+                  d={`
+                    M${-40 + i * 10} 520
+                    C120 460 220 470 360 390
+                  `}
+                  stroke="#3FB26B"
+                  strokeWidth="1"
+                  fill="none"
+                />
+              ))}
+            </g>
+
+            {/* TOP LINES */}
+            <g opacity="0.08">
+              {Array.from({ length: 10 }).map((_, i) => (
+                <path
+                  key={`top-${i}`}
+                  d={`
+                    M${140 + i * 10} 0
+                    C260 40 260 90 325 140
+                  `}
+                  stroke="#0B4C8C"
+                  strokeWidth="1"
+                  fill="none"
+                />
+              ))}
+            </g>
+          </svg>
+
+          {/* ================================================= */}
+          {/* CONTENT */}
+          {/* ================================================= */}
+
+          <div className="relative z-10 h-full flex flex-col items-center">
+
+            {/* ================================================= */}
+            {/* HOLE */}
+            {/* ================================================= */}
+
+            <div
+              className="
+                mt-5
+                w-[88px]
+                h-[18px]
+                rounded-full
+                bg-white
+                border
+                border-slate-300
+                shadow-inner
+              "
+            />
+
+            {/* ================================================= */}
+            {/* LOGO */}
+            {/* ================================================= */}
+
+            <div className="mt-8 flex flex-col items-center">
+              {/* USE SUA LOGO REAL */}
+              <img
+                src="/assets/klin-logo.png"
+                alt="Klin Engenharia"
+                className="w-[190px] object-contain"
+              />
             </div>
-          </div>
 
-          {/* === CORPO DO CRACHÁ === */}
-          <div className="flex-1 flex flex-col items-center px-6 relative z-10 -mt-16" style={{ backgroundColor: 'transparent' }}>
+            {/* ================================================= */}
+            {/* PHOTO */}
+            {/* ================================================= */}
 
-            {/* Foto Centrada */}
-            <div className="relative">
-              <div className="w-32 h-32 rounded-full bg-white p-1 shadow-lg ring-1 ring-slate-200">
+            <div className="relative mt-10">
+
+              {/* OUTER RING */}
+              <div
+                className="
+                  absolute
+                  inset-[-10px]
+                  rounded-full
+                  border-[4px]
+                  border-white
+                  opacity-90
+                "
+              />
+
+              {/* CUSTOM STROKES */}
+              <svg
+                className="
+                  absolute
+                  inset-[-16px]
+                  w-[160px]
+                  h-[160px]
+                  -rotate-12
+                "
+                viewBox="0 0 160 160"
+              >
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="72"
+                  stroke="#062B5B"
+                  strokeWidth="4"
+                  fill="none"
+                  strokeDasharray="280 180"
+                  strokeLinecap="round"
+                />
+
+                <circle
+                  cx="80"
+                  cy="80"
+                  r="72"
+                  stroke="#3FB26B"
+                  strokeWidth="4"
+                  fill="none"
+                  strokeDasharray="80 400"
+                  strokeDashoffset="-220"
+                  strokeLinecap="round"
+                />
+              </svg>
+
+              {/* PHOTO */}
+              <div
+                className="
+                  relative
+                  w-[150px]
+                  h-[150px]
+                  rounded-full
+                  overflow-hidden
+                  border-[6px]
+                  border-white
+                  shadow-[0_20px_50px_rgba(15,23,42,0.22)]
+                  bg-white
+                "
+              >
                 <Avatar
                   nome={user.nome}
                   url={user.fotoUrl}
-                  className="w-full h-full text-4xl shadow-none border-none"
+                  className="w-full h-full border-none shadow-none"
                 />
               </div>
-              <div className="absolute bottom-1 right-1 bg-emerald-500 text-white p-1 rounded-full border-[3px] border-white shadow-sm">
-                <ShieldCheck className="w-5 h-5" />
+
+              {/* VERIFIED */}
+              <div
+                className="
+                  absolute
+                  bottom-2
+                  right-2
+                  w-10
+                  h-10
+                  rounded-full
+                  bg-emerald-500
+                  border-4
+                  border-white
+                  flex
+                  items-center
+                  justify-center
+                  shadow-lg
+                "
+              >
+                <ShieldCheck className="w-5 h-5 text-white" />
               </div>
             </div>
 
-            {/* Nome do Colaborador */}
-            <div className="text-center mt-5 w-full">
-              <h2 className="leading-tight text-slate-900">
-                <span className="block text-2xl font-black tracking-tight">{primeiroNome}</span>
-                <span className="block text-lg font-light text-slate-600 uppercase tracking-wide">{sobrenome}</span>
+            {/* ================================================= */}
+            {/* NAME */}
+            {/* ================================================= */}
+
+            <div className="mt-12 text-center px-6">
+
+              <h2
+                className="
+                  text-[44px]
+                  font-black
+                  leading-none
+                  tracking-[-0.04em]
+                  text-white
+                  drop-shadow-sm
+                "
+              >
+                {primeiroNome}
               </h2>
+
+              <p
+                className="
+                  mt-2
+                  text-[15px]
+                  uppercase
+                  tracking-[0.08em]
+                  font-medium
+                  text-[#A7F3D0]
+                "
+              >
+                {sobrenome}
+              </p>
+
+              <div
+                className="
+                  mx-auto
+                  mt-4
+                  w-12
+                  h-[3px]
+                  rounded-full
+                  bg-[#67D38F]
+                "
+              />
             </div>
 
-            {/* Função / Matrícula */}
-            <div className="mt-3 flex flex-wrap justify-center items-center gap-2">
-              <div className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border ${getRoleBadgeColor(user.role)}`}>
+            {/* ================================================= */}
+            {/* ROLE */}
+            {/* ================================================= */}
+
+            <div
+              className="
+                mt-6
+                px-7
+                py-3
+                rounded-full
+                border
+                backdrop-blur-sm
+                shadow-lg
+              "
+              style={{
+                background: roleBadge.bg,
+                borderColor: roleBadge.border,
+                color: '#FFFFFF',
+              }}
+            >
+              <span
+                className="
+                  text-[13px]
+                  font-black
+                  uppercase
+                  tracking-[0.16em]
+                "
+              >
                 {user.role}
-              </div>
-              {user.matricula && (
-                <div className="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border border-slate-200 bg-slate-50 text-slate-600">
-                  ID: {user.matricula}
+              </span>
+            </div>
+
+            {/* ================================================= */}
+            {/* QR */}
+            {/* ================================================= */}
+
+            <div className="mt-auto mb-10 flex flex-col items-center">
+
+              <div className="relative">
+
+                {/* CORNERS */}
+                <div className="absolute inset-0 pointer-events-none">
+
+                  <div className="absolute top-0 left-0 w-6 h-6 border-l-[3px] border-t-[3px] rounded-tl-xl border-[#3FB26B]" />
+
+                  <div className="absolute top-0 right-0 w-6 h-6 border-r-[3px] border-t-[3px] rounded-tr-xl border-[#062B5B]" />
+
+                  <div className="absolute bottom-0 left-0 w-6 h-6 border-l-[3px] border-b-[3px] rounded-bl-xl border-[#062B5B]" />
+
+                  <div className="absolute bottom-0 right-0 w-6 h-6 border-r-[3px] border-b-[3px] rounded-br-xl border-[#3FB26B]" />
                 </div>
-              )}
-            </div>
 
-            {/* QR Code */}
-            <div className="mt-auto mb-6 w-full flex flex-col items-center gap-3">
-              <div className="bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm">
-                {tokenFinal ? (
-                  <QRCodeSVG value={loginUrl} size={110} level="M" className="opacity-95" />
-                ) : (
-                  <div className="w-[110px] h-[110px] flex flex-col gap-1 items-center justify-center bg-slate-50 rounded-xl text-slate-400">
-                    <QrCode className="w-8 h-8 opacity-50" />
-                    <span className="text-[10px] font-medium">Inativo</span>
-                  </div>
-                )}
+                <div
+                  className="
+                    relative
+                    bg-white
+                    rounded-[24px]
+                    p-4
+                    shadow-[0_15px_40px_rgba(15,23,42,0.20)]
+                  "
+                >
+                  {tokenFinal ? (
+                    <QRCodeSVG
+                      value={loginUrl}
+                      size={122}
+                      level="M"
+                      includeMargin={false}
+                    />
+                  ) : (
+                    <div
+                      className="
+                        w-[122px]
+                        h-[122px]
+                        flex
+                        flex-col
+                        items-center
+                        justify-center
+                        gap-2
+                        rounded-xl
+                        bg-slate-100
+                      "
+                    >
+                      <QrCode className="w-10 h-10 text-slate-400" />
+
+                      <span className="text-xs text-slate-500">
+                        Inativo
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
-              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">Acesso Pessoal Único</span>
-            </div>
-          </div>
 
-          {/* === FOOTER AZUL === */}
-          <div className="h-14 relative flex items-center justify-center" style={{ backgroundColor: '#1a2333' }}>
-             {/* Efeito Arqueado Superior */}
-            <div className="absolute -top-10 left-0 right-0 h-20 rounded-t-[50%] z-0" style={{ backgroundColor: '#1a2333' }}></div>
-            
-            <div className="relative z-10 flex flex-col items-center gap-1">
-              <div className="w-12 h-1 bg-blue-500/50 rounded-full mb-1"></div>
-              <p className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.3em]">Uso Exclusivo Operacional</p>
+              <div className="mt-5 flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4 text-[#67D38F]" />
+
+                <span
+                  className="
+                    text-[11px]
+                    uppercase
+                    tracking-[0.24em]
+                    font-bold
+                    text-white
+                  "
+                >
+                  Identidade Funcional
+                </span>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* === BOTÕES DE AÇÃO === */}
+        {/* ================================================= */}
+        {/* ACTIONS */}
+        {/* ================================================= */}
+
         <div className="w-full flex flex-col gap-3">
+
           {tokenFinal ? (
             <>
               <Button
                 onClick={handlePrint}
-                className="w-full h-12 text-base font-bold bg-slate-100 hover:bg-slate-200 text-slate-900 border-none transition-transform active:scale-95"
+                className="
+                  w-full
+                  h-12
+                  text-base
+                  font-bold
+                  bg-slate-100
+                  hover:bg-slate-200
+                  text-slate-900
+                  border-none
+                "
                 variant="secondary"
-                icon={<Printer className="w-5 h-5 text-blue-600" />}
+                icon={
+                  <Printer className="w-5 h-5 text-blue-600" />
+                }
               >
                 Imprimir Crachá
               </Button>
 
               <div className="grid grid-cols-2 gap-3">
+
                 <Button
                   variant="secondary"
                   onClick={handleCopyLink}
-                  className="h-11 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200"
+                  className="
+                    h-11
+                    bg-slate-50
+                    hover:bg-slate-100
+                    text-slate-700
+                    border
+                    border-slate-200
+                  "
                   icon={<Copy className="w-4 h-4" />}
                 >
                   Copiar Link
                 </Button>
+
                 <Button
                   variant="ghost"
                   onClick={handleGerarNovo}
                   isLoading={loading}
-                  className="h-11 bg-red-50 hover:bg-red-100 text-red-600 border border-red-100"
+                  className="
+                    h-11
+                    bg-red-50
+                    hover:bg-red-100
+                    text-red-600
+                    border
+                    border-red-100
+                  "
                   icon={<RefreshCw className="w-4 h-4" />}
                 >
                   Renovar
@@ -268,7 +789,19 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           ) : (
             <Button
               onClick={handleGerarNovo}
-              className="w-full h-12 text-base shadow-xl bg-blue-600 hover:bg-blue-700 text-white border-none font-bold"
+              className="
+                w-full
+                h-12
+                text-base
+                font-bold
+                text-white
+                border-none
+                shadow-xl
+              "
+              style={{
+                background:
+                  'linear-gradient(135deg,#062B5B,#0B4C8C)',
+              }}
               isLoading={loading}
               icon={<Download className="w-5 h-5" />}
             >
@@ -276,16 +809,23 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             </Button>
           )}
         </div>
-
       </div>
+
+      {/* ================================================= */}
+      {/* CONFIRM */}
+      {/* ================================================= */}
 
       <ConfirmModal
         isOpen={confirmRegenerar}
         title="Renovar QR Code"
-        description="Gerar um novo código invalidará o crachá anterior permanentemente. O colaborador precisará de um novo crachá impresso."
+        description="Gerar um novo código invalidará o crachá anterior permanentemente."
         variant="warning"
         confirmLabel="Sim, Renovar"
-        onConfirm={() => { setConfirmRegenerar(false); executarGerarToken(); }}
+        onConfirm={() => {
+          setConfirmRegenerar(false);
+
+          executarGerarToken();
+        }}
         onCancel={() => setConfirmRegenerar(false)}
       />
     </Modal>
