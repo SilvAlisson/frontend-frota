@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
-import { Printer, RefreshCw, Copy, QrCode, ShieldCheck, Download, LockKeyhole } from 'lucide-react';
+import { Printer, RefreshCw, Copy, QrCode, ShieldCheck, Download } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { User } from '../types';
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -16,32 +16,14 @@ interface ModalQrCodeProps {
   onUpdate?: () => void;
 }
 
-// === MINI COMPONENTE: Logo Institucional (Círculo K + Texto) ===
+// === COMPONENTE: Logo Institucional ===
 const KlinLogo = ({ textClass = "text-text-main", size = "small" }) => (
   <div className={`flex items-center ${size === 'small' ? 'gap-1.5' : 'gap-2.5'}`}>
-    <div className={`rounded-full bg-primary flex items-center justify-center text-white font-bold ${size === 'small' ? 'w-5 h-5 text-[9px]' : 'w-8 h-8 text-[13px]'}`}>
+    <div className={`rounded-full flex items-center justify-center text-white font-bold ${size === 'small' ? 'w-5 h-5 text-[9px]' : 'w-8 h-8 text-[13px]'}`} style={{ backgroundColor: '#2563eb' /* primary */ }}>
       K
     </div>
     <div className={`font-header font-black tracking-tighter ${textClass} ${size === 'small' ? 'text-xs' : 'text-lg'}`}>
       KLIN<span className="font-light"> Engenharia</span>
-    </div>
-  </div>
-);
-
-// === MINI COMPONENTE: Linha de Informação Chave ===
-interface KeyInfoLineProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string | undefined | null;
-}
-const KeyInfoLine = ({ icon, label, value }: KeyInfoLineProps) => (
-  <div className="flex items-center gap-3 w-full py-1.5 border-b border-border/50 last:border-none">
-    <div className="p-2 rounded-full bg-gray-100 text-primary">
-      {icon}
-    </div>
-    <div className="flex flex-col flex-1">
-      <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest leading-none">{label}</span>
-      <span className="text-sm font-semibold text-text-main tracking-tight mt-0.5">{value || "Não informado"}</span>
     </div>
   </div>
 );
@@ -55,6 +37,9 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   const [confirmRegenerar, setConfirmRegenerar] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * ✨ Lógica de Link Protegido
+   */
   const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
   const vercelUrl = "https://klinfrota.vercel.app";
   const baseUrl = import.meta.env.VITE_APP_URL || (isLocalhost ? vercelUrl : window.location.origin);
@@ -92,13 +77,15 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
     toast.success("Link de acesso copiado!");
   };
 
+  /**
+   * ✨ Lógica de Impressão (Blindada com medidas exatas)
+   */
   const handlePrint = () => {
     const printContent = cardRef.current;
     if (!printContent) return;
 
     const printWindow = window.open('', '', 'width=800,height=900');
     if (printWindow) {
-      // 1. Clona TODOS os estilos (Tailwind e variáveis locais) da página atual
       const styles = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
         .map(style => style.outerHTML)
         .join('\n');
@@ -111,21 +98,28 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             <title>Crachá Funcional - ${user.nome}</title>
             ${styles}
             <style>
-              @page { size: auto; margin: 0mm; }
+              @page { size: portrait; margin: 0mm; }
               body { 
                 display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0;
-                background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
+                background: white; 
+                -webkit-print-color-adjust: exact !important; 
+                print-color-adjust: exact !important;
+                color-adjust: exact !important;
               }
-              .no-print-shadow { box-shadow: none !important; border: 1px dashed #cbd5e1 !important; }
+              /* Força a remoção da sombra na impressão e adiciona a linha de corte */
+              .no-print-shadow { 
+                box-shadow: none !important; 
+                border: 1px dashed #cbd5e1 !important; 
+              }
             </style>
           </head>
           <body>
-            <div style="transform: scale(1.05); transform-origin: center; padding: 20px;">
+            <div style="transform: scale(1.0); transform-origin: center; padding: 20px;">
               ${printContent.outerHTML}
             </div>
             <script>
               window.onload = () => {
-                setTimeout(() => { window.print(); window.close(); }, 300);
+                setTimeout(() => { window.print(); window.close(); }, 400);
               };
             </script>
           </body>
@@ -136,13 +130,12 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   };
 
   /**
-   *  Formatação de Dados do Integrante
+   * ✨ Formatação do Nome e Cores
    */
-  // Formatação do Nome (Primeiro nome BOLD, Sobrenome LIGHT)
-  const [primeiroNome, ...restoNome] = (user.nome || '').split(' ');
-  const sobrenome = restoNome.join(' ');
+  const nameParts = (user.nome || '').trim().split(' ');
+  const primeiroNome = nameParts[0] || '';
+  const sobrenome = nameParts.slice(1).join(' ');
 
-  // Cores do Badge da Função
   const getRoleBadgeColor = (role: string) => {
     const map: Record<string, string> = {
       'ADMIN': 'bg-rose-100 text-rose-700 border-rose-200',
@@ -153,132 +146,119 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
     return map[role] || 'bg-gray-100 text-gray-700 border-gray-200';
   };
 
-  const additionalData = {
-    valaAtiva: "VALA_PRINCIPAL_001", // user.valaAtiva
-    veiculoPrincipal: "SCANIA R450", // user.veiculoPrincipal
-    registroProfissional: "CREA-12345/MG" // user.registroProfissional
-  };
-
   return (
     <Modal isOpen={true} onClose={onClose} title="Identidade Funcional" className="max-w-[390px]">
       <div className="flex flex-col items-center gap-6">
-        {/* === CRACHÁ PREMIUM (MODELO NOVO V2) === */}
+        
+        {/* === CRACHÁ PREMIUM (MODELO LIMPO 100% FIEL) === */}
         <div
           ref={cardRef}
-          className="no-print-shadow w-[320px] h-[550px] bg-white rounded-[32px] shadow-lg overflow-hidden relative flex flex-col select-none border border-border/50"
-          style={{
-            boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.8) inset'
-          }}
+          className="no-print-shadow w-[320px] bg-white rounded-[32px] shadow-2xl overflow-hidden relative flex flex-col select-none border border-border/50"
+          style={{ height: '520px' }} // Altura fixa para garantir a proporção na impressão
         >
-          {/* === 1. HEADER BANNER (AZUL) === */}
-          <div className="h-36 bg-[#1a2333] relative flex items-center justify-center pt-2">
+          {/* === HEADER AZUL === */}
+          {/* Usamos backgroundColor inline para garantir que a impressora SEMPRE pinte o fundo */}
+          <div className="h-32 relative flex items-center justify-center pt-2" style={{ backgroundColor: '#1a2333' }}>
             {/* Efeito Arqueado Inferior */}
-            <div className="absolute -bottom-10 left-0 right-0 h-20 bg-[#1a2333] rounded-b-[50%] z-0"></div>
-
+            <div className="absolute -bottom-10 left-0 right-0 h-20 rounded-b-[50%] z-0" style={{ backgroundColor: '#1a2333' }}></div>
+            
             <div className="relative z-10 flex flex-col items-center">
               <KlinLogo textClass="text-white" size="large" />
             </div>
           </div>
 
-          {/* === 2. CORPO DO CRACHÁ (BRANCO) === */}
-          <div className="flex-1 flex flex-col items-center px-6 relative z-10 -mt-16">
+          {/* === CORPO DO CRACHÁ === */}
+          <div className="flex-1 flex flex-col items-center px-6 relative z-10 -mt-16" style={{ backgroundColor: 'transparent' }}>
 
-            {/* Foto Centrada com Borda */}
-            <div className="w-32 h-32 rounded-full bg-white p-1 shadow-lg ring-1 ring-border rotate-3 transition-transform hover:rotate-0 duration-500">
-              <Avatar
-                nome={user.nome}
-                url={user.fotoUrl}
-                className="w-full h-full text-4xl shadow-none border-none"
-              />
+            {/* Foto Centrada */}
+            <div className="relative">
+              <div className="w-32 h-32 rounded-full bg-white p-1 shadow-lg ring-1 ring-slate-200">
+                <Avatar
+                  nome={user.nome}
+                  url={user.fotoUrl}
+                  className="w-full h-full text-4xl shadow-none border-none"
+                />
+              </div>
+              <div className="absolute bottom-1 right-1 bg-emerald-500 text-white p-1 rounded-full border-[3px] border-white shadow-sm">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
             </div>
 
-            {/* Nome do Colaborador (Formatação Chave) */}
+            {/* Nome do Colaborador */}
             <div className="text-center mt-5 w-full">
-              <h2 className="leading-tight text-gray-900">
+              <h2 className="leading-tight text-slate-900">
                 <span className="block text-2xl font-black tracking-tight">{primeiroNome}</span>
-                <span className="block text-lg font-light text-gray-600 uppercase tracking-wide">{sobrenome}</span>
+                <span className="block text-lg font-light text-slate-600 uppercase tracking-wide">{sobrenome}</span>
               </h2>
             </div>
 
-            {/* Badge da Função */}
-            <div className={`mt-3 inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border ${getRoleBadgeColor(user.role)}`}>
-              {user.role}
+            {/* Função / Matrícula */}
+            <div className="mt-3 flex flex-wrap justify-center items-center gap-2">
+              <div className={`px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border ${getRoleBadgeColor(user.role)}`}>
+                {user.role}
+              </div>
+              {user.matricula && (
+                <div className="px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border border-slate-200 bg-slate-50 text-slate-600">
+                  ID: {user.matricula}
+                </div>
+              )}
             </div>
 
-            {/* INFORMAÇÕES CHAVE (COM ÍCONE) */}
-            <div className="mt-8 w-full bg-gray-50 rounded-2xl p-5 border border-gray-100 flex flex-col items-center gap-3">
-              <div className="flex items-center gap-2 mb-2">
-                <LockKeyhole className="w-5 h-5 text-amber-500" />
-                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">Informações Chave</h3>
+            {/* QR Code */}
+            <div className="mt-auto mb-6 w-full flex flex-col items-center gap-3">
+              <div className="bg-white p-2.5 rounded-2xl border border-slate-200 shadow-sm">
+                {tokenFinal ? (
+                  <QRCodeSVG value={loginUrl} size={110} level="M" className="opacity-95" />
+                ) : (
+                  <div className="w-[110px] h-[110px] flex flex-col gap-1 items-center justify-center bg-slate-50 rounded-xl text-slate-400">
+                    <QrCode className="w-8 h-8 opacity-50" />
+                    <span className="text-[10px] font-medium">Inativo</span>
+                  </div>
+                )}
               </div>
-              <KeyInfoLine icon={<QrCode className="w-4 h-4"/>} label="Vala Ativa" value={additionalData.valaAtiva} />
-              <KeyInfoLine icon={<QrCode className="w-4 h-4"/>} label="Veículo Principal" value={additionalData.veiculoPrincipal} />
-              <KeyInfoLine icon={<ShieldCheck className="w-4 h-4"/>} label="Registro Profissional" value={additionalData.registroProfissional} />
-            </div>
-
-            {/* ÁREA DO QR CODE / LOGO PEQUENO */}
-            <div className="mt-auto mb-5 w-full flex items-end justify-between">
-              <div className="flex flex-col items-start gap-1">
-                <div className="flex flex-col gap-1">
-                  <span className="text-[9px] font-bold text-gray-500 uppercase tracking-widest">Acesso</span>
-                  <span className="text-[12px] font-black text-text-main tracking-tighter uppercase">QR Code</span>
-                </div>
-                <div className="h-1 w-10 bg-primary/30 rounded-full"></div>
-              </div>
-              <div className="flex items-end gap-5">
-                <KlinLogo size="small" />
-                <div className="bg-white p-1.5 rounded-xl border border-gray-200">
-                  {tokenFinal ? (
-                    <QRCodeSVG value={loginUrl} size={60} level="M" className="opacity-95" />
-                  ) : (
-                    <div className="w-[60px] h-[60px] flex items-center justify-center bg-gray-100 rounded text-gray-400">
-                      Inativo
-                    </div>
-                  )}
-                </div>
-              </div>
+              <span className="text-[9px] font-bold text-slate-400 uppercase tracking-[0.2em]">Acesso Pessoal Único</span>
             </div>
           </div>
 
-          {/* === 3. FOOTER BANNER (AZUL) === */}
-          <div className="h-16 bg-[#1a2333] relative flex items-center justify-center">
-            {/* Efeito Arqueado Superior */}
-            <div className="absolute -top-10 left-0 right-0 h-20 bg-[#1a2333] rounded-t-[50%] z-0"></div>
-
+          {/* === FOOTER AZUL === */}
+          <div className="h-14 relative flex items-center justify-center" style={{ backgroundColor: '#1a2333' }}>
+             {/* Efeito Arqueado Superior */}
+            <div className="absolute -top-10 left-0 right-0 h-20 rounded-t-[50%] z-0" style={{ backgroundColor: '#1a2333' }}></div>
+            
             <div className="relative z-10 flex flex-col items-center gap-1">
-              <div className="w-12 h-1 bg-primary/50 rounded-full"></div>
-              <p className="text-[9px] text-gray-300 font-bold uppercase tracking-[0.3em]">Identidade Funcional Protegida</p>
+              <div className="w-12 h-1 bg-blue-500/50 rounded-full mb-1"></div>
+              <p className="text-[8px] text-slate-400 font-bold uppercase tracking-[0.3em]">Uso Exclusivo Operacional</p>
             </div>
           </div>
         </div>
 
-        {/* === AÇÕES EXTERNAS === */}
+        {/* === BOTÕES DE AÇÃO === */}
         <div className="w-full flex flex-col gap-3">
           {tokenFinal ? (
             <>
               <Button
                 onClick={handlePrint}
-                className="w-full h-11 text-base font-bold bg-surface-hover hover:bg-border text-text-main border-none transition-transform active:scale-95"
+                className="w-full h-12 text-base font-bold bg-slate-100 hover:bg-slate-200 text-slate-900 border-none transition-transform active:scale-95"
                 variant="secondary"
-                icon={<Printer className="w-5 h-5 text-primary" />}
+                icon={<Printer className="w-5 h-5 text-blue-600" />}
               >
-                Imprimir Documento
+                Imprimir Crachá
               </Button>
 
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   variant="secondary"
                   onClick={handleCopyLink}
-                  className="h-11 bg-surface-hover hover:bg-border text-text-main border border-border/40"
+                  className="h-11 bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200"
                   icon={<Copy className="w-4 h-4" />}
                 >
-                  Copiar
+                  Copiar Link
                 </Button>
                 <Button
                   variant="ghost"
                   onClick={handleGerarNovo}
                   isLoading={loading}
-                  className="h-11 bg-error/10 hover:bg-error/20 text-error border border-error/20"
+                  className="h-11 bg-red-50 hover:bg-red-100 text-red-600 border border-red-100"
                   icon={<RefreshCw className="w-4 h-4" />}
                 >
                   Renovar
@@ -288,7 +268,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           ) : (
             <Button
               onClick={handleGerarNovo}
-              className="w-full h-12 text-base shadow-xl bg-primary hover:bg-primary-hover text-white border-none font-bold"
+              className="w-full h-12 text-base shadow-xl bg-blue-600 hover:bg-blue-700 text-white border-none font-bold"
               isLoading={loading}
               icon={<Download className="w-5 h-5" />}
             >
