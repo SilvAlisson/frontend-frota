@@ -8,6 +8,7 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { toast } from 'sonner';
 import { Package, Save, Layers, Archive, AlertTriangle } from 'lucide-react';
+import { hapticError } from '../../lib/haptics';
 
 const tipos = ["PECA", "SERVICO", "COMBUSTIVEL", "ADITIVO", "LUBRIFICANTE", "PNEU", "OUTROS"] as const;
 
@@ -115,7 +116,7 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormProps) {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+      <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="flex flex-col flex-1 min-h-0">
         
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto scrollbar-thin">
 

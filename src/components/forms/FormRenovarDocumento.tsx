@@ -11,6 +11,7 @@ import { DatePicker } from '../ui/DatePicker';
 import { Textarea } from '../ui/Textarea';
 import { FileText, RefreshCcw, UploadCloud, Loader2 } from 'lucide-react';
 import { uploadToR2 } from '../../services/uploadService';
+import { hapticError } from '../../lib/haptics';
 
 const renovarDocumentoSchema = z.object({
   titulo: z.string().min(3, "O título precisa ter pelo menos 3 letras"),
@@ -115,7 +116,7 @@ export function FormRenovarDocumento({ documentoId, onSuccess, onCancel }: FormR
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col space-y-6">
+      <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="flex flex-col space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="md:col-span-2 bg-background/50 border border-border/60 p-5 rounded-2xl border-dashed">
             <label className="text-xs font-black text-text-main uppercase tracking-widest mb-3 block">Novo Arquivo Digital</label>

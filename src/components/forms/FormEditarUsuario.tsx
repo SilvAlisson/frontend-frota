@@ -12,6 +12,7 @@ import { User, Mail, Hash, Lock, Shield, Briefcase, Calendar, Camera, Save, Load
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
+import { hapticError } from '../../lib/haptics';
 
 interface Cargo {
   id: string;
@@ -223,7 +224,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
         </div>
       </div>
 
-      <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSubmit(onSubmit)}>
+      <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSubmit(onSubmit, () => hapticError())}>
 
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto scrollbar-thin">
 

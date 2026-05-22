@@ -10,6 +10,7 @@ import { Select } from '../ui/Select';
 import { toast } from 'sonner';
 import { Store, Save, Check, Layers, Loader2, Info } from 'lucide-react';
 import type { Produto } from '../../types';
+import { hapticError } from '../../lib/haptics';
 
 const tipos = ["POSTO", "OFICINA", "LAVA_JATO", "SEGURADORA", "OUTROS"] as const;
 
@@ -128,7 +129,7 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormProps) {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+      <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="flex flex-col flex-1 min-h-0">
         
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto scrollbar-thin">
 

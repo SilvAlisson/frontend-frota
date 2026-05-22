@@ -11,6 +11,7 @@ import { Select } from '../ui/Select';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { UserPlus, Camera, Calendar, CreditCard, User, Briefcase, Mail, KeyRound, Hash } from 'lucide-react';
+import { hapticError } from '../../lib/haptics';
 
 // Tipos e Constantes
 interface Cargo { id: string; nome: string; }
@@ -155,7 +156,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+      <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="flex flex-col flex-1 min-h-0">
 
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto scrollbar-thin">
 

@@ -19,6 +19,7 @@ import type { AbastecimentoFormValues, AbastecimentoPayload } from './schema';
 import { Step1DadosOperacionais } from './Step1DadosOperacionais';
 import { Step2DadosFinanceiros } from './Step2DadosFinanceiros';
 import { Step3Confirmacao } from './Step3Confirmacao';
+import { hapticError } from '../../../lib/haptics';
 
 interface FormRegistrarAbastecimentoProps {
   usuarioLogado?: UserType;
@@ -69,7 +70,7 @@ export function FormRegistrarAbastecimento({
       const isValid = await trigger(['fornecedorId', 'itens']);
       if (isValid) setStep(3);
     } else if (step === 3) {
-      await handleSubmit(onSubmit)(e);
+      await handleSubmit(onSubmit, () => hapticError())(e);
     }
   };
 

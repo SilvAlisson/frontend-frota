@@ -86,6 +86,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             )}
             aria-invalid={!!error}
             aria-describedby={errorId}
+            enterKeyHint={rest.enterKeyHint || "next"}
             {...rest}
           />
 

@@ -26,6 +26,7 @@ import { useFornecedores } from '../../hooks/useFornecedores';
 // --- UTILS ---
 import { parseDecimal, formatKmVisual } from '../../utils';
 import { desformatarDinheiro, formatarDinheiro } from '../../lib/formatters';
+import { hapticError } from '../../lib/haptics';
 
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
@@ -279,7 +280,7 @@ export function FormEditarManutencao({
     </Badge>
    </div>
 
-   <form onSubmit={handleSubmit(onSubmit)} className="flex-1 flex flex-col overflow-hidden min-h-0">
+   <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="flex-1 flex flex-col overflow-hidden min-h-0">
 
     <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-8 scrollbar-thin">
 

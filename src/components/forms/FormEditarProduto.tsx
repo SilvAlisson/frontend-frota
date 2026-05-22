@@ -11,6 +11,7 @@ import { Package, Save, Layers, Archive, AlertTriangle, Loader2 } from 'lucide-r
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select'; 
+import { hapticError } from '../../lib/haptics';
 
 const tipos = ["PECA", "SERVICO", "COMBUSTIVEL", "ADITIVO", "LUBRIFICANTE", "PNEU", "OUTROS"] as const;
 
@@ -168,7 +169,7 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
         </div>
       </div>
 
-      <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSubmit(onSubmit)}>
+      <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSubmit(onSubmit, () => hapticError())}>
         
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto scrollbar-thin">
 

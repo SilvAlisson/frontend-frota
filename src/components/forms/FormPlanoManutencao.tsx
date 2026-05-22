@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { Activity, Plus } from 'lucide-react';
 import { useVeiculos } from '../../hooks/useVeiculos';
 import { useMemo } from 'react';
+import { hapticError } from '../../lib/haptics';
 
 const tiposIntervalo = ["KM", "TEMPO"] as const;
 
@@ -87,7 +88,7 @@ export function FormPlanoManutencao({ onSuccess, onCancel }: FormPlanoManutencao
   const isLocked = isSubmitting || loadingVeiculos;
 
   return (
-    <form className="space-y-6 pt-4" onSubmit={handleSubmit(onSubmit)}>
+    <form className="space-y-6 pt-4" onSubmit={handleSubmit(onSubmit, () => hapticError())}>
       <Select
         label="Veículo Alvo"
         options={veiculosOptions}

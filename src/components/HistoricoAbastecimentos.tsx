@@ -22,6 +22,7 @@ import { DataTable } from './ui/DataTable';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { DropdownAcoes } from './ui/DropdownAcoes';
+import { MobileCardWithActions } from './ui/MobileCardWithActions';
 import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { DatePicker } from './ui/DatePicker';
@@ -467,7 +468,11 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
        ]}
 
        renderMobile={(ab) => (
-        <div className="p-5 flex flex-col gap-4 border-b border-border/60 last:border-0 hover:bg-surface-hover/30 transition-colors">
+        <MobileCardWithActions 
+         onEditar={canEdit ? () => setEditingId(ab.id) : undefined}
+         onExcluir={userRole === 'ADMIN' ? () => setDeletingId(ab.id) : undefined}
+         className="p-5 flex flex-col gap-4 border-b border-border/60 last:border-0 hover:bg-surface-hover/30 transition-colors"
+        >
          <div className="flex justify-between items-start">
           <div className="flex gap-4">
            {/* ✨ HELPER DE DATA NO MOBILE */}
@@ -488,11 +493,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
             )}
            </div>
           </div>
-
-          <DropdownAcoes 
-           onEditar={canEdit ? () => setEditingId(ab.id) : undefined}
-           onExcluir={userRole === 'ADMIN' ? () => setDeletingId(ab.id) : undefined}
-          />
          </div>
 
          <div className="grid grid-cols-2 gap-3 bg-surface-hover/50 p-3 rounded-xl border border-border/40">
@@ -517,7 +517,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
             Visualizar Nota de Serviço
            </Button>
          )}
-        </div>
+        </MobileCardWithActions>
        )}
       />
 

@@ -10,6 +10,7 @@ import { Briefcase, Save, X, GraduationCap, AlertTriangle, Clock } from 'lucide-
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Textarea } from '../ui/Textarea';
+import { hapticError } from '../../lib/haptics';
 
 // --- SCHEMA ZOD V4 COMPATÍVEL ---
 // Usamos a união string/number no input para evitar o erro de "unknown" do Zod v4,
@@ -107,7 +108,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+      <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="flex flex-col flex-1 min-h-0">
         
         <div className="p-6 sm:p-8 space-y-10 overflow-y-auto scrollbar-thin">
           

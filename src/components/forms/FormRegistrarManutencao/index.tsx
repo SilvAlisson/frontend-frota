@@ -17,6 +17,7 @@ import type { ManutencaoFormValues, PayloadOrdemServico } from './schema';
 import { Step1DadosGerais } from './Step1DadosGerais';
 import { Step2ItensServicos } from './Step2ItensServicos';
 import { Step3Confirmacao } from './Step3Confirmacao';
+import { hapticError } from '../../../lib/haptics';
 
 interface FormRegistrarManutencaoProps {
   onSuccess?: () => void;
@@ -72,7 +73,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
     if (step < 3) {
       nextStep();
     } else {
-      handleSubmit(onSubmit)(e);
+      handleSubmit(onSubmit, () => hapticError())(e);
     }
   };
 

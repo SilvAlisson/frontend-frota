@@ -6,8 +6,9 @@ import { z } from 'zod';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { QrCode, Mail, Lock, ArrowRight, Truck, Loader2, Sun, Moon } from 'lucide-react';
+import { ArrowRight, Truck, Loader2, Sun, Moon, QrCode, Mail, Lock } from 'lucide-react';
 import { useLogin } from '../hooks/useLogin';
+import { hapticError } from '../lib/haptics';
 
 // --- SCHEMAS DE VALIDAÇÃO (ZOD) ---
 const loginSchema = z.object({
@@ -39,6 +40,10 @@ export function LoginScreen() {
     } catch (err: any) {
       // toast já foi disparado no hook ou pode ser disparado aqui
     }
+  };
+
+  const onError = () => {
+    hapticError();
   };
 
   const onManualQrSubmit = async (e: React.FormEvent) => {
@@ -156,7 +161,7 @@ export function LoginScreen() {
 
           {/* FORMULÁRIO 1: E-MAIL E SENHA */}
           {mode === 'CREDENTIALS' && (
-            <form onSubmit={handleSubmit(onCredentialsSubmit)} className="space-y-5 animate-enter">
+            <form onSubmit={handleSubmit(onCredentialsSubmit, onError)} className="space-y-5 animate-enter">
               <Input
                 label="E-mail Corporativo"
                 type="email"

@@ -9,6 +9,7 @@ import { handleApiError } from '../../utils/errorHandler';
 import { useDefeitos } from '../../hooks/useDefeitos';
 import { cn } from '../../lib/utils';
 import { uploadToR2 } from '../../services/uploadService';
+import { hapticError, hapticLight } from '../../lib/haptics';
 
 interface FormRegistrarDefeitoProps {
   veiculoId?: string;
@@ -86,8 +87,13 @@ export function FormRegistrarDefeito({ veiculoId, veiculosDisponiveis = [], onSu
     }
   };
 
+  const onError = () => {
+    // 📳 Vibra o dispositivo para alertar erro no formulário
+    hapticError();
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6 animate-in fade-in duration-300">
+    <form onSubmit={handleSubmit(onSubmit, onError)} className="space-y-6 animate-in fade-in duration-300">
 
       {/* Alerta Tático (Pro-Max) */}
       <div className="bg-warning-500/10 border border-warning-500/20 p-4 rounded-[1.25rem] flex items-start gap-4 text-warning-700 dark:text-warning-500 shadow-sm relative overflow-hidden">
@@ -139,7 +145,10 @@ export function FormRegistrarDefeito({ veiculoId, veiculosDisponiveis = [], onSu
                     ? "shadow-[0_0_15px_rgba(239,68,68,0.2)] scale-[0.98] border-error"
                     : "hover:border-primary/40 hover:bg-surface-hover hover:scale-105 active:scale-95 border-border/60"
                 )}
-                onClick={() => setValue('categoria', cat.id, { shouldValidate: true })}
+                onClick={() => {
+                  hapticLight();
+                  setValue('categoria', cat.id, { shouldValidate: true });
+                }}
                 aria-pressed={isActive}
               >
                 <Icon className={cn("w-7 h-7 transition-colors", isActive && "animate-pulse")} />

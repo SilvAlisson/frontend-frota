@@ -12,6 +12,7 @@ import type { Produto } from '../../types';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select'; 
+import { hapticError } from '../../lib/haptics';
 
 const tiposFornecedor = ["POSTO", "OFICINA", "LAVA_JATO", "SEGURADORA", "OUTROS"] as const;
 
@@ -175,7 +176,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+      <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="flex flex-col flex-1 min-h-0">
         
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto scrollbar-thin">
 

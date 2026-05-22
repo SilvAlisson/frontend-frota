@@ -13,6 +13,7 @@ import { Select } from '../ui/Select';
 
 // --- UTILS ---
 import { formatKmVisual, parseDecimal } from '../../utils';
+import { hapticError } from '../../lib/haptics';
 
 const tiposDeVeiculo = ["POLIGUINDASTE", "VACUO", "MUNCK", "UTILITARIO", "LEVE", "OUTRO"] as const;
 const tiposDeCombustivel = ["DIESEL_S10", "GASOLINA_COMUM", "ETANOL", "GNV"] as const;
@@ -195,7 +196,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
         </div>
       </div>
 
-      <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSubmit(onSubmit)}>
+      <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSubmit(onSubmit, () => hapticError())}>
 
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto scrollbar-thin">
 

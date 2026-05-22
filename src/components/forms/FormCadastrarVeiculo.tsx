@@ -11,6 +11,7 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select'; 
 import { toast } from 'sonner';
 import { Save } from 'lucide-react';
+import { hapticError } from '../../lib/haptics';
 
 // --- CONFIGURAÇÃO DAS CATEGORIAS ---
 const CATEGORIAS_VEICULO = ['POLIGUINDASTE', 'VACUO', 'MUNCK', 'LEVE', 'OUTRO'] as const;
@@ -120,7 +121,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
 
   return (
     // Removemos as cascas externas de Modal para não colapsar com o Modal.tsx real
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col w-full animate-in fade-in duration-300">
+    <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="flex flex-col w-full animate-in fade-in duration-300">
       
       {/* Grid de 12 colunas que dá respiro para todos os campos */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-x-6 gap-y-5 pb-6">

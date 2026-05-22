@@ -21,6 +21,8 @@ import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { DropdownAcoes } from './ui/DropdownAcoes';
+import { MobileCardWithActions } from './ui/MobileCardWithActions';
+import { SmartFAB } from './ui/SmartFAB';
 import { DatePicker } from './ui/DatePicker';
 import { TableStyles } from '../styles/table';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/Tooltip';
@@ -426,7 +428,11 @@ export function HistoricoManutencoes({
 
        // --- MOBILE ---
        renderMobile={(os) => (
-        <div className="p-5 flex flex-col gap-4 border-b border-border/60 hover:bg-surface-hover/30 transition-colors">
+        <MobileCardWithActions
+         onEditar={canEdit ? () => setEditingOS(os) : undefined}
+         onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
+         className="p-5 flex flex-col gap-4 border-b border-border/60 hover:bg-surface-hover/30 transition-colors"
+        >
          <div className="flex justify-between items-start gap-2">
           <div className="flex gap-3 min-w-0 flex-1">
            <div className="bg-surface shadow-sm text-text-main p-2 rounded-xl border border-border/80 flex flex-col items-center justify-center w-14 h-14 shrink-0">
@@ -446,15 +452,13 @@ export function HistoricoManutencoes({
             )}
            </div>
           </div>
-          <div className="flex flex-col items-end gap-1 shrink-0 ml-auto">
-           <div className="flex items-center justify-end gap-1 flex-wrap">
-            {/* Status Removido Daqui também */}
-            <DropdownAcoes
-             onEditar={canEdit ? () => setEditingOS(os) : undefined}
-             onExcluir={canDelete ? () => setDeletingId(os.id) : undefined}
-            />
+           <div className="flex flex-col items-end gap-1 shrink-0 ml-auto">
+            <div className="flex items-center justify-end gap-1 flex-wrap">
+              <div className="scale-90 origin-right">
+               {getBadgeStatus(os.status)}
+              </div>
+            </div>
            </div>
-          </div>
          </div>
          <div className="flex justify-between items-center bg-surface-hover/50 p-3 rounded-xl border border-border/40">
           <div className="flex flex-col gap-1.5 items-start">
@@ -478,7 +482,7 @@ export function HistoricoManutencoes({
            Visualizar Nota de Serviço
           </Button>
          )}
-        </div>
+        </MobileCardWithActions>
        )}
       />
 
@@ -603,6 +607,13 @@ export function HistoricoManutencoes({
       Toque no botão de lupa ou dê duplo-clique na imagem para Inspecionar
      </div>
     </div>
+   )}
+
+   {canEdit && (
+     <SmartFAB 
+       onClick={() => setIsNovaOSOpen(true)} 
+       label="Nova Manutenção" 
+     />
    )}
 
   </div>
