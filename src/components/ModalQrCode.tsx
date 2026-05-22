@@ -135,7 +135,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
       <div className="flex flex-col items-center gap-6">
 
         {/* ================================================================= */}
-        {/* CARTÃO COMPLETO (ORIGINAL)                                         */}
+        {/* CARTÃO REDESENHADO – CORPORATIVO, CLEAN E MINIMALISTA              */}
         {/* ================================================================= */}
         <div
           ref={cardRef}
@@ -145,13 +145,13 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             height: '540px',
             borderRadius: '32px',
             overflow: 'hidden',
-            background: '#fdfdfd',
-            boxShadow: '0 25px 70px rgba(15,23,42,.18)',
+            background: 'linear-gradient(180deg, #fcfcfc 0%, #f3f4f6 100%)',
+            boxShadow: '0 18px 40px rgba(0,0,0,.12), 0 4px 12px rgba(0,0,0,.08)',
             userSelect: 'none',
           }}
         >
           {/* ====================================================== */}
-          {/* BACKGROUND */}
+          {/* SVG – CAMADA DE FUNDO (APENAS ELEMENTOS VETORIAIS)      */}
           {/* ====================================================== */}
           <svg
             viewBox="0 0 325 540"
@@ -169,32 +169,27 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                 <stop offset="0%" stopColor="#062B5B" />
                 <stop offset="100%" stopColor="#0A4C8B" />
               </linearGradient>
-
               <linearGradient id="greenMain" x1="0%" y1="0%" x2="100%" y2="100%">
                 <stop offset="0%" stopColor="#41B66E" />
                 <stop offset="100%" stopColor="#6CDA94" />
               </linearGradient>
             </defs>
 
-            {/* fundo branco */}
-            <rect width="325" height="540" fill="#FAFAFA" />
-
-            {/* linhas finas superiores */}
-            <g opacity="0.08">
-              <path d="M180 -10 C270 30 300 70 340 150" stroke="#0B4C8C" strokeWidth="1.2" fill="none"/>
-              <path d="M190 -10 C280 35 310 80 350 165" stroke="#0B4C8C" strokeWidth="1.2" fill="none"/>
-              <path d="M200 -10 C290 40 320 90 360 180" stroke="#0B4C8C" strokeWidth="1.2" fill="none"/>
-              <path d="M210 -10 C300 45 330 100 370 195" stroke="#0B4C8C" strokeWidth="1.2" fill="none"/>
-              <path d="M220 -10 C310 50 340 110 380 210" stroke="#0B4C8C" strokeWidth="1.2" fill="none"/>
+            {/* LINHAS DECORATIVAS – EXTREMAMENTE SUTIS (opacidade 0.06) */}
+            {/* Saem do topo direito e seguem orgânicas até o canto inferior esquerdo */}
+            <g opacity="0.06" fill="none" stroke="#0B4C8C" strokeWidth="1.2">
+              <path d="M180 -10 C230 150, 120 380, 40 560" />
+              <path d="M200 -10 C260 160, 140 390, 60 570" />
+              <path d="M220 -10 C280 170, 160 400, 80 580" />
             </g>
 
-            {/* onda superior */}
+            {/* ONDA SUPERIOR */}
             <path
               d="M0 0 L325 0 L325 55 C250 20 120 25 0 0 Z"
               fill="url(#blueMain)"
             />
 
-            {/* linha verde superior */}
+            {/* LINHA VERDE SUPERIOR */}
             <path
               d="M0 18 C100 42 210 18 325 50"
               stroke="url(#greenMain)"
@@ -202,7 +197,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               fill="none"
             />
 
-            {/* onda principal */}
+            {/* ONDA PRINCIPAL */}
             <path
               d="M0 305
               C75 250 155 240 325 290
@@ -211,7 +206,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               fill="url(#blueMain)"
             />
 
-            {/* linha verde principal */}
+            {/* LINHA VERDE PRINCIPAL */}
             <path
               d="M0 295
               C80 240 160 235 325 280"
@@ -219,17 +214,10 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               strokeWidth="7"
               fill="none"
             />
-
-            {/* linhas inferiores */}
-            <g opacity="0.08">
-              <path d="M-20 515 C60 470 120 480 180 560" stroke="#0B4C8C" strokeWidth="1.2" fill="none"/>
-              <path d="M-20 525 C70 480 130 490 190 570" stroke="#0B4C8C" strokeWidth="1.2" fill="none"/>
-              <path d="M-20 535 C80 490 140 500 200 580" stroke="#0B4C8C" strokeWidth="1.2" fill="none"/>
-            </g>
           </svg>
 
           {/* ====================================================== */}
-          {/* FURO */}
+          {/* FURO SUPERIOR – COM PROFUNDIDADE E SOMBRA INTERNA        */}
           {/* ====================================================== */}
           <div
             style={{
@@ -240,14 +228,14 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               width: '92px',
               height: '22px',
               borderRadius: '999px',
-              background: '#efefef',
-              boxShadow: 'inset 0 3px 8px rgba(0,0,0,.12)',
+              background: '#ececec',
+              boxShadow: 'inset 0 3px 8px rgba(0,0,0,.12), 0 1px 2px rgba(255,255,255,.8)',
               zIndex: 5,
             }}
           />
 
           {/* ====================================================== */}
-          {/* LOGO */}
+          {/* LOGO – COM BASTANTE RESPIRO                              */}
           {/* ====================================================== */}
           <div
             style={{
@@ -270,7 +258,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           </div>
 
           {/* ====================================================== */}
-          {/* FOTO */}
+          {/* FOTO CENTRAL – TAMANHO 145px, ANEL SEGMENTADO E SOMBRA  */}
           {/* ====================================================== */}
           <div
             style={{
@@ -281,7 +269,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               zIndex: 15,
             }}
           >
-            {/* anel */}
+            {/* ANEL EXTERNO – AZUL E VERDE COM SEGMENTOS INCOMPLETOS */}
             <svg
               viewBox="0 0 170 170"
               style={{
@@ -303,7 +291,6 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                 strokeDasharray="260 180"
                 strokeLinecap="round"
               />
-
               <circle
                 cx="85"
                 cy="85"
@@ -317,6 +304,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               />
             </svg>
 
+            {/* FOTO COM MOLDURA BRANCA E SOMBRA */}
             <div
               style={{
                 width: '145px',
@@ -337,7 +325,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           </div>
 
           {/* ====================================================== */}
-          {/* NOME */}
+          {/* NOME – IMPACTO VISUAL COM TIPOGRAFIA FORTE               */}
           {/* ====================================================== */}
           <div
             style={{
@@ -376,7 +364,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               {sobrenome}
             </div>
 
-            {/* linha */}
+            {/* LINHA DECORATIVA ABAIXO DO NOME */}
             <div
               style={{
                 width: '42px',
@@ -389,7 +377,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           </div>
 
           {/* ====================================================== */}
-          {/* FUNÇÃO */}
+          {/* TAG DE FUNÇÃO – GRADIENTE, SOMBRA E ARREDONDADA        */}
           {/* ====================================================== */}
           <div
             style={{
@@ -403,7 +391,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           >
             <div
               style={{
-                background: 'linear-gradient(135deg,#46BB73,#69D991)',
+                background: 'linear-gradient(135deg, #46BB73, #69D991)',
                 color: '#fff',
                 padding: '10px 28px',
                 borderRadius: '999px',
@@ -419,7 +407,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           </div>
 
           {/* ====================================================== */}
-          {/* QR CODE */}
+          {/* QR CODE – TAMANHO 108px, CANTONEIRAS SUTIS              */}
           {/* ====================================================== */}
           <div
             style={{
@@ -440,42 +428,35 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                 boxShadow: '0 15px 40px rgba(0,0,0,.16)',
               }}
             >
-              {/* cantos */}
+              {/* CANTOS (CANTONEIRAS) – 24px x 24px, borda 3px */}
               <div style={{
                 position:'absolute',
-                top:0,left:0,
-                width:'24px',
-                height:'24px',
+                top:0, left:0,
+                width:'24px', height:'24px',
                 borderTop:'3px solid #46BB73',
                 borderLeft:'3px solid #46BB73',
                 borderTopLeftRadius:'18px'
               }}/>
-
               <div style={{
                 position:'absolute',
-                top:0,right:0,
-                width:'24px',
-                height:'24px',
+                top:0, right:0,
+                width:'24px', height:'24px',
                 borderTop:'3px solid #0A4C8B',
                 borderRight:'3px solid #0A4C8B',
                 borderTopRightRadius:'18px'
               }}/>
-
               <div style={{
                 position:'absolute',
-                bottom:0,left:0,
-                width:'24px',
-                height:'24px',
+                bottom:0, left:0,
+                width:'24px', height:'24px',
                 borderBottom:'3px solid #46BB73',
                 borderLeft:'3px solid #46BB73',
                 borderBottomLeftRadius:'18px'
               }}/>
-
               <div style={{
                 position:'absolute',
-                bottom:0,right:0,
-                width:'24px',
-                height:'24px',
+                bottom:0, right:0,
+                width:'24px', height:'24px',
                 borderBottom:'3px solid #0A4C8B',
                 borderRight:'3px solid #0A4C8B',
                 borderBottomRightRadius:'18px'
@@ -506,7 +487,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           </div>
 
           {/* ====================================================== */}
-          {/* RODAPÉ */}
+          {/* RODAPÉ – DISCRETO E CORPORATIVO                         */}
           {/* ====================================================== */}
           <div
             style={{
@@ -521,7 +502,6 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             }}
           >
             <ShieldCheck size={14} color="#46BB73" />
-
             <span
               style={{
                 color: '#0A3161',
@@ -537,7 +517,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
         </div>
 
         {/* ================================================================= */}
-        {/* BOTÕES DE AÇÃO                                                    */}
+        {/* BOTÕES DE AÇÃO – GERAR, COPIAR LINK, IMPRIMIR                      */}
         {/* ================================================================= */}
         <div className="flex flex-wrap justify-center gap-3 w-full">
           <Button
@@ -566,7 +546,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
         </div>
 
         {/* ================================================================= */}
-        {/* MODAL DE CONFIRMAÇÃO                                              */}
+        {/* MODAL DE CONFIRMAÇÃO PARA REGENERAR TOKEN                         */}
         {/* ================================================================= */}
         <ConfirmModal
           isOpen={confirmRegenerar}
