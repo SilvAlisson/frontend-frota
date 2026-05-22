@@ -30,6 +30,7 @@ export function GestaoAuditoria() {
   const [busca, setBusca] = useState('');
   const [filtroNivel, setFiltroNivel] = useState('TODOS');
   const [filtroStatus, setFiltroStatus] = useState('PENDENTES');
+  const [arquivandoId, setArquivandoId] = useState<string | null>(null);
 
   const { data: logs = [], isLoading, refetch } = useQuery<SystemLog[]>({
     queryKey: ['system-logs'],
@@ -41,12 +42,16 @@ export function GestaoAuditoria() {
   });
 
   const resolverLog = async (id: string) => {
+    if (arquivandoId) return;
+    setArquivandoId(id);
     try {
       await api.put(`/logs/${id}/resolver`);
       toast.success('Registro arquivado com sucesso.');
-      refetch();
+      await refetch();
     } catch (error) {
       toast.error('Erro ao arquivar o log.');
+    } finally {
+      setArquivandoId(null);
     }
   };
 
@@ -293,6 +298,8 @@ export function GestaoAuditoria() {
                          variant={['CRITICAL', 'ERROR'].includes(log.nivel) ? 'danger' : 'outline'} 
                          size="sm" 
                          onClick={() => resolverLog(log.id)}
+                         disabled={arquivandoId === log.id}
+                         isLoading={arquivandoId === log.id}
                          className={`w-full lg:w-36 text-[10px] uppercase tracking-widest font-black shadow-sm ${!['CRITICAL', 'ERROR'].includes(log.nivel) ? 'text-text-muted hover:text-success hover:border-success/30 hover:bg-success/10' : ''}`}
                        >
                          Arquivar Evento
