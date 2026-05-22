@@ -131,82 +131,82 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           {/* ELEMENTOS GRÁFICOS ABSTRATOS – FAIXAS CURVAS MODERNAS   */}
           {/* ====================================================== */}
           <svg
-            viewBox="0 0 325 540"
-            preserveAspectRatio="none"
-            style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }}
-          >
-            <defs>
-              <linearGradient id="azulBase" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#062B5B" />
-                <stop offset="100%" stopColor="#0A3A6E" />
-              </linearGradient>
-              <linearGradient id="verdeBase" x1="100%" y1="0%" x2="0%" y2="0%">
-                <stop offset="0%" stopColor="#1E6B3E" />
-                <stop offset="100%" stopColor="#3B9E5C" />
-              </linearGradient>
-              <linearGradient id="verdeClaro" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#4CAF7A" />
-                <stop offset="100%" stopColor="#8DE0A8" />
-              </linearGradient>
-              <linearGradient id="azulMedio" x1="100%" y1="0%" x2="0%" y2="0%">
-                <stop offset="0%" stopColor="#0F4477" />
-                <stop offset="100%" stopColor="#1E6BA8" />
-              </linearGradient>
-            </defs>
+  viewBox="0 0 325 540"
+  preserveAspectRatio="none"
+  style={{
+    position: 'absolute',
+    inset: 0,
+    width: '100%',
+    height: '100%',
+    zIndex: 0,
+  }}
+>
+  <defs>
+    <linearGradient id="blueMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#062B5B" />
+      <stop offset="100%" stopColor="#0A4C8B" />
+    </linearGradient>
 
-            {/* Faixa superior – azul marinho, descendo da esquerda para direita */}
-            <path
-              d="M0 0 L325 0 L325 65 Q240 90 160 50 Q80 10 0 55 Z"
-              fill="url(#azulBase)"
-            />
+    <linearGradient id="greenMain" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stopColor="#41B66E" />
+      <stop offset="100%" stopColor="#6CDA94" />
+    </linearGradient>
+  </defs>
 
-            {/* Faixa verde – cruza do topo direito ao meio esquerdo */}
-            <path
-              d="M325 70 Q240 30 160 80 Q80 130 0 90 L0 150 Q80 190 160 140 Q240 90 325 130 Z"
-              fill="url(#verdeBase)"
-            />
+  {/* fundo */}
+  <rect width="325" height="540" fill="#FAFAFA" />
 
-            {/* Faixa verde clara – atravessa o centro */}
-            <path
-              d="M0 160 Q80 210 160 155 Q240 100 325 155 L325 210 Q240 255 160 205 Q80 155 0 215 Z"
-              fill="url(#verdeClaro)"
-              opacity="0.5"
-            />
+  {/* linhas superiores */}
+  <g opacity="0.06">
+    <path d="M180 -10 C270 30 300 70 340 150" stroke="#0B4C8C" strokeWidth="1" fill="none"/>
+    <path d="M190 -10 C280 35 310 80 350 165" stroke="#0B4C8C" strokeWidth="1" fill="none"/>
+    <path d="M200 -10 C290 40 320 90 360 180" stroke="#0B4C8C" strokeWidth="1" fill="none"/>
+    <path d="M210 -10 C300 45 330 100 370 195" stroke="#0B4C8C" strokeWidth="1" fill="none"/>
+  </g>
 
-            {/* Faixa azul média – da esquerda inferior à direita */}
-            <path
-              d="M0 230 Q80 275 160 220 Q240 165 325 225 L325 280 Q240 325 160 270 Q80 215 0 280 Z"
-              fill="url(#azulMedio)"
-              opacity="0.7"
-            />
+  {/* onda topo */}
+  <path
+    d="M0 0 L325 0 L325 55 C250 20 120 25 0 0 Z"
+    fill="url(#blueMain)"
+  />
 
-            {/* Faixa azul marinho – base */}
-            <path
-              d="M0 295 Q80 340 160 285 Q240 230 325 290 L325 350 Q240 395 160 340 Q80 285 0 350 Z"
-              fill="url(#azulBase)"
-              opacity="0.8"
-            />
+  {/* linha verde topo */}
+  <path
+    d="M0 18 C100 42 210 18 325 50"
+    stroke="url(#greenMain)"
+    strokeWidth="6"
+    fill="none"
+  />
 
-            {/* Faixa verde – quase na base */}
-            <path
-              d="M325 355 Q240 315 160 365 Q80 415 0 365 L0 420 Q80 470 160 420 Q240 370 325 420 Z"
-              fill="url(#verdeBase)"
-              opacity="0.45"
-            />
+  {/* onda principal */}
+  <path
+    d="
+      M0 305
+      C75 250 155 240 325 290
+      L325 425
+      C230 455 130 455 0 410 Z
+    "
+    fill="url(#blueMain)"
+  />
 
-            {/* Faixa inferior – azul marinho sólido */}
-            <path
-              d="M0 440 L325 440 L325 540 L0 540 Z"
-              fill="url(#azulBase)"
-            />
+  {/* linha verde principal */}
+  <path
+    d="
+      M0 295
+      C80 240 160 235 325 280
+    "
+    stroke="url(#greenMain)"
+    strokeWidth="7"
+    fill="none"
+  />
 
-            {/* Linhas finas decorativas sobre as faixas */}
-            <path d="M0 65 Q240 90 325 65" fill="none" stroke="white" strokeWidth="0.5" opacity="0.2" />
-            <path d="M325 130 Q160 140 0 150" fill="none" stroke="white" strokeWidth="0.5" opacity="0.15" />
-            <path d="M0 215 Q160 205 325 210" fill="none" stroke="white" strokeWidth="0.5" opacity="0.15" />
-            <path d="M325 280 Q160 270 0 280" fill="none" stroke="white" strokeWidth="0.5" opacity="0.12" />
-          </svg>
-
+  {/* linhas inferiores */}
+  <g opacity="0.06">
+    <path d="M-20 515 C60 470 120 480 180 560" stroke="#0B4C8C" strokeWidth="1" fill="none"/>
+    <path d="M-20 525 C70 480 130 490 190 570" stroke="#0B4C8C" strokeWidth="1" fill="none"/>
+    <path d="M-20 535 C80 490 140 500 200 580" stroke="#0B4C8C" strokeWidth="1" fill="none"/>
+  </g>
+</svg>
           {/* ====================================================== */}
           {/* EMPRESA */}
           {/* ====================================================== */}
