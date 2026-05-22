@@ -115,7 +115,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
     { value: "CIPP", label: "CIPP (Veículo)" },
     { value: "LAUDO_CHAPA", label: "Laudo de Chapa (Veículo)" },
     { value: "TACOGRAFO", label: "Tacógrafo (Veículo)" },
-    {value : "CTF IBAMA", label: "CTF (Global"},
+    {value : "CTF IBAMA", label: "CTF (Global)"},
     { value: "MANUTENCAO", label: "Relatório de Manutenção (Veículo)" },
   ];
 
