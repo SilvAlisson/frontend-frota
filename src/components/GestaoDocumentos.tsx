@@ -9,7 +9,7 @@ import { formatDateDisplay } from '../utils/dateUtils';
 import { Button } from './ui/Button';
 import {
   FileText, Wrench, ShieldCheck, AlertTriangle, FileWarning,
-  Trash2, Edit, ExternalLink, Plus, Loader2, RefreshCcw
+  Trash2, Edit, ExternalLink, Plus, Loader2, RefreshCcw, ZoomIn, X
 } from 'lucide-react';
 
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -272,7 +272,7 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
                         : 'bg-surface border-border/60 hover:border-primary/40'}
                     `}
                   >
-                    {/*  Grupo de Botões de Ação (Editar e Apagar) */}
+                    {/* Grupo de Botões de Ação (Editar e Apagar) */}
                     {!somenteLeitura && (
                       <div className="absolute top-4 right-4 flex items-center gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-all bg-surface-hover/80 lg:bg-transparent rounded-xl p-1 shadow-sm lg:shadow-none">
                         <Button
@@ -410,7 +410,7 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
         confirmLabel={deletingId ? "A Remover..." : "Sim, Excluir Documento"}
       />
 
-      {/* 🔮 Visualizador Cinemático de Perícia Documental */}
+      {/* Visualizador Cinemático de Perícia Documental */}
       {docParaVisualizar && (
         <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-3xl p-4 sm:p-8 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-300">
           
@@ -480,5 +480,3 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
     </div>
   );
 }
-
-

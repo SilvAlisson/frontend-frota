@@ -1,10 +1,10 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { api, sanitizePayload } from '../services/api';
 import { getDeviceContext } from '../utils/errorHandler';
-import { ServerCrash, RefreshCcw } from 'lucide-react';
+import { ServerCrash, RefreshCcw, Loader2 } from 'lucide-react';
 import { Button } from './ui/Button';
 
-// 🍞 SISTEMA DE BREADCRUMBS: Guarda os últimos 10 cliques do usuário silenciosamente
+// SISTEMA DE BREADCRUMBS: Guarda os últimos 10 cliques do usuário silenciosamente
 const MAX_BREADCRUMBS = 10;
 const breadcrumbs: string[] = [];
 
@@ -29,19 +29,32 @@ interface Props {
 interface State {
   hasError: boolean;
   errorId?: string;
+  isChunkError?: boolean;
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   public state: State = {
-    hasError: false
+    hasError: false,
+    isChunkError: false
   };
 
-  public static getDerivedStateFromError(_: Error): State {
-    return { hasError: true };
+  public static getDerivedStateFromError(error: Error): State {
+    //  O SEGREDO: Detecta se o erro foi causado por um deploy novo na Vercel (arquivo JS antigo apagado)
+    const isChunkError = 
+      error.message?.includes('Failed to fetch dynamically imported module') ||
+      error.message?.includes('Importing a module script failed');
+
+    return { hasError: true, isChunkError };
   }
 
   // 1. CAPTURA DE ERROS DE RENDERIZAÇÃO (O Padrão do React)
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    // Se for erro de atualização do Vite, recarrega a página silenciosamente em vez de logar o erro
+    if (this.state.isChunkError) {
+      window.location.reload();
+      return;
+    }
+
     this.logErrorToAuditoria(error, 'REACT_RENDER_CRASH', errorInfo?.componentStack);
   }
 
@@ -58,7 +71,7 @@ export class ErrorBoundary extends Component<Props, State> {
     });
   }
 
-  // 🚀 O MOTOR DE ENVIO: Centraliza a formatação para não repetir código
+  // O MOTOR DE ENVIO: Centraliza a formatação para não repetir código
   private logErrorToAuditoria = (error: Error, type: string, componentStack?: string | null) => {
     if (error.message?.includes('logs')) return;
 
@@ -91,6 +104,16 @@ export class ErrorBoundary extends Component<Props, State> {
   };
 
   public render() {
+    // Tela de transição rápida caso seja um erro de deploy (Vite Chunk)
+    if (this.state.isChunkError) {
+      return (
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+          <p className="text-text-secondary font-medium">Sincronizando nova versão do sistema...</p>
+        </div>
+      );
+    }
+
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
