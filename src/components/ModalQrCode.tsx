@@ -115,303 +115,428 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
       <div className="flex flex-col items-center gap-6">
 
         <div
-          ref={cardRef}
-          style={{
-            position: 'relative',
-            width: '325px',
-            height: '540px',
-            borderRadius: '28px',
-            overflow: 'hidden',
-            background: '#FFFFFF',
-            boxShadow: '0 12px 32px rgba(0,0,0,0.06), 0 3px 10px rgba(0,0,0,0.04)',
-            userSelect: 'none',
-          }}
-        >
-          {/* ====================================================== */}
-          {/* ELEMENTOS GRÁFICOS ABSTRATOS – FAIXAS CURVAS MODERNAS   */}
-          {/* ====================================================== */}
-          <svg
-  viewBox="0 0 325 540"
-  preserveAspectRatio="none"
+  ref={cardRef}
   style={{
-    position: 'absolute',
-    inset: 0,
-    width: '100%',
-    height: '100%',
-    zIndex: 0,
+    position: 'relative',
+    width: '325px',
+    height: '540px',
+    borderRadius: '34px',
+    overflow: 'hidden',
+    background: '#FAFAFA',
+    boxShadow:
+      '0 30px 80px rgba(15,23,42,.18), 0 8px 25px rgba(15,23,42,.08)',
+    userSelect: 'none',
   }}
 >
-  <defs>
-    <linearGradient id="blueMain" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stopColor="#062B5B" />
-      <stop offset="100%" stopColor="#0A4C8B" />
-    </linearGradient>
 
-    <linearGradient id="greenMain" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stopColor="#41B66E" />
-      <stop offset="100%" stopColor="#6CDA94" />
-    </linearGradient>
-  </defs>
+  {/* ====================================================== */}
+  {/* FUNDO */}
+  {/* ====================================================== */}
 
-  {/* fundo */}
-  <rect width="325" height="540" fill="#FAFAFA" />
-
-  {/* linhas superiores */}
-  <g opacity="0.06">
-    <path d="M180 -10 C270 30 300 70 340 150" stroke="#0B4C8C" strokeWidth="1" fill="none"/>
-    <path d="M190 -10 C280 35 310 80 350 165" stroke="#0B4C8C" strokeWidth="1" fill="none"/>
-    <path d="M200 -10 C290 40 320 90 360 180" stroke="#0B4C8C" strokeWidth="1" fill="none"/>
-    <path d="M210 -10 C300 45 330 100 370 195" stroke="#0B4C8C" strokeWidth="1" fill="none"/>
-  </g>
-
-  {/* onda topo */}
-  <path
-    d="M0 0 L325 0 L325 55 C250 20 120 25 0 0 Z"
-    fill="url(#blueMain)"
+  {/* textura topo */}
+  <div
+    style={{
+      position: 'absolute',
+      top: '-90px',
+      right: '-80px',
+      width: '360px',
+      height: '360px',
+      borderRadius: '50%',
+      background:
+        'repeating-radial-gradient(circle at center, transparent, transparent 8px, rgba(10,76,139,.05) 8px, rgba(10,76,139,.05) 9px)',
+      zIndex: 0,
+    }}
   />
 
-  {/* linha verde topo */}
-  <path
-    d="M0 18 C100 42 210 18 325 50"
-    stroke="url(#greenMain)"
-    strokeWidth="6"
-    fill="none"
+  {/* textura inferior */}
+  <div
+    style={{
+      position: 'absolute',
+      bottom: '-120px',
+      left: '-120px',
+      width: '360px',
+      height: '360px',
+      borderRadius: '50%',
+      background:
+        'repeating-radial-gradient(circle at center, transparent, transparent 8px, rgba(10,76,139,.05) 8px, rgba(10,76,139,.05) 9px)',
+      zIndex: 0,
+    }}
   />
 
-  {/* onda principal */}
-  <path
-    d="
-      M0 305
-      C75 250 155 240 325 290
-      L325 425
-      C230 455 130 455 0 410 Z
-    "
-    fill="url(#blueMain)"
+  {/* ====================================================== */}
+  {/* FORMAS SUPERIORES */}
+  {/* ====================================================== */}
+
+  {/* azul */}
+  <div
+    style={{
+      position: 'absolute',
+      top: '-130px',
+      left: '-100px',
+      width: '480px',
+      height: '240px',
+      background: '#082B57',
+      borderRadius: '50%',
+      transform: 'rotate(-17deg)',
+      zIndex: 1,
+    }}
   />
 
-  {/* linha verde principal */}
-  <path
-    d="
-      M0 295
-      C80 240 160 235 325 280
-    "
-    stroke="url(#greenMain)"
-    strokeWidth="7"
-    fill="none"
+  {/* verde */}
+  <div
+    style={{
+      position: 'absolute',
+      top: '-95px',
+      left: '-60px',
+      width: '430px',
+      height: '210px',
+      background: '#4FA06B',
+      borderRadius: '50%',
+      transform: 'rotate(-14deg)',
+      zIndex: 2,
+    }}
   />
 
-  {/* linhas inferiores */}
-  <g opacity="0.06">
-    <path d="M-20 515 C60 470 120 480 180 560" stroke="#0B4C8C" strokeWidth="1" fill="none"/>
-    <path d="M-20 525 C70 480 130 490 190 570" stroke="#0B4C8C" strokeWidth="1" fill="none"/>
-    <path d="M-20 535 C80 490 140 500 200 580" stroke="#0B4C8C" strokeWidth="1" fill="none"/>
-  </g>
-</svg>
-          {/* ====================================================== */}
-          {/* EMPRESA */}
-          {/* ====================================================== */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '24px',
-              width: '100%',
-              textAlign: 'center',
-              zIndex: 10,
-            }}
-          >
-            <span
-              style={{
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: 700,
-                letterSpacing: '4px',
-                textTransform: 'uppercase',
-              }}
-            >
-              Klin Engenharia
-            </span>
-            <div
-              style={{
-                width: '28px',
-                height: '2px',
-                background: '#8DE0A8',
-                margin: '4px auto 0',
-                borderRadius: '1px',
-              }}
-            />
-          </div>
+  {/* branco separador */}
+  <div
+    style={{
+      position: 'absolute',
+      top: '-75px',
+      left: '-40px',
+      width: '420px',
+      height: '180px',
+      background: '#FAFAFA',
+      borderRadius: '50%',
+      transform: 'rotate(-14deg)',
+      zIndex: 3,
+    }}
+  />
 
-          {/* ====================================================== */}
-          {/* FOTO */}
-          {/* ====================================================== */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '78px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '100px',
-              height: '100px',
-              borderRadius: '50%',
-              overflow: 'hidden',
-              border: '3px solid white',
-              boxShadow: '0 6px 18px rgba(0,0,0,0.15)',
-              background: '#fff',
-              zIndex: 10,
-            }}
-          >
-            <Avatar nome={user.nome} url={user.fotoUrl} className="w-full h-full border-none shadow-none" />
-          </div>
+  {/* ====================================================== */}
+  {/* FORMAS CENTRAIS */}
+  {/* ====================================================== */}
 
-          {/* ====================================================== */}
-          {/* NOME */}
-          {/* ====================================================== */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '195px',
-              width: '100%',
-              textAlign: 'center',
-              padding: '0 24px',
-              zIndex: 10,
-            }}
-          >
-            <h2
-              style={{
-                margin: 0,
-                color: '#062B5B',
-                fontSize: '36px',
-                fontWeight: 900,
-                letterSpacing: '-1.5px',
-                lineHeight: 1.1,
-                textTransform: 'uppercase',
-              }}
-            >
-              {primeiroNome}
-            </h2>
-            <div
-              style={{
-                marginTop: '2px',
-                color: '#475569',
-                fontSize: '12px',
-                fontWeight: 500,
-                letterSpacing: '2.5px',
-                textTransform: 'uppercase',
-              }}
-            >
-              {sobrenome}
-            </div>
-            <div
-              style={{
-                width: '32px',
-                height: '2px',
-                background: '#1E6B3E',
-                margin: '8px auto 0',
-                borderRadius: '1px',
-              }}
-            />
-          </div>
+  {/* verde */}
+  <div
+    style={{
+      position: 'absolute',
+      bottom: '80px',
+      left: '-120px',
+      width: '520px',
+      height: '240px',
+      background: '#56A86F',
+      borderRadius: '50%',
+      transform: 'rotate(11deg)',
+      zIndex: 1,
+    }}
+  />
 
-          {/* ====================================================== */}
-          {/* FUNÇÃO */}
-          {/* ====================================================== */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '275px',
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'center',
-              zIndex: 10,
-            }}
-          >
-            <div
-              style={{
-                background: '#062B5B',
-                color: 'white',
-                padding: '6px 20px',
-                borderRadius: '4px',
-                fontWeight: 700,
-                fontSize: '10px',
-                letterSpacing: '2px',
-                textTransform: 'uppercase',
-              }}
-            >
-              {user.role}
-            </div>
-          </div>
+  {/* faixa branca */}
+  <div
+    style={{
+      position: 'absolute',
+      bottom: '108px',
+      left: '-110px',
+      width: '520px',
+      height: '190px',
+      background: '#FAFAFA',
+      borderRadius: '50%',
+      transform: 'rotate(11deg)',
+      zIndex: 2,
+    }}
+  />
 
-          {/* ====================================================== */}
-          {/* QR CODE */}
-          {/* ====================================================== */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '330px',
-              width: '100%',
-              display: 'flex',
-              justifyContent: 'center',
-              zIndex: 10,
-            }}
-          >
-            <div
-              style={{
-                background: 'white',
-                padding: '10px',
-                borderRadius: '12px',
-                boxShadow: '0 3px 12px rgba(0,0,0,0.06)',
-              }}
-            >
-              {tokenFinal ? (
-                <QRCodeSVG value={loginUrl} size={100} level="M" />
-              ) : (
-                <div
-                  style={{
-                    width: '100px',
-                    height: '100px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    background: '#F8FAFC',
-                    borderRadius: '10px',
-                    border: '1px dashed #CBD5E1',
-                  }}
-                >
-                  <QrCode size={38} color="#94a3b8" />
-                </div>
-              )}
-            </div>
-          </div>
+  {/* azul principal */}
+  <div
+    style={{
+      position: 'absolute',
+      bottom: '40px',
+      left: '-90px',
+      width: '500px',
+      height: '280px',
+      background: '#082B57',
+      borderRadius: '50%',
+      transform: 'rotate(11deg)',
+      zIndex: 3,
+    }}
+  />
 
-          {/* ====================================================== */}
-          {/* RODAPÉ */}
-          {/* ====================================================== */}
+  {/* ====================================================== */}
+  {/* FURO */}
+  {/* ====================================================== */}
+
+  <div
+    style={{
+      position: 'absolute',
+      top: '22px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: '92px',
+      height: '22px',
+      borderRadius: '999px',
+      background: '#ECECEC',
+      boxShadow: 'inset 0 3px 10px rgba(0,0,0,.16)',
+      zIndex: 20,
+    }}
+  />
+
+  {/* ====================================================== */}
+  {/* LOGO */}
+  {/* ====================================================== */}
+
+  <div
+    style={{
+      position: 'absolute',
+      top: '78px',
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'center',
+      zIndex: 20,
+    }}
+  >
+    <img
+      src="/assets/klin-logo.png"
+      alt="Klin"
+      style={{
+        width: '160px',
+        objectFit: 'contain',
+      }}
+    />
+  </div>
+
+  {/* ====================================================== */}
+  {/* FOTO */}
+  {/* ====================================================== */}
+
+  <div
+    style={{
+      position: 'absolute',
+      top: '175px',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      zIndex: 25,
+    }}
+  >
+
+    {/* aro */}
+    <div
+      style={{
+        padding: '7px',
+        borderRadius: '50%',
+        background:
+          'linear-gradient(135deg,#0A3A6E 0%,#0A3A6E 55%,#5BB274 55%,#5BB274 100%)',
+        boxShadow: '0 15px 35px rgba(0,0,0,.16)',
+      }}
+    >
+      <div
+        style={{
+          width: '150px',
+          height: '150px',
+          borderRadius: '50%',
+          overflow: 'hidden',
+          border: '5px solid white',
+          background: '#fff',
+        }}
+      >
+        <Avatar
+          nome={user.nome}
+          url={user.fotoUrl}
+          className="w-full h-full border-none shadow-none"
+        />
+      </div>
+    </div>
+  </div>
+
+  {/* ====================================================== */}
+  {/* NOME */}
+  {/* ====================================================== */}
+
+  <div
+    style={{
+      position: 'absolute',
+      top: '350px',
+      width: '100%',
+      textAlign: 'center',
+      zIndex: 30,
+      padding: '0 20px',
+    }}
+  >
+    <h1
+      style={{
+        margin: 0,
+        color: '#FFFFFF',
+        fontSize: '44px',
+        fontWeight: 900,
+        letterSpacing: '-2px',
+        lineHeight: 1,
+        textTransform: 'uppercase',
+        textShadow:
+          '0 0 15px rgba(255,255,255,.25)',
+      }}
+    >
+      {primeiroNome}
+    </h1>
+
+    <div
+      style={{
+        marginTop: '6px',
+        color: '#74D89A',
+        fontSize: '13px',
+        fontWeight: 600,
+        letterSpacing: '1.7px',
+        textTransform: 'uppercase',
+      }}
+    >
+      {sobrenome}
+    </div>
+
+    <div
+      style={{
+        width: '42px',
+        height: '4px',
+        borderRadius: '999px',
+        background: '#74D89A',
+        margin: '14px auto 0',
+      }}
+    />
+  </div>
+
+  {/* ====================================================== */}
+  {/* FUNÇÃO */}
+  {/* ====================================================== */}
+
+  <div
+    style={{
+      position: 'absolute',
+      top: '435px',
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'center',
+      zIndex: 30,
+    }}
+  >
+    <div
+      style={{
+        background:
+          'linear-gradient(135deg,#4EA768,#6DCC8F)',
+        color: '#fff',
+        padding: '10px 34px',
+        borderRadius: '999px',
+        fontWeight: 800,
+        fontSize: '12px',
+        letterSpacing: '2px',
+        textTransform: 'uppercase',
+        boxShadow:
+          '0 10px 25px rgba(78,167,104,.35)',
+      }}
+    >
+      {user.role}
+    </div>
+  </div>
+
+  {/* ====================================================== */}
+  {/* QR CODE */}
+  {/* ====================================================== */}
+
+  <div
+    style={{
+      position: 'absolute',
+      bottom: '58px',
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'center',
+      zIndex: 40,
+    }}
+  >
+    <div
+      style={{
+        position: 'relative',
+        background: '#fff',
+        padding: '12px',
+        borderRadius: '18px',
+        boxShadow:
+          '0 15px 40px rgba(0,0,0,.18)',
+      }}
+    >
+
+      {/* bordas */}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          borderRadius: '18px',
+          borderTop: '4px solid #5BB274',
+          borderLeft: '4px solid #5BB274',
+          borderBottom: '4px solid #0A3A6E',
+          borderRight: '4px solid #0A3A6E',
+        }}
+      />
+
+      <div
+        style={{
+          position: 'relative',
+          zIndex: 2,
+          background: '#fff',
+          borderRadius: '12px',
+          padding: '4px',
+        }}
+      >
+        {tokenFinal ? (
+          <QRCodeSVG
+            value={loginUrl}
+            size={112}
+            level="M"
+          />
+        ) : (
           <div
             style={{
-              position: 'absolute',
-              bottom: '16px',
-              width: '100%',
+              width: '112px',
+              height: '112px',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '6px',
-              zIndex: 10,
+              background: '#F1F5F9',
+              borderRadius: '10px',
             }}
           >
-            <ShieldCheck size={11} color="#8DE0A8" />
-            <span
-              style={{
-                color: 'white',
-                fontSize: '8px',
-                fontWeight: 600,
-                letterSpacing: '3px',
-                textTransform: 'uppercase',
-              }}
-            >
-              Identidade Funcional
-            </span>
+            <QrCode size={42} color="#94A3B8" />
           </div>
-        </div>
+        )}
+      </div>
+    </div>
+  </div>
+
+  {/* ====================================================== */}
+  {/* RODAPÉ */}
+  {/* ====================================================== */}
+
+  <div
+    style={{
+      position: 'absolute',
+      bottom: '14px',
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      gap: '8px',
+      zIndex: 50,
+    }}
+  >
+    <ShieldCheck size={15} color="#56A86F" />
+
+    <span
+      style={{
+        color: '#0A3161',
+        fontSize: '10px',
+        fontWeight: 800,
+        letterSpacing: '3px',
+        textTransform: 'uppercase',
+      }}
+    >
+      IDENTIDADE FUNCIONAL
+    </span>
+  </div>
+</div>
 
         <div className="flex flex-wrap justify-center gap-3 w-full">
           <Button onClick={handleGerarNovo} disabled={loading} isLoading={loading} variant="outline">
