@@ -90,6 +90,7 @@ export function useLogin() {
           _navigator: { userAgent: navigator.userAgent }
         }
       }).catch(() => null);
+      toast.error(err.response?.data?.error || 'E-mail ou senha incorretos.');
       throw new Error('Credenciais inválidas.');
     }
   };

@@ -201,6 +201,16 @@ export function HistoricoManutencoes({
   return <Badge variant={map[tipo] || 'neutral'}>{tipo}</Badge>;
  };
 
+ const getBadgeStatus = (status: string) => {
+  const map: Record<string, "warning" | "info" | "success" | "danger" | "neutral"> = {
+   'PENDENTE': 'warning',
+   'EM_ANDAMENTO': 'info',
+   'CONCLUIDA': 'success',
+   'CANCELADA': 'danger'
+  };
+  return <Badge variant={map[status] || 'neutral'}>{status}</Badge>;
+ };
+
  const veiculosOptions = useMemo(() => [
   { value: "", label: "Todos os Veículos" },
   ...veiculos.map(v => ({ value: v.id, label: `${extrairPlaca(v.placa)} - ${v.modelo}` }))
