@@ -120,77 +120,64 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             position: 'relative',
             width: '325px',
             height: '540px',
-            borderRadius: '32px',
+            borderRadius: '28px',
             overflow: 'hidden',
-            background: 'linear-gradient(180deg, #f9fafb 0%, #f3f4f6 100%)',
-            boxShadow: '0 15px 35px rgba(0,0,0,0.07), 0 3px 10px rgba(0,0,0,0.04)',
+            background: '#ffffff',
+            boxShadow: '0 10px 30px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04)',
             userSelect: 'none',
           }}
         >
+          {/* SVG decorativo de fundo */}
           <svg
             viewBox="0 0 325 540"
             preserveAspectRatio="none"
             style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', zIndex: 0 }}
           >
             <defs>
-              <linearGradient id="blue" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#0B2B4F" />
+              <linearGradient id="blueGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#0A2A4A" />
                 <stop offset="100%" stopColor="#0F4477" />
               </linearGradient>
-              <linearGradient id="green" x1="0%" y1="0%" x2="100%" y2="100%">
+              <linearGradient id="greenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor="#2E8B57" />
                 <stop offset="100%" stopColor="#5CBF7B" />
               </linearGradient>
             </defs>
 
-            {/* Linhas decorativas ultra sutis (apenas um leve toque) */}
-            <g opacity="0.03" fill="none" stroke="#0B2B4F" strokeWidth="1">
-              <path d="M170 -10 Q220 140 10 540" />
-              <path d="M200 -10 Q260 160 30 550" />
+            {/* Faixa superior azul (cabeçalho limpo) */}
+            <rect x="0" y="0" width="325" height="135" fill="url(#blueGrad)" />
+
+            {/* Linha verde fina separando o cabeçalho */}
+            <rect x="0" y="135" width="325" height="3" fill="url(#greenGrad)" />
+
+            {/* Padrão geométrico sutil no cabeçalho (linhas diagonais finas) */}
+            <g opacity="0.06" stroke="#ffffff" strokeWidth="1">
+              <line x1="0" y1="30" x2="325" y2="80" />
+              <line x1="0" y1="60" x2="325" y2="110" />
+              <line x1="0" y1="90" x2="325" y2="140" />
+              <line x1="0" y1="120" x2="200" y2="135" />
             </g>
 
-            {/* Onda superior (leve, apenas no topo direito) */}
-            <path d="M0 0 L325 0 L325 45 Q280 10 0 10 Z" fill="url(#blue)" />
+            {/* Pequeno detalhe geométrico no canto superior direito */}
+            <circle cx="310" cy="20" r="40" fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.15" />
+            <circle cx="310" cy="20" r="60" fill="none" stroke="#ffffff" strokeWidth="0.5" opacity="0.08" />
 
-            {/* Linha verde superior fina */}
-            <path d="M0 12 Q180 28 325 42" stroke="url(#green)" strokeWidth="4" fill="none" />
+            {/* Rodapé azul inferior (faixa final limpa) */}
+            <rect x="0" y="480" width="325" height="60" fill="url(#blueGrad)" />
 
-            {/* Onda principal (limpa, atrás do nome e foto, sem exageros) */}
-            <path
-              d="M0 310 C100 240 200 240 325 290 L325 420 C220 450 110 450 0 410 Z"
-              fill="url(#blue)"
-            />
-
-            {/* Linha verde sobre a onda principal */}
-            <path
-              d="M0 295 C100 225 200 225 325 280"
-              stroke="url(#green)"
-              strokeWidth="5"
-              fill="none"
-            />
+            {/* Linha verde fina separando o rodapé */}
+            <rect x="0" y="477" width="325" height="3" fill="url(#greenGrad)" />
           </svg>
 
-          {/* Furo */}
-          <div
-            style={{
-              position: 'absolute',
-              top: '16px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              width: '90px',
-              height: '20px',
-              borderRadius: '999px',
-              background: '#e5e7eb',
-              boxShadow: 'inset 0 2px 5px rgba(0,0,0,0.08)',
-              zIndex: 5,
-            }}
-          />
+          {/* ====================================================== */}
+          {/* CABEÇALHO – EMPRESA + FOTO + NOME                       */}
+          {/* ====================================================== */}
 
-          {/* Nome da empresa em vez da logo */}
+          {/* Nome da empresa */}
           <div
             style={{
               position: 'absolute',
-              top: '66px',
+              top: '28px',
               width: '100%',
               textAlign: 'center',
               zIndex: 10,
@@ -198,11 +185,10 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           >
             <span
               style={{
-                fontFamily: 'Inter, system-ui, sans-serif',
-                fontSize: '18px',
+                color: 'white',
+                fontSize: '16px',
                 fontWeight: 700,
-                letterSpacing: '2px',
-                color: '#0F4477',
+                letterSpacing: '3px',
                 textTransform: 'uppercase',
               }}
             >
@@ -210,7 +196,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             </span>
             <div
               style={{
-                width: '32px',
+                width: '28px',
                 height: '2px',
                 background: '#5CBF7B',
                 margin: '6px auto 0',
@@ -219,66 +205,45 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             />
           </div>
 
-          {/* Foto */}
+          {/* Foto (menor, com espaço adequado) */}
           <div
             style={{
               position: 'absolute',
-              top: '170px',
+              top: '78px',
               left: '50%',
               transform: 'translateX(-50%)',
-              zIndex: 15,
+              width: '100px',
+              height: '100px',
+              borderRadius: '50%',
+              overflow: 'hidden',
+              border: '4px solid white',
+              boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+              background: '#fff',
+              zIndex: 10,
             }}
           >
-            {/* Anel minimalista */}
-            <svg
-              viewBox="0 0 160 160"
-              style={{
-                position: 'absolute',
-                width: '160px',
-                height: '160px',
-                top: '-10px',
-                left: '-10px',
-                transform: 'rotate(-12deg)',
-              }}
-            >
-              <circle cx="80" cy="80" r="72" stroke="#0F4477" strokeWidth="3" fill="none" strokeDasharray="200 160" strokeLinecap="round" />
-              <circle cx="80" cy="80" r="72" stroke="#2E8B57" strokeWidth="3" fill="none" strokeDasharray="50 400" strokeDashoffset="-200" strokeLinecap="round" />
-            </svg>
-
-            <div
-              style={{
-                width: '140px',
-                height: '140px',
-                borderRadius: '50%',
-                overflow: 'hidden',
-                border: '5px solid white',
-                boxShadow: '0 12px 28px rgba(0,0,0,0.10)',
-                background: '#fff',
-              }}
-            >
-              <Avatar nome={user.nome} url={user.fotoUrl} className="w-full h-full border-none shadow-none" />
-            </div>
+            <Avatar nome={user.nome} url={user.fotoUrl} className="w-full h-full border-none shadow-none" />
           </div>
 
-          {/* Nome do usuário */}
+          {/* Nome do usuário (agora na área branca, com espaço) */}
           <div
             style={{
               position: 'absolute',
-              top: '340px',
+              top: '195px',
               width: '100%',
               textAlign: 'center',
-              padding: '0 20px',
-              zIndex: 20,
+              padding: '0 24px',
+              zIndex: 10,
             }}
           >
             <h2
               style={{
                 margin: 0,
-                color: 'white',
-                fontSize: '40px',
+                color: '#0A2A4A',
+                fontSize: '36px',
                 fontWeight: 900,
-                letterSpacing: '-2px',
-                lineHeight: 1,
+                letterSpacing: '-1.5px',
+                lineHeight: 1.1,
                 textTransform: 'uppercase',
               }}
             >
@@ -286,8 +251,8 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             </h2>
             <div
               style={{
-                marginTop: '4px',
-                color: '#BCE0CA',
+                marginTop: '2px',
+                color: '#64748B',
                 fontSize: '13px',
                 fontWeight: 500,
                 letterSpacing: '2px',
@@ -298,91 +263,104 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             </div>
           </div>
 
+          {/* ====================================================== */}
+          {/* CORPO – FUNÇÃO + QR CODE                                 */}
+          {/* ====================================================== */}
+
           {/* Tag da função */}
           <div
             style={{
               position: 'absolute',
-              top: '424px',
+              top: '278px',
               width: '100%',
               display: 'flex',
               justifyContent: 'center',
-              zIndex: 20,
+              zIndex: 10,
             }}
           >
             <div
               style={{
-                background: 'linear-gradient(135deg, #2E8B57, #4CAF7A)',
+                background: '#0F4477',
                 color: 'white',
-                padding: '8px 24px',
-                borderRadius: '999px',
+                padding: '8px 22px',
+                borderRadius: '6px',
                 fontWeight: 700,
                 fontSize: '11px',
                 letterSpacing: '2px',
                 textTransform: 'uppercase',
-                boxShadow: '0 4px 12px rgba(46,139,87,0.2)',
+                boxShadow: '0 2px 8px rgba(15,68,119,0.2)',
               }}
             >
               {user.role}
             </div>
           </div>
 
-          {/* QR Code */}
+          {/* QR Code (área dedicada, sem sobreposição) */}
           <div
             style={{
               position: 'absolute',
-              bottom: '48px',
+              top: '340px',
               width: '100%',
               display: 'flex',
               justifyContent: 'center',
-              zIndex: 20,
+              zIndex: 10,
             }}
           >
             <div
               style={{
-                position: 'relative',
                 background: 'white',
-                padding: '8px',
+                padding: '12px',
                 borderRadius: '16px',
-                boxShadow: '0 8px 20px rgba(0,0,0,0.06)',
+                border: '1px solid #E2E8F0',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
               }}
             >
-              {/* Cantoneiras sutis */}
-              <div style={{ position:'absolute', top:0, left:0, width:'22px', height:'22px', borderTop:'2px solid #2E8B57', borderLeft:'2px solid #2E8B57', borderTopLeftRadius:'16px' }} />
-              <div style={{ position:'absolute', top:0, right:0, width:'22px', height:'22px', borderTop:'2px solid #0F4477', borderRight:'2px solid #0F4477', borderTopRightRadius:'16px' }} />
-              <div style={{ position:'absolute', bottom:0, left:0, width:'22px', height:'22px', borderBottom:'2px solid #2E8B57', borderLeft:'2px solid #2E8B57', borderBottomLeftRadius:'16px' }} />
-              <div style={{ position:'absolute', bottom:0, right:0, width:'22px', height:'22px', borderBottom:'2px solid #0F4477', borderRight:'2px solid #0F4477', borderBottomRightRadius:'16px' }} />
-
               {tokenFinal ? (
-                <QRCodeSVG value={loginUrl} size={100} level="M" />
+                <QRCodeSVG value={loginUrl} size={110} level="M" />
               ) : (
-                <div style={{ width:'100px', height:'100px', display:'flex', alignItems:'center', justifyContent:'center', background:'#f8fafc', borderRadius:'12px' }}>
-                  <QrCode size={40} color="#94a3b8" />
+                <div
+                  style={{
+                    width: '110px',
+                    height: '110px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: '#F8FAFC',
+                    borderRadius: '12px',
+                    border: '1px dashed #CBD5E1',
+                  }}
+                >
+                  <QrCode size={44} color="#94a3b8" />
                 </div>
               )}
             </div>
           </div>
 
-          {/* Rodapé institucional */}
+          {/* ====================================================== */}
+          {/* RODAPÉ – IDENTIDADE FUNCIONAL                            */}
+          {/* ====================================================== */}
+
           <div
             style={{
               position: 'absolute',
-              bottom: '12px',
+              bottom: '14px',
               width: '100%',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              gap: '5px',
-              zIndex: 20,
+              gap: '6px',
+              zIndex: 10,
             }}
           >
-            <ShieldCheck size={12} color="#2E8B57" />
+            <ShieldCheck size={12} color="#5CBF7B" />
             <span
               style={{
-                color: '#0A2540',
-                fontSize: '8px',
-                fontWeight: 700,
+                color: 'white',
+                fontSize: '9px',
+                fontWeight: 600,
                 letterSpacing: '3px',
                 textTransform: 'uppercase',
+                opacity: 0.9,
               }}
             >
               Identidade Funcional
