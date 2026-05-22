@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form'; // ✨ Adicionado Controller
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
@@ -89,6 +89,7 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
     { value: 'LICENCA_AMBIENTAL', label: 'Licença Ambiental (Sem Validade)' },
     { value: 'AST', label: 'AST - Segurança (Sem Validade)' },
     { value: 'ATRP', label: 'ATRP' },
+    {value: 'CTF IBAMA', label: 'CTF IBAMA'},
     { value: 'OUTROS', label: 'Outros Arquivos' },
   ];
 

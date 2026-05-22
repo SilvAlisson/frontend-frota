@@ -106,7 +106,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
   };
 
   const categoriasOptions = [
-    { value: "AST", label: "âš ï¸ AST (Análise de Segurança)" },
+    { value: "AST", label: "AST (Análise de Segurança)" },
     { value: "LICENCA_AMBIENTAL", label: "Licença Ambiental (Global)" },
     { value: "ATRP", label: "ATRP (Global)" },
     { value: "OUTROS_GLOBAIS", label: "Outros (Global)" },
@@ -115,6 +115,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
     { value: "CIPP", label: "CIPP (Veículo)" },
     { value: "LAUDO_CHAPA", label: "Laudo de Chapa (Veículo)" },
     { value: "TACOGRAFO", label: "Tacógrafo (Veículo)" },
+    {value : "CTF IBAMA", label: "CTF (Global"},
     { value: "MANUTENCAO", label: "Relatório de Manutenção (Veículo)" },
   ];
 
