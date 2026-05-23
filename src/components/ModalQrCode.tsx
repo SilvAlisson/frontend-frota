@@ -254,30 +254,17 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
             </Button>
           )}
         </div>
-            <RefreshCw className="w-4 h-4 mr-2" />
-            {tokenAtual ? 'Regenerar Credencial' : 'Gerar Credencial'}
-          </Button>
-          <Button onClick={handleCopyLink} disabled={!loginUrl} variant="outline">
-            <Copy className="w-4 h-4 mr-2" />
-            Copiar Link
-          </Button>
-          <Button onClick={handlePrint} variant="outline">
-            <Printer className="w-4 h-4 mr-2" />
-            Imprimir
-          </Button>
-        </div>
-
-        <ConfirmModal
-          isOpen={confirmRegenerar}
-          title="Regenerar credencial?"
-          description="Isso invalidará o token atual. Deseja continuar?"
-          onConfirm={async () => {
-            setConfirmRegenerar(false);
-            await executarGerarToken();
-          }}
-          onCancel={() => setConfirmRegenerar(false)}
-        />
       </div>
+
+      <ConfirmModal
+        isOpen={confirmRegenerar}
+        title="Renovar QR Code"
+        description="Gerar um novo código invalidará o crachá anterior permanentemente. O colaborador precisará de um novo crachá impresso."
+        variant="warning"
+        confirmLabel="Sim, Renovar"
+        onConfirm={() => { setConfirmRegenerar(false); executarGerarToken(); }}
+        onCancel={() => setConfirmRegenerar(false)}
+      />
     </Modal>
   );
-}
+}
