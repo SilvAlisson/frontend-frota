@@ -2,6 +2,7 @@ import React, { useState, Suspense, useEffect } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Tabs } from '../components/ui/Tabs';
+import { PageHeader } from '../components/ui/PageHeader';
 import { GestaoDocumentos } from '../components/GestaoDocumentos';
 import { useVeiculoDetalhes } from '../hooks/useVeiculoDetalhes';
 import { EmptyState } from '../components/ui/EmptyState';
@@ -77,37 +78,41 @@ export function VeiculoDetalhes() {
         <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
 
             {/* HEADER */}
-            <div className="glass p-6 sm:p-8 rounded-[2rem] border border-border/60 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                <div className="flex items-center gap-5 sm:gap-6">
-                    <div className={`p-5 rounded-[1.5rem] flex flex-col items-center justify-center min-w-[150px] shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_2px_10px_rgba(0,0,0,0.1)] border border-border/80 bg-surface-hover/80 ${veiculo.status === 'ATIVO' ? 'shadow-[0_0_20px_rgba(var(--color-primary),0.2)] border-primary/30' : ''}`}>
-                        <span className="text-data text-3xl sm:text-4xl font-black tracking-tighter text-text-main">{veiculo.placa}</span>
-                        <span className="text-[9px] font-sans font-black uppercase tracking-[0.3em] opacity-60 mt-1">BRASIL</span>
-                    </div>
-                    <div>
-                        <h2 className="text-2xl sm:text-3xl font-black text-text-main flex items-center gap-2 tracking-tight">
-                            {veiculo.modelo || 'Modelo Indefinido'}
-                        </h2>
-                        <div className="flex flex-wrap gap-2 mt-2">
-                            <span className="text-[10px] glass text-text-secondary border border-border/60 px-2.5 py-1 rounded-lg font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-sm">
-                                <Car className="w-3.5 h-3.5 opacity-70" />
-                                {veiculo.marca}
+            <PageHeader
+                title={
+                    <div className="flex items-center gap-5 sm:gap-6">
+                        <div className={`p-4 rounded-2xl flex flex-col items-center justify-center min-w-[120px] shadow-[inset_0_2px_4px_rgba(255,255,255,0.4),0_2px_10px_rgba(0,0,0,0.1)] border border-border/80 bg-surface-hover/80 ${veiculo.status === 'ATIVO' ? 'shadow-[0_0_20px_rgba(var(--color-primary),0.2)] border-primary/30' : ''}`}>
+                            <span className="text-data text-2xl sm:text-3xl font-black tracking-tighter text-text-main">{veiculo.placa}</span>
+                            <span className="text-[9px] font-sans font-black uppercase tracking-[0.3em] opacity-60 mt-0.5">BRASIL</span>
+                        </div>
+                        <div className="flex flex-col mt-2">
+                            <span className="text-2xl sm:text-3xl font-black text-text-main flex items-center gap-2 tracking-tight">
+                                {veiculo.modelo || 'Modelo Indefinido'}
                             </span>
-                            <span className={`text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase tracking-widest glass flex items-center gap-1.5 shadow-sm ${veiculo.status === 'ATIVO' ? 'text-success-600 border-success/20 bg-success/10' : 'text-error border-error/20 bg-error/10'}`}>
-                                <div className={`w-2 h-2 rounded-full shadow-inner ${veiculo.status === 'ATIVO' ? 'bg-success animate-pulse' : 'bg-error'}`} />
-                                {veiculo.status.replace(/_/g, ' ')}
-                            </span>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                <span className="text-[10px] glass text-text-secondary border border-border/60 px-2.5 py-1 rounded-lg font-bold uppercase tracking-widest flex items-center gap-1.5 shadow-sm">
+                                    <Car className="w-3.5 h-3.5 opacity-70" />
+                                    {veiculo.marca}
+                                </span>
+                                <span className={`text-[10px] px-2.5 py-1 rounded-lg font-bold uppercase tracking-widest glass flex items-center gap-1.5 shadow-sm ${veiculo.status === 'ATIVO' ? 'text-success-600 border-success/20 bg-success/10' : 'text-error border-error/20 bg-error/10'}`}>
+                                    <div className={`w-2 h-2 rounded-full shadow-inner ${veiculo.status === 'ATIVO' ? 'bg-success animate-pulse' : 'bg-error'}`} />
+                                    {veiculo.status.replace(/_/g, ' ')}
+                                </span>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <Button
-                    variant="secondary"
-                    onClick={() => navigate(-1)}
-                    icon={<ArrowLeft className="w-4 h-4" />}
-                    className="w-full md:w-auto h-11"
-                >
-                    Voltar à Frota
-                </Button>
-            </div>
+                }
+                extraAction={
+                    <Button
+                        variant="secondary"
+                        onClick={() => navigate(-1)}
+                        icon={<ArrowLeft className="w-4 h-4" />}
+                        className="w-full md:w-auto h-11"
+                    >
+                        Voltar à Frota
+                    </Button>
+                }
+            />
 
             {/* CARDS DE KPI - Sempre visíveis (Contexto) */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">

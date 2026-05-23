@@ -26,6 +26,7 @@ function AppContent() {
         position="top-right"
         expand={false}
         closeButton
+        visibleToasts={3}
         duration={4000}
         theme={theme}
         style={{

@@ -13,10 +13,13 @@ import {
 } from 'lucide-react';
 
 import { ConfirmModal } from './ui/ConfirmModal';
+import { PageHeader } from './ui/PageHeader';
 import { EmptyState } from './ui/EmptyState';
 import { Callout } from './ui/Callout';
 import { Modal } from './ui/Modal';
 import { FormRenovarDocumento } from './forms/FormRenovarDocumento';
+import { PullToRefresh } from './ui/PullToRefresh';
+import { SmartFAB } from './ui/SmartFAB';
 
 // --- UTILS (Extraído para performance) ---
 const getStatusInfo = (dataValidade?: string | null, categoria?: string) => {
@@ -108,12 +111,12 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
   const [docParaVisualizar, setDocParaVisualizar] = useState<{ url: string, titulo: string } | null>(null);
   const [zoomNivel, setZoomNivel] = useState(1);
 
-  const { data: documentos, isLoading: isLoadingDocs } = useDocumentosLegais({
+  const { data: documentos, isLoading: isLoadingDocs, refetch: refetchDocs } = useDocumentosLegais({
     categoria: filtroCategoria,
     veiculoId: veiculoId
   });
 
-  const { data: planos, isLoading: isLoadingPlanos } = useQuery({
+  const { data: planos, isLoading: isLoadingPlanos, refetch: refetchPlanos } = useQuery({
     queryKey: ['planos', veiculoId],
     queryFn: async () => {
       if (!veiculoId) return [];
@@ -142,26 +145,33 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
 
   const isLoading = isLoadingDocs || (!!veiculoId && filtroCategoria === FILTRO_TODOS && isLoadingPlanos);
 
-  return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 relative">
+  const handleRefresh = async () => {
+    await Promise.all([refetchDocs(), refetchPlanos()]);
+  };
 
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/60 pb-6">
-        <div>
-          <h2 className="text-2xl font-black text-text-main flex items-center gap-3 tracking-tight">
+  return (
+    <PullToRefresh onRefresh={handleRefresh}>
+      <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 relative">
+
+      <PageHeader
+        title={
+          <div className="flex items-center gap-3">
             Biblioteca Legal
             {veiculoId && <span className="text-sm font-bold text-text-muted bg-surface-hover px-2 py-0.5 rounded-lg border border-border/60">Veículo Específico</span>}
-            <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
+            <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20 mt-1">
               {documentos?.length || 0} Registro(s)
             </span>
-          </h2>
-          <p className="text-sm text-text-secondary font-medium mt-1.5 opacity-90">Gestão central de documentação regulatória, laudos e licenças ambientais.</p>
-        </div>
-        {!somenteLeitura && !modoAdicionar && (
-          <Button onClick={() => setModoAdicionar(true)} icon={<Plus className="w-4 h-4" />} className="shadow-button hover:shadow-float-primary w-full sm:w-auto h-11">
-            Novo Documento
-          </Button>
-        )}
-      </div>
+          </div>
+        }
+        description="Gestão central de documentação regulatória, laudos e licenças ambientais."
+        extraAction={
+          !somenteLeitura && !modoAdicionar ? (
+            <Button onClick={() => setModoAdicionar(true)} icon={<Plus className="w-4 h-4" />} className="shadow-button hover:shadow-float-primary w-full sm:w-auto h-11">
+              Novo Documento
+            </Button>
+          ) : undefined
+        }
+      />
 
       {modoAdicionar ? (
         <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 animate-in slide-in-from-right-8 duration-300 max-w-4xl">
@@ -477,6 +487,14 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
         </div>
       )}
 
-    </div>
+    {!somenteLeitura && !modoAdicionar && (
+      <SmartFAB 
+        onClick={() => setModoAdicionar(true)} 
+        label="Novo Documento" 
+      />
+    )}
+
+      </div>
+    </PullToRefresh>
   );
 }

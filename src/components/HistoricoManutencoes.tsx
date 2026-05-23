@@ -226,14 +226,15 @@ export function HistoricoManutencoes({
    <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
 
    {/* 1. HEADER & FILTROS */}
-   <PageHeader
-    title="Boletim de Manutenções"
-    subtitle="Controle de manutenções KLIN. Filtre por oficina para gerar o Boletim de Medição (BM)."
-    actionLabel={canEdit ? "Nova Manutenção" : undefined}
-    onAction={canEdit ? () => setIsNovaOSOpen(true) : undefined}
-    extraAction={
-      // Mudamos para flex-col (duas linhas) com padding
-      <div className="flex flex-col gap-3 w-full max-w-full overflow-hidden bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
+    <PageHeader
+     title="Boletim de Manutenções"
+     subtitle="Controle de manutenções KLIN. Filtre por oficina para gerar o Boletim de Medição (BM)."
+     actionLabel={canEdit ? "Nova Manutenção" : undefined}
+     onAction={canEdit ? () => setIsNovaOSOpen(true) : undefined}
+    />
+
+    {/* FILTROS MOVIDOS PARA FORA DO HEADER */}
+    <div className="flex flex-col gap-3 w-full max-w-full overflow-hidden bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
         
         {/* LINHA 1: Filtros de Seleção (Veículo e Fornecedor) */}
         <div className="flex flex-col sm:flex-row gap-3 items-end">
@@ -308,8 +309,6 @@ export function HistoricoManutencoes({
         </div>
 
       </div>
-    }
-   />
 
    {/* 2. SUMÁRIO DA CONSULTA (KPIs Premium) */}
    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
@@ -317,7 +316,7 @@ export function HistoricoManutencoes({
      <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
       <DollarSign className="w-4 h-4 text-primary" /> Subtotal do Período/Oficina
      </span>
-     <span className="text-3xl font-mono font-black text-text-main truncate group-hover:text-primary transition-colors">
+     <span className="text-3xl font-sans font-black tracking-tight text-text-main truncate group-hover:text-primary transition-colors">
       {totalGasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
      </span>
     </Card>
@@ -326,7 +325,7 @@ export function HistoricoManutencoes({
      <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
       <Wrench className="w-4 h-4 text-amber-500 dark:text-amber-400" /> Ordens de Serviço (Fichas)
      </span>
-     <span className="text-3xl font-mono font-black text-text-main truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+     <span className="text-3xl font-sans font-black tracking-tight text-text-main truncate group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
       {osAbertas} <small className="text-lg font-bold opacity-60 uppercase tracking-widest ml-1">Em Oficina</small>
      </span>
     </Card>

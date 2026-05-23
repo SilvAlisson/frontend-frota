@@ -17,6 +17,7 @@ import type { TreinamentoRealizado, User } from '../types';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
 import { Skeleton } from './ui/Skeleton';
+import { hapticError } from '../lib/haptics';
 
 interface ModalProps {
     usuario: User;
@@ -253,7 +254,7 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
                             <Plus className="w-4 h-4 text-primary" /> Novo Registro
                         </h4>
 
-                        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                        <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="space-y-5">
                             <Input
                                 label="Nome da Certificação"
                                 placeholder="Ex: Direção Defensiva"

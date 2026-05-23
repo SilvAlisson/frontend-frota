@@ -10,6 +10,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Card } from './ui/Card';
 import { parseDecimal, formatKmVisual } from '../utils';
+import { hapticError } from '../lib/haptics';
 import type { Jornada } from '../types';
 
 interface JornadaCardProps {
@@ -121,7 +122,7 @@ export function JornadaCard({
         {/* Marca d'água visual de operação */}
         <Navigation className="absolute -right-6 -bottom-6 w-40 h-40 text-emerald-500/5 -rotate-12 pointer-events-none" />
 
-        <form className="space-y-6 relative z-10" onSubmit={handleSubmit(onSubmit)}>
+        <form className="space-y-6 relative z-10" onSubmit={handleSubmit(onSubmit, () => hapticError())}>
 
           {/* Cabeçalho */}
           <div className="flex flex-col mb-2">

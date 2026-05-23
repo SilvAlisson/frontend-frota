@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { uploadToR2 } from '../../services/uploadService';
 import { useCreateDocumento } from '../../hooks/useDocumentosLegais';
+import { hapticError } from '../../lib/haptics';
 import { useVeiculos } from '../../hooks/useVeiculos';
 import { toast } from 'sonner';
 import { UploadCloud, FileText, Truck, Save, AlertTriangle, Loader2 } from 'lucide-react';
@@ -151,7 +152,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(handleUploadAndSubmit)} className="flex flex-col flex-1 min-h-0">
+      <form onSubmit={handleSubmit(handleUploadAndSubmit, () => hapticError())} className="flex flex-col flex-1 min-h-0">
 
         <div className="p-6 sm:p-8 space-y-8 overflow-y-auto scrollbar-thin">
 
@@ -187,7 +188,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
                   </div>
                 ) : (
                   <div className="space-y-1">
-                    <p className="text-sm font-bold text-text-main">Arraste um Arquivo ou clique parprocurando</p>
+                    <p className="text-sm font-bold text-text-main">Arraste um Arquivo ou clique para procurar</p>
                     <p className="text-xs text-text-secondary font-medium">Tamanho máximo: 5MB (PDF, JPG, PNG)</p>
                   </div>
                 )}

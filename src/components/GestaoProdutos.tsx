@@ -10,11 +10,14 @@ import autoAnimate from '@formkit/auto-animate';
 // Componentes e Ícones Padronizados
 import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
+import { PageHeader } from './ui/PageHeader';
 import { Callout } from './ui/Callout';
 import { 
  Trash2, Edit2, Download, Plus, Loader2, 
  Fuel, Settings, Package, Droplets, AlertTriangle 
 } from 'lucide-react';
+import { PullToRefresh } from './ui/PullToRefresh';
+import { SmartFAB } from './ui/SmartFAB';
 
 interface Produto {
  id: string;
@@ -145,179 +148,185 @@ export function GestaoProdutos() {
  };
 
  return (
-  <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-10">
+  <PullToRefresh onRefresh={fetchProdutos}>
+   <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-10">
 
-   {/* CABEÇALHO */}
-   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/60 pb-6">
-    <div>
-     <h1 className="text-2xl sm:text-3xl font-black text-text-main tracking-tight leading-none flex items-center gap-3">
-       Catálogo Central
-       <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
-        {produtos.length} Itens
-       </span>
-     </h1>
-     <p className="text-text-secondary font-medium mt-1.5 opacity-90">
-       Gestão de serviços de oficina, consumíveis e peças para a frota.
-     </p>
-    </div>
+    {/* CABEÇALHO */}
+    {/* CABEÇALHO */}
+    <PageHeader
+     title={
+       <div className="flex items-center gap-3">
+         Catálogo Central
+         <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20 mt-1">
+           {produtos.length} Itens
+         </span>
+       </div>
+     }
+     description="Gestão de serviços de oficina, consumíveis e peças para a frota."
+     extraAction={
+       modo === 'listando' ? (
+         <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+           <Button
+             variant="secondary"
+             className="flex-1 sm:flex-none h-11"
+             onClick={handleExportar}
+             disabled={produtos.length === 0}
+             icon={<Download className="w-4 h-4" />}
+           >
+             Excel
+           </Button>
+           <Button
+             variant="primary"
+             onClick={() => setModo('adicionando')}
+             className="hidden sm:flex flex-1 sm:flex-none h-11 shadow-button hover:shadow-float-primary"
+             icon={<Plus className="w-4 h-4" />}
+           >
+             Novo Item
+           </Button>
+         </div>
+       ) : undefined
+     }
+    />
 
-    {modo === 'listando' && (
-     <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-      <Button
-       variant="secondary"
-       className="flex-1 sm:flex-none h-11"
-       onClick={handleExportar}
-       disabled={produtos.length === 0}
-       icon={<Download className="w-4 h-4" />}
-      >
-       Excel
-      </Button>
-      <Button
-       variant="primary"
-       onClick={() => setModo('adicionando')}
-       className="flex-1 sm:flex-none h-11 shadow-button hover:shadow-float-primary"
-       icon={<Plus className="w-4 h-4" />}
-      >
-       Novo Item
-      </Button>
+    {/* FORMULÁRIOS (COM TRANSIÇÕES) */}
+    {modo === 'adicionando' && (
+     <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-xl mx-auto animate-in slide-in-from-right-8 duration-300">
+       <div className="mb-6 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit" onClick={handleCancelarForm}>
+       <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar
+      </div>
+      <FormCadastrarProduto onSuccess={handleSucesso} onCancelar={handleCancelarForm} />
      </div>
     )}
-   </div>
 
-   {/* FORMULÁRIOS (COM TRANSIÇÕES) */}
-   {modo === 'adicionando' && (
-    <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-xl mx-auto animate-in slide-in-from-right-8 duration-300">
+    {modo === 'editando' && produtoIdSelecionado && (
+     <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-xl mx-auto animate-in slide-in-from-right-8 duration-300">
       <div className="mb-6 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit" onClick={handleCancelarForm}>
-      <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar
-     </div>
-     <FormCadastrarProduto onSuccess={handleSucesso} onCancelar={handleCancelarForm} />
-    </div>
-   )}
-
-   {modo === 'editando' && produtoIdSelecionado && (
-    <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-xl mx-auto animate-in slide-in-from-right-8 duration-300">
-     <div className="mb-6 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit" onClick={handleCancelarForm}>
-      <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar
-     </div>
-     <FormEditarProduto
-      produtoId={produtoIdSelecionado}
-      onSuccess={handleSucesso}
-      onCancelar={handleCancelarForm}
-     />
-    </div>
-   )}
-
-   {/* LISTAGEM (GRID INDUSTRIAL) */}
-   {modo === 'listando' && (
-    <>
-     {loading ? (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-       {[1, 2, 3, 4, 5, 6].map(i => (
-        <div key={i} className="h-36 bg-surface-hover/50 rounded-3xl border border-border/40 animate-pulse"></div>
-       ))}
+       <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar
       </div>
-     ) : (
-      <div ref={parentRef} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-max">
-       {produtos.map((produto) => {
-        const style = getTypeConfig(produto.tipo);
-        return (
-         <div key={produto.id} className="group bg-surface p-5 sm:p-6 rounded-3xl shadow-sm border border-border/60 hover:shadow-md hover:border-primary/40 transition-all duration-300 flex flex-col relative overflow-hidden h-full">
+      <FormEditarProduto
+       produtoId={produtoIdSelecionado}
+       onSuccess={handleSucesso}
+       onCancelar={handleCancelarForm}
+      />
+     </div>
+    )}
 
-          {/* Topo: Ícone e Ações */}
-          <div className="flex justify-between items-start mb-4">
-           <div className={`h-12 w-12 rounded-2xl ${style.bg} ${style.text} flex items-center justify-center shadow-inner border ${style.border} transition-transform group-hover:scale-110`}>
-            {style.icon}
+    {/* LISTAGEM (GRID INDUSTRIAL) */}
+    {modo === 'listando' && (
+     <>
+      {loading ? (
+       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {[1, 2, 3, 4, 5, 6].map(i => (
+         <div key={i} className="h-36 bg-surface-hover/50 rounded-3xl border border-border/40 animate-pulse"></div>
+        ))}
+       </div>
+      ) : (
+       <div ref={parentRef} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-max">
+        {produtos.map((produto) => {
+         const style = getTypeConfig(produto.tipo);
+         return (
+          <div key={produto.id} className="group bg-surface p-5 sm:p-6 rounded-3xl shadow-sm border border-border/60 hover:shadow-md hover:border-primary/40 transition-all duration-300 flex flex-col relative overflow-hidden h-full">
+
+           {/* Topo: Ícone e Ações */}
+           <div className="flex justify-between items-start mb-4">
+            <div className={`h-12 w-12 rounded-2xl ${style.bg} ${style.text} flex items-center justify-center shadow-inner border ${style.border} transition-transform group-hover:scale-110`}>
+             {style.icon}
+            </div>
+
+            {/* Ações (Hover no Desktop, sempre visível no Mobile) */}
+            <div className="flex gap-1 bg-surface-hover/50 rounded-xl p-1 border border-border/40 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
+             <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => { setProdutoIdSelecionado(produto.id); setModo('editando'); }}
+              aria-label={`Editar produto ${produto.nome}`}
+              className="h-8 w-8 text-text-muted hover:text-primary hover:bg-surface"
+             >
+              <Edit2 className="w-4 h-4" />
+             </Button>
+             <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setProdutoParaExcluir(produto)}
+              disabled={deletingId === produto.id}
+              aria-label={`Excluir produto ${produto.nome}`}
+              className="h-8 w-8 text-text-muted hover:text-error hover:bg-error/10"
+             >
+              {deletingId === produto.id
+               ? <Loader2 className="w-4 h-4 animate-spin text-error" />
+               : <Trash2 className="w-4 h-4" />}
+             </Button>
+            </div>
            </div>
 
-           {/* Ações (Hover no Desktop, sempre visível no Mobile) */}
-           <div className="flex gap-1 bg-surface-hover/50 rounded-xl p-1 border border-border/40 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-             variant="ghost"
-             size="icon"
-             onClick={() => { setProdutoIdSelecionado(produto.id); setModo('editando'); }}
-             aria-label={`Editar produto ${produto.nome}`}
-             className="h-8 w-8 text-text-muted hover:text-primary hover:bg-surface"
-            >
-             <Edit2 className="w-4 h-4" />
-            </Button>
-            <Button
-             variant="ghost"
-             size="icon"
-             onClick={() => setProdutoParaExcluir(produto)}
-             disabled={deletingId === produto.id}
-             aria-label={`Excluir produto ${produto.nome}`}
-             className="h-8 w-8 text-text-muted hover:text-error hover:bg-error/10"
-            >
-             {deletingId === produto.id
-              ? <Loader2 className="w-4 h-4 animate-spin text-error" />
-              : <Trash2 className="w-4 h-4" />}
-            </Button>
+           {/* Informações */}
+           <h4 className="font-black text-text-main text-lg truncate mb-1.5" title={produto.nome}>
+            {produto.nome}
+           </h4>
+
+           {/* Rodapé do Card */}
+           <div className="mt-auto pt-4 border-t border-border/40 flex items-center justify-between text-xs">
+            <span className={`inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border shadow-sm ${style.bg} ${style.text} ${style.border}`}>
+             {produto.tipo.replace('_', ' ')}
+            </span>
+
+            <span className="text-text-secondary font-mono font-bold bg-surface-hover px-2 py-1 rounded-lg border border-border/60">
+             {produto.unidadeMedida}
+            </span>
            </div>
+
           </div>
+         );
+        })}
+       </div>
+      )}
 
-          {/* Informações */}
-          <h4 className="font-black text-text-main text-lg truncate mb-1.5" title={produto.nome}>
-           {produto.nome}
-          </h4>
+      {/* EMPTY STATE ELEGANTE */}
+      {!loading && produtos.length === 0 && (
+       <div className="pt-10">
+        <EmptyState 
+         icon={Package} 
+         title="Catálogo Vazio" 
+         description="Cadastre serviços (ex: Mão de Obra) ou itens (ex: Filtro de Óleo) para poder utilizá-los no lançamento de manutenções e abastecimentos."
+         action={
+          <Button variant="secondary" onClick={() => setModo('adicionando')} icon={<Plus className="w-4 h-4"/>}>
+           Cadastrar Primeiro Item
+          </Button>
+         }
+        />
+       </div>
+      )}
+     </>
+    )}
 
-          {/* Rodapé do Card */}
-          <div className="mt-auto pt-4 border-t border-border/40 flex items-center justify-between text-xs">
-           <span className={`inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border shadow-sm ${style.bg} ${style.text} ${style.border}`}>
-            {produto.tipo.replace('_', ' ')}
-           </span>
-
-           <span className="text-text-secondary font-mono font-bold bg-surface-hover px-2 py-1 rounded-lg border border-border/60">
-            {produto.unidadeMedida}
-           </span>
-          </div>
-
-         </div>
-        );
-       })}
+    {/* CONFIRM MODAL COM CALLOUT INTEGRADO */}
+    <ConfirmModal 
+     isOpen={!!produtoParaExcluir}
+     onCancel={() => setProdutoParaExcluir(null)}
+     onConfirm={handleExecuteDelete}
+     title="Remover Item do Catálogo"
+     description={
+      <div className="space-y-4">
+        <p className="text-text-secondary text-sm font-medium">
+          Tem certeza que deseja excluir <strong className="text-text-main font-black">"{produtoParaExcluir?.nome}"</strong> da base de dados?
+        </p>
+        <Callout variant="warning" title="Atenção ao Histórico" icon={AlertTriangle}>
+          Se este item já tiver sido utilizado em alguma fatura de abastecimento ou ordem de serviço de oficina, a sua exclusão será bloqueada para preservar o histórico financeiro.
+        </Callout>
       </div>
-     )}
+     }
+     variant="danger"
+     confirmLabel={deletingId ? "A Remover..." : "Sim, Excluir Item"}
+    />
 
-     {/* EMPTY STATE ELEGANTE */}
-     {!loading && produtos.length === 0 && (
-      <div className="pt-10">
-       <EmptyState 
-        icon={Package} 
-        title="Catálogo Vazio" 
-        description="Cadastre serviços (ex: Mão de Obra) ou itens (ex: Filtro de Óleo) para poder utilizá-los no lançamento de manutenções e abastecimentos."
-        action={
-         <Button variant="secondary" onClick={() => setModo('adicionando')} icon={<Plus className="w-4 h-4"/>}>
-          Cadastrar Primeiro Item
-         </Button>
-        }
-       />
-      </div>
-     )}
-    </>
-   )}
+    {modo === 'listando' && (
+      <SmartFAB 
+        onClick={() => setModo('adicionando')} 
+        label="Novo Item" 
+      />
+    )}
 
-   {/* CONFIRM MODAL COM CALLOUT INTEGRADO */}
-   <ConfirmModal 
-    isOpen={!!produtoParaExcluir}
-    onCancel={() => setProdutoParaExcluir(null)}
-    onConfirm={handleExecuteDelete}
-    title="Remover Item do Catálogo"
-    description={
-     <div className="space-y-4">
-       <p className="text-text-secondary text-sm font-medium">
-         Tem certeza que deseja excluir <strong className="text-text-main font-black">"{produtoParaExcluir?.nome}"</strong> da base de dados?
-       </p>
-       <Callout variant="warning" title="Atenção ao Histórico" icon={AlertTriangle}>
-         Se este item já tiver sido utilizado em alguma fatura de abastecimento ou ordem de serviço de oficina, a sua exclusão será bloqueada para preservar o histórico financeiro.
-       </Callout>
-     </div>
-    }
-    variant="danger"
-    confirmLabel={deletingId ? "A Remover..." : "Sim, Excluir Item"}
-   />
-
-  </div>
+   </div>
+  </PullToRefresh>
  );
 }
-
-
-

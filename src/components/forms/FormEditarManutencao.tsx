@@ -500,9 +500,8 @@ export function FormEditarManutencao({
             <div className="md:col-span-3">
              <Input
               label="R$ Unitário"
-              type="text"
+              type="tel"
               inputMode="numeric"
-              pattern="[0-9]*"
               {...register(`itens.${index}.valorPorUnidade` as const, {
                onChange: (e) => {
                 e.target.value = formatarDinheiro(e.target.value);

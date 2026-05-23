@@ -16,6 +16,7 @@ import { ConfirmModal } from './ui/ConfirmModal';
 import { Callout } from './ui/Callout';
 import { EmptyState } from './ui/EmptyState';
 import { Skeleton } from './ui/Skeleton';
+import { hapticError } from '../lib/haptics';
 import type { Produto } from '../types';
 
 const tiposServico = ["SERVICO", "PECA", "LAVAGEM", "OUTRO"] as const;
@@ -77,7 +78,7 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
       setServicos(filtrados);
     } catch (err) {
       if (import.meta.env.DEV) console.error(err);
-      toast.error('Falha ao Acessar ao catálogo de serviços.');
+      toast.error('Falha ao acessar o catálogo de serviços.');
     } finally {
       setLoading(false);
     }
@@ -126,10 +127,10 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
   };
 
   const categoriasOpcoes = [
-    { value: 'SERVICO', label: 'ðŸ› ï¸ Serviço de Oficina' },
-    { value: 'PECA', label: 'âš™ï¸ Peça / Componente' },
-    { value: 'LAVAGEM', label: 'ðŸš¿ Lavagem / Estética' },
-    { value: 'OUTRO', label: 'ðŸ“¦ Outros' }
+    { value: 'SERVICO', label: 'Serviço de Oficina' },
+    { value: 'PECA', label: 'Peça / Componente' },
+    { value: 'LAVAGEM', label: 'Lavagem / Estética' },
+    { value: 'OUTRO', label: 'Outros' }
   ];
 
   return (
@@ -153,7 +154,7 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
               </h4>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+            <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="space-y-5">
               <Input
                 label="Descrição do Serviço / Peça"
                 placeholder="Ex: TROCA DE ÓLEO"

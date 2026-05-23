@@ -35,14 +35,8 @@ export function MinhaEquipe({ usuarios, jornadasAbertas, onUpdate }: MinhaEquipe
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
 
-      {/* Cabeçalho */}
-      <div className="flex items-center justify-between border-b border-border/60 pb-4">
-        <div>
-          <h3 className="text-xl font-black text-text-main tracking-tight">Equipe Operacional</h3>
-          <p className="text-sm font-medium text-text-secondary mt-1">
-            Supervisão e gestão de acesso dos motoristas.
-          </p>
-        </div>
+      {/* Cabeçalho Reduzido (Título removido para evitar duplicidade com PageWrapper) */}
+      <div className="flex items-center justify-end pb-4">
         <span className="bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-primary/20 shadow-sm">
           {operadores.length} Motoristas
         </span>

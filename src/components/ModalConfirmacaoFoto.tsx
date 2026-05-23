@@ -5,6 +5,7 @@ import { uploadToR2 } from '../services/uploadService';
 import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
 import { toast } from 'sonner';
+import { hapticError } from '../lib/haptics';
 import { Camera, Loader2, Check, AlertCircle } from 'lucide-react';
 
 // Estilos padronizados Premium
@@ -133,6 +134,7 @@ export function ModalConfirmacaoFoto({
         if (import.meta.env.DEV) {
           if (import.meta.env.DEV) console.error("Erro ao processar imagem:", error);
         }
+        hapticError();
         toast.error("Erro ao processar a foto. Tente novamente.");
         setFoto(null);
         setPreviewUrl(null);
@@ -144,6 +146,7 @@ export function ModalConfirmacaoFoto({
 
   const handleSubmit = async () => {
     if (!foto) {
+      hapticError();
       toast.error('A foto do comprovante é obrigatória.');
       return;
     }

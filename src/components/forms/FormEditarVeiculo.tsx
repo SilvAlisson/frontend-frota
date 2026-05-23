@@ -269,10 +269,11 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
                     Ajuste Manual de Quilometragem
                   </h4>
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                     <div className="relative group">
                         <Input
+                            type="tel"
+                            inputMode="numeric"
                             {...register('ultimoKm')}
                             onChange={(e) => { register('ultimoKm').onChange(e); handleKmChange(e); }}
                             className="bg-surface border-warning-500/40 focus:border-warning-500 focus:ring-warning-500/20 font-mono text-2xl font-black text-warning-600 tracking-wider h-14 pr-12 shadow-sm"

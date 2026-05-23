@@ -267,6 +267,8 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
                     </div>
                     <Input
                         label="KM do Painel (Hodômetro)"
+                        type="tel"
+                        inputMode="numeric"
                         {...register('kmInicio')}
                         onChange={(e) => setValue("kmInicio", formatKmVisual(e.target.value))}
                         error={errors.kmInicio?.message}
@@ -312,6 +314,8 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
                     </div>
                     <Input
                         label="KM Final de Fecho"
+                        type="tel"
+                        inputMode="numeric"
                         {...register('kmFim')}
                         onChange={(e) => setValue("kmFim", formatKmVisual(e.target.value))}
                         error={errors.kmFim?.message}

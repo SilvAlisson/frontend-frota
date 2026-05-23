@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { toast } from 'sonner';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
+import { hapticError } from '../../lib/haptics';
 import { Button } from '../ui/Button';
 import { Textarea } from '../ui/Textarea';
 import { Input } from '../ui/Input';
@@ -96,7 +97,7 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
   const isFormLocked = isSubmitting || mutation.isPending;
 
   return (
-    <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="flex flex-col space-y-6">
+    <form onSubmit={handleSubmit((d) => mutation.mutate(d), () => hapticError())} className="flex flex-col space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="md:col-span-2">
           <Input 

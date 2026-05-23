@@ -245,12 +245,13 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
 
    <PageHeader 
     title="Boletim de Abastecimentos"
-    subtitle="Filtre por Posto pargerando o Boletim de Medição (BM) com os comprovantes integrados."
+    subtitle="Filtre por Posto para gerar o Boletim de Medição (BM) com os comprovantes integrados."
     actionLabel={canEdit ? "Novo Abastecimento" : undefined}
     onAction={canEdit ? () => setIsNovoAbastecimentoOpen(true) : undefined}
-    extraAction={
-      // Mudamos para flex-col (duas linhas) com padding igual ao HistoricoJornadas
-      <div className="flex flex-col gap-3 w-full max-w-full overflow-hidden bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
+   />
+
+   {/* FILTROS MOVIDOS PARA FORA DO HEADER */}
+   <div className="flex flex-col gap-3 w-full max-w-full overflow-hidden bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
         
         {/* LINHA 1: Filtros de Seleção (Veículo e Fornecedor) */}
         <div className="flex flex-col sm:flex-row gap-3 items-end">
@@ -327,8 +328,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
         </div>
 
       </div>
-    }
-   />
 
    {/* ─── GRÁFICO DE CURVA MENSAL ─── */}
    {dadosCurva.length > 1 && (
@@ -348,7 +347,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
      <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
       <DollarSign className="w-4 h-4 text-emerald-500 dark:text-emerald-400" /> Capital Investido (Relatório Atual)
      </span>
-     <span className="text-3xl font-mono font-black text-text-main truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+     <span className="text-3xl font-sans font-black tracking-tight text-text-main truncate group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
       {formatCurrency(totalGasto)}
      </span>
     </Card>
@@ -357,7 +356,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
      <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
       <Droplets className="w-4 h-4 text-info " /> Litragem Abastecida
      </span>
-     <span className="text-3xl font-mono font-black text-text-main group-hover:text-info dark:group-hover:text-sky-400 transition-colors">
+     <span className="text-3xl font-sans font-black tracking-tight text-text-main group-hover:text-info dark:group-hover:text-sky-400 transition-colors">
       {totalLitros.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} <small className="text-lg font-bold opacity-60 ml-1 uppercase tracking-widest">Litros</small>
      </span>
     </Card>

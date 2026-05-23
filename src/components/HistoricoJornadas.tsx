@@ -181,9 +181,13 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
    {!isReadOnly && (
     <PageHeader 
      title="Histórico de Viagens"
-    subtitle="Consulte a quilometragem dos veículos, com provas fotográficas dos hodômetros dia a dia."
-    extraAction={
-     <div className="flex flex-col gap-3 w-full xl:w-auto bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
+     subtitle="Consulte a quilometragem dos veículos, com provas fotográficas dos hodômetros dia a dia."
+    />
+   )}
+
+   {/* FILTROS MOVIDOS PARA FORA DO HEADER */}
+   {!isReadOnly && (
+    <div className="flex flex-col gap-3 w-full max-w-full overflow-hidden bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
       <div className="flex flex-col sm:flex-row gap-3 items-end">
        <div className="w-full sm:w-44">
         <Input 
@@ -257,8 +261,6 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
        </div>
       </div>
      </div>
-    }
-    />
    )}
 
    {/* KPIs Premium Interativos */}
@@ -268,7 +270,7 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
      <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
       <Activity className="w-4 h-4 text-primary" /> Distância Total Percorrida
      </span>
-     <span className="text-3xl font-mono font-black text-text-main truncate group-hover:text-primary transition-colors">
+     <span className="text-3xl font-sans font-black tracking-tight text-text-main truncate group-hover:text-primary transition-colors">
       {kmTotalGeral.toLocaleString('pt-BR')} <small className="text-lg font-bold opacity-60 uppercase tracking-widest ml-1">km</small>
      </span>
     </Card>
@@ -277,7 +279,7 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
      <span className="text-xs font-black text-text-muted uppercase tracking-[0.2em] flex items-center gap-2">
       <MapPin className="w-4 h-4 text-info " /> Total de Viagens
      </span>
-     <span className="text-3xl font-mono font-black text-text-main group-hover:text-info dark:group-hover:text-sky-400 transition-colors">
+     <span className="text-3xl font-sans font-black tracking-tight text-text-main group-hover:text-info dark:group-hover:text-sky-400 transition-colors">
       {historico.length} <small className="text-lg font-bold opacity-60 uppercase tracking-widest ml-1">Registros</small>
      </span>
     </Card>
@@ -346,7 +348,7 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
           </td>
           <td className={`${TableStyles.td} text-center`}>
            <div className="w-full flex flex-col gap-1 items-center justify-center text-center">
-            <span className="font-mono font-black text-text-main text-base block w-full">
+            <span className="font-sans font-black tracking-tight text-text-main text-base block w-full">
              {kmPercorrido > 0 ? `${kmPercorrido.toLocaleString('pt-BR')} km` : '--'}
             </span>
             <span className="text-[10px] text-text-muted font-mono font-bold bg-surface-hover px-1.5 py-0.5 rounded-md border border-border/50 block w-fit mx-auto">
@@ -449,11 +451,11 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
           <div className="flex justify-between items-center bg-surface-hover/50 p-3 rounded-xl border border-border/40 mt-1">
            <div className="flex flex-col gap-1.5 items-start">
              <span className="text-[9px] text-text-muted uppercase font-black tracking-widest">Trajeto Odómetro</span>
-             <span className="text-xs font-mono font-bold text-text-main">{j.kmInicio} <span className="text-text-muted mx-0.5">→</span> {j.kmFim || '...'}</span>
+             <span className="text-xs font-sans font-black tracking-tight text-text-main">{j.kmInicio} <span className="text-text-muted mx-0.5">→</span> {j.kmFim || '...'}</span>
            </div>
            <div className="flex flex-col items-end">
              <span className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-1">Distância</span>
-             <span className="font-mono font-black text-text-main text-lg tracking-tighter">
+             <span className="font-sans font-black tracking-tight text-text-main text-lg">
               {kmPercorrido > 0 ? `${kmPercorrido.toLocaleString('pt-BR')} km` : '--'}
              </span>
            </div>

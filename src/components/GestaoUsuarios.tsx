@@ -28,6 +28,10 @@ import {
   Search, Download, Plus, Users
 } from 'lucide-react'; 
 
+import { PageHeader } from './ui/PageHeader';
+import { SmartFAB } from './ui/SmartFAB';
+import { PullToRefresh } from './ui/PullToRefresh';
+
 interface GestaoUsuariosProps {
   adminUserId: string;
 }
@@ -164,39 +168,38 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
     );
   }
 
-  // --- RENDERIZAÇÃO DA LISTA ---
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-10">
+    <PullToRefresh onRefresh={() => refetch()}>
+      <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-10">
 
-      {/* HEADER DA PÁGINA (Com layout Apple-like) */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 border-b border-border/60 pb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-text-main tracking-tight leading-none">Diretório de Equipe</h1>
-          <p className="text-text-secondary font-medium mt-1.5 opacity-90">Gestão central de acessos, motoristas e Equipe técnica.</p>
-        </div>
+        {/* HEADER DA PÁGINA (Padrão KLIN Elite) */}
+        <PageHeader
+          title="Diretório de Equipe"
+          description="Gestão central de acessos, motoristas e Equipe técnica."
+          extraAction={
+            <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3 items-end mt-4 sm:mt-0">
+              <div className="w-full sm:w-72">
+                <Input
+                  placeholder="Buscar por nome, email ou matrícula..."
+                  value={busca}
+                  onChange={e => setBusca(e.target.value)}
+                  className="bg-surface-hover/50 border-none font-medium"
+                  icon={<Search className="w-4 h-4 text-text-muted" />}
+                  containerClassName="!mb-0"
+                />
+              </div>
 
-        <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3 items-end">
-          <div className="w-full sm:w-72">
-            <Input
-              placeholder="Buscar por nome, email ou matrícula..."
-              value={busca}
-              onChange={e => setBusca(e.target.value)}
-              className="bg-surface-hover/50 border-none font-medium"
-              icon={<Search className="w-4 h-4 text-text-muted" />}
-              containerClassName="!mb-0"
-            />
-          </div>
-
-          <div className="flex gap-2 w-full sm:w-auto">
-            <Button variant="secondary" onClick={handleExportar} className="whitespace-nowrap flex-1 sm:flex-none h-11" icon={<Download className="w-4 h-4" />}>
-              Excel
-            </Button>
-            <Button onClick={() => setIsCadastroOpen(true)} className="whitespace-nowrap flex-1 sm:flex-none h-11 shadow-button hover:shadow-float-primary" icon={<Plus className="w-4 h-4" />}>
-              Novo Membro
-            </Button>
-          </div>
-        </div>
-      </div>
+              <div className="flex gap-2 w-full sm:w-auto">
+                <Button variant="secondary" onClick={handleExportar} className="whitespace-nowrap flex-1 sm:flex-none h-11" icon={<Download className="w-4 h-4" />}>
+                  Excel
+                </Button>
+                <Button onClick={() => setIsCadastroOpen(true)} className="whitespace-nowrap flex-1 sm:flex-none h-11 shadow-button hover:shadow-float-primary" icon={<Plus className="w-4 h-4" />}>
+                  Novo Membro
+                </Button>
+              </div>
+            </div>
+          }
+        />
 
       {/* LISTAGEM RESPONSIVA */}
       {isLoading ? (
@@ -333,7 +336,14 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
           }}
         />
       )}
+
+      <SmartFAB 
+        onClick={() => setIsCadastroOpen(true)} 
+        label="Novo Membro" 
+      />
+
     </div>
+    </PullToRefresh>
   );
 }
 

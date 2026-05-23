@@ -20,6 +20,8 @@ import { ModalQrCode } from './ModalQrCode';
 import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Avatar } from './ui/Avatar';
+import { PullToRefresh } from './ui/PullToRefresh';
+import { SmartFAB } from './ui/SmartFAB';
 
 // Hooks & Contexts
 import { useAuth } from '../contexts/AuthContext';
@@ -109,7 +111,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
     const { data: usuarios = [] } = useUsuarios();
     const { data: veiculos = [] } = useVeiculos();
     const { data: jornadasAbertas = [], refetch: refetchJornadas } = useJornadasAtivas();
-    const { contagemAtiva: defeitosAtivos } = useDefeitos();
+    const { contagemAtiva: defeitosAtivos, refetch: refetchDefeitos } = useDefeitos();
 
     const veiculosAtivos = veiculos.filter(v => v.status !== 'INATIVO');
     const usuariosAtivos = usuarios.filter(u => !u.nome.startsWith('[INATIVO]'));
@@ -126,19 +128,23 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
     const frotaDisponivel = Math.max(veiculosAtivos.length - equipeNaRua, 0);
     const frotaUsoPercent = veiculosAtivos.length ? Math.round((equipeNaRua / veiculosAtivos.length) * 100) : 0;
 
+    const handleRefresh = async () => {
+      refetchJornadas();
+      if (refetchDefeitos) refetchDefeitos();
+    };
 
     // --- VIEW: DASHBOARD TÁTICO BENTO-GRID ---
     if (view === 'DASHBOARD') {
         return (
-            <>
-                <div className="min-h-screen -mx-4 sm:-mx-8 px-4 sm:px-8 pb-28 relative overflow-hidden bg-background transition-colors duration-500 font-sans">
+            <PullToRefresh onRefresh={handleRefresh}>
+                <div className="min-h-screen -mx-4 sm:-mx-8 px-4 sm:px-8 pb-28 relative overflow-x-clip bg-background transition-colors duration-500 font-sans">
                     
                     {/* Background NASA Orbs */}
                     <div className="absolute top-0 right-0 w-[40vw] h-[40vw] rounded-full opacity-10 blur-[150px] pointer-events-none bg-primary mix-blend-screen" />
                     <div className="absolute bottom-0 left-0 w-[50vw] h-[50vw] rounded-full opacity-[0.05] blur-[150px] pointer-events-none bg-emerald-500 mix-blend-screen" />
 
                     {/* ─── NAVEGAÇÃO SUPERIOR CLEAN ─── */}
-                    <header className="sticky top-0 z-40 -mx-4 sm:-mx-8 px-4 sm:px-8 py-3 backdrop-blur-xl bg-background/60 border-b border-border/40 safe-top">
+                    <header className="sticky top-0 z-40 -mx-4 sm:-mx-8 px-4 sm:px-8 py-3 backdrop-blur-xl bg-background/80 border-b border-border/40 safe-top">
                         <div className="max-w-7xl mx-auto flex justify-between items-center">
                             <div className="flex items-center gap-4">
                                 <Avatar url={user.fotoUrl} nome={user.nome} className="shadow-lg shadow-primary/20" />
@@ -300,14 +306,11 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                     </main>
 
                     {/* FAB FLUTUANTE ELITE (Mobile Somente Abastecer Rápido) */}
-                    <button
+                    <SmartFAB
                         onClick={() => setModalAbastecimentoOpen(true)}
-                        className="fixed bottom-6 right-6 h-14 w-14 lg:hidden rounded-[1.25rem] flex items-center justify-center z-50 active:scale-90 transition-transform shadow-[0_15px_30px_rgba(var(--color-primary),0.5)]"
-                        style={{ background: 'linear-gradient(135deg, var(--color-primary), var(--color-primary-hover))' }}
-                        aria-label="Atalho"
-                    >
-                        <Droplets className="w-6 h-6 text-white" />
-                    </button>
+                        label="Abastecimento"
+                        icon={Droplets}
+                    />
                 </div>
 
                 {/* ─── MODAIS FLUTUANTES ─── */}
@@ -322,7 +325,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                 {modalQrCodeOpen && (
                     <ModalQrCode user={user} onClose={() => setModalQrCodeOpen(false)} />
                 )}
-            </>
+            </PullToRefresh>
         );
     } // FIM DA VIEW 'DASHBOARD'
 

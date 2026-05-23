@@ -8,6 +8,7 @@ import { Input } from './ui/Input';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { Modal } from './ui/Modal';
 import { toast } from 'sonner';
+import { hapticError } from '../lib/haptics';
 import { Image as ImageIcon, Edit, Save, X, Trash2, Camera, AlertCircle, PlayCircle, CheckCircle2 } from 'lucide-react';
 import type { Jornada } from '../types';
 
@@ -154,7 +155,7 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
 
         {/* BODY: Formulário de Edição ou Visualização */}
         {isEditing ? (
-          <form onSubmit={handleSubmit(onSaveEdit)} className="space-y-4 bg-surface-hover/30 p-4 rounded-xl border border-border/60 animate-in fade-in zoom-in-95 duration-200 shadow-inner">
+          <form onSubmit={handleSubmit(onSaveEdit, () => hapticError())} className="space-y-4 bg-surface-hover/30 p-4 rounded-xl border border-border/60 animate-in fade-in zoom-in-95 duration-200 shadow-inner">
             <div className="grid grid-cols-2 gap-3">
               <Input label="Saída (Data/Hora)" type="datetime-local" {...register('dataInicio')} error={errors.dataInicio?.message} containerClassName="!mb-0" className="text-xs" />
               <Input label="KM Inicial" type="number" inputMode="numeric" {...register('kmInicio')} error={errors.kmInicio?.message} containerClassName="!mb-0" className="font-mono text-xs" />

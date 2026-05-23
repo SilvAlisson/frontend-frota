@@ -8,22 +8,7 @@
   <meta name="description" content="KLIN Frota — Sistema integrado de gestão de frota, jornadas, manutenções e abastecimentos." />
   <meta name="theme-color" content="#52638a" />
 
-  <!-- 🛑 BOMBA RELÓGIO PWA: Força a destruição do Service Worker antigo antes de carregar o JS -->
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then(function(registrations) {
-        let hasRemoved = false;
-        for (let registration of registrations) {
-          registration.unregister();
-          hasRemoved = true;
-        }
-        if (hasRemoved) {
-          if ('caches' in window) caches.keys().then(keys => keys.forEach(key => caches.delete(key)));
-          setTimeout(() => window.location.reload(), 100);
-        }
-      });
-    }
-  </script>
+  <!-- Service Worker Removido: Agora gerenciado pelo vite-plugin-pwa -->
 
   <!--
     ✅ Estratégia de Font Loading Otimizada (Performance Optimizer)

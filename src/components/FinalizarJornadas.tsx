@@ -7,6 +7,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { parseDecimal, formatKmVisual } from '../utils';
 import { toast } from 'sonner';
+import { hapticError } from '../lib/haptics';
 import type { Jornada } from '../types';
 
 interface FinalizarJornadaProps {
@@ -96,7 +97,7 @@ export function FinalizarJornada({
 
   return (
     <>
-      <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+      <form className="space-y-6" onSubmit={handleSubmit(onSubmit, () => hapticError())}>
 
         <div className="text-center mb-2">
           <h3 className="text-xl font-bold text-primary">

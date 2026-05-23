@@ -15,6 +15,7 @@ import { CHART_COLORS_STATUS } from '../config/chartColors';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
 import { Skeleton } from './ui/Skeleton';
+import { PageHeader } from './ui/PageHeader';
 
 export function PainelPlanosPreventivos() {
   const { planos, isLoading, refetch, registrarExecucao } = usePlanosManutencao();
@@ -144,24 +145,13 @@ export function PainelPlanosPreventivos() {
 
   return (
     <div className="space-y-6">
-      {/* ─── CABEÇALHO COM BOTÃO DE CRIAR ─── */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-surface p-4 rounded-xl border border-border/40">
-        <div className="flex items-center gap-3">
-          <Wrench className="w-5 h-5 text-text-secondary shrink-0" />
-          <div>
-            <p className="text-sm font-bold text-text-main">Cockpit de Preventivas Inteligentes</p>
-            <p className="text-xs text-text-muted">Cards interativos medindo a saúde da frota baseada no hodômetro e calendário.</p>
-          </div>
-        </div>
-        <Button
-          variant="primary"
-          onClick={() => setIsCriandoPlano(true)}
-          icon={<Plus className="w-4 h-4" />}
-          className="w-full sm:w-auto shadow-button"
-        >
-          Novo Plano
-        </Button>
-      </div>
+      {/* ─── CABEÇALHO PADRÃO PREMIUM ─── */}
+      <PageHeader
+        title="Cockpit de Preventivas"
+        subtitle="Cards interativos medindo a saúde da frota baseada no hodômetro e calendário."
+        actionLabel="Novo Plano"
+        onAction={() => setIsCriandoPlano(true)}
+      />
 
       {/* ─── GRÁFICO BARRA — Saúde da Frota ─── */}
       {ordenados.length > 0 && (

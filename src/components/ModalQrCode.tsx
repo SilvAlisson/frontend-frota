@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
-import { Printer, RefreshCw, Copy, QrCode, ShieldCheck } from 'lucide-react';
+import { Printer, RefreshCw, Copy, QrCode, ShieldCheck, Download } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { User } from '../types';
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -111,435 +111,149 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   };
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Identidade Funcional" className="max-w-[400px]">
+    <Modal isOpen={true} onClose={onClose} title="Identidade Funcional" className="max-w-[380px]">
       <div className="flex flex-col items-center gap-6">
-
         <div
-  ref={cardRef}
-  style={{
-    position: 'relative',
-    width: '325px',
-    height: '540px',
-    borderRadius: '34px',
-    overflow: 'hidden',
-    background: '#FAFAFA',
-    boxShadow:
-      '0 30px 80px rgba(15,23,42,.18), 0 8px 25px rgba(15,23,42,.08)',
-    userSelect: 'none',
-  }}
->
-
-  {/* ====================================================== */}
-  {/* FUNDO */}
-  {/* ====================================================== */}
-
-  {/* textura topo */}
-  <div
-    style={{
-      position: 'absolute',
-      top: '-90px',
-      right: '-80px',
-      width: '360px',
-      height: '360px',
-      borderRadius: '50%',
-      background:
-        'repeating-radial-gradient(circle at center, transparent, transparent 8px, rgba(10,76,139,.05) 8px, rgba(10,76,139,.05) 9px)',
-      zIndex: 0,
-    }}
-  />
-
-  {/* textura inferior */}
-  <div
-    style={{
-      position: 'absolute',
-      bottom: '-120px',
-      left: '-120px',
-      width: '360px',
-      height: '360px',
-      borderRadius: '50%',
-      background:
-        'repeating-radial-gradient(circle at center, transparent, transparent 8px, rgba(10,76,139,.05) 8px, rgba(10,76,139,.05) 9px)',
-      zIndex: 0,
-    }}
-  />
-
-  {/* ====================================================== */}
-  {/* FORMAS SUPERIORES */}
-  {/* ====================================================== */}
-
-  {/* azul */}
-  <div
-    style={{
-      position: 'absolute',
-      top: '-130px',
-      left: '-100px',
-      width: '480px',
-      height: '240px',
-      background: '#082B57',
-      borderRadius: '50%',
-      transform: 'rotate(-17deg)',
-      zIndex: 1,
-    }}
-  />
-
-  {/* verde */}
-  <div
-    style={{
-      position: 'absolute',
-      top: '-95px',
-      left: '-60px',
-      width: '430px',
-      height: '210px',
-      background: '#4FA06B',
-      borderRadius: '50%',
-      transform: 'rotate(-14deg)',
-      zIndex: 2,
-    }}
-  />
-
-  {/* branco separador */}
-  <div
-    style={{
-      position: 'absolute',
-      top: '-75px',
-      left: '-40px',
-      width: '420px',
-      height: '180px',
-      background: '#FAFAFA',
-      borderRadius: '50%',
-      transform: 'rotate(-14deg)',
-      zIndex: 3,
-    }}
-  />
-
-  {/* ====================================================== */}
-  {/* FORMAS CENTRAIS */}
-  {/* ====================================================== */}
-
-  {/* verde */}
-  <div
-    style={{
-      position: 'absolute',
-      bottom: '80px',
-      left: '-120px',
-      width: '520px',
-      height: '240px',
-      background: '#56A86F',
-      borderRadius: '50%',
-      transform: 'rotate(11deg)',
-      zIndex: 1,
-    }}
-  />
-
-  {/* faixa branca */}
-  <div
-    style={{
-      position: 'absolute',
-      bottom: '108px',
-      left: '-110px',
-      width: '520px',
-      height: '190px',
-      background: '#FAFAFA',
-      borderRadius: '50%',
-      transform: 'rotate(11deg)',
-      zIndex: 2,
-    }}
-  />
-
-  {/* azul principal */}
-  <div
-    style={{
-      position: 'absolute',
-      bottom: '40px',
-      left: '-90px',
-      width: '500px',
-      height: '280px',
-      background: '#082B57',
-      borderRadius: '50%',
-      transform: 'rotate(11deg)',
-      zIndex: 3,
-    }}
-  />
-
-  {/* ====================================================== */}
-  {/* FURO */}
-  {/* ====================================================== */}
-
-  <div
-    style={{
-      position: 'absolute',
-      top: '22px',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      width: '92px',
-      height: '22px',
-      borderRadius: '999px',
-      background: '#ECECEC',
-      boxShadow: 'inset 0 3px 10px rgba(0,0,0,.16)',
-      zIndex: 20,
-    }}
-  />
-
-  {/* ====================================================== */}
-  {/* LOGO */}
-  {/* ====================================================== */}
-
-  <div
-    style={{
-      position: 'absolute',
-      top: '78px',
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'center',
-      zIndex: 20,
-    }}
-  >
-    <img
-      src="/assets/klin-logo.png"
-      alt="Klin"
-      style={{
-        width: '160px',
-        objectFit: 'contain',
-      }}
-    />
-  </div>
-
-  {/* ====================================================== */}
-  {/* FOTO */}
-  {/* ====================================================== */}
-
-  <div
-    style={{
-      position: 'absolute',
-      top: '175px',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      zIndex: 25,
-    }}
-  >
-
-    {/* aro */}
-    <div
-      style={{
-        padding: '7px',
-        borderRadius: '50%',
-        background:
-          'linear-gradient(135deg,#0A3A6E 0%,#0A3A6E 55%,#5BB274 55%,#5BB274 100%)',
-        boxShadow: '0 15px 35px rgba(0,0,0,.16)',
-      }}
-    >
-      <div
-        style={{
-          width: '150px',
-          height: '150px',
-          borderRadius: '50%',
-          overflow: 'hidden',
-          border: '5px solid white',
-          background: '#fff',
-        }}
-      >
-        <Avatar
-          nome={user.nome}
-          url={user.fotoUrl}
-          className="w-full h-full border-none shadow-none"
-        />
-      </div>
-    </div>
-  </div>
-
-  {/* ====================================================== */}
-  {/* NOME */}
-  {/* ====================================================== */}
-
-  <div
-    style={{
-      position: 'absolute',
-      top: '350px',
-      width: '100%',
-      textAlign: 'center',
-      zIndex: 30,
-      padding: '0 20px',
-    }}
-  >
-    <h1
-      style={{
-        margin: 0,
-        color: '#FFFFFF',
-        fontSize: '44px',
-        fontWeight: 900,
-        letterSpacing: '-2px',
-        lineHeight: 1,
-        textTransform: 'uppercase',
-        textShadow:
-          '0 0 15px rgba(255,255,255,.25)',
-      }}
-    >
-      {primeiroNome}
-    </h1>
-
-    <div
-      style={{
-        marginTop: '6px',
-        color: '#74D89A',
-        fontSize: '13px',
-        fontWeight: 600,
-        letterSpacing: '1.7px',
-        textTransform: 'uppercase',
-      }}
-    >
-      {sobrenome}
-    </div>
-
-    <div
-      style={{
-        width: '42px',
-        height: '4px',
-        borderRadius: '999px',
-        background: '#74D89A',
-        margin: '14px auto 0',
-      }}
-    />
-  </div>
-
-  {/* ====================================================== */}
-  {/* FUNÇÃO */}
-  {/* ====================================================== */}
-
-  <div
-    style={{
-      position: 'absolute',
-      top: '435px',
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'center',
-      zIndex: 30,
-    }}
-  >
-    <div
-      style={{
-        background:
-          'linear-gradient(135deg,#4EA768,#6DCC8F)',
-        color: '#fff',
-        padding: '10px 34px',
-        borderRadius: '999px',
-        fontWeight: 800,
-        fontSize: '12px',
-        letterSpacing: '2px',
-        textTransform: 'uppercase',
-        boxShadow:
-          '0 10px 25px rgba(78,167,104,.35)',
-      }}
-    >
-      {user.role}
-    </div>
-  </div>
-
-  {/* ====================================================== */}
-  {/* QR CODE */}
-  {/* ====================================================== */}
-
-  <div
-    style={{
-      position: 'absolute',
-      bottom: '58px',
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'center',
-      zIndex: 40,
-    }}
-  >
-    <div
-      style={{
-        position: 'relative',
-        background: '#fff',
-        padding: '12px',
-        borderRadius: '18px',
-        boxShadow:
-          '0 15px 40px rgba(0,0,0,.18)',
-      }}
-    >
-
-      {/* bordas */}
-      <div
-        style={{
-          position: 'absolute',
-          inset: 0,
-          borderRadius: '18px',
-          borderTop: '4px solid #5BB274',
-          borderLeft: '4px solid #5BB274',
-          borderBottom: '4px solid #0A3A6E',
-          borderRight: '4px solid #0A3A6E',
-        }}
-      />
-
-      <div
-        style={{
-          position: 'relative',
-          zIndex: 2,
-          background: '#fff',
-          borderRadius: '12px',
-          padding: '4px',
-        }}
-      >
-        {tokenFinal ? (
-          <QRCodeSVG
-            value={loginUrl}
-            size={112}
-            level="M"
-          />
-        ) : (
+          ref={cardRef}
+          className="w-full relative select-none shadow-2xl"
+          style={{
+            aspectRatio: '427 / 585',
+            backgroundImage: 'url(/cracha-bg.png)',
+            backgroundSize: '100% 100%',
+            backgroundRepeat: 'no-repeat',
+            borderRadius: '5.5%',
+            overflow: 'hidden',
+          }}
+        >
           <div
+            className="absolute overflow-hidden rounded-full"
             style={{
-              width: '112px',
-              height: '112px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: '#F1F5F9',
-              borderRadius: '10px',
+              top: '27.1%',
+              left: '49.3%',
+              transform: 'translateX(-50%)',
+              width: '37.5%',
+              aspectRatio: '1 / 1',
             }}
           >
-            <QrCode size={42} color="#94A3B8" />
+            <Avatar
+              nome={user.nome}
+              url={user.fotoUrl}
+              className="w-full h-full rounded-full border-none shadow-none"
+            />
           </div>
-        )}
-      </div>
-    </div>
-  </div>
 
-  {/* ====================================================== */}
-  {/* RODAPÉ */}
-  {/* ====================================================== */}
+          <p
+            className="absolute text-center text-white font-black uppercase leading-none truncate"
+            style={{
+              top: '55.5%',
+              left: '5%',
+              right: '5%',
+              fontSize: 'clamp(18px, 8.5vw, 34px)',
+              letterSpacing: '0.05em',
+              textShadow: '0 2px 12px rgba(0,0,0,0.5)',
+            }}
+          >
+            {primeiroNome}
+          </p>
 
-  <div
-    style={{
-      position: 'absolute',
-      bottom: '14px',
-      width: '100%',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: '8px',
-      zIndex: 50,
-    }}
-  >
-    <ShieldCheck size={15} color="#56A86F" />
+          <p
+            className="absolute text-center font-bold uppercase leading-none truncate"
+            style={{
+              top: '62.5%',
+              left: '5%',
+              right: '5%',
+              fontSize: 'clamp(7px, 3vw, 13px)',
+              letterSpacing: '0.22em',
+              color: '#4ade80',
+            }}
+          >
+            {sobrenome}
+          </p>
 
-    <span
-      style={{
-        color: '#0A3161',
-        fontSize: '10px',
-        fontWeight: 800,
-        letterSpacing: '3px',
-        textTransform: 'uppercase',
-      }}
-    >
-      IDENTIDADE FUNCIONAL
-    </span>
-  </div>
-</div>
+          <p
+            className="absolute text-center text-white font-black uppercase"
+            style={{
+              top: '69.6%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '48%',
+              fontSize: 'clamp(7px, 2.8vw, 11.5px)',
+              letterSpacing: '0.18em',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {user.role}
+          </p>
 
-        <div className="flex flex-wrap justify-center gap-3 w-full">
-          <Button onClick={handleGerarNovo} disabled={loading} isLoading={loading} variant="outline">
+          <div
+            className="absolute flex items-center justify-center"
+            style={{
+              top: '73.7%',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: '24.5%',
+              aspectRatio: '1 / 1',
+            }}
+          >
+            {tokenFinal ? (
+              <QRCodeSVG
+                value={loginUrl}
+                style={{ width: '100%', height: '100%' }}
+                level="M"
+                bgColor="transparent"
+                fgColor="#0f2b46"
+              />
+            ) : (
+              <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 gap-1 bg-gray-50/60 rounded-xl">
+                <QrCode className="w-1/2 h-1/2 opacity-40" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="w-full flex flex-col gap-3">
+          {tokenFinal ? (
+            <>
+              <Button
+                onClick={handlePrint}
+                className="w-full h-11 text-base font-bold bg-surface-hover hover:bg-border text-text-main border-none transition-transform active:scale-95"
+                variant="secondary"
+                icon={<Printer className="w-5 h-5 text-primary" />}
+              >
+                Imprimir Documento
+              </Button>
+
+              <div className="grid grid-cols-2 gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={handleCopyLink}
+                  className="h-11 bg-surface-hover hover:bg-border text-text-main border border-border/40"
+                  icon={<Copy className="w-4 h-4" />}
+                >
+                  Copiar
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={handleGerarNovo}
+                  isLoading={loading}
+                  className="h-11 bg-error/10 hover:bg-error/20 text-error border border-error/20"
+                  icon={<RefreshCw className="w-4 h-4" />}
+                >
+                  Renovar
+                </Button>
+              </div>
+            </>
+          ) : (
+            <Button
+              onClick={handleGerarNovo}
+              className="w-full h-12 text-base shadow-xl bg-primary hover:bg-primary-hover text-white border-none font-bold"
+              isLoading={loading}
+              icon={<Download className="w-5 h-5" />}
+            >
+              Gerar Acesso Inicial
+            </Button>
+          )}
+        </div>
             <RefreshCw className="w-4 h-4 mr-2" />
             {tokenAtual ? 'Regenerar Credencial' : 'Gerar Credencial'}
           </Button>

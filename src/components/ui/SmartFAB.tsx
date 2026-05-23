@@ -6,9 +6,10 @@ import { useIsMobile } from '../../hooks/useMediaQuery';
 interface SmartFABProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   onClick: () => void;
   label?: string;
+  icon?: React.ElementType;
 }
 
-export function SmartFAB({ onClick, label = "Novo", className, ...rest }: SmartFABProps) {
+export function SmartFAB({ onClick, label = "Novo", icon: Icon = Plus, className, ...rest }: SmartFABProps) {
   const isMobile = useIsMobile();
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -45,9 +46,10 @@ export function SmartFAB({ onClick, label = "Novo", className, ...rest }: SmartF
         !isVisible && "translate-y-24 opacity-0 pointer-events-none",
         className
       )}
+      aria-label={label}
       {...rest}
     >
-      <Plus className="w-6 h-6" />
+      <Icon className="w-6 h-6" />
       <span>{label}</span>
     </button>
   );

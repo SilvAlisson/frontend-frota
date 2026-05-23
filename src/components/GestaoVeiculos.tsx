@@ -23,6 +23,8 @@ import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
 import { useFiltragemVeiculos } from '../hooks/useFiltragemVeiculos';
 import React, { Suspense } from 'react';
+import { PullToRefresh } from './ui/PullToRefresh';
+import { SmartFAB } from './ui/SmartFAB';
 
 // --- FORMS (LAZY LOADED) ---
 const FormCadastrarVeiculo = React.lazy(() => import('./forms/FormCadastrarVeiculo').then(module => ({ default: module.FormCadastrarVeiculo })));
@@ -81,42 +83,36 @@ export function GestaoVeiculos() {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+    <PullToRefresh onRefresh={() => refetch()}>
+      <div className="space-y-6 sm:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
 
-      {/* 1. HEADER */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 border-b border-border/60 pb-6">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-text-main tracking-tight leading-none">Diretório de Frota</h1>
-          <p className="text-text-secondary font-medium mt-1.5 opacity-90">Controle de Equipamentos, status operacionais e prontuários.</p>
+        {/* 1. CABEÇALHO PADRÃO PREMIUM */}
+      <PageHeader
+        title="Diretório de Frota"
+        subtitle="Controle de Equipamentos, status operacionais e prontuários."
+        actionLabel="Novo Veículo"
+        onAction={() => setIsCadastroOpen(true)}
+      />
+
+      {/* FILTROS MOVIDOS PARA BAIXO DO HEADER */}
+      <div className="flex flex-col sm:flex-row gap-3 w-full max-w-full overflow-hidden bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm items-center sm:justify-between">
+        <div className="flex items-center gap-3 px-4 h-11 bg-surface-hover/50 rounded-xl border border-border/60 shrink-0 w-full sm:w-auto">
+          <Switch
+            checked={apenasAtivos}
+            onCheckedChange={setApenasAtivos}
+          />
+          <span className="text-xs font-bold text-text-muted select-none cursor-pointer" onClick={() => setApenasAtivos(!apenasAtivos)}>Apenas Ativos</span>
         </div>
-
-        <PageHeader
-          title=""
-          subtitle=""
-          actionLabel="Novo Veículo"
-          onAction={() => setIsCadastroOpen(true)}
-          extraAction={
-            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto items-center">
-              <div className="flex items-center gap-3 px-4 h-11 bg-surface-hover/50 rounded-xl border border-border/60 shrink-0">
-                <Switch
-                  checked={apenasAtivos}
-                  onCheckedChange={setApenasAtivos}
-                />
-                <span className="text-xs font-bold text-text-muted select-none cursor-pointer" onClick={() => setApenasAtivos(!apenasAtivos)}>Apenas Ativos</span>
-              </div>
-              <div className="w-full sm:w-72">
-                <Input
-                  placeholder="Procurar por placa ou modelo..."
-                  value={busca}
-                  onChange={e => setBusca(e.target.value)}
-                  icon={<Search className="w-4 h-4 text-text-muted" />}
-                  className="bg-surface-hover/50 border-none focus:ring-1 focus:ring-primary/30 font-medium h-11"
-                  containerClassName="!mb-0"
-                />
-              </div>
-            </div>
-          }
-        />
+        <div className="w-full sm:w-72">
+          <Input
+            placeholder="Procurar por placa ou modelo..."
+            value={busca}
+            onChange={e => setBusca(e.target.value)}
+            icon={<Search className="w-4 h-4 text-text-muted" />}
+            className="bg-surface-hover/50 border-none focus:ring-1 focus:ring-primary/30 font-medium h-11"
+            containerClassName="!mb-0"
+          />
+        </div>
       </div>
 
       {/* 2. LISTAGEM & EMPTY STATE */}
@@ -292,6 +288,12 @@ export function GestaoVeiculos() {
         variant="danger"
       />
 
+      <SmartFAB 
+        onClick={() => setIsCadastroOpen(true)} 
+        label="Novo Veículo" 
+      />
+
     </div>
+    </PullToRefresh>
   );
 }

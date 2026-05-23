@@ -10,6 +10,9 @@ import type { Cargo } from '../types';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
 import { Callout } from './ui/Callout';
+import { PageHeader } from './ui/PageHeader';
+import { PullToRefresh } from './ui/PullToRefresh';
+import { SmartFAB } from './ui/SmartFAB';
 
 export function GestaoCargos() {
   const [cargos, setCargos] = useState<Cargo[]>([]);
@@ -68,32 +71,23 @@ export function GestaoCargos() {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-10">
+    <PullToRefresh onRefresh={fetchCargos}>
+      <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-10">
 
-      {/* CABEÇALHO */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-border/60 pb-6">
-        <div>
-          <h3 className="text-2xl font-black text-text-main tracking-tight flex items-center gap-3">
-            <div className="p-2 bg-primary/10 rounded-xl text-primary shadow-sm">
+        {/* CABEÇALHO PADRÃO PREMIUM */}
+      <PageHeader
+        title={
+          <span className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-xl text-primary shadow-sm shrink-0">
               <Briefcase className="w-6 h-6" />
             </div>
             Cargos & Requisitos
-          </h3>
-          <p className="text-sm text-text-secondary font-medium mt-2">
-            Estruture as funções da Equipe e defina os treinamentos obrigatórios (Matriz de Qualificação).
-          </p>
-        </div>
-
-        {modo === 'listando' && (
-          <Button
-            onClick={() => setModo('adicionando')}
-            className="shadow-button hover:shadow-float-primary h-11 w-full sm:w-auto"
-            icon={<Plus className="w-4 h-4" />}
-          >
-            Novo Cargo
-          </Button>
-        )}
-      </div>
+          </span>
+        }
+        subtitle="Estruture as funções da Equipe e defina os treinamentos obrigatórios (Matriz de Qualificação)."
+        actionLabel={modo === 'listando' ? "Novo Cargo" : undefined}
+        onAction={modo === 'listando' ? () => setModo('adicionando') : undefined}
+      />
 
       {/* FORMULÁRIO DE CADASTRO COM TRANSIÇÃO */}
       {modo === 'adicionando' && (
@@ -218,7 +212,15 @@ export function GestaoCargos() {
         confirmLabel={deletingId ? "A remover..." : "Sim, Excluir Função"}
       />
 
+      {modo === 'listando' && (
+        <SmartFAB 
+          onClick={() => setModo('adicionando')} 
+          label="Novo Cargo" 
+        />
+      )}
+
     </div>
+    </PullToRefresh>
   );
 }
 

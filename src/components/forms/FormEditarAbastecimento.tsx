@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { uploadToR2 } from '../../services/uploadService';
 import { toast } from 'sonner';
+import { hapticError } from '../../lib/haptics';
 import {
    Save, Plus, X, User as UserIcon, Truck,
   MapPin, Calendar, CreditCard, Image as ImageIcon, Loader2
@@ -269,7 +270,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         }}
       />
 
-      <form onSubmit={handleSubmit(handleValidacaoESubmit)} className="flex flex-col w-full">
+      <form onSubmit={handleSubmit(handleValidacaoESubmit, () => hapticError())} className="flex flex-col w-full">
 
         <div className="flex flex-col lg:flex-row gap-8 pb-6">
 
@@ -372,9 +373,8 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
                 <div className="md:col-span-3">
                   <Input
                     label="Preço Un."
-                    type="text"
+                    type="tel"
                     inputMode="numeric"
-                    pattern="[0-9]*"
                     {...register(`itens.${index}.valorPorUnidade`, {
                       onChange: (e) => {
                         e.target.value = formatarDinheiro(e.target.value);

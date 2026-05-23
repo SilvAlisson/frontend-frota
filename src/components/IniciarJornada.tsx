@@ -6,6 +6,7 @@ import { Select } from './ui/Select';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { parseDecimal, formatKmVisual } from '../utils';
 import { toast } from 'sonner';
+import { hapticError } from '../lib/haptics';
 import { Gauge, Play, AlertTriangle } from 'lucide-react';
 import type { User, Veiculo, Jornada } from '../types';
 
@@ -71,6 +72,7 @@ export function IniciarJornada({
     setLoading(true);
 
     if (!veiculoId || !encarregadoId || !kmInicio) {
+      hapticError();
       toast.warning('Por favor, preencha todos os campos.');
       setLoading(false);
       return;
@@ -78,6 +80,7 @@ export function IniciarJornada({
 
     const kmInicioFloat = parseDecimal(kmInicio);
     if (isNaN(kmInicioFloat) || kmInicioFloat <= 0) {
+      hapticError();
       toast.error('O KM Inicial deve ser válido.');
       setLoading(false);
       return;

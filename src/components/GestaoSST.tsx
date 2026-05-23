@@ -23,6 +23,7 @@ import { EmptyState } from './ui/EmptyState';
 import { Badge } from './ui/Badge';
 import { Callout } from './ui/Callout';
 import { exportarParaExcel } from '../utils';
+import { hapticError } from '../lib/haptics';
 import { cn } from '../lib/utils';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -214,7 +215,7 @@ function FormAcaoSST({
  return (
   <form
    id={formId}
-   onSubmit={handleSubmit(onSubmit)}
+   onSubmit={handleSubmit(onSubmit, () => hapticError())}
    className="space-y-5"
    aria-label={isEditing ? 'Formulário de edição de ação SST' : 'Formulário de nova ação SST'}
    noValidate

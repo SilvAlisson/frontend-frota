@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 import { parseDecimal } from '../utils';
+import { hapticError } from '../lib/haptics';
 import { Truck, Clock, CheckCircle2 } from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
@@ -60,12 +61,14 @@ export function JornadaGestaoItem({
     const kmFimFloat = parseDecimal(kmFim);
 
     if (!kmFim || kmFimFloat <= 0) {
+      hapticError();
       setError('Informe um KM válido.');
       setLoading(false);
       return;
     }
 
     if (kmFimFloat < jornada.kmInicio) {
+      hapticError();
       setError(`KM deve ser > ${jornada.kmInicio}.`);
       setLoading(false);
       return;

@@ -192,7 +192,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                     <div className="lg:col-span-3">
                       <Input
                         label="Reciclagem (Meses)"
-                        type="number" inputMode="decimal"
+                        type="number" inputMode="numeric"
                         {...register(`requisitos.${index}.validadeMeses` as const)}
                         disabled={isSubmitting}
                         error={errors.requisitos?.[index]?.validadeMeses?.message}
@@ -203,7 +203,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                     <div className="lg:col-span-3">
                       <Input
                         label="Aviso Antecipado"
-                        type="number" inputMode="decimal"
+                        type="number" inputMode="numeric"
                         {...register(`requisitos.${index}.diasAntecedenciaAlerta` as const)}
                         disabled={isSubmitting}
                         error={errors.requisitos?.[index]?.diasAntecedenciaAlerta?.message}
