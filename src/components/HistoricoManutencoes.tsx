@@ -591,7 +591,7 @@ export function HistoricoManutencoes({
      </div>
 
      {/* Imagem/PDF Viewer usando zoom nativo em v4 */}
-     <div className="w-full max-w-5xl h-full flex items-center justify-center overflow-auto rounded-3xl mt-16 sm:mt-0 cursor-move scrollbar-thin">
+     <div className="w-full h-full flex items-center justify-center rounded-3xl mt-16 sm:mt-0 flex-1 overflow-hidden">
       {docParaVisualizar.url.toLowerCase().includes('.pdf') ? (
        <iframe
         src={`${docParaVisualizar.url}#toolbar=0`}
@@ -607,11 +607,14 @@ export function HistoricoManutencoes({
          centerOnInit
          doubleClick={{ step: 1.5 }}
        >
-         <TransformComponent wrapperClass="w-full h-full flex items-center justify-center">
+         <TransformComponent 
+           wrapperStyle={{ width: "100%", height: "100%" }}
+           contentStyle={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+         >
            <img
             src={docParaVisualizar.url}
             alt={docParaVisualizar.titulo}
-            className="max-h-[85vh] max-w-full object-contain pointer-events-auto rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] filter contrast-125 transition-transform duration-300"
+            className="max-h-[85vh] max-w-full object-contain pointer-events-auto rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] filter contrast-125"
             draggable={false}
            />
          </TransformComponent>
