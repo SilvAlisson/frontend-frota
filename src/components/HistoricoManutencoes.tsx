@@ -20,6 +20,7 @@ import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
 import { GraficoCurvaAbastecimento } from './ui/GraficosFlota';
+import { ConfirmModal } from './ui/ConfirmModal';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 import { MobileCardWithActions } from './ui/MobileCardWithActions';
