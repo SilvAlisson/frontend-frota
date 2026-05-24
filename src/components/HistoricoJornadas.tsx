@@ -553,19 +553,19 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
        ) : (
         <TransformWrapper
           initialScale={1}
-          minScale={0.5}
+          minScale={1}
           maxScale={4}
           centerOnInit
-          doubleClick={{ step: 1.5 }}
+          doubleClick={{ mode: "toggle", step: 2.5 }}
         >
           <TransformComponent 
-            wrapperStyle={{ width: "100%", height: "100%" }}
-            contentStyle={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+            wrapperStyle={{ maxWidth: "100%", maxHeight: "85vh", borderRadius: "0.75rem" }}
+            contentStyle={{ display: "flex", alignItems: "center", justifyContent: "center" }}
           >
             <img
              src={viewingPhoto}
              alt="Hodômetro Ampliado"
-             className="max-h-[85vh] max-w-full object-contain pointer-events-auto rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] filter contrast-125"
+             className="w-auto h-auto max-h-[85vh] max-w-full object-contain pointer-events-auto filter contrast-125 rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)]"
              draggable={false}
             />
           </TransformComponent>
