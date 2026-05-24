@@ -66,9 +66,11 @@ export function FormRegistrarAbastecimento({
     if (step === 1) {
       const isValid = await trigger(['veiculoId', 'operadorId', 'kmAtual', 'dataHora']);
       if (isValid) setStep(2);
+      else hapticError();
     } else if (step === 2) {
       const isValid = await trigger(['fornecedorId', 'itens']);
       if (isValid) setStep(3);
+      else hapticError();
     } else if (step === 3) {
       await handleSubmit(onSubmit, () => hapticError())(e);
     }

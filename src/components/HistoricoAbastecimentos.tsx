@@ -10,6 +10,7 @@ import { useAuth } from '../contexts/AuthContext';
 import type { Abastecimento } from '../types';
 import { FileDown, Calendar, Truck, Droplets, Receipt, Gauge, DollarSign, ChevronDown, Store, FilterX, ZoomIn, X, FileText } from 'lucide-react';
 import { GraficoCurvaAbastecimento } from './ui/GraficosFlota';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 // --- HOOKS ATÔMICOS ---
 import { useVeiculos } from '../hooks/useVeiculos';
@@ -629,22 +630,29 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
         title={docParaVisualizar.titulo}
        />
       ) : (
-       <img
-        src={docParaVisualizar.url}
-        alt={docParaVisualizar.titulo}
-        style={{ zoom: zoomNivel }}
-        className="max-h-[85vh] max-w-full object-contain pointer-events-auto rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] filter contrast-125 transition-transform duration-300"
-        onDoubleClick={() => setZoomNivel(prev => prev > 1 ? 1 : 2.5)}
-        title="Clique duplo para Zoom Rápido"
-        draggable={false}
-       />
+       <TransformWrapper
+         initialScale={1}
+         minScale={0.5}
+         maxScale={4}
+         centerOnInit
+         doubleClick={{ step: 1.5 }}
+       >
+         <TransformComponent wrapperClass="w-full h-full flex items-center justify-center">
+           <img
+            src={docParaVisualizar.url}
+            alt={docParaVisualizar.titulo}
+            className="max-h-[85vh] max-w-full object-contain pointer-events-auto rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] filter contrast-125 transition-transform duration-300"
+            draggable={false}
+           />
+         </TransformComponent>
+       </TransformWrapper>
       )}
      </div>
 
      {/* Dica Floating Bar */}
      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/60 border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest px-6 py-3 rounded-full flex gap-3 backdrop-blur shadow-2xl items-center pointer-events-none">
       <span className="w-2 h-2 rounded-full bg-info animate-pulse"></span>
-      Toque no botão de lupa ou dê duplo-clique na imagem para Inspecionar
+      Use a pinça na tela ou duplo-clique para Zoom
      </div>
     </div>
    )}

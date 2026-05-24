@@ -8,6 +8,7 @@ import type { Jornada } from '../types';
 
 // --- HOOKS ATÔMICOS ---
 import { useVeiculos } from '../hooks/useVeiculos';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 
 // --- DESIGN SYSTEM ---
 import { PageHeader } from './ui/PageHeader';
@@ -15,6 +16,7 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { ListaResponsiva } from './ui/ListaResponsiva';
+import { MobileCardWithActions } from './ui/MobileCardWithActions';
 import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
@@ -410,7 +412,11 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
         const imgFim = getFotoUrl(j, 'fim');
 
         return (
-         <div className="p-5 flex flex-col gap-4 border-b border-border/60 hover:bg-surface-hover/30 transition-colors">
+         <MobileCardWithActions
+          onEditar={canEdit ? () => setEditingId(j.id) : undefined}
+          onExcluir={userRole === 'ADMIN' ? () => setDeletingId(j.id) : undefined}
+          className="p-5 flex flex-col gap-4 border-b border-border/60 hover:bg-surface-hover/30 transition-colors"
+         >
           <div className="flex justify-between items-start">
            <div className="flex gap-4">
             {/* ✨ HELPER DE DATA (Mobile com estilo calendário) */}
@@ -430,20 +436,6 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
              <Badge variant="success" className="text-[9px] h-5 px-1.5 shadow-sm">FINALIZADA</Badge>
             ) : (
              <Badge variant="info" className="text-[9px] h-5 px-1.5 animate-pulse shadow-sm">EM ROTA</Badge>
-            )}
-            {(canEdit || canDelete) && (
-             <div className="flex gap-1 mt-1">
-              {canEdit && (
-               <Button variant="ghost" className="h-8 w-8 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-lg" onClick={() => setEditingId(j.id)}>
-                <Edit className="w-4 h-4" />
-               </Button>
-              )}
-              {canDelete && (
-               <Button variant="ghost" className="h-8 w-8 !p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-lg" onClick={() => setDeletingId(j.id)}>
-                <Trash2 className="w-4 h-4" />
-               </Button>
-              )}
-             </div>
             )}
            </div>
           </div>
@@ -491,9 +483,9 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
             </div>
            )}
           </div>
-         </div>
-        );
-       }}
+          </MobileCardWithActions>
+         );
+        }}
       />
 
       {historicoVisivel.length < historico.length && (
@@ -550,14 +542,36 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
       >
        <X className="w-6 h-6 sm:w-8 sm:h-8" />
       </button>
-      <img 
-       src={viewingPhoto} 
-       alt="Hodômetro Ampliado" 
-       className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-500 ring-1 ring-white/10"
-       onClick={(e) => e.stopPropagation()} 
-      />
-      <p className="text-white/60 mt-6 text-sm font-bold uppercase tracking-widest flex items-center gap-2">
-       <Camera className="w-4 h-4"/> Registro Fotográfico
+      {/* Imagem/PDF Viewer */}
+      <div className="w-full max-w-5xl h-full flex items-center justify-center overflow-auto rounded-3xl mt-16 sm:mt-0 cursor-move scrollbar-thin">
+       {viewingPhoto.toLowerCase().includes('.pdf') ? (
+        <iframe
+         src={`${viewingPhoto}#toolbar=0`}
+         className="w-full h-[85vh] rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10"
+         title="Visualizador PDF"
+        />
+       ) : (
+        <TransformWrapper
+          initialScale={1}
+          minScale={0.5}
+          maxScale={4}
+          centerOnInit
+          doubleClick={{ step: 1.5 }}
+        >
+          <TransformComponent wrapperClass="w-full h-full flex items-center justify-center">
+            <img
+             src={viewingPhoto}
+             alt="Hodômetro Ampliado"
+             className="max-h-[85vh] max-w-full object-contain pointer-events-auto rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] filter contrast-125 transition-transform duration-300"
+             draggable={false}
+            />
+          </TransformComponent>
+        </TransformWrapper>
+       )}
+      </div>
+
+      <p className="text-white/60 mt-6 text-sm font-bold uppercase tracking-widest flex items-center gap-2 pointer-events-none">
+       <Camera className="w-4 h-4"/> Registro Fotográfico - Use a pinça ou clique duplo para zoom
       </p>
      </div>
     </div>

@@ -20,9 +20,6 @@ export function useLongPress({
 
   const start = useCallback(
     (event: React.TouchEvent | React.MouseEvent) => {
-      // Impede propagação para não ativar clique da linha imediatamente (opcional)
-      // event.stopPropagation();
-
       const eventTarget = event.target;
       target.current = eventTarget;
 
@@ -32,7 +29,7 @@ export function useLongPress({
         onLongPress(event);
       }, delay);
     },
-    [onLongPress, delay, isPreventDefault]
+    [onLongPress, delay]
   );
 
   const clear = useCallback(
@@ -54,6 +51,7 @@ export function useLongPress({
     onMouseUp: (e: React.MouseEvent) => clear(e),
     onMouseLeave: (e: React.MouseEvent) => clear(e, false),
     onTouchEnd: (e: React.TouchEvent) => clear(e),
+    onTouchMove: (e: React.TouchEvent) => clear(e, false),
     // Previne o menu de contexto nativo no mobile (ex: copiar imagem) se der long press
     onContextMenu: (e: React.MouseEvent) => {
       if (isPreventDefault) {

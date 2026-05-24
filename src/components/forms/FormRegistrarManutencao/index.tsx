@@ -64,6 +64,8 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
     }
     if (isValid) {
       setStep(s => s + 1);
+    } else {
+      hapticError();
     }
   };
 
