@@ -58,11 +58,8 @@
   /* --- 5. AJUSTES DE RAIO (Refinamento do DESIGN.md) --- */
   --radius-lg: 0.75rem;
   --radius-xl: 0.75rem;
-  /* Para botões (rounded-xl) */
   --radius-2xl: 1rem;
-  /* Para cards (rounded-2xl) */
   --radius-3xl: 1.5rem;
-  /* Para modais/layouts airy */
   --radius-md: 0.5rem;
   --radius-sm: 0.25rem;
 
@@ -81,22 +78,17 @@
   --animate-shimmer: shimmer 2s infinite;
 
   @keyframes shimmer {
-    100% {
-      transform: translateX(100%);
-    }
+    100% { transform: translateX(100%); }
   }
 
   --transition-timing-function: ease-out;
   --transition-duration: 300ms;
 
   @keyframes ghost-pulse {
-
-    0%,
-    100% {
+    0%, 100% {
       background-color: color-mix(in srgb, var(--surface) 100%, transparent);
       border-color: var(--border);
     }
-
     50% {
       background-color: color-mix(in srgb, var(--color-ghost-500) 8%, var(--surface));
       border-color: var(--color-ghost-500);
@@ -151,6 +143,9 @@
     --tw-enter-opacity: 0;
     --tw-enter-translate-y: 10px;
     --tw-enter-scale: 0.95;
+    
+    /* Força o OS a saber que estamos no light mode como padrão */
+    color-scheme: light; 
   }
 }
 
@@ -169,68 +164,23 @@
     animation-direction: normal;
   }
 
-  /* --- Fade --- */
-  .fade-in {
-    animation-name: fade-in;
-  }
+  .fade-in { animation-name: fade-in; }
+  .fade-in-0 { --tw-enter-opacity: 0; animation-name: fade-in; }
+  .fade-out-0 { animation-name: fade-out; }
 
-  .fade-in-0 {
-    --tw-enter-opacity: 0;
-    animation-name: fade-in;
-  }
+  .slide-in-from-bottom-1 { --tw-enter-translate-y: 4px; animation-name: slide-in-from-bottom; }
+  .slide-in-from-bottom-2 { --tw-enter-translate-y: 8px; animation-name: slide-in-from-bottom; }
+  .slide-in-from-bottom-4 { --tw-enter-translate-y: 16px; animation-name: slide-in-from-bottom; }
 
-  .fade-out-0 {
-    animation-name: fade-out;
-  }
+  .slide-in-from-top-1 { --tw-enter-translate-y: -4px; animation-name: slide-in-from-top; }
+  .slide-in-from-top-2 { --tw-enter-translate-y: -8px; animation-name: slide-in-from-top; }
 
-  /* --- Slide from bottom --- */
-  .slide-in-from-bottom-1 {
-    --tw-enter-translate-y: 4px;
-    animation-name: slide-in-from-bottom;
-  }
+  .slide-in-from-right-2 { animation-name: slide-in-from-bottom; }
+  .slide-in-from-left-2 { animation-name: slide-in-from-bottom; }
 
-  .slide-in-from-bottom-2 {
-    --tw-enter-translate-y: 8px;
-    animation-name: slide-in-from-bottom;
-  }
+  .zoom-in-95 { --tw-enter-scale: 0.95; animation-name: zoom-in; }
+  .zoom-out-95 { --tw-enter-scale: 0.95; animation-name: zoom-out; }
 
-  .slide-in-from-bottom-4 {
-    --tw-enter-translate-y: 16px;
-    animation-name: slide-in-from-bottom;
-  }
-
-  /* --- Slide from top --- */
-  .slide-in-from-top-1 {
-    --tw-enter-translate-y: -4px;
-    animation-name: slide-in-from-top;
-  }
-
-  .slide-in-from-top-2 {
-    --tw-enter-translate-y: -8px;
-    animation-name: slide-in-from-top;
-  }
-
-  /* --- Slide from sides --- */
-  .slide-in-from-right-2 {
-    animation-name: slide-in-from-bottom; /* reutiliza como fallback */
-  }
-
-  .slide-in-from-left-2 {
-    animation-name: slide-in-from-bottom;
-  }
-
-  /* --- Zoom --- */
-  .zoom-in-95 {
-    --tw-enter-scale: 0.95;
-    animation-name: zoom-in;
-  }
-
-  .zoom-out-95 {
-    --tw-enter-scale: 0.95;
-    animation-name: zoom-out;
-  }
-
-  /* --- Duration --- */
   .duration-150 { --tw-animate-duration: 150ms; }
   .duration-200 { --tw-animate-duration: 200ms; }
   .duration-300 { --tw-animate-duration: 300ms; }
@@ -246,15 +196,15 @@
     --primary-hover: var(--color-klin-700);
     --primary-soft: var(--color-klin-50);
 
-    --background: oklch(0.98 0.002 240); /* Branco gelo elegante */
-    --surface: oklch(1 0 0); /* Branco absoluto pros cards */
+    --background: oklch(0.98 0.002 240);
+    --surface: oklch(1 0 0);
     --surface-hover: oklch(0.97 0.002 240);
 
     --border: oklch(0.93 0.01 240);
     --input: oklch(0.95 0.01 240);
     --ring: var(--color-klin-500);
 
-    --text-main: oklch(0.22 0.02 240); /* Preto refinado 2A2A2A */
+    --text-main: oklch(0.22 0.02 240);
     --text-secondary: oklch(0.40 0.02 240);
     --text-muted: oklch(0.55 0.02 240);
 
@@ -274,6 +224,9 @@
 
   /* TEMA ESCURO (Apple / Vercel style) */
   .dark {
+    /* ✨ CORREÇÃO 1: Avisa o motor do Windows que tudo deve ser escuro nativamente */
+    color-scheme: dark; 
+    
     --primary: var(--color-klin-400);
     --primary-foreground: oklch(1 0 0);
     --primary-hover: var(--color-klin-300);
@@ -310,13 +263,43 @@
     -webkit-font-smoothing: antialiased;
     font-variant-numeric: tabular-nums;
     font-feature-settings: "cv02", "cv03", "cv04", "tnum";
-    /* Scrollbar nativa mais elegante quando suportada */
     scrollbar-gutter: stable;
   }
 }
 
-/* --- UTILITÁRIOS PREMIUM (Baseados no DESIGN.md) --- */
+/* --- UTILITÁRIOS PREMIUM --- */
 @layer utilities {
+  
+  /* NOVO MOTOR DE SCROLLBARS */
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    /* ✨ CORREÇÃO 2: Usa o text-main para contraste perfeito (branco no escuro, preto no claro) */
+    scrollbar-color: color-mix(in srgb, var(--text-main) 25%, transparent) transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  /* ✨ CORREÇÃO 3: Remove o "quadrado branco" do Windows na interseção das barras */
+  .custom-scrollbar::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: color-mix(in srgb, var(--text-main) 25%, transparent);
+    border-radius: 9999px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: color-mix(in srgb, var(--primary) 60%, transparent);
+  }
+
   .glass {
     @apply backdrop-blur-xl border transition-all duration-300;
     background: color-mix(in srgb, var(--surface) 70%, transparent);
@@ -324,7 +307,6 @@
     box-shadow: var(--shadow-float-val);
   }
 
-  /* Efeito de Vidro Profundo (Modo Escuro) vs Cristal (Modo Claro) */
   .glass-premium {
     @apply backdrop-blur-3xl border transition-all duration-500;
     background: color-mix(in srgb, var(--surface) 60%, transparent);
@@ -338,7 +320,6 @@
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255,255,255,0.05);
   }
 
-  /* PERFORMANCE OPTIMIZER: Reduz custo de GPU em aparelhos fracos/low-end */
   @media (prefers-reduced-motion: reduce) {
     .glass, .glass-premium {
       backdrop-filter: none;
@@ -370,7 +351,6 @@
     @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-float;
   }
 
-  /* Safe Areas para Bottom Navigation Bar no iOS */
   .safe-bottom {
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
@@ -379,49 +359,22 @@
     padding-top: env(safe-area-inset-top, 0px);
   }
 
-  /* NOVO MOTOR DE SCROLLBARS (Força o Windows a renderizar bonito) */
-  .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: color-mix(in srgb, var(--text-muted) 30%, transparent) transparent;
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-shadow;
   }
 
-  .custom-scrollbar::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: color-mix(in srgb, var(--text-muted) 30%, transparent);
-    border-radius: 9999px;
-  }
-
-  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background-color: color-mix(in srgb, var(--primary) 60%, transparent);
+  .touch-target {
+    @apply min-h-[48px] min-w-[48px];
   }
 }
 
 /* --- ACESSIBILIDADE E UX (A11Y & MOBILE) --- */
 @layer base {
   * {
-    -webkit-tap-highlight-color: transparent; /* Remove piscar azul/cinza no Android ao tocar botões */
+    -webkit-tap-highlight-color: transparent; 
   }
 
   a, button, input, select, textarea, [role="button"] {
-    touch-action: manipulation; /* Remove delay de 300ms no clique e previne zoom por duplo-toque (Fat Finger Zoom) */
-  }
-}
-
-@layer utilities {
-  .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-shadow;
-  }
-
-  /* Área mínima de clique recomendada (48x48px) para evitar Fat Finger */
-  .touch-target {
-    @apply min-h-[48px] min-w-[48px];
+    touch-action: manipulation;
   }
 }
