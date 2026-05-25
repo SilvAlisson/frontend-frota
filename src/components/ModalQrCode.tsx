@@ -64,51 +64,71 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   };
 
   const handlePrint = () => {
-    const printContent = cardRef.current;
-    if (!printContent) return;
+  const cardElement = cardRef.current;
+  if (!cardElement) return;
 
-    const printWindow = window.open('', '', 'width=900,height=900');
-    if (printWindow) {
-      const styles = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
-        .map(style => style.outerHTML)
-        .join('\n');
+  const printWindow = window.open('', '', 'width=900,height=900');
+  if (!printWindow) return;
 
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <base href="${window.location.origin}">
-            <title>Crachá - ${user.nome}</title>
-            ${styles}
-            <style>
-              @page { size: auto; margin: 0; }
-              body { 
-                margin: 0; display: flex; justify-content: center; align-items: center; 
-                min-height: 100vh; background: white; 
-                -webkit-print-color-adjust: exact !important; 
-                print-color-adjust: exact !important; 
-              }
-              .print-card { box-shadow: none !important; border: 1px dashed #cbd5e1 !important; transform: scale(0.95); }
-            </style>
-          </head>
-          <body>
-            <div class="print-card" style="width: 325px; height: 720px; position: relative; border-radius: 34px; overflow: hidden; background: white;">
-              ${printContent.innerHTML}
-            </div>
-            <script>
-              window.onload = () => {
-                setTimeout(() => {
-                  window.print();
-                  window.close();
-                }, 500);
-              };
-            </script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-    }
+  // Copia os estilos da página original
+  const styles = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
+    .map(style => style.outerHTML)
+    .join('\n');
+
+  // Clona o cartão inteiro (preserva background-image e dimensões)
+  const clone = cardElement.cloneNode(true) as HTMLElement;
+
+  // Remove sombra que pode atrapalhar e adiciona estilos de impressão
+  clone.style.boxShadow = 'none';
+  clone.style.borderRadius = '5.5%'; // mantém o arredondamento original
+  clone.style.setProperty('-webkit-print-color-adjust', 'exact', 'important');
+  clone.style.setProperty('print-color-adjust', 'exact', 'important');
+
+  // Opcional: escala para caber bem na página
+  clone.style.transform = 'scale(0.95)';
+  clone.style.transformOrigin = 'top center';
+
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <base href="${window.location.origin}">
+        <title>Crachá - ${user.nome}</title>
+        ${styles}
+        <style>
+          @page { size: auto; margin: 0; }
+          body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: white;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+          /* Garante que o clone fique centralizado */
+          body > * {
+            margin: auto;
+          }
+        </style>
+      </head>
+      <body></body>
+    </html>
+  `);
+
+  // Anexa o clone ao body da nova janela
+  printWindow.document.body.appendChild(clone);
+  printWindow.document.close();
+
+  // Pequeno delay para garantir o carregamento dos estilos e da imagem
+  printWindow.onload = () => {
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 500);
   };
+};
 
   return (
     <Modal isOpen={true} onClose={onClose} title="Identidade Funcional" className="max-w-[380px]">
