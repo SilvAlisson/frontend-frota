@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
-import { Printer, RefreshCw, Copy, QrCode, ShieldCheck, Download } from 'lucide-react';
+import { Printer, RefreshCw, Copy, QrCode, Download } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { User } from '../types';
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -67,47 +67,64 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
     const printContent = cardRef.current;
     if (!printContent) return;
 
-    const printWindow = window.open('', '', 'width=900,height=900');
-    if (printWindow) {
-      const styles = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
-        .map(style => style.outerHTML)
-        .join('\n');
+    // 1. Converter o SVG para string (XML) para que a nova janela o entenda
+    const svgElement = printContent.querySelector('svg');
+    let svgData = '';
+    if (svgElement) {
+      const serializer = new XMLSerializer();
+      svgData = serializer.serializeToString(svgElement);
+    }
 
-      printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <base href="${window.location.origin}">
-            <title>Crachá - ${user.nome}</title>
-            ${styles}
-            <style>
+    const printWindow = window.open('', '_blank', 'width=900,height=900');
+    if (!printWindow) return;
+
+    // 2. Criar o HTML da nova janela
+    const contentHtml = printContent.innerHTML.replace(
+      /<svg[^>]*>([\s\S]*?)<\/svg>/, 
+      svgData
+    );
+
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Crachá - ${user.nome}</title>
+          <style>
+            @media print {
               @page { size: auto; margin: 0; }
               body { 
                 margin: 0; display: flex; justify-content: center; align-items: center; 
-                min-height: 100vh; background: white; 
+                min-height: 100vh; background: white;
                 -webkit-print-color-adjust: exact !important; 
                 print-color-adjust: exact !important; 
               }
-              .print-card { box-shadow: none !important; border: 1px dashed #cbd5e1 !important; transform: scale(0.95); }
-            </style>
-          </head>
-          <body>
-            <div class="print-card" style="width: 325px; height: 720px; position: relative; border-radius: 34px; overflow: hidden; background: white;">
-              ${printContent.innerHTML}
-            </div>
-            <script>
-              window.onload = () => {
-                setTimeout(() => {
-                  window.print();
-                  window.close();
-                }, 500);
-              };
-            </script>
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
-    }
+              .print-card { 
+                width: 325px; height: 720px; position: relative; 
+                border-radius: 34px; overflow: hidden; background: white;
+                background-image: url('${window.location.origin}/cracha-bg.png') !important;
+                background-size: 100% 100% !important;
+                background-repeat: no-repeat !important;
+              }
+              .print-card svg { width: 100%; height: 100%; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="print-card">
+            ${contentHtml}
+          </div>
+          <script>
+            window.onload = () => {
+              setTimeout(() => {
+                window.print();
+                window.close();
+              }, 500);
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   return (
@@ -267,4 +284,4 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
       />
     </Modal>
   );
-}
+}
