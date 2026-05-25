@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { api } from '../services/api';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
+import { Lightbox } from './ui/Lightbox';
 import {
- Calendar, Download, ChevronDown, 
- FileText, FileX, DollarSign, Wrench, Store, Truck, FilterX, ZoomIn, X
+  Calendar, Download, ChevronDown, 
+  FileText, FileX, DollarSign, Wrench, Store, Truck, FilterX
 } from 'lucide-react';
 import type { OrdemServico } from '../types';
 
@@ -20,7 +21,6 @@ import { Card } from './ui/Card';
 import { Badge } from './ui/Badge';
 import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
-import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 import { MobileCardWithActions } from './ui/MobileCardWithActions';
 import { SmartFAB } from './ui/SmartFAB';
@@ -35,207 +35,205 @@ import { FormEditarManutencao } from './forms/FormEditarManutencao';
 import { FormRegistrarManutencao } from './forms/FormRegistrarManutencao';
 
 interface HistoricoManutencoesProps {
- userRole: string;
- filtroInicial?: { veiculoId?: string; dataInicio?: string; };
+  userRole: string;
+  filtroInicial?: { veiculoId?: string; dataInicio?: string; };
 }
 
 const ITENS_POR_PAGINA = 20;
 
 // HELPER 1: Limpador Automático de Placas (Remove o prefixo da marca)
 const extrairPlaca = (placaBruta: string) => {
- if (!placaBruta) return '---';
- const match = placaBruta.match(/\(([^)]+)\)/);
- if (match && match[1]) {
-  return match[1].trim();
- }
- return placaBruta.trim();
+  if (!placaBruta) return '---';
+  const match = placaBruta.match(/\(([^)]+)\)/);
+  if (match && match[1]) {
+   return match[1].trim();
+  }
+  return placaBruta.trim();
 };
 
-
 export function HistoricoManutencoes({
- userRole,
- filtroInicial
+  userRole,
+  filtroInicial
 }: HistoricoManutencoesProps) {
 
- // 📡 BUSCA INDEPENDENTE COM CACHE
- const { data: veiculos = [] } = useVeiculos();
+  // 📡 BUSCA INDEPENDENTE COM CACHE
+  const { data: veiculos = [] } = useVeiculos();
 
- // --- ESTADOS DE DADOS ---
- const [historico, setHistorico] = useState<OrdemServico[]>([]);
- const [fornecedores, setFornecedores] = useState<{ id: string, nome: string }[]>([]);
- const [loading, setLoading] = useState(true);
+  // --- ESTADOS DE DADOS ---
+  const [historico, setHistorico] = useState<OrdemServico[]>([]);
+  const [fornecedores, setFornecedores] = useState<{ id: string, nome: string }[]>([]);
+  const [loading, setLoading] = useState(true);
 
- // --- ESTADOS DE RENDERIZAÇÃO PROGRESSIVA ---
- const [visibleCount, setVisibleCount] = useState(ITENS_POR_PAGINA);
+  // --- ESTADOS DE RENDERIZAÇÃO PROGRESSIVA ---
+  const [visibleCount, setVisibleCount] = useState(ITENS_POR_PAGINA);
 
- // --- ESTADOS DE INTERAÇÃO ---
- const [editingOS, setEditingOS] = useState<OrdemServico | null>(null);
- const [deletingId, setDeletingId] = useState<string | null>(null);
- const [docParaVisualizar, setDocParaVisualizar] = useState<{ url: string, titulo: string } | null>(null);
- const [zoomNivel, setZoomNivel] = useState(1);
- const [isNovaOSOpen, setIsNovaOSOpen] = useState(false);
+  // --- ESTADOS DE INTERAÇÃO ---
+  const [editingOS, setEditingOS] = useState<OrdemServico | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [docParaVisualizar, setDocParaVisualizar] = useState<{ url: string, titulo: string } | null>(null);
+  const [isNovaOSOpen, setIsNovaOSOpen] = useState(false);
 
- // --- ESTADOS DE FILTRO (API) ---
- const [filtros, setFiltros] = useState({
-  veiculoId: filtroInicial?.veiculoId || '',
-  dataInicio: filtroInicial?.dataInicio || '',
-  dataFim: '',
- });
+  // --- ESTADOS DE FILTRO (API) ---
+  const [filtros, setFiltros] = useState({
+   veiculoId: filtroInicial?.veiculoId || '',
+   dataInicio: filtroInicial?.dataInicio || '',
+   dataFim: '',
+  });
 
- // --- ESTADO DE FILTRO LOCAL (FRONTEND) ---
- const [fornecedorIdFiltro, setFornecedorIdFiltro] = useState('');
+  // --- ESTADO DE FILTRO LOCAL (FRONTEND) ---
+  const [fornecedorIdFiltro, setFornecedorIdFiltro] = useState('');
 
- const hasFiltrosAtivos = Boolean(filtros.dataInicio || filtros.dataFim || filtros.veiculoId || fornecedorIdFiltro);
+  const hasFiltrosAtivos = Boolean(filtros.dataInicio || filtros.dataFim || filtros.veiculoId || fornecedorIdFiltro);
 
- const canEdit = ['ADMIN', 'ENCARREGADO', 'COORDENADOR'].includes(userRole);
- const canDelete = ['ADMIN', 'COORDENADOR'].includes(userRole);
+  const canEdit = ['ADMIN', 'ENCARREGADO', 'COORDENADOR'].includes(userRole);
+  const canDelete = ['ADMIN', 'COORDENADOR'].includes(userRole);
 
- // --- BUSCA DE FORNECEDORES PARA O SELECT DO BM ---
- useEffect(() => {
-  api.get('/fornecedores')
-   .then(res => setFornecedores(res.data))
-   .catch(err => { if (import.meta.env.DEV) console.error("Erro ao carregar fornecedores", err); });
- }, []);
+  // --- BUSCA DE FORNECEDORES PARA O SELECT DO BM ---
+  useEffect(() => {
+   api.get('/fornecedores')
+    .then(res => setFornecedores(res.data))
+    .catch(err => { if (import.meta.env.DEV) console.error("Erro ao carregar fornecedores", err); });
+  }, []);
 
- // FETCHING OTIMIZADO (Correção do Erro 400 da API)
- const fetchHistorico = useCallback(async () => {
-  setLoading(true);
-  try {
-   const response = await api.get<OrdemServico[]>('/manutencoes/recentes', { params: { limit: 'all' } });
-   setHistorico(response.data);
-   setVisibleCount(ITENS_POR_PAGINA);
-  } catch (err) {
-   if (import.meta.env.DEV) console.error(err);
-   toast.error('Erro ao carregar o histórico financeiro da oficina.');
-  } finally {
-   setLoading(false);
-  }
- }, []);
-
- useEffect(() => {
-  fetchHistorico();
- }, [fetchHistorico]);
-
- // FILTRO LOCAL INTELIGENTE (Instantâneo na RAM limpo e otimizado)
- const historicoFiltrado = useMemo(() => {
-  return historico.filter(os => {
-   if (fornecedorIdFiltro && os.fornecedorId !== fornecedorIdFiltro) return false;
-   if (filtros.veiculoId && os.veiculoId !== filtros.veiculoId) return false;
-   if (filtros.dataInicio && new Date(os.data) < new Date(`${filtros.dataInicio}T00:00:00`)) return false;
-   if (filtros.dataFim && new Date(os.data) > new Date(`${filtros.dataFim}T23:59:59`)) return false;
-   return true;
-  }).sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
- }, [historico, fornecedorIdFiltro, filtros]);
-
- const totalGasto = useMemo(() => {
-  return historicoFiltrado.reduce((acc, os) => acc + (Number(os.custoTotal) || 0), 0);
- }, [historicoFiltrado]);
-
- const osAbertas = useMemo(() => {
-  return historicoFiltrado.filter(m => m.status === 'PENDENTE' || m.status === 'EM_ANDAMENTO').length;
- }, [historicoFiltrado]);
-
- const historicoVisivel = useMemo(() => {
-  return historicoFiltrado.slice(0, visibleCount);
- }, [historicoFiltrado, visibleCount]);
-
- const handleCarregarMais = () => setVisibleCount(prev => prev + ITENS_POR_PAGINA);
-
- const handleDelete = async () => {
-  if (!deletingId) return;
-  try {
-   await api.delete(`/manutencoes/${deletingId}`);
-   setHistorico(prev => prev.filter(os => os.id !== deletingId));
-   toast.success('Registro financeiro removido.');
-  } catch (error) {
-   toast.error('Ocorreu um erro ao remover o Registro.');
-  } finally {
-   setDeletingId(null);
-  }
- };
-
- const handleExportar = () => {
-  if (historicoFiltrado.length === 0) {
-   toast.warning("Sem dados disponíveis para exportar com estes filtros.");
-   return;
-  }
-  const exportPromise = new Promise((resolve, reject) => {
+  // FETCHING OTIMIZADO (Correção do Erro 400 da API)
+  const fetchHistorico = useCallback(async () => {
+   setLoading(true);
    try {
-    // MAPA DE DADOS OTIMIZADO PARA O BM (Com fallback seguro para produtos)
-    const dados = historicoFiltrado.map(os => ({
-     'Data da OS': DateHelper.getExcel(os.data),
-     'Oficina / Fornecedor': os.fornecedor?.nome || 'Não Registrada',
-     'Placa do Veículo': extrairPlaca(os.veiculo?.placa || ''),
-     'Categoria de Serviço': os.tipo,
-     'Serviços Realizados': (os.itens || []).map(i => `${i.quantidade}x ${i.produto?.nome || 'Serviço'}`).join(' | '),
-     'Valor Total (R$)': Number(os.custoTotal),
-     'Comprovante': os.fotoComprovanteUrl ? `=HYPERLINK("${os.fotoComprovanteUrl}", "Visualizar Comprovante")` : 'Sem anexo'
-    }));
-
-    let nomeArquivo = "BM_Manutencoes_Globais.xlsx";
-    if (fornecedorIdFiltro) {
-     const nomeFornecedor = fornecedores.find(f => f.id === fornecedorIdFiltro)?.nome?.replace(/[^a-zA-Z0-9]/g, '_');
-     nomeArquivo = `BM_${nomeFornecedor}.xlsx`;
-    }
-
-    exportarParaExcel(dados, nomeArquivo);
-    resolve(true);
+    const response = await api.get<OrdemServico[]>('/manutencoes/recentes', { params: { limit: 'all' } });
+    setHistorico(response.data);
+    setVisibleCount(ITENS_POR_PAGINA);
    } catch (err) {
-    reject(err);
+    if (import.meta.env.DEV) console.error(err);
+    toast.error('Erro ao carregar o histórico financeiro da oficina.');
+   } finally {
+    setLoading(false);
    }
-  });
+  }, []);
 
-  toast.promise(exportPromise, {
-   loading: 'Gerando folha de cálculo...',
-   success: 'Boletim de Medição exportado com sucesso!',
-   error: 'Erro a exportar Arquivo.'
-  });
- };
+  useEffect(() => {
+   fetchHistorico();
+  }, [fetchHistorico]);
 
- // --- HELPERS VISUAIS (DESIGN SYSTEM) ---
- const getBadgeTipo = (tipo: string) => {
-  const map: Record<string, "warning" | "info" | "success" | "neutral"> = {
-   'CORRETIVA': 'warning',
-   'PREVENTIVA': 'info',
-   'LAVAGEM': 'success'
+  // FILTRO LOCAL INTELIGENTE (Instantâneo na RAM limpo e otimizado)
+  const historicoFiltrado = useMemo(() => {
+   return historico.filter(os => {
+    if (fornecedorIdFiltro && os.fornecedorId !== fornecedorIdFiltro) return false;
+    if (filtros.veiculoId && os.veiculoId !== filtros.veiculoId) return false;
+    if (filtros.dataInicio && new Date(os.data) < new Date(`${filtros.dataInicio}T00:00:00`)) return false;
+    if (filtros.dataFim && new Date(os.data) > new Date(`${filtros.dataFim}T23:59:59`)) return false;
+    return true;
+   }).sort((a, b) => new Date(b.data).getTime() - new Date(a.data).getTime());
+  }, [historico, fornecedorIdFiltro, filtros]);
+
+  const totalGasto = useMemo(() => {
+   return historicoFiltrado.reduce((acc, os) => acc + (Number(os.custoTotal) || 0), 0);
+  }, [historicoFiltrado]);
+
+  const osAbertas = useMemo(() => {
+   return historicoFiltrado.filter(m => m.status === 'PENDENTE' || m.status === 'EM_ANDAMENTO').length;
+  }, [historicoFiltrado]);
+
+  const historicoVisivel = useMemo(() => {
+   return historicoFiltrado.slice(0, visibleCount);
+  }, [historicoFiltrado, visibleCount]);
+
+  const handleCarregarMais = () => setVisibleCount(prev => prev + ITENS_POR_PAGINA);
+
+  const handleDelete = async () => {
+   if (!deletingId) return;
+   try {
+    await api.delete(`/manutencoes/${deletingId}`);
+    setHistorico(prev => prev.filter(os => os.id !== deletingId));
+    toast.success('Registro financeiro removido.');
+   } catch (error) {
+    toast.error('Ocorreu um erro ao remover o Registro.');
+   } finally {
+    setDeletingId(null);
+   }
   };
-  return <Badge variant={map[tipo] || 'neutral'}>{tipo}</Badge>;
- };
 
- const getBadgeStatus = (status: string) => {
-  const map: Record<string, "warning" | "info" | "success" | "danger" | "neutral"> = {
-   'PENDENTE': 'warning',
-   'EM_ANDAMENTO': 'info',
-   'CONCLUIDA': 'success',
-   'CANCELADA': 'danger'
+  const handleExportar = () => {
+   if (historicoFiltrado.length === 0) {
+    toast.warning("Sem dados disponíveis para exportar com estes filtros.");
+    return;
+   }
+   const exportPromise = new Promise((resolve, reject) => {
+    try {
+     // MAPA DE DADOS OTIMIZADO PARA O BM (Com fallback seguro para produtos)
+     const dados = historicoFiltrado.map(os => ({
+      'Data da OS': DateHelper.getExcel(os.data),
+      'Oficina / Fornecedor': os.fornecedor?.nome || 'Não Registrada',
+      'Placa do Veículo': extrairPlaca(os.veiculo?.placa || ''),
+      'Categoria de Serviço': os.tipo,
+      'Serviços Realizados': (os.itens || []).map(i => `${i.quantidade}x ${i.produto?.nome || 'Serviço'}`).join(' | '),
+      'Valor Total (R$)': Number(os.custoTotal),
+      'Comprovante': os.fotoComprovanteUrl ? `=HYPERLINK("${os.fotoComprovanteUrl}", "Visualizar Comprovante")` : 'Sem anexo'
+     }));
+
+     let nomeArquivo = "BM_Manutencoes_Globais.xlsx";
+     if (fornecedorIdFiltro) {
+      const nomeFornecedor = fornecedores.find(f => f.id === fornecedorIdFiltro)?.nome?.replace(/[^a-zA-Z0-9]/g, '_');
+      nomeArquivo = `BM_${nomeFornecedor}.xlsx`;
+     }
+
+     exportarParaExcel(dados, nomeArquivo);
+     resolve(true);
+    } catch (err) {
+     reject(err);
+    }
+   });
+
+   toast.promise(exportPromise, {
+    loading: 'Gerando folha de cálculo...',
+    success: 'Boletim de Medição exportado com sucesso!',
+    error: 'Erro a exportar Arquivo.'
+   });
   };
-  return <Badge variant={map[status] || 'neutral'}>{status}</Badge>;
- };
 
- const veiculosOptions = useMemo(() => [
-  { value: "", label: "Todos os Veículos" },
-  ...veiculos.map(v => ({ value: v.id, label: `${extrairPlaca(v.placa)} - ${v.modelo}` }))
- ], [veiculos]);
+  // --- HELPERS VISUAIS (DESIGN SYSTEM) ---
+  const getBadgeTipo = (tipo: string) => {
+   const map: Record<string, "warning" | "info" | "success" | "neutral"> = {
+    'CORRETIVA': 'warning',
+    'PREVENTIVA': 'info',
+    'LAVAGEM': 'success'
+   };
+   return <Badge variant={map[tipo] || 'neutral'}>{tipo}</Badge>;
+  };
 
- const fornecedoresOptions = useMemo(() => [
-  { value: "", label: "Todas as Oficinas / Postos" },
-  ...fornecedores.map(f => ({ value: f.id, label: f.nome }))
- ], [fornecedores]);
+  const getBadgeStatus = (status: string) => {
+   const map: Record<string, "warning" | "info" | "success" | "danger" | "neutral"> = {
+    'PENDENTE': 'warning',
+    'EM_ANDAMENTO': 'info',
+    'CONCLUIDA': 'success',
+    'CANCELADA': 'danger'
+   };
+   return <Badge variant={map[status] || 'neutral'}>{status}</Badge>;
+  };
 
- return (
-  <PullToRefresh onRefresh={fetchHistorico}>
-   <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+  const veiculosOptions = useMemo(() => [
+   { value: "", label: "Todos os Veículos" },
+   ...veiculos.map(v => ({ value: v.id, label: `${extrairPlaca(v.placa)} - ${v.modelo}` }))
+  ], [veiculos]);
 
-   {/* 1. HEADER & FILTROS */}
-    <PageHeader
-     title="Boletim de Manutenções"
-     subtitle="Controle de manutenções KLIN. Filtre por oficina para gerar o Boletim de Medição (BM)."
-     actionLabel={canEdit ? "Nova Manutenção" : undefined}
-     onAction={canEdit ? () => setIsNovaOSOpen(true) : undefined}
-    />
+  const fornecedoresOptions = useMemo(() => [
+   { value: "", label: "Todas as Oficinas / Postos" },
+   ...fornecedores.map(f => ({ value: f.id, label: f.nome }))
+  ], [fornecedores]);
 
-    {/* FILTROS MOVIDOS PARA FORA DO HEADER */}
-    <div className="flex flex-col gap-3 w-full max-w-full overflow-hidden bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
+  return (
+   <PullToRefresh onRefresh={fetchHistorico}>
+    <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+    {/* 1. HEADER & FILTROS */}
+     <PageHeader
+      title="Boletim de Manutenções"
+      subtitle="Controle de manutenções KLIN. Filtre por oficina para gerar o Boletim de Medição (BM)."
+      actionLabel={canEdit ? "Nova Manutenção" : undefined}
+      onAction={canEdit ? () => setIsNovaOSOpen(true) : undefined}
+     />
+
+     {/* FILTROS MOVIDOS PARA FORA DO HEADER */}
+     <div className="flex flex-col gap-3 w-full max-w-full overflow-hidden bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
         
         {/* LINHA 1: Filtros de Seleção (Veículo e Fornecedor) */}
         <div className="flex flex-col sm:flex-row gap-3 items-end">
@@ -344,7 +342,7 @@ export function HistoricoManutencoes({
        virtualized={true}
        itens={historicoVisivel}
        emptyMessage="Nenhum Registro encontrado com estes filtros."
-       // 🚨 NOVO GRID SEM A COLUNA STATUS: Espaço extra para Informação Técnica e Custo
+       // 🚨  Espaço extra para Informação Técnica e Custo
        desktopGridCols="grid-cols-[1.2fr_3fr_1.5fr_1fr_80px]"
 
        // --- DESKTOP HEADER ---
@@ -406,7 +404,7 @@ export function HistoricoManutencoes({
              <Button
               variant="ghost"
               size="icon"
-              onClick={() => { setDocParaVisualizar({ url: os.fotoComprovanteUrl || '', titulo: `Manutenção - ${extrairPlaca(os.veiculo?.placa || '')}` }); setZoomNivel(1); }}
+              onClick={() => setDocParaVisualizar({ url: os.fotoComprovanteUrl || '', titulo: `Manutenção - ${extrairPlaca(os.veiculo?.placa || '')}` })}
               className="h-10 w-10 bg-info/10 text-info hover:bg-info/20 transition-all shadow-sm border border-info/20 group"
               aria-label="Visualizar Nota de Serviço"
              >
@@ -464,9 +462,9 @@ export function HistoricoManutencoes({
           </div>
            <div className="flex flex-col items-end gap-1 shrink-0 ml-auto">
             <div className="flex items-center justify-end gap-1 flex-wrap">
-              <div className="scale-90 origin-right">
-               {getBadgeStatus(os.status)}
-              </div>
+             <div className="scale-90 origin-right">
+              {getBadgeStatus(os.status)}
+             </div>
             </div>
            </div>
          </div>
@@ -487,7 +485,7 @@ export function HistoricoManutencoes({
            variant="secondary"
            className="w-full text-xs font-bold h-11 bg-info/10 text-info border-info/20 hover:bg-info/20 shadow-sm transition-all"
            icon={<FileText className="w-4 h-4" />}
-           onClick={() => { setDocParaVisualizar({ url: os.fotoComprovanteUrl || '', titulo: `Manutenção - ${extrairPlaca(os.veiculo?.placa || '')}` }); setZoomNivel(1); }}
+           onClick={() => setDocParaVisualizar({ url: os.fotoComprovanteUrl || '', titulo: `Manutenção - ${extrairPlaca(os.veiculo?.placa || '')}` })}
           >
            Visualizar Nota de Serviço
           </Button>
@@ -552,77 +550,12 @@ export function HistoricoManutencoes({
     confirmLabel="Sim, Apagar Registro"
    />
 
-   {/* 🔮 Visualizador Cinemático de Perícia Documental */}
-   {docParaVisualizar && (
-    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-3xl p-4 sm:p-8 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-300">
-     
-     {/* Top Navigation Bar HUD */}
-     <div className="absolute top-0 left-0 w-full flex justify-between items-center p-6 bg-gradient-to-b from-black/80 to-transparent z-50">
-      <div className="flex items-center gap-3">
-       <div className="w-10 h-10 bg-info/20 flex items-center justify-center rounded-lg border border-info/30 text-info">
-        <FileText className="w-5 h-5" />
-       </div>
-       <div>
-        <span className="text-white font-black uppercase text-sm tracking-widest block">{docParaVisualizar.titulo}</span>
-        <span className="text-info font-medium text-[10px] uppercase tracking-wider block">Visualizador de Comprovantes</span>
-       </div>
-      </div>
-      <div className="flex gap-2">
-       <Button
-        type="button"
-        variant="ghost"
-        className="bg-white/10 hover:bg-white/20 text-white rounded-xl h-11 w-11 touch-target focus-ring"
-        onClick={() => setZoomNivel(prev => prev < 4 ? prev + 0.5 : prev)}
-        title="Aumentar Zoom"
-       >
-        <ZoomIn className="w-5 h-5" />
-       </Button>
-       <Button
-        type="button"
-        variant="ghost"
-        className="bg-white/10 hover:bg-white/20 text-white rounded-xl h-11 w-11 touch-target focus-ring"
-        onClick={() => { setDocParaVisualizar(null); setZoomNivel(1); }}
-        title="Fechar Visualizador"
-       >
-        <X className="w-6 h-6" />
-       </Button>
-      </div>
-     </div>
-
-     {/* Imagem/PDF Viewer usando zoom nativo em v4 */}
-     <div className="w-full h-full flex items-center justify-center rounded-3xl mt-16 sm:mt-0 flex-1 overflow-hidden">
-      {docParaVisualizar.url.toLowerCase().includes('.pdf') ? (
-       <iframe
-        src={`${docParaVisualizar.url}#toolbar=0`}
-        className="w-full h-[85vh] rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10"
-        style={{ zoom: zoomNivel }}
-        title={docParaVisualizar.titulo}
-       />
-      ) : (
-       <TransformWrapper
-         initialScale={1}
-         minScale={1}
-         maxScale={4}
-         centerOnInit
-         doubleClick={{ mode: "toggle", step: 2.5 }}
-       >
-         <TransformComponent 
-           wrapperStyle={{ maxWidth: "100%", maxHeight: "85vh", borderRadius: "0.75rem" }}
-           contentStyle={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-         >
-           <img
-            src={docParaVisualizar.url}
-            alt={docParaVisualizar.titulo}
-            className="w-auto h-auto max-h-[85vh] max-w-full object-contain pointer-events-auto filter contrast-125 rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)]"
-            draggable={false}
-           />
-         </TransformComponent>
-       </TransformWrapper>
-      )}
-     </div>
-
-    </div>
-   )}
+   {/* 🔮 Visualizador Universal de Documentos KLIN */}
+   <Lightbox 
+     src={docParaVisualizar?.url} 
+     alt={docParaVisualizar?.titulo || "Documento da KLIN"} 
+     onClose={() => setDocParaVisualizar(null)} 
+   />
 
    {canEdit && (
      <SmartFAB 

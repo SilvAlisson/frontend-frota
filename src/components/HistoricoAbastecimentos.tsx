@@ -8,9 +8,9 @@ import { FormEditarAbastecimento } from './forms/FormEditarAbastecimento';
 import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
 import { useAuth } from '../contexts/AuthContext';
 import type { Abastecimento } from '../types';
-import { FileDown, Calendar, Truck, Droplets, Receipt, Gauge, DollarSign, ChevronDown, Store, FilterX, ZoomIn, X, FileText } from 'lucide-react';
+import { FileDown, Calendar, Truck, Droplets, Receipt, Gauge, DollarSign, ChevronDown, Store, FilterX } from 'lucide-react';
 import { GraficoCurvaAbastecimento } from './ui/GraficosFlota';
-import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
+import { Lightbox } from './ui/Lightbox';
 
 // --- HOOKS ATÔMICOS ---
 import { useVeiculos } from '../hooks/useVeiculos';
@@ -40,7 +40,6 @@ interface HistoricoAbastecimentosProps {
 
 const ITENS_POR_PAGINA = 20;
 
-
 export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAbastecimentosProps) {
  
  // 📡 BUSCA INDEPENDENTE COM CACHE
@@ -58,7 +57,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
  const [editingId, setEditingId] = useState<string | null>(null);
  const [deletingId, setDeletingId] = useState<string | null>(null);
  const [docParaVisualizar, setDocParaVisualizar] = useState<{ url: string, titulo: string } | null>(null);
- const [zoomNivel, setZoomNivel] = useState(1);
  const [isNovoAbastecimentoOpen, setIsNovoAbastecimentoOpen] = useState(false);
 
  const { user } = useAuth();
@@ -175,7 +173,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
 
   const exportPromise = new Promise((resolve, reject) => {
    try {
-    // ✨ MAPA DE DADOS OTIMIZADO PARA O BM (Sem colunas inúteis e Valor como Número Real)
+    // MAPA DE DADOS OTIMIZADO PARA O BM (Sem colunas inúteis e Valor como Número Real)
     const dadosFormatados = historicoFiltrado.map(ab => {
      const itensSafe = ab.itens || [];
      const itensFormatados = itensSafe.map(item =>
@@ -253,7 +251,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
    {/* FILTROS MOVIDOS PARA FORA DO HEADER */}
    <div className="flex flex-col gap-3 w-full max-w-full overflow-hidden bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
         
-        {/* LINHA 1: Filtros de Seleção (Veículo e Fornecedor) */}
+        {/*  Filtros de Seleção (Veículo e Fornecedor) */}
         <div className="flex flex-col sm:flex-row gap-3 items-end">
           <div className="w-full sm:w-56">
             <Select 
@@ -277,7 +275,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
           </div>
         </div>
 
-        {/* LINHA 2: Filtros de Data e Botões de Ação */}
+        {/*  Filtros de Data e Botões de Ação */}
         <div className="flex flex-col sm:flex-row gap-3 items-end sm:justify-between xl:justify-start">
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <div className="w-full sm:w-40">
@@ -426,7 +424,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                <Button
                  variant="ghost"
                  size="icon"
-                 onClick={() => { setDocParaVisualizar({ url: ab.fotoNotaFiscalUrl || '', titulo: `Abastecimento - ${ab.veiculo?.placa || 'Veículo'}` }); setZoomNivel(1); }}
+                 onClick={() => setDocParaVisualizar({ url: ab.fotoNotaFiscalUrl || '', titulo: `Abastecimento - ${ab.veiculo?.placa || 'Veículo'}` })}
                  aria-label="Visualizar nota fiscal"
                  className="h-10 w-10 text-info hover:text-info bg-info/10 hover:bg-info/20 border border-info/20 mx-auto transition-all shadow-sm group"
                >
@@ -474,7 +472,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
         >
          <div className="flex justify-between items-start">
           <div className="flex gap-4">
-           {/* ✨ HELPER DE DATA NO MOBILE */}
+           {/*  HELPER DE DATA NO MOBILE */}
            <div className="bg-surface shadow-sm text-text-main p-2 rounded-xl border border-border/80 flex flex-col items-center justify-center w-14 h-14 shrink-0">
             <span className="text-lg font-black leading-none">{DateHelper.getDia(ab.dataHora)}</span>
             <span className="text-[10px] uppercase font-bold tracking-widest text-text-muted mt-0.5">
@@ -508,7 +506,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
          {ab.fotoNotaFiscalUrl && (
            <Button
             variant="ghost"
-            onClick={() => { setDocParaVisualizar({ url: ab.fotoNotaFiscalUrl || '', titulo: `Abastecimento - ${ab.veiculo?.placa || 'Veículo'}` }); setZoomNivel(1); }}
+            onClick={() => setDocParaVisualizar({ url: ab.fotoNotaFiscalUrl || '', titulo: `Abastecimento - ${ab.veiculo?.placa || 'Veículo'}` })}
             aria-label={`Visualizar nota fiscal do abastecimento de ${ab.veiculo?.placa || 'veículo'}`}
             icon={<Receipt className="w-4 h-4" />}
             className="w-full bg-info/10 text-info border border-info/20 hover:bg-info/20"
@@ -582,82 +580,14 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     variant="danger"
    />
 
-   {/* 🔮 Visualizador Cinemático de Perícia Documental */}
-   {docParaVisualizar && (
-    <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-3xl p-4 sm:p-8 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-300">
-     
-     {/* Top Navigation Bar HUD */}
-     <div className="absolute top-0 left-0 w-full flex justify-between items-center p-6 bg-gradient-to-b from-black/80 to-transparent z-50">
-      <div className="flex items-center gap-3">
-       <div className="w-10 h-10 bg-info/20 flex items-center justify-center rounded-lg border border-info/30 text-info">
-        <FileText className="w-5 h-5" />
-       </div>
-       <div>
-        <span className="text-white font-black uppercase text-sm tracking-widest block">{docParaVisualizar.titulo}</span>
-        <span className="text-info font-medium text-[10px] uppercase tracking-wider block">Visualizador de Comprovantes</span>
-       </div>
-      </div>
-      <div className="flex gap-2">
-       <Button
-        type="button"
-        variant="ghost"
-        className="bg-white/10 hover:bg-white/20 text-white rounded-xl h-11 w-11 touch-target focus-ring"
-        onClick={() => setZoomNivel(prev => prev < 4 ? prev + 0.5 : prev)}
-        title="Aumentar Zoom"
-       >
-        <ZoomIn className="w-5 h-5" />
-       </Button>
-       <Button
-        type="button"
-        variant="ghost"
-        className="bg-white/10 hover:bg-white/20 text-white rounded-xl h-11 w-11 touch-target focus-ring"
-        onClick={() => { setDocParaVisualizar(null); setZoomNivel(1); }}
-        title="Fechar Visualizador"
-       >
-        <X className="w-6 h-6" />
-       </Button>
-      </div>
-     </div>
-
-     {/* Imagem/PDF Viewer usando zoom nativo em v4 */}
-     <div className="w-full h-full flex items-center justify-center rounded-3xl mt-16 sm:mt-0 flex-1 overflow-hidden">
-      {docParaVisualizar.url.toLowerCase().includes('.pdf') ? (
-       <iframe
-        src={`${docParaVisualizar.url}#toolbar=0`}
-        className="w-full h-[85vh] rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10"
-        style={{ zoom: zoomNivel }}
-        title={docParaVisualizar.titulo}
-       />
-      ) : (
-       <TransformWrapper
-         initialScale={1}
-         minScale={1}
-         maxScale={4}
-         centerOnInit
-         doubleClick={{ mode: "toggle", step: 2.5 }}
-       >
-         <TransformComponent 
-           wrapperStyle={{ maxWidth: "100%", maxHeight: "85vh", borderRadius: "0.75rem" }}
-           contentStyle={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-         >
-           <img
-            src={docParaVisualizar.url}
-            alt={docParaVisualizar.titulo}
-            className="w-auto h-auto max-h-[85vh] max-w-full object-contain pointer-events-auto filter contrast-125 rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)]"
-            draggable={false}
-           />
-         </TransformComponent>
-       </TransformWrapper>
-      )}
-     </div>
-
-    </div>
-   )}
+   {/* 🔮 Visualizador Universal de Documentos KLIN */}
+   <Lightbox
+     src={docParaVisualizar?.url}
+     alt={docParaVisualizar?.titulo || "Documento da KLIN"}
+     onClose={() => setDocParaVisualizar(null)}
+   />
 
   </div>
   </PullToRefresh>
  );
 }
-
-
-

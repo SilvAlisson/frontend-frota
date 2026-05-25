@@ -1,6 +1,7 @@
 import * as Dialog from '@radix-ui/react-dialog';
-import { X, ZoomIn, Camera, AlertTriangle, Loader2 } from 'lucide-react';
+import { X, ZoomIn, ZoomOut, RotateCcw, AlertTriangle, Loader2, Download, FileText, Camera } from 'lucide-react';
 import { useState, useCallback, useEffect } from 'react';
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { cn } from '../../lib/utils';
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -12,175 +13,158 @@ export interface LightboxProps {
   alt: string;
   /** Legenda exibida abaixo da imagem. Se omitida, herda o valor de `alt`. */
   caption?: string;
-  /** Callback disparado ao fechar o Lightbox (ESC, clique no backdrop ou no botão X). */
+  /** Callback disparado ao fechar o Lightbox. */
   onClose: () => void;
   /** Classe extra para o container interno da imagem. */
   imageClassName?: string;
 }
 
-// ─── Tipos de estado da imagem ────────────────────────────────────────────────
-
-type ImageStatus = 'loading' | 'loaded' | 'error';
+type MediaStatus = 'loading' | 'loaded' | 'error';
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
-/**
- * **Lightbox** — Visualizador de imagem fullscreen construído sobre o
- * `@radix-ui/react-dialog`, garantindo:
- * - **Focus trap** automático (foco preso dentro do modal enquanto aberto)
- * - **Fechamento via ESC** nativo do Radix
- * - **aria-labelledby / aria-describedby** para leitores de tela
- * - **Estados de loading e erro** da imagem tratados com feedback visual
- * - **Dark mode** nativo via tokens do Design System KLIN
- */
 export function Lightbox({ src, alt, caption, onClose, imageClassName }: LightboxProps) {
   const isOpen = !!src;
-  const [imageStatus, setImageStatus] = useState<ImageStatus>('loading');
-
-  // Reseta o estado da imagem sempre que uma nova URL é carregada
-  useEffect(() => {
-    if (src) setImageStatus('loading');
-  }, [src]);
-
-  const handleImageLoad = useCallback(() => setImageStatus('loaded'), []);
-  const handleImageError = useCallback(() => setImageStatus('error'), []);
-
+  const [status, setStatus] = useState<MediaStatus>('loading');
+  
+  const isPdf = src?.toLowerCase().includes('.pdf');
   const displayCaption = caption ?? alt;
+
+  useEffect(() => {
+    if (src) setStatus(isPdf ? 'loaded' : 'loading');
+  }, [src, isPdf]);
+
+  const handleDownload = useCallback(() => {
+    if (!src) return;
+    const link = document.createElement('a');
+    link.href = src;
+    link.download = alt || 'documento-klin';
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [src, alt]);
 
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-[9998] bg-black/90 backdrop-blur-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 duration-300" />
 
-        {/*
-         * Overlay escuro com blur.
-         * `animate-in fade-in` → micro-animação de 200ms (WCAG 2.3.3 / UX guideline)
-         */}
-        <Dialog.Overlay
-          className={cn(
-            'fixed inset-0 z-overlay bg-black/90 backdrop-blur-md',
-            'data-[state=open]:animate-in data-[state=closed]:animate-out',
-            'data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0',
-            'duration-200'
-          )}
-        />
-
-        {/*
-         * Conteúdo do Dialog — centralizado na viewport.
-         * `aria-labelledby` e `aria-describedby` são resolvidos pelo Radix
-         * automaticamente via `Dialog.Title` e `Dialog.Description`.
-         */}
-        <Dialog.Content
-          className={cn(
-            'fixed inset-0 z-max flex flex-col items-center justify-center p-4 sm:p-8',
-            'focus:outline-none',
-            'data-[state=open]:animate-in data-[state=closed]:animate-out',
-            'data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95',
-            'data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95',
-            'duration-200'
-          )}
-          // Impede que cliques na área da imagem fechem o dialog acidentalmente
-          onPointerDownOutside={onClose}
+        <Dialog.Content 
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-center focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 duration-300"
+          aria-describedby={undefined}
         >
-          {/* ── Título oculto visualmente mas lido por screen readers ── */}
-          <Dialog.Title className="sr-only">
-            Visualizador de Imagem: {alt}
-          </Dialog.Title>
+          <Dialog.Title className="sr-only">Visualizador: {alt}</Dialog.Title>
 
-          {/* ── Descrição oculta visualmente mas anunciada por screen readers ── */}
-          <Dialog.Description className="sr-only">
-            Pressione Escape ou clique fora da imagem para fechar o visualizador.
-          </Dialog.Description>
-
-          {/* ── Botão Fechar (topo direito) ── */}
-          <Dialog.Close
-            className={cn(
-              'absolute top-4 right-4 sm:top-6 sm:right-6 z-10',
-              'flex items-center justify-center h-10 w-10 rounded-full',
-              'bg-white/10 hover:bg-white/25 text-white',
-              'transition-all duration-150 shadow-lg',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent',
-              'cursor-pointer'
-            )}
-            aria-label="Fechar visualizador de imagem"
-          >
-            <X className="w-5 h-5" aria-hidden="true" />
-          </Dialog.Close>
-
-          {/* ── Área da imagem com estados de loading / loaded / error ── */}
-          <div
-            className="relative flex items-center justify-center w-full max-w-5xl"
-            // Bloqueia propagação para que o click na imagem não feche o dialog
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Estado: CARREGANDO */}
-            {imageStatus === 'loading' && (
-              <div
-                className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white/60"
-                aria-live="polite"
-                aria-label="Carregando imagem..."
-              >
-                <Loader2 className="w-10 h-10 animate-spin" aria-hidden="true" />
-                <span className="text-sm font-medium tracking-wide">Carregando imagem…</span>
+          {/* HUD Superior (Controlos e Título) */}
+          <div className="absolute top-0 left-0 w-full flex justify-between items-center p-4 sm:p-6 bg-gradient-to-b from-black/80 to-transparent z-50 pointer-events-none">
+            <div className="flex items-center gap-3 pointer-events-auto">
+              <div className="w-10 h-10 bg-info/20 flex items-center justify-center rounded-lg border border-info/30 text-info backdrop-blur-md">
+                <FileText className="w-5 h-5" />
               </div>
-            )}
-
-            {/* Estado: ERRO */}
-            {imageStatus === 'error' && (
-              <div
-                className="flex flex-col items-center justify-center gap-4 text-white/70 py-16 px-8 text-center"
-                role="alert"
-                aria-live="assertive"
-              >
-                <AlertTriangle className="w-12 h-12 text-warning" aria-hidden="true" />
-                <p className="text-base font-bold">Não foi possível carregar a imagem.</p>
-                <p className="text-sm opacity-70">A URL pode estar expirada ou inacessível.</p>
+              <div className="hidden sm:block">
+                <span className="text-white font-black uppercase text-sm tracking-widest block drop-shadow-md">{alt}</span>
+                <span className="text-info font-medium text-[10px] uppercase tracking-wider block">KLIN Media Viewer</span>
               </div>
-            )}
+            </div>
 
-            {/* A imagem é sempre renderizada; `sr-only` gerencia visibilidade até carregar */}
-            {src && (
-              <img
-                src={src}
-                alt={alt}
-                onLoad={handleImageLoad}
-                onError={handleImageError}
-                className={cn(
-                  'max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl',
-                  'ring-1 ring-white/10 transition-opacity duration-300',
-                  imageStatus === 'loaded' ? 'opacity-100' : 'opacity-0',
-                  imageStatus === 'loading' && 'pointer-events-none',
-                  imageClassName
-                )}
-              />
-            )}
+            <div className="flex gap-2 pointer-events-auto">
+              <button onClick={handleDownload} className="flex items-center justify-center w-11 h-11 rounded-xl bg-white/10 hover:bg-white/25 text-white backdrop-blur-md transition-all active:scale-95" aria-label="Baixar ficheiro">
+                <Download className="w-5 h-5" />
+              </button>
+              <Dialog.Close className="flex items-center justify-center w-11 h-11 rounded-xl bg-white/10 hover:bg-error/80 hover:text-white text-white/80 backdrop-blur-md transition-all active:scale-95" aria-label="Fechar">
+                <X className="w-6 h-6" />
+              </Dialog.Close>
+            </div>
           </div>
 
-          {/* ── Legenda ── */}
-          {imageStatus === 'loaded' && displayCaption && (
-            <p
-              className={cn(
-                'mt-5 text-white/60 text-sm font-bold uppercase tracking-widest',
-                'flex items-center gap-2',
-                'animate-in fade-in slide-in-from-bottom-2 duration-300'
-              )}
-              aria-label={`Legenda: ${displayCaption}`}
-            >
-              <Camera className="w-4 h-4 shrink-0" aria-hidden="true" />
-              {displayCaption}
-            </p>
-          )}
+          {/* Área Central - Media Viewer */}
+          <div className="w-full h-full flex flex-col items-center justify-center touch-none">
+            
+            {status === 'loading' && !isPdf && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-white/60">
+                <Loader2 className="w-10 h-10 animate-spin" />
+                <span className="text-sm font-bold tracking-widest uppercase">Processando Mídia...</span>
+              </div>
+            )}
 
-          {/* ── Dica de teclado ── */}
-          {imageStatus === 'loaded' && (
-            <div className="mt-3 flex items-center gap-2 opacity-0 hover:opacity-100 transition-opacity duration-300">
-              <ZoomIn className="w-3.5 h-3.5 text-white/30" aria-hidden="true" />
-              <span className="text-white/30 text-xs tracking-wider">
-                Pressione <kbd className="font-mono bg-white/10 px-1.5 py-0.5 rounded text-white/50">ESC</kbd> para fechar
-              </span>
-            </div>
-          )}
+            {status === 'error' && (
+              <div className="flex flex-col items-center justify-center gap-4 text-white/70">
+                <AlertTriangle className="w-12 h-12 text-warning" />
+                <p className="text-base font-bold uppercase tracking-widest">Falha ao carregar</p>
+              </div>
+            )}
+
+            {src && isPdf ? (
+              // PDF Viewer
+              <div className="w-full h-full pt-20 pb-6 px-4 sm:px-8 max-w-7xl mx-auto flex-1 pointer-events-auto">
+                <iframe
+                  src={`${src}#toolbar=0&navpanes=0&scrollbar=0`}
+                  className="w-full h-full rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.5)] border border-white/10 bg-white"
+                  title={alt}
+                />
+              </div>
+            ) : src ? (
+              // Image Viewer com Física Elástica
+              <TransformWrapper
+                initialScale={1}
+                minScale={0.8}
+                maxScale={5}
+                centerOnInit
+                limitToBounds={true}
+                smooth={true}
+                wheel={{ step: 0.1 }} /* ERRO 1 CORRIGIDO: smoothStep alterado para step */
+                panning={{ velocityDisabled: false, lockAxisY: false, lockAxisX: false }}
+                doubleClick={{ mode: "toggle", step: 3 }}
+              >
+                {({ zoomIn, zoomOut, resetTransform }) => (
+                  <>
+                    <TransformComponent
+                      wrapperStyle={{ width: "100%", height: "100%" }}
+                      contentStyle={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}
+                    >
+                      <img
+                        src={src}
+                        alt={alt}
+                        onLoad={() => setStatus('loaded')}
+                        onError={() => setStatus('error')}
+                        draggable={false}
+                        className={cn(
+                          "max-h-[85vh] max-w-[95vw] object-contain rounded-xl shadow-2xl transition-opacity duration-300 pointer-events-auto",
+                          status === 'loaded' ? 'opacity-100' : 'opacity-0',
+                          imageClassName
+                        )}
+                      />
+                    </TransformComponent>
+
+                    {/* Legenda Opcional Integrada */}
+                    {status === 'loaded' && displayCaption && (
+                      <div className="absolute bottom-24 pointer-events-none flex items-center gap-2 text-white/80 text-sm font-bold uppercase tracking-widest animate-in fade-in slide-in-from-bottom-2 duration-300 drop-shadow-md">
+                        <Camera className="w-4 h-4 shrink-0" />
+                        {displayCaption}
+                      </div>
+                    )}
+
+                    {/* HUD Inferior - Controlos Manuais */}
+                    <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 rounded-2xl bg-black/50 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto">
+                      <button onClick={() => zoomOut()} className="p-3 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors active:scale-95">
+                        <ZoomOut className="w-5 h-5" />
+                      </button>
+                      <div className="w-[1px] h-6 bg-white/10 mx-1" />
+                      <button onClick={() => resetTransform()} className="p-3 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors active:scale-95">
+                        <RotateCcw className="w-4 h-4" />
+                      </button>
+                      <div className="w-[1px] h-6 bg-white/10 mx-1" />
+                      <button onClick={() => zoomIn()} className="p-3 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors active:scale-95">
+                        <ZoomIn className="w-5 h-5" />
+                      </button>
+                    </div>
+                  </>
+                )}
+              </TransformWrapper>
+            ) : null /* Adicionado o ": null" no final do bloco do ternário */} 
+          </div>
         </Dialog.Content>
-
       </Dialog.Portal>
     </Dialog.Root>
   );
