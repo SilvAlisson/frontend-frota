@@ -2,7 +2,6 @@ import React, { useRef, useEffect } from 'react';
 import { Inbox } from 'lucide-react';
 import autoAnimate from '@formkit/auto-animate';
 import { TableStyles } from '../../styles/table';
-
 import { useVirtualizer } from '@tanstack/react-virtual';
 
 interface ListaResponsivaProps<T> {
@@ -31,13 +30,11 @@ export function ListaResponsiva<T extends { id?: string | number }>({
   virtualContainerHeight = "600px"
 }: ListaResponsivaProps<T>) {
 
-  // Refs para os contentores que vão receber os itens
   const desktopParentRef = useRef<HTMLTableSectionElement>(null);
   const mobileParentRef = useRef<HTMLDivElement>(null);
   const virtualDesktopContainerRef = useRef<HTMLDivElement>(null);
   const virtualMobileContainerRef = useRef<HTMLDivElement>(null);
 
-  // Ativamos o auto-animate APENAS se não for virtualizado
   useEffect(() => {
     if (!virtualized) {
       if (desktopParentRef.current) autoAnimate(desktopParentRef.current);
@@ -45,7 +42,6 @@ export function ListaResponsiva<T extends { id?: string | number }>({
     }
   }, [desktopParentRef, mobileParentRef, virtualized]);
 
-  // --- VIRTUALIZATION SETUP ---
   const desktopVirtualizer = useVirtualizer({
     count: itens.length,
     getScrollElement: () => virtualDesktopContainerRef.current,
@@ -78,18 +74,13 @@ export function ListaResponsiva<T extends { id?: string | number }>({
 
   return (
     <>
-      {/*
-       * DESKTOP (Tabela Premium — CSS Grid)
-       * Breakpoint: lg (1024px) para cobrir tablets landscape.
-       * A tabela tem min-w-[800px] + overflow-x-auto, então funciona bem
-       * mesmo em 1024px com scroll horizontal suave se necessário.
-       */}
+      {/* DESKTOP */}
       <div
         ref={virtualized ? virtualDesktopContainerRef : null}
-        className={`hidden lg:block animate-in fade-in slide-in-from-bottom-2 duration-500 ${TableStyles.wrapper} ${virtualized ? 'overflow-y-auto scrollbar-thin' : ''}`}
+        className={`hidden lg:block animate-in fade-in slide-in-from-bottom-2 duration-500 ${TableStyles.wrapper} ${virtualized ? 'overflow-y-auto custom-scrollbar' : ''}`}
         style={virtualized ? { height: virtualContainerHeight } : {}}
       >
-        <div className="overflow-x-auto min-h-full scrollbar-thin">
+        <div className="overflow-x-auto min-h-full custom-scrollbar">
           <table className="w-full text-sm text-left border-collapse block min-w-[800px]">
             <thead className={`w-full block ${virtualized ? "sticky top-0 z-10 bg-surface shadow-sm" : ""}`}>
               <tr className={`w-full grid ${desktopGridCols}`}>{desktopHeader}</tr>
@@ -144,13 +135,10 @@ export function ListaResponsiva<T extends { id?: string | number }>({
         </div>
       </div>
 
-      {/*
-       * MOBILE (Cards Flutuantes)
-       * Breakpoint: lg:hidden — aparece em telas até 1023px (mobile + tablets portrait).
-       */}
+      {/* MOBILE */}
       <div
         ref={virtualized ? virtualMobileContainerRef : mobileParentRef}
-        className={`lg:hidden space-y-3 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${virtualized ? 'overflow-y-auto scrollbar-thin relative' : ''}`}
+        className={`lg:hidden space-y-3 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 ${virtualized ? 'overflow-y-auto custom-scrollbar relative' : ''}`}
         style={virtualized ? { height: virtualContainerHeight } : {}}
       >
         {virtualized ? (
@@ -208,8 +196,6 @@ export function ListaResponsiva<T extends { id?: string | number }>({
                 {!customClass.includes('ghost-row') && (
                   <div className="absolute inset-s-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary/80 to-primary/40 rounded-s-[1.25rem] opacity-70" />
                 )}
-
-                {/* min-w-0 garante que textos longos truncam dentro do card */}
                 <div className="ps-2 min-w-0">
                   {renderMobile(item, idx)}
                 </div>

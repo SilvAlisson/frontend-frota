@@ -173,7 +173,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
 
   const exportPromise = new Promise((resolve, reject) => {
    try {
-    // MAPA DE DADOS OTIMIZADO PARA O BM (Sem colunas inúteis e Valor como Número Real)
+    // ✨ MAPA DE DADOS OTIMIZADO PARA O BM (Sem colunas inúteis e Valor como Número Real)
     const dadosFormatados = historicoFiltrado.map(ab => {
      const itensSafe = ab.itens || [];
      const itensFormatados = itensSafe.map(item =>
@@ -251,7 +251,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
    {/* FILTROS MOVIDOS PARA FORA DO HEADER */}
    <div className="flex flex-col gap-3 w-full max-w-full overflow-hidden bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
         
-        {/*  Filtros de Seleção (Veículo e Fornecedor) */}
+        {/* LINHA 1: Filtros de Seleção (Veículo e Fornecedor) */}
         <div className="flex flex-col sm:flex-row gap-3 items-end">
           <div className="w-full sm:w-56">
             <Select 
@@ -275,7 +275,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
           </div>
         </div>
 
-        {/*  Filtros de Data e Botões de Ação */}
+        {/* LINHA 2: Filtros de Data e Botões de Ação */}
         <div className="flex flex-col sm:flex-row gap-3 items-end sm:justify-between xl:justify-start">
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             <div className="w-full sm:w-40">
@@ -472,7 +472,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
         >
          <div className="flex justify-between items-start">
           <div className="flex gap-4">
-           {/*  HELPER DE DATA NO MOBILE */}
+           {/* ✨ HELPER DE DATA NO MOBILE */}
            <div className="bg-surface shadow-sm text-text-main p-2 rounded-xl border border-border/80 flex flex-col items-center justify-center w-14 h-14 shrink-0">
             <span className="text-lg font-black leading-none">{DateHelper.getDia(ab.dataHora)}</span>
             <span className="text-[10px] uppercase font-bold tracking-widest text-text-muted mt-0.5">
