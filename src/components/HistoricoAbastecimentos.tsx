@@ -27,7 +27,6 @@ import { MobileCardWithActions } from './ui/MobileCardWithActions';
 import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { DatePicker } from './ui/DatePicker';
-import { Lightbox } from './ui/Lightbox';
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/Tooltip';
 import { PullToRefresh } from './ui/PullToRefresh';
 
@@ -652,11 +651,6 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
       )}
      </div>
 
-     {/* Dica Floating Bar */}
-     <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/60 border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest px-6 py-3 rounded-full flex gap-3 backdrop-blur shadow-2xl items-center pointer-events-none">
-      <span className="w-2 h-2 rounded-full bg-info animate-pulse"></span>
-      Use a pinça na tela ou duplo-clique para Zoom
-     </div>
     </div>
    )}
 
