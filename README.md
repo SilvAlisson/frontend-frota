@@ -1,73 +1,67 @@
-# React + TypeScript + Vite
+# 🚚 Frota KLIN - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Bem-vindo ao repositório Frontend do sistema **Frota KLIN**. Esta aplicação foi desenvolvida para oferecer uma gestão completa e eficiente da frota de veículos, motoristas, abastecimentos e manutenções da empresa.
 
-Currently, two official plugins are available:
+## 🚀 Tecnologias Utilizadas
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Este projeto foi construído com as melhores e mais modernas tecnologias do ecossistema web:
 
-## React Compiler
+- **[React 18](https://react.dev/)** - Biblioteca principal para construção da interface.
+- **[Vite](https://vitejs.dev/)** - Bundler e ambiente de desenvolvimento ultrarrápido.
+- **[TypeScript](https://www.typescriptlang.org/)** - Tipagem estática para maior segurança e escalabilidade do código.
+- **[Tailwind CSS](https://tailwindcss.com/)** - Framework utilitário para estilização rápida e responsiva.
+- **[React Router DOM](https://reactrouter.com/)** - Roteamento da aplicação (Single Page Application).
+- **[TanStack Query (React Query)](https://tanstack.com/query/latest)** - Gerenciamento de estado de chamadas à API, requisições e cache.
+- **[Axios](https://axios-http.com/)** - Cliente HTTP para comunicação com o backend.
+- **[Lucide React](https://lucide.dev/)** - Biblioteca de ícones minimalistas e consistentes.
+- **[React To Print](https://www.npmjs.com/package/react-to-print)** - Motor para geração de impressões perfeitas (usado nos Crachás Funcionais).
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🌟 Funcionalidades Principais
 
-## Expanding the ESLint configuration
+- 🧑‍✈️ **Gestão de Integrantes (Motoristas/Operadores)**: Cadastro completo, listagem e controle de acesso via token mágico.
+- 🚗 **Gestão de Veículos**: Controle de frota por placas, modelo, status e histórico atrelado.
+- ⛽ **Controle de Abastecimentos**: Lançamento de notas/cupons fiscais, registro de litragem, hodômetro e envio de comprovantes fotográficos.
+- 🔧 **Histórico de Manutenções**: Acompanhamento de serviços corretivos e preventivos realizados na frota, com anexo de notas de serviço.
+- 🪪 **Identidade Funcional (Crachá)**: Geração automatizada de crachás virtuais com QR Code dinâmico e suporte à impressão nativa.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🛠️ Como Executar o Projeto Localmente
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+### Pré-requisitos
+- Node.js (versão 18 ou superior)
+- NPM, Yarn ou PNPM
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Passos de Instalação
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+1. **Clone o repositório:**
+   ```bash
+   git clone https://github.com/SilvAlisson/frontend-frota.git
+   cd frontend-frota-main
+   ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+2. **Instale as dependências:**
+   ```bash
+   npm install
+   ```
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+3. **Configure as Variáveis de Ambiente:**
+   Crie um arquivo `.env` na raiz do projeto (ou modifique o `.env.example`) apontando para o seu Backend local ou de produção:
+   ```env
+   VITE_API_URL=http://localhost:3001/api
+   ```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+4. **Inicie o servidor de desenvolvimento:**
+   ```bash
+   npm run dev
+   ```
+
+5. O projeto estará disponível em: `http://localhost:5173`
+
+## 📦 Scripts Disponíveis no `package.json`
+
+- `npm run dev`: Inicia o servidor local com Hot-Module-Replacement (HMR).
+- `npm run build`: Realiza a checagem de tipos (TypeScript) e compila a aplicação minificada para produção na pasta `dist/`.
+- `npm run lint`: Executa a verificação de regras de código com o ESLint.
+- `npm run preview`: Cria um servidor web simples servindo a build de produção para testes locais finais.
+
+---
+*Projeto desenvolvido para uso e controle interno da frota veicular.*

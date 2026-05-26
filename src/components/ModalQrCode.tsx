@@ -9,6 +9,7 @@ import { Printer, RefreshCw, Copy, QrCode, Download } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { User } from '../types';
 import { ConfirmModal } from './ui/ConfirmModal';
+import { useReactToPrint } from 'react-to-print';
 
 interface ModalQrCodeProps {
   user: User & { loginToken?: string };
@@ -63,80 +64,24 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
     toast.success("Link copiado!");
   };
 
-  const handlePrint = () => {
-  const cardElement = cardRef.current;
-  if (!cardElement) return;
-
-  const printWindow = window.open('', '', 'width=900,height=900');
-  if (!printWindow) return;
-
-  // Copia os estilos da página original
-  const styles = Array.from(document.head.querySelectorAll('style, link[rel="stylesheet"]'))
-    .map(style => style.outerHTML)
-    .join('\n');
-
-  // Clona o cartão inteiro (preserva background-image e dimensões)
-  const clone = cardElement.cloneNode(true) as HTMLElement;
-
-  // Remove sombra que pode atrapalhar e adiciona estilos de impressão
-  clone.style.boxShadow = 'none';
-  clone.style.borderRadius = '5.5%'; // mantém o arredondamento original
-  clone.style.setProperty('-webkit-print-color-adjust', 'exact', 'important');
-  clone.style.setProperty('print-color-adjust', 'exact', 'important');
-
-  // Opcional: escala para caber bem na página
-  clone.style.transform = 'scale(0.95)';
-  clone.style.transformOrigin = 'top center';
-
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-      <head>
-        <base href="${window.location.origin}">
-        <title>Crachá - ${user.nome}</title>
-        ${styles}
-        <style>
-          @page { size: auto; margin: 0; }
-          body {
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: white;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-          }
-          /* Garante que o clone fique centralizado */
-          body > * {
-            margin: auto;
-          }
-        </style>
-      </head>
-      <body></body>
-    </html>
-  `);
-
-  // Anexa o clone ao body da nova janela
-  printWindow.document.body.appendChild(clone);
-  printWindow.document.close();
-
-  // Pequeno delay para garantir o carregamento dos estilos e da imagem
-  printWindow.onload = () => {
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 500);
-  };
-};
+  const handlePrint = useReactToPrint({
+    contentRef: cardRef,
+    documentTitle: `Crachá - ${user.nome}`,
+    pageStyle: `
+      @page { size: auto; margin: 0; }
+      body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: white; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      .print-cracha { width: 380px !important; height: auto !important; box-shadow: none !important; margin: auto !important; }
+    `
+  });
 
   return (
     <Modal isOpen={true} onClose={onClose} title="Identidade Funcional" className="max-w-[380px]">
       <div className="flex flex-col items-center gap-6">
         <div
           ref={cardRef}
-          className="w-full relative select-none shadow-2xl"
+          className="w-full relative select-none shadow-2xl print-cracha"
           style={{
+            containerType: 'inline-size',
             aspectRatio: '427 / 585',
             backgroundImage: 'url(/cracha-bg.png)',
             backgroundSize: '100% 100%',
@@ -148,8 +93,8 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           <div
             className="absolute overflow-hidden rounded-full"
             style={{
-              top: '27.1%',
-              left: '49.3%',
+              top: '26.7%',
+              left: '49%',
               transform: 'translateX(-50%)',
               width: '37.5%',
               aspectRatio: '1 / 1',
@@ -165,10 +110,10 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           <p
             className="absolute text-center text-white font-black uppercase leading-none truncate"
             style={{
-              top: '55.5%',
+              top: '57%',
               left: '5%',
               right: '5%',
-              fontSize: 'clamp(18px, 8.5vw, 34px)',
+              fontSize: 'clamp(18px, 8.5cqi, 34px)',
               letterSpacing: '0.05em',
               textShadow: '0 2px 12px rgba(0,0,0,0.5)',
             }}
@@ -179,10 +124,10 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           <p
             className="absolute text-center font-bold uppercase leading-none truncate"
             style={{
-              top: '62.5%',
+              top: '64%',
               left: '5%',
               right: '5%',
-              fontSize: 'clamp(7px, 3vw, 13px)',
+              fontSize: 'clamp(7px, 3cqi, 13px)',
               letterSpacing: '0.22em',
               color: '#4ade80',
             }}
@@ -193,11 +138,11 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           <p
             className="absolute text-center text-white font-black uppercase"
             style={{
-              top: '69.6%',
+              top: '71.2%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: '48%',
-              fontSize: 'clamp(7px, 2.8vw, 11.5px)',
+              width: '80%',
+              fontSize: 'clamp(7px, 2.8cqi, 11.5px)',
               letterSpacing: '0.18em',
               whiteSpace: 'nowrap',
             }}
@@ -208,10 +153,10 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           <div
             className="absolute flex items-center justify-center"
             style={{
-              top: '73.7%',
+              top: '84%',
               left: '50%',
-              transform: 'translateX(-50%)',
-              width: '24.5%',
+              transform: 'translate(-50%, -50%)',
+              width: '22%',
               aspectRatio: '1 / 1',
             }}
           >
