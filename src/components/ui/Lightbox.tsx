@@ -48,7 +48,7 @@ export function Lightbox({ src, alt, caption, onClose, imageClassName }: Lightbo
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-[9998] bg-black/90 backdrop-blur-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 duration-300" />
+        <Dialog.Overlay className="fixed inset-0 z-[9998] bg-black backdrop-blur-xl data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 duration-300" />
 
         <Dialog.Content 
           className="fixed inset-0 z-[9999] flex flex-col items-center justify-center focus:outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 duration-300"
@@ -130,7 +130,7 @@ export function Lightbox({ src, alt, caption, onClose, imageClassName }: Lightbo
                         onError={() => setStatus('error')}
                         draggable={false}
                         className={cn(
-                          "max-h-[85vh] max-w-[95vw] object-contain rounded-xl shadow-2xl transition-opacity duration-300 pointer-events-auto",
+                          "w-screen h-[100dvh] object-contain transition-opacity duration-300 pointer-events-auto",
                           status === 'loaded' ? 'opacity-100' : 'opacity-0',
                           imageClassName
                         )}
