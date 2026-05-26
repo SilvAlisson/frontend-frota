@@ -235,6 +235,7 @@ export function FormRegistrarAbastecimento({
           jornadaId={payload.veiculoId}
           apiEndpoint="/abastecimentos"
           apiMethod="POST"
+          nested={true}
           onClose={() => setModalConfirmacao(false)}
           onSuccess={() => {
             toast.success("Abastecimento e Nota Fiscal Registrados com sucesso!");
