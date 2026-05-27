@@ -382,40 +382,41 @@ function CardAlerta({ alerta, onClick }: { alerta: Alerta, onClick: () => void }
  const IconComponent = config.icon;
 
  return (
-  <button 
-   type="button"
-   role="button"
+  <Button 
+   variant="ghost"
    onClick={onClick}
    className={`
-   text-left w-full
-   group relative overflow-hidden bg-surface p-5 rounded-2xl shadow-sm border border-border/60 
-   hover:shadow-md transition-all duration-300 flex items-start gap-4 border-l-[4px] hover:border-l-[8px] cursor-pointer
+   text-left w-full !p-0 h-auto
+   group relative overflow-hidden bg-surface rounded-2xl shadow-sm border border-border/60 
+   hover:shadow-md transition-all duration-300 flex items-start gap-0 cursor-pointer
    ${config.border}
   `}>
-   {/* Ícone (Glassmorphism) */}
-   <div className={`p-3 rounded-xl flex-shrink-0 shadow-inner border ${config.iconBg}`}>
-    <IconComponent className="w-5 h-5" />
-   </div>
-
-   {/* Conteúdo */}
-   <div className="flex-1 min-w-0 flex flex-col justify-center py-0.5">
-    <div className="flex flex-wrap gap-2 items-center mb-2">
-     <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${config.textTitle}`}>
-      {config.category}
-     </span>
-     <span className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border shadow-sm ${config.badgeBg}`}>
-      {config.badgeLabel}
-     </span>
+   <div className={`p-5 flex items-start gap-4 w-full h-full border-l-[4px] group-hover:border-l-[8px] transition-all ${config.border}`}>
+    {/* Ícone (Glassmorphism) */}
+    <div className={`p-3 rounded-xl flex-shrink-0 shadow-inner border ${config.iconBg}`}>
+     <IconComponent className="w-5 h-5" />
     </div>
-    <p className="text-text-main text-sm sm:text-base font-bold leading-snug line-clamp-2 tracking-tight">
-     {alerta.mensagem}
-    </p>
-   </div>
 
-   {/* Seta Hover, indica que a atenção está focada no item */}
-   <div className="self-center text-border group-hover:text-text-muted transition-colors opacity-0 lg:group-hover:opacity-100">
-    <ChevronRight className="w-5 h-5" />
+    {/* Conteúdo */}
+    <div className="flex-1 min-w-0 flex flex-col justify-center py-0.5">
+     <div className="flex flex-wrap gap-2 items-center mb-2">
+      <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${config.textTitle}`}>
+       {config.category}
+      </span>
+      <span className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border shadow-sm ${config.badgeBg}`}>
+       {config.badgeLabel}
+      </span>
+     </div>
+     <p className="text-text-main text-sm sm:text-base font-bold leading-snug line-clamp-2 tracking-tight">
+      {alerta.mensagem}
+     </p>
+    </div>
+
+    {/* Seta Hover, indica que a atenção está focada no item */}
+    <div className="self-center text-border group-hover:text-text-muted transition-colors opacity-0 lg:group-hover:opacity-100">
+     <ChevronRight className="w-5 h-5" />
+    </div>
    </div>
-  </button>
+  </Button>
  );
 }

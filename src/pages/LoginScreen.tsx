@@ -73,13 +73,15 @@ export function LoginScreen() {
     <div className="min-h-screen flex bg-background font-sans selection:bg-primary/20 selection:text-primary transition-colors duration-500 overflow-hidden">
       
       {/* --- BOTÃO DE TEMA FLUTUANTE (TOP RIGHT) --- */}
-      <button 
+      <Button 
+        variant="glass"
+        size="icon"
         onClick={toggleTheme}
-        className="fixed top-6 right-6 z-50 p-3 rounded-2xl glass-premium text-text-main hover:text-primary active:scale-95 btn-tactile"
+        className="fixed top-6 right-6 z-50 rounded-2xl text-text-main hover:text-primary"
         title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
       >
         {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-      </button>
+      </Button>
 
       {/* --- LADO ESQUERDO: IMAGEM FROTA (LIMPA E CINEMATOGRÁFICA) --- */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-slate-950 overflow-hidden">
@@ -134,29 +136,31 @@ export function LoginScreen() {
 
           {/* Abas de Navegação (Segmented Control com Acessibilidade) */}
           <div role="tablist" aria-label="Modo de autenticação" className="grid grid-cols-2 gap-1.5 p-1.5 bg-surface-hover/50 border border-border/60 rounded-2xl">
-            <button
+            <Button
+              variant={mode === 'CREDENTIALS' ? 'primary' : 'ghost'}
               role="tab"
               aria-selected={mode === 'CREDENTIALS'}
               onClick={() => setMode('CREDENTIALS')}
-              className={`py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${mode === 'CREDENTIALS'
-                ? 'bg-surface text-primary shadow-sm border border-border/40'
-                : 'text-text-secondary hover:text-text-main hover:bg-surface/50'
+              className={`py-2.5 h-auto min-h-[40px] text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 ${mode === 'CREDENTIALS'
+                ? 'shadow-sm border border-border/40'
+                : 'text-text-secondary hover:text-text-main'
                 }`}
             >
               Credenciais
-            </button>
-            <button
+            </Button>
+            <Button
+              variant={mode === 'QR' ? 'primary' : 'ghost'}
               role="tab"
               aria-selected={mode === 'QR'}
               onClick={() => setMode('QR')}
-              className={`py-2.5 text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${mode === 'QR'
-                ? 'bg-surface text-primary shadow-sm border border-border/40'
-                : 'text-text-secondary hover:text-text-main hover:bg-surface/50'
+              className={`py-2.5 h-auto min-h-[40px] text-xs font-black uppercase tracking-widest rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${mode === 'QR'
+                ? 'shadow-sm border border-border/40'
+                : 'text-text-secondary hover:text-text-main'
                 }`}
             >
               <QrCode className="w-4 h-4" />
               Token / QR
-            </button>
+            </Button>
           </div>
 
           {/* FORMULÁRIO 1: E-MAIL E SENHA */}
@@ -203,13 +207,15 @@ export function LoginScreen() {
                   }}
                 />
                 <div className="flex justify-end">
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     type="button"
                     onClick={() => navigate('/esqueceu-senha')}
-                    className="text-[10px] font-black uppercase tracking-widest text-text-muted hover:text-primary transition-colors italic"
+                    className="text-[10px] h-auto p-0 hover:bg-transparent font-black uppercase tracking-widest text-text-muted hover:text-primary transition-colors italic"
                   >
                     Esqueceu sua senha?
-                  </button>
+                  </Button>
                 </div>
               </div>
 

@@ -76,12 +76,13 @@ export function EsqueceuSenha() {
         )}
 
         <div className="text-center mt-2 border-t border-border/40 pt-6">
-          <button 
+          <Button
+            variant="ghost" 
             onClick={() => navigate('/login')}
-            className="text-[10px] font-black uppercase tracking-[0.2em] text-text-muted hover:text-primary transition-colors flex items-center justify-center gap-2 mx-auto italic"
+            className="text-[10px] h-auto p-0 hover:bg-transparent font-black uppercase tracking-[0.2em] text-text-muted hover:text-primary transition-colors flex items-center justify-center gap-2 mx-auto italic"
           >
             <ArrowLeft className="w-4 h-4" /> Voltar para o Login
-          </button>
+          </Button>
         </div>
 
       </div>

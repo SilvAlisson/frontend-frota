@@ -362,27 +362,31 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
           {/* Botões de Foto */}
           <td className={`${TableStyles.td} text-center`}>
            <div className="flex justify-center gap-2">
-            <button 
+            <Button 
+             variant="ghost"
+             size="icon"
              onClick={() => imgInicio && setViewingPhoto(imgInicio)}
              disabled={!imgInicio}
-             className={`p-2 rounded-xl border transition-all ${imgInicio 
-               ? 'bg-info/10 text-info border-info/20 hover:bg-info/20 hover:scale-105 cursor-pointer shadow-sm' 
-               : 'bg-surface-hover text-text-muted/40 border-border cursor-not-allowed'}`}
+             className={`w-9 h-9 min-w-[36px] min-h-[36px] transition-all ${imgInicio 
+               ? 'bg-info/10 text-info border border-info/20 hover:bg-info/20 hover:scale-105 cursor-pointer shadow-sm' 
+               : 'bg-surface-hover text-text-muted/40 border border-border cursor-not-allowed'}`}
              title={imgInicio ? "Ver Foto Hodômetro Inicial" : "Foto Indisponível"}
             >
              {imgInicio ? <Camera className="w-4 h-4"/> : <ImageOff className="w-4 h-4"/>}
-            </button>
+            </Button>
             
-            <button 
+            <Button 
+             variant="ghost"
+             size="icon"
              onClick={() => imgFim && setViewingPhoto(imgFim)}
              disabled={!imgFim}
-             className={`p-2 rounded-xl border transition-all ${imgFim 
-               ? 'bg-success/10 text-success border-success/20 hover:bg-success/20 hover:scale-105 cursor-pointer shadow-sm' 
-               : 'bg-surface-hover text-text-muted/40 border-border cursor-not-allowed'}`}
+             className={`w-9 h-9 min-w-[36px] min-h-[36px] transition-all ${imgFim 
+               ? 'bg-success/10 text-success border border-success/20 hover:bg-success/20 hover:scale-105 cursor-pointer shadow-sm' 
+               : 'bg-surface-hover text-text-muted/40 border border-border cursor-not-allowed'}`}
              title={imgFim ? "Ver Foto Hodômetro Final" : "Foto Indisponível"}
             >
              {imgFim ? <Camera className="w-4 h-4"/> : <ImageOff className="w-4 h-4"/>}
-            </button>
+            </Button>
            </div>
           </td>
 
@@ -535,13 +539,15 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
      onClick={() => setViewingPhoto(null)}
     >
      <div className="relative w-full h-full flex flex-col items-center justify-center">
-      <button 
-       onClick={() => setViewingPhoto(null)}
-       className="absolute top-4 right-4 sm:top-8 sm:right-8 text-white hover:text-error bg-white/10 hover:bg-white/20 rounded-full p-2.5 transition-all z-50 shadow-lg cursor-pointer"
-       title="Fechar Imagem"
-      >
-       <X className="w-6 h-6 sm:w-8 sm:h-8" />
-      </button>
+      <Button 
+         variant="ghost"
+         size="icon"
+         onClick={() => setViewingPhoto(null)}
+         className="absolute top-4 right-4 sm:top-8 sm:right-8 w-12 h-12 text-white hover:text-error bg-white/10 hover:bg-white/20 rounded-full transition-all z-50 shadow-lg cursor-pointer"
+         title="Fechar Imagem"
+        >
+         <X className="w-6 h-6 sm:w-8 sm:h-8" />
+      </Button>
       {/* Imagem/PDF Viewer */}
       <div className="w-full h-full flex items-center justify-center rounded-3xl mt-16 sm:mt-0 flex-1 overflow-hidden">
        {viewingPhoto.toLowerCase().includes('.pdf') ? (

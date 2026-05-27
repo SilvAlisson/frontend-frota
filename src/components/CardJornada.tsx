@@ -186,9 +186,9 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
               <div className="flex items-center gap-2 pt-1 border-t border-border/50">
                 <span className="font-mono font-black text-text-main text-sm">{jornada.kmInicio.toLocaleString()} km</span>
                 {jornada.fotoInicioUrl && (
-                  <button onClick={() => setImageModal(jornada.fotoInicioUrl!)} className="text-info hover:text-info/80 transition-colors ml-auto" title="Ver foto do painel">
+                  <Button variant="ghost" size="icon" onClick={() => setImageModal(jornada.fotoInicioUrl!)} className="w-8 h-8 text-info hover:text-info hover:bg-info/10 transition-colors ml-auto" title="Ver foto do painel">
                     <Camera className="w-4 h-4" />
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -205,9 +205,9 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
                   </p>
                   <div className="flex items-center justify-end gap-2 pt-1 border-t border-border/50">
                     {jornada.fotoFimUrl && (
-                      <button onClick={() => setImageModal(jornada.fotoFimUrl!)} className="text-success hover:text-success/80 transition-colors mr-auto" title="Ver foto do painel final">
+                      <Button variant="ghost" size="icon" onClick={() => setImageModal(jornada.fotoFimUrl!)} className="w-8 h-8 text-success hover:text-success hover:bg-success/10 transition-colors mr-auto" title="Ver foto do painel final">
                         <Camera className="w-4 h-4" />
-                      </button>
+                      </Button>
                     )}
                     <span className="font-mono font-black text-text-main text-sm">{jornada.kmFim?.toLocaleString()} km</span>
                   </div>
@@ -218,9 +218,9 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
                     Em Rota Atual
                   </span>
                   {mode === 'GESTOR' && (
-                    <button onClick={() => setForceFinishModal(true)} className="text-[10px] text-error font-bold hover:underline underline-offset-2 flex items-center gap-1">
+                    <Button variant="ghost" size="sm" onClick={() => setForceFinishModal(true)} className="h-6 px-2 text-[10px] text-error hover:text-error hover:bg-error/10 font-bold hover:underline underline-offset-2 flex items-center gap-1">
                       <AlertCircle className="w-3 h-3" /> Encerrar Manual
-                    </button>
+                    </Button>
                   )}
                 </div>
               )}
@@ -243,9 +243,9 @@ export function CardJornada({ jornada, mode, onUpdate }: CardJornadaProps) {
       {imageModal && (
         <div className="fixed inset-0 z-max flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-8 animate-in fade-in duration-300" onClick={() => setImageModal(null)}>
           <div className="relative w-full h-full flex flex-col items-center justify-center">
-            <button className="absolute top-4 right-4 sm:top-8 sm:right-8 text-white hover:text-error bg-white/10 hover:bg-white/20 rounded-full p-2.5 transition-all z-50 shadow-lg cursor-pointer" onClick={() => setImageModal(null)}>
+            <Button variant="ghost" size="icon" className="absolute top-4 right-4 sm:top-8 sm:right-8 w-12 h-12 text-white hover:text-error bg-white/10 hover:bg-white/20 rounded-full transition-all z-50 shadow-lg cursor-pointer" onClick={() => setImageModal(null)}>
               <X className="w-6 h-6 sm:w-8 sm:h-8" />
-            </button>
+            </Button>
             <img src={imageModal} alt="Comprovante de Odómetro" className="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl animate-in zoom-in-95 duration-500 ring-1 ring-white/10" onClick={(e) => e.stopPropagation()} />
             <p className="text-white/60 mt-6 text-sm font-bold uppercase tracking-widest flex items-center gap-2">
               <ImageIcon className="w-4 h-4"/> Registro do Painel

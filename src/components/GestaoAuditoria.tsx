@@ -261,13 +261,15 @@ export function GestaoAuditoria() {
                             <p className="text-xs text-text-muted font-mono whitespace-pre-wrap break-words leading-relaxed ml-2 max-h-40 overflow-y-auto scrollbar-thin">
                               <span className="text-primary/70 select-none">{'> '}</span>{log.detalhes}
                             </p>
-                            <button 
+                            <Button 
+                               variant="ghost"
+                               size="icon"
                                onClick={() => copyToClipboard(log.detalhes || '')}
-                               className="absolute top-2 right-2 p-1.5 bg-surface hover:bg-surface-hover text-text-muted rounded-lg opacity-0 group-hover/terminal:opacity-100 transition-opacity border border-border/30 shadow-sm"
+                               className="absolute top-2 right-2 w-7 h-7 min-w-[28px] min-h-[28px] opacity-0 group-hover/terminal:opacity-100 transition-opacity border border-border/30 shadow-sm"
                                title="Copiar Log"
                             >
                                <Terminal className="w-3.5 h-3.5" />
-                            </button>
+                            </Button>
                          </div>
                        )}
 

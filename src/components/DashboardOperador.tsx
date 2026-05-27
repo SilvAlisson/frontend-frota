@@ -9,9 +9,9 @@ import { GestaoDocumentos } from './GestaoDocumentos';
 import { Modal } from './ui/Modal';
 import { ModalQrCode } from './ModalQrCode';
 
-// Empty State
 import { EmptyState } from './ui/EmptyState';
 import { Avatar } from './ui/Avatar';
+import { Button } from './ui/Button';
 
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -53,9 +53,10 @@ function BottomNavItem({ icon: Icon, label, onClick, accent = 'yellow', badge = 
  };
 
  return (
-  <button
+  <Button
+   variant="ghost"
    onClick={handleClick}
-   className="group relative flex flex-col items-center justify-center gap-1 flex-1 h-full touch-target transition-all active:scale-95 focus-ring rounded-xl"
+   className="group relative flex flex-col items-center justify-center gap-1 flex-1 h-full touch-target transition-all active:scale-95 hover:bg-transparent !p-0 focus-ring rounded-xl"
    aria-label={label}
   >
    <div className={cn(
@@ -66,10 +67,10 @@ function BottomNavItem({ icon: Icon, label, onClick, accent = 'yellow', badge = 
    </div>
    <span className="text-[9px] font-black uppercase tracking-widest text-text-muted leading-none">{label}</span>
 
-   {badge && (
-    <span className="absolute top-1 right-1/4 w-2 h-2 rounded-full bg-error animate-pulse border-2 border-background" />
-   )}
-  </button>
+    {badge && (
+     <span className="absolute top-1 right-1/4 w-2 h-2 rounded-full bg-error animate-pulse border-2 border-background" />
+    )}
+  </Button>
  );
 }
 
@@ -122,7 +123,9 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
     <div className="max-w-2xl mx-auto flex justify-between items-center">
 
      <div className="flex items-center gap-3">
-      <button
+      <Button
+       variant="ghost"
+       size="icon"
        onClick={() => {
         vibrateMedium();
         setModalQrCodeOpen(true);
@@ -131,7 +134,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
        aria-label="Abrir QrCode do Perfil"
       >
        <Avatar url={user.fotoUrl} nome={user.nome} className="w-10 h-10 border-none shadow-none" />
-      </button>
+      </Button>
       <div className="leading-tight">
        <h1 className="font-header text-base sm:text-lg font-black text-text-main tracking-tight">
         Olá, <span className="text-primary">{user.nome.split(' ')[0]}</span>
@@ -148,16 +151,20 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
 
      <div className="flex items-center gap-2">
       {/* ✨ BOTÃO REFRESH MANUAL */}
-      <button
+      <Button
+       variant="ghost"
+       size="icon"
        onClick={handleManualRefresh}
        disabled={isRefreshing}
        className="w-11 h-11 touch-target rounded-xl bg-surface/50 border border-border/40 hover:bg-surface flex items-center justify-center text-text-muted transition-all active:scale-90 focus-ring"
        aria-label="Atualizar Dados"
       >
        <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-primary' : ''}`} />
-      </button>
+      </Button>
 
-      <button
+      <Button
+       variant="ghost"
+       size="icon"
        onClick={() => {
         vibrateLight();
         toggleTheme();
@@ -166,9 +173,11 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
        aria-label="Alterar Tema"
       >
        {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
-      </button>
+      </Button>
 
-      <button
+      <Button
+       variant="ghost"
+       size="icon"
        onClick={() => {
         vibrateMedium();
         logout();
@@ -177,7 +186,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
        aria-label="Sair"
       >
        <LogOut className="w-4 h-4" />
-      </button>
+      </Button>
      </div>
 
     </div>
@@ -247,14 +256,15 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
       { icon: FileText, label: 'Licenças', sub: 'Documentos legais KLIN e ASTs', accent: 'text-info bg-info/10', border: 'hover:border-info/30', onClick: () => setModalDocumentosOpen(true) },
       { icon: History, label: 'Histórico', sub: 'Registro pessoal de turnos anteriores', accent: 'text-purple-600 dark:text-purple-400 bg-purple-500/10', border: 'hover:border-purple-500/30', onClick: () => setModalHistoricoOpen(true) },
      ].map(({ icon: Icon, label, sub, accent, border, onClick }) => (
-      <button
+      <Button
+       variant="ghost"
        key={label}
        onClick={() => {
         vibrateLight();
         onClick();
        }}
        className={cn(
-        "flex items-center gap-4 glass-premium border border-border/20 p-5 rounded-[2rem] shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left group focus-ring touch-target",
+        "flex h-auto items-center gap-4 glass-premium border border-border/20 p-5 rounded-[2rem] shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left group focus-ring touch-target !justify-start !whitespace-normal",
         border
        )}
       >
@@ -265,7 +275,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
         <span className="block font-black text-text-main tracking-tight mb-0.5 truncate">{label}</span>
         <span className="block text-xs font-bold text-text-secondary opacity-80 truncate">{sub}</span>
        </div>
-      </button>
+      </Button>
      ))}
     </div>
 

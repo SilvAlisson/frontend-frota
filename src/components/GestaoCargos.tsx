@@ -139,14 +139,16 @@ export function GestaoCargos() {
                     </div>
 
                     <div className="flex gap-1 bg-surface-hover/50 rounded-xl p-1 border border-border/40 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-4">
-                        <button
-                          className="p-1.5 text-text-muted hover:text-error hover:bg-error/10 rounded-lg transition-all shadow-sm"
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-8 h-8 min-w-[32px] min-h-[32px] text-text-muted hover:text-error hover:bg-error/10 rounded-lg transition-all shadow-sm"
                           onClick={() => setCargoParaExcluir(cargo)}
                           disabled={deletingId === cargo.id}
                           title="Remover Cargo"
                         >
                           {deletingId === cargo.id ? <Loader2 className="w-4 h-4 animate-spin text-error" /> : <Trash2 className="w-4 h-4" />}
-                        </button>
+                        </Button>
                     </div>
                   </div>
 
