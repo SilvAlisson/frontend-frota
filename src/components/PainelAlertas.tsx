@@ -65,10 +65,8 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
    const isPrevisao = alerta.mensagem.toUpperCase().includes('PREVISÃO');
    
    // Correção do redirecionamento de PREVISÃO e VENCIDO
-   if (isPrevisao) {
+   if (isPrevisao || alerta.nivel === 'VENCIDO') {
     navigate('/admin/planos');
-   } else if (alerta.nivel === 'VENCIDO') {
-    navigate(`/admin/veiculos/${alerta.veiculoId}?tab=manutencoes`);
    } else {
     navigate(`/admin/manutencoes/nova?veiculoId=${alerta.veiculoId}`);
    }

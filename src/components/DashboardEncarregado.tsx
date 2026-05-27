@@ -289,7 +289,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                   <div className="flex-1 overflow-auto p-2 scrollbar-hide">
                                     <PainelAlertas onAlertaClick={(alerta) => {
                                        //  Rotas de alerta ajustadas para o dashboard do encarregado
-                                       if (alerta.mensagem.toUpperCase().includes('PREVISÃO')) {
+                                       if (alerta.mensagem.toUpperCase().includes('PREVISÃO') || alerta.nivel === 'VENCIDO') {
                                            setView('PLANOS');
                                        } else if (alerta.tipo === 'MANUTENCAO') {
                                            setView('HISTORICO_MANUTENCOES');
