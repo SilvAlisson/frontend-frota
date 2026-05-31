@@ -241,23 +241,41 @@ export function LoginScreen() {
                 )}
               </Button>
 
-              <div className="relative flex items-center py-2">
-                <div className="flex-grow border-t border-border/40"></div>
-                <span className="flex-shrink-0 mx-4 text-[10px] uppercase font-bold text-text-muted">OU</span>
-                <div className="flex-grow border-t border-border/40"></div>
+              <div className="flex flex-col items-center pt-4 mt-6 border-t border-border/40">
+                <span className="text-[10px] uppercase font-black text-text-muted/80 tracking-widest mb-4">
+                  OU ACESSE RAPIDAMENTE COM
+                </span>
+                
+                <button
+                  type="button"
+                  onClick={onBiometryClick}
+                  disabled={isSubmitting || isAuthenticating}
+                  aria-label="Login com Biometria"
+                  className={`relative flex items-center justify-center w-20 h-20 rounded-full border-2 transition-all duration-300 shadow-sm overflow-hidden btn-tactile
+                    ${isAuthenticating 
+                      ? 'border-primary bg-primary/10 shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.3)]' 
+                      : 'border-border/60 bg-surface hover:border-primary/50 hover:bg-primary/5 hover:shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.2)]'
+                    }`}
+                >
+                  {/* Efeito de Scan (Pulso) */}
+                  {isAuthenticating && (
+                    <div className="absolute inset-0 border-[3px] border-primary rounded-full animate-ping opacity-20"></div>
+                  )}
+                  
+                  <Fingerprint 
+                    className={`w-9 h-9 transition-colors duration-300 ${
+                      isAuthenticating ? 'text-primary animate-pulse' : 'text-text-secondary group-hover:text-primary'
+                    }`} 
+                    strokeWidth={1.5}
+                  />
+                </button>
+                
+                <span className={`text-[11px] font-black uppercase tracking-widest mt-3 transition-colors ${
+                  isAuthenticating ? 'text-primary animate-pulse' : 'text-text-muted'
+                }`}>
+                  {isAuthenticating ? 'Aguardando Leitura...' : 'Touch ID / Face ID'}
+                </span>
               </div>
-
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={onBiometryClick}
-                isLoading={isAuthenticating}
-                disabled={isSubmitting || isAuthenticating}
-                className="w-full h-14 text-sm font-black btn-tactile tracking-widest uppercase rounded-2xl bg-surface hover:bg-surface-hover text-text-main border border-border/60"
-              >
-                {!isAuthenticating && <Fingerprint className="mr-2 w-5 h-5 text-primary" />}
-                {isAuthenticating ? 'Lendo Biometria...' : 'Face ID / Touch ID'}
-              </Button>
             </form>
           )}
 
