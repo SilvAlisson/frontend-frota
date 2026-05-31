@@ -17,7 +17,7 @@ export function useWebAuthn() {
       // 1.2 Pede ao navegador/SO para ler a face/dedo
       let attResp;
       try {
-        attResp = await startRegistration(options);
+        attResp = await startRegistration({ optionsJSON: options });
       } catch (error: any) {
         if (error.name === 'NotAllowedError') {
           toast.error("O cadastro biométrico foi cancelado.");
@@ -58,7 +58,7 @@ export function useWebAuthn() {
       // 2.2 Pede ao SO para validar a face/dedo
       let asseResp;
       try {
-        asseResp = await startAuthentication(options);
+        asseResp = await startAuthentication({ optionsJSON: options });
       } catch (error: any) {
         if (error.name === 'NotAllowedError') {
           toast.error("Ação cancelada pelo usuário.");
