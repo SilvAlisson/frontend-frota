@@ -6,9 +6,11 @@ import { z } from 'zod';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import { ArrowRight, Truck, Loader2, Sun, Moon, QrCode, Mail, Lock } from 'lucide-react';
+import { ArrowRight, Truck, Loader2, Sun, Moon, QrCode, Mail, Lock, Fingerprint } from 'lucide-react';
 import { useLogin } from '../hooks/useLogin';
 import { hapticError } from '../lib/haptics';
+import { useWebAuthn } from '../hooks/useWebAuthn';
+import { useAuth } from '../contexts/AuthContext';
 
 // --- SCHEMAS DE VALIDAÇÃO (ZOD) ---
 const loginSchema = z.object({
@@ -21,6 +23,8 @@ type LoginFormValues = z.input<typeof loginSchema>;
 export function LoginScreen() {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { login } = useAuth();
+  const { loginWithDevice, isAuthenticating } = useWebAuthn();
   
   // Custom Hook com a lógica isolada (Single Responsibility)
   const { isMagicLoggingIn, authLoading, loginWithCredentials, loginWithManualQr } = useLogin();
@@ -53,6 +57,12 @@ export function LoginScreen() {
     } catch (err: any) {
       // erros tratados no hook
     }
+  };
+
+  const onBiometryClick = async () => {
+    await loginWithDevice((token, user) => {
+      login({ token, user });
+    });
   };
 
   // --- UI: FULL SCREEN LOADER (Apenas para URL Magic Link) ---
@@ -224,11 +234,29 @@ export function LoginScreen() {
                 variant="primary"
                 className="w-full h-14 text-sm font-black btn-tactile mt-6 tracking-[0.1em] uppercase group rounded-2xl"
                 isLoading={isSubmitting}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isAuthenticating}
               >
                 {isSubmitting ? 'A Autenticar...' : (
                   <>Validar Acesso <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
                 )}
+              </Button>
+
+              <div className="relative flex items-center py-2">
+                <div className="flex-grow border-t border-border/40"></div>
+                <span className="flex-shrink-0 mx-4 text-[10px] uppercase font-bold text-text-muted">OU</span>
+                <div className="flex-grow border-t border-border/40"></div>
+              </div>
+
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={onBiometryClick}
+                isLoading={isAuthenticating}
+                disabled={isSubmitting || isAuthenticating}
+                className="w-full h-14 text-sm font-black btn-tactile tracking-widest uppercase rounded-2xl bg-surface hover:bg-surface-hover text-text-main border border-border/60"
+              >
+                {!isAuthenticating && <Fingerprint className="mr-2 w-5 h-5 text-primary" />}
+                {isAuthenticating ? 'Lendo Biometria...' : 'Face ID / Touch ID'}
               </Button>
             </form>
           )}

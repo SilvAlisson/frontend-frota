@@ -5,11 +5,12 @@ import { api } from '../services/api';
 import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
-import { Printer, RefreshCw, Copy, QrCode, Download } from 'lucide-react';
+import { Printer, RefreshCw, Copy, QrCode, Download, Share2, Fingerprint } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { User } from '../types';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { useReactToPrint } from 'react-to-print';
+import { useWebAuthn } from '../hooks/useWebAuthn';
 
 interface ModalQrCodeProps {
   user: User & { loginToken?: string };
@@ -19,6 +20,7 @@ interface ModalQrCodeProps {
 
 export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   const queryClient = useQueryClient();
+  const { registerDevice, isRegistering } = useWebAuthn();
   const [tokenAtual, setTokenAtual] = useState<string | null>(user.loginToken || null);
   const [loading, setLoading] = useState(false);
   const [confirmRegenerar, setConfirmRegenerar] = useState(false);
@@ -64,6 +66,24 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
     toast.success("Link copiado!");
   };
 
+  const handleShare = async () => {
+    if (!loginUrl) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Acesso - Clínica do Caminhão',
+          text: `Olá ${primeiroNome}, aqui está seu acesso rápido para o sistema da Clínica do Caminhão:\n`,
+          url: loginUrl,
+        });
+        toast.success("Compartilhado com sucesso!");
+      } catch (err) {
+        console.log("Erro ao compartilhar ou compartilhamento cancelado", err);
+      }
+    } else {
+      handleCopyLink();
+    }
+  };
+
   const handlePrint = useReactToPrint({
     contentRef: cardRef,
     documentTitle: `Crachá - ${user.nome}`,
@@ -93,8 +113,8 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           <div
             className="absolute overflow-hidden rounded-full"
             style={{
-              top: '26.7%',
-              left: '49%',
+              top: '26%',
+              left: '50.2%',
               transform: 'translateX(-50%)',
               width: '37.5%',
               aspectRatio: '1 / 1',
@@ -110,7 +130,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           <p
             className="absolute text-center text-white font-black uppercase leading-none truncate"
             style={{
-              top: '57%',
+              top: '53.5%',
               left: '5%',
               right: '5%',
               fontSize: 'clamp(18px, 8.5cqi, 34px)',
@@ -124,7 +144,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           <p
             className="absolute text-center font-bold uppercase leading-none truncate"
             style={{
-              top: '64%',
+              top: '60.5%',
               left: '5%',
               right: '5%',
               fontSize: 'clamp(7px, 3cqi, 13px)',
@@ -138,7 +158,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           <p
             className="absolute text-center text-white font-black uppercase"
             style={{
-              top: '71.2%',
+              top: '65.4%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
               width: '80%',
@@ -153,10 +173,10 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           <div
             className="absolute flex items-center justify-center"
             style={{
-              top: '84%',
+              top: '80.5%',
               left: '50%',
               transform: 'translate(-50%, -50%)',
-              width: '22%',
+              width: '27%',
               aspectRatio: '1 / 1',
             }}
           >
@@ -180,19 +200,37 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           {tokenFinal ? (
             <>
               <Button
+                onClick={registerDevice}
+                isLoading={isRegistering}
+                className="w-full h-11 text-base font-black bg-surface hover:bg-surface-hover text-text-main border-border/60 transition-transform active:scale-95 mb-1 shadow-sm"
+                variant="secondary"
+                icon={!isRegistering ? <Fingerprint className="w-5 h-5 text-primary" /> : undefined}
+              >
+                Cadastrar Biometria no Aparelho
+              </Button>
+
+              <Button
                 onClick={handlePrint}
-                className="w-full h-11 text-base font-bold bg-surface-hover hover:bg-border text-text-main border-none transition-transform active:scale-95"
+                className="w-full h-11 text-sm font-bold bg-surface-hover hover:bg-border text-text-main border-none transition-transform active:scale-95"
                 variant="secondary"
                 icon={<Printer className="w-5 h-5 text-primary" />}
               >
                 Imprimir Documento
               </Button>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-2">
+                <Button
+                  variant="secondary"
+                  onClick={handleShare}
+                  className="h-11 px-0 bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20"
+                  icon={<Share2 className="w-4 h-4" />}
+                >
+                  Enviar
+                </Button>
                 <Button
                   variant="secondary"
                   onClick={handleCopyLink}
-                  className="h-11 bg-surface-hover hover:bg-border text-text-main border border-border/40"
+                  className="h-11 px-0 bg-surface-hover hover:bg-border text-text-main border border-border/40"
                   icon={<Copy className="w-4 h-4" />}
                 >
                   Copiar
@@ -201,7 +239,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                   variant="ghost"
                   onClick={handleGerarNovo}
                   isLoading={loading}
-                  className="h-11 bg-error/10 hover:bg-error/20 text-error border border-error/20"
+                  className="h-11 px-0 bg-error/10 hover:bg-error/20 text-error border border-error/20"
                   icon={<RefreshCw className="w-4 h-4" />}
                 >
                   Renovar

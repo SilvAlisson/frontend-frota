@@ -79,6 +79,8 @@ const formatBRL = (val: number) => val.toLocaleString('pt-BR', { style: 'currenc
 const formatNum = (val: number) => val.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
 const formatDec = (val: number) => val.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
+import { ModalAnalyticsEngine } from './ModalAnalyticsEngine';
+
 interface KpiCardProps {
  titulo: string;
  valorRaw?: number;
@@ -120,9 +122,18 @@ const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descr
  return (
   <Card
    onClick={onClick}
+   onKeyDown={(e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onClick?.();
+    }
+   }}
+   role={onClick ? "button" : undefined}
+   tabIndex={onClick ? 0 : undefined}
    className={cn(
     "relative flex flex-col justify-between h-full cursor-pointer overflow-hidden group glass hover-lift rounded-2xl",
-    "border-l-[4px]", style.border, style.glow,
+    "border-l-[4px] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background", 
+    style.border, style.glow,
     highlight ? "min-h-[160px]" : "min-h-[140px]"
    )}
   >
@@ -283,7 +294,16 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
 
  const [ano, setAno] = useState(new Date().getFullYear());
  const [mes, setMes] = useState(new Date().getMonth() + 1);
- const [veiculoIdFiltro, setVeiculoIdFiltro] = useState('');
+ const [veiculoIdFiltro, setVeiculoIdFiltro] = useState<string>('');
+ const [modalAnalyticsOpen, setModalAnalyticsOpen] = useState(false);
+ const [modalMetric, setModalMetric] = useState<any>(null);
+ const [modalTitle, setModalTitle] = useState('');
+
+ const openAnalytics = (metric: string, title: string) => {
+    setModalMetric(metric);
+    setModalTitle(title);
+    setModalAnalyticsOpen(true);
+ };
 
  const { data: kpis, isLoading: loading } = useSumarioKPIs({ ano, mes, veiculoId: veiculoIdFiltro || undefined });
  const { data: dadosGraficoKm = [], isLoading: loadingGrafico } = useEvolucaoKm(veiculoIdFiltro || undefined, 7);
@@ -411,15 +431,16 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
       highlight
       variant="default"
       icon={<DollarSign className="w-5 h-5 sm:w-6 sm:h-6" />}
+      onClick={() => openAnalytics('CUSTO_GLOBAL', 'Custo Operacional Global')}
      />
     </div>
 
-    <KpiCard titulo="Quilometragem Total" valorRaw={kpis?.kmTotalRodado} formatter={formatNum} descricao="Distância percorrida no período" loading={loading} variant="info" icon={<Activity className="w-4 h-4 sm:w-5 sm:h-5" />} />
-    <KpiCard titulo="Eficiência de Consumo" valorRaw={kpis?.consumoMedioKML} formatter={formatDec} descricao="Média de consumo da frota (KM/L)" loading={loading} variant="success" icon={<TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />} />
-    <KpiCard titulo="Despesa em Combustível" valorRaw={kpis?.custoTotalCombustivel} formatter={formatBRL} descricao="Diesel, Gasolina e GNV" loading={loading} variant="default" icon={<Fuel className="w-4 h-4 sm:w-5 sm:h-5" />} />
-    <KpiCard titulo="Custos de Oficina" valorRaw={kpis?.custoTotalManutencao} formatter={formatBRL} descricao="Preventivas e Corretivas" loading={loading} variant="warning" icon={<Wrench className="w-4 h-4 sm:w-5 sm:h-5" />} />
-    <KpiCard titulo="Aditivos e Fluidos" valorRaw={kpis?.custoTotalAditivo} formatter={formatBRL} descricao="Consumo de Arla 32 e Óleos" loading={loading} variant="info" icon={<Droplets className="w-4 h-4 sm:w-5 sm:h-5" />} />
-    <KpiCard titulo="Custo Médio / KM" valorRaw={kpis?.custoMedioPorKM} formatter={formatBRL} descricao="Indicador de rentabilidade" loading={loading} variant={(kpis?.custoMedioPorKM || 0) > 4 ? 'danger' : 'success'} icon={<Gauge className="w-4 h-4 sm:w-5 sm:h-5" />} />
+    <KpiCard titulo="Quilometragem Total" valorRaw={kpis?.kmTotalRodado} formatter={formatNum} descricao="Distância percorrida no período" loading={loading} variant="info" icon={<Activity className="w-4 h-4 sm:w-5 sm:h-5" />} onClick={() => openAnalytics('KM_TOTAL', 'Quilometragem Total')} />
+    <KpiCard titulo="Eficiência de Consumo" valorRaw={kpis?.consumoMedioKML} formatter={formatDec} descricao="Média de consumo da frota (KM/L)" loading={loading} variant="success" icon={<TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />} onClick={() => openAnalytics('EFICIENCIA', 'Eficiência de Consumo')} />
+    <KpiCard titulo="Despesa em Combustível" valorRaw={kpis?.custoTotalCombustivel} formatter={formatBRL} descricao="Diesel, Gasolina e GNV" loading={loading} variant="default" icon={<Fuel className="w-4 h-4 sm:w-5 sm:h-5" />} onClick={() => openAnalytics('COMBUSTIVEL', 'Despesa em Combustível')} />
+    <KpiCard titulo="Custos de Oficina" valorRaw={kpis?.custoTotalManutencao} formatter={formatBRL} descricao="Preventivas e Corretivas" loading={loading} variant="warning" icon={<Wrench className="w-4 h-4 sm:w-5 sm:h-5" />} onClick={() => openAnalytics('OFICINA', 'Custos de Oficina')} />
+    <KpiCard titulo="Aditivos e Fluidos" valorRaw={kpis?.custoTotalAditivo} formatter={formatBRL} descricao="Consumo de Arla 32 e Óleos" loading={loading} variant="info" icon={<Droplets className="w-4 h-4 sm:w-5 sm:h-5" />} onClick={() => openAnalytics('ADITIVOS', 'Aditivos e Fluidos')} />
+    <KpiCard titulo="Custo Médio / KM" valorRaw={kpis?.custoMedioPorKM} formatter={formatBRL} descricao="Indicador de rentabilidade" loading={loading} variant={(kpis?.custoMedioPorKM || 0) > 4 ? 'danger' : 'success'} icon={<Gauge className="w-4 h-4 sm:w-5 sm:h-5" />} onClick={() => openAnalytics('CUSTO_KM', 'Custo Médio / KM')} />
    </div>
 
    {/* ─── SEÇÃO DE GRÁFICOS ──────────────────────────────────────────────────── */}
@@ -486,6 +507,12 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
 
    </div>
 
+   <ModalAnalyticsEngine 
+     isOpen={modalAnalyticsOpen} 
+     onClose={() => setModalAnalyticsOpen(false)} 
+     metric={modalMetric} 
+     title={modalTitle} 
+   />
   </div>
  );
 }

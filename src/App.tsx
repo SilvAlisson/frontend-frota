@@ -4,6 +4,7 @@ import { Toaster } from 'sonner';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { TooltipProvider } from './components/ui/Tooltip';
 import { NetworkStatus } from './components/ui/NetworkStatus';
+import { InstallPromptBanner } from './components/InstallPromptBanner';
 
 // 🛠️ DevTools: Carregado dinamicamente APENAS em desenvolvimento.
 // Em produção, o Vite faz tree-shaking e ZERO bytes desta lib vão para o bundle.
@@ -33,12 +34,18 @@ function AppContent() {
           fontFamily: 'var(--font-sans)',
         }}
       />
-      {/* 🛠️ DevTools: Apenas em desenvolvimento — tree-shaken pelo Vite em produção */}
+      {/* 🟢 DevTools: Apenas em desenvolvimento */}
       {import.meta.env.DEV && (
         <Suspense fallback={null}>
           <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
         </Suspense>
       )}
+
+      {/* Status da Rede (Online/Offline) */}
+      <NetworkStatus />
+
+      {/* Banner de Instalação PWA Móvel */}
+      <InstallPromptBanner />
     </div>
   );
 }

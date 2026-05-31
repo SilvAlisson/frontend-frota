@@ -19,7 +19,7 @@ import type { AbastecimentoFormValues, AbastecimentoPayload } from './schema';
 import { Step1DadosOperacionais } from './Step1DadosOperacionais';
 import { Step2DadosFinanceiros } from './Step2DadosFinanceiros';
 import { Step3Confirmacao } from './Step3Confirmacao';
-import { hapticError } from '../../../lib/haptics';
+import { hapticError, hapticSuccess } from '../../../lib/haptics';
 
 interface FormRegistrarAbastecimentoProps {
   usuarioLogado?: UserType;
@@ -238,6 +238,7 @@ export function FormRegistrarAbastecimento({
           nested={true}
           onClose={() => setModalConfirmacao(false)}
           onSuccess={() => {
+            hapticSuccess();
             toast.success("Abastecimento e Nota Fiscal Registrados com sucesso!");
             onSuccess?.();
             onCancelar();

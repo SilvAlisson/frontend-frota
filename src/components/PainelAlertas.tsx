@@ -5,9 +5,11 @@ import { toast } from 'sonner';
 import { 
  AlertTriangle, CheckCircle2, Loader2, 
  Wrench, FileText, Clock, ChevronRight,
- Timer, UserX, X, Bug, ShieldAlert, HeartPulse
+ Timer, UserX, X, Bug, ShieldAlert, HeartPulse, Trash2
 } from 'lucide-react';
 import type { Alerta } from '../types';
+import { motion, AnimatePresence } from 'framer-motion';
+import { haptics } from '../utils/haptics';
 
 // Componentes Elite
 import { EmptyState } from './ui/EmptyState';
@@ -201,9 +203,19 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
 
    {/* Grid de Cartões */}
    <div className="grid gap-4 auto-rows-max">
-    {alertas.map((alerta) => (
-     <CardAlerta key={alerta.id} alerta={alerta} onClick={() => handleAlertaClick(alerta)} />
-    ))}
+    <AnimatePresence>
+     {alertas.map((alerta) => (
+      <CardAlerta 
+        key={alerta.id} 
+        alerta={alerta} 
+        onClick={() => handleAlertaClick(alerta)} 
+        onDismiss={() => {
+          haptics.heavy();
+          setAlertas(prev => prev.filter(a => a.id !== alerta.id));
+        }}
+      />
+     ))}
+    </AnimatePresence>
    </div>
 
    {/* --- MODAL DE TRIAGEM DE OCIOSIDADE --- */}
@@ -285,7 +297,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
 }
 
 // --- SUBCOMPONENTE DE CARD DE ALERTA ---
-function CardAlerta({ alerta, onClick }: { alerta: Alerta, onClick: () => void }) {
+function CardAlerta({ alerta, onClick, onDismiss }: { alerta: Alerta, onClick: () => void, onDismiss: () => void }) {
  const isVencido = alerta.nivel === 'VENCIDO';
  const isPrevisao = alerta.mensagem.toUpperCase().includes('PREVISÃO');
 
@@ -380,41 +392,68 @@ function CardAlerta({ alerta, onClick }: { alerta: Alerta, onClick: () => void }
  const IconComponent = config.icon;
 
  return (
-  <Button 
-   variant="ghost"
-   onClick={onClick}
-   className={`
-   text-left w-full !p-0 h-auto
-   group relative overflow-hidden bg-surface rounded-2xl shadow-sm border border-border/60 
-   hover:shadow-md transition-all duration-300 flex items-start gap-0 cursor-pointer
-   ${config.border}
-  `}>
-   <div className={`p-5 flex items-start gap-4 w-full h-full border-l-[4px] group-hover:border-l-[8px] transition-all ${config.border}`}>
-    {/* Ícone (Glassmorphism) */}
-    <div className={`p-3 rounded-xl flex-shrink-0 shadow-inner border ${config.iconBg}`}>
-     <IconComponent className="w-5 h-5" />
+  <motion.div
+    layout
+    initial={{ opacity: 0, scale: 0.95 }}
+    animate={{ opacity: 1, scale: 1 }}
+    exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
+    className="relative w-full"
+  >
+    {/* Fundo que aparece ao arrastar (Swipe-to-Dismiss indicator) */}
+    <div className="absolute inset-0 bg-error/10 border border-error/20 rounded-2xl flex items-center px-6 justify-between">
+      <Trash2 className="w-5 h-5 text-error opacity-70" />
+      <Trash2 className="w-5 h-5 text-error opacity-70" />
     </div>
 
-    {/* Conteúdo */}
-    <div className="flex-1 min-w-0 flex flex-col justify-center py-0.5">
-     <div className="flex flex-wrap gap-2 items-center mb-2">
-      <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${config.textTitle}`}>
-       {config.category}
-      </span>
-      <span className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border shadow-sm ${config.badgeBg}`}>
-       {config.badgeLabel}
-      </span>
-     </div>
-     <p className="text-text-main text-sm sm:text-base font-bold leading-snug line-clamp-2 tracking-tight">
-      {alerta.mensagem}
-     </p>
-    </div>
+    <motion.div
+      drag="x"
+      dragConstraints={{ left: 0, right: 0 }}
+      dragElastic={0.8}
+      onDragEnd={(_, info) => {
+        if (Math.abs(info.offset.x) > 120) {
+          onDismiss();
+        }
+      }}
+      whileDrag={{ scale: 0.98, cursor: 'grabbing' }}
+      className="w-full relative z-10"
+    >
+      <Button 
+       variant="ghost"
+       onClick={onClick}
+       className={`
+       text-left w-full !p-0 h-auto
+       group relative overflow-hidden bg-surface rounded-2xl shadow-sm border border-border/60 
+       hover:shadow-md transition-all duration-300 flex items-start gap-0 cursor-pointer
+       ${config.border}
+      `}>
+       <div className={`p-5 flex items-start gap-4 w-full h-full border-l-[4px] group-hover:border-l-[8px] transition-all ${config.border}`}>
+        {/* Ícone (Glassmorphism) */}
+        <div className={`p-3 rounded-xl flex-shrink-0 shadow-inner border ${config.iconBg}`}>
+         <IconComponent className="w-5 h-5" />
+        </div>
 
-    {/* Seta Hover, indica que a atenção está focada no item */}
-    <div className="self-center text-border group-hover:text-text-muted transition-colors opacity-0 lg:group-hover:opacity-100">
-     <ChevronRight className="w-5 h-5" />
-    </div>
-   </div>
-  </Button>
+        {/* Conteúdo */}
+        <div className="flex-1 min-w-0 flex flex-col justify-center py-0.5">
+         <div className="flex flex-wrap gap-2 items-center mb-2">
+          <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${config.textTitle}`}>
+           {config.category}
+          </span>
+          <span className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border shadow-sm ${config.badgeBg}`}>
+           {config.badgeLabel}
+          </span>
+         </div>
+         <p className="text-text-main text-sm sm:text-base font-bold leading-snug line-clamp-2 tracking-tight pointer-events-none">
+          {alerta.mensagem}
+         </p>
+        </div>
+
+        {/* Seta Hover, indica que a atenção está focada no item */}
+        <div className="self-center text-border group-hover:text-text-muted transition-colors opacity-0 lg:group-hover:opacity-100">
+         <ChevronRight className="w-5 h-5" />
+        </div>
+       </div>
+      </Button>
+    </motion.div>
+  </motion.div>
  );
 }

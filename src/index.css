@@ -45,6 +45,20 @@
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
 
+  /* --- PALETA ESTENDIDA DE GRÁFICOS (DRILL-DOWN) --- */
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-chart-6: var(--chart-6);
+  --color-chart-7: var(--chart-7);
+  --color-chart-8: var(--chart-8);
+  --color-chart-9: var(--chart-9);
+  --color-chart-10: var(--chart-10);
+  --color-chart-11: var(--chart-11);
+  --color-chart-12: var(--chart-12);
+
   /* --- 3. SOMBRAS TINTURADAS --- */
   --shadow-card: var(--shadow-card-val);
   --shadow-float: var(--shadow-float-val);
@@ -217,6 +231,20 @@
     --info: oklch(0.60 0.15 240);
     --info-foreground: oklch(1 0 0);
 
+    /* --- PALETA ESTENDIDA DE GRÁFICOS (DRILL-DOWN) - CLARO --- */
+    --chart-1: var(--color-klin-500);
+    --chart-2: oklch(0.55 0.15 180);
+    --chart-3: oklch(0.55 0.18 140);
+    --chart-4: oklch(0.65 0.20 90);
+    --chart-5: oklch(0.60 0.20 30);
+    --chart-6: oklch(0.60 0.15 310);
+    --chart-7: oklch(0.55 0.12 280);
+    --chart-8: oklch(0.65 0.15 60);
+    --chart-9: oklch(0.45 0.10 200);
+    --chart-10: oklch(0.65 0.10 160);
+    --chart-11: oklch(0.50 0.18 350);
+    --chart-12: oklch(0.70 0.15 110);
+
     --shadow-card-val: 0 1px 2px 0 color-mix(in srgb, var(--color-klin-900) 4%, transparent), 0 0px 2px 0 color-mix(in srgb, var(--color-klin-900) 2%, transparent);
     --shadow-float-val: 0 8px 16px -4px color-mix(in srgb, var(--color-klin-900) 8%, transparent), 0 2px 6px -2px color-mix(in srgb, var(--color-klin-900) 4%, transparent);
     --shadow-button-val: 0 1px 2px 0 color-mix(in srgb, var(--color-klin-900) 8%, transparent);
@@ -252,6 +280,20 @@
     --success-foreground: oklch(1 0 0);
     --info: oklch(0.65 0.15 240);
     --info-foreground: oklch(1 0 0);
+
+    /* --- PALETA ESTENDIDA DE GRÁFICOS (DRILL-DOWN) - ESCURO --- */
+    --chart-1: var(--color-klin-300);
+    --chart-2: oklch(0.75 0.15 180);
+    --chart-3: oklch(0.75 0.18 140);
+    --chart-4: oklch(0.85 0.20 90);
+    --chart-5: oklch(0.80 0.20 30);
+    --chart-6: oklch(0.80 0.15 310);
+    --chart-7: oklch(0.75 0.12 280);
+    --chart-8: oklch(0.85 0.15 60);
+    --chart-9: oklch(0.65 0.10 200);
+    --chart-10: oklch(0.85 0.10 160);
+    --chart-11: oklch(0.70 0.18 350);
+    --chart-12: oklch(0.90 0.15 110);
 
     --shadow-card-val: 0 4px 6px -1px color-mix(in srgb, black 40%, transparent);
     --shadow-float-val: 0 20px 25px -5px color-mix(in srgb, black 50%, transparent);

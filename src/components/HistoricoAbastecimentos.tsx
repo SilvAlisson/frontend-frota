@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { DateHelper } from '../lib/dateHelper';
 import { formatCurrency } from '../lib/utils';
@@ -67,7 +68,10 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
  const [veiculoIdFiltro, setVeiculoIdFiltro] = useState(filtroInicial?.veiculoId || '');
  const [fornecedorIdFiltro, setFornecedorIdFiltro] = useState('');
 
- const hasFiltrosAtivos = Boolean(dataInicioFiltro || dataFimFiltro || veiculoIdFiltro || fornecedorIdFiltro);
+ const [searchParams, setSearchParams] = useSearchParams();
+ const [tipoProdutoFiltro, setTipoProdutoFiltro] = useState(searchParams.get('tipoProduto') || '');
+
+ const hasFiltrosAtivos = Boolean(dataInicioFiltro || dataFimFiltro || veiculoIdFiltro || fornecedorIdFiltro || tipoProdutoFiltro);
 
  const canEdit = ['ADMIN', 'ENCARREGADO'].includes(userRole);
 
@@ -84,21 +88,22 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
  const fetchHistorico = useCallback(async () => {
   setLoading(true);
   try {
-   const params: Record<string, string> = {};
-   if (dataInicioFiltro) params.dataInicio = dataInicioFiltro;
-   if (dataFimFiltro) params.dataFim = dataFimFiltro;
-   if (veiculoIdFiltro) params.veiculoId = veiculoIdFiltro;
+     const params: Record<string, string> = {};
+     if (dataInicioFiltro) params.dataInicio = dataInicioFiltro;
+     if (dataFimFiltro) params.dataFim = dataFimFiltro;
+     if (veiculoIdFiltro) params.veiculoId = veiculoIdFiltro;
+     if (tipoProdutoFiltro) params.tipoProduto = tipoProdutoFiltro;
 
-   const response = await api.get('/abastecimentos/recentes', { params });
+     const response = await api.get('/abastecimentos/recentes', { params });
    setHistorico(response.data);
    setVisibleCount(ITENS_POR_PAGINA); 
   } catch (err) {
    if (import.meta.env.DEV) console.error("Erro ao buscar histórico:", err);
    toast.error('Falha ao carregar abastecimentos.');
   } finally {
-   setLoading(false);
-  }
- }, [dataInicioFiltro, dataFimFiltro, veiculoIdFiltro]);
+     setLoading(false);
+    }
+   }, [dataInicioFiltro, dataFimFiltro, veiculoIdFiltro, tipoProdutoFiltro]);
 
  useEffect(() => {
   fetchHistorico();
@@ -273,6 +278,27 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
               containerClassName="!mb-0"
             />
           </div>
+          <div className="w-full sm:w-[220px]">
+          <Select
+           label="Tipo de Produto"
+           value={tipoProdutoFiltro}
+           onChange={(e) => {
+               setTipoProdutoFiltro(e.target.value);
+               if(e.target.value) {
+                   searchParams.set('tipoProduto', e.target.value);
+               } else {
+                   searchParams.delete('tipoProduto');
+               }
+               setSearchParams(searchParams);
+           }}
+           options={[
+            { value: '', label: 'Todos os Produtos' },
+            { value: 'COMBUSTIVEL', label: 'Apenas Combustíveis' },
+            { value: 'ADITIVO', label: 'Aditivos e Fluidos' },
+            { value: 'OUTRO', label: 'Outros' }
+           ]}
+          />
+         </div>
         </div>
 
         {/* LINHA 2: Filtros de Data e Botões de Ação */}
@@ -306,6 +332,9 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
                   setDataFimFiltro('');
                   setVeiculoIdFiltro('');
                   setFornecedorIdFiltro('');
+                  setTipoProdutoFiltro('');
+                  searchParams.delete('tipoProduto');
+                  setSearchParams(searchParams);
                 }} 
                 icon={<FilterX className="w-4 h-4" />}
                 className="h-11 sm:h-12 text-text-secondary hover:text-error hover:bg-error/10 transition-colors px-3"
