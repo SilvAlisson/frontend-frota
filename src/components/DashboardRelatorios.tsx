@@ -151,6 +151,7 @@ const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descr
    <div className="flex flex-col justify-end flex-1 min-h-0 relative z-10 p-3 sm:p-4 min-w-0">
     <span
      className={cn(
+      //  As classes que garantem o alinhamento à esquerda, ocupação total e truncamento inteligente
       "block w-full text-left font-black text-text-main leading-none truncate transition-colors duration-300 tracking-tighter max-w-full",
       highlight 
        ? "!text-2xl sm:!text-3xl lg:!text-3xl xl:!text-4xl 2xl:!text-5xl" 
@@ -230,7 +231,7 @@ function GraficoCpk({ dados, loading }: { dados: DadoCpk[]; loading: boolean }) 
  if (loading) return <Skeleton variant="card" className="h-[280px] w-full" />;
  return (
   <ResponsiveContainer width="100%" height={280}>
-   <AreaChart data={dados} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+   <AreaChart data={dados} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
     <defs>
      <linearGradient id="gradFuel" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.35} />
@@ -243,7 +244,7 @@ function GraficoCpk({ dados, loading }: { dados: DadoCpk[]; loading: boolean }) 
     </defs>
     <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
     <XAxis dataKey="name" tick={{ fill: 'var(--color-text-muted)', fontSize: 10, fontWeight: 700 }} axisLine={false} tickLine={false} />
-    <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 9, fontWeight: 700 }} axisLine={false} tickLine={false} tickFormatter={(v) => `R$${v}`} width={42} />
+    <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 9, fontWeight: 700 }} axisLine={false} tickLine={false} tickFormatter={(v) => `R$${v}`} width={55} />
     <Tooltip content={<CpkTooltip />} cursor={{ stroke: 'var(--color-border)', strokeWidth: 1.5, strokeDasharray: '4 4' }} />
     <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700, paddingTop: 12 }} iconType="circle" iconSize={8} />
     <Area type="monotone" dataKey="fuel" name="CPK Combustível" stroke="#38bdf8" strokeWidth={2.5} fill="url(#gradFuel)" dot={{ fill: '#38bdf8', r: 3, strokeWidth: 0 }} activeDot={{ r: 5, fill: '#38bdf8', strokeWidth: 0 }} animationDuration={800} />
@@ -265,18 +266,15 @@ function GraficoPerformance({ dados, loading }: { dados: DadoPerformance[]; load
  );
  return (
   <ResponsiveContainer width="100%" height={280}>
-   {/* Atualizadas as margens para left: 10 e bottom: 40 */}
-   <BarChart data={dados} margin={{ top: 10, right: 10, left: 10, bottom: 40 }} barSize={20}>
+   <BarChart data={dados} margin={{ top: 10, right: 10, left: 10, bottom: 60 }} barSize={20}>
     <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
     <XAxis
      dataKey="name"
      tick={{ fill: 'var(--color-text-muted)', fontSize: 9, fontWeight: 700 }}
      axisLine={false} tickLine={false} angle={-20} textAnchor="end"
      interval={0}
-     dy={5} // Adicionado dy para descolar o texto do eixo
     />
-    {/* Atualizado width para 60 para acomodar números maiores */}
-    <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 9, fontWeight: 700 }} axisLine={false} tickLine={false} tickFormatter={(v) => `R$${v}`} width={60} />
+    <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 9, fontWeight: 700 }} axisLine={false} tickLine={false} tickFormatter={(v) => `R$${v}`} width={55} />
     <Tooltip content={<PerformanceTooltip />} cursor={{ fill: 'var(--color-surface-hover)', radius: 8 }} />
     <Bar dataKey="cost" name="Custo Total" radius={[6, 6, 0, 0]} animationDuration={900} animationEasing="ease-out">
      {dados.map((entry, index) => (
@@ -312,6 +310,7 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
  const { data: dadosCpk = [], isLoading: loadingCpk } = useEvolucaoCpk(veiculoIdFiltro || undefined);
  const { data: dadosPerformance = [], isLoading: loadingPerformance } = usePerformanceFrota({ ano, mes });
 
+ // ✨ CORREÇÃO: Tipagem explícita para DadoPerformance
  const dadosPerformanceLimpos = useMemo(() => {
   return dadosPerformance.map((d: DadoPerformance) => ({
    ...d,

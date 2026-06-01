@@ -2,15 +2,14 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import type { DadosEvolucaoKm } from '../types';
 import { Activity } from 'lucide-react';
 
-// CORREÇÃO 1: Usando variáveis CSS do tema para suportar Modo Claro e Escuro corretamente
-const PRIMARY_COLOR = 'var(--color-primary)';
-const SURFACE_COLOR = 'var(--color-surface)';
+// Cor Primária em HEX
+const PRIMARY_COLOR = '#10b981'; 
 
 interface GraficoKmVeiculoProps {
     dados: DadosEvolucaoKm[];
 }
 
-// TOOLTIP CUSTOMIZADA
+// TOOLTIP CUSTOMIZADA (O Segredo do visual "Elite")
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
         return (
@@ -55,12 +54,12 @@ export function GraficoKmVeiculo({ dados }: GraficoKmVeiculoProps) {
             </div>
 
             {/* Container do Gráfico */}
-            <div className="flex-1 w-full min-h-[240px] relative z-10 -ml-4 sm:-ml-2">
+            <div className="flex-1 w-full min-h-[240px] relative z-10">
                 <ResponsiveContainer width="100%" height="100%">
-                    
-                    {/* CORREÇÃO 2: Aumentamos a margem bottom para 25 para evitar o corte do texto */}
-                    <AreaChart data={dados} margin={{ top: 10, right: 10, left: 0, bottom: 25 }}>
+                    {/* Mudamos de LineChart para AreaChart para usar o gradiente */}
+                    <AreaChart data={dados} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
                         
+                        {/* 🌈 Definição do Gradiente */}
                         <defs>
                             <linearGradient id="colorKm" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor={PRIMARY_COLOR} stopOpacity={0.4} />
@@ -68,22 +67,22 @@ export function GraficoKmVeiculo({ dados }: GraficoKmVeiculoProps) {
                             </linearGradient>
                         </defs>
 
-                        {/* CORREÇÃO 3: Grade ajustada para pegar a cor da borda do tema atual */}
-                        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
+                        {/* Grade bem sutil */}
+                        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="currentColor" className="text-border/40" />
                         
                         <XAxis
                             dataKey="data"
                             axisLine={false}
                             tickLine={false}
-                            /* CORREÇÃO 4: Cor do texto fixa na variável mutável do tema */
-                            tick={{ fontSize: 10, fill: 'var(--color-text-muted)', fontWeight: 600 }}
+                            tick={{ fontSize: 10, fill: 'currentColor', fontWeight: 600 }}
+                            className="text-text-muted"
                             dy={15}
-                            /* CORREÇÃO 5: Altura do eixo X definida para acomodar o texto + o distanciamento */
-                            height={40}
                         />
                         
+                        {/* Escondemos o YAxis para o visual de "Sparkline", mas deixamos a margem correta */}
                         <YAxis hide domain={['dataMin - 15', 'dataMax + 15']} />
                         
+                        {/* Acionamos o nosso Tooltip customizado */}
                         <Tooltip
                             content={<CustomTooltip />}
                             cursor={{ stroke: PRIMARY_COLOR, strokeWidth: 1.5, strokeDasharray: '4 4', opacity: 0.4 }}
@@ -96,8 +95,7 @@ export function GraficoKmVeiculo({ dados }: GraficoKmVeiculoProps) {
                             strokeWidth={4}
                             fillOpacity={1}
                             fill="url(#colorKm)"
-                            /* CORREÇÃO 6: O contorno (stroke) do hover agora usa a cor de fundo (SURFACE_COLOR) em vez do branco fixo */
-                            activeDot={{ r: 6, strokeWidth: 4, stroke: SURFACE_COLOR, fill: PRIMARY_COLOR, className: "shadow-lg" }}
+                            activeDot={{ r: 6, strokeWidth: 4, stroke: '#fff', fill: PRIMARY_COLOR, className: "shadow-lg" }}
                         />
                     </AreaChart>
                 </ResponsiveContainer>
@@ -108,3 +106,5 @@ export function GraficoKmVeiculo({ dados }: GraficoKmVeiculoProps) {
         </div>
     );
 }
+
+
