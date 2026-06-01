@@ -12,6 +12,7 @@ import { ModalQrCode } from './ModalQrCode';
 import { EmptyState } from './ui/EmptyState';
 import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
+import { Skeleton } from './ui/Skeleton';
 
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -89,10 +90,11 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
  const [modalQrCodeOpen, setModalQrCodeOpen] = useState(false);
 
  // 📡 BUSCA DOS DADOS COM CACHE
- const { data: usuarios = [], refetch: refetchUsuarios } = useUsuarios();
- const { data: veiculos = [], refetch: refetchVeiculos } = useVeiculos();
- const { data: jornadasAtivas = [], refetch: refetchJornadas } = useJornadasAtivas();
+ const { data: usuarios = [], refetch: refetchUsuarios, isLoading: loadingUsuarios } = useUsuarios();
+ const { data: veiculos = [], refetch: refetchVeiculos, isLoading: loadingVeiculos } = useVeiculos();
+ const { data: jornadasAtivas = [], refetch: refetchJornadas, isLoading: loadingJornadas } = useJornadasAtivas();
 
+ const isInitialLoading = loadingUsuarios || loadingVeiculos || loadingJornadas;
 
  const handleManualRefresh = async () => {
   vibrateLight();
@@ -195,90 +197,101 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
    {/* ─── ÁREA PRINCIPAL ────────────────────────────────────────────────── */}
    <main className="max-w-2xl mx-auto px-4 sm:px-8 pt-6 pb-32 lg:pb-10 space-y-6 @container">
 
-    {/* === BLOCO DE JORNADA === */}
-    {!tenhoJornadaAtiva ? (
-     <div className="bg-gradient-to-br from-primary to-primary-hover rounded-[2rem] p-6 sm:p-8 shadow-[0_20px_60px_-10px_rgba(var(--color-primary),0.5)] relative overflow-hidden group">
-      <Navigation className="absolute -right-8 -bottom-8 w-48 h-48 text-white/10 -rotate-12 group-hover:scale-110 group-hover:rotate-0 transition-transform duration-700 pointer-events-none" />
-
-      <div className="relative z-10 flex flex-col gap-6">
-       <div className="flex items-start gap-4">
-        <div className="p-4 bg-white/20 text-white rounded-2xl shadow-inner backdrop-blur-sm border border-white/20">
-         <Play className="w-7 h-7 fill-current" />
-        </div>
-        <div className="text-white">
-         <h2 className="font-header text-xl sm:text-2xl font-black tracking-tight drop-shadow-sm">Iniciar Turno</h2>
-         <p className="text-white/80 font-medium mt-1 text-sm">
-          Selecione a placa do <strong>veículo</strong> para começar o trabalho.
-         </p>
-        </div>
+    {isInitialLoading ? (
+     <div className="space-y-6 animate-in fade-in duration-500">
+       <Skeleton className="h-[280px] w-full rounded-[2rem]" />
+       <div className="grid grid-cols-2 gap-4">
+         <Skeleton className="h-[100px] w-full rounded-[2rem]" />
+         <Skeleton className="h-[100px] w-full rounded-[2rem]" />
        </div>
-
-       <div className="glass-premium rounded-[2rem] p-4 sm:p-6 shadow-lg border-0 border-white/5">
-        <IniciarJornada
-         usuarios={usuarios}
-         veiculos={veiculos}
-         operadorLogadoId={user.id}
-         onJornadaIniciada={() => refetchJornadas()}
-         jornadasAtivas={jornadasAtivas}
-        />
-       </div>
-      </div>
      </div>
     ) : (
-     <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
-      <div className="flex items-center gap-2 text-xs font-black text-success uppercase tracking-widest bg-success/10 py-2 px-4 rounded-xl w-fit border border-success/20 shadow-sm">
-       <span className="relative flex h-2.5 w-2.5">
-        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
-        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success" />
-       </span>
-       Veículo Vinculado
+     <>
+      {/* === BLOCO DE JORNADA === */}
+      {!tenhoJornadaAtiva ? (
+       <div className="bg-gradient-to-br from-primary to-primary-hover rounded-[2rem] p-6 sm:p-8 shadow-[0_20px_60px_-10px_rgba(var(--color-primary),0.5)] relative overflow-hidden group">
+        <Navigation className="absolute -right-8 -bottom-8 w-48 h-48 text-white/10 -rotate-12 group-hover:scale-110 group-hover:rotate-0 transition-transform duration-700 pointer-events-none" />
+
+        <div className="relative z-10 flex flex-col gap-6">
+         <div className="flex items-start gap-4">
+          <div className="p-4 bg-white/20 text-white rounded-2xl shadow-inner backdrop-blur-sm border border-white/20">
+           <Play className="w-7 h-7 fill-current" />
+          </div>
+          <div className="text-white">
+           <h2 className="font-header text-xl sm:text-2xl font-black tracking-tight drop-shadow-sm">Iniciar Turno</h2>
+           <p className="text-white/80 font-medium mt-1 text-sm">
+            Selecione a placa do <strong>veículo</strong> para começar o trabalho.
+           </p>
+          </div>
+         </div>
+
+         <div className="glass-premium rounded-[2rem] p-4 sm:p-6 shadow-lg border-0 border-white/5">
+          <IniciarJornada
+           usuarios={usuarios}
+           veiculos={veiculos}
+           operadorLogadoId={user.id}
+           onJornadaIniciada={() => refetchJornadas()}
+           jornadasAtivas={jornadasAtivas}
+          />
+         </div>
+        </div>
+       </div>
+      ) : (
+       <div className="space-y-4 animate-in slide-in-from-bottom-4 duration-500">
+        <div className="flex items-center gap-2 text-xs font-black text-success uppercase tracking-widest bg-success/10 py-2 px-4 rounded-xl w-fit border border-success/20 shadow-sm">
+         <span className="relative flex h-2.5 w-2.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75" />
+          <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-success" />
+         </span>
+         Veículo Vinculado
+        </div>
+
+        {minhasJornadas.map((jornada) => (
+         <JornadaCard
+          key={jornada.id}
+          jornada={jornada}
+          onJornadaFinalizada={() => refetchJornadas()}
+         />
+        ))}
+       </div>
+      )}
+
+      {/* === ACESSO RÁPIDO (Visível apenas em DESKTOP) === */}
+      <div className="hidden lg:grid @max-md:grid-cols-1 @md:grid-cols-2 gap-4 pt-2">
+       <h2 className="lg:col-span-2 text-[10px] font-black text-text-secondary uppercase tracking-[0.2em]">
+        Acesso Rápido
+       </h2>
+
+       {[
+        { icon: Fuel, label: 'Abastecimento', sub: 'Lançar combustível ou aditivo', accent: 'text-warning-600 dark:text-warning bg-warning/10', border: 'hover:border-warning/30', onClick: () => setModalAbastecimentoOpen(true) },
+        { icon: AlertTriangle, label: 'Reportar Defeito', sub: 'Problema no veículo? Envie para a base', accent: 'text-error bg-error/10', border: 'hover:border-error/30', onClick: () => setModalDefeitoOpen(true) },
+        { icon: FileText, label: 'Licenças', sub: 'Documentos legais KLIN e ASTs', accent: 'text-info bg-info/10', border: 'hover:border-info/30', onClick: () => setModalDocumentosOpen(true) },
+        { icon: History, label: 'Histórico', sub: 'Registro pessoal de turnos anteriores', accent: 'text-purple-600 dark:text-purple-400 bg-purple-500/10', border: 'hover:border-purple-500/30', onClick: () => setModalHistoricoOpen(true) },
+       ].map(({ icon: Icon, label, sub, accent, border, onClick }) => (
+        <Button
+         variant="ghost"
+         key={label}
+         onClick={() => {
+          vibrateLight();
+          onClick();
+         }}
+         className={cn(
+          "flex h-auto items-center gap-4 glass-premium border border-border/20 p-5 rounded-[2rem] shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left group focus-ring touch-target !justify-start !whitespace-normal",
+          border
+         )}
+        >
+         <div className={cn("p-3.5 rounded-2xl border border-transparent shadow-inner group-hover:scale-110 transition-transform duration-300", accent)}>
+          <Icon className="w-6 h-6" />
+         </div>
+         <div className="flex-1 min-w-0 flex flex-col justify-center">
+          <span className="block font-black text-text-main tracking-tight mb-0.5 truncate">{label}</span>
+          <span className="block text-xs font-bold text-text-secondary opacity-80 truncate">{sub}</span>
+         </div>
+        </Button>
+       ))}
       </div>
-
-      {minhasJornadas.map((jornada) => (
-       <JornadaCard
-        key={jornada.id}
-        jornada={jornada}
-        onJornadaFinalizada={() => refetchJornadas()}
-       />
-      ))}
-     </div>
+     </>
     )}
-
-    {/* === ACESSO RÁPIDO (Visível apenas em DESKTOP) === */}
-    <div className="hidden lg:grid @max-md:grid-cols-1 @md:grid-cols-2 gap-4 pt-2">
-     <h2 className="lg:col-span-2 text-[10px] font-black text-text-secondary uppercase tracking-[0.2em]">
-      Acesso Rápido
-     </h2>
-
-     {[
-      { icon: Fuel, label: 'Abastecimento', sub: 'Lançar combustível ou aditivo', accent: 'text-warning-600 dark:text-warning bg-warning/10', border: 'hover:border-warning/30', onClick: () => setModalAbastecimentoOpen(true) },
-      { icon: AlertTriangle, label: 'Reportar Defeito', sub: 'Problema no veículo? Envie para a base', accent: 'text-error bg-error/10', border: 'hover:border-error/30', onClick: () => setModalDefeitoOpen(true) },
-      { icon: FileText, label: 'Licenças', sub: 'Documentos legais KLIN e ASTs', accent: 'text-info bg-info/10', border: 'hover:border-info/30', onClick: () => setModalDocumentosOpen(true) },
-      { icon: History, label: 'Histórico', sub: 'Registro pessoal de turnos anteriores', accent: 'text-purple-600 dark:text-purple-400 bg-purple-500/10', border: 'hover:border-purple-500/30', onClick: () => setModalHistoricoOpen(true) },
-     ].map(({ icon: Icon, label, sub, accent, border, onClick }) => (
-      <Button
-       variant="ghost"
-       key={label}
-       onClick={() => {
-        vibrateLight();
-        onClick();
-       }}
-       className={cn(
-        "flex h-auto items-center gap-4 glass-premium border border-border/20 p-5 rounded-[2rem] shadow-sm hover:shadow-md active:scale-[0.98] transition-all text-left group focus-ring touch-target !justify-start !whitespace-normal",
-        border
-       )}
-      >
-       <div className={cn("p-3.5 rounded-2xl border border-transparent shadow-inner group-hover:scale-110 transition-transform duration-300", accent)}>
-        <Icon className="w-6 h-6" />
-       </div>
-       <div className="flex-1 min-w-0 flex flex-col justify-center">
-        <span className="block font-black text-text-main tracking-tight mb-0.5 truncate">{label}</span>
-        <span className="block text-xs font-bold text-text-secondary opacity-80 truncate">{sub}</span>
-       </div>
-      </Button>
-     ))}
-    </div>
-
    </main>
 
    {/* ─── BOTTOM NAVIGATION BAR (Mobile) ────────────────────────── */}

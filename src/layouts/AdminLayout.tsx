@@ -4,6 +4,7 @@ import {
   Menu, X, LogOut, Sun, Moon
 } from 'lucide-react';
 import { Drawer } from 'vaul'; 
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { ConfirmModal } from '../components/ui/ConfirmModal'; 
 import { Button } from '../components/ui/Button';
@@ -289,15 +290,21 @@ export function AdminLayout() {
               </header>
             )}
 
-            {/* Conteúdo das Páginas (Outlet) com Transição Suave */}
-            <div 
-              key={location.pathname} 
-              className={`flex-1 w-full max-w-[1600px] mx-auto pb-10 animate-in fade-in slide-in-from-bottom-2 duration-500 fill-mode-both ${
-                isShareMode ? 'p-0' : 'px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10'
-              }`}
-            >
-                <Outlet />
-            </div>
+            {/* Conteúdo das Páginas (Outlet) com Transição Suave Framer Motion */}
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={location.pathname} 
+                initial={{ opacity: 0, x: 20, scale: 0.98 }}
+                animate={{ opacity: 1, x: 0, scale: 1 }}
+                exit={{ opacity: 0, x: -20, scale: 0.98 }}
+                transition={{ duration: 0.25, ease: 'easeOut' }}
+                className={`flex-1 w-full max-w-[1600px] mx-auto pb-10 ${
+                  isShareMode ? 'p-0' : 'px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10'
+                }`}
+              >
+                  <Outlet />
+              </motion.div>
+            </AnimatePresence>
         </main>
       </div>
 
