@@ -151,7 +151,6 @@ const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descr
    <div className="flex flex-col justify-end flex-1 min-h-0 relative z-10 p-3 sm:p-4 min-w-0">
     <span
      className={cn(
-      //  As classes que garantem o alinhamento à esquerda, ocupação total e truncamento inteligente
       "block w-full text-left font-black text-text-main leading-none truncate transition-colors duration-300 tracking-tighter max-w-full",
       highlight 
        ? "!text-2xl sm:!text-3xl lg:!text-3xl xl:!text-4xl 2xl:!text-5xl" 
@@ -266,15 +265,18 @@ function GraficoPerformance({ dados, loading }: { dados: DadoPerformance[]; load
  );
  return (
   <ResponsiveContainer width="100%" height={280}>
-   <BarChart data={dados} margin={{ top: 10, right: 10, left: 0, bottom: 20 }} barSize={20}>
+   {/* Atualizadas as margens para left: 10 e bottom: 40 */}
+   <BarChart data={dados} margin={{ top: 10, right: 10, left: 10, bottom: 40 }} barSize={20}>
     <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
     <XAxis
      dataKey="name"
      tick={{ fill: 'var(--color-text-muted)', fontSize: 9, fontWeight: 700 }}
      axisLine={false} tickLine={false} angle={-20} textAnchor="end"
      interval={0}
+     dy={5} // Adicionado dy para descolar o texto do eixo
     />
-    <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 9, fontWeight: 700 }} axisLine={false} tickLine={false} tickFormatter={(v) => `R$${v}`} width={42} />
+    {/* Atualizado width para 60 para acomodar números maiores */}
+    <YAxis tick={{ fill: 'var(--color-text-muted)', fontSize: 9, fontWeight: 700 }} axisLine={false} tickLine={false} tickFormatter={(v) => `R$${v}`} width={60} />
     <Tooltip content={<PerformanceTooltip />} cursor={{ fill: 'var(--color-surface-hover)', radius: 8 }} />
     <Bar dataKey="cost" name="Custo Total" radius={[6, 6, 0, 0]} animationDuration={900} animationEasing="ease-out">
      {dados.map((entry, index) => (
@@ -310,7 +312,6 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
  const { data: dadosCpk = [], isLoading: loadingCpk } = useEvolucaoCpk(veiculoIdFiltro || undefined);
  const { data: dadosPerformance = [], isLoading: loadingPerformance } = usePerformanceFrota({ ano, mes });
 
- // ✨ CORREÇÃO: Tipagem explícita para DadoPerformance
  const dadosPerformanceLimpos = useMemo(() => {
   return dadosPerformance.map((d: DadoPerformance) => ({
    ...d,
