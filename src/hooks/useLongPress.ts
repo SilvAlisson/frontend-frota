@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { hapticLight } from '../lib/haptics';
+import { haptics } from '../utils/haptics';
 
 interface UseLongPressOptions {
   isPreventDefault?: boolean;
@@ -15,7 +15,9 @@ export function useLongPress({
   onClick
 }: UseLongPressOptions) {
   const [longPressTriggered, setLongPressTriggered] = useState(false);
-  const timeout = useRef<NodeJS.Timeout>();
+  
+  // SOLUÇÃO DO ERRO TS2503: Tipagem dinâmica baseada no retorno nativo do setTimeout do ambiente
+  const timeout = useRef<ReturnType<typeof setTimeout>>();
   const target = useRef<EventTarget>();
 
   const start = useCallback(
@@ -25,7 +27,8 @@ export function useLongPress({
 
       timeout.current = setTimeout(() => {
         setLongPressTriggered(true);
-        hapticLight();
+        // CORREÇÃO: Alinhado com a chamada padrão de feedback tátil do seu sistema
+        haptics.light();
         onLongPress(event);
       }, delay);
     },
