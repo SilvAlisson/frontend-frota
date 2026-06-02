@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell, ResponsiveContainer, Tooltip as RechartsTooltip
 } from 'recharts';
@@ -10,11 +10,8 @@ import { Button } from './ui/Button';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 
-if (typeof Highcharts3D === 'function') {
-  Highcharts3D(Highcharts);
-} else if (typeof (Highcharts3D as any)?.default === 'function') {
-  (Highcharts3D as any).default(Highcharts);
-}
+// @ts-expect-error
+Highcharts3D(Highcharts);
 
 const HIGHCHARTS_COLORS = [
   '#2F80ED', '#EB5757', '#7CB518', '#8E44AD', '#F2994A', '#06b6d4', 
@@ -31,26 +28,19 @@ interface ModalAnalyticsProps {
 }
 
 export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAnalyticsProps) {
-  // Estados de Navegação Drill-Down
   const [level, setLevel] = useState<1 | 2 | 3 | 4>(1);
   const [loading, setLoading] = useState(false);
 
-  // Dados dos Níveis
   const [dataNivel1, setDataNivel1] = useState<any[]>([]);
   const [dataNivel2, setDataNivel2] = useState<any[]>([]);
   const [dataNivel3, setDataNivel3] = useState<any[]>([]);
   const [dataNivel4, setDataNivel4] = useState<any[]>([]);
 
-  // Seleções Feitas pelo Usuário
   const [selectedVeiculo, setSelectedVeiculo] = useState<string | null>(null);
   const [selectedVeiculoId, setSelectedVeiculoId] = useState<string | null>(null);
   const [selectedCategoria, setSelectedCategoria] = useState<string | null>(null);
   const [selectedMes, setSelectedMes] = useState<string | null>(null);
   
-  // Controle de Filtros do BarChart
-  const [filtroTempo, setFiltroTempo] = useState<'MENSAL' | 'TRIMESTRAL' | 'ANUAL'>('MENSAL');
-
-  // Escutar Abertura e Carregar Nível 1
   useEffect(() => {
     if (isOpen && metric) {
       setLevel(1);
@@ -58,7 +48,6 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
       setSelectedVeiculoId(null);
       setSelectedCategoria(null);
       setSelectedMes(null);
-      setSelectedCategoria(null);
       loadMacroData();
     }
   }, [isOpen, metric]);
@@ -82,7 +71,6 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
         const { data } = await api.get('/drilldown/macro', { params: { categoria: 'ADITIVO' } });
         setDataNivel1(data);
       }
-      // Fakes/Mock para as outras métricas provisoriamente
       else if (metric === 'OFICINA') {
         const { data } = await api.get('/drilldown/macro', { params: { categoria: 'MANUTENCAO' } });
         setDataNivel1(data);
@@ -269,7 +257,6 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
             params: { veiculoId: selectedVeiculoId, categoria: reqCategoria, mes: entry.name } 
         });
         
-        // Fallback em caso de dados vazios para não quebrar o gráfico (mas preferencialmente vazio  vazio)
         const finalData = data.length > 0 ? data : [
           { name: 'Nenhum fornecedor encontrado', value: entry.value }
         ];
@@ -279,8 +266,7 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
       }
     } catch (err) {
       console.error(err);
-      // Fallback de erro
-      setDataNivel4([{ name: 'Erro de conexǜo', value: 1 }]);
+      setDataNivel4([{ name: 'Erro de conexão', value: 1 }]);
       setLevel(4);
     } finally {
       setLoading(false);
@@ -295,14 +281,14 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
         type: "pie",
         backgroundColor: "transparent",
         animation: true,
-        spacing: [5, 5, 5, 5], // Minimiza o espaçamento morto da borda para deixar o gráfico explodir
+        spacing: [40, 10, 40, 10], 
         options3d: {
           enabled: true,
           alpha: 50,
           beta: 0,
         },
         style: {
-          fontFamily: "Segoe UI",
+          fontFamily: "var(--font-sans)",
         }
       },
       title: {
@@ -313,13 +299,15 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
       exporting: { enabled: false },
       tooltip: {
         useHTML: true,
-        backgroundColor: "#ffffff",
+        backgroundColor: "var(--color-surface)",
+        borderColor: "var(--color-border)",
         borderRadius: 12,
         borderWidth: 1,
         shadow: true,
         style: {
           fontSize: "14px",
-          fontFamily: "Segoe UI",
+          fontFamily: "var(--font-sans)",
+          color: "var(--color-text-main)"
         },
         formatter: function(this: any) {
           const percentage = ((this.point.y as number) / total) * 100;
@@ -334,13 +322,15 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
       },
       plotOptions: {
         pie: {
+          size: '85%',
+          center: ['50%', '45%'],
           allowPointSelect: true,
           cursor: "pointer",
           depth: 55,
-          showInLegend: true, // Adiciona as fatias à legenda
+          showInLegend: true,
           slicedOffset: 12,
-          borderWidth: 2,
-          borderColor: "#ffffff",
+          borderWidth: 1.5,
+          borderColor: "var(--color-surface)",
           edgeWidth: 1,
           edgeColor: "rgba(0,0,0,0.5)",
           shadow: {
@@ -353,7 +343,7 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
           states: {
             inactive: { opacity: 1 },
             hover: {
-              brightness: 0.15, // Retornando o clareamento
+              brightness: 0.15,
               halo: {
                 size: 15,
                 attributes: { fill: "rgba(255,255,255,0.2)" }
@@ -361,7 +351,7 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
             }
           },
           dataLabels: {
-            enabled: false, // Remove as linhas e textos em cima do gráfico
+            enabled: false,
           },
           point: {
             events: {
@@ -376,13 +366,13 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
         enabled: true,
         useHTML: true,
         itemStyle: {
-          color: '#ffffff',
+          color: 'var(--color-text-main)',
           fontSize: '14px',
           fontWeight: 'bold',
-          fontFamily: 'Segoe UI'
+          fontFamily: 'var(--font-sans)'
         },
         itemHoverStyle: {
-          color: '#a0a0a0'
+          color: 'var(--color-text-muted)'
         },
         labelFormatter: function(this: any) {
           const percentage = ((this.y as number) / total) * 100;
@@ -394,13 +384,12 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
           type: "pie",
           data: data.map((item: any, index: number) => {
             const baseColor = HIGHCHARTS_COLORS[index % HIGHCHARTS_COLORS.length];
-            // Criando cores bem escuras para contraste forte e impressão fotorealista
             const color2 = Highcharts.color(baseColor).brighten(-0.5).get('rgb');
 
             return {
               name: item.name,
               y: item.value,
-              sliced: true, // TRUE para todas: Força um gap fixo entre TODAS as fatias!
+              sliced: true, 
               formattedValue: metric === 'KM_TOTAL' ? `${item.value.toLocaleString('pt-BR')} km` : metric === 'EFICIENCIA' ? `${item.value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km/l` : metric === 'CUSTO_KM' ? `${formatBRL(item.value)} / km` : formatBRL(item.value),
               customData: item,
               color: {
@@ -410,8 +399,8 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
                   r: 0.9,
                 },
                 stops: [
-                  [0, Highcharts.color(baseColor).brighten(0.2).get('rgb')], // Ponto focal luminoso
-                  [1, color2], // Extremidades muito escuras
+                  [0, Highcharts.color(baseColor).brighten(0.2).get('rgb')],
+                  [1, color2],
                 ],
               }
             };
@@ -489,14 +478,22 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
                 <div className="w-full h-full flex flex-col">
                   <div className="flex-1 mt-4" style={{ width: '100%', height: '450px' }}>
                     <ResponsiveContainer width="99%" height={450}>
-                      {/* Filtra os meses dinamicamente para mostrar apenas de Janeiro até o mês atual */}
                       <BarChart data={dataNivel3.slice(0, new Date().getMonth() + 1)} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
                         <XAxis dataKey="name" stroke="var(--color-text-muted)" tick={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} />
                         <YAxis stroke="var(--color-text-muted)" tick={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500 }} axisLine={false} tickLine={false} tickFormatter={(v) => metric === 'KM_TOTAL' ? `${v} km` : metric === 'EFICIENCIA' ? `${v.toFixed(1)} km/l` : metric === 'CUSTO_KM' ? `${formatBRL(v)} / km` : formatBRL(v)} width={90} />
                         <RechartsTooltip 
                           cursor={{fill: 'var(--color-surface-hover)', opacity: 0.5}} 
-                          formatter={(value: number) => metric === 'KM_TOTAL' ? `${value.toLocaleString('pt-BR')} km` : metric === 'EFICIENCIA' ? `${value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km/l` : metric === 'CUSTO_KM' ? `${formatBRL(value)} / km` : formatBRL(value)} 
+                          formatter={(value: number | string | undefined) => {
+                            const v = Number(value ?? 0);
+                            return metric === 'KM_TOTAL' 
+                                ? `${v.toLocaleString('pt-BR')} km` 
+                                : metric === 'EFICIENCIA' 
+                                ? `${v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km/l` 
+                                : metric === 'CUSTO_KM' 
+                                ? `${formatBRL(v)} / km` 
+                                : formatBRL(v);
+                          }} 
                           contentStyle={{ borderRadius: '1rem', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', fontFamily: 'var(--font-mono)', color: 'var(--text-main)' }}
                         />
                         <Bar 
@@ -510,7 +507,7 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
                               handleSliceClickNivel3(data);
                           }}
                         >
-                          {dataNivel3.map((entry, index) => (
+                          {dataNivel3.map((_, index) => (
                             <Cell key={`cell-${index}`} fill={HIGHCHARTS_COLORS[index % HIGHCHARTS_COLORS.length]} />
                           ))}
                         </Bar>
