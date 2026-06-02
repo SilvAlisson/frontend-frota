@@ -26,7 +26,8 @@ export function MobileCardWithActions({
 
   const longPressProps = useLongPress({
     delay: 400,
-    onLongPress: (e) => {
+    // REMOVIDO o "e" daqui:
+    onLongPress: () => {
       // Abre o bottom sheet se houver alguma ação disponível
       if (onEditar || onExcluir || onVerDetalhes) {
         setOpen(true);

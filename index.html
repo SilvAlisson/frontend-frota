@@ -8,20 +8,9 @@
   <meta name="description" content="KLIN Frota — Sistema integrado de gestão de frota, jornadas, manutenções e abastecimentos." />
   <meta name="theme-color" content="#52638a" />
 
-  <!-- Service Worker Removido: Agora gerenciado pelo vite-plugin-pwa -->
-
-  <!--
-    ✅ Estratégia de Font Loading Otimizada (Performance Optimizer)
-    1. preconnect: Abre conexão TCP/TLS com Google Fonts antes do browser precisar
-    2. preload:    Prioriza o download do CSS de fontes (High Priority Resource Hint)
-    3. onload:     media="print" → onload="this.media='all'" = carregamento NÃO-BLOQUEANTE
-       Isso elimina o render-blocking que causava +200ms no FCP em conexões lentas
-    4. noscript:   Fallback seguro para ambientes sem JavaScript
-  -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
-  <!-- Inter (Dados Numéricos e Corpo) + Outfit (Headers) + JetBrains Mono -->
   <link rel="preload"
     href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
     as="style"
@@ -32,6 +21,34 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap"
     />
   </noscript>
+
+  <script>
+    window.addEventListener('error', function(e) {
+      // Verifica se a falha ocorreu no carregamento de um <script> da pasta /assets/
+      if (e.target && e.target.tagName === 'SCRIPT' && e.target.src && e.target.src.includes('/assets/')) {
+        console.warn('Detectada versão fantasma do sistema. Limpando cache e atualizando...');
+        
+        // Impede que o navegador entre em um loop infinito de recarregamento
+        if (!sessionStorage.getItem('klin_app_reloaded')) {
+          sessionStorage.setItem('klin_app_reloaded', '1');
+          
+          // Remove o cache do PWA que estava segurando o HTML velho
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(regs) {
+              for (var i = 0; i < regs.length; i++) {
+                regs[i].unregister();
+              }
+              window.location.reload(true);
+            }).catch(function() {
+              window.location.reload(true);
+            });
+          } else {
+            window.location.reload(true);
+          }
+        }
+      }
+    }, true); 
+  </script>
 
   <title>KLIN - Gestão de Frota</title>
 </head>

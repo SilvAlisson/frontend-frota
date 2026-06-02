@@ -163,7 +163,7 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
             </span>
           </div>
         }
-        description="Gestão central de documentação regulatória, laudos e licenças ambientais."
+        subtitle="Gestão central de documentação regulatória, laudos e licenças ambientais."
         extraAction={
           !somenteLeitura && !modoAdicionar ? (
             <Button onClick={() => setModoAdicionar(true)} icon={<Plus className="w-4 h-4" />} className="shadow-button hover:shadow-float-primary w-full sm:w-auto h-11">

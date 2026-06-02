@@ -120,7 +120,7 @@ export function MinhaEquipe({ usuarios, jornadasAbertas, onUpdate }: MinhaEquipe
 
       {usuarioParaQr && (
         <ModalQrCode
-          user={usuarioParaQr}
+          user={{ ...usuarioParaQr, loginToken: usuarioParaQr.loginToken ?? undefined }}
           onClose={() => setUsuarioParaQr(null)}
           onUpdate={() => {
             if (onUpdate) onUpdate();

@@ -162,7 +162,7 @@ export function GestaoProdutos() {
          </span>
        </div>
      }
-     description="Gestão de serviços de oficina, consumíveis e peças para a frota."
+     subtitle="Gestão de serviços de oficina, consumíveis e peças para a frota."
      extraAction={
        modo === 'listando' ? (
          <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0">

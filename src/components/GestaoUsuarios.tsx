@@ -175,7 +175,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
         {/* HEADER DA PÁGINA (Padrão KLIN Elite) */}
         <PageHeader
           title="Diretório de Equipe"
-          description="Gestão central de acessos, motoristas e Equipe técnica."
+          subtitle="Gestão central de acessos, motoristas e Equipe técnica."
           extraAction={
             <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3 items-end mt-4 sm:mt-0">
               <div className="w-full sm:w-72">
@@ -321,7 +321,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
       {usuarioParaQr && (
         <ModalQrCode
-          user={usuarioParaQr}
+          user={{ ...usuarioParaQr, loginToken: usuarioParaQr.loginToken ?? undefined }}
           onClose={() => setUsuarioParaQr(null)}
           onUpdate={() => refetch()}
         />

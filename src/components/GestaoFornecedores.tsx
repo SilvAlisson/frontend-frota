@@ -95,7 +95,7 @@ export function GestaoFornecedores() {
     {/* CABEÇALHO */}
     <PageHeader
      title="Parceiros & Fornecedores"
-     description="Gerencie oficinas, postos de combustível e prestadores de serviço."
+     subtitle="Gerencie oficinas, postos de combustível e prestadores de serviço."
      extraAction={
        modo === 'listando' ? (
          <Button

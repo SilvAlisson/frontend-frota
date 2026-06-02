@@ -32,7 +32,7 @@ export function InstallPromptBanner() {
               Adicionar à Tela Inicial
             </h4>
             <p className="text-xs text-text-secondary leading-snug pr-4">
-              Instale o aplicativo Clínica do Caminhão para acesso rápido, offline e melhor performance.
+              Instale o aplicativo Frota KLIN para acesso rápido, login com Biometria e melhor performance.
             </p>
           </div>
         </div>
