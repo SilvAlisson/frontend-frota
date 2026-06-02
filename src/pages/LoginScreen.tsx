@@ -11,6 +11,7 @@ import { useLogin } from '../hooks/useLogin';
 import { hapticError } from '../lib/haptics';
 import { useWebAuthn } from '../hooks/useWebAuthn';
 import { useAuth } from '../contexts/AuthContext';
+import { LockScreen } from '../components/LockScreen';
 
 // --- SCHEMAS DE VALIDAÇÃO (ZOD) ---
 const loginSchema = z.object({
@@ -64,6 +65,21 @@ export function LoginScreen() {
       login({ token, user });
     });
   };
+
+  // --- UI: LOCK SCREEN NATIVA ---
+  const [showLockScreen, setShowLockScreen] = useState(() => {
+    return localStorage.getItem('hasPasskey') === 'true';
+  });
+
+  if (showLockScreen) {
+    return (
+      <LockScreen 
+        isAuthenticating={isAuthenticating}
+        onUnlock={onBiometryClick}
+        onUsePassword={() => setShowLockScreen(false)}
+      />
+    );
+  }
 
   // --- UI: FULL SCREEN LOADER (Apenas para URL Magic Link) ---
   if (isMagicLoggingIn || authLoading) {

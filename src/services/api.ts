@@ -160,11 +160,6 @@ api.interceptors.response.use(
     if (error.response?.status && error.response.status >= 500) {
       toast.error('O sistema está momentaneamente instável. Já estamos atuando, tente novamente em alguns instantes.');
       (error as CustomAxiosError)._toastHandled = true;
-    } else if (error.response?.status === 400) {
-      const responseData = error.response.data as { message?: string, error?: string };
-      const msgAtrelada = responseData?.message || responseData?.error;
-      toast.error(typeof msgAtrelada === 'string' ? msgAtrelada : 'Não foi possível concluir a ação. Revise os dados informados.');
-      (error as CustomAxiosError)._toastHandled = true;
     }
 
     logToAuditTracker(error, duration, userLogadoInfo, method, urlChamada);

@@ -6,7 +6,13 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
+      strategies: 'injectManifest',
+      srcDir: 'src',
+      filename: 'sw.js',
       registerType: 'autoUpdate',
+      injectManifest: {
+        injectionPoint: undefined
+      },
       includeAssets: ['logo.png', 'vite.svg'],
       manifest: {
         name: 'KLIN - Gestão de Frota',

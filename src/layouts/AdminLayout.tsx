@@ -16,6 +16,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 import type { User } from '../types';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 
 // Tipo local para os logs de auditoria do polling
 interface SystemLog {
@@ -156,8 +157,36 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // ✨ Instancia o Hook do Tema
+  // 🌗 Instancia o Hook do Tema
   const { theme, toggleTheme } = useTheme();
+
+  // 🔔 Hook de Push Notifications
+  const { isSupported, subscription, subscribeToPush } = usePushNotifications();
+
+  // Ativação Automática do Push para ADMINS
+  useEffect(() => {
+    if (user?.role === 'ADMIN' && isSupported && !subscription) {
+      // Pequeno delay para não assustar no primeiro frame
+      const timeout = setTimeout(() => {
+        const jaFoiAvisado = sessionStorage.getItem('pushPrompted');
+        if (!jaFoiAvisado && Notification.permission === 'default') {
+          toast.info("Ativar Alertas Nativos?", {
+            description: "Receba notificações sobre documentos e manutenções a vencer no seu celular.",
+            action: {
+              label: "Ativar",
+              onClick: () => subscribeToPush()
+            },
+            duration: 10000
+          });
+          sessionStorage.setItem('pushPrompted', 'true');
+        } else if (Notification.permission === 'granted' && !subscription) {
+          // Se já tem permissão mas perdeu a assinatura (limpeza de cache), reassina silenciosamente
+          subscribeToPush();
+        }
+      }, 2000);
+      return () => clearTimeout(timeout);
+    }
+  }, [user, isSupported, subscription, subscribeToPush]);
 
   // Detecção robusta de Share Mode (suporta BrowserRouter e HashRouter)
   const isShareMode = 

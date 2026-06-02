@@ -32,6 +32,7 @@ export function useWebAuthn() {
 
       if (verification && verification.verified) {
         toast.success("Biometria registrada com sucesso neste aparelho!");
+        localStorage.setItem('hasPasskey', 'true');
         return true;
       } else {
         toast.error("Falha ao validar biometria no servidor.");
@@ -75,6 +76,7 @@ export function useWebAuthn() {
       });
 
       if (verification && verification.verified) {
+        localStorage.setItem('hasPasskey', 'true');
         toast.success(`Bem-vindo(a) de volta, ${verification.user.nome}!`);
         onSuccess(verification.token, verification.user);
         return true;

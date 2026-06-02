@@ -57,7 +57,7 @@ export function GraficoKmVeiculo({ dados }: GraficoKmVeiculoProps) {
             <div className="flex-1 w-full min-h-[240px] relative z-10">
                 <ResponsiveContainer width="100%" height="100%">
                     {/* Mudamos de LineChart para AreaChart para usar o gradiente */}
-                    <AreaChart data={dados} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+                    <AreaChart data={dados} margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
                         
                         {/* 🌈 Definição do Gradiente */}
                         <defs>

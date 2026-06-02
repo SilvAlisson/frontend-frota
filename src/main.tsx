@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider, QueryCache, MutationCache } from '@tanstack/react-query';
@@ -94,15 +94,13 @@ const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');
 
 createRoot(rootElement).render(
-  <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <AuthProvider>
-          <ErrorBoundary>
-            <App />
-          </ErrorBoundary>
-        </AuthProvider>
-      </BrowserRouter>
-    </QueryClientProvider>
-  </StrictMode>,
+  <QueryClientProvider client={queryClient}>
+    <BrowserRouter>
+      <AuthProvider>
+        <ErrorBoundary>
+          <App />
+        </ErrorBoundary>
+      </AuthProvider>
+    </BrowserRouter>
+  </QueryClientProvider>
 );

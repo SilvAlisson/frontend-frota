@@ -231,7 +231,7 @@ function GraficoCpk({ dados, loading }: { dados: DadoCpk[]; loading: boolean }) 
  if (loading) return <Skeleton variant="card" className="h-[280px] w-full" />;
  return (
   <ResponsiveContainer width="100%" height={280}>
-   <AreaChart data={dados} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
+   <AreaChart data={dados} margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>
     <defs>
      <linearGradient id="gradFuel" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.35} />
@@ -266,7 +266,7 @@ function GraficoPerformance({ dados, loading }: { dados: DadoPerformance[]; load
  );
  return (
   <ResponsiveContainer width="100%" height={280}>
-   <BarChart data={dados} margin={{ top: 10, right: 10, left: 10, bottom: 60 }} barSize={20}>
+   <BarChart data={dados} margin={{ top: 10, right: 40, left: 10, bottom: 60 }} barSize={20}>
     <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
     <XAxis
      dataKey="name"
