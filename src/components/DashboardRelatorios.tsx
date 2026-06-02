@@ -294,7 +294,13 @@ function GraficoPerformance({ dados, loading }: { dados: DadoPerformance[]; load
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
 
 export function DashboardRelatorios(_props: DashboardRelatoriosProps) {
-  // 🔧 REMOVIDOS: navigate e onDrillDown não eram utilizados
+
+  console.log('cn', cn);
+  console.log('NumberTicker', NumberTicker);
+  console.log('Card', Card);
+  console.log('Button', Button);
+  console.log('Select', Select);
+
   const { data: veiculos = [] } = useVeiculos();
 
   const [ano, setAno] = useState(new Date().getFullYear());
