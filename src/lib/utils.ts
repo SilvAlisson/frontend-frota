@@ -1,12 +1,6 @@
-import { type ClassValue, clsx } from "clsx";
+import clsx, { type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
-/**
- * Função CN (ClassNames):
- * 1. Condicionalmente junta classes (clsx) -> ex: loading && 'opacity-50'
- * 2. Remove conflitos do Tailwind (tailwind-merge) -> ex: 'p-4 p-2' vira 'p-2'
- * * Isso é a base de todo Design System moderno.
- */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -23,5 +17,3 @@ export const formatCurrency = (value: number | string) => {
 export const formatNumber = (value: number) => {
   return new Intl.NumberFormat("pt-BR").format(value);
 };
-
-
