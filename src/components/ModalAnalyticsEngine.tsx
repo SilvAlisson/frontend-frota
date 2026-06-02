@@ -4,14 +4,17 @@ import {
 } from 'recharts';
 import Highcharts from "highcharts";
 import HighchartsReact from "highcharts-react-official";
-import Highcharts3D from "highcharts/highcharts-3d";
+import highcharts3dModule from "highcharts/highcharts-3d";
 import { ArrowLeft, Loader2, X } from 'lucide-react';
 import { Button } from './ui/Button';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 
-// @ts-expect-error
-Highcharts3D(Highcharts);
+if (typeof highcharts3dModule === 'function') {
+  (highcharts3dModule as any)(Highcharts);
+} else if (highcharts3dModule && typeof (highcharts3dModule as any).default === 'function') {
+  (highcharts3dModule as any).default(Highcharts);
+}
 
 const HIGHCHARTS_COLORS = [
   '#2F80ED', '#EB5757', '#7CB518', '#8E44AD', '#F2994A', '#06b6d4', 

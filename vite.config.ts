@@ -39,7 +39,6 @@ export default defineConfig({
     })
   ],
   build: {
-    sourcemap: true, // <--- ADICIONE ESTA LINHA PARA A VERCEL GERAR O MAPA
     rollupOptions: {
       output: {
         manualChunks: {

@@ -310,7 +310,7 @@ export function DashboardRelatorios({ onDrillDown }: DashboardRelatoriosProps) {
  const { data: dadosCpk = [], isLoading: loadingCpk } = useEvolucaoCpk(veiculoIdFiltro || undefined);
  const { data: dadosPerformance = [], isLoading: loadingPerformance } = usePerformanceFrota({ ano, mes });
 
- // ✨ CORREÇÃO: Tipagem explícita para DadoPerformance
+
  const dadosPerformanceLimpos = useMemo(() => {
   return dadosPerformance.map((d: DadoPerformance) => ({
    ...d,
