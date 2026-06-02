@@ -284,7 +284,11 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
         type: "pie",
         backgroundColor: "transparent",
         animation: true,
-        spacing: [40, 10, 40, 10], 
+        // Removemos o espaçamento nativo que estava espremendo o gráfico
+        spacingTop: 10,
+        spacingBottom: 0,
+        spacingLeft: 0,
+        spacingRight: 0,
         options3d: {
           enabled: true,
           alpha: 50,
@@ -325,8 +329,8 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
       },
       plotOptions: {
         pie: {
-          size: '85%',
-          center: ['50%', '45%'],
+          size: '70%', // FIX: Reduzido de 85% para dar espaço real ao 3D e não cortar a base
+          center: ['50%', '38%'], // FIX: Levemente deslocado para cima para balancear com a legenda
           allowPointSelect: true,
           cursor: "pointer",
           depth: 55,
@@ -368,11 +372,15 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
       legend: {
         enabled: true,
         useHTML: true,
+        align: 'center',
+        verticalAlign: 'bottom',
+        y: -15, // FIX: Puxa a legenda para cima, removendo o vácuo inferior
         itemStyle: {
           color: 'var(--color-text-main)',
-          fontSize: '14px',
+          fontSize: '13px', // FIX: Reduzido levemente para caber melhor
           fontWeight: 'bold',
-          fontFamily: 'var(--font-sans)'
+          fontFamily: 'var(--font-sans)',
+          paddingBottom: '4px'
         },
         itemHoverStyle: {
           color: 'var(--color-text-muted)'
@@ -445,7 +453,7 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 p-4 sm:p-8 relative flex items-center justify-center overflow-auto">
+        <div className="flex-1 p-4 sm:p-8 relative overflow-auto">
           {loading ? (
             <div className="flex flex-col items-center justify-center text-primary">
               <Loader2 className="w-12 h-12 animate-spin mb-4" />
