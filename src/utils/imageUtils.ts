@@ -1,14 +1,12 @@
 export const comprimirImagem = (arquivo: File): Promise<File> => {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(arquivo);
-
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(arquivo);
+    
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      
+      const canvas = document.createElement('canvas');
         const MAX_WIDTH = 1200;
         const MAX_HEIGHT = 1600;
 
@@ -51,8 +49,11 @@ export const comprimirImagem = (arquivo: File): Promise<File> => {
         }, 'image/jpeg', 0.7);
       };
 
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
+      img.onerror = (err) => {
+        URL.revokeObjectURL(objectUrl);
+        reject(err);
+      };
+      
+      img.src = objectUrl;
   });
 };

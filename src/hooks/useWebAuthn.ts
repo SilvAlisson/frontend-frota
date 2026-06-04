@@ -82,7 +82,7 @@ export function useWebAuthn() {
             } else if (error?.name === 'InvalidStateError') {
                 toast.error('Este dispositivo já tem biometria cadastrada.');
             } else {
-                toast.error('Erro no sensor biométrico do aparelho.');
+                toast.error(`Erro no sensor: ${error?.message || error?.name || 'Desconhecido'}`);
             }
             if (import.meta.env.DEV) console.error('[useWebAuthn] registerDevice:', error);
             return false;
