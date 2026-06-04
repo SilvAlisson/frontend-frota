@@ -52,8 +52,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (data.token) {
         sessionStorage.setItem('authToken', data.token);
     }
-    sessionStorage.setItem('authUser', JSON.stringify(data.user));
-    setManualUser(data.user);
+    
+    // Mapeia image para fotoUrl antes de salvar na memória/state
+    const userData = { ...data.user };
+    if ((userData as any).image && !userData.fotoUrl) {
+        userData.fotoUrl = (userData as any).image;
+    }
+
+    sessionStorage.setItem('authUser', JSON.stringify(userData));
+    setManualUser(userData);
   };
 
   const logout = async () => {
