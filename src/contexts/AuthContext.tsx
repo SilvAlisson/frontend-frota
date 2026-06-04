@@ -20,7 +20,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedUser = sessionStorage.getItem('authUser');
     if (storedUser) {
         try {
-            return JSON.parse(storedUser);
+            const parsed = JSON.parse(storedUser);
+            if (parsed && typeof parsed === 'object') {
+                if (parsed.image && !parsed.fotoUrl) {
+                    parsed.fotoUrl = parsed.image;
+                }
+            }
+            return parsed;
         } catch {
             return null;
         }
