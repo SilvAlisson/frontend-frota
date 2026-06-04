@@ -10,7 +10,8 @@ export const authClient = createAuthClient({
         onRequest: (context) => {
             const token = sessionStorage.getItem('authToken');
             if (token) {
-                context.request.headers.set('Authorization', `Bearer ${token}`);
+                // context contains headers directly, not context.request.headers
+                context.headers.set('Authorization', `Bearer ${token}`);
             }
         }
     },
