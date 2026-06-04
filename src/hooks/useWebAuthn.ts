@@ -67,7 +67,8 @@ export function useWebAuthn() {
             });
 
             if (res?.error) {
-                toast.error('Falha ao registrar biometria no servidor.');
+                console.error('[useWebAuthn] registerDevice error from server:', res.error);
+                toast.error(`Falha ao registrar biometria: ${res.error.message || res.error.statusText || 'Erro no servidor'}`);
                 return false;
             }
 
