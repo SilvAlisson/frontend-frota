@@ -1,6 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
-import { toast } from 'sonner';
 
 export interface VeiculoRanking {
   id: string;

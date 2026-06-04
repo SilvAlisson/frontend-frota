@@ -159,7 +159,8 @@ api.interceptors.response.use(
     }
 
     if (error.response?.status && error.response.status >= 400 && error.response.status < 500 && ![401, 403, 429].includes(error.response.status)) {
-      const serverMsg = error.response.data?.error || error.response.data?.message;
+      const responseData = error.response.data as { error?: string; message?: string } | undefined;
+      const serverMsg = responseData?.error || responseData?.message;
       toast.error(serverMsg || 'Falha na requisição. Verifique os dados e tente novamente.');
       (error as CustomAxiosError)._toastHandled = true;
     }

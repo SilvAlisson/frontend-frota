@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
-import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import type { DadosEvolucaoKm, Veiculo, OrdemServico, Abastecimento } from '../types';
 

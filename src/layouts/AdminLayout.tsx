@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Menu, X, LogOut, Sun, Moon, UserCircle
+  Menu, X, LogOut, Sun, Moon
 } from 'lucide-react';
 import { Drawer } from 'vaul'; 
 import { motion, AnimatePresence } from 'framer-motion';
