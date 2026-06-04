@@ -11,6 +11,7 @@ import {
   ChevronRight 
 } from 'lucide-react';
 import autoAnimate from '@formkit/auto-animate';
+import type { Jornada } from '../types/operacoes';
 
 // --- DESIGN SYSTEM ---
 import { Input } from './ui/Input';
@@ -35,7 +36,7 @@ function formatDuration(dateString: string) {
 }
 
 interface GestaoJornadasProps {
-  jornadasAbertas: any[];
+  jornadasAbertas: Jornada[];
   onJornadaFinalizadaManualmente: (id?: string) => void;
   isLoading?: boolean;
 }
@@ -46,7 +47,7 @@ export function GestaoJornadas({
   isLoading = false
 }: GestaoJornadasProps) {
   
-  const [jornadaParaEncerrar, setJornadaParaEncerrar] = useState<any | null>(null);
+  const [jornadaParaEncerrar, setJornadaParaEncerrar] = useState<Jornada | null>(null);
   const [jornadaEditandoId, setJornadaEditandoId] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
 

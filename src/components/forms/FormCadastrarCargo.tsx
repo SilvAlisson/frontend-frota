@@ -43,7 +43,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
     control,
     handleSubmit,
     formState: { errors, isSubmitting }
-  } = useForm<CargoFormInput, any, CargoFormOutput>({
+  } = useForm<CargoFormInput, unknown, CargoFormOutput>({
     resolver: zodResolver(cargoSchema),
     defaultValues: {
       nome: '',
@@ -81,7 +81,10 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                 setTimeout(onSuccess, 500);
                 return 'Cargo e Matriz de Treinamento Registrados!';
             },
-            error: (err: any) => err.response?.data?.error || 'Erro ao salvar cargo.'
+            error: (err: unknown) => {
+              const apiErr = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+              return apiErr || 'Erro ao salvar cargo.';
+            }
         });
     } catch (e) {
         if (import.meta.env.DEV) console.error(e);

@@ -5,6 +5,8 @@ import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { TooltipProvider } from './components/ui/Tooltip';
 import { NetworkStatus } from './components/ui/NetworkStatus';
 import { InstallPromptBanner } from './components/InstallPromptBanner';
+import { ModalProvider } from './components/ui/ModalProvider';
+import { BiometryOnboardingBanner } from './components/BiometryOnboardingBanner';
 
 // 🛠️ DevTools: Carregado dinamicamente APENAS em desenvolvimento.
 // Em produção, o Vite faz tree-shaking e ZERO bytes desta lib vão para o bundle.
@@ -46,6 +48,12 @@ function AppContent() {
 
       {/* Banner de Instalação PWA Móvel */}
       <InstallPromptBanner />
+
+      {/* Sugestão de cadastro biométrico pós-login */}
+      <BiometryOnboardingBanner />
+
+      {/* Orquestrador Global de Modais */}
+      <ModalProvider />
     </div>
   );
 }

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { api } from '../services/api';
-import { toast } from 'sonner';
+import { useProdutos, type Produto, type AddProdutoData } from '../hooks/useProdutos';
+import { useModalStore } from '../hooks/useModalStore';
 import { Settings, Package, Sparkles, Trash2, Lightbulb, Box, Loader2, Droplets, Grid } from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
@@ -12,12 +12,10 @@ import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { Modal } from './ui/Modal';
 import { Card } from './ui/Card';
-import { ConfirmModal } from './ui/ConfirmModal';
 import { Callout } from './ui/Callout';
 import { EmptyState } from './ui/EmptyState';
 import { Skeleton } from './ui/Skeleton';
 import { hapticError } from '../lib/haptics';
-import type { Produto } from '../types';
 
 const tiposServico = ["SERVICO", "PECA", "LAVAGEM", "OUTRO"] as const;
 
@@ -44,11 +42,9 @@ interface ModalGerenciarServicosProps {
 }
 
 export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarServicosProps) {
-  const [servicos, setServicos] = useState<Produto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { produtos, loading, deleteProduto, addProduto } = useProdutos();
+  const { openModal, closeModal } = useModalStore();
   
-  // --- ESTADOS DO MODAL DE EXCLUSÃO ---
-  const [itemToDelete, setItemToDelete] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const {
@@ -56,7 +52,7 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
     handleSubmit,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm<ServicoFormInput, any, ServicoFormOutput>({
+  } = useForm<ServicoFormInput, unknown, ServicoFormOutput>({
     resolver: zodResolver(servicoSchema),
     defaultValues: {
       nome: '',
@@ -66,64 +62,46 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
     mode: 'onBlur'
   });
 
-  // --- CARREGAR DADOS ---
-  const fetchServicos = async () => {
-    setLoading(true);
-    try {
-      const response = await api.get<Produto[]>('/produtos');
-      const filtrados = response.data
-        .filter(p => ['SERVICO', 'PECA', 'LAVAGEM', 'OUTRO'].includes(p.tipo))
-        .sort((a, b) => a.nome.localeCompare(b.nome));
+  // Filtrar apenas os tipos relevantes para esta modal
+  const servicos = useMemo(() => {
+    return produtos
+      .filter(p => ['SERVICO', 'PECA', 'LAVAGEM', 'OUTRO'].includes(p.tipo))
+      .sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [produtos]);
 
-      setServicos(filtrados);
-    } catch (err) {
-      if (import.meta.env.DEV) console.error(err);
-      toast.error('Falha ao acessar o catálogo de serviços.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchServicos();
-  }, []);
-
-  // --- ADICIONAR ---
   const onSubmit = async (data: ServicoFormOutput) => {
     try {
-      const response = await api.post('/produtos', data);
-      toast.success(`Catálogo atualizado com sucesso!`);
-
+      const payload: AddProdutoData = {
+        nome: data.nome,
+        tipo: data.tipo,
+        unidadeMedida: data.unidadeMedida
+      };
+      const response = await addProduto(payload);
       reset();
-      fetchServicos();
-
       if (onItemAdded) {
-        onItemAdded(response.data);
+        onItemAdded(response);
       }
-    } catch (err: any) {
-      if (err.response?.status === 409) {
-        toast.error('Este item já existe no catálogo.');
-      } else {
-        toast.error('Ocorreu um erro ao registar o item.');
-      }
+    } catch (err) {
+      // O hook já dispara o toast e faz log
     }
   };
 
-  // --- REMOVER (NOVA LÓGICA SEM WINDOW.CONFIRM) ---
-  const executeDelete = async () => {
-    if (!itemToDelete) return;
-    
-    setDeletingId(itemToDelete);
-    try {
-      await api.delete(`/produtos/${itemToDelete}`);
-      setServicos(prev => prev.filter(p => p.id !== itemToDelete));
-      toast.success('Item removido do catálogo.');
-    } catch (err) {
-      toast.error('Não é possível remover itens que já tenham sido utilizados em Ordens de Serviço.');
-    } finally {
-      setDeletingId(null);
-      setItemToDelete(null); // Fecha o modal
-    }
+  const confirmExclusao = (item: Produto) => {
+    const modalId = openModal('CONFIRM', {
+      title: "Excluir Item do Catálogo",
+      description: "Tem certeza de que deseja remover este item? Esta ação é irreversível e o item não estará mais disponível para novas faturas.",
+      variant: "danger",
+      confirmLabel: "Sim, Excluir",
+      onConfirm: async () => {
+        setDeletingId(item.id);
+        try {
+          await deleteProduto(item.id);
+        } finally {
+          setDeletingId(null);
+          closeModal(modalId);
+        }
+      }
+    });
   };
 
   const categoriasOpcoes = [
@@ -201,7 +179,6 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
             </form>
           </Card>
 
-          {/* ✨ O NOVO CALLOUT EM AÇÃO */}
           <Callout variant="info" title="Dica de Ouro" icon={Lightbulb}>
             Cadastre itens genéricos (ex: "LAVAGEM COMPLETA" ou "MÃO DE OBRA MECÂNICA") para reaproveitá-los em múltiplas faturas.
           </Callout>
@@ -225,7 +202,6 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
               ))}
             </div>
           ) : servicos.length === 0 ? (
-            /* ✨ O NOVO EMPTY STATE EM AÇÃO */
             <EmptyState 
               icon={Box} 
               title="Catálogo Vazio" 
@@ -266,7 +242,7 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
                     type="button"
                     variant="ghost"
                     size="icon"
-                    onClick={() => setItemToDelete(item.id)} // âš ï¸ Aciona o Modal
+                    onClick={() => confirmExclusao(item)}
                     disabled={deletingId === item.id}
                     className="h-10 w-10 text-text-muted hover:text-white hover:bg-error opacity-100 lg:opacity-0 group-hover:opacity-100 shrink-0 transition-all rounded-xl ml-2 shadow-sm"
                     title="Remover Item"
@@ -283,20 +259,6 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
           )}
         </div>
       </div>
-      
-      {/* ✨ O NOSSO CONFIRM MODAL (Substitui o window.confirm) */}
-      <ConfirmModal 
-        isOpen={!!itemToDelete}
-        onCancel={() => setItemToDelete(null)}
-        onConfirm={executeDelete}
-        title="Excluir Item do Catálogo"
-        description="Tem certeza de que deseja remover este item? Esta ação é irreversível e o item não estará mais disponível para novas faturas."
-        variant="danger"
-        confirmLabel="Sim, Excluir"
-      />
     </Modal>
   );
 }
-
-
-

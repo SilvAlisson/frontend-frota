@@ -3,7 +3,7 @@ import { RefreshCw } from 'lucide-react';
 import { hapticLight, hapticSuccess } from '../../lib/haptics';
 
 interface PullToRefreshProps {
-  onRefresh: () => Promise<any>;
+  onRefresh: () => Promise<void>;
   children: React.ReactNode;
 }
 

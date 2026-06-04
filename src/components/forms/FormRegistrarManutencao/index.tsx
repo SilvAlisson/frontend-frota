@@ -12,7 +12,11 @@ import { desformatarDinheiro } from '../../../lib/formatters';
 import { useVeiculos } from '../../../hooks/useVeiculos';
 
 import { manutencaoSchema } from './schema';
-import type { ManutencaoFormValues, PayloadOrdemServico } from './schema';
+import type { PayloadOrdemServico } from './schema';
+import type { z } from 'zod';
+
+type FormInput = z.input<typeof manutencaoSchema>;
+type FormOutput = z.output<typeof manutencaoSchema>;
 
 import { Step1DadosGerais } from './Step1DadosGerais';
 import { Step2ItensServicos } from './Step2ItensServicos';
@@ -37,7 +41,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
 
   const { data: veiculos = [] } = useVeiculos();
 
-  const methods = useForm<ManutencaoFormValues>({
+  const methods = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(manutencaoSchema),
     defaultValues: {
       alvo: finalVeiculoId ? 'VEICULO' : 'VEICULO',
@@ -48,7 +52,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       tipo: planoManutencaoId ? 'PREVENTIVA' : 'CORRETIVA',
       data: new Date().toISOString().slice(0, 10),
       observacoes: '',
-      itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: '' } as unknown as ManutencaoFormValues['itens'][0]] 
+      itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: '' }] 
     },
     mode: 'onBlur'
   });
@@ -79,7 +83,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
     }
   };
 
-  const onSubmit = async (data: ManutencaoFormValues) => {
+  const onSubmit = async (data: FormOutput) => {
     let kmInputFloat = null;
     
     if (data.alvo === 'VEICULO' && data.kmAtual) {
@@ -212,7 +216,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       {modalAberto && formDataParaModal && (
         <ModalConfirmacaoFoto
           titulo={`Anexar NF da OS ${formDataParaModal.tipo}`}
-          dadosJornada={formDataParaModal}
+          dadosJornada={formDataParaModal as unknown as Record<string, unknown>}
           apiEndpoint="/manutencoes"
           apiMethod="POST"
           kmParaConfirmar={null}

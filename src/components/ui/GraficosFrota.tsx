@@ -105,7 +105,7 @@ interface DadoDonut {
   name: string;
   value: number;
   color: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 interface GraficoDonutDefeitosProps {
@@ -114,15 +114,26 @@ interface GraficoDonutDefeitosProps {
 }
 
 // Tooltip customizado para o Donut
-const DonutTooltip = ({ active, payload }: any) => {
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    name: string;
+    value: number;
+    color?: string;
+    payload?: { color?: string };
+  }>;
+  label?: string;
+}
+
+const DonutTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload?.length) {
     return (
       <div style={TOOLTIP_STYLE}>
-        <span style={{ color: payload[0].payload.color, fontWeight: 900 }}>
-          ● {payload[0].name}
+        <span style={{ color: payload[0]?.payload?.color, fontWeight: 900 }}>
+          ● {payload[0]?.name}
         </span>
         <div style={{ color: 'var(--color-text-main)', fontSize: 14, fontWeight: 900 }}>
-          {payload[0].value} ocorrência{payload[0].value !== 1 ? 's' : ''}
+          {payload[0]?.value} ocorrência{payload[0]?.value !== 1 ? 's' : ''}
         </div>
       </div>
     );
@@ -174,7 +185,7 @@ interface GraficoBarraPlanoProps {
   dados: DadoBarra[];
 }
 
-const BarTooltip = ({ active, payload, label }: any) => {
+const BarTooltip = ({ active, payload, label }: CustomTooltipProps) => {
   if (active && payload?.length) {
     return (
       <div style={TOOLTIP_STYLE}>

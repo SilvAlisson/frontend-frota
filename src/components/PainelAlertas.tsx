@@ -1,460 +1,252 @@
-import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
 import { toast } from 'sonner';
 import { 
- AlertTriangle, CheckCircle2, Loader2, 
- Wrench, FileText, Clock, ChevronRight,
- Timer, UserX, Bug, ShieldAlert, HeartPulse, Trash2
+  AlertTriangle, CheckCircle2, Loader2, 
+  Timer, UserX, Bug, ShieldAlert 
 } from 'lucide-react';
 import type { Alerta } from '../types';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import { haptics } from '../utils/haptics';
+
+// Hooks Globais
+import { useAlertas } from '../hooks/useAlertas';
+import { useModalStore } from '../hooks/useModalStore';
 
 // Componentes Elite
 import { EmptyState } from './ui/EmptyState';
-import { Modal } from './ui/Modal';
 import { Callout } from './ui/Callout';
 import { Button } from './ui/Button';
+import { CardAlerta } from './alertas/CardAlerta';
 
 interface PainelAlertasProps { 
- onAlertaClick?: (alerta: Alerta) => void;
+  onAlertaClick?: (alerta: Alerta) => void;
 }
 
 export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
- const [alertas, setAlertas] = useState<Alerta[]>([]);
- const [loading, setLoading] = useState(true);
- const [error, setError] = useState('');
- const navigate = useNavigate();
+  const navigate = useNavigate();
+  const { openModal, closeModal } = useModalStore();
 
- // Estados para o Modal de Ociosidade Exclusivo
- const [alertaOciosoSelecionado, setAlertaOciosoSelecionado] = useState<Alerta | null>(null);
- 
- // Estados para o Modal de Auditoria (Logs/Erros)
- const [logAuditSelecionado, setLogAuditSelecionado] = useState<Alerta | null>(null);
+  const {
+    alertas,
+    isLoading,
+    isError,
+    refetch,
+    resolverOciosidade,
+    isResolvendoOciosidade,
+    resolverLog,
+    isResolvendoLog,
+    dismissLocal
+  } = useAlertas();
 
- const [isResolvendo, setIsResolvendo] = useState(false);
+  // --- COMPORTAMENTO DO CLIQUE NOS ALERTAS ---
+  const handleAlertaClick = (alerta: Alerta) => {
+    // 1. Modais internos de triagem SEMPRE abrem primeiro, ignorando navegação externa
+    if (alerta.tipo === 'VEICULO_OCIOSO' || alerta.tipo === 'OPERADOR_OCIOSO') {
+      abrirModalOciosidade(alerta);
+      return;
+    }
 
- const handleAlertaClick = (alerta: Alerta) => {
-  // 1. Modais internos de triagem SEMPRE abrem primeiro, ignorando navegação externa
-  if (alerta.tipo === 'VEICULO_OCIOSO' || alerta.tipo === 'OPERADOR_OCIOSO') {
-   setAlertaOciosoSelecionado(alerta);
-   return;
-  }
+    if (alerta.tipo === 'TENTATIVA_FRAUDE' || alerta.tipo === 'ERRO_SISTEMA') {
+      abrirModalAuditoria(alerta);
+      return;
+    }
 
-  if (alerta.tipo === 'TENTATIVA_FRAUDE' || alerta.tipo === 'ERRO_SISTEMA') {
-   setLogAuditSelecionado(alerta);
-   return;
-  }
+    // 2. Se houver prop onAlertaClick (DashboardEncarregado), delega a navegação a ele
+    if (onAlertaClick) {
+      onAlertaClick(alerta);
+      return;
+    }
 
-  // 2. Se houver prop onAlertaClick (DashboardEncarregado), delega a navegação a ele
-  if (onAlertaClick) {
-   onAlertaClick(alerta);
-   return;
-  }
+    // 3. Comportamento padrão (Dashboard Admin)
+    if (alerta.tipo === 'SST') {
+      navigate('/admin/sst?tab=treinamentos');
+      return;
+    }
 
-  // 3. Comportamento padrão (Dashboard Admin)
-  if (alerta.tipo === 'SST') {
-   navigate('/admin/sst?tab=treinamentos');
-   return;
-  }
+    if (!alerta.veiculoId) return;
 
-  if (!alerta.veiculoId) return;
-
-  if (alerta.tipo === 'DOCUMENTO') {
-   navigate(`/admin/veiculos/${alerta.veiculoId}?tab=documentos`);
-  } else if (alerta.tipo === 'MANUTENCAO') {
-   const isPrevisao = alerta.mensagem.toUpperCase().includes('PREVISÃO');
-   
-   // Correção do redirecionamento de PREVISÃO e VENCIDO
-   if (isPrevisao || alerta.nivel === 'VENCIDO') {
-    navigate('/admin/planos');
-   } else {
-    navigate(`/admin/manutencoes/nova?veiculoId=${alerta.veiculoId}`);
-   }
-  }
- };
-
- const fetchAlertas = useCallback(async () => {
-  setLoading(true);
-  setError('');
-  try {
-   const response = await api.get('/relatorios/alertas');
-   setAlertas(response.data);
-  } catch (err) {
-   if (import.meta.env.DEV) console.error("Erro ao buscar alertas:", err);
-   setError('Não foi possível verificar o estado da frota.');
-   toast.error('Falha ao carregar alertas.');
-  } finally {
-   setLoading(false);
-  }
- }, []);
-
- useEffect(() => {
-  fetchAlertas();
- }, [fetchAlertas]);
-
- // --- FUNÇÕES DE RESOLUÇÃO INTERATIVA (OCIOSIDADE) ---
- const resolverAlertaOcioso = async (isMotivoJustificado: boolean) => {
-  if (!alertaOciosoSelecionado) return;
-  
-  if (!isMotivoJustificado) {
-   toast.success('Cobrança Registrada. Oriente o responsável a abrir a jornada no celular.');
-   setAlertaOciosoSelecionado(null);
-   return;
-  }
-
-  setIsResolvendo(true);
-  try {
-   if (alertaOciosoSelecionado.tipo === 'VEICULO_OCIOSO') {
-    await api.put(`/veiculos/${alertaOciosoSelecionado.veiculoId}/status`, { status: 'EM_MANUTENCAO' });
-   } else {
-    await api.put(`/users/${alertaOciosoSelecionado.usuarioId}/status`, { status: 'ATESTADO' });
-   }
-   toast.success('Status atualizado! O alerta não aparecerá mais até que voltem à ativa.');
-   // Remove do array visualmente para não precisar dar reload na página
-   setAlertas(prev => prev.filter(a => a !== alertaOciosoSelecionado));
-   setAlertaOciosoSelecionado(null);
-  } catch (e) {
-   toast.error('Ocorreu um erro ao atualizar o status.');
-  } finally {
-   setIsResolvendo(false);
-  }
- };
-
- // --- FUNÇÕES DE RESOLUÇÃO DE AUDITORIA/LOGS ---
- const resolverLogAudit = async () => {
-  if (!logAuditSelecionado?.logId) return;
-  setIsResolvendo(true);
-  try {
-   await api.put(`/logs/${logAuditSelecionado.logId}/resolver`);
-   toast.success('Log Arquivado. Solução registrada na auditoria.');
-   setAlertas(prev => prev.filter(a => a !== logAuditSelecionado));
-   setLogAuditSelecionado(null);
-  } catch (e) {
-   toast.error('Erro ao arquivar log de sistema.');
-  } finally {
-   setIsResolvendo(false);
-  }
- };
-
- // --- LOADING (Premium Skeleton) ---
- if (loading) {
-  return (
-   <div className="flex flex-col items-center justify-center py-20 opacity-60 gap-4 animate-in fade-in duration-500">
-    <Loader2 className="w-10 h-10 text-primary animate-spin" />
-    <p className="text-sm text-text-secondary font-black uppercase tracking-widest animate-pulse">Analisando métricas da frota...</p>
-   </div>
-  );
- }
-
- // --- ERRO (Com Callout) ---
- if (error) {
-  return (
-   <div className="pt-4 animate-in fade-in duration-300">
-    <Callout variant="danger" title="Falha de Sincronização" icon={AlertTriangle}>
-     <p className="mb-2">{error}</p>
-     <Button
-      onClick={fetchAlertas}
-      variant="ghost" size="sm"
-      className="text-xs font-black uppercase tracking-widest text-error hover:text-error hover:bg-error/10 mt-2"
-     >
-      Tentar novamente
-     </Button>
-    </Callout>
-   </div>
-  );
- }
-
- // --- TUDO OK (O NOSSO EMPTY STATE EM AÇÃO) ---
- if (alertas.length === 0) {
-  return (
-   <div className="pt-8 animate-in zoom-in-95 duration-500">
-     <EmptyState 
-      icon={CheckCircle2} 
-      title="Tudo em Ordem!" 
-      description="Nenhuma manutenção, certificação ou documento pendente na frota neste momento."
-     />
-   </div>
-  );
- }
-
- // --- LISTA DE ALERTAS ---
- return (
-  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-   
-   {/* Cabeçalho do Painel */}
-   <div className="flex items-center justify-between border-b border-border/60 pb-4">
-    <h3 className="text-xl sm:text-2xl font-black text-text-main flex items-center gap-3 tracking-tight">
-     <div className="p-2 bg-error/10 rounded-xl text-error border border-error/20 shadow-inner">
-       <AlertTriangle className="w-5 h-5" />
-     </div>
-     Painel de Atenção
-    </h3>
-    
-    <span className="bg-error/10 text-error text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-error/20 shadow-sm flex items-center gap-2">
-     <span className="relative flex h-2 w-2 hidden sm:flex">
-      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
-      <span className="relative inline-flex rounded-full h-2 w-2 bg-error"></span>
-     </span>
-     {alertas.length} Pendências
-    </span>
-   </div>
-
-   {/* Grid de Cartões */}
-   <div className="grid gap-4 auto-rows-max">
-    <AnimatePresence>
-     {alertas.map((alerta, index) => (
-      <CardAlerta 
-        key={`${alerta.tipo}-${index}`} 
-        alerta={alerta} 
-        onClick={() => handleAlertaClick(alerta)} 
-        onDismiss={() => {
-          haptics.heavy();
-          // ✨ Filtro agora é feito pela referência do próprio objeto (a !== alerta)
-          setAlertas(prev => prev.filter(a => a !== alerta));
-        }}
-      />
-     ))}
-    </AnimatePresence>
-   </div>
-
-   {/* --- MODAL DE TRIAGEM DE OCIOSIDADE --- */}
-   <Modal
-     isOpen={!!alertaOciosoSelecionado}
-     onClose={() => setAlertaOciosoSelecionado(null)}
-     title="Triagem de Inatividade"
-     className="max-w-md"
-   >
-      <div className="flex flex-col items-center pt-2">
-       <div className="w-14 h-14 bg-stone-500/10 rounded-full flex items-center justify-center mb-4 border border-stone-500/20">
-        {alertaOciosoSelecionado?.tipo === 'VEICULO_OCIOSO' ? <Timer className="w-7 h-7 text-stone-600" /> : <UserX className="w-7 h-7 text-stone-600" />}
-       </div>
-       
-       <p className="text-text-secondary text-sm font-medium mb-6 leading-relaxed text-center">
-        {alertaOciosoSelecionado?.mensagem}
-       </p>
-
-       <div className="space-y-3 w-full">
-        <Button
-         disabled={isResolvendo} isLoading={isResolvendo}
-         onClick={() => resolverAlertaOcioso(true)}
-         variant="primary"
-         className="w-full py-6 text-sm font-black shadow-lg"
-        >
-         {alertaOciosoSelecionado?.tipo === 'VEICULO_OCIOSO' ? 'Sim, está na Oficina (Em Manutenção)' : 'Sim, está de Atestado/Férias'}
-        </Button>
-        <Button
-         disabled={isResolvendo}
-         onClick={() => resolverAlertaOcioso(false)}
-         variant="secondary"
-         className="w-full py-6 font-bold"
-        >
-         Não! Deveria estar rodando. Vou cobrar!
-        </Button>
-       </div>
-      </div>
-   </Modal>
-
-   {/* --- MODAL DE AUDITORIA DE SISTEMA E FRAUDES --- */}
-   <Modal
-     isOpen={!!logAuditSelecionado}
-     onClose={() => setLogAuditSelecionado(null)}
-     title="Auditoria de Sistema"
-     className="max-w-md"
-   >
-      <div className="flex flex-col items-center pt-2">
-       <div className="w-14 h-14 bg-error/10 rounded-full flex items-center justify-center mb-4 border border-error/20">
-        {logAuditSelecionado?.tipo === 'TENTATIVA_FRAUDE' ? <ShieldAlert className="w-7 h-7 text-error" /> : <Bug className="w-7 h-7 text-error" />}
-       </div>
-       
-       <p className="text-text-secondary text-sm font-medium mb-6 leading-relaxed text-center">
-        {logAuditSelecionado?.mensagem}
-       </p>
-
-       <div className="space-y-3 w-full">
-        <Button
-         disabled={isResolvendo} isLoading={isResolvendo}
-         onClick={resolverLogAudit}
-         variant="danger"
-         className="w-full py-6 font-black shadow-lg"
-        >
-         Ciente, Marcar como Corrigido
-        </Button>
-        <Button
-         disabled={isResolvendo}
-         onClick={() => setLogAuditSelecionado(null)}
-         variant="secondary"
-         className="w-full py-6 font-bold"
-        >
-         Fechar para Análise
-        </Button>
-       </div>
-      </div>
-   </Modal>
-
-  </div>
- );
-}
-
-// --- SUBCOMPONENTE DE CARD DE ALERTA ---
-function CardAlerta({ alerta, onClick, onDismiss }: { alerta: Alerta, onClick: () => void, onDismiss: () => void }) {
- const isVencido = alerta.nivel === 'VENCIDO';
- const isPrevisao = alerta.mensagem.toUpperCase().includes('PREVISÃO');
-
- // Configuração Visual Base (Atenção - Usando as variáveis dinâmicas do Tailwind CSS v4)
- let config = {
-  border: 'border-l-warning',
-  textTitle: 'text-warning',
-  badgeBg: 'bg-warning/10 text-warning border-warning/20',
-  iconBg: 'bg-warning/10 text-warning border-warning/20',
-  icon: AlertTriangle,
-  category: 'Atenção',
-  badgeLabel: alerta.nivel as string
- };
-
- // Sobrescrita para VENCIDO (Crítico - Error)
- if (isVencido) {
-  config = {
-   border: 'border-l-error',
-   textTitle: 'text-error',
-   badgeBg: 'bg-error/10 text-error border-error/20',
-   iconBg: 'bg-error/10 text-error border-error/20',
-   icon: AlertTriangle,
-   category: 'Crítico',
-   badgeLabel: 'VENCIDO'
+    if (alerta.tipo === 'DOCUMENTO') {
+      navigate(`/admin/veiculos/${alerta.veiculoId}?tab=documentos`);
+    } else if (alerta.tipo === 'MANUTENCAO') {
+      const isPrevisao = alerta.mensagem.toUpperCase().includes('PREVISÃO');
+      
+      // Correção do redirecionamento de PREVISÃO e VENCIDO
+      if (isPrevisao || alerta.nivel === 'VENCIDO') {
+        navigate('/admin/planos');
+      } else {
+        navigate(`/admin/manutencoes/nova?veiculoId=${alerta.veiculoId}`);
+      }
+    }
   };
- }
 
- // Sobrescrita para PREVISÃO (Informativo - Cores fixas precisam do 'dark:' explícito)
- if (isPrevisao) {
-  config = {
-   border: 'border-l-info',
-   textTitle: 'text-info ',
-   badgeBg: 'bg-info/10 text-info border-info/20',
-   iconBg: 'bg-info/10 text-info border-info/20',
-   icon: Clock,
-   category: 'Previsão de Rodagem',
-   badgeLabel: 'PROJETADO'
+  // --- ORQUESTRAÇÃO DOS MODAIS GLOBAIS ---
+  const abrirModalOciosidade = (alerta: Alerta) => {
+    const modalId = openModal('CUSTOM', {
+      title: "Triagem de Inatividade",
+      content: (
+        <div className="flex flex-col items-center pt-2">
+          <div className="w-14 h-14 bg-stone-500/10 rounded-full flex items-center justify-center mb-4 border border-stone-500/20">
+            {alerta.tipo === 'VEICULO_OCIOSO' ? <Timer className="w-7 h-7 text-stone-600" /> : <UserX className="w-7 h-7 text-stone-600" />}
+          </div>
+          
+          <p className="text-text-secondary text-sm font-medium mb-6 leading-relaxed text-center">
+            {alerta.mensagem}
+          </p>
+
+          <div className="space-y-3 w-full">
+            <Button
+              disabled={isResolvendoOciosidade} isLoading={isResolvendoOciosidade}
+              onClick={async () => {
+                const isVeiculo = alerta.tipo === 'VEICULO_OCIOSO';
+                const id = isVeiculo ? alerta.veiculoId! : alerta.usuarioId!;
+                const status = isVeiculo ? 'EM_MANUTENCAO' : 'ATESTADO';
+                
+                await resolverOciosidade({ isVeiculo, id, status });
+                closeModal(modalId);
+              }}
+              variant="primary"
+              className="w-full py-6 text-sm font-black shadow-lg"
+            >
+              {alerta.tipo === 'VEICULO_OCIOSO' ? 'Sim, está na Oficina (Em Manutenção)' : 'Sim, está de Atestado/Férias'}
+            </Button>
+            <Button
+              disabled={isResolvendoOciosidade}
+              onClick={() => {
+                toast.success('Cobrança Registrada. Oriente o responsável a abrir a jornada no celular.');
+                closeModal(modalId);
+              }}
+              variant="secondary"
+              className="w-full py-6 font-bold"
+            >
+              Não! Deveria estar rodando. Vou cobrar!
+            </Button>
+          </div>
+        </div>
+      )
+    });
   };
- }
 
- // Seleção de Ícone por Tipo
- if (!isPrevisao) {
-  if (alerta.tipo === 'MANUTENCAO') {
-   config.icon = Wrench;
-   config.category = 'Manutenção';
-  } else if (alerta.tipo === 'DOCUMENTO') {
-   config.icon = FileText;
-   config.category = 'Documentação';
-  } else if (alerta.tipo === 'VEICULO_OCIOSO') {
-   config.icon = Timer;
-   config.category = 'Máquina Parada';
-   config.badgeBg = 'bg-stone-500/10 text-stone-600 dark:text-stone-400 border-stone-500/20';
-   config.iconBg = 'bg-stone-500/10 text-stone-600 dark:text-stone-400 border-stone-500/20';
-   config.border = 'border-l-stone-500';
-   config.textTitle = 'text-stone-600 dark:text-stone-400';
-   config.badgeLabel = 'OCIOSO';
-  } else if (alerta.tipo === 'OPERADOR_OCIOSO') {
-   config.icon = UserX;
-   config.category = 'Falta de Rodagem';
-   config.badgeBg = 'bg-stone-500/10 text-stone-600 dark:text-stone-400 border-stone-500/20';
-   config.iconBg = 'bg-stone-500/10 text-stone-600 dark:text-stone-400 border-stone-500/20';
-   config.border = 'border-l-stone-500';
-   config.textTitle = 'text-stone-600 dark:text-stone-400';
-   config.badgeLabel = 'AUSENTE';
-  } else if (alerta.tipo === 'TENTATIVA_FRAUDE') {
-   config.icon = ShieldAlert;
-   config.category = 'Auditoria';
-   config.badgeBg = 'bg-error/10 text-error border-error/20';
-   config.iconBg = 'bg-error/10 text-error border-error/20';
-   config.border = 'border-l-error';
-   config.textTitle = 'text-error';
-   config.badgeLabel = 'FRAUDE';
-  } else if (alerta.tipo === 'ERRO_SISTEMA') {
-   config.icon = Bug;
-   config.category = 'App Crash';
-   config.badgeBg = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
-   config.iconBg = 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20';
-   config.border = 'border-l-amber-500';
-   config.textTitle = 'text-amber-600 dark:text-amber-400';
-   config.badgeLabel = 'FALHA';
-  } else if (alerta.tipo === 'SST') {
-   config.icon = HeartPulse;
-   config.category = 'SST & Saúde';
-   config.badgeBg = 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20';
-   config.iconBg = 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/20';
-   config.border = 'border-l-violet-500';
-   config.textTitle = 'text-violet-600 dark:text-violet-400';
-   config.badgeLabel = alerta.nivel === 'VENCIDO' ? 'VENCIDO' : 'ATENÇÃO';
+  const abrirModalAuditoria = (alerta: Alerta) => {
+    const modalId = openModal('CUSTOM', {
+      title: "Auditoria de Sistema",
+      content: (
+        <div className="flex flex-col items-center pt-2">
+          <div className="w-14 h-14 bg-error/10 rounded-full flex items-center justify-center mb-4 border border-error/20">
+            {alerta.tipo === 'TENTATIVA_FRAUDE' ? <ShieldAlert className="w-7 h-7 text-error" /> : <Bug className="w-7 h-7 text-error" />}
+          </div>
+          
+          <p className="text-text-secondary text-sm font-medium mb-6 leading-relaxed text-center">
+            {alerta.mensagem}
+          </p>
+
+          <div className="space-y-3 w-full">
+            <Button
+              disabled={isResolvendoLog} isLoading={isResolvendoLog}
+              onClick={async () => {
+                if (alerta.logId) {
+                  await resolverLog(alerta.logId);
+                }
+                closeModal(modalId);
+              }}
+              variant="danger"
+              className="w-full py-6 font-black shadow-lg"
+            >
+              Ciente, Marcar como Corrigido
+            </Button>
+            <Button
+              disabled={isResolvendoLog}
+              onClick={() => closeModal(modalId)}
+              variant="secondary"
+              className="w-full py-6 font-bold"
+            >
+              Fechar para Análise
+            </Button>
+          </div>
+        </div>
+      )
+    });
+  };
+
+  // --- LOADING (Premium Skeleton) ---
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 opacity-60 gap-4 animate-in fade-in duration-500">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <p className="text-sm text-text-secondary font-black uppercase tracking-widest animate-pulse">Analisando métricas da frota...</p>
+      </div>
+    );
   }
- }
 
- const IconComponent = config.icon;
-
- return (
-  <motion.div
-   layout
-   initial={{ opacity: 0, scale: 0.95 }}
-   animate={{ opacity: 1, scale: 1 }}
-   exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-   className="relative w-full"
-  >
-   {/* Fundo que aparece ao arrastar (Swipe-to-Dismiss indicator) */}
-   <div className="absolute inset-0 bg-error/10 border border-error/20 rounded-2xl flex items-center px-6 justify-between">
-    <Trash2 className="w-5 h-5 text-error opacity-70" />
-    <Trash2 className="w-5 h-5 text-error opacity-70" />
-   </div>
-
-   <motion.div
-    drag="x"
-    dragConstraints={{ left: 0, right: 0 }}
-    dragElastic={0.8}
-    onDragEnd={(_, info) => {
-     if (Math.abs(info.offset.x) > 120) {
-      onDismiss();
-     }
-    }}
-    whileDrag={{ scale: 0.98, cursor: 'grabbing' }}
-    className="w-full relative z-10"
-   >
-    <Button 
-     variant="ghost"
-     onClick={onClick}
-     className={`
-     text-left w-full !p-0 h-auto
-     group relative overflow-hidden bg-surface rounded-2xl shadow-sm border border-border/60 
-     hover:shadow-md transition-all duration-300 flex items-start gap-0 cursor-pointer
-     ${config.border}
-    `}>
-     <div className={`p-5 flex items-start gap-4 w-full h-full border-l-[4px] group-hover:border-l-[8px] transition-all ${config.border}`}>
-      {/* Ícone (Glassmorphism) */}
-      <div className={`p-3 rounded-xl flex-shrink-0 shadow-inner border ${config.iconBg}`}>
-       <IconComponent className="w-5 h-5" />
+  // --- ERRO (Com Callout) ---
+  if (isError) {
+    return (
+      <div className="pt-4 animate-in fade-in duration-300">
+        <Callout variant="danger" title="Falha de Sincronização" icon={AlertTriangle}>
+          <p className="mb-2">Não foi possível verificar o estado da frota.</p>
+          <Button
+            onClick={() => refetch()}
+            variant="ghost" size="sm"
+            className="text-xs font-black uppercase tracking-widest text-error hover:text-error hover:bg-error/10 mt-2"
+          >
+            Tentar novamente
+          </Button>
+        </Callout>
       </div>
+    );
+  }
 
-      {/* Conteúdo */}
-      <div className="flex-1 min-w-0 flex flex-col justify-center py-0.5">
-       <div className="flex flex-wrap gap-2 items-center mb-2">
-        <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${config.textTitle}`}>
-         {config.category}
+  // --- TUDO OK (O NOSSO EMPTY STATE EM AÇÃO) ---
+  if (alertas.length === 0) {
+    return (
+      <div className="pt-8 animate-in zoom-in-95 duration-500">
+        <EmptyState 
+          icon={CheckCircle2} 
+          title="Tudo em Ordem!" 
+          description="Nenhuma manutenção, certificação ou documento pendente na frota neste momento."
+        />
+      </div>
+    );
+  }
+
+  // --- LISTA DE ALERTAS ---
+  return (
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      
+      {/* Cabeçalho do Painel */}
+      <div className="flex items-center justify-between border-b border-border/60 pb-4">
+        <h3 className="text-xl sm:text-2xl font-black text-text-main flex items-center gap-3 tracking-tight">
+          <div className="p-2 bg-error/10 rounded-xl text-error border border-error/20 shadow-inner">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          Painel de Atenção
+        </h3>
+        
+        <span className="bg-error/10 text-error text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-error/20 shadow-sm flex items-center gap-2">
+          <span className="relative flex h-2 w-2 hidden sm:flex">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-error"></span>
+          </span>
+          {alertas.length} Pendências
         </span>
-        <span className={`text-[9px] font-black px-2 py-0.5 rounded-md uppercase tracking-widest border shadow-sm ${config.badgeBg}`}>
-         {config.badgeLabel}
-        </span>
-       </div>
-       <p className="text-text-main text-sm sm:text-base font-bold leading-snug line-clamp-2 tracking-tight pointer-events-none">
-        {alerta.mensagem}
-       </p>
       </div>
 
-      {/* Seta Hover, indica que a atenção está focada no item */}
-      <div className="self-center text-border group-hover:text-text-muted transition-colors opacity-0 lg:group-hover:opacity-100">
-       <ChevronRight className="w-5 h-5" />
+      {/* Grid de Cartões */}
+      <div className="grid gap-4 auto-rows-max">
+        <AnimatePresence>
+          {alertas.map((alerta, index) => (
+            <CardAlerta 
+              key={`${alerta.tipo}-${index}`} 
+              alerta={alerta} 
+              onClick={() => handleAlertaClick(alerta)} 
+              onDismiss={() => {
+                haptics.heavy();
+                dismissLocal(alerta);
+              }}
+            />
+          ))}
+        </AnimatePresence>
       </div>
-     </div>
-    </Button>
-   </motion.div>
-  </motion.div>
- );
+
+    </div>
+  );
 }

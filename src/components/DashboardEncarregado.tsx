@@ -108,7 +108,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
     const [modalQrCodeOpen, setModalQrCodeOpen] = useState(false);
 
     // Data Hooks
-    const { data: usuarios = [] } = useUsuarios();
+    const { usuarios = [] } = useUsuarios();
     const { data: veiculos = [] } = useVeiculos();
     const { data: jornadasAbertas = [], refetch: refetchJornadas } = useJornadasAtivas();
     const { contagemAtiva: defeitosAtivos, refetch: refetchDefeitos } = useDefeitos();
@@ -323,7 +323,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                 </Modal>
 
                 {modalQrCodeOpen && (
-                    <ModalQrCode user={user} onClose={() => setModalQrCodeOpen(false)} />
+                    <ModalQrCode user={user as User & { loginToken?: string }} onClose={() => setModalQrCodeOpen(false)} />
                 )}
             </PullToRefresh>
         );

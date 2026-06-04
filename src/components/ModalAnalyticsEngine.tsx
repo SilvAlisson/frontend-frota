@@ -1,27 +1,11 @@
 import { useState, useEffect } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell, ResponsiveContainer, Tooltip as RechartsTooltip
-} from 'recharts';
-import Highcharts from "highcharts";
-import HighchartsReact from "highcharts-react-official";
-import highcharts3dModule from "highcharts/highcharts-3d";
-import { ArrowLeft, Loader2, X } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import { Button } from './ui/Button';
-import { api } from '../services/api';
 import { toast } from 'sonner';
-
-if (typeof highcharts3dModule === 'function') {
-  (highcharts3dModule as any)(Highcharts);
-} else if (highcharts3dModule && typeof (highcharts3dModule as any).default === 'function') {
-  (highcharts3dModule as any).default(Highcharts);
-}
-
-const HIGHCHARTS_COLORS = [
-  '#2F80ED', '#EB5757', '#7CB518', '#8E44AD', '#F2994A', '#06b6d4', 
-  '#eab308', '#84cc16', '#22c55e', '#f43f5e', '#6366f1', '#a855f7'
-];
-
-type MetricType = 'CUSTO_GLOBAL' | 'KM_TOTAL' | 'EFICIENCIA' | 'COMBUSTIVEL' | 'OFICINA' | 'ADITIVOS' | 'CUSTO_KM' | null;
+import type { DrilldownDataPoint, MetricType } from '../types/analytics';
+import { PieChartDrilldown } from './charts/PieChartDrilldown';
+import { BarChartTemporal } from './charts/BarChartTemporal';
+import { ANALYTICS_STRATEGIES } from '../hooks/useAnalyticsStrategy';
 
 interface ModalAnalyticsProps {
   isOpen: boolean;
@@ -34,10 +18,10 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
   const [level, setLevel] = useState<1 | 2 | 3 | 4>(1);
   const [loading, setLoading] = useState(false);
 
-  const [dataNivel1, setDataNivel1] = useState<any[]>([]);
-  const [dataNivel2, setDataNivel2] = useState<any[]>([]);
-  const [dataNivel3, setDataNivel3] = useState<any[]>([]);
-  const [dataNivel4, setDataNivel4] = useState<any[]>([]);
+  const [dataNivel1, setDataNivel1] = useState<DrilldownDataPoint[]>([]);
+  const [dataNivel2, setDataNivel2] = useState<DrilldownDataPoint[]>([]);
+  const [dataNivel3, setDataNivel3] = useState<DrilldownDataPoint[]>([]);
+  const [dataNivel4, setDataNivel4] = useState<DrilldownDataPoint[]>([]);
 
   const [selectedVeiculo, setSelectedVeiculo] = useState<string | null>(null);
   const [selectedVeiculoId, setSelectedVeiculoId] = useState<string | null>(null);
@@ -55,370 +39,83 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
     }
   }, [isOpen, metric]);
 
-  const formatBRL = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
-
   const loadMacroData = async () => {
+    if (!metric) return;
     setLoading(true);
     try {
-      if (metric === 'CUSTO_GLOBAL') {
-        const { data } = await api.get('/drilldown/macro');
-        setDataNivel1(data);
-      }
-      else if (metric === 'COMBUSTIVEL') {
-        const { data } = await api.get('/drilldown/macro', { params: { categoria: 'ABASTECIMENTO' } });
-        setDataNivel1(data);
-      }
-      else if (metric === 'ADITIVOS') {
-        const { data } = await api.get('/drilldown/macro', { params: { categoria: 'ADITIVO' } });
-        setDataNivel1(data);
-      }
-      else if (metric === 'OFICINA') {
-        const { data } = await api.get('/drilldown/macro', { params: { categoria: 'MANUTENCAO' } });
-        setDataNivel1(data);
-      }
-      else if (metric === 'KM_TOTAL') {
-        const { data } = await api.get('/drilldown/km/macro');
-        setDataNivel1(data);
-      }
-      else if (metric === 'EFICIENCIA') {
-        const { data } = await api.get('/drilldown/eficiencia/macro');
-        setDataNivel1(data);
-      }
-      else if (metric === 'CUSTO_KM') {
-        const { data } = await api.get('/drilldown/custokm/macro');
-        setDataNivel1(data);
-      }
-      else {
-        setDataNivel1([
-          { name: 'Em Desenvolvimento', value: 100 }
-        ]);
-      }
-    } catch (err) {
-      console.error(err);
+      const strategy = ANALYTICS_STRATEGIES[metric];
+      const data = await strategy.fetchMacro();
+      setDataNivel1(data);
+    } catch (err: unknown) {
+      if (import.meta.env.DEV) console.error(err);
+      toast.error("Erro ao carregar dados macro");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSliceClickNivel1 = async (entry: any) => {
+  const handleSliceClickNivel1 = async (entry: DrilldownDataPoint) => {
+    if (!metric) return;
     setSelectedVeiculo(entry.name);
-    setSelectedVeiculoId(entry.veiculoId);
+    setSelectedVeiculoId(entry.veiculoId || null);
     setLoading(true);
 
-    if (metric === 'CUSTO_GLOBAL') {
-      try {
-        const { data } = await api.get('/drilldown/veiculo', { params: { veiculoId: entry.veiculoId } });
-        setDataNivel2(data.length > 0 ? data : [
-            { name: 'Abastecimento', value: entry.value * 0.6 },
-            { name: 'Manutenção', value: entry.value * 0.4 }
-        ]);
-        setLevel(2);
-      } catch (err) {
-        setDataNivel2([
-            { name: 'Abastecimento', value: entry.value * 0.6 },
-            { name: 'Manutenção', value: entry.value * 0.4 }
-        ]);
-        setLevel(2);
-      } finally {
-        setLoading(false);
-      }
-    } else if (metric === 'COMBUSTIVEL' || metric === 'OFICINA' || metric === 'ADITIVOS') {
-      let catReq = 'ABASTECIMENTO';
-      let catDisplay = 'Abastecimento';
-      if (metric === 'OFICINA') { catReq = 'MANUTENCAO'; catDisplay = 'Manutenção'; }
-      if (metric === 'ADITIVOS') { catReq = 'ADITIVO'; catDisplay = 'Aditivos'; }
+    try {
+      const strategy = ANALYTICS_STRATEGIES[metric];
+      const nextLevel = strategy.getNextLevelFrom1();
       
-      setSelectedCategoria(catDisplay);
-      try {
-        const { data } = await api.get('/drilldown/temporal', { 
-            params: { veiculoId: entry.veiculoId, categoria: catReq } 
-        });
-        
-        setDataNivel3(data.length > 0 ? data : [
-            { name: 'Nenhum dado', value: entry.value }
-        ]);
+      if (nextLevel === 2) {
+        const data = await strategy.fetchLevel2(entry.veiculoId);
+        setDataNivel2(data);
+        setLevel(2);
+      } else {
+        // Para métricas que pulam do 1 pro 3 (ex: Combustível)
+        const catDisplay = metric === 'OFICINA' ? 'Manutenção' : metric === 'ADITIVOS' ? 'Aditivos' : 'Abastecimento';
+        setSelectedCategoria(catDisplay);
+        const data = await strategy.fetchLevel3(entry.veiculoId);
+        setDataNivel3(data);
         setLevel(3);
-      } catch (err) {
-        console.error(err);
-        setDataNivel3([{ name: 'Erro de conexão', value: 1 }]);
-        setLevel(3);
-      } finally {
-        setLoading(false);
       }
-    } else if (metric === 'KM_TOTAL') {
-      try {
-        const { data } = await api.get('/drilldown/km/temporal', { 
-            params: { veiculoId: entry.veiculoId } 
-        });
-        
-        setDataNivel3(data.length > 0 ? data : [
-            { name: 'Nenhum dado', value: entry.value }
-        ]);
-        setLevel(3);
-      } catch (err) {
-        console.error(err);
-        setDataNivel3([{ name: 'Erro de conexão', value: 1 }]);
-        setLevel(3);
-      } finally {
-        setLoading(false);
-      }
-    } else if (metric === 'EFICIENCIA') {
-      try {
-        const { data } = await api.get('/drilldown/eficiencia/temporal', { 
-            params: { veiculoId: entry.veiculoId } 
-        });
-        
-        setDataNivel3(data.length > 0 ? data : [
-            { name: 'Nenhum dado', value: entry.value }
-        ]);
-        setLevel(3);
-      } catch (err) {
-        console.error(err);
-        setDataNivel3([{ name: 'Erro de conexão', value: 1 }]);
-        setLevel(3);
-      } finally {
-        setLoading(false);
-      }
-    } else if (metric === 'CUSTO_KM') {
-      try {
-        const { data } = await api.get('/drilldown/custokm/temporal', { 
-            params: { veiculoId: entry.veiculoId } 
-        });
-        
-        setDataNivel3(data.length > 0 ? data : [
-            { name: 'Nenhum dado', value: entry.value }
-        ]);
-        setLevel(3);
-      } catch (err) {
-        console.error(err);
-        setDataNivel3([{ name: 'Erro de conexão', value: 1 }]);
-        setLevel(3);
-      } finally {
-        setLoading(false);
-      }
+    } catch (err: unknown) {
+      if (import.meta.env.DEV) console.error(err);
+      toast.error("Erro ao carregar detalhes");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSliceClickNivel2 = async (entry: any) => {
-    if (metric === 'CUSTO_GLOBAL') {
-      setSelectedCategoria(entry.name);
-      setLoading(true);
-      try {
-        const reqCategoria = entry.name === 'Abastecimento' ? 'ABASTECIMENTO' : 'MANUTENCAO';
-        const { data } = await api.get('/drilldown/temporal', { 
-            params: { veiculoId: selectedVeiculoId, categoria: reqCategoria } 
-        });
-        
-        setDataNivel3(data.length > 0 ? data : [
-            { name: 'Jan', value: entry.value * 0.2 },
-            { name: 'Fev', value: entry.value * 0.5 },
-            { name: 'Mar', value: entry.value * 0.3 }
-        ]);
-        setLevel(3);
-      } catch (err) {
-        setDataNivel3([
-            { name: 'Jan', value: entry.value * 0.2 },
-            { name: 'Fev', value: entry.value * 0.5 },
-            { name: 'Mar', value: entry.value * 0.3 }
-        ]);
-        setLevel(3);
-      } finally {
-        setLoading(false);
-      }
+  const handleSliceClickNivel2 = async (entry: DrilldownDataPoint) => {
+    if (!metric) return;
+    setSelectedCategoria(entry.name);
+    setLoading(true);
+    try {
+      const strategy = ANALYTICS_STRATEGIES[metric];
+      const data = await strategy.fetchLevel3(selectedVeiculoId, entry.name);
+      setDataNivel3(data);
+      setLevel(3);
+    } catch (err: unknown) {
+      if (import.meta.env.DEV) console.error(err);
+      toast.error("Erro ao carregar evolução temporal");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleSliceClickNivel3 = async (entry: any) => {
+  const handleSliceClickNivel3 = async (entry: DrilldownDataPoint) => {
+    if (!metric) return;
     setSelectedMes(entry.name);
     setLoading(true);
     try {
-      if (metric === 'KM_TOTAL' || metric === 'EFICIENCIA') {
-        const { data } = await api.get('/drilldown/km/operadores', { 
-            params: { veiculoId: selectedVeiculoId, mes: entry.name } 
-        });
-        const finalData = data.length > 0 ? data : [
-          { name: 'Nenhum operador encontrado', value: entry.value }
-        ];
-        setDataNivel4(finalData);
-        setLevel(4);
-      } else if (metric === 'CUSTO_KM') {
-        const { data } = await api.get('/drilldown/custokm/categorias', { 
-            params: { veiculoId: selectedVeiculoId, mes: entry.name } 
-        });
-        const finalData = data.length > 0 ? data : [
-          { name: 'Sem custos registrados', value: entry.value }
-        ];
-        setDataNivel4(finalData);
-        setLevel(4);
-      } else {
-        let reqCategoria = selectedCategoria === 'Abastecimento' ? 'ABASTECIMENTO' : 'MANUTENCAO';
-        if (metric === 'ADITIVOS') reqCategoria = 'ADITIVO';
-
-        const { data } = await api.get('/drilldown/fornecedores', { 
-            params: { veiculoId: selectedVeiculoId, categoria: reqCategoria, mes: entry.name } 
-        });
-        
-        const finalData = data.length > 0 ? data : [
-          { name: 'Nenhum fornecedor encontrado', value: entry.value }
-        ];
-        
-        setDataNivel4(finalData);
-        setLevel(4);
-      }
-    } catch (err) {
-      console.error(err);
-      setDataNivel4([{ name: 'Erro de conexão', value: 1 }]);
+      const strategy = ANALYTICS_STRATEGIES[metric];
+      const data = await strategy.fetchLevel4(selectedVeiculoId, selectedCategoria, entry.name);
+      setDataNivel4(data);
       setLevel(4);
+    } catch (err: unknown) {
+      if (import.meta.env.DEV) console.error(err);
+      toast.error("Erro ao carregar detalhamento final");
     } finally {
       setLoading(false);
     }
-  };
-
-  const getHighchartsOptions = (data: any[], clickHandler: (entry: any) => void) => {
-    const total = data.reduce((acc, item) => acc + item.value, 0);
-
-    return {
-      chart: {
-        type: "pie",
-        backgroundColor: "transparent",
-        animation: true,
-        // Removemos o espaçamento nativo que estava espremendo o gráfico
-        spacingTop: 10,
-        spacingBottom: 0,
-        spacingLeft: 0,
-        spacingRight: 0,
-        options3d: {
-          enabled: true,
-          alpha: 50,
-          beta: 0,
-        },
-        style: {
-          fontFamily: "var(--font-sans)",
-        }
-      },
-      title: {
-        text: null, 
-      },
-      accessibility: { enabled: false },
-      credits: { enabled: false },
-      exporting: { enabled: false },
-      tooltip: {
-        useHTML: true,
-        backgroundColor: "var(--color-surface)",
-        borderColor: "var(--color-border)",
-        borderRadius: 12,
-        borderWidth: 1,
-        shadow: true,
-        style: {
-          fontSize: "14px",
-          fontFamily: "var(--font-sans)",
-          color: "var(--color-text-main)"
-        },
-        formatter: function(this: any) {
-          const percentage = ((this.point.y as number) / total) * 100;
-          return `
-            <div style="padding:8px">
-              <b>${this.point.name}</b><br/>
-              Total: <b>${this.point.formattedValue}</b><br/>
-              Percentual: <b>${percentage.toFixed(1).replace(".", ",")}%</b>
-            </div>
-          `;
-        }
-      },
-      plotOptions: {
-        pie: {
-          size: '70%', // FIX: Reduzido de 85% para dar espaço real ao 3D e não cortar a base
-          center: ['50%', '38%'], // FIX: Levemente deslocado para cima para balancear com a legenda
-          allowPointSelect: true,
-          cursor: "pointer",
-          depth: 55,
-          showInLegend: true,
-          slicedOffset: 12,
-          borderWidth: 1.5,
-          borderColor: "var(--color-surface)",
-          edgeWidth: 1,
-          edgeColor: "rgba(0,0,0,0.5)",
-          shadow: {
-            color: "rgba(0,0,0,0.4)",
-            offsetX: 0,
-            offsetY: 15,
-            opacity: 0.4,
-            width: 15,
-          },
-          states: {
-            inactive: { opacity: 1 },
-            hover: {
-              brightness: 0.15,
-              halo: {
-                size: 15,
-                attributes: { fill: "rgba(255,255,255,0.2)" }
-              }
-            }
-          },
-          dataLabels: {
-            enabled: false,
-          },
-          point: {
-            events: {
-              click: function(this: any) {
-                clickHandler(this.options.customData);
-              }
-            }
-          }
-        },
-      },
-      legend: {
-        enabled: true,
-        useHTML: true,
-        align: 'center',
-        verticalAlign: 'bottom',
-        y: -15, // FIX: Puxa a legenda para cima, removendo o vácuo inferior
-        itemStyle: {
-          color: 'var(--color-text-main)',
-          fontSize: '13px', // FIX: Reduzido levemente para caber melhor
-          fontWeight: 'bold',
-          fontFamily: 'var(--font-sans)',
-          paddingBottom: '4px'
-        },
-        itemHoverStyle: {
-          color: 'var(--color-text-muted)'
-        },
-        labelFormatter: function(this: any) {
-          const percentage = ((this.y as number) / total) * 100;
-          return `${this.name} <span style="opacity: 0.7; font-weight: normal; margin-left: 4px;">(${percentage.toFixed(1).replace(".", ",")}%)</span>`;
-        },
-      },
-      series: [
-        {
-          type: "pie",
-          data: data.map((item: any, index: number) => {
-            const baseColor = HIGHCHARTS_COLORS[index % HIGHCHARTS_COLORS.length];
-            const color2 = Highcharts.color(baseColor).brighten(-0.5).get('rgb');
-
-            return {
-              name: item.name,
-              y: item.value,
-              sliced: true, 
-              formattedValue: metric === 'KM_TOTAL' ? `${item.value.toLocaleString('pt-BR')} km` : metric === 'EFICIENCIA' ? `${item.value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km/l` : metric === 'CUSTO_KM' ? `${formatBRL(item.value)} / km` : formatBRL(item.value),
-              customData: item,
-              color: {
-                radialGradient: {
-                  cx: 0.4,
-                  cy: 0.3,
-                  r: 0.9,
-                },
-                stops: [
-                  [0, Highcharts.color(baseColor).brighten(0.2).get('rgb')],
-                  [1, color2],
-                ],
-              }
-            };
-          })
-        }
-      ]
-    };
   };
 
   if (!isOpen) return null;
@@ -455,92 +152,55 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
         {/* Content Area */}
         <div className="flex-1 p-4 sm:p-8 relative overflow-auto">
           {loading ? (
-            <div className="flex flex-col items-center justify-center text-primary">
-              <Loader2 className="w-12 h-12 animate-spin mb-4" />
-              <p className="font-medium animate-pulse">Processando Big Data...</p>
+            <div className="w-full h-full min-h-[400px] sm:min-h-[650px] flex flex-col gap-8 animate-in fade-in duration-500">
+              <div className="flex justify-center mb-4">
+                <div className="w-64 h-64 sm:w-96 sm:h-96 rounded-full border-[20px] border-surface-hover/50 border-t-primary/20 animate-spin" />
+              </div>
+              <div className="flex justify-center gap-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="w-24 h-6 bg-surface-hover/50 rounded-md animate-pulse" />
+                ))}
+              </div>
             </div>
           ) : (
             <div className="w-full h-full min-h-[400px] sm:min-h-[650px]">
               
               {/* NÍVEL 1: PIE CHART MACRO */}
               {level === 1 && (
-                <div className="w-full h-full">
-                  <HighchartsReact 
-                    highcharts={Highcharts} 
-                    options={getHighchartsOptions(dataNivel1, handleSliceClickNivel1)} 
-                    containerProps={{ style: { height: "100%", width: "100%" } }}
-                  />
-                </div>
+                <PieChartDrilldown 
+                  data={dataNivel1} 
+                  metric={metric} 
+                  onClickSlice={handleSliceClickNivel1} 
+                />
               )}
 
               {/* NÍVEL 2: PIE CHART VEÍCULO */}
               {level === 2 && (
-                <div className="w-full h-full">
-                  <HighchartsReact 
-                    highcharts={Highcharts} 
-                    options={getHighchartsOptions(dataNivel2, handleSliceClickNivel2)} 
-                    containerProps={{ style: { height: "100%", width: "100%" } }}
-                  />
-                </div>
+                <PieChartDrilldown 
+                  data={dataNivel2} 
+                  metric={metric} 
+                  onClickSlice={handleSliceClickNivel2} 
+                />
               )}
 
               {/* NÍVEL 3: BAR CHART TEMPORAL */}
               {level === 3 && (
-                <div className="w-full h-full flex flex-col">
-                  <div className="flex-1 mt-4" style={{ width: '100%', height: '450px' }}>
-                    <ResponsiveContainer width="99%" height={450}>
-                      <BarChart data={dataNivel3.slice(0, new Date().getMonth() + 1)} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
-                        <XAxis dataKey="name" stroke="var(--color-text-muted)" tick={{ fontFamily: 'var(--font-sans)', fontSize: 12, fontWeight: 600 }} axisLine={false} tickLine={false} />
-                        <YAxis stroke="var(--color-text-muted)" tick={{ fontFamily: 'var(--font-mono)', fontSize: 11, fontWeight: 500 }} axisLine={false} tickLine={false} tickFormatter={(v) => metric === 'KM_TOTAL' ? `${v} km` : metric === 'EFICIENCIA' ? `${v.toFixed(1)} km/l` : metric === 'CUSTO_KM' ? `${formatBRL(v)} / km` : formatBRL(v)} width={90} />
-                        <RechartsTooltip 
-                          cursor={{fill: 'var(--color-surface-hover)', opacity: 0.5}} 
-                          formatter={(value: number | string | undefined) => {
-                            const v = Number(value ?? 0);
-                            return metric === 'KM_TOTAL' 
-                                ? `${v.toLocaleString('pt-BR')} km` 
-                                : metric === 'EFICIENCIA' 
-                                ? `${v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km/l` 
-                                : metric === 'CUSTO_KM' 
-                                ? `${formatBRL(v)} / km` 
-                                : formatBRL(v);
-                          }} 
-                          contentStyle={{ borderRadius: '1rem', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-surface)', fontFamily: 'var(--font-mono)', color: 'var(--text-main)' }}
-                        />
-                        <Bar 
-                          dataKey="value" 
-                          fill="var(--color-primary)" 
-                          radius={[6, 6, 0, 0]} 
-                          className="cursor-pointer hover:brightness-110 transition-all"
-                          animationDuration={800}
-                          animationEasing="ease-out"
-                          onClick={(data) => {
-                              handleSliceClickNivel3(data);
-                          }}
-                        >
-                          {dataNivel3.map((_, index) => (
-                            <Cell key={`cell-${index}`} fill={HIGHCHARTS_COLORS[index % HIGHCHARTS_COLORS.length]} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+                <BarChartTemporal 
+                  data={dataNivel3} 
+                  metric={metric} 
+                  onClickBar={handleSliceClickNivel3} 
+                />
               )}
 
               {/* NÍVEL 4: PIE CHART FORNECEDORES */}
               {level === 4 && (
-                <div className="w-full h-full flex flex-col">
-                  <div className="w-full h-full">
-                    <HighchartsReact 
-                      highcharts={Highcharts} 
-                      options={getHighchartsOptions(dataNivel4, () => {
-                        toast.info("Em breve: Lista de tickets deste fornecedor!");
-                      })} 
-                      containerProps={{ style: { height: "100%", width: "100%" } }}
-                    />
-                  </div>
-                </div>
+                <PieChartDrilldown 
+                  data={dataNivel4} 
+                  metric={metric} 
+                  onClickSlice={() => {
+                    toast.info("Em breve: Lista de tickets deste fornecedor!");
+                  }} 
+                />
               )}
 
             </div>

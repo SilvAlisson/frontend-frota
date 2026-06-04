@@ -91,7 +91,7 @@ export const getDeviceContext = () => {
         _idioma: navigator.language,
         _plataforma: navigator.platform,
         // Pegamos o tipo de conexão (ex: 3g, 4g, wifi) se o navegador suportar (Android/Chrome)
-        _conexao: (navigator as any).connection?.effectiveType || 'Desconhecida',
+        _conexao: ((navigator as unknown) as { connection?: { effectiveType?: string } }).connection?.effectiveType || 'Desconhecida',
         _horaLocal: new Date().toLocaleTimeString()
     };
 };

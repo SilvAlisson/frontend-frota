@@ -39,7 +39,7 @@ export function usePushNotifications() {
     try {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
-        toast.error("Permissão para notificações negada.");
+        // toast.error("Permissão para notificações negada.");
         return false;
       }
 
@@ -64,8 +64,8 @@ export function usePushNotifications() {
       return true;
 
     } catch (error) {
-      console.error('Erro ao assinar push:', error);
-      toast.error("Erro ao configurar notificações no dispositivo.");
+      if (import.meta.env.DEV) console.error('Erro ao assinar push:', error);
+      // toast.error("Erro ao configurar notificações no dispositivo.");
       return false;
     }
   };

@@ -5,9 +5,6 @@ const GestaoAuditoria = lazy(() => import('./components/GestaoAuditoria').then(m
 
 // Telas de Acesso (Não-Lazy pois são os gatilhos iniciais)
 import { LoginScreen } from './pages/LoginScreen';
-import { EsqueceuSenha } from './pages/EsqueceuSenha';
-import { RedefinirSenha } from './pages/RedefinirSenha';
-
 // COMPONENTES DINÂMICOS (Lazy Loading)
 const AdminLayout = lazy(() => import('./layouts/AdminLayout').then(m => ({ default: m.AdminLayout })));
 const DashboardOperador = lazy(() => import('./components/DashboardOperador').then(m => ({ default: m.DashboardOperador })));
@@ -29,6 +26,7 @@ const HistoricoJornadas = lazy(() => import('./components/HistoricoJornadas').th
 const GestaoSST = lazy(() => import('./components/GestaoSST').then(m => ({ default: m.GestaoSST })));
 
 const PainelPlanosPreventivos = lazy(() => import('./components/PainelPlanosPreventivos').then(m => ({ default: m.PainelPlanosPreventivos })));
+const MinhaContaPage = lazy(() => import('./pages/MinhaContaPage').then(m => ({ default: m.MinhaContaPage })));
 
 const LoadingScreen = () => (
   <div className="flex flex-col items-center justify-center h-screen bg-background">
@@ -106,13 +104,17 @@ export function Router() {
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
         <Route path="/login" element={<LoginScreen />} />
-        <Route path="/esqueceu-senha" element={<EsqueceuSenha />} />
-        <Route path="/redefinir-senha" element={<RedefinirSenha />} />
-
         {/* Rota Raiz (Dashboards Operacionais Isoladas) */}
         <Route path="/" element={
           <PrivateRoute>
             <RootDashboardRouter />
+          </PrivateRoute>
+        } />
+
+        {/* Perfil Universal */}
+        <Route path="/minha-conta" element={
+          <PrivateRoute>
+            <MinhaContaPage />
           </PrivateRoute>
         } />
 

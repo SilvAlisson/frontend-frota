@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
@@ -37,7 +38,7 @@ export function useLogin() {
           await new Promise(resolve => setTimeout(resolve, 50));
         }
 
-        const { data } = await api.post('/auth/login-token', { loginToken: magicToken });
+        const { data } = await api.post('/auth-custom/login-token', { loginToken: magicToken });
 
         login(data);
         toast.success(`Bem-vindo, ${data.user.nome.split(' ')[0]}!`);
@@ -47,7 +48,7 @@ export function useLogin() {
         const target = (role === 'ADMIN' || role === 'COORDENADOR') ? '/admin' : '/';
         navigate(target, { replace: true });
 
-      } catch (err: any) {
+      } catch (err: unknown) {
         api.post('/logs', {
           level: 'FRAUD_ATTEMPT',
           source: 'FRONTEND',
@@ -55,12 +56,12 @@ export function useLogin() {
           context: {
             // 🔒 007 — Não logamos o token em si, apenas o tipo de erro.
             // O token já foi removido da URL no início do processamento.
-            erro: err.response?.data?.error || err.message,
+            erro: (axios.isAxiosError(err) ? (axios.isAxiosError(err) ? err.response?.data?.error : undefined) : (err instanceof Error ? err.message : 'Erro desconhecido')),
             _navigator: { userAgent: navigator.userAgent }
           }
         }).catch(() => null);
 
-        toast.error(err.response?.data?.error || err.message || 'Crachá inválido.');
+        toast.error((axios.isAxiosError(err) ? (axios.isAxiosError(err) ? err.response?.data?.error : undefined) : (err instanceof Error ? err.message : 'Erro desconhecido')) || 'Crachá inválido.');
         setIsMagicLoggingIn(false);
         navigate('/login', { replace: true });
       }
@@ -75,12 +76,29 @@ export function useLogin() {
     }
   }, [isAuthenticated, user, authLoading, isMagicLoggingIn, handleRedirect]);
 
-  const loginWithCredentials = async (data: any) => {
+  const loginWithCredentials = async (data: { email?: string; senha?: string; password?: string; [key:string]: unknown }) => {
     try {
-      const response = await api.post('/auth/login', data);
-      login(response.data);
-      toast.success('Acesso Autorizado. Bem-vindo de volta!');
-    } catch (err: any) {
+      const email = data.email || '';
+      const password = data.password || data.senha || '';
+      
+      const { signIn } = await import('../lib/auth-client');
+      const { data: resData, error } = await signIn.email({
+        email,
+        password
+      });
+
+      if (error) {
+        throw new Error(error.message || 'Credenciais inválidas.');
+      }
+
+      if (resData) {
+        // Better Auth não retorna JWT, o cookie é gerido automaticamente.
+        // O `AuthContext` irá reagir ao recarregar a sessão ou se inscrever, mas 
+        // para dar o feedback imediato, chamamos `login` simbolicamente com o user.
+        login({ user: resData.user as User });
+        toast.success('Acesso Autorizado. Bem-vindo de volta!');
+      }
+    } catch (err: unknown) {
       api.post('/logs', {
         level: 'WARNING',
         source: 'FRONTEND',
@@ -90,8 +108,8 @@ export function useLogin() {
           _navigator: { userAgent: navigator.userAgent }
         }
       }).catch(() => null);
-      toast.error(err.response?.data?.error || 'E-mail ou senha incorretos.');
-      throw new Error('Credenciais inválidas.');
+      toast.error((err instanceof Error ? err.message : 'Erro desconhecido') || 'E-mail ou senha incorretos.');
+      throw err;
     }
   };
 
@@ -101,24 +119,25 @@ export function useLogin() {
     const toastId = toast.loading('A validar credenciais seguras...');
 
     try {
-      const { data } = await api.post('/auth/login-token', { loginToken: qrManualToken });
+      const { data } = await api.post('/auth-custom/login-token', { loginToken: qrManualToken });
       login(data);
       toast.dismiss(toastId);
       toast.success('Acesso Autorizado!');
-    } catch (err: any) {
+    } catch (err: unknown) {
       api.post('/logs', {
         level: 'FRAUD_ATTEMPT',
         source: 'FRONTEND',
         message: `Falha de Autenticação via QR Manual`,
         context: {
           tentativaToken: qrManualToken,
-          erro: err.response?.data?.error || err.message,
+          erro: (axios.isAxiosError(err) ? (axios.isAxiosError(err) ? err.response?.data?.error : undefined) : (err instanceof Error ? err.message : 'Erro desconhecido')),
           _navigator: { userAgent: navigator.userAgent }
         }
       }).catch(() => null);
 
       toast.dismiss(toastId);
-      throw new Error(err.response?.data?.error || err.message || 'Token inválido ou expirado.');
+      toast.error((axios.isAxiosError(err) ? (axios.isAxiosError(err) ? err.response?.data?.error : undefined) : (err instanceof Error ? err.message : 'Erro desconhecido')) || 'Token inválido ou expirado.');
+      throw new Error((axios.isAxiosError(err) ? (axios.isAxiosError(err) ? err.response?.data?.error : undefined) : (err instanceof Error ? err.message : 'Erro desconhecido')) || 'Token inválido ou expirado.');
     }
   };
 

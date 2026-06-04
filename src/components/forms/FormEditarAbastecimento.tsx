@@ -27,39 +27,7 @@ import { useProdutos } from '../../hooks/useProdutos';
 import { useFornecedores } from '../../hooks/useFornecedores';
 import { desformatarDinheiro, formatarDinheiro } from '../../lib/formatters';
 import { validarAbastecimento, temBloqueio, type AnomaliaAbastecimento } from '../../utils/validateAbastecimento';
-
-// --- UTILS: Compressão de Imagem ---
-const comprimirImagem = (arquivo: File): Promise<File> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(arquivo);
-    reader.onload = (e) => {
-      const img = new Image();
-      img.src = e.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 1600;
-        let [w, h] = [img.width, img.height];
-
-        if (w > h) { if (w > MAX_WIDTH) { h *= MAX_WIDTH / w; w = MAX_WIDTH; } }
-        else { if (h > MAX_HEIGHT) { w *= MAX_HEIGHT / h; h = MAX_HEIGHT; } }
-
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, w, h);
-          canvas.toBlob((blob) => {
-            if (blob) resolve(new File([blob], arquivo.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg', lastModified: Date.now() }));
-            else reject(new Error("Erro ao comprimir"));
-          }, 'image/jpeg', 0.7);
-        } else reject(new Error("Erro canvas"));
-      };
-    };
-    reader.onerror = (err) => reject(err);
-  });
-};
+import { comprimirImagem } from '../../utils/imageCompressor';
 
 // --- SCHEMA ZOD V4 COMPATÍVEL ---
 const itemSchema = z.object({
@@ -97,10 +65,10 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const [dadosPendentes, setDadosPendentes] = useState<EditFormOutput | null>(null);
 
   // 📡 DADOS GLOBAIS COM CACHE
-  const { data: usuarios = [], isLoading: loadU } = useUsuarios();
+  const { usuarios = [], isLoading: loadU } = useUsuarios();
   const { data: veiculos = [], isLoading: loadV } = useVeiculos();
-  const { data: produtos = [], isLoading: loadP } = useProdutos();
-  const { data: fornecedores = [], isLoading: loadF } = useFornecedores();
+  const { produtos = [], loading: loadP } = useProdutos();
+  const { fornecedores = [], isLoading: loadF } = useFornecedores();
 
   // 1. Query Específica do Abastecimento
   const { data: abastecimento, isLoading: loadingAbs } = useQuery<Abastecimento>({
@@ -122,7 +90,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const produtosOptions = useMemo(() => produtosCombustivel.map(p => ({ value: p.id, label: p.nome })), [produtosCombustivel]);
 
   // 2. Form Setup
-  const { register, control, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<EditFormInput, any, EditFormOutput>({
+  const { register, control, handleSubmit, reset, setValue, formState: { errors, isSubmitting } } = useForm<EditFormInput, unknown, EditFormOutput>({
     resolver: zodResolver(editSchema),
     mode: 'onBlur'
   });
@@ -143,37 +111,22 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   // 3. Populate Form (Garantindo formatação de dinheiro)
   useEffect(() => {
     if (abastecimento) {
-      const abs = abastecimento as unknown as {
-        veiculoId?: string; veiculo?: { id: string };
-        operadorId?: string; operador?: { nome: string };
-        fornecedorId?: string; fornecedor?: { nome: string };
-        kmOdometro: string | number;
-        dataHora: string;
-        placaCartaoUsado?: string;
-        justificativa?: string;
-        fotoNotaFiscalUrl?: string | null;
-        itens?: Array<{
-          produtoId?: string; produto?: { id: string; valorAtual: number };
-          quantidade: number;
-          valorPorUnidade?: string | number;
-        }>;
-      };
       reset({
-        veiculoId: abs.veiculoId || abs.veiculo?.id || '',
-        operadorId: abs.operadorId || usuarios.find(u => u.nome === abs.operador?.nome)?.id || '',
-        fornecedorId: abs.fornecedorId || fornecedores.find(f => f.nome === abs.fornecedor?.nome)?.id || '',
-        kmOdometro: Number(abs.kmOdometro),
-        dataHora: new Date(new Date(abs.dataHora).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16),
-        placaCartaoUsado: abs.placaCartaoUsado || '',
-        justificativa: abs.justificativa || '',
-        fotoNotaFiscalUrl: abs.fotoNotaFiscalUrl,
-        itens: abs.itens?.map(i => ({
-          produtoId: i.produtoId || i.produto?.id || '',
+        veiculoId: abastecimento.veiculoId ?? '',
+        operadorId: abastecimento.operador?.id ?? usuarios.find(u => u.nome === abastecimento.operador?.nome)?.id ?? '',
+        fornecedorId: abastecimento.fornecedorId ?? fornecedores.find(f => f.nome === abastecimento.fornecedor?.nome)?.id ?? '',
+        kmOdometro: Number(abastecimento.kmOdometro),
+        dataHora: new Date(new Date(abastecimento.dataHora).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16),
+        placaCartaoUsado: abastecimento.placaCartaoUsado ?? '',
+        justificativa: abastecimento.justificativa ?? '',
+        fotoNotaFiscalUrl: abastecimento.fotoNotaFiscalUrl ?? null,
+        itens: (abastecimento.itens ?? []).map(i => ({
+          produtoId: i.produto?.id ?? '',
           quantidade: i.quantidade,
-          valorPorUnidade: Number(i.valorPorUnidade || (i.produto?.valorAtual || 0)).toFixed(2).replace('.', ',')
-        })) || []
+          valorPorUnidade: Number(i.valorPorUnidade || 0).toFixed(2).replace('.', ',')
+        }))
       });
-      if (abs.fotoNotaFiscalUrl) setPreviewFoto(abs.fotoNotaFiscalUrl);
+      if (abastecimento.fotoNotaFiscalUrl) setPreviewFoto(abastecimento.fotoNotaFiscalUrl);
     }
   }, [abastecimento, usuarios, fornecedores, reset]);
 
@@ -217,8 +170,9 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
       queryClient.invalidateQueries({ queryKey: ['abastecimento', abastecimentoId] });
       onSuccess();
     },
-    onError: (err: any) => {
-      toast.error(err.response?.data?.error || "Erro ao salvar alterações.");
+    onError: (err: unknown) => {
+      const apiError = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      toast.error(apiError || "Erro ao salvar alterações.");
     }
   });
 

@@ -66,7 +66,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
     reset,
     setValue,
     formState: { errors, isSubmitting }
-  } = useForm<VeiculoFormInput, any, VeiculoFormOutput>({ 
+  } = useForm<VeiculoFormInput, unknown, VeiculoFormOutput>({ 
     resolver: zodResolver(veiculoSchema),
     mode: 'onBlur'
   });
@@ -164,10 +164,10 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
       await api.put(`/veiculos/${veiculoId}`, payload);
       toast.success('Registro do Veículo atualizado com sucesso!');
       onSuccess();
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (import.meta.env.DEV) console.error(e);
-      const msg = e.response?.data?.error || 'Falha ao salvar as alterações. Verifique os dados.';
-      toast.error(msg);
+      const apiError = (e as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      toast.error(apiError || 'Falha ao salvar as alterações. Verifique os dados.');
     }
   };
 

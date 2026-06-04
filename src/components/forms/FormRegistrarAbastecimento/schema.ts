@@ -1,4 +1,4 @@
-﻿import { z } from 'zod';
+import { z } from 'zod';
 
 export const abastecimentoSchema = z.object({
   veiculoId: z.string().min(1, "Selecione o veículo"),
@@ -9,8 +9,8 @@ export const abastecimentoSchema = z.object({
   observacoes: z.string().optional(),
   itens: z.array(z.object({
     produtoId: z.string().min(1, "Selecione o produto"),
-    quantidade: z.any()
-      .transform((val: any) => Number(val))
+    quantidade: z.union([z.string(), z.number()])
+      .transform((val) => Number(val))
       .refine((val: number) => !isNaN(val) && val >= 0.01, "Qtd inválida"),
     valorUnitario: z.string().min(1, "Valor inválido"), 
   })).min(1, "Adicione pelo menos um item")

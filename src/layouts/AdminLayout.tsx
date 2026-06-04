@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Menu, X, LogOut, Sun, Moon
+  Menu, X, LogOut, Sun, Moon, UserCircle
 } from 'lucide-react';
 import { Drawer } from 'vaul'; 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -108,14 +108,26 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
       <div className="p-4 border-t border-border/30 bg-surface-hover/10 shrink-0 space-y-3 pb-safe">
 
         <div className="flex items-center gap-2 px-1 pt-2">
-          {/* Avatar */}
-          <Avatar url={user?.fotoUrl} nome={user?.nome} size="md" className="border-2" />
           
           {/* Info */}
           <div className="overflow-hidden flex-1 px-1">
             <p className="text-sm font-black text-text-main truncate leading-tight">{user?.nome}</p>
             <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider truncate mt-0.5">{user?.role || 'Acesso Restrito'}</p>
           </div>
+
+          {/* ✨ Botão Minha Conta (Agora é a foto do usuário) */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link
+                to="/minha-conta"
+                className="hover:scale-105 active:scale-95 transition-transform shrink-0 touch-target focus-ring rounded-full"
+                aria-label="Minha Conta"
+              >
+                <Avatar url={user?.fotoUrl} nome={user?.nome} size="md" className="border-2 border-primary/20 hover:border-primary/60 transition-colors shadow-sm" />
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent side="top">Minha Conta</TooltipContent>
+          </Tooltip>
 
           {/* ✨ Botão de Tema */}
           <Tooltip>

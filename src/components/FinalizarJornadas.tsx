@@ -60,7 +60,7 @@ export function FinalizarJornada({
     setValue,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm<FinalizarFormInput, any, FinalizarFormOutput>({
+  } = useForm<FinalizarFormInput, unknown, FinalizarFormOutput>({
     resolver: zodResolver(finalizarSchema),
     defaultValues: {
       kmFimInput: ''
@@ -132,7 +132,7 @@ export function FinalizarJornada({
             inputMode="numeric"
             placeholder={`> ${jornadaParaFinalizar.kmInicio}`}
             {...register('kmFimInput')}
-            onChange={(e: any) => {
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
               register('kmFimInput').onChange(e);
               handleKmChange(e);
             }}

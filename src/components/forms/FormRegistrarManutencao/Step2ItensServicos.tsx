@@ -16,15 +16,15 @@ export function Step2ItensServicos() {
   const { register, control, watch, setValue, formState: { errors, isSubmitting } } = useFormContext<ManutencaoFormValues>();
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
 
-  const { data: produtos = [], isLoading: loadP } = useProdutos();
-  const { data: fornecedores = [] } = useFornecedores();
+  const { produtos = [], loading: loadP } = useProdutos();
+  const { fornecedores = [] } = useFornecedores();
   
   const isLocked = isSubmitting || loadP;
   const [modalServicosOpen, setModalServicosOpen] = useState(false);
-  const [listaProdutos, setListaProdutos] = useState<Produto[]>(produtos);
+  const [listaProdutos, setListaProdutos] = useState<Produto[]>(produtos as unknown as Produto[]);
 
   useEffect(() => {
-    if (produtos.length > 0) setListaProdutos(produtos);
+    if (produtos.length > 0) setListaProdutos(produtos as unknown as Produto[]);
   }, [produtos]);
 
   const tipoManutencao = watch('tipo');
@@ -90,9 +90,9 @@ export function Step2ItensServicos() {
                       type="button"
                       onClick={() => remove(index)}
                       disabled={isLocked}
-                      // UX Mobile: Touch-target maior (h-10 w-10) para dedos, e h-8 no mouse/desktop
-                      className="h-10 w-10 sm:h-8 sm:w-8 rounded-full bg-surface border border-border/60 text-text-muted hover:text-white hover:border-error hover:bg-error shadow-sm flex items-center justify-center transition-all disabled:opacity-50"
+                      className="h-11 w-11 sm:h-8 sm:w-8 rounded-full bg-surface border border-border/60 text-text-muted hover:text-white hover:border-error hover:bg-error shadow-sm flex items-center justify-center transition-all disabled:opacity-50"
                       title="Remover linha"
+                      aria-label="Remover linha"
                     >
                       <X className="w-5 h-5 sm:w-4 sm:h-4" />
                     </button>
@@ -203,7 +203,7 @@ export function Step2ItensServicos() {
       {modalServicosOpen && (
         <ModalGerenciarServicos
           onClose={() => setModalServicosOpen(false)}
-          onItemAdded={(novoItem) => setListaProdutos(prev => [...prev, novoItem].sort((a, b) => a.nome.localeCompare(b.nome)))}
+          onItemAdded={(novoItem) => setListaProdutos(prev => [...prev, novoItem as unknown as Produto].sort((a, b) => a.nome.localeCompare(b.nome)))}
         />
       )}
     </div>

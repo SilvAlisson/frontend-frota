@@ -55,7 +55,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
     watch,
     setValue,
     formState: { errors, isSubmitting }
-  } = useForm<FornecedorInput, any, FornecedorOutput>({
+  } = useForm<FornecedorInput, unknown, FornecedorOutput>({
     resolver: zodResolver(fornecedorSchema),
     defaultValues: { nome: '', cnpj: '', tipo: 'OUTROS', produtosIds: [] },
     mode: 'onBlur'
@@ -92,7 +92,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
         const tipoValido = tiposFornecedor.includes(data.tipo) ? data.tipo : 'OUTROS';
 
         const idsExistentes = data.produtosOferecidos
-          ? data.produtosOferecidos.map((p: any) => p.id)
+          ? (data.produtosOferecidos as { id: string }[]).map(p => p.id)
           : [];
 
         reset({

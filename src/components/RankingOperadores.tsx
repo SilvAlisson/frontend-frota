@@ -1,8 +1,10 @@
-import { useState, useEffect, useMemo } from 'react';
-import { api } from '../services/api';
+import { useState, useMemo } from 'react';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
-import { Trophy, Medal, Award, Download, Truck, AlertTriangle, Calendar } from 'lucide-react';
+import { Trophy, Download, Truck, AlertTriangle, Calendar, Loader2 } from 'lucide-react';
+
+// Hooks Globais
+import { useRankingVeiculos } from '../hooks/useRankingVeiculos';
 
 // Componentes UI
 import { ListaResponsiva } from './ui/ListaResponsiva';
@@ -11,41 +13,17 @@ import { Badge } from './ui/Badge';
 import { Card } from './ui/Card';
 import { Select } from './ui/Select'; 
 import { TableStyles } from '../styles/table';
-
-interface VeiculoRanking {
-  id: string;
-  placa: string;
-  modelo: string;
-  totalKM: number;
-  totalLitros: number;
-  kml: number;
-}
+import { CardPodium } from './dashboard/CardPodium';
 
 export function RankingOperadores() {
   const [ano, setAno] = useState(new Date().getFullYear());
   const [mes, setMes] = useState(new Date().getMonth() + 1);
-  const [ranking, setRanking] = useState<VeiculoRanking[]>([]);
-  const [loading, setLoading] = useState(true);
+
+  const { data: ranking = [], isLoading: loading } = useRankingVeiculos(ano, mes);
 
   // Formatadores
   const fmtNum = (n: number) => n.toLocaleString('pt-BR');
   const fmtKml = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-
-  useEffect(() => {
-    const carregar = async () => {
-      setLoading(true);
-      try {
-        const res = await api.get('/relatorios/ranking-veiculos', { params: { ano, mes } });
-        setRanking(res.data);
-      } catch (err) {
-        if (import.meta.env.DEV) console.error(err);
-        toast.error('Erro ao carregar ranking da frota.');
-      } finally {
-        setLoading(false);
-      }
-    };
-    carregar();
-  }, [ano, mes]);
 
   const handleExportar = () => {
     if (!ranking.length) return;
@@ -133,8 +111,9 @@ export function RankingOperadores() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 animate-pulse">
-          {[1, 2, 3].map(i => <div key={i} className="h-56 bg-surface-hover/50 rounded-3xl border border-border/40" />)}
+        <div className="flex flex-col items-center justify-center py-20 opacity-60 gap-4 animate-in fade-in duration-500">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <p className="text-sm text-text-secondary font-black uppercase tracking-widest animate-pulse">Compilando ranking da frota...</p>
         </div>
       ) : (
         <>
@@ -236,7 +215,7 @@ export function RankingOperadores() {
                       idx === 2 ? 'bg-orange-500/10 text-orange-600 border-orange-500/30' :
                       'bg-surface-hover text-text-muted border-border/60'
                     }`}>
-                    {idx + 1}�
+                    {idx + 1}º
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start mb-3">
@@ -271,82 +250,3 @@ export function RankingOperadores() {
     </div>
   );
 }
-
-// Subcomponente Podium (100% Compatível com Dark Mode)
-function CardPodium({ pos, veiculo, isWinner }: { pos: number, veiculo: VeiculoRanking, isWinner?: boolean }) {
-  const config = {
-    1: {
-      bg: 'bg-yellow-500/10',
-      border: 'border-yellow-500/30',
-      text: 'text-yellow-600 dark:text-yellow-500',
-      icon: Trophy,
-      label: 'Mais Econômico',
-      labelBg: 'bg-yellow-500 text-white'
-    },
-    2: {
-      bg: 'bg-slate-500/10',
-      border: 'border-slate-500/30',
-      text: 'text-slate-600 dark:text-slate-400',
-      icon: Medal,
-      label: '2ª Lugar',
-      labelBg: 'bg-slate-500 text-white'
-    },
-    3: {
-      bg: 'bg-orange-500/10',
-      border: 'border-orange-500/30',
-      text: 'text-orange-600 dark:text-orange-500',
-      icon: Award,
-      label: '3ª Lugar',
-      labelBg: 'bg-orange-500 text-white'
-    }
-  }[pos as 1 | 2 | 3];
-
-  const Icon = config.icon;
-
-  return (
-    <div className={`
-        relative rounded-[2rem] border p-6 flex flex-col items-center text-center transition-all duration-500 overflow-hidden group
-        ${config.bg} ${config.border} backdrop-blur-sm
-        ${isWinner ? 'h-72 justify-end ring-2 ring-yellow-500/30 z-10 transform sm:scale-105 shadow-xl bg-yellow-500/15' : 'h-64 justify-end opacity-95 hover:opacity-100 sm:hover:scale-105 shadow-md'}
-      `}>
-
-      {/* Reflexo / Brilho Sutil */}
-      <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/10 to-transparent dark:from-white/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-
-      {/* Posição Gigante de Fundo (Mais discreto no dark mode) */}
-      <div className={`absolute -top-4 -right-2 font-black text-9xl opacity-[0.07] dark:opacity-[0.04] select-none ${config.text} drop-shadow-md`}>
-        {pos}
-      </div>
-
-      <div className={`absolute top-5 left-5 p-2 bg-surface/80 rounded-xl backdrop-blur-md shadow-sm border border-border/50 ${config.text}`}>
-        <Icon className="w-6 h-6" />
-      </div>
-
-      {/* Avatar do Veículo */}
-      <div className="relative mb-5">
-        <div className={`w-20 h-20 rounded-2xl border-2 border-surface shadow-lg flex items-center justify-center bg-surface/80 backdrop-blur-xl overflow-hidden transform group-hover:scale-110 transition-transform ${config.text}`}>
-          <Truck className="w-10 h-10 drop-shadow-sm" />
-        </div>
-        <div className={`absolute -bottom-3 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.2em] px-3 py-1 rounded-lg shadow-md whitespace-nowrap border border-white/10 ${config.labelBg}`}>
-          {config.label}
-        </div>
-      </div>
-
-      <h3 className={`font-black truncate w-full px-2 text-2xl tracking-tight leading-none mb-1 ${config.text}`}>{veiculo.placa}</h3>
-      <p className={`text-[11px] font-bold uppercase tracking-widest mb-4 opacity-80 ${config.text}`}>{veiculo.modelo}</p>
-
-      {/* Stats Box */}
-      <div className="w-full bg-surface/80 rounded-2xl p-3 backdrop-blur-xl border border-border/50 shadow-sm relative z-10">
-        <div className="flex flex-col">
-          <span className={`text-[9px] uppercase tracking-[0.2em] font-black mb-0.5 opacity-80 ${config.text}`}>Média de Consumo</span>
-          <span className={`font-mono font-black text-3xl tracking-tighter ${config.text}`}>
-            {veiculo.kml.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            <span className="text-[10px] uppercase tracking-widest font-bold ml-1 opacity-70">km/l</span>
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-

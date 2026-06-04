@@ -38,6 +38,20 @@ const editarUsuarioSchema = z.object({
 type EditarUsuarioFormInput = z.input<typeof editarUsuarioSchema>;
 type EditarUsuarioFormOutput = z.output<typeof editarUsuarioSchema>;
 
+interface UserUpdatePayload {
+  nome: string;
+  email: string;
+  matricula: string | null;
+  role: string;
+  fotoUrl: string | null;
+  cargoId: string | null;
+  cnhNumero: string | null;
+  cnhCategoria: string | null;
+  cnhValidade: string | null;
+  dataAdmissao: string | null;
+  password?: string;
+}
+
 interface FormEditarUsuarioProps {
   userId: string;
   onSuccess: () => void;
@@ -60,7 +74,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
     reset,
     control,
     formState: { errors, isSubmitting }
-  } = useForm<EditarUsuarioFormInput, any, EditarUsuarioFormOutput>({
+  } = useForm<EditarUsuarioFormInput, unknown, EditarUsuarioFormOutput>({
     resolver: zodResolver(editarUsuarioSchema),
     defaultValues: { nome: '', email: '', matricula: '', role: 'ENCARREGADO', password: '' },
     mode: 'onBlur'
@@ -165,7 +179,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
       }
     }
 
-    const dataToUpdate: any = {
+    const dataToUpdate: UserUpdatePayload = {
       nome: DOMPurify.sanitize(data.nome),
       email: DOMPurify.sanitize(data.email),
       matricula: data.matricula ? DOMPurify.sanitize(data.matricula) : null,

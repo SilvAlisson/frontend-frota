@@ -11,9 +11,15 @@ import { cn } from '../../lib/utils';
 import { uploadToR2 } from '../../services/uploadService';
 import { hapticError, hapticLight } from '../../lib/haptics';
 
+interface VeiculoDisponivel {
+  id: string;
+  placa: string;
+  modelo: string;
+}
+
 interface FormRegistrarDefeitoProps {
   veiculoId?: string;
-  veiculosDisponiveis?: any[];
+  veiculosDisponiveis?: VeiculoDisponivel[];
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -80,7 +86,7 @@ export function FormRegistrarDefeito({ veiculoId, veiculosDisponiveis = [], onSu
       });
 
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       handleApiError(err, 'Não foi possível enviar o registro de defeito.');
     } finally {
       setIsSubmitting(false);
@@ -116,7 +122,7 @@ export function FormRegistrarDefeito({ veiculoId, veiculosDisponiveis = [], onSu
             className="w-full h-14 bg-surface px-4 rounded-xl border border-border/60 text-text-main focus:ring-2 focus:ring-primary/50 outline-none transition-all font-medium appearance-none"
           >
             <option value="">Selecione a placa...</option>
-            {veiculosDisponiveis.map((v: any) => (
+            {veiculosDisponiveis.map((v) => (
               <option key={v.id} value={v.id}>{v.placa} - {v.modelo}</option>
             ))}
           </select>

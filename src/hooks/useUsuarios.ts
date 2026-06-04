@@ -1,25 +1,50 @@
-import { useQuery } from '@tanstack/react-query';
-import { isAxiosError } from 'axios';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'sonner';
+import axios from 'axios';
 import type { User } from '../types';
 
 export function useUsuarios() {
-  const { user } = useAuth();
-  const isOperador = user?.role === 'OPERADOR';
+  const queryClient = useQueryClient();
 
-  return useQuery({
-    queryKey: ['usuarios', user?.role],
+  const usuariosQuery = useQuery({
+    queryKey: ['users'],
     queryFn: async () => {
-      const endpoint = isOperador ? '/users/encarregados' : '/users';
-      const { data } = await api.get<User[]>(endpoint);
-      return data;
+      try {
+        const { data } = await api.get<User[]>('/users');
+        return data;
+      } catch (err: unknown) {
+        if (import.meta.env.DEV) console.error(err);
+        // toast.error('Não foi possível carregar o diretório de equipe.');
+        throw err;
+      }
     },
-    enabled: !!user,
     staleTime: 1000 * 60 * 5,
-    retry: (failureCount, error: unknown) => {
-        if (isAxiosError(error) && error.response && error.response.status >= 400 && error.response.status < 500) return false;
-        return failureCount < 3;
+  });
+
+  const excluirUsuarioMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/users/${id}`);
+    },
+    onSuccess: () => {
+      toast.success('Colaborador removido com sucesso.');
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+    },
+    onError: (err: unknown) => {
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        // toast.error(err.response.data.error);
+      } else {
+        // toast.error('Erro ao remover colaborador. O servidor não respondeu como esperado.');
+      }
     }
   });
+
+  return {
+    usuarios: usuariosQuery.data || [],
+    isLoading: usuariosQuery.isLoading,
+    refetch: usuariosQuery.refetch,
+    excluirUsuario: excluirUsuarioMutation.mutateAsync,
+    isExcluindo: excluirUsuarioMutation.isPending,
+    excluindoId: excluirUsuarioMutation.variables
+  };
 }

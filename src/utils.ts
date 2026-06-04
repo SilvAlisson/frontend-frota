@@ -59,7 +59,7 @@ export const formatKmVisual = (value: string | number): string => {
 
 // --- EXCEL EXPORT ---
 
-export const exportarParaExcel = async (data: any[], nomeArquivo: string) => {
+export const exportarParaExcel = async <T extends Record<string, unknown>>(data: T[], nomeArquivo: string) => {
   try {
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Relatório');
@@ -105,7 +105,7 @@ export const exportarParaExcel = async (data: any[], nomeArquivo: string) => {
 
       // 3. INSERIR DADOS (Com suporte a links do ExcelJS)
       const linhasProcessadas = data.map(row => {
-        const novaLinha: any = {};
+        const novaLinha: Record<string, unknown> = {};
         for (const key in row) {
           let valor = row[key];
           
@@ -114,11 +114,11 @@ export const exportarParaExcel = async (data: any[], nomeArquivo: string) => {
             if (valor.startsWith('=HYPERLINK')) {
               novaLinha[key] = { formula: valor.substring(1) }; // O ExcelJS exige que remova o '=' inicial
             } else {
-              // 007 FIX: Prevenção contra CSV/XLS Formula Injection
-              if (/^[=\-+\@]/.test(valor)) {
-                valor = "'" + valor;
+              let valString = valor as string;
+              if (/^[=\-+\@]/.test(valString)) {
+                valString = "'" + valString;
               }
-              novaLinha[key] = valor;
+              novaLinha[key] = valString;
             }
           } else {
             novaLinha[key] = valor;

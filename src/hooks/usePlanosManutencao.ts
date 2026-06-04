@@ -1,60 +1,111 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
+import { toast } from 'sonner';
+import axios from 'axios';
+import { FILTRO_TODOS } from '../config/constants';
 
-export interface HistoricoExecucao {
-  id: string;
-  dataExecucao: string;
-  kmNaExecucao: number | null;
-  observacao: string | null;
-  registradoPorId: string;
-  registradoPor?: { nome: string };
-}
-
+// Tipos extraídos para garantir Strict Typing
 export interface PlanoManutencao {
   id: string;
-  descricao: string;
-  tipoIntervalo: 'KM' | 'TEMPO';
-  valorIntervalo: number;
-  kmProximaManutencao: number | null;
-  dataProximaManutencao: string | null;
   veiculoId: string;
-  veiculo: { placa: string; modelo: string; ultimoKm: number | null };
-  historicoExecucoes?: HistoricoExecucao[];
+  categoria: string;
+  descricao: string;
+  tipoIntervalo: 'KM' | 'MESES';
+  valorIntervalo: number;
+  kmProximaManutencao?: number;
+  dataProximaManutencao?: string;
+  ativo: boolean;
+  veiculo: {
+    placa: string;
+    modelo: string;
+    ultimoKm: number;
+  };
+  historicoExecucoes?: Array<{
+    id: string;
+    dataExecucao: string;
+    kmDaBaixa?: number;
+    observacao?: string;
+    registradoPor?: {
+      nome: string;
+    };
+  }>;
 }
 
-export function usePlanosManutencao(veiculoId?: string) {
+interface RegisterExecucaoDTO {
+  planoId: string;
+  kmDaBaixa?: number;
+  observacao?: string;
+}
+
+export function usePlanosManutencao(veiculoId?: string, filtroCategoria?: string, fetchAll: boolean = false) {
   const queryClient = useQueryClient();
 
-  // 1. Busca todos os planos (com histórico e ultimoKm já embutidos no veiculo)
-  const planosQuery = useQuery<PlanoManutencao[]>({
-    queryKey: ['planos-manutencao', veiculoId],
+  const queryParams = new URLSearchParams();
+  if (veiculoId) queryParams.append('veiculoId', veiculoId);
+  if (filtroCategoria && filtroCategoria !== FILTRO_TODOS) queryParams.append('categoria', filtroCategoria);
+
+  const url = `/planos-manutencao${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+  const query = useQuery({
+    queryKey: ['planos', veiculoId, filtroCategoria],
     queryFn: async () => {
-      const { data } = await api.get('/planos-manutencao', { params: { veiculoId } });
-      return data;
+      // Se não for modo global (fetchAll) e não tiver veiculoId, não faz fetch
+      if (!fetchAll && !veiculoId) return [];
+      
+      try {
+        const res = await api.get<PlanoManutencao[]>(url);
+        return res.data;
+      } catch (err) {
+        if (import.meta.env.DEV) console.error("Falha ao carregar planos:", err);
+        return [];
+      }
     },
-    refetchInterval: 120000 // A cada 2 mins mantém a previsão atualizada
+    // Habilita a query se for fetchAll, ou se tiver veiculoId (com a checagem de filtro)
+    enabled: fetchAll || (!!veiculoId && (filtroCategoria === undefined || filtroCategoria === FILTRO_TODOS || !!filtroCategoria))
   });
 
-  // 2. Transforma Alertas Passivos em Ação "Dar Baixa"
   const registrarExecucaoMutation = useMutation({
-    mutationFn: async ({ planoId, kmDaBaixa, observacao }: { planoId: string; kmDaBaixa?: number; observacao?: string }) => {
-      const { data } = await api.patch(`/planos-manutencao/${planoId}/registrar-execucao`, {
-        kmDaBaixa,
-        observacao
-      });
-      return data;
+    mutationFn: async (data: RegisterExecucaoDTO) => {
+      await api.post(`/planos-manutencao/${data.planoId}/executar`, data);
     },
     onSuccess: () => {
-      // Invalida pra recarregar os Gauges do Termostato do Painel
-      queryClient.invalidateQueries({ queryKey: ['planos-manutencao'] });
-      queryClient.invalidateQueries({ queryKey: ['veiculos'] }); // Pode ter afetado previsao no carro
+      toast.success('Manutenção registrada com sucesso!');
+      queryClient.invalidateQueries({ queryKey: ['planos'] });
+    },
+    onError: (err: unknown) => {
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        // toast.error(err.response.data.error);
+      } else {
+        // toast.error('Erro ao registrar manutenção.');
+      }
+    }
+  });
+
+  const excluirPlanoMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/planos-manutencao/${id}`);
+    },
+    onSuccess: () => {
+      toast.success("Plano desativado e removido.");
+      queryClient.invalidateQueries({ queryKey: ['planos'] });
+    },
+    onError: (err: unknown) => {
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        // toast.error(err.response.data.error);
+      } else {
+        // toast.error("Falha ao tentar remover o plano.");
+      }
     }
   });
 
   return {
-    planos: planosQuery.data || [],
-    isLoading: planosQuery.isLoading,
-    refetch: planosQuery.refetch,
-    registrarExecucao: registrarExecucaoMutation
+    planos: query.data || [],
+    isLoading: query.isLoading,
+    isError: query.isError,
+    refetch: query.refetch,
+    // Devolvemos a data crua para manter compatibilidade com GestaoDocumentos
+    data: query.data,
+    registrarExecucao: registrarExecucaoMutation,
+    excluirPlano: excluirPlanoMutation
   };
 }

@@ -1,7 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
-// axios import removed
-import { api } from '../services/api';
-import { uploadToR2 } from '../services/uploadService';
+import { usePhotoSubmit } from '../hooks/usePhotoSubmit';
+import { comprimirImagem } from '../utils/imageUtils';
 import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
 import { toast } from 'sonner';
@@ -12,80 +11,20 @@ import { Camera, Loader2, Check, AlertCircle } from 'lucide-react';
 const fileInputContainer = "relative border-2 border-dashed border-border/60 rounded-3xl p-4 hover:bg-surface-hover transition-all duration-300 cursor-pointer group hover:border-primary/50 flex flex-col items-center justify-center min-h-[280px] overflow-hidden bg-surface shadow-sm";
 const hiddenInput = "absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10";
 
-interface ModalProps {
+interface ModalProps<T = Record<string, unknown>> {
   titulo: string;
   kmParaConfirmar: number | null;
   jornadaId: string | null;
-  dadosJornada: any;
+  dadosJornada: T;
   apiEndpoint: string;
   apiMethod: 'POST' | 'PUT';
   onClose: () => void;
-  onSuccess: (data: any) => void;
+  onSuccess: (data: unknown) => void;
   nested?: boolean;
   permitirGaleria?: boolean;
 }
 
-// --- FUNÇÃO DE COMPRESSÃO ---
-const comprimirImagem = (arquivo: File): Promise<File> => {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(arquivo);
-
-    reader.onload = (event) => {
-      const img = new Image();
-      img.src = event.target?.result as string;
-
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 1200;
-        const MAX_HEIGHT = 1600;
-
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error("Erro ao processar imagem"));
-          return;
-        }
-
-        ctx.drawImage(img, 0, 0, width, height);
-
-        canvas.toBlob((blob) => {
-          if (blob) {
-            const novoArquivo = new File([blob], arquivo.name.replace(/\.[^/.]+$/, ".jpg"), {
-              type: 'image/jpeg',
-              lastModified: Date.now(),
-            });
-            resolve(novoArquivo);
-          } else {
-            reject(new Error("Erro na compressão"));
-          }
-        }, 'image/jpeg', 0.7);
-      };
-
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
-  });
-};
-
-export function ModalConfirmacaoFoto({
+export function ModalConfirmacaoFoto<T extends Record<string, unknown>>({
   titulo,
   kmParaConfirmar,
   jornadaId,
@@ -96,12 +35,13 @@ export function ModalConfirmacaoFoto({
   onSuccess,
   nested = false,
   permitirGaleria = false
-}: ModalProps) {
+}: ModalProps<T>) {
 
   const [foto, setFoto] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [processandoFoto, setProcessandoFoto] = useState(false);
+
+  const { submitPhoto, loading } = usePhotoSubmit<T>();
 
   const textoAjuda = useMemo(() => {
     if (apiEndpoint.includes('abastecimentos')) {
@@ -131,9 +71,7 @@ export function ModalConfirmacaoFoto({
         setFoto(imagemComprimida);
 
       } catch (error) {
-        if (import.meta.env.DEV) {
-          if (import.meta.env.DEV) console.error("Erro ao processar imagem:", error);
-        }
+        if (import.meta.env.DEV) console.error("Erro ao processar imagem:", error);
         hapticError();
         toast.error("Erro ao processar a foto. Tente novamente.");
         setFoto(null);
@@ -151,49 +89,18 @@ export function ModalConfirmacaoFoto({
       return;
     }
 
-    setLoading(true);
-
-    const fluxoCompleto = async () => {
-      const fileType = apiEndpoint.split('/')[1] || 'geral';
-      const fileExt = foto.name.split('.').pop() || 'jpg';
-      const fileName = `${fileType}-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${fileExt}`;
-
-      const publicUrlString = await uploadToR2(foto, fileName, foto.type || 'image/jpeg', fileType);
-      const fotoUrl = publicUrlString;
-
-      let dadosCompletos = { ...dadosJornada };
-
-      if (apiEndpoint.includes('abastecimentos')) {
-        dadosCompletos.fotoNotaFiscalUrl = fotoUrl;
-      } else if (apiEndpoint.includes('manutencoes')) {
-        dadosCompletos.fotoComprovanteUrl = fotoUrl;
-      } else if (apiMethod === 'POST') {
-        dadosCompletos.fotoInicioUrl = fotoUrl;
-      } else {
-        dadosCompletos.fotoFimUrl = fotoUrl;
-      }
-
-      let response;
-      if (apiMethod === 'POST') {
-        response = await api.post(apiEndpoint, dadosCompletos);
-      } else {
-        const endpoint = apiEndpoint.replace(':jornadaId', jornadaId || '');
-        response = await api.put(endpoint, dadosCompletos);
-      }
-
-      return response?.data;
-    };
-
     try {
-      const data = await fluxoCompleto();
-      toast.success('Informações gravadas com sucesso!');
+      const data = await submitPhoto({
+        foto,
+        apiEndpoint,
+        apiMethod,
+        jornadaId,
+        dadosJornada
+      });
       onSuccess(data);
       safeOnClose();
-    } catch (error: any) {
-      if (import.meta.env.DEV) console.error('Erro ao confirmar foto:', error);
-      toast.error('Erro ao processar imagem. Verifique sua conexão e tente novamente.');
-    } finally {
-      setLoading(false);
+    } catch (error: unknown) {
+      // o hook já exibe toast de erro
     }
   };
 

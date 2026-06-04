@@ -27,42 +27,10 @@ import { useFornecedores } from '../../hooks/useFornecedores';
 import { parseDecimal, formatKmVisual } from '../../utils';
 import { desformatarDinheiro, formatarDinheiro } from '../../lib/formatters';
 import { hapticError } from '../../lib/haptics';
+import { comprimirImagem } from '../../utils/imageCompressor';
 
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
 type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
-
-// --- FUNÇÃO DE COMPRESSÃO ---
-const comprimirImagem = (arquivo: File): Promise<File> => {
- return new Promise((resolve, reject) => {
-  const reader = new FileReader();
-  reader.readAsDataURL(arquivo);
-  reader.onload = (e) => {
-   const img = new Image();
-   img.src = e.target?.result as string;
-   img.onload = () => {
-    const canvas = document.createElement('canvas');
-    const MAX_WIDTH = 1200;
-    const MAX_HEIGHT = 1600;
-    let [w, h] = [img.width, img.height];
-
-    if (w > h) { if (w > MAX_WIDTH) { h *= MAX_WIDTH / w; w = MAX_WIDTH; } }
-    else { if (h > MAX_HEIGHT) { w *= MAX_HEIGHT / h; h = MAX_HEIGHT; } }
-
-    canvas.width = w;
-    canvas.height = h;
-    const ctx = canvas.getContext('2d');
-    if (ctx) {
-     ctx.drawImage(img, 0, 0, w, h);
-     canvas.toBlob((blob) => {
-      if (blob) resolve(new File([blob], arquivo.name.replace(/\.[^/.]+$/, ".jpg"), { type: 'image/jpeg', lastModified: Date.now() }));
-      else reject(new Error("Erro ao comprimir"));
-     }, 'image/jpeg', 0.7);
-    } else reject(new Error("Erro canvas"));
-   };
-  };
-  reader.onerror = (err) => reject(err);
- });
-};
 
 // --- SCHEMA ZOD V4 COMPATÍVEL ---
 const manutencaoSchema = z.object({
@@ -95,8 +63,28 @@ const manutencaoSchema = z.object({
 type ManutencaoFormInput = z.input<typeof manutencaoSchema>;
 type ManutencaoFormOutput = z.output<typeof manutencaoSchema>;
 
+interface ManutencaoItem {
+ id?: string;
+ produtoId: string;
+ quantidade: number;
+ valorPorUnidade: number;
+}
+
+interface ManutencaoParaEditar {
+ id: string;
+ tipo: 'CORRETIVA' | 'PREVENTIVA';
+ alvo?: string;
+ veiculoId?: string | null;
+ kmAtual?: number | string | null;
+ fornecedorId: string;
+ data: string;
+ observacoes?: string | null;
+ fotoComprovanteUrl?: string | null;
+ itens: ManutencaoItem[];
+}
+
 interface FormEditarManutencaoProps {
- osParaEditar: any;
+ osParaEditar: ManutencaoParaEditar;
  onSuccess: () => void;
  onClose: () => void;
 }
@@ -107,8 +95,8 @@ export function FormEditarManutencao({
 
  // 📡 BUSCA INDEPENDENTE COM CACHE
  const { data: veiculos = [], isLoading: loadV } = useVeiculos();
- const { data: produtos = [], isLoading: loadP } = useProdutos();
- const { data: fornecedores = [], isLoading: loadF } = useFornecedores();
+ const { produtos = [], loading: loadP } = useProdutos();
+ const { fornecedores = [], isLoading: loadF } = useFornecedores();
 
  const isLoadingDados = loadV || loadP || loadF;
 
@@ -123,7 +111,7 @@ export function FormEditarManutencao({
  const {
   register, control, handleSubmit, watch, setValue,
   formState: { errors, isSubmitting }
- } = useForm<ManutencaoFormInput, any, ManutencaoFormOutput>({
+ } = useForm<ManutencaoFormInput, unknown, ManutencaoFormOutput>({
   resolver: zodResolver(manutencaoSchema),
   defaultValues: {
    tipo: osParaEditar.tipo,
@@ -136,7 +124,7 @@ export function FormEditarManutencao({
    data: new Date(new Date(osParaEditar.data).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10),
    observacoes: obsLimpa,
    fotoComprovanteUrl: osParaEditar.fotoComprovanteUrl,
-   itens: osParaEditar.itens.map((i: any) => ({
+   itens: osParaEditar.itens.map((i: ManutencaoItem) => ({
     produtoId: i.produtoId,
     quantidade: Number(i.quantidade),
     // Transforma para string visual caso necessite edição

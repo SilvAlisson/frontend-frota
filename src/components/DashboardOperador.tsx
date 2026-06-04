@@ -90,7 +90,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
  const [modalQrCodeOpen, setModalQrCodeOpen] = useState(false);
 
  // 📡 BUSCA DOS DADOS COM CACHE
- const { data: usuarios = [], refetch: refetchUsuarios, isLoading: loadingUsuarios } = useUsuarios();
+ const { usuarios = [], refetch: refetchUsuarios, isLoading: loadingUsuarios } = useUsuarios();
  const { data: veiculos = [], refetch: refetchVeiculos, isLoading: loadingVeiculos } = useVeiculos();
  const { data: jornadasAtivas = [], refetch: refetchJornadas, isLoading: loadingJornadas } = useJornadasAtivas();
 
@@ -106,10 +106,8 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
 
  // 🛡️ FILTRO BLINDADO — só minhas jornadas
  const minhasJornadas = useMemo(() => {
-  const result = jornadasAtivas.filter((j: any) =>
-   j.operador?.id === user.id ||
-   j.operadorId === user.id ||
-   j.motoristaId === user.id
+  const result = jornadasAtivas.filter((j) =>
+   j.operador?.id === user.id
   );
   return result;
  }, [jornadasAtivas, user.id]);
@@ -335,7 +333,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
    </Modal>
 
    {modalQrCodeOpen && (
-    <ModalQrCode user={user} onClose={() => setModalQrCodeOpen(false)} />
+    <ModalQrCode user={user as User & { loginToken?: string }} onClose={() => setModalQrCodeOpen(false)} />
    )}
 
   </div>

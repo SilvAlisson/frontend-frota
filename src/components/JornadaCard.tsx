@@ -170,7 +170,7 @@ export function JornadaCard({
               inputMode="numeric"
               placeholder={`Deve ser > ${jornada.kmInicio}`}
               {...register('kmFimInput')}
-              onChange={(e: any) => {
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                 register('kmFimInput').onChange(e);
                 handleKmChange(e);
               }}

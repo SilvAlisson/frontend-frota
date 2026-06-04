@@ -1,103 +1,142 @@
 import { useState } from 'react';
-import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
-import { api } from '../services/api';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { signIn, passkey } from '../lib/auth-client';
+import { useAuth } from '../contexts/AuthContext';
+import { api } from '../services/api';
+
+export interface PasskeyDevice {
+    id: string;
+    name: string | null;
+    deviceType: string;
+    createdAt: string | null;
+    credentialID: string;
+}
 
 export function useWebAuthn() {
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [isAuthenticating, setIsAuthenticating] = useState(false);
+    const [isRegistering, setIsRegistering] = useState(false);
+    const [isAuthenticating, setIsAuthenticating] = useState(false);
+    const { user } = useAuth();
+    const queryClient = useQueryClient();
 
-  // 1. Cadastra o dispositivo atual como Biometria (exige usuário já logado via QR ou Senha)
-  const registerDevice = async () => {
-    setIsRegistering(true);
-    try {
-      // 1.1 Pega o desafio do servidor
-      const { data: options } = await api.get('/auth/webauthn/register-options');
+    // ─── Busca server-side das passkeys (substitui localStorage) ───────────
+    const {
+        data: passkeys = [],
+        isLoading: isLoadingPasskeys,
+        refetch: refetchPasskeys,
+    } = useQuery<PasskeyDevice[]>({
+        queryKey: ['passkeys', user?.id],
+        queryFn: async () => {
+            const { data } = await api.get('/users/me/passkeys');
+            return data;
+        },
+        // Só busca se o usuário estiver logado
+        enabled: !!user?.id,
+        staleTime: 1000 * 60 * 2, // 2 min cache
+    });
 
-      // 1.2 Pede ao navegador/SO para ler a face/dedo
-      let attResp;
-      try {
-        attResp = await startRegistration({ optionsJSON: options });
-      } catch (error: any) {
-        if (error.name === 'NotAllowedError') {
-          toast.error("O cadastro biométrico foi cancelado.");
-        } else {
-          toast.error("Erro no sensor biométrico do aparelho.");
+    const hasPasskeys = passkeys.length > 0;
+
+    // ─── Revogar passkey ────────────────────────────────────────────────────
+    const revokeMutation = useMutation({
+        mutationFn: async (passkeyId: string) => {
+            await api.delete(`/users/me/passkeys/${passkeyId}`);
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['passkeys'] });
+            toast.success('Dispositivo biométrico removido com sucesso!');
+        },
+        onError: () => {
+            toast.error('Erro ao remover dispositivo. Tente novamente.');
         }
-        throw error;
-      }
+    });
 
-      // 1.3 Manda de volta a chave pública para o servidor
-      const { data: verification } = await api.post('/auth/webauthn/register-verify', attResp);
+    const revokePasskey = (passkeyId: string) => revokeMutation.mutate(passkeyId);
 
-      if (verification && verification.verified) {
-        toast.success("Biometria registrada com sucesso neste aparelho!");
-        localStorage.setItem('hasPasskey', 'true');
-        return true;
-      } else {
-        toast.error("Falha ao validar biometria no servidor.");
-        return false;
-      }
+    // ─── Cadastrar biometria no dispositivo atual ───────────────────────────
+    const registerDevice = async () => {
+        setIsRegistering(true);
+        try {
+            if (!user) {
+                toast.error('Você precisa estar logado para cadastrar a biometria.');
+                return false;
+            }
 
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error.response?.data?.error || "Erro ao registrar biometria. HTTPS é obrigatório.");
-      return false;
-    } finally {
-      setIsRegistering(false);
-    }
-  };
+            const res = await passkey.addPasskey({
+                name: `${navigator.platform || 'Dispositivo'} — ${new Date().toLocaleDateString('pt-BR')}`
+            });
 
-  // 2. Faz o login usando a biometria cadastrada
-  const loginWithDevice = async (onSuccess: (token: string, user: any) => void) => {
-    setIsAuthenticating(true);
-    try {
-      // 2.1 Pega as opções de autenticação (desafio)
-      const { data: resp } = await api.post('/auth/webauthn/login-options');
-      const { options } = resp;
+            if (res?.error) {
+                toast.error('Falha ao registrar biometria no servidor.');
+                return false;
+            }
 
-      // 2.2 Pede ao SO para validar a face/dedo
-      let asseResp;
-      try {
-        asseResp = await startAuthentication({ optionsJSON: options });
-      } catch (error: any) {
-        if (error.name === 'NotAllowedError') {
-          toast.error("Ação cancelada pelo usuário.");
-        } else {
-          toast.error("Falha ao ler biometria ou aparelho não cadastrado.");
+            await refetchPasskeys();
+            toast.success('Biometria cadastrada com sucesso neste aparelho! ✅');
+            return true;
+
+        } catch (error: any) {
+            if (error?.name === 'NotAllowedError') {
+                toast.error('O cadastro biométrico foi cancelado.');
+            } else if (error?.name === 'InvalidStateError') {
+                toast.error('Este dispositivo já tem biometria cadastrada.');
+            } else {
+                toast.error('Erro no sensor biométrico do aparelho.');
+            }
+            if (import.meta.env.DEV) console.error('[useWebAuthn] registerDevice:', error);
+            return false;
+        } finally {
+            setIsRegistering(false);
         }
-        throw error;
-      }
+    };
 
-      // 2.3 Manda o desafio resolvido pro servidor
-      const { data: verification } = await api.post('/auth/webauthn/login-verify', {
-        response: asseResp,
-        expectedChallenge: options.challenge
-      });
+    // ─── Login com biometria ────────────────────────────────────────────────
+    const loginWithDevice = async (
+        onSuccess: (token: string, user: { nome: string; [key: string]: unknown }) => void
+    ) => {
+        setIsAuthenticating(true);
+        try {
+            const { data, error } = await signIn.passkey();
 
-      if (verification && verification.verified) {
-        localStorage.setItem('hasPasskey', 'true');
-        toast.success(`Bem-vindo(a) de volta, ${verification.user.nome}!`);
-        onSuccess(verification.token, verification.user);
-        return true;
-      } else {
-        toast.error("Assinatura biométrica inválida.");
-        return false;
-      }
+            if (error) {
+                toast.error(error.message || 'Assinatura biométrica inválida.');
+                return false;
+            }
 
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error.response?.data?.error || "Falha ao autenticar por biometria.");
-      return false;
-    } finally {
-      setIsAuthenticating(false);
-    }
-  };
+            if (data) {
+                await refetchPasskeys();
+                toast.success(`Bem-vindo(a) de volta, ${data.user.name}! 👋`);
+                onSuccess('', data.user as any);
+                return true;
+            }
 
-  return {
-    registerDevice,
-    loginWithDevice,
-    isRegistering,
-    isAuthenticating
-  };
+        } catch (error: any) {
+            if (error?.name === 'NotAllowedError') {
+                toast.error('Ação cancelada pelo usuário.');
+            } else if (error?.name === 'NotFoundError') {
+                toast.error('Nenhuma biometria cadastrada neste dispositivo. Entre com sua senha e cadastre nas Configurações.');
+            } else {
+                toast.error('Falha ao ler biometria. Tente novamente.');
+            }
+            if (import.meta.env.DEV) console.error('[useWebAuthn] loginWithDevice:', error);
+            return false;
+        } finally {
+            setIsAuthenticating(false);
+        }
+    };
+
+    return {
+        // Estado
+        passkeys,
+        hasPasskeys,
+        isLoadingPasskeys,
+        isRegistering,
+        isAuthenticating,
+        isRevoking: revokeMutation.isPending,
+        // Ações
+        registerDevice,
+        loginWithDevice,
+        revokePasskey,
+        refetchPasskeys,
+    };
 }

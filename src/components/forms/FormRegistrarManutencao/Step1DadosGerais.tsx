@@ -6,17 +6,15 @@ import { Select } from '../../ui/Select';
 import { Callout } from '../../ui/Callout';
 import { DatePicker } from '../../ui/DatePicker';
 import { formatKmVisual } from '../../../utils';
-import { api } from '../../../services/api';
 import { useVeiculos } from '../../../hooks/useVeiculos';
 import { useFornecedores } from '../../../hooks/useFornecedores';
-import type { Veiculo } from '../../../types';
 import type { ManutencaoFormValues, TipoManutencao } from './schema';
 
 export function Step1DadosGerais() {
   const { register, watch, setValue, control, formState: { errors, isSubmitting } } = useFormContext<ManutencaoFormValues>();
 
   const { data: veiculos = [], isLoading: loadV } = useVeiculos();
-  const { data: fornecedores = [], isLoading: loadF } = useFornecedores();
+  const { fornecedores = [], isLoading: loadF } = useFornecedores();
 
   const isLocked = isSubmitting || loadV || loadF;
   const [ultimoKmRegistrado, setUltimoKmRegistrado] = useState<number>(0);
@@ -46,20 +44,14 @@ export function Step1DadosGerais() {
   );
 
   useEffect(() => {
-    let isMounted = true;
     if (alvoSelecionado !== 'VEICULO' || !veiculoIdSelecionado) {
       setUltimoKmRegistrado(0);
       return;
     }
-    const fetchInfo = async () => {
-      try {
-        const { data } = await api.get<Veiculo>(`/veiculos/${veiculoIdSelecionado}`);
-        if (isMounted) setUltimoKmRegistrado(data.ultimoKm || 0);
-      } catch (err) { if (import.meta.env.DEV) console.error(err); }
-    };
-    fetchInfo();
-    return () => { isMounted = false; };
-  }, [veiculoIdSelecionado, alvoSelecionado]);
+    // Lendo diretamente do cache da frota em vez de fazer nova requisição (Clean Architecture)
+    const veiculo = veiculos.find(v => v.id === veiculoIdSelecionado);
+    setUltimoKmRegistrado(veiculo?.ultimoKm || 0);
+  }, [veiculoIdSelecionado, alvoSelecionado, veiculos]);
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-2">

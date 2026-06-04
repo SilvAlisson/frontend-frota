@@ -34,6 +34,19 @@ const editJornadaFormSchema = z.object({
 type EditJornadaFormInput = z.input<typeof editJornadaFormSchema>;
 type EditJornadaFormOutput = z.output<typeof editJornadaFormSchema>;
 
+interface VeiculoItem {
+  id: string;
+  placa: string;
+  modelo: string;
+  ultimoKm?: number;
+}
+
+interface OperadorItem {
+  id: string;
+  nome: string;
+  role: string;
+}
+
 interface FormEditarJornadaProps {
   jornadaId: string;
   onSuccess: () => void;
@@ -44,14 +57,14 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
   
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  const [veiculos, setVeiculos] = useState<any[]>([]);
-  const [operadores, setOperadores] = useState<any[]>([]);
+  const [veiculos, setVeiculos] = useState<VeiculoItem[]>([]);
+  const [operadores, setOperadores] = useState<OperadorItem[]>([]);
   const [ultimoKmVeiculo, setUltimoKmVeiculo] = useState<number>(0);
 
   const { 
     register, handleSubmit, reset, setValue, watch, 
     formState: { errors, isSubmitting } 
-  } = useForm<EditJornadaFormInput, any, EditJornadaFormOutput>({
+  } = useForm<EditJornadaFormInput, unknown, EditJornadaFormOutput>({
     resolver: zodResolver(editJornadaFormSchema),
     defaultValues: {
       kmInicio: '', kmFim: '', observacoes: '',
@@ -85,7 +98,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
         if (!isMounted) return;
 
         setVeiculos(veiculosRes.data);
-        setOperadores(usersRes.data.filter((u: any) => ['OPERADOR', 'ENCARREGADO'].includes(u.role)));
+        setOperadores((usersRes.data as OperadorItem[]).filter(u => ['OPERADOR', 'ENCARREGADO'].includes(u.role)));
 
         const jornada = jornadaRes.data;
         const inicio = new Date(jornada.dataInicio);
@@ -126,7 +139,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
 
   useEffect(() => {
     if (veiculos.length > 0 && veiculoSelecionadoId) {
-      const veiculo = veiculos.find((v: any) => v.id === veiculoSelecionadoId);
+      const veiculo = veiculos.find(v => v.id === veiculoSelecionadoId);
       if (veiculo) setUltimoKmVeiculo(veiculo.ultimoKm || 0);
     }
   }, [veiculoSelecionadoId, veiculos]);
@@ -166,9 +179,10 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
       await api.put(`/jornadas/${jornadaId}`, payload);
       toast.success('Jornada retificada com sucesso!');
       onSuccess();
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (import.meta.env.DEV) console.error(err);
-      toast.error(err.response?.data?.error || 'Ocorreu um erro ao gravar as alterações.');
+      const apiError = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      toast.error(apiError || 'Ocorreu um erro ao gravar as alterações.');
     } finally {
       setLoading(false);
     }

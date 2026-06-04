@@ -57,7 +57,7 @@ export function MinhaEquipe({ usuarios, jornadasAbertas, onUpdate }: MinhaEquipe
               <div className="flex items-center gap-4">
                 <Avatar 
                   nome={op.nome} 
-                  url={op.fotoUrl} 
+                  url={op.fotoUrl || op.image} 
                   className="w-12 h-12 text-lg group-hover:border-primary/40 group-hover:shadow-md transition-all" 
                 />
 

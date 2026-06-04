@@ -28,8 +28,13 @@ interface FormRenovarDocumentoProps {
   onCancel: () => void;
 }
 
+interface DocumentoCarregado {
+  titulo: string;
+  categoria: string;
+}
+
 export function FormRenovarDocumento({ documentoId, onSuccess, onCancel }: FormRenovarDocumentoProps) {
-  const [docOriginal, setDocOriginal] = useState<any>(null);
+  const [docOriginal, setDocOriginal] = useState<DocumentoCarregado | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const { mutateAsync: renovar, isPending: isSaving } = useRenovarDocumento();
 

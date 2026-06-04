@@ -75,15 +75,15 @@ export class ErrorBoundary extends Component<Props, State> {
   private logErrorToAuditoria = (error: Error, type: string, componentStack?: string | null) => {
     if (error.message?.includes('logs')) return;
 
-    const errorData = {
+    const errorData: any = {
       message: error.message,
       stack: error.stack,
-      ...(componentStack ? { componentStack } : {})
     };
+    if (componentStack) errorData.componentStack = componentStack;
 
     const context = {
-      ...sanitizePayload(errorData),
-      ...getDeviceContext(),
+      ...(sanitizePayload(errorData) as Record<string, unknown>),
+      ...(getDeviceContext() as Record<string, unknown>),
       _tipoErro: type,
       _breadcrumbs: [...breadcrumbs]
     };

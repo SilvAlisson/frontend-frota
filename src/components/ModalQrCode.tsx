@@ -47,13 +47,13 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   const executarGerarToken = async () => {
     setLoading(true);
     try {
-      const { data } = await api.post(`/auth/user/${user.id}/generate-token`);
+      const { data } = await api.post(`/auth-custom/user/${user.id}/generate-token`);
       setTokenAtual(data.loginToken);
       await queryClient.invalidateQueries({ queryKey: ['users'] });
       toast.success("Credencial atualizada com sucesso!");
       if (onUpdate) onUpdate();
     } catch (error) {
-      console.error(error);
+      if (import.meta.env.DEV) console.error(error);
       toast.error("Erro ao gerar credencial.");
     } finally {
       setLoading(false);
@@ -77,7 +77,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
         });
         toast.success("Compartilhado com sucesso!");
       } catch (err) {
-        console.log("Erro ao compartilhar ou compartilhamento cancelado", err);
+        if (import.meta.env.DEV) console.log("Erro ao compartilhar ou compartilhamento cancelado", err);
       }
     } else {
       handleCopyLink();
@@ -122,7 +122,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
           >
             <Avatar
               nome={user.nome}
-              url={user.fotoUrl}
+              url={user.fotoUrl || user.image}
               className="w-full h-full rounded-full border-none shadow-none"
             />
           </div>

@@ -1,94 +1,88 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { useTheme } from '../contexts/ThemeContext';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { ArrowRight, Truck, Loader2, Sun, Moon, QrCode, Mail, Lock, Fingerprint } from 'lucide-react';
+import { Truck, Sun, Moon, QrCode } from 'lucide-react';
 import { useLogin } from '../hooks/useLogin';
-import { hapticError } from '../lib/haptics';
 import { useWebAuthn } from '../hooks/useWebAuthn';
+import { usePasskeyGuard } from '../hooks/usePasskeyGuard';
 import { useAuth } from '../contexts/AuthContext';
 import { LockScreen } from '../components/LockScreen';
-
-// --- SCHEMAS DE VALIDAÇÃO (ZOD) ---
-const loginSchema = z.object({
-  email: z.string().min(1, "Email obrigatório").email("Formato inválido").transform(e => e.toLowerCase().trim()),
-  password: z.string().min(1, "Digite sua senha")
-});
-
-type LoginFormValues = z.input<typeof loginSchema>;
+import { LoginFormCredentials, type LoginFormValues } from '../components/forms/FormLogin/LoginFormCredentials';
+import { LoginFormQR } from '../components/forms/FormLogin/LoginFormQR';
+import { Skeleton } from '../components/ui/Skeleton';
+import { toast } from 'sonner';
+import type { User } from '../types';
 
 export function LoginScreen() {
-  const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
   const { login } = useAuth();
   const { loginWithDevice, isAuthenticating } = useWebAuthn();
-  
+  const { shouldShowLockScreen, canUseBiometry, isWebAuthnSupported } = usePasskeyGuard();
+
   // Custom Hook com a lógica isolada (Single Responsibility)
   const { isMagicLoggingIn, authLoading, loginWithCredentials, loginWithManualQr } = useLogin();
 
   // Estado visual
   const [mode, setMode] = useState<'CREDENTIALS' | 'QR'>('CREDENTIALS');
-  const [qrManualToken, setQrManualToken] = useState('');
-
-  // Hook Form
-  const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema)
-  });
+  const [isSubmittingForm, setIsSubmittingForm] = useState(false);
+  const [overrideLockScreen, setOverrideLockScreen] = useState(false);
 
   const onCredentialsSubmit = async (data: LoginFormValues) => {
+    setIsSubmittingForm(true);
     try {
       await loginWithCredentials(data);
-    } catch (err: any) {
-      // toast já foi disparado no hook ou pode ser disparado aqui
+    } catch (err: unknown) {
+      // erros tratados no hook
+    } finally {
+      setIsSubmittingForm(false);
     }
   };
 
-  const onError = () => {
-    hapticError();
-  };
-
-  const onManualQrSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const onManualQrSubmit = async (token: string) => {
+    setIsSubmittingForm(true);
     try {
-      await loginWithManualQr(qrManualToken);
-    } catch (err: any) {
+      await loginWithManualQr(token);
+    } catch (err: unknown) {
       // erros tratados no hook
+    } finally {
+      setIsSubmittingForm(false);
     }
   };
 
   const onBiometryClick = async () => {
+    // Feedback inteligente: usuário clicou mas não tem passkey cadastrada
+    if (!canUseBiometry) {
+      if (!isWebAuthnSupported) {
+        toast.error('Seu navegador não suporta autenticação biométrica.');
+      } else {
+        toast.info('Nenhuma biometria cadastrada. Entre com senha e cadastre em "Minha Conta".');
+      }
+      return;
+    }
     await loginWithDevice((token, user) => {
-      login({ token, user });
+      login({ token, user: user as User });
     });
   };
 
-  // --- UI: LOCK SCREEN NATIVA ---
-  const [showLockScreen, setShowLockScreen] = useState(() => {
-    return localStorage.getItem('hasPasskey') === 'true';
-  });
-
-  if (showLockScreen) {
+  // --- UI: LOCK SCREEN NATIVA (server-side, não localStorage) ---
+  if (shouldShowLockScreen && !overrideLockScreen) {
     return (
-      <LockScreen 
+      <LockScreen
         isAuthenticating={isAuthenticating}
         onUnlock={onBiometryClick}
-        onUsePassword={() => setShowLockScreen(false)}
+        onUsePassword={() => setOverrideLockScreen(true)}
       />
     );
   }
 
-  // --- UI: FULL SCREEN LOADER (Apenas para URL Magic Link) ---
+  // --- UI: SKELETON LOADER (Apenas para URL Magic Link) ---
   if (isMagicLoggingIn || authLoading) {
     return (
       <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background text-text-main space-y-6 animate-in fade-in duration-500">
-        <Loader2 className="w-16 h-16 text-primary animate-spin" />
-        <div className="text-center space-y-2">
-          <h2 className="text-xl font-black tracking-tight uppercase">Iniciando Gestão de Frota...</h2>
-          <p className="text-sm font-bold text-text-muted animate-pulse">Validando código QR...</p>
+        <Skeleton className="w-16 h-16 rounded-2xl" />
+        <div className="text-center space-y-3 w-64 flex flex-col items-center">
+          <Skeleton className="h-6 w-48 rounded-md" />
+          <Skeleton className="h-4 w-32 rounded-md" />
         </div>
       </div>
     );
@@ -111,19 +105,13 @@ export function LoginScreen() {
 
       {/* --- LADO ESQUERDO: IMAGEM FROTA (LIMPA E CINEMATOGRÁFICA) --- */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-slate-950 overflow-hidden">
-
-        {/* Imagem de caminhão em blend mode suave */}
         <img
           src="https://plus.unsplash.com/premium_photo-1661935334659-a4f95e515c3b?q=80&w=861&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
           alt="Caminhão pesado em operação"
           className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-30 grayscale"
         />
-
-        {/* Gradiente Mesh Sutil (Configurado para o tema) */}
         <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-950/80 to-transparent"></div>
         <div className="absolute -top-[30%] -right-[10%] w-[100%] h-[100%] bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-primary/10 via-transparent to-transparent"></div>
-
-        {/* Brilho da marca (Azul Klin Vivo) */}
         <div className="absolute -bottom-32 -left-32 w-[600px] h-[600px] bg-primary/20 rounded-full blur-[120px] pointer-events-none"></div>
 
         <div className="relative z-10 flex flex-col justify-end p-16 h-full text-white w-full">
@@ -149,7 +137,6 @@ export function LoginScreen() {
 
       {/* --- LADO DIREITO: FORMULÁRIO --- */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative overflow-y-auto">
-        {/* Fundo sutil Mesh para o lado direito também */}
         <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5 pointer-events-none -z-10"></div>
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
 
@@ -189,139 +176,20 @@ export function LoginScreen() {
             </Button>
           </div>
 
-          {/* FORMULÁRIO 1: E-MAIL E SENHA */}
           {mode === 'CREDENTIALS' && (
-            <form onSubmit={handleSubmit(onCredentialsSubmit, onError)} className="space-y-5 animate-enter">
-              <Input
-                label="E-mail Corporativo"
-                type="email"
-                inputMode="email"
-                autoComplete="email"
-                enterKeyHint="next"
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                placeholder="nome@klinambiental.com.br"
-                {...register('email')}
-                error={errors.email?.message}
-                icon={<Mail className="w-5 h-5 text-text-muted" />}
-                disabled={isSubmitting}
-                className="font-bold bg-surface/40 backdrop-blur-sm border-border/40 focus:bg-surface/60 transition-all rounded-xl"
-              />
-
-              <div className="space-y-2">
-                <Input
-                  label="Senha de Acesso"
-                  type="password"
-                  autoComplete="current-password"
-                  enterKeyHint="done"
-                  placeholder="••••••••"
-                  {...register('password')}
-                  error={errors.password?.message}
-                  icon={<Lock className="w-5 h-5 text-text-muted" />}
-                  disabled={isSubmitting}
-                  className="font-bold bg-surface/40 backdrop-blur-sm border-border/40 focus:bg-surface/60 transition-all rounded-xl"
-                  containerClassName="!mb-0"
-                  onFocus={() => {
-                    // 🚀 PERFORMANCE: Smart Prefetching
-                    import('../layouts/AdminLayout' /* webpackPrefetch: true */).catch(() => {});
-                    import('../components/DashboardRelatorios' /* webpackPrefetch: true */).catch(() => {});
-                  }}
-                  onMouseEnter={() => {
-                    // Antecipação do movimento do mouse
-                    import('../components/DashboardRelatorios').catch(() => {});
-                  }}
-                />
-                <div className="flex justify-end">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    type="button"
-                    onClick={() => navigate('/esqueceu-senha')}
-                    className="text-[10px] h-auto p-0 hover:bg-transparent font-black uppercase tracking-widest text-text-muted hover:text-primary transition-colors italic"
-                  >
-                    Esqueceu sua senha?
-                  </Button>
-                </div>
-              </div>
-
-              <Button
-                type="submit"
-                variant="primary"
-                className="w-full h-14 text-sm font-black btn-tactile mt-6 tracking-[0.1em] uppercase group rounded-2xl"
-                isLoading={isSubmitting}
-                disabled={isSubmitting || isAuthenticating}
-              >
-                {isSubmitting ? 'A Autenticar...' : (
-                  <>Validar Acesso <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
-                )}
-              </Button>
-
-              <div className="flex flex-col items-center pt-4 mt-6 border-t border-border/40">
-                <span className="text-[10px] uppercase font-black text-text-muted/80 tracking-widest mb-4">
-                  OU ACESSE RAPIDAMENTE COM
-                </span>
-                
-                <button
-                  type="button"
-                  onClick={onBiometryClick}
-                  disabled={isSubmitting || isAuthenticating}
-                  aria-label="Login com Biometria"
-                  className={`relative flex items-center justify-center w-20 h-20 rounded-full border-2 transition-all duration-300 shadow-sm overflow-hidden btn-tactile
-                    ${isAuthenticating 
-                      ? 'border-primary bg-primary/10 shadow-[0_0_20px_rgba(var(--color-primary-rgb),0.3)]' 
-                      : 'border-border/60 bg-surface hover:border-primary/50 hover:bg-primary/5 hover:shadow-[0_0_15px_rgba(var(--color-primary-rgb),0.2)]'
-                    }`}
-                >
-                  {/* Efeito de Scan (Pulso) */}
-                  {isAuthenticating && (
-                    <div className="absolute inset-0 border-[3px] border-primary rounded-full animate-ping opacity-20"></div>
-                  )}
-                  
-                  <Fingerprint 
-                    className={`w-9 h-9 transition-colors duration-300 ${
-                      isAuthenticating ? 'text-primary animate-pulse' : 'text-text-secondary group-hover:text-primary'
-                    }`} 
-                    strokeWidth={1.5}
-                  />
-                </button>
-                
-                <span className={`text-[11px] font-black uppercase tracking-widest mt-3 transition-colors ${
-                  isAuthenticating ? 'text-primary animate-pulse' : 'text-text-muted'
-                }`}>
-                  {isAuthenticating ? 'Aguardando Leitura...' : 'Touch ID / Face ID'}
-                </span>
-              </div>
-            </form>
+            <LoginFormCredentials 
+              onSubmit={onCredentialsSubmit}
+              onBiometryClick={onBiometryClick}
+              isSubmittingAuth={isSubmittingForm}
+              isAuthenticatingBiometry={isAuthenticating}
+            />
           )}
 
-          {/* FORMULÁRIO 2: TOKEN QR CODE */}
           {mode === 'QR' && (
-            <form onSubmit={onManualQrSubmit} className="space-y-6 animate-enter">
-              <div className="text-center py-5 px-6 bg-primary/5 rounded-2xl border border-primary/10 shadow-inner">
-                <p className="text-[11px] text-primary font-black uppercase tracking-widest leading-relaxed">
-                  Utilize o terminal seguro para validar o seu crachá de identificação.
-                </p>
-              </div>
-
-              <Input
-                label="Identificador Seguro (Token)"
-                placeholder="Insira o código aqui..."
-                value={qrManualToken}
-                onChange={(e) => setQrManualToken(e.target.value)}
-                icon={<QrCode className="w-5 h-5 text-text-muted" />}
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                enterKeyHint="done"
-                className="font-mono text-sm tracking-widest font-bold bg-surface/40 border-border/40 text-center rounded-xl"
-                autoFocus
-              />
-
-              <Button type="submit" variant="secondary" className="w-full h-14 text-sm font-black btn-tactile group border-border/60 hover:border-primary/50 text-text-main shadow-sm rounded-2xl uppercase tracking-widest">
-                Iniciar Sessão <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform text-primary" />
-              </Button>
-            </form>
+            <LoginFormQR 
+              onSubmit={onManualQrSubmit}
+              isSubmitting={isSubmittingForm}
+            />
           )}
 
           {/* Rodapé Form */}

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import type { DadosEvolucaoKm, Veiculo, OrdemServico, Abastecimento } from '../types';
 
 export type VeiculoCompleto = Veiculo & {
-  resumoFinanceiro?: any;
+  resumoFinanceiro?: unknown;
   ordensServico?: OrdemServico[];
   abastecimentos?: Abastecimento[];
 };
@@ -35,7 +35,7 @@ export function useVeiculoDetalhes(id?: string) {
 
       } catch (err) {
         if (import.meta.env.DEV) console.error("Erro crítico na API:", err);
-        toast.error("Não foi possível carregar o prontuário.");
+        // toast.error("Não foi possível carregar o prontuário.");
         navigate('/admin/veiculos');
       } finally {
         setLoading(false);

@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { AlertCircle, CheckCircle, Clock, Navigation, Wrench, X, ZoomIn, Info, Zap, Droplets, Cog, CarFront, BarChart2 } from 'lucide-react';
-import { GraficoDonutDefeitos } from './ui/GraficosFlota';
+import { GraficoDonutDefeitos } from './ui/GraficosFrota';
 import { Button } from './ui/Button';
 import { Textarea } from './ui/Textarea';
 import { Modal } from './ui/Modal';

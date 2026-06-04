@@ -1,258 +1,220 @@
 import { useState, useEffect, useRef } from 'react';
-import { api } from '../services/api';
 import { FormCadastrarFornecedor } from './forms/FormCadastrarFornecedor';
 import { FormEditarFornecedor } from './forms/FormEditarFornecedor';
 import { Button } from './ui/Button';
-import { toast } from 'sonner';
 import { Trash2, Edit2, Store, Plus, Loader2, AlertTriangle } from 'lucide-react';
-import type { Fornecedor } from '../types';
 import autoAnimate from '@formkit/auto-animate';
 
-// ✨ Componentes Elite
-import { ConfirmModal } from './ui/ConfirmModal';
+// ✨ Componentes Elite & Hooks Globais
 import { EmptyState } from './ui/EmptyState';
 import { PageHeader } from './ui/PageHeader';
 import { Callout } from './ui/Callout';
 import { PullToRefresh } from './ui/PullToRefresh';
 import { SmartFAB } from './ui/SmartFAB';
+import { useFornecedores } from '../hooks/useFornecedores';
+import { useModalStore } from '../hooks/useModalStore';
 
 export function GestaoFornecedores() {
+  const [modo, setModo] = useState<'listando' | 'adicionando' | 'editando'>('listando');
+  const [fornecedorIdSelecionado, setFornecedorIdSelecionado] = useState<string | null>(null);
 
- const [fornecedores, setFornecedores] = useState<Fornecedor[]>([]);
- const [loading, setLoading] = useState(true);
- const [modo, setModo] = useState<'listando' | 'adicionando' | 'editando'>('listando');
- 
- // Estados para exclusão segura
- const [deletingId, setDeletingId] = useState<string | null>(null);
- const [fornecedorParaExcluir, setFornecedorParaExcluir] = useState<Fornecedor | null>(null);
- const [fornecedorIdSelecionado, setFornecedorIdSelecionado] = useState<string | null>(null);
+  const { fornecedores, isLoading, refetch, excluirFornecedor, isExcluindo, excluindoId } = useFornecedores();
+  const { openModal } = useModalStore();
 
- // Referência para a grelha animada
- const parentRef = useRef<HTMLDivElement>(null);
+  // Referência para a grelha animada
+  const parentRef = useRef<HTMLDivElement>(null);
 
- useEffect(() => {
-  if (parentRef.current) {
-   autoAnimate(parentRef.current);
-  }
- }, [parentRef, modo]);
+  useEffect(() => {
+    if (parentRef.current) {
+      autoAnimate(parentRef.current);
+    }
+  }, [parentRef, modo]);
 
- const fetchFornecedores = async () => {
-  setLoading(true);
-  try {
-   const response = await api.get<Fornecedor[]>('/fornecedores');
-   setFornecedores(response.data);
-  } catch (err) {
-   if (import.meta.env.DEV) console.error(err);
-   toast.error('Não foi possível carregar a lista de parceiros.');
-  } finally {
-   setLoading(false);
-  }
- };
+  // --- LÓGICA DE EXCLUSÃO (Global Modal) ---
+  const handleRequestDelete = (id: string, nome: string) => {
+    openModal('CONFIRM', {
+      title: "Remover Parceiro",
+      description: (
+        <div className="space-y-4">
+          <p className="text-text-secondary text-sm font-medium">
+            Tem certeza que deseja excluir <strong className="text-text-main font-black">"{nome}"</strong> da sua rede de fornecedores?
+          </p>
+          <Callout variant="warning" title="Atenção" icon={AlertTriangle}>
+            Históricos de manutenção ou abastecimentos já Registrados com este parceiro não serão apagados, mas perderão o vínculo de pesquisa rápida.
+          </Callout>
+        </div>
+      ),
+      variant: 'danger',
+      confirmLabel: "Sim, Excluir",
+      onConfirm: async () => {
+        await excluirFornecedor(id);
+      }
+    });
+  };
 
- useEffect(() => {
-  fetchFornecedores();
- }, []);
+  const handleSucesso = () => {
+    setModo('listando');
+    setFornecedorIdSelecionado(null);
+    refetch();
+  };
 
- // --- LÓGICA DE EXCLUSÃO (ConfirmModal) ---
- const handleExecuteDelete = async () => {
-  if (!fornecedorParaExcluir) return;
+  const handleCancelarForm = () => {
+    setModo('listando');
+    setFornecedorIdSelecionado(null);
+  };
 
-  setDeletingId(fornecedorParaExcluir.id);
-  try {
-   await api.delete(`/fornecedores/${fornecedorParaExcluir.id}`);
-   setFornecedores(prev => prev.filter(f => f.id !== fornecedorParaExcluir.id));
-   toast.success('Parceiro removido com sucesso.');
-  } catch (err: any) {
-   toast.error(err.response?.data?.error || 'Erro ao remover. Pode estar vinculado a históricos.');
-  } finally {
-   setDeletingId(null);
-   setFornecedorParaExcluir(null); // Fecha o modal
-  }
- };
+  // Helper de cor 100% compatível com Dark Mode
+  const getIconColor = (tipo?: string) => {
+    if (tipo === 'POSTO') return 'bg-orange-500/10 text-orange-600 dark:text-orange-500 border-orange-500/20';
+    if (tipo === 'LAVA_JATO') return 'bg-info/10 text-info border-info/20';
+    return 'bg-surface-hover/80 text-text-secondary border-border/60';
+  };
 
- const handleSucesso = () => {
-  setModo('listando');
-  setFornecedorIdSelecionado(null);
-  fetchFornecedores();
- };
+  return (
+    <PullToRefresh onRefresh={async () => { await refetch(); }}>
+      <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-10">
 
- const handleCancelarForm = () => {
-  setModo('listando');
-  setFornecedorIdSelecionado(null);
- };
-
- // Helper de cor 100% compatível com Dark Mode
- const getIconColor = (tipo?: string) => {
-  if (tipo === 'POSTO') return 'bg-orange-500/10 text-orange-600 dark:text-orange-500 border-orange-500/20';
-  if (tipo === 'LAVA_JATO') return 'bg-info/10 text-info border-info/20';
-  return 'bg-surface-hover/80 text-text-secondary border-border/60';
- };
-
- return (
-  <PullToRefresh onRefresh={fetchFornecedores}>
-   <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-10">
-
-    {/* CABEÇALHO */}
-    <PageHeader
-     title="Parceiros & Fornecedores"
-     subtitle="Gerencie oficinas, postos de combustível e prestadores de serviço."
-     extraAction={
-       modo === 'listando' ? (
-         <Button
-           variant="primary"
-           onClick={() => setModo('adicionando')}
-           className="shadow-button hover:shadow-float-primary h-11 w-full sm:w-auto"
-           icon={<Plus className="w-4 h-4" />}
-         >
-           Novo Parceiro
-         </Button>
-       ) : undefined
-     }
-    />
-
-    {/* FORMULÁRIOS (COM TRANSIÇÃO) */}
-    {modo === 'adicionando' && (
-     <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-xl mx-auto animate-in slide-in-from-right-8 duration-300">
-      <div className="mb-6 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit" onClick={handleCancelarForm}>
-       <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar
-      </div>
-      <FormCadastrarFornecedor onSuccess={handleSucesso} onCancelar={handleCancelarForm} />
-     </div>
-    )}
-
-    {modo === 'editando' && fornecedorIdSelecionado && (
-     <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-xl mx-auto animate-in slide-in-from-right-8 duration-300">
-       <div className="mb-6 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit" onClick={handleCancelarForm}>
-       <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar
-      </div>
-      <FormEditarFornecedor
-       fornecedorId={fornecedorIdSelecionado}
-       onSuccess={handleSucesso}
-       onCancelar={handleCancelarForm}
-      />
-     </div>
-    )}
-
-    {/* LISTAGEM (GRID INDUSTRIAL) */}
-    {modo === 'listando' && (
-     <>
-      {loading ? (
-       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {[1, 2, 3, 4, 5, 6].map(i => (
-         <div key={i} className="h-40 bg-surface-hover/50 rounded-3xl border border-border/40 animate-pulse"></div>
-        ))}
-       </div>
-      ) : (
-       <div ref={parentRef} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-max">
-        {fornecedores.map((f) => (
-         <div key={f.id} className="group bg-surface p-5 sm:p-6 rounded-3xl shadow-sm border border-border/60 hover:shadow-md hover:border-primary/40 transition-all duration-300 flex flex-col relative h-full">
-
-          {/* Topo: Ícone e Ações */}
-          <div className="flex justify-between items-start mb-5">
-           <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shadow-inner border ${getIconColor(f.tipo)}`}>
-            <Store className="w-5 h-5" />
-           </div>
-
-           <div className="flex gap-1 bg-surface-hover/50 rounded-xl p-1 border border-border/40 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
-            <Button
-             variant="ghost"
-             size="icon"
-             onClick={() => { setFornecedorIdSelecionado(f.id); setModo('editando'); }}
-             aria-label={`Editar parceiro ${f.nome}`}
-             className="h-8 w-8 text-text-muted hover:text-primary hover:bg-primary/10"
-            >
-             <Edit2 className="w-4 h-4" />
-            </Button>
-            <Button
-             variant="ghost"
-             size="icon"
-             onClick={() => setFornecedorParaExcluir(f)}
-             disabled={deletingId === f.id}
-             aria-label={`Excluir parceiro ${f.nome}`}
-             className="h-8 w-8 text-text-muted hover:text-error hover:bg-error/10"
-            >
-             {deletingId === f.id
-              ? <Loader2 className="w-4 h-4 animate-spin text-error" />
-              : <Trash2 className="w-4 h-4" />}
-            </Button>
-           </div>
-          </div>
-
-          {/* Informações */}
-          <div className="mb-4">
-           <h4 className="font-black text-text-main text-lg tracking-tight leading-tight mb-1.5 truncate" title={f.nome}>
-            {f.nome}
-           </h4>
-           {f.tipo && (
-            <span className="inline-block text-[9px] uppercase font-black tracking-widest text-text-secondary bg-surface-hover px-2 py-1 rounded-md border border-border/50">
-             {f.tipo.replace('_', ' ')}
-            </span>
-           )}
-          </div>
-
-          {/* Rodapé: CNPJ */}
-          <div className="mt-auto pt-4 border-t border-border/40 flex items-center justify-between">
-           <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">CNPJ</span>
-           {f.cnpj ? (
-            <span className="text-xs font-mono font-bold text-text-main bg-surface-hover/50 px-2 py-0.5 rounded border border-border/40">
-             {f.cnpj}
-            </span>
-           ) : (
-            <span className="text-xs text-text-muted/60 font-medium italic">Não informado</span>
-           )}
-          </div>
-
-         </div>
-        ))}
-       </div>
-      )}
-
-      {!loading && fornecedores.length === 0 && (
-       // NOSSO EMPTY STATE ELEGANTE
-       <div className="pt-10">
-        <EmptyState 
-         icon={Store} 
-         title="Sem Parceiros Registrados" 
-         description="Adicione oficinas, postos de combustível ou fornecedores de peças para começar a associar despesas."
-         action={
-          <Button variant="secondary" onClick={() => setModo('adicionando')} icon={<Plus className="w-4 h-4"/>}>
-           Registar o Primeiro
-          </Button>
-         }
+        {/* CABEÇALHO */}
+        <PageHeader
+          title="Parceiros & Fornecedores"
+          subtitle="Gerencie oficinas, postos de combustível e prestadores de serviço."
+          extraAction={
+            modo === 'listando' ? (
+              <Button
+                variant="primary"
+                onClick={() => setModo('adicionando')}
+                className="shadow-button hover:shadow-float-primary h-11 w-full sm:w-auto"
+                icon={<Plus className="w-4 h-4" />}
+              >
+                Novo Parceiro
+              </Button>
+            ) : undefined
+          }
         />
-       </div>
-      )}
-     </>
-    )}
 
-    {/* MODAL ELEGANTE COM CALLOUT */}
-    <ConfirmModal 
-     isOpen={!!fornecedorParaExcluir}
-     onCancel={() => setFornecedorParaExcluir(null)}
-     onConfirm={handleExecuteDelete}
-     title="Remover Parceiro"
-     description={
-      <div className="space-y-4">
-       <p className="text-text-secondary text-sm font-medium">
-         Tem certeza que deseja excluir <strong className="text-text-main font-black">"{fornecedorParaExcluir?.nome}"</strong> da sua rede de fornecedores?
-       </p>
-       <Callout variant="warning" title="Atenção" icon={AlertTriangle}>
-         Históricos de manutenção ou abastecimentos já Registrados com este parceiro não serão apagados, mas perderão o vínculo de pesquisa rápida.
-       </Callout>
+        {/* FORMULÁRIOS (COM TRANSIÇÃO) */}
+        {modo === 'adicionando' && (
+          <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-xl mx-auto animate-in slide-in-from-right-8 duration-300">
+            <div className="mb-6 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit" onClick={handleCancelarForm}>
+              <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar
+            </div>
+            <FormCadastrarFornecedor onSuccess={handleSucesso} onCancelar={handleCancelarForm} />
+          </div>
+        )}
+
+        {modo === 'editando' && fornecedorIdSelecionado && (
+          <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-xl mx-auto animate-in slide-in-from-right-8 duration-300">
+            <div className="mb-6 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit" onClick={handleCancelarForm}>
+              <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar
+            </div>
+            <FormEditarFornecedor
+              fornecedorId={fornecedorIdSelecionado}
+              onSuccess={handleSucesso}
+              onCancelar={handleCancelarForm}
+            />
+          </div>
+        )}
+
+        {/* LISTAGEM (GRID INDUSTRIAL) */}
+        {modo === 'listando' && (
+          <>
+            {isLoading ? (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {[1, 2, 3, 4, 5, 6].map(i => (
+                  <div key={i} className="h-40 bg-surface-hover/50 rounded-3xl border border-border/40 animate-pulse"></div>
+                ))}
+              </div>
+            ) : (
+              <div ref={parentRef} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 auto-rows-max">
+                {fornecedores.map((f) => (
+                  <div key={f.id} className="group bg-surface p-5 sm:p-6 rounded-3xl shadow-sm border border-border/60 hover:shadow-md hover:border-primary/40 transition-all duration-300 flex flex-col relative h-full">
+
+                    {/* Topo: Ícone e Ações */}
+                    <div className="flex justify-between items-start mb-5">
+                      <div className={`h-12 w-12 rounded-2xl flex items-center justify-center shadow-inner border ${getIconColor(f.tipo)}`}>
+                        <Store className="w-5 h-5" />
+                      </div>
+
+                      <div className="flex gap-1 bg-surface-hover/50 rounded-xl p-1 border border-border/40 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => { setFornecedorIdSelecionado(f.id); setModo('editando'); }}
+                          aria-label={`Editar parceiro ${f.nome}`}
+                          className="h-8 w-8 text-text-muted hover:text-primary hover:bg-primary/10"
+                        >
+                          <Edit2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRequestDelete(f.id, f.nome)}
+                          disabled={isExcluindo && excluindoId === f.id}
+                          aria-label={`Excluir parceiro ${f.nome}`}
+                          className="h-8 w-8 text-text-muted hover:text-error hover:bg-error/10"
+                        >
+                          {isExcluindo && excluindoId === f.id
+                            ? <Loader2 className="w-4 h-4 animate-spin text-error" />
+                            : <Trash2 className="w-4 h-4" />}
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Informações */}
+                    <div className="mb-4">
+                      <h4 className="font-black text-text-main text-lg tracking-tight leading-tight mb-1.5 truncate" title={f.nome}>
+                        {f.nome}
+                      </h4>
+                      {f.tipo && (
+                        <span className="inline-block text-[9px] uppercase font-black tracking-widest text-text-secondary bg-surface-hover px-2 py-1 rounded-md border border-border/50">
+                          {f.tipo.replace('_', ' ')}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Rodapé: CNPJ */}
+                    <div className="mt-auto pt-4 border-t border-border/40 flex items-center justify-between">
+                      <span className="text-[9px] font-black text-text-muted uppercase tracking-[0.2em]">CNPJ</span>
+                      {f.cnpj ? (
+                        <span className="text-xs font-mono font-bold text-text-main bg-surface-hover/50 px-2 py-0.5 rounded border border-border/40">
+                          {f.cnpj}
+                        </span>
+                      ) : (
+                        <span className="text-xs text-text-muted/60 font-medium italic">Não informado</span>
+                      )}
+                    </div>
+
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {!isLoading && fornecedores.length === 0 && (
+              // NOSSO EMPTY STATE ELEGANTE
+              <div className="pt-10">
+                <EmptyState 
+                  icon={Store} 
+                  title="Sem Parceiros Registrados" 
+                  description="Adicione oficinas, postos de combustível ou fornecedores de peças para começar a associar despesas."
+                  action={
+                    <Button variant="secondary" onClick={() => setModo('adicionando')} icon={<Plus className="w-4 h-4"/>}>
+                      Registar o Primeiro
+                    </Button>
+                  }
+                />
+              </div>
+            )}
+          </>
+        )}
+
+        {modo === 'listando' && (
+          <SmartFAB 
+            onClick={() => setModo('adicionando')} 
+            label="Novo Parceiro" 
+          />
+        )}
+
       </div>
-     }
-     variant="danger"
-     confirmLabel={deletingId ? "A remover..." : "Sim, Excluir"}
-    />
-
-    {modo === 'listando' && (
-      <SmartFAB 
-        onClick={() => setModo('adicionando')} 
-        label="Novo Parceiro" 
-      />
-    )}
-
-   </div>
-  </PullToRefresh>
- );
+    </PullToRefresh>
+  );
 }

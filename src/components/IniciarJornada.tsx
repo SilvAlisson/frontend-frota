@@ -14,7 +14,7 @@ interface IniciarJornadaProps {
   usuarios: User[];
   veiculos: Veiculo[];
   operadorLogadoId: string;
-  onJornadaIniciada: (novaJornada: any) => void;
+  onJornadaIniciada: (novaJornada: Jornada) => void;
   jornadasAtivas: Jornada[];
 }
 
@@ -33,12 +33,22 @@ export function IniciarJornada({
   const [loading, setLoading] = useState(false);
 
   const [modalAberto, setModalAberto] = useState(false);
-  const [formDataParaModal, setFormDataParaModal] = useState<any>(null);
+  const [formDataParaModal, setFormDataParaModal] = useState<{
+    veiculoId: string;
+    operadorId: string;
+    encarregadoId: string;
+    kmInicio: number;
+  } | null>(null);
 
   // ConfirmModal de conflito de veículo
   const [showConflictConfirm, setShowConflictConfirm] = useState(false);
   const [conflictMsg, setConflictMsg] = useState('');
-  const [pendingDados, setPendingDados] = useState<any>(null);
+  const [pendingDados, setPendingDados] = useState<{
+    veiculoId: string;
+    operadorId: string;
+    encarregadoId: string;
+    kmInicio: number;
+  } | null>(null);
 
   // Calcula o último KM do veículo selecionado
   const ultimoKmReferencia = useMemo(() => {
@@ -86,9 +96,12 @@ export function IniciarJornada({
       return;
     }
 
-    // Validação de coerência: Avisa se o KM inserido for MENOR que o anterior
+    // Validação de coerência: Bloqueia se o KM inserido for MENOR que o anterior
     if (ultimoKmReferencia > 0 && kmInicioFloat < ultimoKmReferencia) {
-      toast.warning(`Atenção: O KM informado (${kmInicioFloat}) é MENOR que o último registrado (${ultimoKmReferencia}). Verifique o painel.`);
+      hapticError();
+      toast.error(`O KM informado (${kmInicioFloat}) é MENOR que o último registrado (${ultimoKmReferencia}). Verifique o painel.`);
+      setLoading(false);
+      return;
     }
 
     const dadosForm = {
@@ -113,7 +126,7 @@ export function IniciarJornada({
     setLoading(false);
   };
 
-  const handleModalSuccess = (novaJornada: any) => {
+  const handleModalSuccess = (novaJornada: Jornada) => {
     toast.success('Jornada iniciada com sucesso! Boa viagem.');
     onJornadaIniciada(novaJornada);
     setModalAberto(false);
@@ -141,7 +154,7 @@ export function IniciarJornada({
         {/* Veículo */}
         <div>
           <Select
-            label="Veículo"
+            label={`Veículo (${veiculos.length})`}
             value={veiculoId}
             onChange={(e) => handleVeiculoChange(e.target.value)}
             disabled={loading}
@@ -229,7 +242,7 @@ export function IniciarJornada({
           apiMethod="POST"
           jornadaId={null}
           onClose={() => setModalAberto(false)}
-          onSuccess={handleModalSuccess}
+          onSuccess={handleModalSuccess as unknown as React.ComponentProps<typeof ModalConfirmacaoFoto>['onSuccess']}
         />
       )}
 

@@ -8,7 +8,7 @@ export interface CustomAxiosError extends AxiosError {
   _toastHandled?: boolean;
 }
 
-export const sanitizePayload = (payload: any): any => {
+export const sanitizePayload = (payload: unknown): unknown => {
   if (!payload) return payload;
   if (typeof payload === 'string') {
     try {
@@ -24,7 +24,7 @@ export const sanitizePayload = (payload: any): any => {
     return payload.map(sanitizePayload);
   }
 
-  const sanitized = { ...payload };
+  const sanitized: Record<string, unknown> = { ...(payload as Record<string, unknown>) };
   const sensitiveKeys = ['password', 'senha', 'token', 'secret', 'magictoken'];
   
   for (const key in sanitized) {
@@ -44,11 +44,12 @@ export const api = axios.create({
     'Content-Type': 'application/json',
   },
   timeout: 30000,
+  withCredentials: true,
 });
 
 // --- Interceptor de Requisição ---
 api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig & { metadata?: any }) => {
+  (config: InternalAxiosRequestConfig & { metadata?: unknown }) => {
     const token = sessionStorage.getItem('authToken');
 
     if (token) {
@@ -91,7 +92,7 @@ function logToAuditTracker(error: AxiosError, duration: number, userLogadoInfo: 
   }
 
   const context = {
-    ...sanitizePayload(parsedConfigData),
+    ...sanitizePayload(parsedConfigData) as Record<string, unknown>,
     ...getDeviceContext(),
     _dataHoraBatida: new Date().toLocaleString('pt-BR'),
     _usuarioLogado: userLogadoInfo,
@@ -155,6 +156,12 @@ api.interceptors.response.use(
       toast.warning('O servidor está sobrecarregado no momento. Tente de novo em alguns segundos.');
       (error as CustomAxiosError)._toastHandled = true;
       return Promise.reject(error);
+    }
+
+    if (error.response?.status && error.response.status >= 400 && error.response.status < 500 && ![401, 403, 429].includes(error.response.status)) {
+      const serverMsg = error.response.data?.error || error.response.data?.message;
+      toast.error(serverMsg || 'Falha na requisição. Verifique os dados e tente novamente.');
+      (error as CustomAxiosError)._toastHandled = true;
     }
 
     if (error.response?.status && error.response.status >= 500) {

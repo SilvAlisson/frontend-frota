@@ -1,25 +1,49 @@
-﻿import { useQuery } from '@tanstack/react-query';
-import { isAxiosError } from 'axios';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'sonner';
+import axios from 'axios';
 import type { Fornecedor } from '../types';
 
 export function useFornecedores() {
-  const { user } = useAuth();
+  const queryClient = useQueryClient();
 
-  return useQuery({
+  const fornecedoresQuery = useQuery({
     queryKey: ['fornecedores'],
     queryFn: async () => {
-      const { data } = await api.get<Fornecedor[]>('/fornecedores');
-      return data;
-    },
-    enabled: !!user,
-    staleTime: 1000 * 60 * 5,
-    retry: (failureCount, error: unknown) => {
-        if (isAxiosError(error) && error.response && error.response.status >= 400 && error.response.status < 500) return false;
-        return failureCount < 3;
+      try {
+        const { data } = await api.get<Fornecedor[]>('/fornecedores');
+        return data;
+      } catch (err: unknown) {
+        if (import.meta.env.DEV) console.error(err);
+        // toast.error('Não foi possível carregar a lista de parceiros.');
+        throw err;
+      }
     }
   });
+
+  const excluirFornecedorMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await api.delete(`/fornecedores/${id}`);
+    },
+    onSuccess: () => {
+      toast.success('Parceiro removido com sucesso.');
+      queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
+    },
+    onError: (err: unknown) => {
+      if (axios.isAxiosError(err) && err.response?.data?.error) {
+        // toast.error(err.response.data.error);
+      } else {
+        // toast.error('Erro ao remover. Pode estar vinculado a históricos.');
+      }
+    }
+  });
+
+  return {
+    fornecedores: fornecedoresQuery.data || [],
+    isLoading: fornecedoresQuery.isLoading,
+    refetch: fornecedoresQuery.refetch,
+    excluirFornecedor: excluirFornecedorMutation.mutateAsync,
+    isExcluindo: excluirFornecedorMutation.isPending,
+    excluindoId: excluirFornecedorMutation.variables
+  };
 }
-
-

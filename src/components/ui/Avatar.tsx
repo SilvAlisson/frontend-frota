@@ -38,7 +38,7 @@ export function Avatar({ nome = 'Usuário', url, size = 'md', className, ...prop
           'rounded-full object-cover border border-border/60 shadow-sm shrink-0',
           className
         )} 
-        {...(props as any)}
+        {...(props as React.ImgHTMLAttributes<HTMLImageElement>)}
       />
     );
   }

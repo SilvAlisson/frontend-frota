@@ -1,6 +1,4 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { api } from '../services/api';
 import type { User, UserRole } from '../types';
 import { Button } from './ui/Button';
 import { Avatar } from './ui/Avatar';
@@ -14,7 +12,6 @@ import { ModalTreinamentosUsuario } from './ModalTreinamentosUsuario';
 import { exportarParaExcel } from '../utils';
 import { TableStyles } from '../styles/table';
 import { toast } from 'sonner';
-import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
 
 function getFirstAndLastName(fullName: string) {
@@ -32,76 +29,74 @@ import { PageHeader } from './ui/PageHeader';
 import { SmartFAB } from './ui/SmartFAB';
 import { PullToRefresh } from './ui/PullToRefresh';
 
+// ✨ DOMÍNIO E MODAL GLOBAL
+import { useUsuarios } from '../hooks/useUsuarios';
+import { useModalStore } from '../hooks/useModalStore';
+
 interface GestaoUsuariosProps {
   adminUserId: string;
 }
 
 export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
-  const queryClient = useQueryClient();
-
   // Estados de Fluxo
   const [isCadastroOpen, setIsCadastroOpen] = useState(false);
   const [usuarioParaEditar, setUsuarioParaEditar] = useState<User | null>(null);
   const [busca, setBusca] = useState('');
 
-  // Estados dos Modais Específicos
-  const [usuarioParaTreinamento, setUsuarioParaTreinamento] = useState<User | null>(null);
-  const [usuarioParaQr, setUsuarioParaQr] = useState<User | null>(null);
-  
-  // ✨ Estados para o Modal de Exclusão Segura
-  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const { usuarios, isLoading, refetch, excluirUsuario, isExcluindo } = useUsuarios();
+  const { openModal, closeModal } = useModalStore();
 
-  // 1. Data Fetching
-  const { data: usuarios = [], isLoading, refetch } = useQuery<User[]>({
-    queryKey: ['users'],
-    queryFn: async () => {
-      const response = await api.get('/users');
-      return response.data;
-    },
-    staleTime: 1000 * 60 * 5,
-  });
-
-  // 2. Filtragem Local
+  // Filtragem Local
   const usuariosFiltrados = usuarios.filter(u =>
     u.nome.toLowerCase().includes(busca.toLowerCase()) ||
     u.email.toLowerCase().includes(busca.toLowerCase()) ||
     (u.matricula && u.matricula.includes(busca))
   );
 
-  // 3. Ações
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete(`/users/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('Colaborador removido com sucesso.');
-      setUserToDelete(null); // Fecha o modal após o sucesso
-    },
-    onError: (err: any) => {
-      if (import.meta.env.DEV) console.error(err);
-      toast.error('Erro ao remover colaborador.');
-      setUserToDelete(null);
-    }
-  });
-
-  // ✨ Lógica atualizada para usar o ConfirmModal em vez do window.confirm
+  // --- AÇÕES COM MODAL GLOBAL ---
   const handleDeleteRequest = (user: User) => {
     if (user.id === adminUserId) {
       toast.error("Ação bloqueada: Não pode remover o seu próprio Usuário.");
       return;
     }
-    setUserToDelete(user);
-  };
-
-  const handleConfirmDelete = () => {
-    if (userToDelete) {
-      deleteMutation.mutate(userToDelete.id);
-    }
+    
+    openModal('CONFIRM', {
+      title: "Inativar ou Remover Colaborador",
+      description: `Tem certeza que deseja inativar ou remover as credenciais de acesso de ${user.nome}? Se o usuário possuir histórico, ele será apenas inativado para manter o histórico da frota.`,
+      variant: "danger",
+      confirmLabel: "Sim, Confirmar Ação",
+      onConfirm: async () => {
+        await excluirUsuario(user.id);
+      }
+    });
   };
 
   const handleAbrirQrModal = (user: User) => {
-    setUsuarioParaQr(user);
+    const modalId = openModal('CUSTOM', {
+      content: (
+        <ModalQrCode
+          user={{ ...user, loginToken: user.loginToken ?? undefined }}
+          onClose={() => closeModal(modalId)}
+          onUpdate={() => {
+             refetch();
+          }}
+        />
+      )
+    });
+  };
+
+  const handleAbrirTreinamentosModal = (user: User) => {
+    const modalId = openModal('CUSTOM', {
+      content: (
+        <ModalTreinamentosUsuario
+          usuario={user}
+          onClose={() => {
+              closeModal(modalId);
+              refetch(); // Atualiza a lista caso os treinos alterem o status do operador
+          }}
+        />
+      )
+    });
   };
 
   const handleExportar = () => {
@@ -169,7 +164,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   }
 
   return (
-    <PullToRefresh onRefresh={() => refetch()}>
+    <PullToRefresh onRefresh={async () => { await refetch(); }}>
       <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-10">
 
         {/* HEADER DA PÁGINA (Padrão KLIN Elite) */}
@@ -230,7 +225,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
               <>
                 <td className={`${TableStyles.td} pl-8`}>
                   <div className="flex items-center gap-4 min-w-0">
-                    <Avatar nome={u.nome} url={u.fotoUrl} />
+                    <Avatar nome={u.nome} url={u.fotoUrl || u.image} />
                     <span className="font-bold text-text-main text-base tracking-tight truncate" title={u.nome}>{getFirstAndLastName(u.nome)}</span>
                   </div>
                 </td>
@@ -242,7 +237,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                 </td>
                 <td className={`${TableStyles.td} text-right pr-8`}>
                   <div className="grid grid-cols-2 gap-1.5 w-fit ml-auto opacity-60 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" className="h-9 w-9 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => setUsuarioParaTreinamento(u)} title="Registro de Treinamentos">
+                    <Button variant="ghost" className="h-9 w-9 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => handleAbrirTreinamentosModal(u)} title="Registro de Treinamentos">
                       <GraduationCap className="w-4 h-4" />
                     </Button>
 
@@ -262,7 +257,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                       variant="ghost" 
                       className="h-9 w-9 !p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-xl" 
                       onClick={() => handleDeleteRequest(u)} 
-                      disabled={deleteMutation.isPending || u.id === adminUserId} 
+                      disabled={isExcluindo || u.id === adminUserId} 
                       title="Inativar Colaborador"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -277,7 +272,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
               <div className="p-5 border-b border-border/50 hover:bg-surface-hover/30 transition-colors cursor-pointer hover-lift rounded-2xl m-2 glass" onClick={() => setUsuarioParaEditar(u)}>
                 <div className="flex flex-col">
                   <div className="flex items-start gap-4">
-                    <Avatar nome={u.nome} url={u.fotoUrl} size="lg" />
+                    <Avatar nome={u.nome} url={u.fotoUrl || u.image} size="lg" />
                     <div className="flex flex-col gap-0.5 justify-center mt-1">
                       <h3 className="font-black text-text-main text-lg tracking-tight leading-none mb-1.5">{getFirstAndLastName(u.nome)}</h3>
                       <BadgeRole role={u.role} />
@@ -285,7 +280,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                   </div>
 
                   <div className="mt-5 grid grid-cols-2 gap-2 border-t border-dashed border-border/60 pt-4" onClick={e => e.stopPropagation()}>
-                    <Button variant="secondary" className="text-[11px] h-10 w-full bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => setUsuarioParaTreinamento(u)}>Treinos</Button>
+                    <Button variant="secondary" className="text-[11px] h-10 w-full bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => handleAbrirTreinamentosModal(u)}>Treinos</Button>
                     <Button variant="secondary" className="text-[11px] h-10 w-full bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => setUsuarioParaEditar(u)}>Editar</Button>
 
                     {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') ? (
@@ -304,37 +299,6 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
             )}
           />
         </div>
-      )}
-
-      {/* --- MODAIS DE APOIO --- */}
-
-      {/* ✨ O NOSSO NOVO CONFIRM MODAL EM AÇÃO */}
-      <ConfirmModal 
-        isOpen={!!userToDelete}
-        onCancel={() => setUserToDelete(null)}
-        onConfirm={handleConfirmDelete}
-        title="Inativar ou Remover Colaborador"
-        description={`Tem certeza que deseja inativar ou remover as credenciais de acesso de ${userToDelete?.nome}? Se o usuário possuir histórico, ele será apenas inativado para manter o histórico da frota.`}
-        variant="danger"
-        confirmLabel={deleteMutation.isPending ? "A processar..." : "Sim, Confirmar Ação"}
-      />
-
-      {usuarioParaQr && (
-        <ModalQrCode
-          user={{ ...usuarioParaQr, loginToken: usuarioParaQr.loginToken ?? undefined }}
-          onClose={() => setUsuarioParaQr(null)}
-          onUpdate={() => refetch()}
-        />
-      )}
-
-      {usuarioParaTreinamento && (
-        <ModalTreinamentosUsuario
-          usuario={usuarioParaTreinamento}
-          onClose={() => {
-              setUsuarioParaTreinamento(null);
-              refetch(); // Atualiza a lista caso os treinos alterem o status do operador
-          }}
-        />
       )}
 
       <SmartFAB 
@@ -367,5 +331,3 @@ function BadgeRole({ role }: { role: UserRole }) {
     </Badge>
   );
 }
-
-

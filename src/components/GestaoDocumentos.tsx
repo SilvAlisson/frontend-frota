@@ -1,81 +1,21 @@
 import { useState } from 'react';
 import { useDocumentosLegais, useDeleteDocumento } from '../hooks/useDocumentosLegais';
+import { usePlanosManutencao } from '../hooks/usePlanosManutencao';
+import { useModalStore } from '../hooks/useModalStore';
 import { FILTRO_TODOS } from '../config/constants';
-import { useQuery } from '@tanstack/react-query';
-import { api } from '../services/api';
 import { FormCadastrarDocumento } from './forms/FormCadastrarDocumento';
 import { FormEditarDocumento } from './forms/FormEditarDocumento';
-import { formatDateDisplay } from '../utils/dateUtils';
+import { FormRenovarDocumento } from './forms/FormRenovarDocumento';
 import { Button } from './ui/Button';
-import {
-  FileText, Wrench, ShieldCheck, AlertTriangle, FileWarning,
-  Trash2, Edit, ExternalLink, Plus, Loader2, RefreshCcw, ZoomIn, X
-} from 'lucide-react';
-
-import { ConfirmModal } from './ui/ConfirmModal';
 import { PageHeader } from './ui/PageHeader';
 import { EmptyState } from './ui/EmptyState';
-import { Callout } from './ui/Callout';
 import { Modal } from './ui/Modal';
-import { FormRenovarDocumento } from './forms/FormRenovarDocumento';
 import { PullToRefresh } from './ui/PullToRefresh';
 import { SmartFAB } from './ui/SmartFAB';
-
-// --- UTILS (Extraído para performance) ---
-const getStatusInfo = (dataValidade?: string | null, categoria?: string) => {
-  // 1. Licenças Permanentes (Sem validade e categorias específicas)
-  if ((categoria === 'LICENCA_AMBIENTAL' || categoria === 'AST') && !dataValidade) {
-    return {
-      color: 'bg-success/10 text-success border-success/20',
-      text: 'Vigente (Permanente)',
-      icon: ShieldCheck
-    };
-  }
-
-  // 2. Sem data definida (Generico)
-  if (!dataValidade) return {
-    color: 'bg-surface-hover text-text-muted border-border/60',
-    text: 'Sem data',
-    icon: null
-  };
-
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-
-  const validade = new Date(dataValidade);
-  validade.setHours(23, 59, 59, 999);
-
-  const diffTime = validade.getTime() - hoje.getTime();
-  const diasParaVencer = Math.ceil(diffTime / (1000 * 3600 * 24));
-
-  // 3. Vencido
-  if (diasParaVencer < 0) return {
-    color: 'bg-error/10 text-error border-error/20 animate-pulse',
-    text: `Venceu a ${formatDateDisplay(dataValidade)}`,
-    icon: AlertTriangle
-  };
-
-  // 4. Vence em breve (30 dias)
-  if (diasParaVencer <= 30) return {
-    color: 'bg-warning-500/10 text-warning-600 border-warning-500/20',
-    text: `Vence em ${diasParaVencer} dias`,
-    icon: AlertTriangle
-  };
-
-  // 5. Vigente
-  return {
-    color: 'bg-success/10 text-success border-success/20',
-    text: `Vence a ${formatDateDisplay(dataValidade)}`,
-    icon: ShieldCheck
-  };
-};
-
-const getStatusBadge = (status?: string) => {
-  if (status === 'ARQUIVADO') {
-    return { color: 'bg-surface-hover/50 text-text-secondary border-border/80 opacity-70', text: 'ARQUIVADO' };
-  }
-  return { color: 'bg-primary/10 text-primary border-primary/20', text: 'VIGENTE' };
-};
+import { Callout } from './ui/Callout';
+import { FileText, Wrench, Plus, AlertTriangle } from 'lucide-react';
+import { DocumentoCard } from './documentos/DocumentoCard';
+import { DocumentoViewer } from './documentos/DocumentoViewer';
 
 const CATEGORIAS = [
   { id: 'TODOS', label: 'Todos' },
@@ -101,7 +41,6 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
   const [filtroCategoria, setFiltroCategoria] = useState<string>(FILTRO_TODOS);
 
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [docParaExcluir, setDocParaExcluir] = useState<{ id: string, titulo: string } | null>(null);
 
   // Estado para a Edição e Renovação
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -111,36 +50,42 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
   const [docParaVisualizar, setDocParaVisualizar] = useState<{ url: string, titulo: string } | null>(null);
   const [zoomNivel, setZoomNivel] = useState(1);
 
+  const { openModal, closeModal } = useModalStore();
+
   const { data: documentos, isLoading: isLoadingDocs, refetch: refetchDocs } = useDocumentosLegais({
     categoria: filtroCategoria,
     veiculoId: veiculoId
   });
 
-  const { data: planos, isLoading: isLoadingPlanos, refetch: refetchPlanos } = useQuery({
-    queryKey: ['planos', veiculoId],
-    queryFn: async () => {
-      if (!veiculoId) return [];
-      const res = await api.get(`/planos-manutencao?veiculoId=${veiculoId}`);
-      return res.data;
-    },
-    enabled: !!veiculoId && filtroCategoria === FILTRO_TODOS
-  });
+  const { data: planos, isLoading: isLoadingPlanos, refetch: refetchPlanos } = usePlanosManutencao(veiculoId, filtroCategoria);
 
   const { mutateAsync: deletarDoc } = useDeleteDocumento();
 
-  const handleDeleteRequest = (id: string, titulo: string) => {
-    setDocParaExcluir({ id, titulo });
-  };
-
-  const executeDelete = async () => {
-    if (!docParaExcluir) return;
-    try {
-      setDeletingId(docParaExcluir.id);
-      await deletarDoc(docParaExcluir.id);
-    } catch (error) { } finally {
-      setDeletingId(null);
-      setDocParaExcluir(null);
-    }
+  const confirmExclusao = (id: string, titulo: string) => {
+    const modalId = openModal('CONFIRM', {
+      title: "Remover Documento",
+      description: (
+        <div className="space-y-4">
+          <p className="text-text-secondary text-sm font-medium">
+            Tem certeza que deseja excluir o documento <strong className="text-text-main font-black">"{titulo}"</strong> da base de dados?
+          </p>
+          <Callout variant="danger" title="Ação Irreversível" icon={AlertTriangle}>
+            O Arquivo será permanentemente apagado e não poderá ser recuperado. Se este documento for obrigatório, a frota poderá ficar irregular.
+          </Callout>
+        </div>
+      ) as unknown as string,
+      variant: "danger",
+      confirmLabel: "Sim, Excluir Documento",
+      onConfirm: async () => {
+        setDeletingId(id);
+        try {
+          await deletarDoc(id);
+        } finally {
+          setDeletingId(null);
+          closeModal(modalId);
+        }
+      }
+    });
   };
 
   const isLoading = isLoadingDocs || (!!veiculoId && filtroCategoria === FILTRO_TODOS && isLoadingPlanos);
@@ -265,105 +210,18 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
                 </div>
               )}
 
-              {documentos?.map(doc => {
-                const status = getStatusInfo(doc.dataValidade, doc.categoria);
-                const isAst = doc.categoria === 'AST';
-                const StatusIcon = status.icon;
-                const isDeleting = deletingId === doc.id;
-
-                return (
-                  <div
-                    key={doc.id}
-                    className={`
-                      flex flex-col p-5 sm:p-6 rounded-3xl border shadow-sm transition-all duration-300 relative group h-full
-                      ${isDeleting ? 'opacity-50 pointer-events-none' : 'hover:shadow-md'}
-                      ${isAst
-                        ? 'bg-gradient-to-br from-surface to-warning-500/5 border-warning-500/30 hover:border-warning-500/50'
-                        : 'bg-surface border-border/60 hover:border-primary/40'}
-                    `}
-                  >
-                    {/* Grupo de Botões de Ação (Editar e Apagar) */}
-                    {!somenteLeitura && (
-                      <div className="absolute top-4 right-4 flex items-center gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-all bg-surface-hover/80 lg:bg-transparent rounded-xl p-1 shadow-sm lg:shadow-none">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => setEditingId(doc.id)}
-                          disabled={isDeleting}
-                          className="h-8 w-8 text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"
-                          title="Editar Detalhes"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        {status.text.includes('Permanente') === false && doc.status !== 'ARQUIVADO' && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setRenewingId(doc.id)}
-                            disabled={isDeleting}
-                            className="h-8 w-8 text-text-muted hover:text-warning-600 hover:bg-warning-500/10 transition-colors"
-                            title="Renovar Documento"
-                          >
-                            <RefreshCcw className="w-4 h-4" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteRequest(doc.id, doc.titulo)}
-                          disabled={isDeleting}
-                          className="h-8 w-8 text-text-muted hover:text-error hover:bg-error/10 transition-colors opacity-50 hover:opacity-100"
-                          title="Remover Permanentemente (Admin)"
-                        >
-                          {isDeleting ? <Loader2 className="w-4 h-4 animate-spin text-error" /> : <Trash2 className="w-4 h-4" />}
-                        </Button>
-                      </div>
-                    )}
-
-                    <div className="flex items-start gap-4 flex-1">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-xl shrink-0 border shadow-inner ${isAst ? 'bg-warning-500/10 text-warning-600 border-warning-500/20' : 'bg-surface-hover/80 text-text-secondary border-border/60'}`}>
-                        {isAst ? <FileWarning className="w-6 h-6" /> : <FileText className="w-6 h-6" />}
-                      </div>
-
-                      <div className="flex-1 min-w-0 pr-16 lg:pr-8 group-hover:pr-16 transition-all">
-                        <div className="flex flex-wrap gap-2 mb-2">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-[0.1em] ${isAst ? 'text-warning-700 bg-warning-500/10 border border-warning-500/20' : 'text-text-secondary bg-surface-hover border border-border/60'}`}>
-                            {doc.categoria.replace(/_/g, ' ')}
-                          </span>
-                          {doc.veiculoId && (
-                            <span className="inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black bg-primary/10 text-primary border border-primary/20 tracking-widest">
-                              VINCULADO
-                            </span>
-                          )}
-                          <span className={`inline-flex items-center px-2 py-1 rounded-lg text-[9px] font-black tracking-widest border ${getStatusBadge(doc.status).color}`}>
-                            {getStatusBadge(doc.status).text}
-                          </span>
-                        </div>
-
-                        <h4 className="font-black text-base text-text-main truncate tracking-tight leading-tight mb-1" title={doc.titulo}>{doc.titulo}</h4>
-                        <p className="text-xs text-text-secondary font-medium line-clamp-2 min-h-[2.5em] opacity-80">
-                          {doc.descricao || <span className="italic opacity-60">Sem anotações complementares.</span>}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 mt-4 border-t border-border/60 flex items-center justify-between">
-                      <div className={`text-[10px] uppercase tracking-widest font-black px-2.5 py-1.5 rounded-lg border flex items-center gap-1.5 shadow-sm ${doc.status === 'ARQUIVADO' ? 'bg-surface-hover/80 text-text-muted border-border/80' : status.color}`}>
-                        {StatusIcon && <StatusIcon className="w-3.5 h-3.5" />}
-                        {doc.status === 'ARQUIVADO' ? 'Histórico' : status.text}
-                      </div>
-
-                      <button
-                        onClick={() => { setDocParaVisualizar({ url: doc.arquivoUrl, titulo: doc.titulo }); setZoomNivel(1); }}
-                        className="text-[11px] font-black uppercase tracking-widest text-primary hover:text-white bg-primary/10 hover:bg-primary px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm focus-ring touch-target"
-                        title="Visualizar Documento"
-                      >
-                        Visualizar<ExternalLink className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
+              {documentos?.map(doc => (
+                <DocumentoCard
+                  key={doc.id}
+                  doc={doc}
+                  somenteLeitura={somenteLeitura}
+                  isDeleting={deletingId === doc.id}
+                  onEdit={(id) => setEditingId(id)}
+                  onRenew={(id) => setRenewingId(id)}
+                  onDelete={confirmExclusao}
+                  onView={(url, titulo) => { setDocParaVisualizar({ url, titulo }); setZoomNivel(1); }}
+                />
+              ))}
             </div>
           )}
         </>
@@ -401,90 +259,15 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
         )}
       </Modal>
 
-      <ConfirmModal
-        isOpen={!!docParaExcluir}
-        onCancel={() => setDocParaExcluir(null)}
-        onConfirm={executeDelete}
-        title="Remover Documento"
-        description={
-          <div className="space-y-4">
-            <p className="text-text-secondary text-sm font-medium">
-              Tem certeza que deseja excluir o documento <strong className="text-text-main font-black">"{docParaExcluir?.titulo}"</strong> da base de dados?
-            </p>
-            <Callout variant="danger" title="Ação Irreversível" icon={AlertTriangle}>
-              O Arquivo será permanentemente apagado e não poderá ser recuperado. Se este documento for obrigatório, a frota poderá ficar irregular.
-            </Callout>
-          </div>
-        }
-        variant="danger"
-        confirmLabel={deletingId ? "A Remover..." : "Sim, Excluir Documento"}
-      />
-
       {/* Visualizador Cinemático de Perícia Documental */}
       {docParaVisualizar && (
-        <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-3xl p-4 sm:p-8 flex flex-col items-center justify-center animate-in fade-in zoom-in-95 duration-300">
-          
-          {/* Top Navigation Bar HUD */}
-          <div className="absolute top-0 left-0 w-full flex justify-between items-center p-6 bg-gradient-to-b from-black/80 to-transparent z-50">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-info/20 flex items-center justify-center rounded-lg border border-info/30 text-info">
-                <FileText className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-white font-black uppercase text-sm tracking-widest block">{docParaVisualizar.titulo}</span>
-                <span className="text-info font-medium text-[10px] uppercase tracking-wider block">Visualizador de Documentos Legais</span>
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="ghost"
-                className="bg-white/10 hover:bg-white/20 text-white rounded-xl h-11 w-11 touch-target focus-ring"
-                onClick={() => setZoomNivel(prev => prev < 4 ? prev + 0.5 : prev)}
-                title="Aumentar Zoom"
-              >
-                <ZoomIn className="w-5 h-5" />
-              </Button>
-              <Button
-                type="button"
-                variant="ghost"
-                className="bg-white/10 hover:bg-white/20 text-white rounded-xl h-11 w-11 touch-target focus-ring"
-                onClick={() => { setDocParaVisualizar(null); setZoomNivel(1); }}
-                title="Fechar Visualizador"
-              >
-                <X className="w-6 h-6" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Imagem/PDF Viewer usando zoom nativo em v4 */}
-          <div className="w-full max-w-5xl h-full flex items-center justify-center overflow-auto rounded-3xl mt-16 sm:mt-0 cursor-move scrollbar-thin">
-            {docParaVisualizar.url.toLowerCase().includes('.pdf') ? (
-              <iframe
-                src={`${docParaVisualizar.url}#toolbar=0`}
-                className="w-full h-[85vh] rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/10"
-                style={{ zoom: zoomNivel }}
-                title={docParaVisualizar.titulo}
-              />
-            ) : (
-              <img
-                src={docParaVisualizar.url}
-                alt={docParaVisualizar.titulo}
-                style={{ zoom: zoomNivel }}
-                className="max-h-[85vh] max-w-full object-contain pointer-events-auto rounded-xl shadow-[0_0_50px_rgba(0,0,0,0.8)] filter contrast-125 transition-transform duration-300"
-                onDoubleClick={() => setZoomNivel(prev => prev > 1 ? 1 : 2.5)}
-                title="Clique duplo para Zoom Rápido"
-                draggable={false}
-              />
-            )}
-          </div>
-
-          {/* Dica Floating Bar */}
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 bg-black/60 border border-white/10 text-white font-bold text-[10px] uppercase tracking-widest px-6 py-3 rounded-full flex gap-3 backdrop-blur shadow-2xl items-center pointer-events-none">
-            <span className="w-2 h-2 rounded-full bg-info animate-pulse"></span>
-            Toque no botão de lupa ou dê duplo-clique na imagem para Inspecionar
-          </div>
-        </div>
+        <DocumentoViewer
+          url={docParaVisualizar.url}
+          titulo={docParaVisualizar.titulo}
+          zoomNivel={zoomNivel}
+          onZoomChange={setZoomNivel}
+          onClose={() => { setDocParaVisualizar(null); setZoomNivel(1); }}
+        />
       )}
 
     {!somenteLeitura && !modoAdicionar && (

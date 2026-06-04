@@ -10,7 +10,13 @@ interface GraficoKmVeiculoProps {
 }
 
 // TOOLTIP CUSTOMIZADA (O Segredo do visual "Elite")
-const CustomTooltip = ({ active, payload, label }: any) => {
+interface CustomTooltipProps {
+    active?: boolean;
+    payload?: { value: number }[];
+    label?: string;
+}
+
+const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
         return (
             <div className="bg-surface/80 backdrop-blur-md border border-border/60 p-4 rounded-2xl shadow-float animate-in zoom-in-95 duration-200">

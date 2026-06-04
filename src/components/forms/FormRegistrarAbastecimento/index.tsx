@@ -14,7 +14,11 @@ import { useVeiculos } from '../../../hooks/useVeiculos';
 import type { User as UserType, Veiculo } from '../../../types';
 
 import { abastecimentoSchema } from './schema';
-import type { AbastecimentoFormValues, AbastecimentoPayload } from './schema';
+import type { AbastecimentoPayload } from './schema';
+import type { z } from 'zod';
+
+type FormInput = z.input<typeof abastecimentoSchema>;
+type FormOutput = z.output<typeof abastecimentoSchema>;
 
 import { Step1DadosOperacionais } from './Step1DadosOperacionais';
 import { Step2DadosFinanceiros } from './Step2DadosFinanceiros';
@@ -43,7 +47,7 @@ export function FormRegistrarAbastecimento({
 
   const { data: veiculos = [] } = useVeiculos();
 
-  const methods = useForm<AbastecimentoFormValues>({
+  const methods = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(abastecimentoSchema),
     defaultValues: {
       veiculoId: veiculoPreSelecionadoId ?? '',
@@ -51,7 +55,7 @@ export function FormRegistrarAbastecimento({
       fornecedorId: '',
       dataHora: new Date().toISOString().slice(0, 16),
       observacoes: '',
-      itens: [{ produtoId: '', quantidade: '0' as unknown as number, valorUnitario: '' }]
+      itens: [{ produtoId: '', quantidade: '0', valorUnitario: '' }]
     },
     mode: 'onBlur',
     reValidateMode: 'onBlur', 
@@ -76,7 +80,7 @@ export function FormRegistrarAbastecimento({
     }
   };
 
-  const onSubmit = async (data: AbastecimentoFormValues) => {
+  const onSubmit = async (data: FormOutput) => {
     const veiculo = veiculos.find((v: Veiculo) => v.id === data.veiculoId);
     const ultimoKm = veiculo?.ultimoKm || 0;
     const kmInputFloat = parseKmInteligente(data.kmAtual, ultimoKm);
@@ -230,7 +234,7 @@ export function FormRegistrarAbastecimento({
       {modalConfirmacao && payload && (
         <ModalConfirmacaoFoto
           titulo="Comprovante e Finalização"
-          dadosJornada={payload}
+          dadosJornada={payload as unknown as Record<string, unknown>}
           kmParaConfirmar={payload.kmOdometro}
           jornadaId={payload.veiculoId}
           apiEndpoint="/abastecimentos"

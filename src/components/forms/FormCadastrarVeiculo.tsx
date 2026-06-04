@@ -65,7 +65,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
     reset,
     setValue,
     formState: { errors, isSubmitting }
-  } = useForm<VeiculoFormInput, any, VeiculoFormOutput>({
+  } = useForm<VeiculoFormInput, unknown, VeiculoFormOutput>({
     resolver: zodResolver(veiculoSchema),
     defaultValues: {
       tipoVeiculo: 'POLIGUINDASTE',
@@ -102,10 +102,10 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
       reset();
       setTimeout(onSuccess, 500);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       if (import.meta.env.DEV) console.error(error);
-      const msg = error.response?.data?.error || 'Erro ao cadastrar. Verifique a placa.';
-      toast.error(msg);
+      const apiError = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      toast.error(apiError || 'Erro ao cadastrar. Verifique a placa.');
     }
   };
 

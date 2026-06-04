@@ -14,7 +14,7 @@ export function Step1DadosOperacionais() {
   const { register, watch, setValue, formState: { errors, isSubmitting } } = useFormContext<AbastecimentoFormValues>();
   
   const { data: veiculos = [], isLoading: loadV } = useVeiculos();
-  const { data: usuarios = [], isLoading: loadU } = useUsuarios();
+  const { usuarios = [], isLoading: loadU } = useUsuarios();
 
   const isLocked = isSubmitting || loadV || loadU;
   const [ultimoKm, setUltimoKm] = useState<number>(0);

@@ -19,8 +19,8 @@ export const manutencaoSchema = z.object({
   
   itens: z.array(z.object({
     produtoId: z.string().min(1, "Selecione o serviço/peça"),
-    quantidade: z.any()
-      .transform((val: any) => Number(val))
+    quantidade: z.union([z.string(), z.number()])
+      .transform((val) => Number(val))
       .refine((val: number) => !isNaN(val) && val >= 0.01, "Qtd inválida"),
     valorPorUnidade: z.string().min(1, "Valor inválido"),
   })).min(1, "Adicione pelo menos um item")

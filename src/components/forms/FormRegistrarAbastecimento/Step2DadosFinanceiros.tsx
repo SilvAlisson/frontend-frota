@@ -16,8 +16,8 @@ export function Step2DadosFinanceiros() {
  const { register, control, watch, setValue, formState: { errors, isSubmitting } } = useFormContext<AbastecimentoFormValues>();
  const { fields, append, remove } = useFieldArray({ control, name: "itens" });
 
- const { data: fornecedores = [], isLoading: loadF } = useFornecedores();
- const { data: produtos = [], isLoading: loadP } = useProdutos();
+ const { fornecedores = [], isLoading: loadF } = useFornecedores();
+ const { produtos = [], loading: loadP } = useProdutos();
  const { data: veiculos = [] } = useVeiculos();
 
  const isLocked = isSubmitting || loadF || loadP;
@@ -44,12 +44,14 @@ export function Step2DadosFinanceiros() {
      v.tipoCombustivel && p.nome.toUpperCase().includes(v.tipoCombustivel.replace('_', ' ').toUpperCase())
     );
 
+    // Usa 'fields' da memória do react-hook-form ou o estado via 'getValues'/'watch' não incluído nas dependências reativas
     const itemAtualId = itensObservados[0]?.produtoId;
     if (combustivelPadrao && (!itemAtualId || itemAtualId !== combustivelPadrao.id)) {
      setValue('itens.0.produtoId', combustivelPadrao.id);
     }
    }
   }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
  }, [veiculoIdSelecionado, veiculos, produtos, setValue]);
 
  return (
@@ -75,7 +77,7 @@ export function Step2DadosFinanceiros() {
       type="button"
       variant="ghost"
       size="sm"
-      onClick={() => append({ produtoId: '', quantidade: '' as any, valorUnitario: '' } as unknown as AbastecimentoFormValues['itens'][0])}
+      onClick={() => append({ produtoId: '', quantidade: 0, valorUnitario: '' } as unknown as AbastecimentoFormValues['itens'][0])}
       className="text-primary hover:bg-primary/10 h-8"
       icon={<Plus className="w-4 h-4" />}
       disabled={isLocked}
