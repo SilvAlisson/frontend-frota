@@ -92,7 +92,15 @@ export function useLogin() {
       }
 
       if (resData) {
-        // Better Auth não retorna JWT, o cookie é gerido automaticamente.
+        // Fallback robusto contra bloqueio de Third-Party Cookies (Ex: Chrome Incognito, Edge)
+        // O Better Auth retorna a sessão completa. Extraímos o token para usar como Bearer Header
+        const sessionObj = (resData as any).session;
+        const tokenStr = sessionObj?.token || (resData as any).token;
+        if (tokenStr) {
+          sessionStorage.setItem('authToken', tokenStr);
+        }
+
+        // Better Auth não retorna JWT, o cookie é gerido automaticamente (quando permitido).
         // O `AuthContext` irá reagir ao recarregar a sessão ou se inscrever, mas 
         // para dar o feedback imediato, chamamos `login` simbolicamente com o user.
         login({ user: resData.user as User });
