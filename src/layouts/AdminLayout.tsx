@@ -250,8 +250,9 @@ export function AdminLayout() {
     }
   }, [latestLogs, lastSeenLogId]);
 
-  const handleLogout = () => {
-    logout(); 
+  const handleLogout = async () => {
+    setIsLogoutModalOpen(false);
+    await logout(); 
     navigate('/login');
   };
 

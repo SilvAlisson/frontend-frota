@@ -178,9 +178,9 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
       <Button
        variant="ghost"
        size="icon"
-       onClick={() => {
+       onClick={async () => {
         vibrateMedium();
-        logout();
+        await logout();
        }}
        className="w-11 h-11 touch-target rounded-xl bg-error/5 border border-error/10 hover:bg-error/20 flex items-center justify-center text-error transition-all hover:rotate-12 focus-ring"
        aria-label="Sair"
