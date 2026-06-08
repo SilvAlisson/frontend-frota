@@ -25,6 +25,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 if (parsed.image && !parsed.fotoUrl) {
                     parsed.fotoUrl = parsed.image;
                 }
+                if (parsed.name && !parsed.nome) {
+                    parsed.nome = parsed.name;
+                }
             }
             return parsed;
         } catch {
@@ -44,8 +47,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [isSessionLoading]);
 
   // Derived state: Usa o user do BetterAuth (Cookie) prioritariamente, ou o manualUser (QR Code Bearer)
-  // Mapeia .image para .fotoUrl para manter compatibilidade com o frontend inteiro
-  const betterUser = sessionData?.user ? { ...sessionData.user, fotoUrl: sessionData.user.image } as User : undefined;
+  // Mapeia .image para .fotoUrl e .name para .nome para manter compatibilidade com o frontend inteiro
+  const betterUser = sessionData?.user ? { 
+    ...sessionData.user, 
+    fotoUrl: sessionData.user.image,
+    nome: sessionData.user.name 
+  } as unknown as User : undefined;
   const currentUser = betterUser || manualUser;
 
   const login = (data: { token?: string; user: User }) => {
@@ -53,10 +60,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.setItem('authToken', data.token);
     }
     
-    // Mapeia image para fotoUrl antes de salvar na memória/state
+    // Mapeia image para fotoUrl e name para nome antes de salvar na memória/state
     const userData = { ...data.user };
     if ((userData as any).image && !userData.fotoUrl) {
         userData.fotoUrl = (userData as any).image;
+    }
+    if ((userData as any).name && !userData.nome) {
+        userData.nome = (userData as any).name;
     }
 
     sessionStorage.setItem('authUser', JSON.stringify(userData));
