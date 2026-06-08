@@ -71,8 +71,8 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Acesso - Clínica do Caminhão',
-          text: `Olá ${primeiroNome}, aqui está seu acesso rápido para o sistema da Clínica do Caminhão:\n`,
+          title: 'Acesso - Frota KLIN',
+          text: `Olá ${primeiroNome}, aqui está seu acesso rápido para o sistema da Frota KLIN:\n`,
           url: loginUrl,
         });
         toast.success("Compartilhado com sucesso!");
