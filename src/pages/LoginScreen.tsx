@@ -16,8 +16,8 @@ import type { User } from '../types';
 export function LoginScreen() {
   const { theme, toggleTheme } = useTheme();
   const { login } = useAuth();
-  const { loginWithDevice, isAuthenticating } = useWebAuthn();
-  const { shouldShowLockScreen, canUseBiometry, isWebAuthnSupported } = usePasskeyGuard();
+  const { loginWithDevice, isAuthenticating, isWebAuthnSupported, hasLocalPasskeyHint } = useWebAuthn();
+  const { shouldShowLockScreen: shouldShowPasskeyGuard } = usePasskeyGuard();
 
   // Custom Hook com a lógica isolada (Single Responsibility)
   const { isMagicLoggingIn, authLoading, loginWithCredentials, loginWithManualQr } = useLogin();
@@ -50,15 +50,11 @@ export function LoginScreen() {
   };
 
   const onBiometryClick = async () => {
-    // Feedback inteligente: usuário clicou mas não tem passkey cadastrada
-    if (!canUseBiometry) {
-      if (!isWebAuthnSupported) {
-        toast.error('Seu navegador não suporta autenticação biométrica.');
-      } else {
-        toast.info('Nenhuma biometria cadastrada. Entre com senha e cadastre em "Minha Conta".');
-      }
+    if (!isWebAuthnSupported) {
+      toast.error('Seu navegador não suporta autenticação biométrica.');
       return;
     }
+    
     await loginWithDevice((token, user) => {
       login({ token, user: user as User });
     });

@@ -15,11 +15,14 @@ export function usePasskeyGuard() {
         !!window.PublicKeyCredential &&
         typeof window.PublicKeyCredential === 'function';
 
-    // Pode usar biometria = tem passkeys cadastradas no servidor E browser suporta
-    const canUseBiometry = hasPasskeys && isWebAuthnSupported;
+    // O hint local permite saber se o usuário já cadastrou passkey neste aparelho antes do login
+    const hasLocalPasskeyHint = typeof window !== 'undefined' && localStorage.getItem('klin_has_passkey') === 'true';
 
-    // Deve mostrar a LockScreen = tem passkeys no servidor, browser suporta, e não está carregando
-    const shouldShowLockScreen = canUseBiometry && !isLoadingPasskeys;
+    // Pode usar biometria = browser suporta
+    const canUseBiometry = isWebAuthnSupported;
+
+    // Deve mostrar a LockScreen = o hint local diz que já registrou neste dispositivo
+    const shouldShowLockScreen = isWebAuthnSupported && hasLocalPasskeyHint;
 
     return {
         canUseBiometry,

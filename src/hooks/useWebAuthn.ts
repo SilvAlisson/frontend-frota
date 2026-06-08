@@ -73,6 +73,7 @@ export function useWebAuthn() {
             }
 
             await refetchPasskeys();
+            localStorage.setItem('klin_has_passkey', 'true');
             toast.success('Biometria cadastrada com sucesso neste aparelho! ✅');
             return true;
 
@@ -126,15 +127,20 @@ export function useWebAuthn() {
         }
     };
 
+    const isWebAuthnSupported = typeof window !== 'undefined' && !!window.PublicKeyCredential;
+    const canUseBiometry = isWebAuthnSupported;
+    const hasLocalPasskeyHint = localStorage.getItem('klin_has_passkey') === 'true';
+
     return {
-        // Estado
         passkeys,
-        hasPasskeys,
         isLoadingPasskeys,
+        hasPasskeys,
+        hasLocalPasskeyHint,
+        canUseBiometry,
+        isWebAuthnSupported,
         isRegistering,
         isAuthenticating,
         isRevoking: revokeMutation.isPending,
-        // Ações
         registerDevice,
         loginWithDevice,
         revokePasskey,
