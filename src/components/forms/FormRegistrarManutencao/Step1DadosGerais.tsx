@@ -30,7 +30,6 @@ export function Step1DadosGerais() {
   const fornecedoresOpcoes = useMemo(() =>
     fornecedores.filter(f => {
       if (['OFICINA', 'MECANICA', 'OUTRO'].includes(f.tipo)) return true;
-      // Filtro dinâmico: Lava-jato e Posto só aparecem se for Preventiva
       if (['LAVA_JATO', 'POSTO'].includes(f.tipo)) return tipoManutencao === 'PREVENTIVA';
       return false;
     }).map(f => ({ value: f.id, label: f.nome })),
@@ -49,7 +48,6 @@ export function Step1DadosGerais() {
       setUltimoKmRegistrado(0);
       return;
     }
-    // Lendo diretamente do cache da frota em vez de fazer nova requisição (Clean Architecture)
     const veiculo = veiculos.find(v => v.id === veiculoIdSelecionado);
     setUltimoKmRegistrado(veiculo?.ultimoKm || 0);
   }, [veiculoIdSelecionado, alvoSelecionado, veiculos]);
@@ -64,25 +62,37 @@ export function Step1DadosGerais() {
       </div>
 
       <div className="grid grid-cols-2 gap-2 bg-surface-hover/80 p-1.5 rounded-[1rem] border border-border/60 shadow-inner">
-        {/* Botões customizados via React Hook Form */}
+        {/* Restauramos o Controller respeitando as regras nativas do React Hook Form */}
         <Controller
           control={control}
           name="tipo"
-          render={({ field }) => (
+          render={({ field: { onChange, onBlur, value, ref } }) => (
             <>
               {['CORRETIVA', 'PREVENTIVA'].map((t) => (
                 <button
                   key={t}
                   type="button"
+                  // 1. O RECUPERADOR DE AUTO-FOCUS:
+                  // Passamos a 'ref' injetada pelo Controller para o primeiro botão.
+                  // Assim, se houver erro, o RHF sabe exatamente qual elemento focar e rolar a tela!
+                  ref={t === 'CORRETIVA' ? ref : null}
+                  
                   onClick={() => {
-                    field.onChange(t);
-                    // Bônus de segurança: Limpa a oficina selecionada se o usuário trocar o tipo
-                    setValue('fornecedorId', '', { shouldValidate: true });
+                    // 2. A ATUALIZAÇÃO PASSIVA DE ESTADO:
+                    onChange(t);
+                    
+                    if (value !== t) {
+
+                      setTimeout(() => setValue('fornecedorId', '', { shouldValidate: true }), 0);
+                    }
                   }}
+                  
+                  // Mantemos o rastreamento nativo de campo "tocado"
+                  onBlur={onBlur}
                   disabled={isLocked}
                   className={`
                     py-3 text-xs font-black tracking-widest uppercase rounded-xl transition-all duration-300 truncate min-w-0
-                    ${field.value === t
+                    ${value === t
                       ? (t === 'CORRETIVA' ? 'bg-error text-white shadow-md' : 'bg-success text-white shadow-md')
                       : 'text-text-muted hover:text-text-main hover:bg-surface/80'}
                     ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}
@@ -121,7 +131,6 @@ export function Step1DadosGerais() {
 
       {alvoSelecionado === 'VEICULO' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* CADEADO DE RESPONSIVIDADE: min-w-0 */}
           <div className="min-w-0">
             <Controller
               control={control}
@@ -140,16 +149,12 @@ export function Step1DadosGerais() {
             />
           </div>
 
-          {/* CADEADO DE RESPONSIVIDADE: flex flex-col min-w-0 */}
           <div className="flex flex-col min-w-0">
             <Input
               label="KM na entrada da oficina (Opcional)"
               icon={<Gauge className="w-4 h-4 text-primary" />}
-              
-              // Garante o teclado numérico sem quebrar por causa do ponto de milhar
               type="tel"
               inputMode="numeric"
-
               {...register("kmAtual")}
               onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
               placeholder={ultimoKmRegistrado > 0 ? `Ref: ${ultimoKmRegistrado}` : "Ex: 15.000"}
@@ -193,7 +198,6 @@ export function Step1DadosGerais() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* CADEADO DE RESPONSIVIDADE: min-w-0 */}
         <div className="min-w-0">
           <Controller
             control={control}
@@ -212,7 +216,6 @@ export function Step1DadosGerais() {
           />
         </div>
 
-        {/* CADEADO DE RESPONSIVIDADE: min-w-0 */}
         <div className="min-w-0">
           <Controller
             control={control}
