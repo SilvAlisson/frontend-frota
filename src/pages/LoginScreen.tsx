@@ -16,8 +16,8 @@ import type { User } from '../types';
 export function LoginScreen() {
   const { theme, toggleTheme } = useTheme();
   const { login } = useAuth();
-  const { loginWithDevice, isAuthenticating, isWebAuthnSupported, hasLocalPasskeyHint } = useWebAuthn();
-  const { shouldShowLockScreen: shouldShowPasskeyGuard } = usePasskeyGuard();
+  const { loginWithDevice, isAuthenticating, isWebAuthnSupported } = useWebAuthn();
+  const { shouldShowLockScreen } = usePasskeyGuard();
 
   // Custom Hook com a lógica isolada (Single Responsibility)
   const { isMagicLoggingIn, authLoading, loginWithCredentials, loginWithManualQr } = useLogin();
