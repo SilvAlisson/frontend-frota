@@ -92,23 +92,27 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
               maxHeight: 'calc(100svh - 2rem)',
               paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))'
             }}
-            aria-labelledby={title ? titleId : undefined}
+            aria-describedby={undefined}
           >
             {/* Pega-mão (Handle) */}
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-border/80 mt-4 mb-2" />
 
-            {/* O contrato WAI-ARIA do Radix 100% cumprido e semanticamente correto: */}
+            {/* 🔥 A SOLUÇÃO DEFINITIVA ESTÁ AQUI 🔥 */}
+            {/* Título e Descrição OBRIGATÓRIOS, sempre montados e invisíveis para o usuário */}
+            <Drawer.Title className="sr-only">
+              {title || "Caixa de diálogo"}
+            </Drawer.Title>
+            
             <Drawer.Description className="sr-only">
-              Conteúdo do modal {title}
+              {title ? `Conteúdo sobre ${title}` : "Conteúdo da janela modal"}
             </Drawer.Description>
 
-            {!title && <Drawer.Title className="sr-only">Modal</Drawer.Title>}
-
+            {/* Cabeçalho Visual: Usa HTML normal (h3) em vez de componentes Radix */}
             {title && (
               <div className="px-6 pb-4 flex items-center justify-between border-b border-border/50 shrink-0">
-                <Drawer.Title id={titleId} className="font-black text-xl text-text-main tracking-tight">
+                <h3 id={titleId} className="font-black text-xl text-text-main tracking-tight">
                   {title}
-                </Drawer.Title>
+                </h3>
                 <button
                   onClick={onClose}
                   className="p-3 -mr-2 min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl text-text-muted hover:text-text-main hover:bg-surface-hover transition-all active:scale-95 bg-surface-hover/50"
