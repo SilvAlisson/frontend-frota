@@ -30,6 +30,7 @@ export function Step1DadosGerais() {
   const fornecedoresOpcoes = useMemo(() =>
     fornecedores.filter(f => {
       if (['OFICINA', 'MECANICA', 'OUTRO'].includes(f.tipo)) return true;
+      // Filtro dinâmico: Lava-jato e Posto só aparecem se for Preventiva
       if (['LAVA_JATO', 'POSTO'].includes(f.tipo)) return tipoManutencao === 'PREVENTIVA';
       return false;
     }).map(f => ({ value: f.id, label: f.nome })),
@@ -73,7 +74,11 @@ export function Step1DadosGerais() {
                 <button
                   key={t}
                   type="button"
-                  onClick={() => field.onChange(t)}
+                  onClick={() => {
+                    field.onChange(t);
+                    // Bônus de segurança: Limpa a oficina selecionada se o usuário trocar o tipo
+                    setValue('fornecedorId', '', { shouldValidate: true });
+                  }}
                   disabled={isLocked}
                   className={`
                     py-3 text-xs font-black tracking-widest uppercase rounded-xl transition-all duration-300 truncate min-w-0
@@ -116,7 +121,7 @@ export function Step1DadosGerais() {
 
       {alvoSelecionado === 'VEICULO' ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* ✨ CADEADO DE RESPONSIVIDADE: min-w-0 */}
+          {/* CADEADO DE RESPONSIVIDADE: min-w-0 */}
           <div className="min-w-0">
             <Controller
               control={control}
@@ -140,8 +145,8 @@ export function Step1DadosGerais() {
             <Input
               label="KM na entrada da oficina (Opcional)"
               icon={<Gauge className="w-4 h-4 text-primary" />}
-
-              // 🚨 Ajuste crucial: 'tel' garante o teclado numérico sem quebrar por causa do ponto de milhar
+              
+              // Garante o teclado numérico sem quebrar por causa do ponto de milhar
               type="tel"
               inputMode="numeric"
 
