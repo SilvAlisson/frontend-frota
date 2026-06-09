@@ -13,6 +13,7 @@ interface DrilldownStrategy {
   fetchLevel2: FetchFn;
   fetchLevel3: FetchFn;
   fetchLevel4: FetchFn;
+  fetchLevel5?: (veiculoId?: string | null, categoria?: string | null, mes?: string | null, fornecedorNome?: string | null) => Promise<import('../types/analytics').TicketDrilldown[]>;
   getNextLevelFrom1: () => 2 | 3;
 }
 
@@ -35,6 +36,11 @@ export const ANALYTICS_STRATEGIES: Record<NonNullable<MetricType>, DrilldownStra
       const { data } = await api.get<DrilldownDataPoint[]>('/drilldown/fornecedores', { params: { veiculoId, categoria: catReq, mes } });
       return data.length > 0 ? data : defaultFallback(100, 'Nenhum fornecedor encontrado');
     },
+    fetchLevel5: async (veiculoId, categoria, mes, fornecedorNome) => {
+      const catReq = categoria === 'Abastecimento' ? 'ABASTECIMENTO' : 'MANUTENCAO';
+      const { data } = await api.get<import('../types/analytics').TicketDrilldown[]>('/drilldown/fornecedores/tickets', { params: { veiculoId, categoria: catReq, mes, fornecedorNome } });
+      return data;
+    },
     getNextLevelFrom1: () => 2,
   },
   COMBUSTIVEL: {
@@ -47,6 +53,10 @@ export const ANALYTICS_STRATEGIES: Record<NonNullable<MetricType>, DrilldownStra
     fetchLevel4: async (veiculoId, _cat, mes) => {
       const { data } = await api.get<DrilldownDataPoint[]>('/drilldown/fornecedores', { params: { veiculoId, categoria: 'ABASTECIMENTO', mes } });
       return data.length > 0 ? data : defaultFallback(100, 'Nenhum fornecedor encontrado');
+    },
+    fetchLevel5: async (veiculoId, _cat, mes, fornecedorNome) => {
+      const { data } = await api.get<import('../types/analytics').TicketDrilldown[]>('/drilldown/fornecedores/tickets', { params: { veiculoId, categoria: 'ABASTECIMENTO', mes, fornecedorNome } });
+      return data;
     },
     getNextLevelFrom1: () => 3,
   },
@@ -61,6 +71,10 @@ export const ANALYTICS_STRATEGIES: Record<NonNullable<MetricType>, DrilldownStra
       const { data } = await api.get<DrilldownDataPoint[]>('/drilldown/fornecedores', { params: { veiculoId, categoria: 'ADITIVO', mes } });
       return data.length > 0 ? data : defaultFallback(100, 'Nenhum fornecedor encontrado');
     },
+    fetchLevel5: async (veiculoId, _cat, mes, fornecedorNome) => {
+      const { data } = await api.get<import('../types/analytics').TicketDrilldown[]>('/drilldown/fornecedores/tickets', { params: { veiculoId, categoria: 'ADITIVO', mes, fornecedorNome } });
+      return data;
+    },
     getNextLevelFrom1: () => 3,
   },
   OFICINA: {
@@ -73,6 +87,10 @@ export const ANALYTICS_STRATEGIES: Record<NonNullable<MetricType>, DrilldownStra
     fetchLevel4: async (veiculoId, _cat, mes) => {
       const { data } = await api.get<DrilldownDataPoint[]>('/drilldown/fornecedores', { params: { veiculoId, categoria: 'MANUTENCAO', mes } });
       return data.length > 0 ? data : defaultFallback(100, 'Nenhum fornecedor encontrado');
+    },
+    fetchLevel5: async (veiculoId, _cat, mes, fornecedorNome) => {
+      const { data } = await api.get<import('../types/analytics').TicketDrilldown[]>('/drilldown/fornecedores/tickets', { params: { veiculoId, categoria: 'MANUTENCAO', mes, fornecedorNome } });
+      return data;
     },
     getNextLevelFrom1: () => 3,
   },

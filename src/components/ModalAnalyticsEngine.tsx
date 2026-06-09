@@ -12,21 +12,21 @@ interface ModalAnalyticsProps {
   onClose: () => void;
   metric: MetricType;
   title: string;
-}
-
 export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAnalyticsProps) {
-  const [level, setLevel] = useState<1 | 2 | 3 | 4>(1);
+  const [level, setLevel] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [loading, setLoading] = useState(false);
 
   const [dataNivel1, setDataNivel1] = useState<DrilldownDataPoint[]>([]);
   const [dataNivel2, setDataNivel2] = useState<DrilldownDataPoint[]>([]);
   const [dataNivel3, setDataNivel3] = useState<DrilldownDataPoint[]>([]);
   const [dataNivel4, setDataNivel4] = useState<DrilldownDataPoint[]>([]);
+  const [dataNivel5, setDataNivel5] = useState<import('../types/analytics').TicketDrilldown[]>([]);
 
   const [selectedVeiculo, setSelectedVeiculo] = useState<string | null>(null);
   const [selectedVeiculoId, setSelectedVeiculoId] = useState<string | null>(null);
   const [selectedCategoria, setSelectedCategoria] = useState<string | null>(null);
   const [selectedMes, setSelectedMes] = useState<string | null>(null);
+  const [selectedFornecedor, setSelectedFornecedor] = useState<string | null>(null);
   
   useEffect(() => {
     if (isOpen && metric) {
@@ -35,6 +35,7 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
       setSelectedVeiculoId(null);
       setSelectedCategoria(null);
       setSelectedMes(null);
+      setSelectedFornecedor(null);
       loadMacroData();
     }
   }, [isOpen, metric]);
@@ -141,6 +142,7 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
                 {level === 2 && `Visão por Veículo: ${selectedVeiculo} - Selecione a categoria`}
                 {level === 3 && `Evolução Mensal: ${selectedCategoria ? selectedCategoria : selectedVeiculo}`}
                 {level === 4 && `${metric === 'KM_TOTAL' || metric === 'EFICIENCIA' ? 'Operadores' : metric === 'CUSTO_KM' ? 'Breakdown de Custos' : 'Top Fornecedores'}: ${selectedMes} (${selectedCategoria ? selectedCategoria : selectedVeiculo})`}
+                {level === 5 && `Tickets do Fornecedor: ${selectedFornecedor} - ${selectedMes}`}
               </p>
             </div>
           </div>
@@ -197,10 +199,60 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
                 <PieChartDrilldown 
                   data={dataNivel4} 
                   metric={metric} 
-                  onClickSlice={() => {
-                    toast.info("Em breve: Lista de tickets deste fornecedor!");
+                  onClickSlice={async (entry) => {
+                    if (!metric) return;
+                    const strategy = ANALYTICS_STRATEGIES[metric];
+                    if (!strategy.fetchLevel5) {
+                       toast.info("Não há mais níveis de detalhamento.");
+                       return;
+                    }
+                    setSelectedFornecedor(entry.name);
+                    setLoading(true);
+                    try {
+                      const data = await strategy.fetchLevel5(selectedVeiculoId, selectedCategoria, selectedMes, entry.name);
+                      setDataNivel5(data);
+                      setLevel(5);
+                    } catch (err: unknown) {
+                      toast.error("Erro ao carregar tickets do fornecedor");
+                    } finally {
+                      setLoading(false);
+                    }
                   }} 
                 />
+              )}
+
+              {/* NÍVEL 5: TABELA DE TICKETS */}
+              {level === 5 && (
+                <div className="w-full h-full overflow-auto rounded-xl border border-border/50 bg-surface/50">
+                  <table className="w-full text-left text-sm text-text-main">
+                    <thead className="bg-surface-hover/50 text-xs uppercase text-text-secondary sticky top-0 backdrop-blur-md">
+                      <tr>
+                        <th className="px-6 py-4 font-medium">Data</th>
+                        <th className="px-6 py-4 font-medium">Placa</th>
+                        <th className="px-6 py-4 font-medium">Serviço/Produto</th>
+                        <th className="px-6 py-4 font-medium text-right">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/30">
+                      {dataNivel5.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-8 text-center text-text-muted">Nenhum ticket encontrado.</td>
+                        </tr>
+                      ) : (
+                        dataNivel5.map(ticket => (
+                          <tr key={ticket.id} className="hover:bg-surface-hover/30 transition-colors">
+                            <td className="px-6 py-4 whitespace-nowrap">{new Date(ticket.data).toLocaleDateString('pt-BR')}</td>
+                            <td className="px-6 py-4 font-mono text-primary/80">{ticket.placa || '-'}</td>
+                            <td className="px-6 py-4">{ticket.servicoProduto}</td>
+                            <td className="px-6 py-4 text-right font-medium">
+                              {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(ticket.valor)}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               )}
 
             </div>
