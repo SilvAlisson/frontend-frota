@@ -27,30 +27,38 @@ export function Step1DadosGerais() {
   const kmAtualNum = Number(kmAtualVisual?.replace(/\D/g, '')) || 0;
   const isKmInvalido = ultimoKmRegistrado > 0 && kmAtualNum > 0 && kmAtualNum < ultimoKmRegistrado;
 
-  // 🔥 SOLUÇÃO DEFINITIVA DO FILTRO 🔥
   const fornecedoresOpcoes = useMemo(() => {
-    // Garantimos uma leitura booleana exata do watch atual
     const isPreventiva = tipoManutencao === 'PREVENTIVA';
 
     return fornecedores.filter(f => {
-      // 1. NORMALIZAÇÃO: Pegamos o tipo do banco, transformamos em maiúsculo e trocamos espaços por underline.
-      // Ex: "Lava Jato" -> "LAVA_JATO" | "lavajato" -> "LAVA_JATO" (com o replace extra)
-      let tipoNormalizado = String(f.tipo || '').toUpperCase().trim();
-      tipoNormalizado = tipoNormalizado.replace(/\s+/g, '_');
+      // 1. Primeiro verificamos o TIPO principal do fornecedor que vem do seu Backend (Enum)
+      const tipoFornecedor = f.tipo; // Será 'OFICINA', 'LAVA_JATO', 'POSTO', etc.
 
-      // 2. CORREÇÃO "OUTROS": Adicionado "OUTROS" (plural) para bater com a interface do veiculo.ts
-      if (['OFICINA', 'MECANICA', 'OUTRO', 'OUTROS'].includes(tipoNormalizado)) {
-        return true; // Oficinas mecânicas sempre aparecem
+      // 2. Se for uma OFICINA, sempre exibe
+      if (tipoFornecedor === 'OFICINA' || tipoFornecedor === 'OUTROS') {
+          return true;
       }
 
-      // 3. AMPLIAÇÃO DO LAVA JATO: Cobrimos todas as variações possíveis de digitação no banco
-      if (['LAVA_JATO', 'LAVAJATO', 'LAVAGEM', 'POSTO'].includes(tipoNormalizado)) {
-        return isPreventiva; // Só aparece se clicou em PREVENTIVA
+      // 3. Regra do LAVA_JATO e POSTO (Apenas Preventiva)
+      if (tipoFornecedor === 'LAVA_JATO' || tipoFornecedor === 'POSTO') {
+          if (isPreventiva) {
+              return true;
+          }
+      }
+
+      if (f.produtosOferecidos && Array.isArray(f.produtosOferecidos)) {
+         const ofereceLavagemOuPeca = f.produtosOferecidos.some(
+            (p: any) => p.tipo === 'LAVAGEM' || p.tipo === 'PECA' || p.tipo === 'SERVICO'
+         );
+
+         if (ofereceLavagemOuPeca && isPreventiva) {
+             return true;
+         }
       }
 
       return false;
     }).map(f => ({ value: f.id, label: f.nome }));
-  }, [fornecedores, tipoManutencao]); // Recalcula sempre que a lista de fornecedores ou o clique mudar
+  }, [fornecedores, tipoManutencao]);
 
   const veiculosOpcoes = useMemo(() =>
     veiculos
@@ -78,47 +86,37 @@ export function Step1DadosGerais() {
       </div>
 
       <div className="grid grid-cols-2 gap-2 bg-surface-hover/80 p-1.5 rounded-[1rem] border border-border/60 shadow-inner">
-        <Controller
-          control={control}
-          name="tipo"
-          render={({ field: { onChange, onBlur, value, ref } }) => (
-            <>
-              {['CORRETIVA', 'PREVENTIVA'].map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  // Preserva a funcionalidade de "auto-focus" do RHF no primeiro botão se houver erro
-                  ref={t === 'CORRETIVA' ? ref : null}
-                  
-                  onClick={() => {
-                    // 1. Atualiza o field interno para o botão mudar de cor imediatamente
-                    onChange(t);
-                    
-                    // 2. FORÇA a atualização do estado global para o watch() não sofrer delay
-                    setValue('tipo', t as "CORRETIVA" | "PREVENTIVA", { shouldValidate: true, shouldDirty: true });
-                    
-                    // 3. Limpa a oficina selecionada (sem setTimeout para evitar bugs de ciclo de render)
-                    if (value !== t) {
-                      setValue('fornecedorId', '', { shouldValidate: true });
-                    }
-                  }}
-                  
-                  onBlur={onBlur}
-                  disabled={isLocked}
-                  className={`
-                    py-3 text-xs font-black tracking-widest uppercase rounded-xl transition-all duration-300 truncate min-w-0
-                    ${value === t
-                      ? (t === 'CORRETIVA' ? 'bg-error text-white shadow-md' : 'bg-success text-white shadow-md')
-                      : 'text-text-muted hover:text-text-main hover:bg-surface/80'}
-                    ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}
-                  `}
-                >
-                  {t}
-                </button>
-              ))}
-            </>
-          )}
-        />
+        {/* Substituímos Componentes Complexos por Rádio Nativo */}
+        {['CORRETIVA', 'PREVENTIVA'].map((t) => {
+          const isSelected = tipoManutencao === t;
+          return (
+            <label
+              key={t}
+              className={`
+                relative flex items-center justify-center py-3 text-xs font-black tracking-widest uppercase rounded-xl transition-all duration-300 truncate min-w-0 cursor-pointer select-none
+                ${isSelected
+                  ? (t === 'CORRETIVA' ? 'bg-error text-white shadow-md' : 'bg-success text-white shadow-md')
+                  : 'text-text-muted hover:text-text-main hover:bg-surface/80'}
+                ${isLocked ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}
+              `}
+            >
+              {/* O sr-only esconde visualmente, mas mantém acessível pro RHF focar sozinho em caso de erro! */}
+              <input
+                type="radio"
+                value={t}
+                className="sr-only"
+                disabled={isLocked}
+                {...register('tipo', {
+                  onChange: () => {
+                    // Ao trocar, limpa a oficina
+                    setValue('fornecedorId', '', { shouldValidate: true });
+                  }
+                })}
+              />
+              {t}
+            </label>
+          );
+        })}
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -155,7 +153,7 @@ export function Step1DadosGerais() {
                   label="Veículo"
                   options={veiculosOpcoes}
                   icon={<Truck className="w-4 h-4" />}
-                  value={field.value || ""}
+                  value={field.value ?? ""}
                   onChange={(e) => field.onChange(e.target.value)}
                   error={errors.veiculoId?.message}
                   disabled={isLocked}
@@ -221,7 +219,7 @@ export function Step1DadosGerais() {
                 label="Oficina / Fornecedor"
                 options={fornecedoresOpcoes}
                 icon={<Wrench className="w-4 h-4" />}
-                value={field.value || ""}
+                value={field.value ?? ""}
                 onChange={(e) => field.onChange(e.target.value)}
                 error={errors.fornecedorId?.message}
                 disabled={isLocked}
