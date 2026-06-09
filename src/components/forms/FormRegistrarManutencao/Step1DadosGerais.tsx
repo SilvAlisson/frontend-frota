@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useFormContext, Controller } from 'react-hook-form';
+import { useFormContext, Controller, useWatch } from 'react-hook-form';
 import { Wrench, Truck, Gauge, AlertTriangle } from 'lucide-react';
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
@@ -19,10 +19,10 @@ export function Step1DadosGerais() {
   const isLocked = isSubmitting || loadV || loadF;
   const [ultimoKmRegistrado, setUltimoKmRegistrado] = useState<number>(0);
 
-  const alvoSelecionado = watch('alvo');
-  const tipoManutencao = watch('tipo');
-  const veiculoIdSelecionado = watch('veiculoId');
-  const kmAtualVisual = watch('kmAtual');
+  const alvoSelecionado = useWatch({ name: 'alvo' });
+  const tipoManutencao = useWatch({ name: 'tipo' });
+  const veiculoIdSelecionado = useWatch({ name: 'veiculoId' });
+  const kmAtualVisual = useWatch({ name: 'kmAtual' });
 
   const kmAtualNum = Number(kmAtualVisual?.replace(/\D/g, '')) || 0;
   const isKmInvalido = ultimoKmRegistrado > 0 && kmAtualNum > 0 && kmAtualNum < ultimoKmRegistrado;
@@ -188,7 +188,7 @@ export function Step1DadosGerais() {
             name="fornecedorId"
             render={({ field }) => (
               <Select
-                label="Oficina / Fornecedor"
+                label="Oficina / Fornecedor (v2)"
                 options={fornecedoresOpcoes}
                 icon={<Wrench className="w-4 h-4" />}
                 value={field.value ?? ""}
