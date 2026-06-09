@@ -86,37 +86,34 @@ export function Step1DadosGerais() {
       </div>
 
       <div className="grid grid-cols-2 gap-2 bg-surface-hover/80 p-1.5 rounded-[1rem] border border-border/60 shadow-inner">
-        {/* Substituímos Componentes Complexos por Rádio Nativo */}
-        {['CORRETIVA', 'PREVENTIVA'].map((t) => {
-          const isSelected = tipoManutencao === t;
-          return (
-            <label
-              key={t}
-              className={`
-                relative flex items-center justify-center py-3 text-xs font-black tracking-widest uppercase rounded-xl transition-all duration-300 truncate min-w-0 cursor-pointer select-none
-                ${isSelected
-                  ? (t === 'CORRETIVA' ? 'bg-error text-white shadow-md' : 'bg-success text-white shadow-md')
-                  : 'text-text-muted hover:text-text-main hover:bg-surface/80'}
-                ${isLocked ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''}
-              `}
-            >
-              {/* O sr-only esconde visualmente, mas mantém acessível pro RHF focar sozinho em caso de erro! */}
-              <input
-                type="radio"
-                value={t}
-                className="sr-only"
-                disabled={isLocked}
-                {...register('tipo', {
-                  onChange: () => {
-                    // Ao trocar, limpa a oficina
-                    setValue('fornecedorId', '', { shouldValidate: true });
-                  }
-                })}
-              />
-              {t}
-            </label>
-          );
-        })}
+        <Controller
+          control={control}
+          name="tipo"
+          render={({ field }) => (
+            <>
+              {['CORRETIVA', 'PREVENTIVA'].map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => {
+                      field.onChange(t);
+                      setValue('fornecedorId', '', { shouldValidate: true });
+                  }}
+                  disabled={isLocked}
+                  className={`
+                    py-3 text-xs font-black tracking-widest uppercase rounded-xl transition-all duration-300 truncate min-w-0
+                    ${field.value === t
+                      ? (t === 'CORRETIVA' ? 'bg-error text-white shadow-md' : 'bg-success text-white shadow-md')
+                      : 'text-text-muted hover:text-text-main hover:bg-surface/80'}
+                    ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}
+                  `}
+                >
+                  {t}
+                </button>
+              ))}
+            </>
+          )}
+        />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
