@@ -12,6 +12,8 @@ interface ModalAnalyticsProps {
   onClose: () => void;
   metric: MetricType;
   title: string;
+}
+
 export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAnalyticsProps) {
   const [level, setLevel] = useState<1 | 2 | 3 | 4 | 5>(1);
   const [loading, setLoading] = useState(false);
