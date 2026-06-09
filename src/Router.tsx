@@ -56,9 +56,9 @@ function PrivateRoute({ children, allowedRoles }: { children: React.ReactNode, a
  * AdminIndex: Decide qual Dashboard carregar dentro do AdminLayout 
  */
 function AdminIndex() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
-  if (!user) return null;
+  if (loading || !user) return <LoadingScreen />;
 
   if (user.role === 'RH') {
     return <DashboardRH user={user} />;

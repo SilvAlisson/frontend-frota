@@ -100,7 +100,7 @@ function PasskeyCard({
 // ─── Componente Principal ──────────────────────────────────────────────────
 export function MinhaContaPage() {
     const navigate = useNavigate();
-    const { user } = useAuth();
+    const { user, loading } = useAuth();
     const {
         passkeys,
         isLoadingPasskeys,
@@ -212,7 +212,11 @@ export function MinhaContaPage() {
         }
     };
 
-    if (!user) return null;
+    if (loading || !user) return (
+        <div className="min-h-screen bg-background flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary" />
+        </div>
+    );
 
     const roleLabel: Record<string, string> = {
         ADMIN: 'Administrador',

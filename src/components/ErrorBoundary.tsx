@@ -59,16 +59,29 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   // 2. CAPTURA DE ERROS GLOBAIS E ASSÍNCRONOS (A Mágica do Sentry)
+  private _unhandledRejectionHandler: ((event: PromiseRejectionEvent) => void) | null = null;
+  private _previousWindowOnerror: OnErrorEventHandler = null;
+
   public componentDidMount() {
+    this._previousWindowOnerror = window.onerror;
     window.onerror = (message, _source, _lineno, _colno, error) => {
       const globalError = error instanceof Error ? error : new Error(String(message));
       this.logErrorToAuditoria(globalError, 'WINDOW_ONERROR');
     };
 
-    window.addEventListener('unhandledrejection', (event: PromiseRejectionEvent) => {
+    this._unhandledRejectionHandler = (event: PromiseRejectionEvent) => {
       const promiseError = event.reason instanceof Error ? event.reason : new Error(String(event.reason));
       this.logErrorToAuditoria(promiseError, 'UNHANDLED_PROMISE');
-    });
+    };
+    window.addEventListener('unhandledrejection', this._unhandledRejectionHandler);
+  }
+
+  public componentWillUnmount() {
+    // Restaura o onerror original e remove o listener para evitar memory leak
+    window.onerror = this._previousWindowOnerror;
+    if (this._unhandledRejectionHandler) {
+      window.removeEventListener('unhandledrejection', this._unhandledRejectionHandler);
+    }
   }
 
   // O MOTOR DE ENVIO: Centraliza a formatação para não repetir código

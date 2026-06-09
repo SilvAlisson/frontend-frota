@@ -62,7 +62,6 @@ function App() {
   return (
     <ThemeProvider>
       <TooltipProvider delayDuration={300}>
-        <NetworkStatus />
         <AppContent />
       </TooltipProvider>
     </ThemeProvider>
