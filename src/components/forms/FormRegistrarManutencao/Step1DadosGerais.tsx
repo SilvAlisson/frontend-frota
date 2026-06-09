@@ -28,37 +28,11 @@ export function Step1DadosGerais() {
   const isKmInvalido = ultimoKmRegistrado > 0 && kmAtualNum > 0 && kmAtualNum < ultimoKmRegistrado;
 
   const fornecedoresOpcoes = useMemo(() => {
-    const isPreventiva = tipoManutencao === 'PREVENTIVA';
-
-    return fornecedores.filter(f => {
-      // 1. Primeiro verificamos o TIPO principal do fornecedor que vem do seu Backend (Enum)
-      const tipoFornecedor = f.tipo; // Será 'OFICINA', 'LAVA_JATO', 'POSTO', etc.
-
-      // 2. Se for uma OFICINA, sempre exibe
-      if (tipoFornecedor === 'OFICINA' || tipoFornecedor === 'OUTROS') {
-          return true;
-      }
-
-      // 3. Regra do LAVA_JATO e POSTO (Apenas Preventiva)
-      if (tipoFornecedor === 'LAVA_JATO' || tipoFornecedor === 'POSTO') {
-          if (isPreventiva) {
-              return true;
-          }
-      }
-
-      if (f.produtosOferecidos && Array.isArray(f.produtosOferecidos)) {
-         const ofereceLavagemOuPeca = f.produtosOferecidos.some(
-            (p: any) => p.tipo === 'LAVAGEM' || p.tipo === 'PECA' || p.tipo === 'SERVICO'
-         );
-
-         if (ofereceLavagemOuPeca && isPreventiva) {
-             return true;
-         }
-      }
-
-      return false;
-    }).map(f => ({ value: f.id, label: f.nome }));
+    return fornecedores
+      .filter(f => tipoManutencao === 'CORRETIVA' ? !['POSTO', 'LAVA_JATO'].includes(f.tipo) : true)
+      .map(f => ({ value: f.id, label: f.nome }));
   }, [fornecedores, tipoManutencao]);
+
 
   const veiculosOpcoes = useMemo(() =>
     veiculos
@@ -80,6 +54,7 @@ export function Step1DadosGerais() {
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-2">
 
       {/* SEÇÃO 1: NATUREZA DO SERVIÇO */}
+
       <div className="flex items-center gap-2 border-b border-border/50 pb-2">
         <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
         <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Natureza do Serviço</label>
