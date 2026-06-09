@@ -93,13 +93,16 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
               paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))'
             }}
             aria-labelledby={title ? titleId : undefined}
-            aria-describedby={undefined} // 🚨 Correção do Warning de Descrição
           >
             {/* Pega-mão (Handle) */}
             <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-border/80 mt-4 mb-2" />
 
-            {/*  Renderiza oculto se não for fornecido */}
-            {!title && <Drawer.Title className="sr-only">Modal Padrão</Drawer.Title>}
+            {/* O contrato WAI-ARIA do Radix 100% cumprido e semanticamente correto: */}
+            <Drawer.Description className="sr-only">
+              Conteúdo do modal {title}
+            </Drawer.Description>
+
+            {!title && <Drawer.Title className="sr-only">Modal</Drawer.Title>}
 
             {title && (
               <div className="px-6 pb-4 flex items-center justify-between border-b border-border/50 shrink-0">

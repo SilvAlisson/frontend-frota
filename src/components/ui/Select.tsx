@@ -93,7 +93,6 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                     value={radixValue}
                     onValueChange={handleValueChange}
                     disabled={disabled}
-                    name={name}
                 >
                     <div className="relative group w-full">
                         {icon && (

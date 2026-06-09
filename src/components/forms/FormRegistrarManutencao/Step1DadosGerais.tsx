@@ -8,7 +8,7 @@ import { DatePicker } from '../../ui/DatePicker';
 import { formatKmVisual } from '../../../utils';
 import { useVeiculos } from '../../../hooks/useVeiculos';
 import { useFornecedores } from '../../../hooks/useFornecedores';
-import type { ManutencaoFormValues, TipoManutencao } from './schema';
+import type { ManutencaoFormValues } from './schema';
 
 export function Step1DadosGerais() {
   const { register, watch, setValue, control, formState: { errors, isSubmitting } } = useFormContext<ManutencaoFormValues>();
@@ -64,20 +64,26 @@ export function Step1DadosGerais() {
 
       <div className="grid grid-cols-2 gap-2 bg-surface-hover/80 p-1.5 rounded-[1rem] border border-border/60 shadow-inner">
         {['CORRETIVA', 'PREVENTIVA'].map((t) => (
-          <button
+          <label
             key={t}
-            type="button"
-            onClick={() => setValue('tipo', t as TipoManutencao)}
-            disabled={isLocked}
             className={`
-              py-3 text-xs font-black tracking-widest uppercase rounded-xl transition-all duration-300 truncate min-w-0
+              py-3 text-xs font-black tracking-widest uppercase rounded-xl transition-all duration-300 truncate min-w-0 text-center cursor-pointer select-none
               ${tipoManutencao === t
                 ? (t === 'CORRETIVA' ? 'bg-error text-white shadow-md' : 'bg-success text-white shadow-md')
                 : 'text-text-muted hover:text-text-main hover:bg-surface/80'}
+              ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}
             `}
           >
+            {/* O padrão 100% correto: um rádio nativo oculto assume o controle de estado do React Hook Form */}
+            <input
+              type="radio"
+              value={t}
+              {...register('tipo')}
+              disabled={isLocked}
+              className="sr-only" 
+            />
             {t}
-          </button>
+          </label>
         ))}
       </div>
 
