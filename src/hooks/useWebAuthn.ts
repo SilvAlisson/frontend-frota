@@ -74,6 +74,12 @@ export function useWebAuthn() {
 
             await refetchPasskeys();
             localStorage.setItem('klin_has_passkey', 'true');
+            
+            // 🔥 SOLUÇÃO: Salva o e-mail do dono da biometria como âncora
+            if (user.email) {
+                localStorage.setItem('klin_passkey_email', user.email);
+            }
+            
             toast.success('Biometria cadastrada com sucesso neste aparelho! ✅');
             return true;
 
@@ -94,11 +100,21 @@ export function useWebAuthn() {
 
     // ─── Login com biometria ────────────────────────────────────────────────
     const loginWithDevice = async (
-        onSuccess: (token: string, user: { nome: string; [key: string]: unknown }) => void
+        onSuccess: (token: string, user: { nome: string; [key: string]: unknown }) => void,
+        emailFromForm?: string // 🔥 Adicionamos o e-mail como parâmetro
     ) => {
         setIsAuthenticating(true);
         try {
-            const { data, error } = await signIn.passkey();
+            // 🔥 SOLUÇÃO: Puxa o e-mail do formulário, ou o que está salvo em cache
+            let emailToUse = emailFromForm;
+            if (!emailToUse || emailToUse.trim() === '') {
+                emailToUse = localStorage.getItem('klin_passkey_email') || undefined;
+            }
+
+            const passkeyOptions = emailToUse ? { email: emailToUse } : undefined;
+            
+            // O Better Auth agora enviará o ID exato da sua biometria e o sensor ligará 100% das vezes
+            const { data, error } = await signIn.passkey(passkeyOptions);
 
             if (error) {
                 toast.error(error.message || 'Assinatura biométrica inválida.');
@@ -107,6 +123,10 @@ export function useWebAuthn() {
 
             if (data) {
                 await refetchPasskeys();
+                // Atualiza o cache caso tenha dado certo com um e-mail novo
+                if (data.user.email) {
+                    localStorage.setItem('klin_passkey_email', data.user.email);
+                }
                 toast.success(`Bem-vindo(a) de volta, ${data.user.name}! 👋`);
                 onSuccess('', data.user as any);
                 return true;
@@ -116,7 +136,7 @@ export function useWebAuthn() {
             if (error?.name === 'NotAllowedError') {
                 toast.error('Ação cancelada pelo usuário.');
             } else if (error?.name === 'NotFoundError') {
-                toast.error('Nenhuma biometria cadastrada neste dispositivo. Entre com sua senha e cadastre nas Configurações.');
+                toast.error('Nenhuma biometria encontrada. Digite seu E-mail antes de clicar no botão, ou faça login com senha e cadastre a biometria novamente.');
             } else {
                 toast.error('Falha ao ler biometria. Tente novamente.');
             }

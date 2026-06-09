@@ -15,7 +15,7 @@ export type LoginFormValues = z.input<typeof loginSchema>;
 
 interface LoginFormCredentialsProps {
   onSubmit: (data: LoginFormValues) => Promise<void>;
-  onBiometryClick: () => Promise<void>;
+  onBiometryClick: (email?: string) => Promise<void>;
   isSubmittingAuth: boolean;
   isAuthenticatingBiometry: boolean;
 }
@@ -26,7 +26,8 @@ export function LoginFormCredentials({
   isSubmittingAuth,
   isAuthenticatingBiometry
 }: LoginFormCredentialsProps) {
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>({
+  // 🔥 Extraído o getValues para ler o formulário
+  const { register, handleSubmit, getValues, formState: { errors } } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema)
   });
 
@@ -96,7 +97,8 @@ export function LoginFormCredentials({
         
         <button
           type="button"
-          onClick={onBiometryClick}
+          // 🔥 Agora passamos o e-mail para a função
+          onClick={() => onBiometryClick(getValues('email'))}
           disabled={isBusy}
           aria-label="Login com Biometria"
           className={`relative flex items-center justify-center w-20 h-20 rounded-full border-2 transition-all duration-300 shadow-sm overflow-hidden btn-tactile

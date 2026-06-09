@@ -49,7 +49,8 @@ export function LoginScreen() {
     }
   };
 
-  const onBiometryClick = async () => {
+  // 🔥 Recebe o e-mail do form
+  const onBiometryClick = async (emailFromForm?: string) => {
     if (!isWebAuthnSupported) {
       toast.error('Seu navegador não suporta autenticação biométrica.');
       return;
@@ -57,7 +58,7 @@ export function LoginScreen() {
     
     await loginWithDevice((token, user) => {
       login({ token, user: user as User });
-    });
+    }, typeof emailFromForm === 'string' ? emailFromForm : undefined); 
   };
 
   // --- UI: LOCK SCREEN NATIVA (server-side, não localStorage) ---
@@ -65,7 +66,8 @@ export function LoginScreen() {
     return (
       <LockScreen
         isAuthenticating={isAuthenticating}
-        onUnlock={onBiometryClick}
+        // Quando for na lockscreen ele puxará o e-mail do localStorage perfeitamente
+        onUnlock={() => onBiometryClick()} 
         onUsePassword={() => setOverrideLockScreen(true)}
       />
     );

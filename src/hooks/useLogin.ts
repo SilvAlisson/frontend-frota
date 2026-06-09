@@ -40,6 +40,11 @@ export function useLogin() {
 
         const { data } = await api.post('/auth-custom/login-token', { loginToken: magicToken });
 
+        // 🔥 ADICIONE ISTO: Salva a âncora do operador silenciosamente
+        if (data.user?.email) {
+            localStorage.setItem('klin_passkey_email', data.user.email);
+        }
+
         login(data);
         toast.success(`Bem-vindo, ${data.user.nome.split(' ')[0]}!`);
 
@@ -100,6 +105,11 @@ export function useLogin() {
           sessionStorage.setItem('authToken', tokenStr);
         }
 
+        // 🔥 SOLUÇÃO: Salva o email logado como âncora para a próxima tentativa de biometria
+        if (resData.user?.email) {
+            localStorage.setItem('klin_passkey_email', resData.user.email);
+        }
+
         // Better Auth não retorna JWT, o cookie é gerido automaticamente (quando permitido).
         // O `AuthContext` irá reagir ao recarregar a sessão ou se inscrever, mas 
         // para dar o feedback imediato, chamamos `login` simbolicamente com o user.
@@ -128,6 +138,12 @@ export function useLogin() {
 
     try {
       const { data } = await api.post('/auth-custom/login-token', { loginToken: qrManualToken });
+      
+      // 🔥 ADICIONE ISTO: Salva a âncora do operador silenciosamente
+      if (data.user?.email) {
+          localStorage.setItem('klin_passkey_email', data.user.email);
+      }
+      
       login(data);
       toast.dismiss(toastId);
       toast.success('Acesso Autorizado!');
