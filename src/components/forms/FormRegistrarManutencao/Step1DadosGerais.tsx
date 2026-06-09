@@ -27,14 +27,30 @@ export function Step1DadosGerais() {
   const kmAtualNum = Number(kmAtualVisual?.replace(/\D/g, '')) || 0;
   const isKmInvalido = ultimoKmRegistrado > 0 && kmAtualNum > 0 && kmAtualNum < ultimoKmRegistrado;
 
-  const fornecedoresOpcoes = useMemo(() =>
-    fornecedores.filter(f => {
-      if (['OFICINA', 'MECANICA', 'OUTRO'].includes(f.tipo)) return true;
-      if (['LAVA_JATO', 'POSTO'].includes(f.tipo)) return tipoManutencao === 'PREVENTIVA';
+  // 🔥 SOLUÇÃO DEFINITIVA DO FILTRO 🔥
+  const fornecedoresOpcoes = useMemo(() => {
+    // Garantimos uma leitura booleana exata do watch atual
+    const isPreventiva = tipoManutencao === 'PREVENTIVA';
+
+    return fornecedores.filter(f => {
+      // 1. NORMALIZAÇÃO: Pegamos o tipo do banco, transformamos em maiúsculo e trocamos espaços por underline.
+      // Ex: "Lava Jato" -> "LAVA_JATO" | "lavajato" -> "LAVA_JATO" (com o replace extra)
+      let tipoNormalizado = String(f.tipo || '').toUpperCase().trim();
+      tipoNormalizado = tipoNormalizado.replace(/\s+/g, '_');
+
+      // 2. CORREÇÃO "OUTROS": Adicionado "OUTROS" (plural) para bater com a interface do veiculo.ts
+      if (['OFICINA', 'MECANICA', 'OUTRO', 'OUTROS'].includes(tipoNormalizado)) {
+        return true; // Oficinas mecânicas sempre aparecem
+      }
+
+      // 3. AMPLIAÇÃO DO LAVA JATO: Cobrimos todas as variações possíveis de digitação no banco
+      if (['LAVA_JATO', 'LAVAJATO', 'LAVAGEM', 'POSTO'].includes(tipoNormalizado)) {
+        return isPreventiva; // Só aparece se clicou em PREVENTIVA
+      }
+
       return false;
-    }).map(f => ({ value: f.id, label: f.nome })),
-    [fornecedores, tipoManutencao]
-  );
+    }).map(f => ({ value: f.id, label: f.nome }));
+  }, [fornecedores, tipoManutencao]); // Recalcula sempre que a lista de fornecedores ou o clique mudar
 
   const veiculosOpcoes = useMemo(() =>
     veiculos
@@ -62,7 +78,6 @@ export function Step1DadosGerais() {
       </div>
 
       <div className="grid grid-cols-2 gap-2 bg-surface-hover/80 p-1.5 rounded-[1rem] border border-border/60 shadow-inner">
-        {/* Restauramos o Controller respeitando as regras nativas do React Hook Form */}
         <Controller
           control={control}
           name="tipo"
@@ -72,22 +87,22 @@ export function Step1DadosGerais() {
                 <button
                   key={t}
                   type="button"
-                  // 1. O RECUPERADOR DE AUTO-FOCUS:
-                  // Passamos a 'ref' injetada pelo Controller para o primeiro botão.
-                  // Assim, se houver erro, o RHF sabe exatamente qual elemento focar e rolar a tela!
+                  // Preserva a funcionalidade de "auto-focus" do RHF no primeiro botão se houver erro
                   ref={t === 'CORRETIVA' ? ref : null}
                   
                   onClick={() => {
-                    // 2. A ATUALIZAÇÃO PASSIVA DE ESTADO:
+                    // 1. Atualiza o field interno para o botão mudar de cor imediatamente
                     onChange(t);
                     
+                    // 2. FORÇA a atualização do estado global para o watch() não sofrer delay
+                    setValue('tipo', t as "CORRETIVA" | "PREVENTIVA", { shouldValidate: true, shouldDirty: true });
+                    
+                    // 3. Limpa a oficina selecionada (sem setTimeout para evitar bugs de ciclo de render)
                     if (value !== t) {
-
-                      setTimeout(() => setValue('fornecedorId', '', { shouldValidate: true }), 0);
+                      setValue('fornecedorId', '', { shouldValidate: true });
                     }
                   }}
                   
-                  // Mantemos o rastreamento nativo de campo "tocado"
                   onBlur={onBlur}
                   disabled={isLocked}
                   className={`
@@ -182,7 +197,6 @@ export function Step1DadosGerais() {
         </div>
       )}
 
-      {/* CALLOUT DE AVISO DE KM INCONSISTENTE */}
       {alvoSelecionado === 'VEICULO' && isKmInvalido && (
         <div className="animate-in fade-in zoom-in-95 duration-300 min-w-0">
           <Callout variant="warning" title="Odómetro Inconsistente" icon={AlertTriangle}>
