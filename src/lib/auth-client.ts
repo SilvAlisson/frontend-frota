@@ -7,6 +7,7 @@ export const authClient = createAuthClient({
     // O Better Auth por padrão já adiciona /api/auth, então precisamos do host base.
     baseURL: RENDER_API_BASE_URL.replace(/\/api$/, ''),
     fetchOptions: {
+        credentials: 'include',
         onRequest: (context) => {
             const token = sessionStorage.getItem('authToken');
             if (token) {
