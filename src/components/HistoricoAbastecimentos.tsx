@@ -15,6 +15,8 @@ import { PullToRefresh } from './ui/PullToRefresh';
 import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { Lightbox } from './ui/Lightbox';
+import { EmptyState } from './ui/EmptyState';
+import { AlertTriangle } from 'lucide-react';
 
 // --- FORMS ---
 import { FormEditarAbastecimento } from './forms/FormEditarAbastecimento';
@@ -168,18 +170,26 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
 
         <KpisAbastecimento estatisticas={estatisticas} />
 
-        <TabelaAbastecimentos
-          historicoVisivel={historicoVisivel}
-          totalFiltrado={historicoFiltrado.length}
-          loading={loading}
-          canEdit={canEdit}
-          userRole={userRole}
-          onEditar={setEditingId}
-          onExcluir={setDeletingId}
-          onVisualizarDoc={(url, titulo) => setDocParaVisualizar({ url, titulo })}
-          onCarregarMais={handleCarregarMais}
-          itensPorPagina={ITENS_POR_PAGINA}
-        />
+        {error ? (
+          <EmptyState 
+            title="Erro de Conexão" 
+            description={error.message || "Não foi possível carregar o histórico de abastecimentos."} 
+            icon={AlertTriangle} 
+          />
+        ) : (
+          <TabelaAbastecimentos
+            historicoVisivel={historicoVisivel}
+            totalFiltrado={historicoFiltrado.length}
+            loading={loading}
+            canEdit={canEdit}
+            userRole={userRole}
+            onEditar={setEditingId}
+            onExcluir={setDeletingId}
+            onVisualizarDoc={(url, titulo) => setDocParaVisualizar({ url, titulo })}
+            onCarregarMais={handleCarregarMais}
+            itensPorPagina={ITENS_POR_PAGINA}
+          />
+        )}
 
         {/* MODAIS */}
         <Modal 

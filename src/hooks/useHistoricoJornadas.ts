@@ -38,7 +38,7 @@ export function useHistoricoJornadas(filtros: FiltrosJornada) {
       if (import.meta.env.DEV) console.error('Erro no fetch de histórico:', err);
       const e = err instanceof Error ? err : new Error('Não foi possível carregar o histórico.');
       setError(e);
-      // toast.error(e.message);
+      toast.error(e.message);
     } finally {
       setLoading(false);
     }
@@ -55,7 +55,7 @@ export function useHistoricoJornadas(filtros: FiltrosJornada) {
       toast.success('Registro excluído com sucesso.');
     } catch (err: unknown) {
       if (import.meta.env.DEV) console.error("Erro ao excluir:", err);
-      // toast.error('Erro ao excluir jornada.');
+      toast.error('Erro ao excluir jornada.');
     }
   };
 

@@ -13,6 +13,8 @@ import { PageHeader } from './ui/PageHeader';
 import { Modal } from './ui/Modal';
 import { ConfirmModal } from './ui/ConfirmModal'; 
 import { Lightbox } from './ui/Lightbox';
+import { EmptyState } from './ui/EmptyState';
+import { AlertTriangle } from 'lucide-react';
 
 // --- FORMS ---
 import { FormEditarJornada } from './forms/FormEditarJornada';
@@ -131,18 +133,26 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
         />
       )}
 
-      <TabelaJornadas
-        historicoVisivel={historicoVisivel}
-        totalFiltrado={historico.length}
-        loading={loading}
-        canEdit={canEdit}
-        canDelete={canDelete}
-        onEditar={setEditingId}
-        onExcluir={setDeletingId}
-        onVisualizarFoto={setViewingPhoto}
-        onCarregarMais={handleCarregarMais}
-        itensPorPagina={ITENS_POR_PAGINA}
-      />
+      {error ? (
+        <EmptyState 
+          title="Erro de Conexão" 
+          description={error.message || "Não foi possível carregar o histórico de viagens."} 
+          icon={AlertTriangle} 
+        />
+      ) : (
+        <TabelaJornadas
+          historicoVisivel={historicoVisivel}
+          totalFiltrado={historico.length}
+          loading={loading}
+          canEdit={canEdit}
+          canDelete={canDelete}
+          onEditar={setEditingId}
+          onExcluir={setDeletingId}
+          onVisualizarFoto={setViewingPhoto}
+          onCarregarMais={handleCarregarMais}
+          itensPorPagina={ITENS_POR_PAGINA}
+        />
+      )}
 
       {/* MODAIS */}
       <Modal 

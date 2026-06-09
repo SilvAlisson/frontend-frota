@@ -32,7 +32,7 @@ export function useHistoricoManutencoes(filtros: FiltrosManutencao) {
       if (import.meta.env.DEV) console.error(err);
       const e = err instanceof Error ? err : new Error('Erro ao carregar o histórico financeiro da oficina.');
       setError(e);
-      // toast.error(e.message);
+      toast.error(e.message);
     } finally {
       setLoading(false);
     }
@@ -48,7 +48,7 @@ export function useHistoricoManutencoes(filtros: FiltrosManutencao) {
       setHistorico(prev => prev.filter(os => os.id !== id));
       toast.success('Registro financeiro removido.');
     } catch (error: unknown) {
-      // toast.error('Ocorreu um erro ao remover o Registro.');
+      toast.error('Ocorreu um erro ao remover o Registro.');
     }
   };
 

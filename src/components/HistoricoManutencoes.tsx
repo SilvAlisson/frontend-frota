@@ -14,6 +14,8 @@ import { PageHeader } from './ui/PageHeader';
 import { Modal } from './ui/Modal';
 import { SmartFAB } from './ui/SmartFAB';
 import { PullToRefresh } from './ui/PullToRefresh';
+import { EmptyState } from './ui/EmptyState';
+import { AlertTriangle } from 'lucide-react';
 
 // --- FORMS ---
 import { FormEditarManutencao } from './forms/FormEditarManutencao';
@@ -133,31 +135,39 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
 
         <KpisManutencao estatisticas={estatisticas} />
 
-        <TabelaManutencoes
-          historicoVisivel={historicoVisivel}
-          totalFiltrado={historicoFiltrado.length}
-          loading={loading}
-          canEdit={canEdit}
-          canDelete={canDelete}
-          onEditar={setEditingOS}
-          onExcluir={(id) => {
-            openModal('CONFIRM', {
-              title: "Eliminar Registro de Oficina",
-              description: "Esta ação é permanente. Ao apagar, o relatório financeiro e o histórico de manutenções do veículo serão alterados.",
-              variant: "danger",
-              confirmLabel: "Sim, Apagar Registro",
-              onConfirm: async () => await handleDelete(id)
-            });
-          }}
-          onVisualizarDoc={(url, titulo) => {
-            openModal('LIGHTBOX', {
-              src: url,
-              alt: titulo
-            });
-          }}
-          onCarregarMais={handleCarregarMais}
-          itensPorPagina={ITENS_POR_PAGINA}
-        />
+        {error ? (
+          <EmptyState 
+            title="Erro de Conexão" 
+            description={error.message || "Não foi possível carregar o histórico de manutenções."} 
+            icon={AlertTriangle} 
+          />
+        ) : (
+          <TabelaManutencoes
+            historicoVisivel={historicoVisivel}
+            totalFiltrado={historicoFiltrado.length}
+            loading={loading}
+            canEdit={canEdit}
+            canDelete={canDelete}
+            onEditar={setEditingOS}
+            onExcluir={(id) => {
+              openModal('CONFIRM', {
+                title: "Eliminar Registro de Oficina",
+                description: "Esta ação é permanente. Ao apagar, o relatório financeiro e o histórico de manutenções do veículo serão alterados.",
+                variant: "danger",
+                confirmLabel: "Sim, Apagar Registro",
+                onConfirm: async () => await handleDelete(id)
+              });
+            }}
+            onVisualizarDoc={(url, titulo) => {
+              openModal('LIGHTBOX', {
+                src: url,
+                alt: titulo
+              });
+            }}
+            onCarregarMais={handleCarregarMais}
+            itensPorPagina={ITENS_POR_PAGINA}
+          />
+        )}
 
         {/* MODAIS */}
         <Modal

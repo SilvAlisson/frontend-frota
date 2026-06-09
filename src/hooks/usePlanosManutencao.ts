@@ -74,9 +74,9 @@ export function usePlanosManutencao(veiculoId?: string, filtroCategoria?: string
     },
     onError: (err: unknown) => {
       if (axios.isAxiosError(err) && err.response?.data?.error) {
-        // toast.error(err.response.data.error);
+        toast.error(err.response.data.error);
       } else {
-        // toast.error('Erro ao registrar manutenção.');
+        toast.error('Erro ao registrar manutenção.');
       }
     }
   });
@@ -91,9 +91,9 @@ export function usePlanosManutencao(veiculoId?: string, filtroCategoria?: string
     },
     onError: (err: unknown) => {
       if (axios.isAxiosError(err) && err.response?.data?.error) {
-        // toast.error(err.response.data.error);
+        toast.error(err.response.data.error);
       } else {
-        // toast.error("Falha ao tentar remover o plano.");
+        toast.error("Falha ao tentar remover o plano.");
       }
     }
   });

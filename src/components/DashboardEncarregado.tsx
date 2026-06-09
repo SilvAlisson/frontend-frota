@@ -96,6 +96,25 @@ function SidebarActionButton({ icon: Icon, title, onClick, badge, variant = 'def
   );
 }
 
+// --- ENVELOPE DAS SUB-PÁGINAS FLUIDAS ---
+const PageWrapper = ({ title, onBack, children }: { title: string; onBack: () => void; children: React.ReactNode }) => (
+    <div className="space-y-6 animate-in slide-in-from-right-8 duration-500 pb-20 min-h-screen bg-background -mx-4 sm:-mx-8 px-4 sm:px-8">
+        <div className="flex items-center gap-4 py-6 sticky top-0 z-40 -mx-4 px-4 sm:-mx-8 sm:px-8 backdrop-blur-xl bg-background/80 border-b border-border/40">
+            <Button 
+              onClick={onBack} 
+              variant="ghost" size="icon"
+              className="w-11 h-11 rounded-2xl bg-surface hover:bg-surface-hover border border-border/40 hover:border-primary/30 text-text-muted hover:text-primary transition-all active:scale-95 shadow-sm"
+            >
+                <ChevronRight className="w-5 h-5 rotate-180" />
+            </Button>
+            <h2 className="text-xl sm:text-2xl font-black text-text-main tracking-tight uppercase italic drop-shadow-sm">{title}</h2>
+        </div>
+        <div className="max-w-7xl mx-auto">
+            {children}
+        </div>
+    </div>
+);
+
 // ─── COMPONENTE PRINCIPAL MÃE ─────────────────────────────────────────────
 export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
     const { logout } = useAuth();
@@ -330,29 +349,12 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
     } // FIM DA VIEW 'DASHBOARD'
 
 
-    // --- ENVELOPE DAS SUB-PÁGINAS FLUIDAS ---
-    const PageWrapper = ({ title, children }: { title: string; children: React.ReactNode }) => (
-        <div className="space-y-6 animate-in slide-in-from-right-8 duration-500 pb-20 min-h-screen bg-background -mx-4 sm:-mx-8 px-4 sm:px-8">
-            <div className="flex items-center gap-4 py-6 sticky top-0 z-40 -mx-4 px-4 sm:-mx-8 sm:px-8 backdrop-blur-xl bg-background/80 border-b border-border/40">
-                <Button 
-                  onClick={() => setView('DASHBOARD')} 
-                  variant="ghost" size="icon"
-                  className="w-11 h-11 rounded-2xl bg-surface hover:bg-surface-hover border border-border/40 hover:border-primary/30 text-text-muted hover:text-primary transition-all active:scale-95 shadow-sm"
-                >
-                    <ChevronRight className="w-5 h-5 rotate-180" />
-                </Button>
-                <h2 className="text-xl sm:text-2xl font-black text-text-main tracking-tight uppercase italic drop-shadow-sm">{title}</h2>
-            </div>
-            <div className="max-w-7xl mx-auto">
-                {children}
-            </div>
-        </div>
-    );
-
     // --- ROTAS INTERNAS DO ENCARREGADO ---
+    const goBack = () => setView('DASHBOARD');
+
     if (view === 'MONITORAMENTO') {
         return (
-            <PageWrapper title="Painel de Monitoramento Vivo">
+            <PageWrapper title="Painel de Monitoramento Vivo" onBack={goBack}>
                 <GestaoJornadas jornadasAbertas={jornadasAbertas} onJornadaFinalizadaManualmente={() => refetchJornadas().catch(err => handleApiError(err, 'Erro ao sincronizar.'))} />
             </PageWrapper>
         );
@@ -360,7 +362,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
     
     if (view === 'MINHA_JORNADA') {
         return (
-            <PageWrapper title="Controle Pessoal de Acesso">
+            <PageWrapper title="Controle Pessoal de Acesso" onBack={goBack}>
                 <div className="max-w-2xl mx-auto p-8 rounded-[2.5rem] border border-border/20 glass-premium shadow-xl">
                     <IniciarJornada usuarios={usuarios} veiculos={veiculosLeves} operadorLogadoId={user.id} jornadasAtivas={jornadasAbertas} onJornadaIniciada={() => { setView('DASHBOARD'); refetchJornadas(); }} />
                 </div>
@@ -369,24 +371,24 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
     }
 
     if (view === 'HISTORICO') {
-        return <PageWrapper title="Histórico de Abastecimentos"><HistoricoAbastecimentos userRole={user.role} /></PageWrapper>;
+        return <PageWrapper title="Histórico de Abastecimentos" onBack={goBack}><HistoricoAbastecimentos userRole={user.role} /></PageWrapper>;
     }
 
     //  Rota Histórico de Manutenções Adicionada
     if (view === 'HISTORICO_MANUTENCOES') {
-        return <PageWrapper title="Histórico de Manutenções"><HistoricoManutencoes userRole={user.role} /></PageWrapper>;
+        return <PageWrapper title="Histórico de Manutenções" onBack={goBack}><HistoricoManutencoes userRole={user.role} /></PageWrapper>;
     }
 
     if (view === 'EQUIPE') {
-        return <PageWrapper title="Minha Equipe Operacional"><MinhaEquipe usuarios={usuarios} jornadasAbertas={jornadasAbertas} /></PageWrapper>;
+        return <PageWrapper title="Minha Equipe Operacional" onBack={goBack}><MinhaEquipe usuarios={usuarios} jornadasAbertas={jornadasAbertas} /></PageWrapper>;
     }
 
     if (view === 'DEFEITOS') {
-        return <PageWrapper title="Incidências Operacionais"><PainelDefeitosEncarregado /></PageWrapper>;
+        return <PageWrapper title="Incidências Operacionais" onBack={goBack}><PainelDefeitosEncarregado /></PageWrapper>;
     }
 
     if (view === 'PLANOS') {
-        return <PageWrapper title="Planos de Manutenção Oficiais"><PainelPlanosPreventivos /></PageWrapper>;
+        return <PageWrapper title="Planos de Manutenção Oficiais" onBack={goBack}><PainelPlanosPreventivos /></PageWrapper>;
     }
 
     return null;

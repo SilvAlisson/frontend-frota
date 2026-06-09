@@ -41,7 +41,7 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
     } catch (err: unknown) {
       const e = err instanceof Error ? err : new Error('Falha ao carregar abastecimentos.');
       setError(e);
-      // toast.error(e.message);
+      toast.error(e.message);
     } finally {
       setLoading(false);
     }
@@ -57,7 +57,7 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
       setHistorico(prev => prev.filter(ab => ab.id !== id));
       toast.success('Abastecimento removido.');
     } catch (err: unknown) {
-      // toast.error('Erro ao remover abastecimento.');
+      toast.error('Erro ao remover abastecimento.');
     }
   };
 
