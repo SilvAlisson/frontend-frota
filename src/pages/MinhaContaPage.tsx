@@ -14,7 +14,7 @@ import { api } from '../services/api';
 import {
     User, Shield, Key, Smartphone, Monitor, Trash2,
     Plus, Lock, Eye, EyeOff, CheckCircle, Fingerprint,
-    Calendar, ChevronLeft
+    Calendar, ChevronLeft, Bell, BellRing
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -137,6 +137,78 @@ export function MinhaContaPage() {
             toast.error(err?.response?.data?.error || 'Erro ao alterar senha.');
         } finally {
             setIsAlterandoSenha(false);
+        }
+    };
+
+    const [isPushSubscribed, setIsPushSubscribed] = useState(false);
+    const [isSubscribingPush, setIsSubscribingPush] = useState(false);
+
+    useEffect(() => {
+        if ('serviceWorker' in navigator && 'PushManager' in window) {
+            navigator.serviceWorker.getRegistration().then(reg => {
+                if (reg) {
+                    reg.pushManager.getSubscription().then(sub => {
+                        setIsPushSubscribed(!!sub);
+                    });
+                }
+            });
+        }
+    }, []);
+
+    const urlBase64ToUint8Array = (base64String: string) => {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        const outputArray = new Uint8Array(rawData.length);
+        for (let i = 0; i < rawData.length; ++i) {
+            outputArray[i] = rawData.charCodeAt(i);
+        }
+        return outputArray;
+    };
+
+    const togglePushNotifications = async () => {
+        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+            toast.error('Notificações push não suportadas neste navegador.');
+            return;
+        }
+
+        setIsSubscribingPush(true);
+        try {
+            const registration = await navigator.serviceWorker.ready;
+
+            if (isPushSubscribed) {
+                const subscription = await registration.pushManager.getSubscription();
+                if (subscription) {
+                    await subscription.unsubscribe();
+                    await api.post('/notifications/unsubscribe', { endpoint: subscription.endpoint });
+                }
+                setIsPushSubscribed(false);
+                toast.success('Notificações desativadas neste dispositivo.');
+            } else {
+                const permissao = await Notification.requestPermission();
+                if (permissao !== 'granted') {
+                    toast.error('Permissão de notificação negada.');
+                    setIsSubscribingPush(false);
+                    return;
+                }
+
+                const { data } = await api.get('/notifications/vapid-public-key');
+                const publicKey = data.publicKey;
+
+                const subscription = await registration.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey: urlBase64ToUint8Array(publicKey)
+                });
+
+                await api.post('/notifications/subscribe', subscription);
+                setIsPushSubscribed(true);
+                toast.success('Notificações ativadas com sucesso!');
+            }
+        } catch (error) {
+            console.error('Erro ao configurar notificações push:', error);
+            toast.error('Ocorreu um erro ao configurar notificações.');
+        } finally {
+            setIsSubscribingPush(false);
         }
     };
 
@@ -278,6 +350,43 @@ export function MinhaContaPage() {
                             Tente com Chrome, Safari ou Edge em um dispositivo com leitor biométrico.
                         </div>
                     )}
+                </motion.section>
+
+                {/* ── SEÇÃO: Notificações Push ──────────────────────────── */}
+                <motion.section
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 }}
+                    className="bg-surface/50 border border-border/40 rounded-3xl p-6 backdrop-blur-sm"
+                >
+                    <div className="flex items-center justify-between mb-5">
+                        <div className="flex items-center gap-3">
+                            <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${isPushSubscribed ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-surface-hover border-border/40 text-text-muted'}`}>
+                                {isPushSubscribed ? <BellRing className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                            </div>
+                            <h2 className="text-base font-black text-text-main uppercase tracking-widest">Notificações</h2>
+                        </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 bg-surface-hover/30 rounded-2xl border border-border/40">
+                        <div>
+                            <p className="font-bold text-sm text-text-main">Avisos no Navegador / Celular</p>
+                            <p className="text-xs text-text-muted mt-0.5">
+                                {isPushSubscribed 
+                                    ? 'Você receberá alertas importantes neste dispositivo.' 
+                                    : 'Ative para receber alertas de documentos vencendo ou vencidos.'}
+                            </p>
+                        </div>
+                        <Button
+                            onClick={togglePushNotifications}
+                            isLoading={isSubscribingPush}
+                            disabled={isSubscribingPush}
+                            variant={isPushSubscribed ? "danger" : "primary"}
+                            className="w-full sm:w-auto text-sm font-bold whitespace-nowrap"
+                        >
+                            {isPushSubscribed ? 'Desativar Notificações' : 'Ativar Notificações'}
+                        </Button>
+                    </div>
                 </motion.section>
 
                 {/* ── SEÇÃO: Alterar Senha ───────────────────────────────── */}
