@@ -164,7 +164,11 @@ export function FormEditarManutencao({
  // Transformação para o formato do Select Inteligente
  const fornecedoresOpcoes = useMemo(() =>
   fornecedores
-   .filter(f => abaAtiva === 'CORRETIVA' ? !['POSTO', 'LAVA_JATO'].includes(f.tipo) : true)
+   .filter(f => {
+     if (f.tipo === 'POSTO') return false;
+     if (f.tipo === 'LAVA_JATO') return abaAtiva === 'PREVENTIVA';
+     return true;
+   })
    .map(f => ({ value: f.id, label: f.nome })),
   [fornecedores, abaAtiva]
  );

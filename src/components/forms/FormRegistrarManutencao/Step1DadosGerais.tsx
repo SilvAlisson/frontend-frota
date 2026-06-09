@@ -29,7 +29,11 @@ export function Step1DadosGerais() {
 
   const fornecedoresOpcoes = useMemo(() => {
     return fornecedores
-      .filter(f => tipoManutencao === 'CORRETIVA' ? !['POSTO', 'LAVA_JATO'].includes(f.tipo) : true)
+      .filter(f => {
+        if (f.tipo === 'POSTO') return false;
+        if (f.tipo === 'LAVA_JATO') return tipoManutencao === 'PREVENTIVA';
+        return true;
+      })
       .map(f => ({ value: f.id, label: f.nome }));
   }, [fornecedores, tipoManutencao]);
 
@@ -188,7 +192,7 @@ export function Step1DadosGerais() {
             name="fornecedorId"
             render={({ field }) => (
               <Select
-                label="Oficina / Fornecedor (v2)"
+                label="Oficina / Fornecedor"
                 options={fornecedoresOpcoes}
                 icon={<Wrench className="w-4 h-4" />}
                 value={field.value ?? ""}
