@@ -228,14 +228,6 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
                   Enviar
                 </Button>
                 <Button
-                  variant="secondary"
-                  onClick={handleCopyLink}
-                  className="h-11 px-0 bg-surface-hover hover:bg-border text-text-main border border-border/40"
-                  icon={<Copy className="w-4 h-4" />}
-                >
-                  Copiar
-                </Button>
-                <Button
                   variant="ghost"
                   onClick={handleGerarNovo}
                   isLoading={loading}

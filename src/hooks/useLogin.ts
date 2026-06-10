@@ -36,9 +36,13 @@ export function useLogin() {
 
     const processMagicLogin = async () => {
       try {
-        if (isAuthenticated) {
-          logout();
-          await new Promise(resolve => setTimeout(resolve, 50));
+        if (isAuthenticated && user) {
+          // Se o Admin clicou no link mágico de um operador para "testar", 
+          // bloqueamos para não sobrescrever a sessão dele e causar erros 403 na aba original.
+          toast.error(`Você já está logado como ${user.nome}. Saia da conta atual antes de acessar outro crachá.`);
+          setIsMagicLoggingIn(false);
+          navigate('/', { replace: true });
+          return;
         }
 
         const { data } = await api.post('/auth-custom/login-token', { loginToken: magicToken });

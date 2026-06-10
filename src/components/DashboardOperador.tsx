@@ -7,7 +7,6 @@ import { FormRegistrarDefeito } from './forms/FormRegistrarDefeito';
 import { HistoricoJornadas } from './HistoricoJornadas';
 import { GestaoDocumentos } from './GestaoDocumentos';
 import { Modal } from './ui/Modal';
-import { ModalQrCode } from './ModalQrCode';
 
 import { EmptyState } from './ui/EmptyState';
 import { Avatar } from './ui/Avatar';
@@ -87,7 +86,6 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
  const [modalDefeitoOpen, setModalDefeitoOpen] = useState(false);
  const [modalHistoricoOpen, setModalHistoricoOpen] = useState(false);
  const [modalDocumentosOpen, setModalDocumentosOpen] = useState(false);
- const [modalQrCodeOpen, setModalQrCodeOpen] = useState(false);
 
  // 📡 BUSCA DOS DADOS COM CACHE
  const { usuarios = [], refetch: refetchUsuarios, isLoading: loadingUsuarios } = useUsuarios();
@@ -123,18 +121,11 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
     <div className="max-w-2xl mx-auto flex justify-between items-center">
 
      <div className="flex items-center gap-3">
-      <Button
-       variant="ghost"
-       size="icon"
-       onClick={() => {
-        vibrateMedium();
-        setModalQrCodeOpen(true);
-       }}
-       className="w-11 h-11 rounded-full p-0.5 shadow-lg shadow-primary/20 active:scale-95 transition-transform bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shrink-0 touch-target focus-ring"
-       aria-label="Abrir QrCode do Perfil"
+      <div
+       className="w-11 h-11 rounded-full p-0.5 shadow-lg shadow-primary/20 bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shrink-0"
       >
        <Avatar url={user.fotoUrl} nome={user.nome} className="w-10 h-10 border-none shadow-none" />
-      </Button>
+      </div>
       <div className="leading-tight">
        <h1 className="font-header text-base sm:text-lg font-black text-text-main tracking-tight">
         Olá, <span className="text-primary">{user.nome.split(' ')[0]}</span>
@@ -331,10 +322,6 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
      </div>
     )}
    </Modal>
-
-   {modalQrCodeOpen && (
-    <ModalQrCode user={user as User & { loginToken?: string }} onClose={() => setModalQrCodeOpen(false)} />
-   )}
 
   </div>
  );
