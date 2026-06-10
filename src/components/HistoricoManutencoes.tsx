@@ -51,7 +51,8 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
     historicoFiltrado, 
     fornecedores, 
     estatisticas, 
-    loading, 
+    loading,
+    error, 
     refetch, 
     handleDelete 
   } = useHistoricoManutencoes(filtros);

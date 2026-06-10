@@ -1,4 +1,4 @@
-import React, { useState, Suspense, useEffect } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui/Button';
 import { Tabs } from '../components/ui/Tabs';
@@ -32,12 +32,6 @@ export function VeiculoDetalhes() {
     const queryTab = searchParams.get('tab');
     // 🚚 Novo estado de navegação por abas
     const [abaAtiva, setAbaAtiva] = useState(queryTab || 'geral');
-
-    useEffect(() => {
-        if (queryTab) {
-            setAbaAtiva(queryTab);
-        }
-    }, [queryTab]);
 
     if (loading) return (
         <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-500 pb-12 pt-6">

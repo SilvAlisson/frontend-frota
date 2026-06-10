@@ -17,9 +17,12 @@ export function useHistoricoManutencoes(filtros: FiltrosManutencao) {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    api.get('/fornecedores')
+    const controller = new AbortController();
+    api.get('/fornecedores', { signal: controller.signal })
       .then(res => setFornecedores(res.data))
-      .catch(err => { if (import.meta.env.DEV) console.error("Erro ao carregar fornecedores", err); });
+      .catch(err => { if (import.meta.env.DEV && err.name !== 'CanceledError') console.error("Erro ao carregar fornecedores", err); });
+      
+    return () => controller.abort();
   }, []);
 
   const fetchHistorico = useCallback(async () => {

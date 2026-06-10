@@ -11,7 +11,6 @@ import { LoginFormCredentials, type LoginFormValues } from '../components/forms/
 import { LoginFormQR } from '../components/forms/FormLogin/LoginFormQR';
 import { Skeleton } from '../components/ui/Skeleton';
 import { toast } from 'sonner';
-import type { User } from '../types';
 
 export function LoginScreen() {
   const { theme, toggleTheme } = useTheme();
@@ -57,7 +56,7 @@ export function LoginScreen() {
     }
     
     await loginWithDevice((token, user) => {
-      login({ token, user: user as User });
+      login({ token, user });
     }, typeof emailFromForm === 'string' ? emailFromForm : undefined); 
   };
 
@@ -104,7 +103,7 @@ export function LoginScreen() {
       {/* --- LADO ESQUERDO: IMAGEM FROTA (LIMPA E CINEMATOGRÁFICA) --- */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-slate-950 overflow-hidden">
         <img
-          src="https://plus.unsplash.com/premium_photo-1661935334659-a4f95e515c3b?q=80&w=861&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+          src="/login-bg.jpg"
           alt="Caminhão pesado em operação"
           className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-30 grayscale"
         />

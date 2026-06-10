@@ -11,7 +11,7 @@ import { useFornecedores } from '../../../hooks/useFornecedores';
 import type { ManutencaoFormValues } from './schema';
 
 export function Step1DadosGerais() {
-  const { register, watch, setValue, control, formState: { errors, isSubmitting } } = useFormContext<ManutencaoFormValues>();
+  const { register, setValue, control, formState: { errors, isSubmitting } } = useFormContext<ManutencaoFormValues>();
 
   const { data: veiculos = [], isLoading: loadV } = useVeiculos();
   const { fornecedores = [], isLoading: loadF } = useFornecedores();

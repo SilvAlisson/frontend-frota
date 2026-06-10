@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Menu, X, LogOut, Sun, Moon
@@ -211,7 +211,7 @@ export function AdminLayout() {
   }, [location.pathname]);
 
   // ✨ BIG BROTHER ALERTS (Polling invisível de 15s para Admins)
-  const [lastSeenLogId, setLastSeenLogId] = useState<string | null>(null);
+  const lastSeenLogId = useRef<string | null>(null);
   
   const { data: latestLogs } = useQuery<SystemLog[]>({
     queryKey: ['system-logs-alerts'],
@@ -227,13 +227,13 @@ export function AdminLayout() {
     if (latestLogs && latestLogs.length > 0) {
       const latestLog = latestLogs[0];
       
-      if (!lastSeenLogId) {
-        setLastSeenLogId(latestLog.id);
+      if (!lastSeenLogId.current) {
+        lastSeenLogId.current = latestLog.id;
         return;
       }
 
-      if (latestLog.id !== lastSeenLogId) {
-        const newLogs = latestLogs.slice(0, latestLogs.findIndex(l => l.id === lastSeenLogId));
+      if (latestLog.id !== lastSeenLogId.current) {
+        const newLogs = latestLogs.slice(0, latestLogs.findIndex(l => l.id === lastSeenLogId.current));
         const criticalLogs = newLogs.filter(l => ['CRITICAL', 'FRAUD_ATTEMPT'].includes(l.nivel));
         
         if (criticalLogs.length > 0) {
@@ -245,10 +245,10 @@ export function AdminLayout() {
              }
           });
         }
-        setLastSeenLogId(latestLog.id);
+        lastSeenLogId.current = latestLog.id;
       }
     }
-  }, [latestLogs, lastSeenLogId]);
+  }, [latestLogs]);
 
   const handleLogout = async () => {
     setIsLogoutModalOpen(false);

@@ -1,22 +1,19 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
 import type { Veiculo } from '../types';
-import { toast } from 'sonner';
 import { Search, Truck } from 'lucide-react';
 
 // --- HOOKS ATÔMICOS ---
-import { useVeiculos } from '../hooks/useVeiculos';
+import { useVeiculos, useDeleteVeiculo } from '../hooks/useVeiculos';
 
 // --- DESIGN SYSTEM KLIN ---
 import { PageHeader } from './ui/PageHeader';
 import { Input } from './ui/Input';
-import { DataTable } from './ui/DataTable'; // 🔥 Removido o ColumnDef não utilizado
+import { DataTable } from './ui/DataTable';
 import { Switch } from './ui/Switch';
 import { Badge } from './ui/Badge';
 import { DropdownAcoes } from './ui/DropdownAcoes';
 import { Modal } from './ui/Modal';
-// 🔥 Removido o TableStyles que não era mais utilizado
 import { Skeleton } from './ui/Skeleton';
 import { SkeletonTable } from './skeletons/SkeletonTable';
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -53,16 +50,13 @@ export function GestaoVeiculos() {
     : veiculosFiltrados;
 
   // --- ACTIONS ---
+  const { mutateAsync: deleteVeiculo } = useDeleteVeiculo();
+
   const handleExecuteDelete = async () => {
     if (!veiculoParaExcluir) return;
 
     try {
-      await toast.promise(api.delete(`/veiculos/${veiculoParaExcluir}`), {
-        loading: 'A remover veículo da frota...',
-        success: 'Veículo removido com sucesso!',
-        error: 'Erro: Este veículo tem histórico associado e não pode ser apagado.'
-      });
-      refetch();
+      await deleteVeiculo(veiculoParaExcluir);
     } catch (error) {
       if (import.meta.env.DEV) console.error('[DELETE_VEICULO_ERROR]', error);
     } finally {

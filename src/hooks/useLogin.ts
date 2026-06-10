@@ -4,12 +4,15 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
-import type { UserRole } from '../types';
+import type { UserRole, User, StatusOperador } from '../types';
 
 export function useLogin() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { login, logout, isAuthenticated, user, loading: authLoading } = useAuth();
+  
+  const getErrorMessage = (err: unknown) => 
+    axios.isAxiosError(err) ? err.response?.data?.error : (err instanceof Error ? err.message : 'Erro desconhecido');
   
   const magicToken = searchParams.get('magicToken');
   const [isMagicLoggingIn, setIsMagicLoggingIn] = useState(!!magicToken);
@@ -61,12 +64,12 @@ export function useLogin() {
           context: {
             // 🔒 007 — Não logamos o token em si, apenas o tipo de erro.
             // O token já foi removido da URL no início do processamento.
-            erro: (axios.isAxiosError(err) ? (axios.isAxiosError(err) ? err.response?.data?.error : undefined) : (err instanceof Error ? err.message : 'Erro desconhecido')),
+            erro: getErrorMessage(err),
             _navigator: { userAgent: navigator.userAgent }
           }
         }).catch(() => null);
 
-        toast.error((axios.isAxiosError(err) ? (axios.isAxiosError(err) ? err.response?.data?.error : undefined) : (err instanceof Error ? err.message : 'Erro desconhecido')) || 'Crachá inválido.');
+        toast.error(getErrorMessage(err) || 'Crachá inválido.');
         setIsMagicLoggingIn(false);
         navigate('/login', { replace: true });
       }
@@ -99,8 +102,9 @@ export function useLogin() {
       if (resData) {
         // Fallback robusto contra bloqueio de Third-Party Cookies (Ex: Chrome Incognito, Edge)
         // O Better Auth retorna a sessão completa. Extraímos o token para usar como Bearer Header
-        const sessionObj = (resData as any).session;
-        const tokenStr = sessionObj?.token || (resData as any).token;
+        const payload = resData as typeof resData & { session?: { token?: string }, token?: string };
+        const tokenStr = payload.session?.token || payload.token;
+        
         if (tokenStr) {
           sessionStorage.setItem('authToken', tokenStr);
         }
@@ -113,7 +117,27 @@ export function useLogin() {
         // Better Auth não retorna JWT, o cookie é gerido automaticamente (quando permitido).
         // O `AuthContext` irá reagir ao recarregar a sessão ou se inscrever, mas 
         // para dar o feedback imediato, chamamos `login` simbolicamente com o user.
-        login({ user: resData.user as User });
+        
+        const userPayload = resData.user as typeof resData.user & {
+            role?: string;
+            matricula?: string;
+            cargo?: string;
+            fotoUrl?: string;
+            status?: string;
+        };
+
+        const appUser: User = {
+            id: userPayload.id,
+            nome: userPayload.name,
+            email: userPayload.email,
+            role: (userPayload.role as UserRole) || 'OPERADOR',
+            matricula: userPayload.matricula || null,
+            cargo: userPayload.cargo || null,
+            fotoUrl: userPayload.fotoUrl || userPayload.image || null,
+            status: (userPayload.status as StatusOperador) || 'ATIVO',
+        };
+
+        login({ user: appUser });
         toast.success('Acesso Autorizado. Bem-vindo de volta!');
       }
     } catch (err: unknown) {
@@ -154,14 +178,14 @@ export function useLogin() {
         message: `Falha de Autenticação via QR Manual`,
         context: {
           tentativaToken: qrManualToken,
-          erro: (axios.isAxiosError(err) ? (axios.isAxiosError(err) ? err.response?.data?.error : undefined) : (err instanceof Error ? err.message : 'Erro desconhecido')),
+          erro: getErrorMessage(err),
           _navigator: { userAgent: navigator.userAgent }
         }
       }).catch(() => null);
 
       toast.dismiss(toastId);
-      toast.error((axios.isAxiosError(err) ? (axios.isAxiosError(err) ? err.response?.data?.error : undefined) : (err instanceof Error ? err.message : 'Erro desconhecido')) || 'Token inválido ou expirado.');
-      throw new Error((axios.isAxiosError(err) ? (axios.isAxiosError(err) ? err.response?.data?.error : undefined) : (err instanceof Error ? err.message : 'Erro desconhecido')) || 'Token inválido ou expirado.');
+      toast.error(getErrorMessage(err) || 'Token inválido ou expirado.');
+      throw new Error(getErrorMessage(err) || 'Token inválido ou expirado.');
     }
   };
 

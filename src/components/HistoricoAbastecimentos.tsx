@@ -76,6 +76,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     fornecedores, 
     estatisticas, 
     loading, 
+    error,
     refetch, 
     handleDelete 
   } = useHistoricoAbastecimentos(filtros);

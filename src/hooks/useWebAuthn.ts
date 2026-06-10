@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { signIn, passkey } from '../lib/auth-client';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
+import type { User, UserRole } from '../types';
 
 export interface PasskeyDevice {
     id: string;
@@ -100,7 +101,7 @@ export function useWebAuthn() {
 
     // ─── Login com biometria ────────────────────────────────────────────────
     const loginWithDevice = async (
-        onSuccess: (token: string, user: { nome: string; [key: string]: unknown }) => void,
+        onSuccess: (token: string, user: User) => void,
         emailFromForm?: string // 🔥 Adicionamos o e-mail como parâmetro
     ) => {
         setIsAuthenticating(true);
@@ -111,7 +112,11 @@ export function useWebAuthn() {
                 emailToUse = localStorage.getItem('klin_passkey_email') || undefined;
             }
 
-            const passkeyOptions = emailToUse ? { email: emailToUse } : undefined;
+            const passkeyOptions = emailToUse ? { 
+                fetchOptions: { 
+                    body: { email: emailToUse } 
+                } 
+            } : undefined;
             
             // O Better Auth agora enviará o ID exato da sua biometria e o sensor ligará 100% das vezes
             const { data, error } = await signIn.passkey(passkeyOptions);
@@ -128,7 +133,28 @@ export function useWebAuthn() {
                     localStorage.setItem('klin_passkey_email', data.user.email);
                 }
                 toast.success(`Bem-vindo(a) de volta, ${data.user.name}! 👋`);
-                onSuccess('', data.user as any);
+                
+                // Mapeia o usuário do better-auth para o formato esperado pelo sistema (User)
+                const userPayload = data.user as typeof data.user & {
+                    role?: string;
+                    matricula?: string;
+                    cargo?: string;
+                    fotoUrl?: string;
+                    status?: string;
+                };
+
+                const appUser: User = {
+                    id: userPayload.id,
+                    nome: userPayload.name,
+                    email: userPayload.email,
+                    role: (userPayload.role as UserRole) || 'OPERADOR',
+                    matricula: userPayload.matricula || null,
+                    cargo: userPayload.cargo || null,
+                    fotoUrl: userPayload.fotoUrl || userPayload.image || null,
+                    status: (userPayload.status as import('../types').StatusOperador) || 'ATIVO',
+                };
+
+                onSuccess('', appUser);
                 return true;
             }
 

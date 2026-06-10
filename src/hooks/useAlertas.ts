@@ -12,7 +12,8 @@ export function useAlertas() {
     queryFn: async () => {
       const { data } = await api.get<Alerta[]>('/relatorios/alertas');
       return data;
-    }
+    },
+    staleTime: 1000 * 60 * 1
   });
 
   // Mutação para resolver ociosidade (veículo ou operador)

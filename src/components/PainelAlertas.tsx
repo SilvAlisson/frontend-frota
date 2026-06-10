@@ -235,7 +235,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
         <AnimatePresence>
           {alertas.map((alerta, index) => (
             <CardAlerta 
-              key={`${alerta.tipo}-${index}`} 
+              key={`${alerta.tipo}-${alerta.veiculoId || alerta.usuarioId || alerta.logId || index}`} 
               alerta={alerta} 
               onClick={() => handleAlertaClick(alerta)} 
               onDismiss={() => {

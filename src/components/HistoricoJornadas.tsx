@@ -47,6 +47,7 @@ export function HistoricoJornadas({ userRole = 'OPERADOR', isReadOnly = false }:
   const {
     historico,
     loading,
+    error,
     refetch,
     executeDelete,
     kmTotalGeral

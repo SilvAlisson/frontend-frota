@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
@@ -30,19 +30,7 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
   const [selectedMes, setSelectedMes] = useState<string | null>(null);
   const [selectedFornecedor, setSelectedFornecedor] = useState<string | null>(null);
   
-  useEffect(() => {
-    if (isOpen && metric) {
-      setLevel(1);
-      setSelectedVeiculo(null);
-      setSelectedVeiculoId(null);
-      setSelectedCategoria(null);
-      setSelectedMes(null);
-      setSelectedFornecedor(null);
-      loadMacroData();
-    }
-  }, [isOpen, metric]);
-
-  const loadMacroData = async () => {
+  const loadMacroData = useCallback(async () => {
     if (!metric) return;
     setLoading(true);
     try {
@@ -55,7 +43,19 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
     } finally {
       setLoading(false);
     }
-  };
+  }, [metric]);
+
+  useEffect(() => {
+    if (isOpen && metric) {
+      setLevel(1);
+      setSelectedVeiculo(null);
+      setSelectedVeiculoId(null);
+      setSelectedCategoria(null);
+      setSelectedMes(null);
+      setSelectedFornecedor(null);
+      loadMacroData();
+    }
+  }, [isOpen, metric, loadMacroData]);
 
   const handleSliceClickNivel1 = async (entry: DrilldownDataPoint) => {
     if (!metric) return;
