@@ -1,4 +1,5 @@
-import { Truck, Store, FilterX, FileDown } from 'lucide-react';
+import { Truck, Store, FilterX, FileDown, AlertTriangle } from 'lucide-react';
+import { Switch } from '../ui/Switch';
 import { Select } from '../ui/Select';
 import { DatePicker } from '../ui/DatePicker';
 import { Button } from '../ui/Button';
@@ -24,6 +25,7 @@ interface FiltrosAbastecimentoProps {
   onLimparFiltros: () => void;
   onExportar: () => void;
   podeExportar: boolean;
+  userRole?: string;
 }
 
 export function FiltrosAbastecimento({
@@ -34,8 +36,11 @@ export function FiltrosAbastecimento({
   hasFiltrosAtivos,
   onLimparFiltros,
   onExportar,
-  podeExportar
+  podeExportar,
+  userRole
 }: FiltrosAbastecimentoProps) {
+  const isAdminOrCoordenador = userRole === 'ADMIN' || userRole === 'COORDENADOR';
+
   return (
     <div className="flex flex-col gap-3 w-full max-w-full overflow-hidden bg-surface p-2 sm:p-3 rounded-2xl border border-border/60 shadow-sm">
       <div className="flex flex-col sm:flex-row gap-3 items-end">
@@ -75,7 +80,7 @@ export function FiltrosAbastecimento({
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3 items-end sm:justify-between xl:justify-start">
-        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto items-end">
           <div className="w-full sm:w-40">
             <DatePicker disableFuture
               label="Data Inicial"
@@ -92,6 +97,17 @@ export function FiltrosAbastecimento({
               onChange={date => setFiltros(prev => ({ ...prev, dataFim: date ? date.toISOString().split('T')[0] : '' }))}
             />
           </div>
+
+          {isAdminOrCoordenador && (
+            <div className="flex items-center gap-2 h-11 bg-surface-hover/50 px-3 rounded-xl border border-warning/30 hover:border-warning/50 transition-colors cursor-pointer w-full sm:w-auto" onClick={() => setFiltros(prev => ({ ...prev, status: prev.status === 'PENDENTE_AVALIACAO' ? '' : 'PENDENTE_AVALIACAO' }))}>
+              <Switch 
+                checked={filtros.status === 'PENDENTE_AVALIACAO'} 
+                onCheckedChange={(checked) => setFiltros(prev => ({ ...prev, status: checked ? 'PENDENTE_AVALIACAO' : '' }))}
+              />
+              <AlertTriangle className={`w-4 h-4 ${filtros.status === 'PENDENTE_AVALIACAO' ? 'text-warning' : 'text-text-muted'}`} />
+              <span className={`text-xs font-bold ${filtros.status === 'PENDENTE_AVALIACAO' ? 'text-warning' : 'text-text-muted'} select-none whitespace-nowrap`}>Requer Aprovação</span>
+            </div>
+          )}
         </div>
         
         <div className="flex gap-2 w-full sm:w-auto mt-2 sm:mt-0 xl:ml-auto">

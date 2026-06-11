@@ -32,6 +32,7 @@ import { PullToRefresh } from './ui/PullToRefresh';
 // ✨ DOMÍNIO E MODAL GLOBAL
 import { useUsuarios } from '../hooks/useUsuarios';
 import { useModalStore } from '../hooks/useModalStore';
+import { useDebounce } from '../hooks/useDebounce';
 
 interface GestaoUsuariosProps {
   adminUserId: string;
@@ -46,12 +47,16 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   const { usuarios, isLoading, refetch, excluirUsuario, isExcluindo } = useUsuarios();
   const { openModal, closeModal } = useModalStore();
 
+  const buscaDebounced = useDebounce(busca, 300);
+
   // Filtragem Local
-  const usuariosFiltrados = usuarios.filter(u =>
-    u.nome.toLowerCase().includes(busca.toLowerCase()) ||
-    u.email.toLowerCase().includes(busca.toLowerCase()) ||
-    (u.matricula && u.matricula.includes(busca))
-  );
+  const usuariosFiltrados = usuarios.filter(u => {
+    if (!buscaDebounced) return true;
+    const termo = buscaDebounced.toLowerCase();
+    return u.nome.toLowerCase().includes(termo) ||
+      u.email.toLowerCase().includes(termo) ||
+      (u.matricula && u.matricula.includes(buscaDebounced));
+  });
 
   // --- AÇÕES COM MODAL GLOBAL ---
   const handleDeleteRequest = (user: User) => {

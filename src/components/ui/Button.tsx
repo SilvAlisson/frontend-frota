@@ -22,7 +22,7 @@ const buttonVariants = cva(
         success: 
           "bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 hover:shadow-md",
         glass: 
-          "bg-surface/50 backdrop-blur-md border border-border/50 text-text-main hover:bg-surface/80 shadow-sm",
+          "bg-surface border border-border text-text-main hover:bg-surface-hover shadow-sm",
       },
       size: {
         default: "h-11 min-h-[44px] px-5",

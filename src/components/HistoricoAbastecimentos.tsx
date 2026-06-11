@@ -48,7 +48,8 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     dataFim: '',
     veiculoId: filtroInicial?.veiculoId || '',
     fornecedorId: '',
-    tipoProduto: searchParams.get('tipoProduto') || ''
+    tipoProduto: searchParams.get('tipoProduto') || '',
+    status: ''
   });
 
   const hasFiltrosAtivos = Boolean(
@@ -78,7 +79,8 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
     loading, 
     error,
     refetch, 
-    handleDelete 
+    handleDelete,
+    aprovarAbastecimento
   } = useHistoricoAbastecimentos(filtros);
 
   // --- ESTADOS DA UI ---
@@ -108,7 +110,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
   const handleCarregarMais = () => setVisibleCount(prev => prev + ITENS_POR_PAGINA);
 
   const handleLimparFiltros = () => {
-    setFiltros({ dataInicio: '', dataFim: '', veiculoId: '', fornecedorId: '', tipoProduto: '' });
+    setFiltros({ dataInicio: '', dataFim: '', veiculoId: '', fornecedorId: '', tipoProduto: '', status: '' });
   };
 
   const handleExportar = () => {
@@ -167,6 +169,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
           onLimparFiltros={handleLimparFiltros}
           onExportar={handleExportar}
           podeExportar={historicoFiltrado.length > 0}
+          userRole={userRole}
         />
 
         <KpisAbastecimento estatisticas={estatisticas} />
@@ -188,6 +191,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
             onExcluir={setDeletingId}
             onVisualizarDoc={(url, titulo) => setDocParaVisualizar({ url, titulo })}
             onCarregarMais={handleCarregarMais}
+            onAprovar={aprovarAbastecimento}
             itensPorPagina={ITENS_POR_PAGINA}
           />
         )}

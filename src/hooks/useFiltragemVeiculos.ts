@@ -1,17 +1,19 @@
-﻿import { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import type { Veiculo } from '../types';
+import { useDebounce } from './useDebounce';
 
 export function useFiltragemVeiculos(veiculos: Veiculo[] = []) {
   const [busca, setBusca] = useState('');
+  const buscaDebounced = useDebounce(busca, 300);
 
   const veiculosFiltrados = useMemo(() => {
-    if (!busca) return veiculos;
-    const termo = busca.toLowerCase();
+    if (!buscaDebounced) return veiculos;
+    const termo = buscaDebounced.toLowerCase();
     return veiculos.filter(v =>
       v.placa.toLowerCase().includes(termo) ||
       v.modelo.toLowerCase().includes(termo)
     );
-  }, [veiculos, busca]);
+  }, [veiculos, buscaDebounced]);
 
   return {
     busca,

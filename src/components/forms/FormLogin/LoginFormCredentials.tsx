@@ -51,7 +51,7 @@ export function LoginFormCredentials({
         error={errors.email?.message}
         icon={<Mail className="w-5 h-5 text-text-muted" />}
         disabled={isBusy}
-        className="font-bold bg-surface/40 backdrop-blur-sm border-border/40 focus:bg-surface/60 transition-all rounded-xl"
+        className="font-bold bg-surface border-border focus:bg-surface-hover transition-all rounded-xl"
       />
 
       <div className="space-y-2">
@@ -65,7 +65,7 @@ export function LoginFormCredentials({
           error={errors.password?.message}
           icon={<Lock className="w-5 h-5 text-text-muted" />}
           disabled={isBusy}
-          className="font-bold bg-surface/40 backdrop-blur-sm border-border/40 focus:bg-surface/60 transition-all rounded-xl"
+          className="font-bold bg-surface border-border focus:bg-surface-hover transition-all rounded-xl"
           containerClassName="!mb-0"
           onFocus={() => {
             // Performance: Smart Prefetching
@@ -85,14 +85,14 @@ export function LoginFormCredentials({
         isLoading={isSubmittingAuth}
         disabled={isBusy}
       >
-        {isSubmittingAuth ? 'A Autenticar...' : (
-          <>Validar Acesso <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
+        {isSubmittingAuth ? 'Autenticando...' : (
+          <>Acessar <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" /></>
         )}
       </Button>
 
       <div className="flex flex-col items-center pt-4 mt-6 border-t border-border/40">
         <span className="text-[10px] uppercase font-black text-text-muted/80 tracking-widest mb-4">
-          OU ACESSE RAPIDAMENTE COM
+          OU ACESSE COM
         </span>
         
         <button
@@ -122,7 +122,7 @@ export function LoginFormCredentials({
         <span className={`text-[11px] font-black uppercase tracking-widest mt-3 transition-colors ${
           isAuthenticatingBiometry ? 'text-primary animate-pulse' : 'text-text-muted'
         }`}>
-          {isAuthenticatingBiometry ? 'Aguardando Leitura...' : 'Touch ID / Face ID'}
+          {isAuthenticatingBiometry ? 'Aguardando biometria...' : 'Touch ID / Face ID'}
         </span>
       </div>
     </form>

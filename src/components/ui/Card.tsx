@@ -7,10 +7,10 @@ const cardVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-surface border-border shadow-card", // Sombra suave padrão
+        default: "bg-surface border-border shadow-card",
         outline: "bg-transparent border-border shadow-none",
-        glass: "glass-premium",
-        solid: "bg-surface-hover/50 dark:bg-gray-900 border-transparent", // Para fundos mais densos
+        glass: "bg-surface border-border shadow-float",
+        solid: "bg-surface-hover dark:bg-gray-900 border-transparent", 
       },
       padding: {
         none: "p-0",

@@ -9,6 +9,7 @@ interface FiltrosAbastecimento {
   veiculoId: string;
   fornecedorId: string;
   tipoProduto: string;
+  status?: string;
 }
 
 export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
@@ -35,6 +36,7 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
       if (filtros.dataFim) params.dataFim = filtros.dataFim;
       if (filtros.veiculoId) params.veiculoId = filtros.veiculoId;
       if (filtros.tipoProduto) params.tipoProduto = filtros.tipoProduto;
+      if (filtros.status) params.status = filtros.status;
 
       const response = await api.get('/abastecimentos/recentes', { params });
       setHistorico(response.data);
@@ -45,7 +47,7 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
     } finally {
       setLoading(false);
     }
-  }, [filtros.dataInicio, filtros.dataFim, filtros.veiculoId, filtros.tipoProduto]);
+  }, [filtros.dataInicio, filtros.dataFim, filtros.veiculoId, filtros.tipoProduto, filtros.status]);
 
   useEffect(() => {
     fetchHistorico();
@@ -58,6 +60,17 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
       toast.success('Abastecimento removido.');
     } catch (err: unknown) {
       toast.error('Erro ao remover abastecimento.');
+    }
+  };
+
+  const aprovarAbastecimento = async (id: string) => {
+    try {
+      await api.put(`/abastecimentos/${id}`, { status: 'APROVADO' });
+      setHistorico(prev => prev.filter(ab => ab.id !== id));
+      toast.success('Abastecimento aprovado e KM registrado com sucesso!');
+    } catch (err: unknown) {
+      const e = err instanceof Error ? err : new Error('Falha ao aprovar.');
+      toast.error(e.message);
     }
   };
 
@@ -105,6 +118,7 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
     loading,
     error,
     refetch: fetchHistorico,
-    handleDelete
+    handleDelete,
+    aprovarAbastecimento
   };
 }

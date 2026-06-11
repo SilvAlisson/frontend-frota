@@ -261,7 +261,7 @@ export function AdminLayout() {
       
       {/* 💻 VISÃO DESKTOP: Sidebar Estática (Só aparece em xl+) */}
       {!isShareMode && (
-        <aside className="hidden xl:flex w-[280px] flex-col glass-premium border-r-0 border-r-border/30 h-full relative z-10 shrink-0">
+        <aside className="hidden xl:flex w-[280px] flex-col bg-surface border-r border-border h-full relative z-10 shrink-0">
            <SidebarContent 
               user={user}
               onLogout={() => setIsLogoutModalOpen(true)}
@@ -276,7 +276,7 @@ export function AdminLayout() {
         <Drawer.Root direction="left" open={isShareMode ? false : isSidebarOpen} onOpenChange={setIsSidebarOpen}>
           <Drawer.Portal>
             <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 xl:hidden" />
-            <Drawer.Content className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col glass-premium border-r-0 border-r-border/30 outline-none xl:hidden">
+            <Drawer.Content className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-surface border-r border-border outline-none xl:hidden">
               
               <div className="sr-only">
                 <Drawer.Title>Menu de Navegação</Drawer.Title>
@@ -302,7 +302,7 @@ export function AdminLayout() {
             
             {/* Header Mobile (Aparece só em < xl) */}
             {!isShareMode && (
-              <header className="xl:hidden flex items-center justify-between px-4 h-[72px] glass-premium sticky top-0 z-30 border-b-0 border-border/30 shadow-sm shrink-0">
+              <header className="xl:hidden flex items-center justify-between px-4 h-[72px] bg-surface sticky top-0 z-30 border-b border-border shadow-sm shrink-0">
                   <div className="flex items-center gap-3">
                       <Button variant="ghost" size="icon"
                           onClick={() => setIsSidebarOpen(true)}

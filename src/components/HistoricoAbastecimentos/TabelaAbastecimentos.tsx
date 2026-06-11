@@ -1,4 +1,4 @@
-import { Calendar, Gauge, Receipt, Droplets, ChevronDown } from 'lucide-react';
+import { Calendar, Gauge, Receipt, Droplets, ChevronDown, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { DateHelper } from '../../lib/dateHelper';
 import { formatarDinheiro } from '../../lib/formatters';
 import type { Abastecimento } from '../../types';
@@ -20,6 +20,7 @@ interface TabelaAbastecimentosProps {
   onExcluir: (id: string) => void;
   onVisualizarDoc: (url: string, titulo: string) => void;
   onCarregarMais: () => void;
+  onAprovar: (id: string) => Promise<void>;
   itensPorPagina: number;
 }
 
@@ -33,6 +34,7 @@ export function TabelaAbastecimentos({
   onExcluir,
   onVisualizarDoc,
   onCarregarMais,
+  onAprovar,
   itensPorPagina
 }: TabelaAbastecimentosProps) {
 
@@ -97,6 +99,11 @@ export function TabelaAbastecimentos({
                         Obs: {ab.observacoes}
                       </div>
                     )}
+                    {ab.status === 'PENDENTE_AVALIACAO' && (
+                      <div className="mt-2 flex items-center gap-1.5 text-[10px] text-warning font-bold bg-warning/10 px-2 py-1 rounded-md w-fit border border-warning/30">
+                        <AlertTriangle className="w-3.5 h-3.5" /> AGUARDANDO APROVAÇÃO
+                      </div>
+                    )}
                   </div>
                 )
               },
@@ -145,10 +152,23 @@ export function TabelaAbastecimentos({
                 headerClassName: 'text-right pr-8',
                 className: 'text-right pr-8 py-5',
                 cell: (ab: Abastecimento) => (
-                  <DropdownAcoes 
-                    onEditar={canEdit ? () => onEditar(ab.id) : undefined}
-                    onExcluir={userRole === 'ADMIN' ? () => onExcluir(ab.id) : undefined}
-                  />
+                  <div className="flex items-center justify-end gap-2">
+                    {ab.status === 'PENDENTE_AVALIACAO' && userRole === 'ADMIN' && (
+                      <Button 
+                        variant="secondary" 
+                        size="sm" 
+                        onClick={() => onAprovar(ab.id)}
+                        className="h-8 bg-success/10 text-success border-success/20 hover:bg-success/20 whitespace-nowrap"
+                        icon={<CheckCircle2 className="w-4 h-4" />}
+                      >
+                        Aprovar
+                      </Button>
+                    )}
+                    <DropdownAcoes 
+                      onEditar={canEdit ? () => onEditar(ab.id) : undefined}
+                      onExcluir={userRole === 'ADMIN' ? () => onExcluir(ab.id) : undefined}
+                    />
+                  </div>
                 )
               }
             ]}
@@ -175,6 +195,11 @@ export function TabelaAbastecimentos({
                           Obs: {ab.observacoes}
                         </span>
                       )}
+                      {ab.status === 'PENDENTE_AVALIACAO' && (
+                        <span className="mt-2 text-[9px] text-warning font-black uppercase tracking-widest bg-warning/10 px-2 py-0.5 rounded border border-warning/30 w-fit">
+                          Requer Aprovação
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -196,9 +221,20 @@ export function TabelaAbastecimentos({
                     onClick={() => onVisualizarDoc(ab.fotoNotaFiscalUrl || '', `Abastecimento - ${ab.veiculo?.placa || 'Veículo'}`)}
                     aria-label={`Visualizar nota fiscal do abastecimento de ${ab.veiculo?.placa || 'veículo'}`}
                     icon={<Receipt className="w-4 h-4" />}
-                    className="w-full bg-info/10 text-info border border-info/20 hover:bg-info/20"
+                    className="w-full bg-info/10 text-info border border-info/20 hover:bg-info/20 mt-1"
                   >
                     Visualizar Nota de Serviço
+                  </Button>
+                )}
+
+                {ab.status === 'PENDENTE_AVALIACAO' && userRole === 'ADMIN' && (
+                  <Button
+                    variant="secondary"
+                    onClick={() => onAprovar(ab.id)}
+                    icon={<CheckCircle2 className="w-4 h-4" />}
+                    className="w-full bg-success/10 text-success border-success/20 hover:bg-success/20 mt-1"
+                  >
+                    Aprovar Abastecimento
                   </Button>
                 )}
               </MobileCardWithActions>

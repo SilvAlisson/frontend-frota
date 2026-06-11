@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useEffect, useState } from 'react';
+import { createContext, useContext, ReactNode, useEffect, useState, useCallback, useMemo } from 'react';
 import { useSession, signOut as betterSignOut } from '../lib/auth-client';
 import type { User } from '../types';
 
@@ -40,11 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Só deixa de carregar quando o BetterAuth resolver o estado da sessão (cookies)
-    if (!isSessionLoading) {
+    // Libera o carregamento se a sessão resolver OU se já tivermos um usuário manual em memória
+    if (!isSessionLoading || manualUser) {
       setLoading(false);
     }
-  }, [isSessionLoading]);
+  }, [isSessionLoading, manualUser]);
 
   // Derived state: Usa o user do BetterAuth (Cookie) prioritariamente, ou o manualUser (QR Code Bearer)
   // Mapeia .image para .fotoUrl e .name para .nome para manter compatibilidade com o frontend inteiro
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   } as unknown as User : undefined;
   const currentUser = betterUser || manualUser;
 
-  const login = (data: { token?: string; user: User }) => {
+  const login = useCallback((data: { token?: string; user: User }) => {
     if (data.token) {
         sessionStorage.setItem('authToken', data.token);
     }
@@ -71,9 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     sessionStorage.setItem('authUser', JSON.stringify(userData));
     setManualUser(userData);
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     sessionStorage.removeItem('authToken');
     sessionStorage.removeItem('authUser');
     setManualUser(null);
@@ -82,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch(e) {
         console.error(e);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const handleUnauthorized = () => {
@@ -90,16 +90,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener('auth:unauthorized', handleUnauthorized);
     return () => window.removeEventListener('auth:unauthorized', handleUnauthorized);
-  }, []);
+  }, [logout]);
 
-  return (
-    <AuthContext.Provider value={{
+  const contextValue = useMemo(() => ({
       user: currentUser || null,
       isAuthenticated: !!currentUser,
       login,
       logout,
       loading
-    }}>
+  }), [currentUser, login, logout, loading]);
+
+  return (
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
