@@ -437,6 +437,39 @@
   }
 }
 
+/* --- SCROLLBAR FORÇADA GLOBALMENTE (Fora de layers para máxima prioridade) --- */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) var(--background);
+}
+
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--background);
+}
+
+*::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 9999px;
+  border: 2px solid var(--background);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--color-klin-500);
+}
+
 @theme {
   --animate-scan: scan 1.5s ease-in-out infinite alternate;
   @keyframes scan {

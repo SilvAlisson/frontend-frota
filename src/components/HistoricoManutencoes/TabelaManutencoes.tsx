@@ -80,7 +80,7 @@ export function TabelaManutencoes({
             desktopHeader={
               <>
                 <th className={`${TableStyles.th} justify-start text-left pl-8 py-5`}>Data da OS</th>
-                <th className={`${TableStyles.th} justify-start text-left`}>Informação Técnica</th>
+                <th className={`${TableStyles.th} justify-start text-left`}>Identificação</th>
                 <th className={`${TableStyles.th} justify-center text-center whitespace-nowrap`}>Custo Financeiro</th>
                 <th className={`${TableStyles.th} justify-center text-center whitespace-nowrap`}>Ticket Manutenção</th>
                 <th className={`${TableStyles.th} justify-end text-right pr-8`}>Gestão</th>
