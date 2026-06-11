@@ -39,6 +39,16 @@ export function useAuditoria() {
     }
   });
 
+  const resolverTodosMutation = useMutation({
+    mutationFn: async () => {
+      await api.put(`/logs/resolver-todos`);
+    },
+    onSuccess: () => {
+      toast.success('Todos os registros pendentes foram arquivados.');
+      queryClient.invalidateQueries({ queryKey: ['system-logs'] });
+    }
+  });
+
   return {
     logs: logsQuery.data || [],
     isLoading: logsQuery.isLoading,
@@ -46,6 +56,8 @@ export function useAuditoria() {
     refetch: logsQuery.refetch,
     arquivarLog: resolverLogMutation.mutateAsync,
     isArquivando: resolverLogMutation.isPending,
-    arquivandoId: resolverLogMutation.variables // para sabermos qual id está em loading
+    arquivandoId: resolverLogMutation.variables,
+    arquivarTodos: resolverTodosMutation.mutateAsync,
+    isArquivandoTodos: resolverTodosMutation.isPending
   };
 }

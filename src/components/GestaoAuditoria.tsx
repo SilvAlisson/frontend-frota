@@ -6,6 +6,7 @@ import {
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { EmptyState } from './ui/EmptyState';
+import { Button } from './ui/Button';
 
 // Hook de Domínio
 import { useAuditoria } from '../hooks/useAuditoria';
@@ -22,7 +23,9 @@ export function GestaoAuditoria() {
     logs,
     isLoading,
     arquivarLog,
-    arquivandoId
+    arquivandoId,
+    arquivarTodos,
+    isArquivandoTodos
   } = useAuditoria();
 
   const logsFiltrados = useMemo(() => {
@@ -111,6 +114,17 @@ export function GestaoAuditoria() {
               containerClassName="!mb-0 w-full sm:w-40"
               className="border-none bg-surface-hover/50 text-xs font-bold"
             />
+            {totalCriticosPendentes > 0 && (
+              <Button 
+                variant="outline"
+                className="text-xs h-[38px] border-border/60 hover:bg-success/10 hover:text-success transition-colors font-bold whitespace-nowrap px-3"
+                onClick={() => arquivarTodos()}
+                disabled={isArquivandoTodos}
+                icon={isArquivandoTodos ? <Activity className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+              >
+                Limpar Auditoria
+              </Button>
+            )}
          </div>
       </div>
 
