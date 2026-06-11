@@ -35,6 +35,8 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
     isResolvendoOciosidade,
     resolverLog,
     isResolvendoLog,
+    resolverTodosLogs,
+    isResolvendoTodosLogs,
     dismissLocal
   } = useAlertas();
 
@@ -229,6 +231,25 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
           {alertas.length} Pendências
         </span>
       </div>
+
+      {/* Ação em Massa para Logs */}
+      {alertas.filter(a => a.tipo === 'ERRO_SISTEMA' || a.tipo === 'TENTATIVA_FRAUDE').length > 1 && (
+        <div className="flex justify-end mt-2 mb-4">
+          <Button 
+            variant="danger" 
+            size="sm" 
+            onClick={async () => {
+              haptics.heavy();
+              await resolverTodosLogs();
+            }}
+            isLoading={isResolvendoTodosLogs}
+            disabled={isResolvendoTodosLogs}
+            className="text-[10px] uppercase tracking-widest"
+          >
+            Marcar Todos os Logs como Resolvidos
+          </Button>
+        </div>
+      )}
 
       {/* Grid de Cartões */}
       <div className="grid gap-4 auto-rows-max">

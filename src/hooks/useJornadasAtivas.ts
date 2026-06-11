@@ -13,7 +13,7 @@ export function useJornadasAtivas() {
     queryFn: async () => {
       const isGestor = !!user && (user.role === 'ADMIN' || user.role === 'ENCARREGADO');
       const endpoint = isGestor
-        ? '/jornadas/abertas'
+        ? '/jornadas/ativas'
         : '/jornadas/minhas-abertas-operador';
         
       const { data } = await api.get<Jornada[]>(endpoint);

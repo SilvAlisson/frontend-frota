@@ -39,9 +39,11 @@ export function useLogin() {
         if (isAuthenticated && user) {
           // Se o Admin clicou no link mágico de um operador para "testar", 
           // bloqueamos para não sobrescrever a sessão dele e causar erros 403 na aba original.
-          toast.error(`Você já está logado como ${user.nome}. Saia da conta atual antes de acessar outro crachá.`);
           setIsMagicLoggingIn(false);
-          navigate('/', { replace: true });
+          handleRedirect(user.role);
+          setTimeout(() => {
+            toast.error(`Acesso Bloqueado: Você já está logado como ${user.nome}. Saia da conta atual antes de acessar outro crachá.`);
+          }, 100);
           return;
         }
 

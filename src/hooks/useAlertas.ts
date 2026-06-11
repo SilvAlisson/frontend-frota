@@ -13,7 +13,8 @@ export function useAlertas() {
       const { data } = await api.get<Alerta[]>('/relatorios/alertas');
       return data;
     },
-    staleTime: 1000 * 60 * 1
+    staleTime: 1000 * 60 * 1,
+    refetchInterval: 1000 * 30
   });
 
   // Mutação para resolver ociosidade (veículo ou operador)
@@ -45,6 +46,19 @@ export function useAlertas() {
     }
   });
 
+  const resolverTodosLogMutation = useMutation({
+    mutationFn: async () => {
+      await api.put(`/logs/resolver-todos`);
+    },
+    onSuccess: (data: any) => {
+      toast.success(data?.data?.message || 'Todos os logs foram arquivados com sucesso.');
+      queryClient.invalidateQueries({ queryKey: ['alertas'] });
+    },
+    onError: () => {
+      toast.error('Erro ao arquivar logs em massa.');
+    }
+  });
+
   // Dismiss local (Swipe)
   const dismissLocal = (alertaParaRemover: Alerta) => {
     queryClient.setQueryData<Alerta[]>(['alertas'], (oldData) => {
@@ -62,6 +76,8 @@ export function useAlertas() {
     isResolvendoOciosidade: resolverOciosidadeMutation.isPending,
     resolverLog: resolverLogMutation.mutateAsync,
     isResolvendoLog: resolverLogMutation.isPending,
+    resolverTodosLogs: resolverTodosLogMutation.mutateAsync,
+    isResolvendoTodosLogs: resolverTodosLogMutation.isPending,
     dismissLocal
   };
 }
