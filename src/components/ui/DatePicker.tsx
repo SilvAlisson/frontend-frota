@@ -92,11 +92,18 @@ export function DatePicker({
                 head_cell: "text-text-muted rounded-md w-9 font-bold text-[0.8rem] uppercase tracking-wider",
                 row: "flex w-full mt-2",
                 cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-primary/10 first:[&:has([aria-selected])]:rounded-s-md last:[&:has([aria-selected])]:rounded-e-md focus-within:relative focus-within:z-20",
-                day: "h-9 w-9 p-0 font-medium text-text-main hover:bg-surface-hover hover:text-text-main rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-30 disabled:text-text-muted/50 disabled:hover:bg-transparent disabled:pointer-events-none",
+                
+                // ALTERAÇÃO 1: Adicionado aria-disabled para o Tailwind rastrear o bloqueio da v9
+                day: "h-9 w-9 p-0 font-medium text-text-main hover:bg-surface-hover hover:text-text-main rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:opacity-30 disabled:text-text-muted/50 aria-disabled:opacity-30 aria-disabled:text-text-muted/50 aria-disabled:hover:bg-transparent aria-disabled:cursor-not-allowed aria-disabled:pointer-events-none",
+                
                 day_selected: "bg-primary text-white hover:bg-primary hover:text-white focus:bg-primary focus:text-white font-black shadow-md",
                 day_today: "bg-surface-hover/50 text-primary font-bold border border-primary/20",
                 day_outside: "text-text-muted/50 opacity-50 aria-selected:bg-primary/10 aria-selected:text-primary aria-selected:opacity-30",
+                
+                // ALTERAÇÃO 2: Mantemos a original (v8) e injetamos a nova classe "disabled" que a v9 exige nativamente
                 day_disabled: "text-text-muted/50 opacity-30 cursor-not-allowed pointer-events-none",
+                disabled: "text-text-muted/50 opacity-30 cursor-not-allowed pointer-events-none",
+                
                 day_hidden: "invisible",
               }}
             />
