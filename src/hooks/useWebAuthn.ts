@@ -112,14 +112,9 @@ export function useWebAuthn() {
                 emailToUse = localStorage.getItem('klin_passkey_email') || undefined;
             }
 
-            const passkeyOptions = emailToUse ? { 
-                fetchOptions: { 
-                    body: { email: emailToUse } 
-                } 
-            } : undefined;
-            
-            // O Better Auth agora enviará o ID exato da sua biometria e o sensor ligará 100% das vezes
-            const { data, error } = await signIn.passkey(passkeyOptions);
+            // O Better Auth gerencia a chamada WebAuthn nativamente. Passar body no fetchOptions
+            // estava sobrescrevendo o payload da biometria, enviando apenas { email: '...' } para o servidor!
+            const { data, error } = await signIn.passkey();
 
             if (error) {
                 toast.error(error.message || 'Assinatura biométrica inválida.');
