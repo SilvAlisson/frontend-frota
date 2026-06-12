@@ -25,7 +25,7 @@ export function DatePicker({
   error,
   placeholder = "Selecione uma data",
   disabled,
-  disableFuture = false,
+  disableFuture = true,
   containerClassName,
 }: DatePickerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
