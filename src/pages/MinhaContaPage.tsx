@@ -77,7 +77,7 @@ function PasskeyCard({
                 <button
                     onClick={() => setConfirmOpen(true)}
                     disabled={isRevoking}
-                    className="p-2 rounded-xl text-text-muted hover:text-error hover:bg-error/10 transition-all opacity-0 group-hover:opacity-100"
+                    className="p-2 rounded-xl text-text-muted hover:text-error hover:bg-error/10 transition-all"
                     title="Revogar acesso deste dispositivo"
                 >
                     <Trash2 className="w-4 h-4" />
