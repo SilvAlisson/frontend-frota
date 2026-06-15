@@ -394,100 +394,103 @@ export function MinhaContaPage() {
                 </motion.section>
 
                 {/* ── SEÇÃO: Alterar Senha ───────────────────────────────── */}
-                <motion.section
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="bg-surface/50 border border-border/40 rounded-3xl p-6 backdrop-blur-sm"
-                >
-                    <div className="flex items-center gap-3 mb-5">
-                        <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                            <Shield className="w-4 h-4 text-primary" />
-                        </div>
-                        <h2 className="text-base font-black text-text-main uppercase tracking-widest">Alterar Senha</h2>
-                    </div>
-
-                    <form onSubmit={handleSubmit(onAlterarSenha)} className="space-y-4">
-                        {/* Senha Atual */}
-                        <div>
-                            <label className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1.5">
-                                Senha Atual
-                            </label>
-                            <div className="relative">
-                                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-                                <input
-                                    type={showSenhaAtual ? 'text' : 'password'}
-                                    {...register('senhaAtual')}
-                                    className="w-full h-11 pl-10 pr-10 bg-surface border border-border/60 rounded-xl text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all"
-                                    placeholder="••••••••"
-                                    autoComplete="current-password"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowSenhaAtual(v => !v)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
-                                >
-                                    {showSenhaAtual ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                </button>
+                {user.role !== 'OPERADOR' && (
+                    <motion.section
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 }}
+                        className="bg-surface/50 border border-border/40 rounded-3xl p-6 backdrop-blur-sm"
+                    >
+                        <div className="flex items-center gap-3 mb-5">
+                            <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                                <Shield className="w-4 h-4 text-primary" />
                             </div>
-                            {errors.senhaAtual && <p className="text-xs text-error mt-1">{errors.senhaAtual.message}</p>}
+                            <h2 className="text-base font-black text-text-main uppercase tracking-widest">Alterar Senha</h2>
                         </div>
 
-                        {/* Nova Senha */}
-                        <div>
-                            <label className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1.5">
-                                Nova Senha
-                            </label>
-                            <div className="relative">
-                                <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-                                <input
-                                    type={showNovaSenha ? 'text' : 'password'}
-                                    {...register('novaSenha')}
-                                    className="w-full h-11 pl-10 pr-10 bg-surface border border-border/60 rounded-xl text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all"
-                                    placeholder="Mín. 8 caracteres"
-                                    autoComplete="new-password"
-                                />
-                                <button
-                                    type="button"
-                                    onClick={() => setShowNovaSenha(v => !v)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
-                                >
-                                    {showNovaSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                </button>
+                        <form onSubmit={handleSubmit(onAlterarSenha)} className="space-y-4">
+                            {/* ... (todo o conteúdo dos inputs de senha continua igual aqui dentro) ... */}
+                            {/* Senha Atual */}
+                            <div>
+                                <label className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1.5">
+                                    Senha Atual
+                                </label>
+                                <div className="relative">
+                                    <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                                    <input
+                                        type={showSenhaAtual ? 'text' : 'password'}
+                                        {...register('senhaAtual')}
+                                        className="w-full h-11 pl-10 pr-10 bg-surface border border-border/60 rounded-xl text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all"
+                                        placeholder="••••••••"
+                                        autoComplete="current-password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowSenhaAtual(v => !v)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
+                                    >
+                                        {showSenhaAtual ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                                {errors.senhaAtual && <p className="text-xs text-error mt-1">{errors.senhaAtual.message}</p>}
                             </div>
-                            {errors.novaSenha && <p className="text-xs text-error mt-1">{errors.novaSenha.message}</p>}
-                        </div>
 
-                        {/* Confirmar Nova Senha */}
-                        <div>
-                            <label className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1.5">
-                                Confirmar Nova Senha
-                            </label>
-                            <div className="relative">
-                                <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
-                                <input
-                                    type="password"
-                                    {...register('confirmarSenha')}
-                                    className="w-full h-11 pl-10 pr-4 bg-surface border border-border/60 rounded-xl text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all"
-                                    placeholder="Repita a nova senha"
-                                    autoComplete="new-password"
-                                />
+                            {/* Nova Senha */}
+                            <div>
+                                <label className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1.5">
+                                    Nova Senha
+                                </label>
+                                <div className="relative">
+                                    <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                                    <input
+                                        type={showNovaSenha ? 'text' : 'password'}
+                                        {...register('novaSenha')}
+                                        className="w-full h-11 pl-10 pr-10 bg-surface border border-border/60 rounded-xl text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all"
+                                        placeholder="Mín. 8 caracteres"
+                                        autoComplete="new-password"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNovaSenha(v => !v)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
+                                    >
+                                        {showNovaSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                    </button>
+                                </div>
+                                {errors.novaSenha && <p className="text-xs text-error mt-1">{errors.novaSenha.message}</p>}
                             </div>
-                            {errors.confirmarSenha && <p className="text-xs text-error mt-1">{errors.confirmarSenha.message}</p>}
-                        </div>
 
-                        <Button
-                            type="submit"
-                            variant="primary"
-                            isLoading={isAlterandoSenha}
-                            disabled={isAlterandoSenha}
-                            className="w-full h-11 font-black uppercase tracking-widest mt-2"
-                            icon={!isAlterandoSenha ? <CheckCircle className="w-4 h-4" /> : undefined}
-                        >
-                            {isAlterandoSenha ? 'Salvando...' : 'Salvar Nova Senha'}
-                        </Button>
-                    </form>
-                </motion.section>
+                            {/* Confirmar Nova Senha */}
+                            <div>
+                                <label className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1.5">
+                                    Confirmar Nova Senha
+                                </label>
+                                <div className="relative">
+                                    <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                                    <input
+                                        type="password"
+                                        {...register('confirmarSenha')}
+                                        className="w-full h-11 pl-10 pr-4 bg-surface border border-border/60 rounded-xl text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all"
+                                        placeholder="Repita a nova senha"
+                                        autoComplete="new-password"
+                                    />
+                                </div>
+                                {errors.confirmarSenha && <p className="text-xs text-error mt-1">{errors.confirmarSenha.message}</p>}
+                            </div>
+
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                isLoading={isAlterandoSenha}
+                                disabled={isAlterandoSenha}
+                                className="w-full h-11 font-black uppercase tracking-widest mt-2"
+                                icon={!isAlterandoSenha ? <CheckCircle className="w-4 h-4" /> : undefined}
+                            >
+                                {isAlterandoSenha ? 'Salvando...' : 'Salvar Nova Senha'}
+                            </Button>
+                        </form>
+                    </motion.section>
+                )}
 
             </div>
         </div>
