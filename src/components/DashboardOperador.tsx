@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import { Fuel, History, FileText, Info, LogOut, Play, Navigation, AlertTriangle, RefreshCw } from 'lucide-react';
 import { IniciarJornada } from './IniciarJornada';
 import { JornadaCard } from './JornadaCard';
@@ -121,11 +122,14 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
     <div className="max-w-2xl mx-auto flex justify-between items-center">
 
      <div className="flex items-center gap-3">
-      <div
-       className="w-11 h-11 rounded-full p-0.5 shadow-lg shadow-primary/20 bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shrink-0"
+      {/* ✨ MUDANÇA AQUI: Avatar envolvido no Link */}
+      <Link
+       to="/minha-conta"
+       title="Acessar Minha Conta e Biometria"
+       className="w-11 h-11 rounded-full p-0.5 shadow-lg shadow-primary/20 bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center shrink-0 hover:scale-105 active:scale-95 transition-transform"
       >
-       <Avatar url={user.fotoUrl} nome={user.nome} className="w-10 h-10 border-none shadow-none" />
-      </div>
+       <Avatar url={user.fotoUrl} nome={user.nome} className="w-10 h-10 border-none shadow-none cursor-pointer" />
+      </Link>
       <div className="leading-tight">
        <h1 className="font-header text-base sm:text-lg font-black text-text-main tracking-tight">
         Olá, <span className="text-primary">{user.nome.split(' ')[0]}</span>
@@ -141,7 +145,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
      </div>
 
      <div className="flex items-center gap-2">
-      {/* ✨ BOTÃO REFRESH MANUAL */}
+      {/* BOTÃO REFRESH MANUAL */}
       <Button
        variant="ghost"
        size="icon"
