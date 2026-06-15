@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Key, Droplets, Users, LogOut, ChevronRight, 
   Wrench, Activity, AlertTriangle, ShieldCheck, Navigation,
@@ -13,7 +14,7 @@ import { GestaoJornadas } from './GestaoJornadas';
 import { FormRegistrarAbastecimento } from './forms/FormRegistrarAbastecimento';
 import { FormRegistrarManutencao } from './forms/FormRegistrarManutencao';
 import { HistoricoAbastecimentos } from './HistoricoAbastecimentos';
-import { HistoricoManutencoes } from './HistoricoManutencoes'; //  Importado
+import { HistoricoManutencoes } from './HistoricoManutencoes';
 import { MinhaEquipe } from './MinhaEquipe';
 import { IniciarJornada } from './IniciarJornada';
 import { ModalQrCode } from './ModalQrCode';
@@ -41,7 +42,6 @@ interface DashboardEncarregadoProps {
     user: User;
 }
 
-//  Adicionado HISTORICO_MANUTENCOES
 type ViewMode = 'DASHBOARD' | 'MONITORAMENTO' | 'MINHA_JORNADA' | 'HISTORICO' | 'HISTORICO_MANUTENCOES' | 'EQUIPE' | 'DEFEITOS' | 'PLANOS';
 
 // ─── COMPONENTES CLEAN-CODE ─────────────────────────────────────────────
@@ -166,7 +166,16 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                     <header className="sticky top-0 z-40 -mx-4 sm:-mx-8 px-4 sm:px-8 py-3 backdrop-blur-xl bg-background/80 border-b border-border/40 safe-top">
                         <div className="max-w-7xl mx-auto flex justify-between items-center">
                             <div className="flex items-center gap-4">
-                                <Avatar url={user.fotoUrl} nome={user.nome} className="shadow-lg shadow-primary/20" />
+                                
+                                {/* Avatar envolvido no Link */}
+                                <Link 
+                                  to="/minha-conta" 
+                                  className="shrink-0 hover:scale-105 active:scale-95 transition-transform block rounded-full"
+                                  title="Acessar Minha Conta e Biometria"
+                                >
+                                  <Avatar url={user.fotoUrl} nome={user.nome} className="shadow-lg shadow-primary/20 cursor-pointer border-2 border-primary/20 hover:border-primary/60" />
+                                </Link>
+
                                 <div className="leading-tight">
                                     <h1 className="text-base sm:text-lg font-black text-text-main tracking-tight uppercase">Olá, <span className="text-primary">{user.nome.split(' ')[0]}</span></h1>
                                     <p className="text-[9px] font-bold text-success uppercase tracking-widest flex items-center gap-1.5 mt-0.5">
@@ -213,7 +222,6 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                       badge={defeitosAtivos > 0 ? `${defeitosAtivos} AVISOS` : null} 
                                     />
                                     <SidebarActionButton icon={ShieldCheck} title="Planos Preventivos" onClick={() => setView('PLANOS')} />
-                                    {/*  Histórico de Manutenções no lugar correto */}
                                     <SidebarActionButton icon={Wrench} title="Histórico de Manutenções" onClick={() => setView('HISTORICO_MANUTENCOES')} />
                                  </div>
                               </div>
@@ -223,7 +231,6 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                     <Users className="w-3.5 h-3.5" /> Administração
                                  </h2>
                                  <div className="space-y-3">
-                                    {/*  Histórico de Abastecimentos corrigido */}
                                     <SidebarActionButton icon={Droplets} title="Histórico de Abastecimentos" onClick={() => setView('HISTORICO')} />
                                     <SidebarActionButton icon={Users} title="Equipes Operacionais" onClick={() => setView('EQUIPE')} />
                                     <SidebarActionButton icon={Key} title="Minha Jornada" onClick={() => setView('MINHA_JORNADA')} variant={!minhaJornadaAtiva ? "subtle" : "default"} badge={minhaJornadaAtiva ? 'ESTOU EM ROTA' : null} />
@@ -276,7 +283,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                           <div key={jornada.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-background border border-border/40 rounded-xl hover:border-primary/30 transition-all gap-4">
                                              <div className="flex items-center gap-4">
                                                 <div className="w-12 h-12 rounded-xl bg-primary/10 text-primary flex items-center justify-center font-black font-mono shadow-inner border border-primary/20 shrink-0">
-                                                   C {jornada.veiculo?.placa?.substring(jornada.veiculo.placa.length - 2)}
+                                                    C {jornada.veiculo?.placa?.substring(jornada.veiculo.placa.length - 2)}
                                                 </div>
                                                 <div>
                                                    <h4 className="text-sm font-black text-text-main tracking-tight uppercase">{jornada.operador?.nome}</h4>
@@ -307,7 +314,6 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                   
                                   <div className="flex-1 overflow-auto p-2 scrollbar-hide">
                                     <PainelAlertas onAlertaClick={(alerta) => {
-                                       //  Rotas de alerta ajustadas para o dashboard do encarregado
                                        if (alerta.mensagem.toUpperCase().includes('PREVISÃO') || alerta.nivel === 'VENCIDO') {
                                            setView('PLANOS');
                                        } else if (alerta.tipo === 'MANUTENCAO') {
@@ -374,7 +380,6 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
         return <PageWrapper title="Histórico de Abastecimentos" onBack={goBack}><HistoricoAbastecimentos userRole={user.role} /></PageWrapper>;
     }
 
-    //  Rota Histórico de Manutenções Adicionada
     if (view === 'HISTORICO_MANUTENCOES') {
         return <PageWrapper title="Histórico de Manutenções" onBack={goBack}><HistoricoManutencoes userRole={user.role} /></PageWrapper>;
     }
