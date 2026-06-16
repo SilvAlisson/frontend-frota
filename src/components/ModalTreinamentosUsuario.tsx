@@ -7,7 +7,7 @@ import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
 import {
     X, Trash2, Calendar, AlertTriangle, Loader2,
-    CheckCircle2, FileSpreadsheet, Plus, GraduationCap, UploadCloud, QrCode
+    CheckCircle2, FileSpreadsheet, Plus, GraduationCap, UploadCloud, QrCode, Printer
 } from 'lucide-react';
 import type { User } from '../types';
 import { useModalStore } from '../hooks/useModalStore';
@@ -17,7 +17,6 @@ import { Skeleton } from './ui/Skeleton';
 import { hapticError } from '../lib/haptics';
 import { toast } from 'sonner';
 
-// Importando o seu serviço de upload (ajuste o caminho ou nome do método se necessário)
 import { uploadToR2 } from '../services/uploadService';
 
 interface ModalProps {
@@ -25,7 +24,6 @@ interface ModalProps {
     onClose: () => void;
 }
 
-// Estendendo o form localmente para aceitar o novo campo caso o schema original ainda não tenha sido atualizado
 type TreinamentoFormAprimorado = TreinamentoForm & { diasAntecedenciaAlerta: number };
 
 export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
@@ -35,9 +33,10 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     
-    // Estados para o Upload do Certificado
     const [certificadoFile, setCertificadoFile] = useState<File | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+
+    const [showCracha, setShowCracha] = useState(false);
 
     const {
         register,
@@ -45,8 +44,6 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
         reset,
         formState: { errors, isSubmitting }
     } = useForm<TreinamentoFormAprimorado>({
-        // Se o seu Zod schema ainda não tiver o diasAntecedenciaAlerta, o resolver vai ignorar ele, 
-        // mas ele passará no handleSubmit por estarmos estendendo a tipagem.
         resolver: zodResolver(treinamentoSchema) as any, 
         defaultValues: {
             nome: '',
@@ -54,7 +51,7 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
             dataVencimento: '',
             descricao: '',
             comprovanteUrl: '',
-            diasAntecedenciaAlerta: 30 // Padrão de 30 dias
+            diasAntecedenciaAlerta: 30
         }
     });
 
@@ -63,26 +60,21 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
             setIsUploading(true);
             let finalComprovanteUrl = data.comprovanteUrl;
 
-            // Se o gestor anexou um PDF/Imagem, fazemos o upload para o Cloudflare R2 primeiro
             if (certificadoFile) {
-                // Nota: Verifique se o método no seu uploadService se chama 'uploadFile', 'upload' ou 'uploadImage'
-                // e se ele aceita o nome da pasta (ex: 'certificados')
                 finalComprovanteUrl = await uploadToR2(
-    certificadoFile, 
-    certificadoFile.name, 
-    certificadoFile.type, 
-    'certificados'
-);
+                    certificadoFile, 
+                    certificadoFile.name, 
+                    certificadoFile.type, 
+                    'certificados'
+                );
             }
 
-            // Envia para o banco de dados (Prisma)
             await addTreinamento({
                 ...data,
                 comprovanteUrl: finalComprovanteUrl,
                 diasAntecedenciaAlerta: Number(data.diasAntecedenciaAlerta)
             } as any);
 
-            // Limpa o formulário
             reset();
             setCertificadoFile(null);
             toast.success("Certificação salva com sucesso!");
@@ -98,7 +90,7 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
     const confirmExclusao = (id: string, nome: string) => {
         const modalId = openModal('CONFIRM', {
             title: "Excluir Certificação",
-            description: `Tem certeza que deseja remover o Registro de "${nome}" do histórico deste colaborador?`,
+            description: `Tem certeza que deseja remover o Registro de "${nome}" do histórico?`,
             variant: "danger",
             confirmLabel: "Sim, Remover",
             onConfirm: async () => {
@@ -116,7 +108,6 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
-
         try {
             await importarPlanilha(file);
         } finally {
@@ -124,292 +115,234 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
         }
     };
 
-    // --- MÁGICA DO CRACHÁ PÚBLICO ---
-    const handleGerarCracha = () => {
-        // Esta será a rota pública que criaremos futuramente
-        const publicUrl = `${window.location.origin}/dossie/${usuario.id}`;
-        // Usamos uma API gratuita e rápida para gerar a imagem do QR Code na hora
-        const qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(publicUrl)}&margin=10`;
+    const publicUrl = `${window.location.origin}/dossie/${usuario.id}`;
+    const qrCodeImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(publicUrl)}&margin=10`;
 
-        const modalId = openModal('CUSTOM', {
-            content: (
-                <div className="bg-surface p-8 rounded-[2rem] max-w-sm w-full mx-auto flex flex-col items-center text-center shadow-2xl border border-border/40">
-                    <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-4">
-                        <QrCode className="w-6 h-6" />
-                    </div>
-                    <h2 className="text-xl font-black text-text-main uppercase tracking-tight mb-2">Crachá de Conformidade</h2>
-                    <p className="text-sm text-text-muted mb-6">Escaneie para acessar o dossiê público de <strong>{usuario.nome}</strong> com a validade de todos os treinamentos.</p>
-                    
-                    <div className="bg-white p-3 rounded-2xl shadow-inner mb-6 border border-border/40">
-                        <img src={qrCodeImageUrl} alt="QR Code Dossiê" className="w-48 h-48 rounded-xl" />
-                    </div>
-
-                    <Button variant="secondary" className="w-full h-12 font-black uppercase tracking-widest text-xs" onClick={() => closeModal(modalId)}>
-                        Fechar Crachá
-                    </Button>
-                </div>
-            )
-        });
+    const handleImprimirEtiqueta = () => {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Etiqueta Capacete - ${usuario.nome}</title>
+                        <style>
+                            @media print {
+                                @page { margin: 0; size: auto; }
+                                body { margin: 0; -webkit-print-color-adjust: exact; }
+                            }
+                            body {
+                                display: flex;
+                                justify-content: center;
+                                align-items: center;
+                                height: 100vh;
+                                font-family: 'Inter', Arial, sans-serif;
+                                background: #fff;
+                            }
+                            .etiqueta {
+                                text-align: center;
+                                border: 2px solid #000;
+                                padding: 15px;
+                                border-radius: 8px;
+                                width: fit-content;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="etiqueta">
+                            <h2 style="margin: 0 0 10px 0; font-size: 16px; font-weight: 900;">FROTA KLIN</h2>
+                            <img src="${qrCodeImageUrl}" style="width: 140px; height: 140px; display: block; margin: 0 auto;" />
+                            <p style="margin: 10px 0 0 0; font-size: 14px; font-weight: bold; text-transform: uppercase;">${usuario.nome}</p>
+                            <p style="margin: 5px 0 0 0; font-size: 10px; color: #333; font-weight: bold;">AUDITORIA DE SSMA</p>
+                        </div>
+                        <script>
+                            setTimeout(() => {
+                                window.print();
+                                window.close();
+                            }, 500);
+                        </script>
+                    </body>
+                </html>
+            `);
+        }
     };
 
     const formatDate = (d: string) => new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 
     const getStatusInfo = (vencimento: string | null | undefined) => {
         if (!vencimento) return { color: 'bg-info/10 text-info border-info/20', icon: CheckCircle2, text: 'Vitalício' };
-
         const hoje = new Date();
         const dataVenc = new Date(vencimento);
         const diffDias = Math.ceil((dataVenc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-
         if (diffDias < 0) return { color: 'bg-error/10 text-error border-error/20', icon: AlertTriangle, text: 'Vencido' };
         if (diffDias < 30) return { color: 'bg-warning-500/10 text-warning-600 border-warning-500/20', icon: AlertTriangle, text: 'Expira Brevemente' };
         return { color: 'bg-success/10 text-success border-success/20', icon: CheckCircle2, text: 'Válido' };
     };
 
     return (
-        <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300" onClick={onClose}>
-            <div
-                className="bg-background rounded-[2.5rem] shadow-float border border-border/60 w-full max-w-5xl h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 slide-in-from-bottom-8 duration-500"
-                onClick={e => e.stopPropagation()}
-            >
-                {/* ESQUERDA: FORMULÁRIO */}
-                <div className="w-full md:w-[420px] bg-surface p-5 sm:p-8 border-r border-border/60 overflow-y-auto flex flex-col scrollbar-thin">
-                    
-                    {/* Perfil do Colaborador */}
-                    <div className="mb-8 flex items-center gap-4 pb-6 border-b border-border/60">
-                        <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-xl border border-primary/20 shadow-inner shrink-0">
-                            {usuario.nome.charAt(0).toUpperCase()}
+        <>
+            <div className="fixed inset-0 z-modal flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300" onClick={onClose}>
+                <div
+                    className="bg-background rounded-[2.5rem] shadow-float border border-border/60 w-full max-w-5xl h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 relative"
+                    onClick={e => e.stopPropagation()}
+                >
+                    {/* ESQUERDA: FORMULÁRIO */}
+                    <div className="w-full md:w-[420px] bg-surface p-5 sm:p-8 border-r border-border/60 overflow-y-auto flex flex-col scrollbar-thin">
+                        <div className="mb-8 flex items-center gap-4 pb-6 border-b border-border/60">
+                            <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-xl border border-primary/20 shadow-inner shrink-0">
+                                {usuario.nome.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="overflow-hidden">
+                                <h3 className="text-lg font-black text-text-main leading-tight truncate">{usuario.nome}</h3>
+                                <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary bg-surface-hover px-2 py-0.5 rounded-md border border-border/60 w-fit mt-1.5">{usuario.role}</p>
+                            </div>
                         </div>
-                        <div className="overflow-hidden">
-                            <h3 className="text-lg font-black text-text-main leading-tight truncate">{usuario.nome}</h3>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-text-secondary bg-surface-hover px-2 py-0.5 rounded-md border border-border/60 w-fit mt-1.5">{usuario.role}</p>
-                        </div>
-                    </div>
 
-                    <div className="flex-1">
-                        <h4 className="text-xs font-black text-text-secondary uppercase tracking-[0.2em] mb-5 flex items-center gap-2">
-                            <Plus className="w-4 h-4 text-primary" /> Novo Registro
-                        </h4>
-
-                        <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="space-y-5">
-                            <Input
-                                label="Nome da Certificação"
-                                placeholder="Ex: Direção Defensiva, NR-35..."
-                                {...register('nome')}
-                                error={errors.nome?.message}
-                                disabled={isSubmitting || isUploading}
-                                className="bg-background"
-                            />
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <Input
-                                    label="Data de Emissão"
-                                    type="date"
-                                    {...register('dataRealizacao')}
-                                    error={errors.dataRealizacao?.message}
-                                    disabled={isSubmitting || isUploading}
-                                    className="bg-background"
-                                />
-                                <Input
-                                    label="Data de Validade"
-                                    type="date"
-                                    {...register('dataVencimento')}
-                                    disabled={isSubmitting || isUploading}
-                                    className="bg-background"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4 items-end">
-                                <div className="col-span-2">
-                                  <Input
-                                      label="Avisar Vencimento (Em Dias)"
-                                      type="number"
-                                      placeholder="Ex: 30, 45, 60"
-                                      {...register('diasAntecedenciaAlerta', { valueAsNumber: true })}
-                                      disabled={isSubmitting || isUploading}
-                                      className="bg-background"
-                                      title="Com quantos dias de antecedência o sistema deve gerar um alerta?"
-                                  />
-                                </div>
-                            </div>
-
-                            {/* UPLOAD DE CERTIFICADO */}
-                            <div className="space-y-1.5">
-                                <label className="text-xs font-black text-text-muted uppercase tracking-widest block">
-                                    Anexar Certificado (PDF/IMG)
-                                </label>
-                                <label className={`flex flex-col items-center justify-center w-full h-16 px-4 transition-all bg-surface border-2 border-dashed rounded-xl cursor-pointer
-                                    ${certificadoFile ? 'border-primary/50 bg-primary/5' : 'border-border/60 hover:border-primary/40 hover:bg-surface-hover'}`}
-                                >
-                                    <input 
-                                        type="file" 
-                                        className="hidden" 
-                                        accept=".pdf,image/*" 
-                                        onChange={(e) => setCertificadoFile(e.target.files?.[0] || null)}
-                                        disabled={isSubmitting || isUploading}
-                                    />
-                                    <div className="flex items-center gap-2 text-sm font-bold text-text-secondary truncate w-full justify-center">
-                                        <UploadCloud className={`w-4 h-4 shrink-0 ${certificadoFile ? 'text-primary' : 'text-text-muted'}`} />
-                                        <span className="truncate">{certificadoFile ? certificadoFile.name : 'Clique para selecionar arquivo...'}</span>
-                                    </div>
-                                </label>
-                            </div>
-
-                            <Textarea
-                                label="Observações Adicionais"
-                                {...register('descricao')}
-                                disabled={isSubmitting || isUploading}
-                                rows={2}
-                                placeholder="Carga horária, entidade formadora..."
-                                autoResize={false}
-                            />
-
-                            <Button
-                                type="submit"
-                                variant="primary"
-                                className="w-full shadow-button hover:shadow-float-primary mt-4 h-12 text-sm uppercase tracking-widest"
-                                isLoading={isSubmitting || isUploading}
-                                disabled={isSubmitting || isUploading}
-                            >
-                                {isUploading ? 'Enviando Arquivo...' : 'Inserir Certificação'}
-                            </Button>
-                        </form>
-                    </div>
-
-                    {/* Importação Excel */}
-                    <div className="mt-8 pt-6 border-t border-border/60">
-                        <p className="text-[9px] text-center text-text-muted font-black mb-3 uppercase tracking-[0.2em]">
-                            Importação em Massa
-                        </p>
-                        <input type="file" accept=".xlsx, .xls" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
-                        <Button
-                            type="button"
-                            variant="outline"
-                            className="w-full border-dashed border-border/60 text-text-secondary hover:border-primary/50 hover:text-primary transition-all bg-background h-12"
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={isSubmitting || isUploading}
-                            icon={<FileSpreadsheet className="w-4 h-4" />}
-                        >
-                            Upload de Planilha Excel
-                        </Button>
-                    </div>
-                </div>
-
-                {/* DIREITA: LISTAGEM E CRACHÁ */}
-                <div className="flex-1 bg-background flex flex-col h-full overflow-hidden">
-                    <div className="p-6 sm:p-8 border-b border-border/60 flex justify-between items-center bg-surface sticky top-0 z-10 shrink-0 gap-4">
                         <div className="flex-1">
-                            <h3 className="text-2xl font-black text-text-main tracking-tight">Registro de Formação</h3>
-                            <p className="text-sm font-medium text-text-secondary mt-1 opacity-90">Monitorize a validade técnica e conformidade deste integrante.</p>
-                        </div>
-                        
-                        <div className="flex items-center gap-2">
-                            {/* BOTÃO GERAR CRACHÁ */}
-                            <Button
-                                variant="secondary"
-                                onClick={handleGerarCracha}
-                                className="hidden sm:flex border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary whitespace-nowrap"
-                                icon={<QrCode className="w-4 h-4" />}
-                            >
-                                Crachá Público
-                            </Button>
+                            <h4 className="text-xs font-black text-text-secondary uppercase tracking-[0.2em] mb-5 flex items-center gap-2">
+                                <Plus className="w-4 h-4 text-primary" /> Novo Registro
+                            </h4>
 
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={onClose}
-                                className="rounded-full hover:bg-surface-hover text-text-muted hover:text-error transition-colors shrink-0"
-                            >
-                                <X className="w-6 h-6" />
+                            <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="space-y-5">
+                                <Input label="Nome da Certificação" placeholder="Ex: Direção Defensiva, NR-35..." {...register('nome')} error={errors.nome?.message} disabled={isSubmitting || isUploading} className="bg-background" />
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Input label="Data de Emissão" type="date" {...register('dataRealizacao')} error={errors.dataRealizacao?.message} disabled={isSubmitting || isUploading} className="bg-background" />
+                                    <Input label="Data de Validade" type="date" {...register('dataVencimento')} disabled={isSubmitting || isUploading} className="bg-background" />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 items-end">
+                                    <div className="col-span-2">
+                                    <Input label="Avisar Vencimento (Em Dias)" type="number" placeholder="Ex: 30, 45, 60" {...register('diasAntecedenciaAlerta', { valueAsNumber: true })} disabled={isSubmitting || isUploading} className="bg-background" title="Com quantos dias de antecedência o sistema deve gerar um alerta?" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-black text-text-muted uppercase tracking-widest block">Anexar Certificado (PDF/IMG)</label>
+                                    <label className={`flex flex-col items-center justify-center w-full h-16 px-4 transition-all bg-surface border-2 border-dashed rounded-xl cursor-pointer ${certificadoFile ? 'border-primary/50 bg-primary/5' : 'border-border/60 hover:border-primary/40 hover:bg-surface-hover'}`}>
+                                        <input type="file" className="hidden" accept=".pdf,image/*" onChange={(e) => setCertificadoFile(e.target.files?.[0] || null)} disabled={isSubmitting || isUploading} />
+                                        <div className="flex items-center gap-2 text-sm font-bold text-text-secondary truncate w-full justify-center">
+                                            <UploadCloud className={`w-4 h-4 shrink-0 ${certificadoFile ? 'text-primary' : 'text-text-muted'}`} />
+                                            <span className="truncate">{certificadoFile ? certificadoFile.name : 'Clique para selecionar arquivo...'}</span>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <Textarea label="Observações Adicionais" {...register('descricao')} disabled={isSubmitting || isUploading} rows={2} placeholder="Carga horária, entidade formadora..." autoResize={false} />
+
+                                <Button type="submit" variant="primary" className="w-full shadow-button hover:shadow-float-primary mt-4 h-12 text-sm uppercase tracking-widest" isLoading={isSubmitting || isUploading} disabled={isSubmitting || isUploading}>
+                                    {isUploading ? 'Enviando Arquivo...' : 'Inserir Certificação'}
+                                </Button>
+                            </form>
+                        </div>
+
+                        <div className="mt-8 pt-6 border-t border-border/60">
+                            <p className="text-[9px] text-center text-text-muted font-black mb-3 uppercase tracking-[0.2em]">Importação em Massa</p>
+                            <input type="file" accept=".xlsx, .xls" className="hidden" ref={fileInputRef} onChange={handleFileChange} />
+                            <Button type="button" variant="outline" className="w-full border-dashed border-border/60 text-text-secondary hover:border-primary/50 hover:text-primary transition-all bg-background h-12" onClick={() => fileInputRef.current?.click()} disabled={isSubmitting || isUploading} icon={<FileSpreadsheet className="w-4 h-4" />}>
+                                Upload de Planilha Excel
                             </Button>
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-6 sm:p-8 bg-background scrollbar-thin">
-                        {/* Botão Crachá no Mobile */}
-                        <Button
-                            variant="secondary"
-                            onClick={handleGerarCracha}
-                            className="w-full sm:hidden mb-6 border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary"
-                            icon={<QrCode className="w-4 h-4" />}
-                        >
-                            Gerar Crachá Público
-                        </Button>
-
-                        {loading ? (
-                            <div className="grid gap-4 auto-rows-max">
-                                {[1, 2, 3].map(i => (
-                                    <Skeleton key={i} className="h-32 w-full rounded-2xl border border-border/40" />
-                                ))}
+                    {/* DIREITA: LISTAGEM E CRACHÁ */}
+                    <div className="flex-1 bg-background flex flex-col h-full overflow-hidden">
+                        <div className="p-6 sm:p-8 border-b border-border/60 flex justify-between items-center bg-surface sticky top-0 z-10 shrink-0 gap-4">
+                            <div className="flex-1">
+                                <h3 className="text-2xl font-black text-text-main tracking-tight">Registro de Formação</h3>
+                                <p className="text-sm font-medium text-text-secondary mt-1 opacity-90">Monitorize a validade técnica e conformidade deste integrante.</p>
                             </div>
-                        ) : treinamentos.length === 0 ? (
-                            <div className="h-full flex items-center justify-center">
-                                <EmptyState 
-                                    icon={GraduationCap} 
-                                    title="Sem Formação Registrada" 
-                                    description="Este integrante ainda não possui histórico de cursos, licenças ou reciclagens no sistema." 
-                                />
-                            </div>
-                        ) : (
-                            <div className="grid gap-4 auto-rows-max">
-                                {treinamentos.map(treino => {
-                                    const status = getStatusInfo(treino.dataVencimento);
-                                    const StatusIcon = status.icon;
+                            
+                            <div className="flex items-center gap-2">
+                                <Button variant="secondary" onClick={() => setShowCracha(true)} className="hidden sm:flex border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary whitespace-nowrap" icon={<QrCode className="w-4 h-4" />}>
+                                    Crachá Público
+                                </Button>
 
-                                    return (
-                                        <div key={treino.id} className="group bg-surface border border-border/60 rounded-2xl p-5 hover:shadow-md hover:border-primary/30 transition-all duration-300 relative overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                                            
-                                            <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${status.color.split(' ')[0]}`}></div>
-                                            
-                                            <div className="flex-1 pl-2 min-w-0">
-                                                <h4 className="font-black text-text-main text-lg tracking-tight truncate" title={treino.nome}>{treino.nome}</h4>
-                                                
-                                                <div className="flex flex-wrap gap-x-3 gap-y-2 mt-2">
-                                                    <span className="flex items-center gap-1.5 bg-surface-hover px-2.5 py-1 rounded-md text-[10px] text-text-secondary font-bold uppercase tracking-widest border border-border/60">
-                                                        <Calendar className="w-3 h-3" />
-                                                        {formatDate(treino.dataRealizacao)}
-                                                    </span>
-                                                    <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border ${status.color}`}>
-                                                        <StatusIcon className="w-3.5 h-3.5" />
-                                                        {status.text}
-                                                    </span>
+                                <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full hover:bg-surface-hover text-text-muted hover:text-error transition-colors shrink-0">
+                                    <X className="w-6 h-6" />
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6 sm:p-8 bg-background scrollbar-thin">
+                            <Button variant="secondary" onClick={() => setShowCracha(true)} className="w-full sm:hidden mb-6 border-primary/20 bg-primary/5 hover:bg-primary/10 text-primary" icon={<QrCode className="w-4 h-4" />}>
+                                Gerar Crachá Público
+                            </Button>
+
+                            {loading ? (
+                                <div className="grid gap-4 auto-rows-max">
+                                    {[1, 2, 3].map(i => <Skeleton key={i} className="h-32 w-full rounded-2xl border border-border/40" />)}
+                                </div>
+                            ) : treinamentos.length === 0 ? (
+                                <div className="h-full flex items-center justify-center">
+                                    <EmptyState icon={GraduationCap} title="Sem Formação Registrada" description="Este integrante ainda não possui histórico de cursos no sistema." />
+                                </div>
+                            ) : (
+                                <div className="grid gap-4 auto-rows-max">
+                                    {treinamentos.map(treino => {
+                                        const status = getStatusInfo(treino.dataVencimento);
+                                        const StatusIcon = status.icon;
+
+                                        return (
+                                            <div key={treino.id} className="group bg-surface border border-border/60 rounded-2xl p-5 hover:shadow-md hover:border-primary/30 transition-all duration-300 relative overflow-hidden flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                                                <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${status.color.split(' ')[0]}`}></div>
+                                                <div className="flex-1 pl-2 min-w-0">
+                                                    <h4 className="font-black text-text-main text-lg tracking-tight truncate" title={treino.nome}>{treino.nome}</h4>
+                                                    <div className="flex flex-wrap gap-x-3 gap-y-2 mt-2">
+                                                        <span className="flex items-center gap-1.5 bg-surface-hover px-2.5 py-1 rounded-md text-[10px] text-text-secondary font-bold uppercase tracking-widest border border-border/60">
+                                                            <Calendar className="w-3 h-3" />
+                                                            {formatDate(treino.dataRealizacao)}
+                                                        </span>
+                                                        <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border ${status.color}`}>
+                                                            <StatusIcon className="w-3.5 h-3.5" />
+                                                            {status.text}
+                                                        </span>
+                                                    </div>
+                                                    {treino.descricao && <p className="text-xs text-text-secondary mt-3 font-medium line-clamp-2">"{treino.descricao}"</p>}
                                                 </div>
-                                                
-                                                {treino.descricao && (
-                                                    <p className="text-xs text-text-secondary mt-3 font-medium line-clamp-2">"{treino.descricao}"</p>
-                                                )}
-                                            </div>
 
-                                            <div className="flex items-center gap-2 pl-2 w-full sm:w-auto justify-end sm:justify-start border-t border-dashed border-border/60 sm:border-none pt-3 sm:pt-0">
-                                                {treino.comprovanteUrl && (
-                                                    <a
-                                                        href={treino.comprovanteUrl}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className="p-2.5 text-primary hover:bg-primary/10 rounded-xl transition-all border border-transparent hover:border-primary/20 shadow-sm bg-surface-hover flex items-center gap-2 text-xs font-bold uppercase tracking-widest"
-                                                        title="Visualizar Certificado"
-                                                    >
-                                                        <FileSpreadsheet className="w-4 h-4" /> PDF
-                                                    </a>
-                                                )}
-                                                <Button
-                                                    variant="secondary"
-                                                    size="icon"
-                                                    onClick={() => confirmExclusao(treino.id, treino.nome)}
-                                                    disabled={deletingId === treino.id}
-                                                    className="w-10 h-10 bg-surface-hover text-text-muted hover:text-error hover:bg-error/10 border-transparent shadow-sm"
-                                                    title="Excluir Registro"
-                                                    icon={deletingId === treino.id ? <Loader2 className="animate-spin h-4 w-4 text-error" /> : <Trash2 className="w-4 h-4" />}
-                                                />
+                                                <div className="flex items-center gap-2 pl-2 w-full sm:w-auto justify-end sm:justify-start border-t border-dashed border-border/60 sm:border-none pt-3 sm:pt-0">
+                                                    {treino.comprovanteUrl && (
+                                                        <a href={treino.comprovanteUrl} target="_blank" rel="noreferrer" className="p-2.5 text-primary hover:bg-primary/10 rounded-xl transition-all border border-transparent hover:border-primary/20 shadow-sm bg-surface-hover flex items-center gap-2 text-xs font-bold uppercase tracking-widest">
+                                                            <FileSpreadsheet className="w-4 h-4" /> PDF
+                                                        </a>
+                                                    )}
+                                                    <Button variant="secondary" size="icon" onClick={() => confirmExclusao(treino.id, treino.nome)} disabled={deletingId === treino.id} className="w-10 h-10 bg-surface-hover text-text-muted hover:text-error hover:bg-error/10 border-transparent shadow-sm" title="Excluir Registro" icon={deletingId === treino.id ? <Loader2 className="animate-spin h-4 w-4 text-error" /> : <Trash2 className="w-4 h-4" />} />
+                                                </div>
                                             </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+
+            {/* Modal do Crachá – agora local e com z-index máximo */}
+            {showCracha && (
+                <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200" onClick={(e) => { e.stopPropagation(); setShowCracha(false); }}>
+                    <div className="bg-surface p-8 rounded-[2rem] max-w-sm w-full mx-auto flex flex-col items-center text-center shadow-2xl border border-border/40 animate-in zoom-in-95 duration-300" onClick={e => e.stopPropagation()}>
+                        <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-4">
+                            <QrCode className="w-6 h-6" />
+                        </div>
+                        <h2 className="text-xl font-black text-text-main uppercase tracking-tight mb-2">Crachá de Conformidade</h2>
+                        <p className="text-sm text-text-muted mb-6">Escaneie para acessar o dossiê público de <strong>{usuario.nome}</strong> com a validade de todos os treinamentos.</p>
+                        
+                        <div className="bg-white p-3 rounded-2xl shadow-inner mb-8 border border-border/40">
+                            <img src={qrCodeImageUrl} alt="QR Code Dossiê" className="w-48 h-48 rounded-xl" />
+                        </div>
+
+                        <div className="flex gap-3 w-full">
+                            <Button variant="secondary" className="flex-1 h-12 font-black uppercase tracking-widest text-xs" onClick={() => setShowCracha(false)}>
+                                Fechar
+                            </Button>
+                            <Button variant="primary" className="flex-1 h-12 font-black uppercase tracking-widest text-xs shadow-button hover:shadow-float-primary" onClick={handleImprimirEtiqueta} icon={<Printer className="w-4 h-4" />}>
+                                Imprimir
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+        </>
     );
 }
