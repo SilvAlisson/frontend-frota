@@ -60,7 +60,7 @@ export function GestaoCargos() {
         setDeletingId(null);
         setCargoParaExcluir(null);
         if (import.meta.env.DEV) console.error("Erro ao deletar cargo:", err);
-        return 'Erro: Não é possível remover cargos com colaboradores ou treinos ativos vinculados.';
+        return 'Erro: Não é possível remover cargos com integrantes ou treinos ativos vinculados.';
       }
     });
   };
@@ -181,7 +181,7 @@ export function GestaoCargos() {
 
                   {/* Rodapé do Card */}
                   <div className="mt-5 pt-4 border-t border-border/60 flex justify-between items-center">
-                    <span className="text-[10px] font-black text-text-secondary uppercase tracking-[0.1em]">Colaboradores Alocados</span>
+                    <span className="text-[10px] font-black text-text-secondary uppercase tracking-[0.1em]">Integrantes Alocados</span>
                     <div className="flex items-center gap-2 bg-success/10 text-success px-3 py-1 rounded-lg text-xs font-black border border-success/20 shadow-sm">
                       <span className="w-1.5 h-1.5 bg-success rounded-full animate-pulse shadow-[0_0_4px_rgba(16,185,129,0.8)]"></span>
                       {cargo._count?.colaboradores || 0}
@@ -206,7 +206,7 @@ export function GestaoCargos() {
                  Tem certeza que deseja remover a função <strong className="text-text-main font-black">"{cargoParaExcluir?.nome}"</strong> da estrutura da empresa?
              </p>
              <Callout variant="warning" title="Impacto Estrutural" icon={AlertTriangle}>
-                 Se houverem colaboradores atualmente vinculados a este cargo, a exclusão será bloqueada pela base de dados. Caso contrário, todos os requisitos e matrizes de qualificação desta função seráo perdidos.
+                 Se houverem integrantes atualmente vinculados a este cargo, a exclusão será bloqueada pela base de dados. Caso contrário, todos os requisitos e matrizes de qualificação desta função seráo perdidos.
              </Callout>
           </div>
         }

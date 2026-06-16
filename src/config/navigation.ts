@@ -53,8 +53,8 @@ export const MENU_ITEMS: MenuGroup[] = [
     // mas as permissões internas no Router.tsx (como GestãoUsuarios) barram acessos indevidos.
     items: [
       { icon: Truck, label: 'Veículos', path: '/admin/veiculos' },
-      { icon: Users, label: 'Equipe', path: '/admin/usuarios' },
-      { icon: Briefcase, label: 'Cargos', path: '/admin/cargos' },
+      { icon: Users, label: 'Integrantes', path: '/admin/integrantes' },
+      { icon: Briefcase, label: 'Cargos e Matrizes', path: '/admin/cargos' },
       { icon: FileBadge, label: 'Documentos Legais', path: '/admin/documentos' },
       { icon: Package, label: 'Produtos/Serviços', path: '/admin/produtos' },
       { icon: Users, label: 'Fornecedores', path: '/admin/fornecedores' },

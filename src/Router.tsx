@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 const GestaoAuditoria = lazy(() => import('./components/GestaoAuditoria').then(m => ({ default: m.GestaoAuditoria })));
+const DossiePublico = lazy(() => import('./pages/DossiePublico').then(m => ({ default: m.DossiePublico })));
 
 // Telas de Acesso (Não-Lazy pois são os gatilhos iniciais)
 import { LoginScreen } from './pages/LoginScreen';
@@ -104,6 +105,8 @@ export function Router() {
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
         <Route path="/login" element={<LoginScreen />} />
+        {/* Rota Pública do QR Code do Integrante */}
+        <Route path="/dossie/:id" element={<DossiePublico />} />
         {/* Rota Raiz (Dashboards Operacionais Isoladas) */}
         <Route path="/" element={
           <PrivateRoute>
@@ -140,7 +143,7 @@ export function Router() {
             <Route path=":id" element={<VeiculoDetalhes />} />
           </Route>
 
-          <Route path="usuarios" element={
+          <Route path="integrantes" element={
             <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'RH']}>
               <GestaoUsuarios adminUserId={user?.id || ''} />
             </PrivateRoute>

@@ -29,7 +29,7 @@ import { PageHeader } from './ui/PageHeader';
 import { SmartFAB } from './ui/SmartFAB';
 import { PullToRefresh } from './ui/PullToRefresh';
 
-// ✨ DOMÍNIO E MODAL GLOBAL
+// DOMÍNIO E MODAL GLOBAL
 import { useUsuarios } from '../hooks/useUsuarios';
 import { useModalStore } from '../hooks/useModalStore';
 import { useDebounce } from '../hooks/useDebounce';
@@ -66,7 +66,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
     }
     
     openModal('CONFIRM', {
-      title: "Inativar ou Remover Colaborador",
+      title: "Inativar ou Remover Integrante",
       description: `Tem certeza que deseja inativar ou remover as credenciais de acesso de ${user.nome}? Se o usuário possuir histórico, ele será apenas inativado para manter o histórico da frota.`,
       variant: "danger",
       confirmLabel: "Sim, Confirmar Ação",
@@ -122,7 +122,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
         'Matrícula': u.matricula || '-',
         'Função': formatRole(u.role)
       }));
-      exportarParaExcel(dados, "Lista_Colaboradores.xlsx");
+      exportarParaExcel(dados, "Lista_Integrantes.xlsx");
       resolve(true);
     });
     toast.promise(promessa, { loading: 'Gerando Arquivo Excel...', success: 'Transferência concluída!', error: 'Erro na exportação.' });
@@ -174,8 +174,8 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
         {/* HEADER DA PÁGINA (Padrão KLIN Elite) */}
         <PageHeader
-          title="Diretório de Equipe"
-          subtitle="Gestão central de acessos, motoristas e Equipe técnica."
+          title="Hub de Integrantes"
+          subtitle="Controle de acessos, treinamentos, certificados em nuvem e conformidade da equipe."
           extraAction={
             <div className="flex flex-col sm:flex-row w-full lg:w-auto gap-3 items-end mt-4 sm:mt-0">
               <div className="w-full sm:w-72">
@@ -194,7 +194,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                   Excel
                 </Button>
                 <Button onClick={() => setIsCadastroOpen(true)} className="whitespace-nowrap flex-1 sm:flex-none h-11 shadow-button hover:shadow-float-primary" icon={<Plus className="w-4 h-4" />}>
-                  Novo Membro
+                  Novo Integrante
                 </Button>
               </div>
             </div>
@@ -209,8 +209,8 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
       ) : usuariosFiltrados.length === 0 ? (
         <EmptyState 
             icon={Users}
-            title={busca ? "Nenhum colaborador encontrado" : "Diretório Vazio"}
-            description={busca ? "Tente usar outros termos de pesquisa." : "Adicione o primeiro membro da Equipe para começar."}
+            title={busca ? "Nenhum integrante encontrado" : "Diretório Vazio"}
+            description={busca ? "Tente usar outros termos de pesquisa." : "Adicione o primeiro integrante para começar."}
         />
       ) : (
         <div className="bg-surface rounded-3xl shadow-sm border border-border/60 overflow-hidden">
@@ -221,7 +221,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
             // --- DESKTOP ---
             desktopHeader={
               <>
-                <th className={`${TableStyles.th} pl-8 text-left w-2/5`}>Colaborador</th>
+                <th className={`${TableStyles.th} pl-8 text-left w-2/5`}>Integrante</th>
                 <th className={`${TableStyles.th} text-center w-1/4`}>Estatuto Operacional</th>
                 <th className={`${TableStyles.th} text-right pr-8 w-1/4`}>Gestão</th>
               </>
@@ -263,7 +263,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                       className="h-9 w-9 !p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-xl" 
                       onClick={() => handleDeleteRequest(u)} 
                       disabled={isExcluindo || u.id === adminUserId} 
-                      title="Inativar Colaborador"
+                      title="Inativar Integrante"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>
@@ -308,7 +308,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
       <SmartFAB 
         onClick={() => setIsCadastroOpen(true)} 
-        label="Novo Membro" 
+        label="Novo Integrante" 
       />
 
     </div>
