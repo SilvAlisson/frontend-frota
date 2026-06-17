@@ -250,15 +250,24 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
                 onClick={onClose}
             >
                 <div
-                    className="bg-background rounded-[2.5rem] shadow-float border border-border/60 w-full max-w-5xl h-[90vh] overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 relative"
+                    className="bg-background rounded-[2.5rem] shadow-float border border-border/60 w-full max-w-5xl h-[90vh] overflow-y-auto md:overflow-hidden flex flex-col md:flex-row animate-in zoom-in-95 slide-in-from-bottom-8 duration-500 relative"
                     onClick={e => e.stopPropagation()}
                 >
+                    {/* Botão de Fechar Mobile Absoluto */}
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={onClose}
+                        className="md:hidden absolute top-5 right-5 z-50 rounded-full bg-surface-hover shadow-sm border border-border/40 text-text-muted hover:text-error h-10 w-10 flex items-center justify-center"
+                    >
+                        <X className="w-5 h-5" />
+                    </Button>
 
                     {/* ─── PAINEL ESQUERDO: FORMULÁRIO ────────────────── */}
-                    <div className="w-full md:w-[420px] bg-surface p-5 sm:p-8 border-r border-border/60 overflow-y-auto flex flex-col scrollbar-thin">
+                    <div className="w-full md:w-[420px] bg-surface p-5 sm:p-8 border-b md:border-b-0 md:border-r border-border/60 md:overflow-y-auto flex flex-col scrollbar-thin shrink-0">
 
                         {/* Cabeçalho do usuário */}
-                        <div className="mb-8 flex items-center gap-4 pb-6 border-b border-border/60">
+                        <div className="mb-6 md:mb-8 flex items-center gap-4 pb-6 border-b border-border/60 pr-12 md:pr-0">
                             <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-xl border border-primary/20 shadow-inner shrink-0">
                                 {inicialNome}
                             </div>
@@ -270,6 +279,16 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
                                     {usuario.role}
                                 </p>
                             </div>
+                        </div>
+
+                        {/* Título Mobile Only */}
+                        <div className="md:hidden mb-8">
+                            <h3 className="text-2xl font-black text-text-main tracking-tight">
+                                Registro de Formação
+                            </h3>
+                            <p className="text-sm font-medium text-text-secondary mt-1 opacity-90">
+                                Monitorize a validade técnica e conformidade deste integrante.
+                            </p>
                         </div>
 
                         {/* Formulário */}
@@ -401,10 +420,10 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
                     </div>
 
                     {/* ─── PAINEL DIREITO: LISTAGEM ────────────────────── */}
-                    <div className="flex-1 bg-background flex flex-col h-full overflow-hidden">
+                    <div className="flex-1 bg-background flex flex-col md:h-full md:overflow-hidden shrink-0">
 
-                        {/* Header fixo */}
-                        <div className="p-6 sm:p-8 border-b border-border/60 flex justify-between items-center bg-surface sticky top-0 z-10 shrink-0 gap-4">
+                        {/* Header fixo - DESKTOP ONLY */}
+                        <div className="hidden md:flex p-6 sm:p-8 border-b border-border/60 justify-between items-center bg-surface sticky top-0 z-10 shrink-0 gap-4">
                             <div className="flex-1">
                                 <h3 className="text-2xl font-black text-text-main tracking-tight">
                                     Registro de Formação
@@ -435,7 +454,7 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
                         </div>
 
                         {/* Listagem */}
-                        <div className="flex-1 overflow-y-auto p-6 sm:p-8 bg-background scrollbar-thin">
+                        <div className="flex-1 md:overflow-y-auto p-6 sm:p-8 bg-background scrollbar-thin">
                             {/* Botão crachá — mobile only */}
                             <Button
                                 variant="secondary"
