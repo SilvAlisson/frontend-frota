@@ -9,29 +9,25 @@ import type { TreinamentoRealizado } from '../types';
 // Schema de validação — única fonte de verdade do formulário
 // ─────────────────────────────────────────────────────────────────
 export const treinamentoSchema = z.object({
-    nome: z
-        .string()
-        .min(2, 'Nome deve ter ao menos 2 caracteres')
-        .transform(val => val.toUpperCase().trim()),
-
-    dataRealizacao: z.string().min(1, 'Data de emissão obrigatória'),
-
+    nome: z.string().min(2, 'Nome deve ter ao menos 2 caracteres')
+           .transform(val => val.toUpperCase().replace(/\s+/g, ' ').trim()), // Remove espaços duplos
+    dataRealizacao: z.string().min(1, 'Data de emissão obrigatória').refine(data => {
+        const hoje = new Date();
+        hoje.setHours(23, 59, 59, 999);
+        return new Date(data) <= hoje;
+    }, 'A realização não pode estar no futuro'),
     dataVencimento: z.string().optional().or(z.literal('')),
-
     descricao: z.string().optional().nullable(),
-
-    comprovanteUrl: z
-        .string()
-        .url('URL inválida')
-        .optional()
-        .or(z.literal('')),
-
-    diasAntecedenciaAlerta: z.coerce
-        .number({ invalid_type_error: 'Informe um número válido' })
-        .int('Deve ser um número inteiro')
-        .min(1, 'Mínimo de 1 dia')
-        .max(365, 'Máximo de 365 dias')
-        .default(30),
+    comprovanteUrl: z.string().url('URL inválida').optional().or(z.literal('')),
+    diasAntecedenciaAlerta: z.coerce.number().int().min(1).max(365).default(30),
+}).refine((data) => {
+    if (!data.dataVencimento) return true; // Vitalício passa
+    const realizacao = new Date(data.dataRealizacao);
+    const vencimento = new Date(data.dataVencimento);
+    return vencimento > realizacao;
+}, {
+    message: "A validade DEVE ser posterior à realização",
+    path: ["dataVencimento"] // O erro pisca em vermelho debaixo do input correto!
 });
 
 export type TreinamentoForm = z.infer<typeof treinamentoSchema>;
@@ -121,6 +117,17 @@ export function useTreinamentosUsuario(userId: string) {
 
     // ── Ações públicas ───────────────────────────────────────────
     const addTreinamento = async (data: TreinamentoForm): Promise<void> => {
+        const normalizeNome = (n: string) => n.replace(/\s+/g, '').toUpperCase();
+        const nomeAlvo = normalizeNome(data.nome);
+        
+        const duplicado = treinamentos.find(t => normalizeNome(t.nome) === nomeAlvo);
+        
+        if (duplicado) {
+            toast.error(`A certificação "${duplicado.nome}" já está ativa!`, {
+                description: "Para renovar, edite ou exclua o registro existente."
+            });
+            return Promise.reject(new Error("Treinamento duplicado")); // Mata a execução aqui
+        }
         const payload: CreateTreinamentoPayload = {
             userId,
             nome: data.nome,

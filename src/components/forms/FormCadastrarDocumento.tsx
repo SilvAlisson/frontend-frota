@@ -24,6 +24,15 @@ const docSchema = z.object({
   dataValidade: z.string().optional(),
   tipoVeiculo: z.string().optional(),
   veiculoId: z.string().optional(),
+}).refine((data) => {
+  if (!data.dataValidade) return true;
+  const vencimento = new Date(data.dataValidade + "T12:00:00Z");
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  return vencimento > hoje;
+}, {
+  message: "A validade não pode estar no passado ou expirar hoje.",
+  path: ["dataValidade"]
 });
 
 type DocFormInput = z.input<typeof docSchema>;
