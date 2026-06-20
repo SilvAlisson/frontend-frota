@@ -9,6 +9,7 @@ import { FormCadastrarUsuario } from './forms/FormCadastrarUsuario';
 import { FormEditarUsuario } from './forms/FormEditarUsuario';
 import { ModalQrCode } from './ModalQrCode';
 import { ModalTreinamentosUsuario } from './ModalTreinamentosUsuario';
+import { ModalGerarEtiquetas } from './rh/ModalGerarEtiquetas';
 import { exportarParaExcel } from '../utils';
 import { TableStyles } from '../styles/table';
 import { toast } from 'sonner';
@@ -22,7 +23,7 @@ function getFirstAndLastName(fullName: string) {
 
 import { 
   Trash2, Edit2, QrCode, GraduationCap, 
-  Search, Download, Plus, Users
+  Search, Download, Plus, Users, Printer
 } from 'lucide-react'; 
 
 import { PageHeader } from './ui/PageHeader';
@@ -99,6 +100,17 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
               closeModal(modalId);
               refetch(); // Atualiza a lista caso os treinos alterem o status do operador
           }}
+        />
+      )
+    });
+  };
+
+  const handleAbrirEtiquetasModal = () => {
+    const modalId = openModal('CUSTOM', {
+      content: (
+        <ModalGerarEtiquetas
+          usuarios={usuarios}
+          onClose={() => closeModal(modalId)}
         />
       )
     });
@@ -189,9 +201,12 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                 />
               </div>
 
-              <div className="flex gap-2 w-full sm:w-auto">
+              <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
                 <Button variant="secondary" onClick={handleExportar} className="whitespace-nowrap flex-1 sm:flex-none h-11" icon={<Download className="w-4 h-4" />}>
                   Excel
+                </Button>
+                <Button variant="secondary" onClick={handleAbrirEtiquetasModal} className="whitespace-nowrap flex-1 sm:flex-none h-11 shadow-sm border-border" icon={<Printer className="w-4 h-4 text-primary" />}>
+                  Imprimir QRs
                 </Button>
                 <Button onClick={() => setIsCadastroOpen(true)} className="whitespace-nowrap flex-1 sm:flex-none h-11 shadow-button hover:shadow-float-primary" icon={<Plus className="w-4 h-4" />}>
                   Novo Integrante
