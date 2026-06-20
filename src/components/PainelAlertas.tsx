@@ -13,6 +13,7 @@ import { haptics } from '../utils/haptics';
 import { useAlertas } from '../hooks/useAlertas';
 
 // Componentes Elite
+import { Modal } from './ui/Modal';
 import { EmptyState } from './ui/EmptyState';
 import { Callout } from './ui/Callout';
 import { Button } from './ui/Button';
@@ -187,20 +188,16 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
       </div>
 
       {/*  MODAL DE OCIOSIDADE (Renderizado por cima de tudo) */}
-      {alertaOcioso && (
-        <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200" 
-          onClick={() => setAlertaOcioso(null)}
-        >
-          <div 
-            className="bg-surface p-6 sm:p-8 rounded-[2rem] max-w-md w-full shadow-2xl border border-border/40 text-center animate-in zoom-in-95 duration-300" 
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="w-14 h-14 bg-stone-500/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-stone-500/20">
+      <Modal 
+        isOpen={!!alertaOcioso} 
+        onClose={() => setAlertaOcioso(null)} 
+        title="Triagem de Inatividade"
+      >
+        {alertaOcioso && (
+          <div className="text-center">
+            <div className="w-14 h-14 bg-stone-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-stone-500/20">
               {alertaOcioso.tipo === 'VEICULO_OCIOSO' ? <Timer className="w-7 h-7 text-stone-600" /> : <UserX className="w-7 h-7 text-stone-600" />}
             </div>
-            
-            <h2 className="text-xl font-black text-text-main uppercase tracking-tight mb-4">Triagem de Inatividade</h2>
             
             <p className="text-text-secondary text-sm font-medium mb-8 leading-relaxed">
               {alertaOcioso.mensagem}
@@ -248,24 +245,20 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/*  MODAL DE AUDITORIA (Renderizado por cima de tudo) */}
-      {alertaAuditoria && (
-        <div 
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200" 
-          onClick={() => setAlertaAuditoria(null)}
-        >
-          <div 
-            className="bg-surface p-6 sm:p-8 rounded-[2rem] max-w-md w-full shadow-2xl border border-border/40 text-center animate-in zoom-in-95 duration-300" 
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="w-14 h-14 bg-error/10 rounded-full flex items-center justify-center mx-auto mb-4 border border-error/20">
+      <Modal 
+        isOpen={!!alertaAuditoria} 
+        onClose={() => setAlertaAuditoria(null)}
+        title="Auditoria de Sistema"
+      >
+        {alertaAuditoria && (
+          <div className="text-center">
+            <div className="w-14 h-14 bg-error/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-error/20">
               {alertaAuditoria.tipo === 'TENTATIVA_FRAUDE' ? <ShieldAlert className="w-7 h-7 text-error" /> : <Bug className="w-7 h-7 text-error" />}
             </div>
-            
-            <h2 className="text-xl font-black text-text-main uppercase tracking-tight mb-4">Auditoria de Sistema</h2>
 
             <p className="text-text-secondary text-sm font-medium mb-8 leading-relaxed">
               {alertaAuditoria.mensagem}
@@ -299,8 +292,8 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
               </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </>
   );
 }
