@@ -46,7 +46,7 @@ export function FormPlanoManutencao({ onSuccess, onCancel }: FormPlanoManutencao
     reset,
     watch,
     formState: { errors, isSubmitting }
-  } = useForm<PlanoFormInput, any, PlanoFormOutput>({
+  } = useForm<PlanoFormInput, unknown, PlanoFormOutput>({
     resolver: zodResolver(planoSchema),
     defaultValues: {
       veiculoId: '',

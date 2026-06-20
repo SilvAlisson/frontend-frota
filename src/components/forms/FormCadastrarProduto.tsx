@@ -52,7 +52,7 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormProps) {
     reset,
     watch,
     formState: { errors, isSubmitting }
-  } = useForm<FormInput, any, FormOutput>({
+  } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(produtoSchema),
     defaultValues: {
       nome: '',

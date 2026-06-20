@@ -50,7 +50,7 @@ export function useAlertas() {
     mutationFn: async () => {
       await api.put(`/logs/resolver-todos`);
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: { data?: { message?: string } }) => {
       toast.success(data?.data?.message || 'Todos os logs foram arquivados com sucesso.');
       queryClient.invalidateQueries({ queryKey: ['alertas'] });
     },

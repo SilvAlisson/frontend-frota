@@ -61,12 +61,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     
     // Mapeia image para fotoUrl e name para nome antes de salvar na memória/state
-    const userData = { ...data.user };
-    if ((userData as any).image && !userData.fotoUrl) {
-        userData.fotoUrl = (userData as any).image;
+    const userData = { ...data.user } as typeof data.user & { image?: string; name?: string };
+    if (userData.image && !userData.fotoUrl) {
+        userData.fotoUrl = userData.image;
     }
-    if ((userData as any).name && !userData.nome) {
-        userData.nome = (userData as any).name;
+    if (userData.name && !userData.nome) {
+        userData.nome = userData.name;
     }
 
     sessionStorage.setItem('authUser', JSON.stringify(userData));

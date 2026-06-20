@@ -84,8 +84,8 @@ export function useWebAuthn() {
             toast.success('Biometria cadastrada com sucesso neste aparelho! ✅');
             return true;
 
-        } catch (error: any) {
-            if (error?.name === 'NotAllowedError') {
+        } catch (error: unknown) {
+            if (error instanceof Error && error.name === 'NotAllowedError') {
                 toast.error('O cadastro biométrico foi cancelado.');
             } else if (error?.name === 'InvalidStateError') {
                 toast.error('Este dispositivo já tem biometria cadastrada.');
@@ -153,10 +153,10 @@ export function useWebAuthn() {
                 return true;
             }
 
-        } catch (error: any) {
-            if (error?.name === 'NotAllowedError') {
+        } catch (error: unknown) {
+            if (error instanceof Error && error.name === 'NotAllowedError') {
                 toast.error('Ação cancelada pelo usuário.');
-            } else if (error?.name === 'NotFoundError') {
+            } else if (error instanceof Error && error.name === 'NotFoundError') {
                 toast.error('Nenhuma biometria encontrada. Digite seu E-mail antes de clicar no botão, ou faça login com senha e cadastre a biometria novamente.');
             } else {
                 toast.error('Falha ao ler biometria. Tente novamente.');

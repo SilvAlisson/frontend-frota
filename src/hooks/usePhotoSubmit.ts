@@ -31,7 +31,7 @@ export function usePhotoSubmit<T extends Record<string, unknown>>() {
       const publicUrlString = await uploadToR2(foto, fileName, foto.type || 'image/jpeg', fileType);
       const fotoUrl = publicUrlString;
 
-      const dadosCompletos: any = { ...dadosJornada };
+      const dadosCompletos: Record<string, unknown> = { ...dadosJornada };
 
       if (apiEndpoint.includes('abastecimentos')) {
         dadosCompletos.fotoNotaFiscalUrl = fotoUrl;

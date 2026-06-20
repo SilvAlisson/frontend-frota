@@ -46,7 +46,7 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormProps) {
     setValue,
     watch,
     formState: { errors, isSubmitting }
-  } = useForm<FormInput, any, FormOutput>({
+  } = useForm<FormInput, unknown, FormOutput>({
     resolver: zodResolver(fornecedorSchema),
     defaultValues: {
       nome: '',

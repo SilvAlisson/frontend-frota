@@ -120,9 +120,9 @@ export function DashboardRelatorios() {
             </summary>
             
             <div className="p-4 pt-0 flex flex-col gap-3 border-t border-border/50 bg-surface-hover/30">
-              <Select value={String(mes)} onChange={(e: any) => setMes(Number(e.target.value))} options={opcoesMeses} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
-              <Select value={String(ano)} onChange={(e: any) => setAno(Number(e.target.value))} options={opcoesAnos} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
-              <Select value={veiculoIdFiltro} onChange={(e: any) => setVeiculoIdFiltro(e.target.value)} options={opcoesVeiculos} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
+              <Select value={String(mes)} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMes(Number(e.target.value))} options={opcoesMeses} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
+              <Select value={String(ano)} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAno(Number(e.target.value))} options={opcoesAnos} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
+              <Select value={veiculoIdFiltro} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setVeiculoIdFiltro(e.target.value)} options={opcoesVeiculos} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
               <Button variant="secondary" onClick={handleExportar} className="h-12 w-full mt-2 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 hover:text-emerald-700 border-emerald-500/20 shadow-none transition-colors" icon={<FileSpreadsheet className="w-5 h-5 ml-1" />}>
                 Exportar Relatório Excel
               </Button>
@@ -132,14 +132,14 @@ export function DashboardRelatorios() {
           {/* Menu Desktop Flexível */}
           <div className="hidden lg:flex gap-2 xl:gap-3 items-center bg-surface p-2 rounded-2xl border border-border/60 shadow-sm w-full lg:w-auto">
             <div className="flex-1 min-w-[100px] xl:w-[120px]">
-              <Select value={String(mes)} onChange={(e: any) => setMes(Number(e.target.value))} options={opcoesMeses} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
+              <Select value={String(mes)} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMes(Number(e.target.value))} options={opcoesMeses} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
             </div>
             <div className="w-[80px] xl:w-[90px]">
-              <Select value={String(ano)} onChange={(e: any) => setAno(Number(e.target.value))} options={opcoesAnos} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
+              <Select value={String(ano)} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAno(Number(e.target.value))} options={opcoesAnos} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
             </div>
             <div className="w-px h-6 bg-border/60 mx-0.5 xl:mx-1"></div>
             <div className="flex-1 min-w-[150px] lg:w-[180px] xl:w-56">
-              <Select value={veiculoIdFiltro} onChange={(e: any) => setVeiculoIdFiltro(e.target.value)} options={opcoesVeiculos} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
+              <Select value={veiculoIdFiltro} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setVeiculoIdFiltro(e.target.value)} options={opcoesVeiculos} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
             </div>
             <div className="flex justify-end pl-1 xl:pl-0">
               <Button

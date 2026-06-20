@@ -13,7 +13,7 @@ import { cn } from '../lib/utils';
 import { CHART_COLORS_DEFEITOS } from '../config/chartColors';
 
 // Constantes de estilo e ícones
-const ICONS: Record<string, any> = { PNEU: Cog, FREIO: AlertCircle, MOTOR: Wrench, ILUMINACAO: Zap, CARROCERIA: CarFront, OLEO: Droplets, OUTRO: Info };
+const ICONS: Record<string, React.ElementType> = { PNEU: Cog, FREIO: AlertCircle, MOTOR: Wrench, ILUMINACAO: Zap, CARROCERIA: CarFront, OLEO: Droplets, OUTRO: Info };
 const CRITICOS = ['FREIO', 'MOTOR'];
 
 export function PainelDefeitosEncarregado() {

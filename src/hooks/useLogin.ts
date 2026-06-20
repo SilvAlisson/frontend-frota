@@ -75,7 +75,7 @@ export function useLogin() {
           }
         }).catch(() => null);
 
-        if (!(err as any)._toastHandled) {
+        if (!(err as { _toastHandled?: boolean })._toastHandled) {
             toast.error(getErrorMessage(err) || 'Crachá inválido.', { id: 'auth-error' });
         }
         setIsMagicLoggingIn(false);
@@ -158,7 +158,7 @@ export function useLogin() {
           _navigator: { userAgent: navigator.userAgent }
         }
       }).catch(() => null);
-      if (!(err as any)._toastHandled) {
+      if (!(err as { _toastHandled?: boolean })._toastHandled) {
           toast.error((err instanceof Error ? err.message : 'Erro desconhecido') || 'E-mail ou senha incorretos.', { id: 'auth-error' });
       }
       throw err;
@@ -194,7 +194,7 @@ export function useLogin() {
       }).catch(() => null);
 
       toast.dismiss(toastId);
-      if (!(err as any)._toastHandled) {
+      if (!(err as { _toastHandled?: boolean })._toastHandled) {
           toast.error(getErrorMessage(err) || 'Token inválido ou expirado.', { id: 'auth-error' });
       }
       throw new Error(getErrorMessage(err) || 'Token inválido ou expirado.');

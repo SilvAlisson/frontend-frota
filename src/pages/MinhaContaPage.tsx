@@ -133,8 +133,8 @@ export function MinhaContaPage() {
             });
             toast.success('Senha alterada com sucesso!');
             reset();
-        } catch (err: any) {
-            toast.error(err?.response?.data?.error || 'Erro ao alterar senha.');
+        } catch (err: unknown) {
+            toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao alterar senha.');
         } finally {
             setIsAlterandoSenha(false);
         }
@@ -272,10 +272,14 @@ export function MinhaContaPage() {
                                 <p className="text-sm font-bold text-text-main">{user.matricula}</p>
                             </div>
                         )}
-                        {(user as any).cargo && (
+                        {(user as { cargo?: { nome?: string } | string }).cargo && (
                             <div className="bg-surface-hover/50 rounded-2xl p-3">
                                 <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-1">Cargo</p>
-                                <p className="text-sm font-bold text-text-main">{(user as any).cargo?.nome || (user as any).cargo}</p>
+                                <p className="text-sm font-bold text-text-main">
+                                    {typeof (user as { cargo?: { nome?: string } | string }).cargo === 'string'
+                                        ? (user as { cargo?: string }).cargo
+                                        : (user as { cargo?: { nome?: string } }).cargo?.nome}
+                                </p>
                             </div>
                         )}
                     </div>

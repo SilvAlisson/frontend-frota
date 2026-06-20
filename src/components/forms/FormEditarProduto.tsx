@@ -60,7 +60,7 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
     reset,
     control,
     formState: { errors, isSubmitting }
-  } = useForm<ProdutoFormInput, any, ProdutoFormOutput>({
+  } = useForm<ProdutoFormInput, unknown, ProdutoFormOutput>({
     resolver: zodResolver(produtoSchema),
     defaultValues: {
       nome: '',
