@@ -304,7 +304,10 @@ export function AdminLayout() {
               <header className="xl:hidden flex items-center justify-between px-4 h-[72px] bg-surface sticky top-0 z-30 border-b border-border shadow-sm shrink-0">
                   <div className="flex items-center gap-3">
                       <Button variant="ghost" size="icon"
-                          onClick={() => setIsSidebarOpen(true)}
+                          onClick={(e) => {
+                            e.currentTarget.blur();
+                            setIsSidebarOpen(true);
+                          }}
                           className="p-2 -ml-2 text-text-main hover:bg-surface-hover rounded-xl active:scale-95 transition-all touch-target focus-ring"
                           aria-label="Abrir menu"
                       >
