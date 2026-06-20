@@ -200,9 +200,9 @@ export function GestaoVeiculos() {
 
             // CARD MOBILE
             renderMobile={(v) => (
-              <div className="p-5 border-b border-border/50 hover:bg-surface-hover/30 transition-colors cursor-pointer hover-lift rounded-2xl m-2 glass" onClick={() => navigate(`/admin/veiculos/${v.id}`)}>
-                <div className="flex justify-between items-start">
-                  <div className="space-y-4">
+              <button className="text-left w-full block p-5 border-b border-border/50 hover:bg-surface-hover/30 transition-colors cursor-pointer hover-lift rounded-2xl m-2 glass" onClick={() => navigate(`/admin/veiculos/${v.id}`)}>
+                <div className="flex justify-between items-start w-full">
+                  <div className="space-y-4 w-full">
                     <div className="flex items-center gap-3">
                       {/* Visual de placa cinza mobile */}
                       <span className="text-data text-[13px] bg-surface hover:bg-surface-hover px-2.5 py-1 rounded-md border border-border/80 shadow-[inset_0_1px_1px_rgba(255,255,255,0.8),0_1px_2px_rgba(0,0,0,0.05)] text-text-main transition-colors uppercase">
@@ -218,15 +218,16 @@ export function GestaoVeiculos() {
                     </div>
                   </div>
 
-                  <div onClick={e => e.stopPropagation()} className="shrink-0">
+                  <div onClick={e => e.stopPropagation()} className="shrink-0 ml-2">
                     <DropdownAcoes
                       onVerDetalhes={() => navigate(`/admin/veiculos/${v.id}`)}
                       onEditar={() => setVeiculoParaEditar(v)}
                       onExcluir={() => setVeiculoParaExcluir(v.id)}
+                      excluirLabel="Inativar"
                     />
                   </div>
                 </div>
-              </div>
+              </button>
             )}
           />
         </div>

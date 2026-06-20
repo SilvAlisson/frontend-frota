@@ -144,12 +144,12 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   if (isCadastroOpen) {
     return (
       <div className="animate-in slide-in-from-right duration-500">
-        <div
+        <button
           className="mb-4 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit"
           onClick={() => setIsCadastroOpen(false)}
         >
           <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar para o diretório
-        </div>
+        </button>
         <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-2xl mx-auto">
           <FormCadastrarUsuario
             onSuccess={() => { setIsCadastroOpen(false); refetch(); }}
@@ -163,12 +163,12 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   if (usuarioParaEditar) {
     return (
       <div className="animate-in slide-in-from-right duration-500">
-        <div
+        <button
           className="mb-4 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit"
           onClick={() => setUsuarioParaEditar(null)}
         >
           <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar para o diretório
-        </div>
+        </button>
         <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-2xl mx-auto">
           <FormEditarUsuario
             userId={usuarioParaEditar.id}
@@ -289,7 +289,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
             // --- MOBILE (Cards) ---
             renderMobile={(u) => (
-              <div className="p-5 border-b border-border/50 hover:bg-surface-hover/30 transition-colors cursor-pointer hover-lift rounded-2xl m-2 glass" onClick={() => setUsuarioParaEditar(u)}>
+              <button className="text-left w-full p-5 border-b border-border/50 hover:bg-surface-hover/30 transition-colors cursor-pointer hover-lift rounded-2xl m-2 glass block" onClick={() => setUsuarioParaEditar(u)}>
                 <div className="flex flex-col">
                   <div className="flex items-start gap-4">
                     <Avatar nome={u.nome} url={u.fotoUrl || u.image} size="lg" />
@@ -315,7 +315,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                     )}
                   </div>
                 </div>
-              </div>
+              </button>
             )}
           />
         </div>
