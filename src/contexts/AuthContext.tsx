@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode, useEffect, useState, useCallback, useMemo } from 'react';
+import { createContext, useContext, type ReactNode, useEffect, useState, useCallback, useMemo } from 'react';
 import { useSession, signOut as betterSignOut } from '../lib/auth-client';
 import type { User } from '../types';
 
