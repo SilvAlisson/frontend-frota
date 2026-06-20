@@ -186,6 +186,7 @@ export function FormRenovarDocumento({ documentoId, onSuccess, onCancel }: FormR
                     }}
                     error={errors.dataValidade?.message}
                     disabled={isFormLocked}
+                    disableFuture={false}
                   />
                 )}
               />

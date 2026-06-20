@@ -138,6 +138,7 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
                 }}
                 error={errors.dataValidade?.message}
                 disabled={isFormLocked}
+                disableFuture={false}
               />
             )}
           />

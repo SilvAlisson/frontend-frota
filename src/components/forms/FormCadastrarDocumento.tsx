@@ -254,6 +254,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
                       }}
                       error={errors.dataValidade?.message}
                       disabled={isFormLocked}
+                      disableFuture={false}
                     />
                   )}
                 />
