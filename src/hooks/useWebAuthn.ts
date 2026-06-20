@@ -85,12 +85,13 @@ export function useWebAuthn() {
             return true;
 
         } catch (error: unknown) {
-            if (error instanceof Error && error.name === 'NotAllowedError') {
+            const err = error as Error;
+            if (err.name === 'NotAllowedError') {
                 toast.error('O cadastro biométrico foi cancelado.');
-            } else if (error?.name === 'InvalidStateError') {
+            } else if (err.name === 'InvalidStateError') {
                 toast.error('Este dispositivo já tem biometria cadastrada.');
             } else {
-                toast.error(`Erro no sensor: ${error?.message || error?.name || 'Desconhecido'}`);
+                toast.error(`Erro no sensor: ${err.message || err.name || 'Desconhecido'}`);
             }
             if (import.meta.env.DEV) console.error('[useWebAuthn] registerDevice:', error);
             return false;
