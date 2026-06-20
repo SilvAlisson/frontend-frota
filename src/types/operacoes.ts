@@ -50,6 +50,7 @@ export interface Abastecimento {
   justificativa?: string | null;
   observacoes?: string | null;
   fotoNotaFiscalUrl: string | null;
+  status?: 'PENDENTE_AVALIACAO' | 'APROVADO' | 'REJEITADO' | string;
 
   quantidade?: number | string;
 
