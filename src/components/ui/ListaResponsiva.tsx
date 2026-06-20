@@ -90,14 +90,14 @@ export function ListaResponsiva<T extends { id?: string | number }>({
         style={virtualized ? { height: virtualContainerHeight } : {}}
       >
         <div className="overflow-x-auto min-h-full custom-scrollbar">
-          <table className="w-full text-sm text-left border-collapse block min-w-[800px]">
-            <thead className={`w-full block ${virtualized ? "sticky top-0 z-10 bg-surface shadow-sm" : ""}`}>
+          <table className="w-full text-sm text-left border-collapse min-w-[800px]">
+            <thead className={`w-full ${virtualized ? "sticky top-0 z-10 bg-surface shadow-sm" : ""}`}>
               <tr className={`w-full grid ${desktopGridCols}`}>{desktopHeader}</tr>
             </thead>
 
             <tbody
               ref={virtualized ? undefined : desktopParentRef}
-              className="bg-surface w-full block"
+              className="bg-surface w-full"
               style={virtualized ? { height: `${desktopVirtualizer.getTotalSize()}px`, position: 'relative' } : undefined}
             >
               {virtualized ? (
