@@ -73,7 +73,7 @@
 
   /* --- 5. AJUSTES DE RAIO (Refinamento do DESIGN.md) --- */
   --radius-lg: 0.75rem;
-  --radius-xl: 0.75rem;
+  --radius-xl: 0.875rem;
   --radius-2xl: 1rem;
   --radius-3xl: 1.5rem;
   --radius-md: 0.5rem;
@@ -192,8 +192,16 @@
   .slide-in-from-top-1 { --tw-enter-translate-y: -4px; animation-name: slide-in-from-top; }
   .slide-in-from-top-2 { --tw-enter-translate-y: -8px; animation-name: slide-in-from-top; }
 
-  .slide-in-from-right-2 { animation-name: slide-in-from-bottom; }
-  .slide-in-from-left-2 { animation-name: slide-in-from-bottom; }
+  @keyframes slide-in-from-right {
+    from { transform: translateX(8px); opacity: 0; }
+    to   { transform: translateX(0);   opacity: 1; }
+  }
+  @keyframes slide-in-from-left {
+    from { transform: translateX(-8px); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+  .slide-in-from-right-2 { animation-name: slide-in-from-right; }
+  .slide-in-from-left-2  { animation-name: slide-in-from-left;  }
 
   .zoom-in-95 { --tw-enter-scale: 0.95; animation-name: zoom-in; }
   .zoom-out-95 { --tw-enter-scale: 0.95; animation-name: zoom-out; }
@@ -438,10 +446,12 @@
   }
 }
 
-/* --- SCROLLBAR FORÇADA GLOBALMENTE (Fora de layers para máxima prioridade) --- */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) var(--background);
+/* --- SCROLLBAR GLOBALMENTE --- */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) var(--background);
+  }
 }
 
 html {
