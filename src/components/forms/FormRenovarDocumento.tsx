@@ -104,7 +104,7 @@ export function FormRenovarDocumento({ documentoId, onSuccess, onCancel }: FormR
     return <div className="p-10 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>;
   }
 
-  const showValidade = !['LICENCA_AMBIENTAL', 'AST'].includes(docOriginal.categoria);
+  const showValidade = true;
   const isFormLocked = isSubmitting || isSaving || isUploading;
 
   return (

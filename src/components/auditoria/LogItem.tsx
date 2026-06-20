@@ -51,11 +51,26 @@ export function LogItem({ log, onArquivar, isArquivando }: LogItemProps) {
                 {format(new Date(log.dataCriacao), "dd MMM yyyy, HH:mm:ss", { locale: ptBR })}
               </span>
               
-              {log.usuario && (
+              {log.usuario ? (
                 <span className="text-[10px] bg-primary/10 text-primary px-2 py-0.5 rounded-md border border-primary/20 flex items-center gap-1.5 font-bold shadow-sm">
                   <Fingerprint className="w-3 h-3" />
                   {log.usuario.nome.split(' ')[0]} <span className="opacity-70 font-normal">({log.usuario.role})</span>
                 </span>
+              ) : (
+                <>
+                  {log.contexto && typeof log.contexto === 'object' && (log.contexto as Record<string, unknown>).emailTentado && (
+                    <span className="text-[10px] bg-error/10 text-error px-2 py-0.5 rounded-md border border-error/20 flex items-center gap-1.5 font-bold shadow-sm" title={String((log.contexto as Record<string, unknown>).emailTentado)}>
+                      <Fingerprint className="w-3 h-3" />
+                      {String((log.contexto as Record<string, unknown>).emailTentado)}
+                    </span>
+                  )}
+                  {log.contexto && typeof log.contexto === 'object' && (log.contexto as Record<string, unknown>).tentativaToken && (
+                    <span className="text-[10px] bg-error/10 text-error px-2 py-0.5 rounded-md border border-error/20 flex items-center gap-1.5 font-bold shadow-sm" title={String((log.contexto as Record<string, unknown>).tentativaToken)}>
+                      <Fingerprint className="w-3 h-3" />
+                      {String((log.contexto as Record<string, unknown>).tentativaToken).slice(0, 15)}...
+                    </span>
+                  )}
+                </>
               )}
 
               {!!log.contexto?._auditIp && (
