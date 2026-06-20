@@ -31,8 +31,6 @@ interface ModalProps {
     onClose: () => void;
 }
 
-type TreinamentoFormAprimorado = TreinamentoForm & { diasAntecedenciaAlerta: number };
-
 interface StatusConfig {
     /** Cor sólida para o indicador lateral da card. */
     indicatorBg: string;
@@ -125,8 +123,8 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
         handleSubmit,
         reset,
         formState: { errors, isSubmitting },
-    } = useForm<TreinamentoFormAprimorado>({
-        resolver: zodResolver(treinamentoSchema) as any,
+    } = useForm<TreinamentoForm>({
+        resolver: zodResolver(treinamentoSchema),
         defaultValues: {
             nome: '',
             dataRealizacao: new Date().toISOString().split('T')[0],

@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { ShieldCheck, AlertTriangle, Calendar, FileSpreadsheet, CheckCircle2, Loader2, GraduationCap } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 // Tipagem baseada no que a API vai nos devolver
 interface TreinamentoPublico {
@@ -20,41 +21,82 @@ interface IntegrantePublico {
   treinamentos: TreinamentoPublico[];
 }
 
+interface StatusConfig {
+  indicatorBg: string;
+  badgeBg: string;
+  textColor: string;
+  border: string;
+  Icon: LucideIcon;
+  label: string;
+}
+
+function getStatusInfo(vencimento: string | null): StatusConfig {
+  if (!vencimento) {
+      return {
+          indicatorBg: 'bg-info',
+          badgeBg: 'bg-info/10',
+          textColor: 'text-info',
+          border: 'border-info/20',
+          Icon: CheckCircle2,
+          label: 'Vitalício',
+      };
+  }
+
+  const [year, month, day] = vencimento.split('T')[0].split('-').map(Number);
+  const vencUTC = Date.UTC(year, month - 1, day);
+  const now = new Date();
+  const hojeUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffDias = Math.ceil((vencUTC - hojeUTC) / (1000 * 60 * 60 * 24));
+
+  if (diffDias < 0) {
+      return {
+          indicatorBg: 'bg-error',
+          badgeBg: 'bg-error/10',
+          textColor: 'text-error',
+          border: 'border-error/20',
+          Icon: AlertTriangle,
+          label: 'Vencido',
+      };
+  }
+  if (diffDias < 30) {
+      return {
+          indicatorBg: 'bg-warning-500',
+          badgeBg: 'bg-warning-500/10',
+          textColor: 'text-warning-600',
+          border: 'border-warning-500/20',
+          Icon: AlertTriangle,
+          label: 'Expira Brevemente',
+      };
+  }
+  return {
+      indicatorBg: 'bg-success',
+      badgeBg: 'bg-success/10',
+      textColor: 'text-success',
+      border: 'border-success/20',
+      Icon: CheckCircle2,
+      label: 'Válido',
+  };
+}
+
+function formatDate(d: string) {
+  return new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
+}
+
 export function DossiePublico() {
   const { id } = useParams<{ id: string }>();
-  const [integrante, setIntegrante] = useState<IntegrantePublico | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
 
-  useEffect(() => {
-    async function fetchDossie() {
-      try {
-        // Vamos usar uma rota pública no backend para buscar isso
-        const { data } = await api.get(`/treinamentos/dossie/${id}`);
-        setIntegrante(data);
-      } catch (err) {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    }
-    if (id) fetchDossie();
-  }, [id]);
+  const { data: integrante, isLoading, isError } = useQuery<IntegrantePublico>({
+    queryKey: ['dossie', id],
+    queryFn: async () => {
+      const { data } = await api.get(`/treinamentos/dossie/${id}`);
+      return data;
+    },
+    enabled: !!id,
+    staleTime: 1000 * 60 * 5, // 5 min de cache para evitar requisições repetidas se a pessoa fechar/abrir o QR Code
+    retry: 1
+  });
 
-  const getStatusInfo = (vencimento: string | null) => {
-    if (!vencimento) return { color: 'bg-info/10 text-info border-info/20', icon: CheckCircle2, text: 'Vitalício' };
-    const hoje = new Date();
-    const dataVenc = new Date(vencimento);
-    const diffDias = Math.ceil((dataVenc.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-
-    if (diffDias < 0) return { color: 'bg-error/10 text-error border-error/20', icon: AlertTriangle, text: 'Vencido' };
-    if (diffDias < 30) return { color: 'bg-warning-500/10 text-warning-600 border-warning-500/20', icon: AlertTriangle, text: 'Expira Brevemente' };
-    return { color: 'bg-success/10 text-success border-success/20', icon: CheckCircle2, text: 'Válido' };
-  };
-
-  const formatDate = (d: string) => new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center">
         <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
@@ -63,14 +105,14 @@ export function DossiePublico() {
     );
   }
 
-  if (error || !integrante) {
+  if (isError || !integrante) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-20 h-20 bg-error/10 text-error rounded-full flex items-center justify-center mb-6 border-2 border-error/20">
+        <div className="w-20 h-20 bg-error/10 text-error rounded-full flex items-center justify-center mb-6 border-2 border-error/20 shadow-inner">
           <AlertTriangle className="w-10 h-10" />
         </div>
         <h1 className="text-2xl font-black text-text-main uppercase tracking-tight mb-2">Dossiê Indisponível</h1>
-        <p className="text-text-muted max-w-sm">Não foi possível localizar os registros deste integrante. O QRCode pode ser inválido ou o integrante foi inativado.</p>
+        <p className="text-text-muted max-w-sm">Não foi possível localizar os registros oficiais deste integrante. O QRCode pode ser inválido ou o integrante inativado.</p>
       </div>
     );
   }
@@ -101,7 +143,7 @@ export function DossiePublico() {
           
           <h1 className="text-2xl font-black text-text-main tracking-tight leading-tight">{integrante.nome}</h1>
           <div className="flex items-center gap-2 mt-3">
-             <span className="bg-surface-hover px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest border border-border/60 text-text-secondary">{integrante.role}</span>
+             <span className="bg-surface-hover px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest border border-border/60 text-text-secondary shadow-sm">{integrante.role}</span>
              {integrante.matricula && (
                <span className="text-[10px] font-mono font-bold px-2 py-1 rounded-lg bg-primary/5 text-primary border border-primary/20">MAT: {integrante.matricula}</span>
              )}
@@ -114,29 +156,29 @@ export function DossiePublico() {
         </h2>
 
         {integrante.treinamentos.length === 0 ? (
-           <div className="bg-surface border border-dashed border-border/60 rounded-3xl p-8 text-center">
+           <div className="bg-surface border border-dashed border-border/60 rounded-3xl p-8 text-center shadow-sm">
              <p className="text-sm font-bold text-text-muted uppercase tracking-widest">Nenhum certificado atrelado a este integrante.</p>
            </div>
         ) : (
           <div className="space-y-4">
             {integrante.treinamentos.map(treino => {
               const status = getStatusInfo(treino.dataVencimento);
-              const StatusIcon = status.icon;
+              const StatusIcon = status.Icon;
 
               return (
-                <div key={treino.id} className="bg-surface rounded-3xl p-5 border border-border/60 shadow-sm relative overflow-hidden flex flex-col gap-4">
-                  <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${status.color.split(' ')[0]}`}></div>
+                <div key={treino.id} className="bg-surface rounded-3xl p-5 border border-border/60 shadow-sm relative overflow-hidden flex flex-col gap-4 group hover:shadow-md transition-all">
+                  <div className={`absolute left-0 top-0 bottom-0 w-1.5 ${status.indicatorBg}`}></div>
                   
                   <div className="pl-2">
-                    <h3 className="font-black text-text-main text-lg leading-tight mb-3">{treino.nome}</h3>
+                    <h3 className="font-black text-text-main text-lg leading-tight mb-3 group-hover:text-primary transition-colors">{treino.nome}</h3>
                     
                     <div className="flex flex-wrap gap-2">
                       <span className="flex items-center gap-1.5 bg-background px-2.5 py-1 rounded-md text-[10px] text-text-secondary font-bold uppercase tracking-widest border border-border/60">
                           <Calendar className="w-3 h-3" /> Emitido: {formatDate(treino.dataRealizacao)}
                       </span>
-                      <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border ${status.color}`}>
+                      <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest border ${status.badgeBg} ${status.textColor} ${status.border}`}>
                           <StatusIcon className="w-3.5 h-3.5" />
-                          {status.text}
+                          {status.label}
                       </span>
                     </div>
                   </div>
@@ -146,9 +188,9 @@ export function DossiePublico() {
                       href={treino.comprovanteUrl} 
                       target="_blank" 
                       rel="noreferrer"
-                      className="mt-2 flex items-center justify-center gap-2 w-full bg-primary/5 hover:bg-primary/10 text-primary border border-primary/20 rounded-xl p-3 text-xs font-black uppercase tracking-widest transition-colors"
+                      className="mt-2 flex items-center justify-center gap-2 w-full bg-primary/5 hover:bg-primary/10 text-primary border border-primary/20 rounded-xl p-3 text-xs font-black uppercase tracking-widest transition-colors shadow-sm"
                     >
-                      <FileSpreadsheet className="w-4 h-4" /> Visualizar Documento Oficial
+                      <FileSpreadsheet className="w-4 h-4" /> Visualizar Documento
                     </a>
                   )}
                 </div>
