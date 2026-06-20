@@ -17,7 +17,7 @@ import { KpiCard } from './ui/KpiCard';
 import {
   Fuel, Wrench, Gauge, DollarSign, Activity,
   Droplets, TrendingUp, FileSpreadsheet,
-  BarChart2, LineChart
+  BarChart2, LineChart, Filter
 } from 'lucide-react';
 import type { Veiculo } from '../types';
 
@@ -110,22 +110,24 @@ export function DashboardRelatorios() {
         {/* FILTROS RESPONSIVOS */}
         <div className="w-full lg:w-auto">
           {/* Menu Mobile */}
-          <details className="group lg:hidden bg-surface rounded-2xl border border-border/60 shadow-sm">
+          <details className="group lg:hidden bg-surface rounded-2xl border border-border/60 shadow-sm overflow-hidden [&_div.det-content]:max-h-0 [&[open]_div.det-content]:max-h-[500px] [&_div.det-content]:transition-all [&_div.det-content]:duration-300 [&_div.det-content]:ease-in-out">
             <summary className="flex items-center justify-between p-4 cursor-pointer list-none font-bold text-text-main touch-manipulation">
               <span className="flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>
+                <Filter className="w-5 h-5 text-primary" />
                 Filtros e Configurações
               </span>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="transform transition-transform duration-300 group-open:rotate-180 text-text-muted"><polyline points="6 9 12 15 18 9"></polyline></svg>
             </summary>
             
-            <div className="p-4 pt-0 flex flex-col gap-3 border-t border-border/50 bg-surface-hover/30">
-              <Select value={String(mes)} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMes(Number(e.target.value))} options={opcoesMeses} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
-              <Select value={String(ano)} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAno(Number(e.target.value))} options={opcoesAnos} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
-              <Select value={veiculoIdFiltro} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setVeiculoIdFiltro(e.target.value)} options={opcoesVeiculos} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
-              <Button variant="secondary" onClick={handleExportar} className="h-12 w-full mt-2 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 hover:text-emerald-700 border-emerald-500/20 shadow-none transition-colors" icon={<FileSpreadsheet className="w-5 h-5 ml-1" />}>
-                Exportar Relatório Excel
-              </Button>
+            <div className="det-content overflow-hidden">
+              <div className="p-4 pt-0 flex flex-col gap-3 border-t border-border/50 bg-surface-hover/30">
+                <Select value={String(mes)} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setMes(Number(e.target.value))} options={opcoesMeses} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
+                <Select value={String(ano)} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setAno(Number(e.target.value))} options={opcoesAnos} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
+                <Select value={veiculoIdFiltro} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setVeiculoIdFiltro(e.target.value)} options={opcoesVeiculos} className="h-12 border-none bg-surface hover:bg-surface-hover shadow-sm text-base font-bold focus:ring-1 focus:ring-primary" containerClassName="!mb-0 w-full" />
+                <Button variant="secondary" onClick={handleExportar} className="h-12 w-full mt-2 bg-success/10 text-success hover:bg-success/20 hover:text-success border-success/20 shadow-none transition-colors" icon={<FileSpreadsheet className="w-5 h-5 ml-1" />}>
+                  Exportar Relatório Excel
+                </Button>
+              </div>
             </div>
           </details>
 
@@ -145,8 +147,9 @@ export function DashboardRelatorios() {
               <Button
                 variant="secondary"
                 onClick={handleExportar}
-                className="h-10 w-10 p-0 rounded-xl bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 hover:text-emerald-700 border-emerald-500/20 shadow-none transition-colors"
+                className="h-10 w-10 p-0 rounded-xl bg-success/10 text-success hover:bg-success/20 hover:text-success border-success/20 shadow-none transition-colors"
                 title="Exportar Relatório Excel"
+                aria-label="Exportar Relatório Excel"
                 icon={<FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5 mx-auto" />}
               />
             </div>

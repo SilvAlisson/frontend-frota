@@ -45,7 +45,7 @@ function BottomNavItem({ icon: Icon, label, onClick, accent = 'yellow', badge = 
   yellow: 'text-warning-600 dark:text-warning bg-warning/10 group-active:bg-warning/20',
   red: 'text-error bg-error/10 group-active:bg-error/20',
   sky: 'text-info bg-info/10 group-active:bg-info/20',
-  purple: 'text-purple-600 dark:text-purple-400 bg-purple-500/10 group-active:bg-purple-500/20',
+  purple: 'text-primary bg-primary/10 group-active:bg-primary/20',
  };
 
  const handleClick = () => {
@@ -202,7 +202,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
      <>
       {/* === BLOCO DE JORNADA === */}
       {!tenhoJornadaAtiva ? (
-       <div className="bg-gradient-to-br from-primary to-primary-hover rounded-[2rem] p-6 sm:p-8 shadow-[0_20px_60px_-10px_rgba(var(--color-primary),0.5)] relative overflow-hidden group">
+       <div className="bg-gradient-to-br from-primary to-primary-hover rounded-3xl p-6 sm:p-8 shadow-[0_20px_60px_-10px_rgba(var(--color-primary),0.5)] relative overflow-hidden group">
         <Navigation className="absolute -right-8 -bottom-8 w-48 h-48 text-white/10 -rotate-12 group-hover:scale-110 group-hover:rotate-0 transition-transform duration-700 pointer-events-none" />
 
         <div className="relative z-10 flex flex-col gap-6">
@@ -259,7 +259,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
         { icon: Fuel, label: 'Abastecimento', sub: 'Lançar combustível ou aditivo', accent: 'text-warning-600 dark:text-warning bg-warning/10', border: 'hover:border-warning/30', onClick: () => setModalAbastecimentoOpen(true) },
         { icon: AlertTriangle, label: 'Reportar Defeito', sub: 'Problema no veículo? Envie para a base', accent: 'text-error bg-error/10', border: 'hover:border-error/30', onClick: () => setModalDefeitoOpen(true) },
         { icon: FileText, label: 'Licenças', sub: 'Documentos legais KLIN e ASTs', accent: 'text-info bg-info/10', border: 'hover:border-info/30', onClick: () => setModalDocumentosOpen(true) },
-        { icon: History, label: 'Histórico', sub: 'Registro pessoal de turnos anteriores', accent: 'text-purple-600 dark:text-purple-400 bg-purple-500/10', border: 'hover:border-purple-500/30', onClick: () => setModalHistoricoOpen(true) },
+        { icon: History, label: 'Histórico', sub: 'Registro pessoal de turnos anteriores', accent: 'text-primary bg-primary/10', border: 'hover:border-primary/30', onClick: () => setModalHistoricoOpen(true) },
        ].map(({ icon: Icon, label, sub, accent, border, onClick }) => (
         <Button
          variant="ghost"

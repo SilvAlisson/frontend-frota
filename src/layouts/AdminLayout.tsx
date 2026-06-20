@@ -17,7 +17,7 @@ import { api } from '../services/api';
 import { toast } from 'sonner';
 import type { User } from '../types';
 import { usePushNotifications } from '../hooks/usePushNotifications';
-
+import { cn } from '../lib/utils';
 // Tipo local para os logs de auditoria do polling
 interface SystemLog {
   id: string;
@@ -85,14 +85,13 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
                   <Link
                     key={item.path}
                     to={item.path}
-                    className={`
-                      flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 group relative overflow-hidden
-                      ${isActive 
-                        ? 'bg-primary text-white shadow-md hover:shadow-lg' 
-                        : 'text-text-secondary hover:bg-surface-hover hover:text-text-main'
-                      }
-                      ${item.highlight && !isActive ? 'border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10' : 'border border-transparent'}
-                    `}
+                    className={cn(
+                      "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 group relative overflow-hidden",
+                      isActive 
+                        ? "bg-primary text-white shadow-md hover:shadow-lg" 
+                        : "text-text-secondary hover:bg-surface-hover hover:text-text-main",
+                      item.highlight && !isActive ? "border border-primary/20 bg-primary/5 text-primary hover:bg-primary/10" : "border border-transparent"
+                    )}
                   >
                     <item.icon className={`w-5 h-5 shrink-0 transition-transform duration-300 ${isActive ? 'text-white' : 'text-text-muted group-hover:text-primary group-hover:scale-110'}`} />
                     <span className="truncate flex-1 tracking-tight">{item.label}</span>
@@ -338,7 +337,7 @@ export function AdminLayout() {
                 key={location.pathname} 
                 initial={{ opacity: 0, x: 20, scale: 0.98 }}
                 animate={{ opacity: 1, x: 0, scale: 1 }}
-                exit={{ opacity: 0, x: -20, scale: 0.98 }}
+                exit={{ opacity: 0, scale: 0.98 }}
                 transition={{ duration: 0.25, ease: 'easeOut' }}
                 className={`flex-1 w-full max-w-[1600px] mx-auto pb-10 ${
                   isShareMode ? 'p-0' : 'px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10'
