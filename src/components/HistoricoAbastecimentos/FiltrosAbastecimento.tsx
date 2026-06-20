@@ -11,7 +11,7 @@ interface FiltrosAbastecimentoProps {
     veiculoId: string;
     fornecedorId: string;
     tipoProduto: string;
-    status?: string;
+    status: string;
   };
   setFiltros: React.Dispatch<React.SetStateAction<{
     dataInicio: string;
@@ -19,7 +19,7 @@ interface FiltrosAbastecimentoProps {
     veiculoId: string;
     fornecedorId: string;
     tipoProduto: string;
-    status?: string;
+    status: string;
   }>>;
   veiculosOptions: { value: string; label: string }[];
   fornecedoresOptions: { value: string; label: string }[];
