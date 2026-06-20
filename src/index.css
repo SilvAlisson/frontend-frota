@@ -80,9 +80,10 @@
   --radius-sm: 0.25rem;
 
   /* --- 6. ESCALA DE Z-INDEX OFICIAL (Tailwind v4 Oxide) --- */
+  /* Hierarquia: floating → dropdown → overlay → modal → toast → max */
   --z-index-base: 0;
   --z-index-floating: 10;
-  --z-index-dropdown: 65;
+  --z-index-dropdown: 50;  /* CORRIGIDO: era 65, ficava acima do overlay */
   --z-index-overlay: 60;
   --z-index-modal: 70;
   --z-index-toast: 80;
