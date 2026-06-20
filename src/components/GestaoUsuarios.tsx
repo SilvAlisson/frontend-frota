@@ -290,7 +290,18 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
             // --- MOBILE (Cards) ---
             renderMobile={(u) => (
-              <button className="text-left w-full p-5 border-b border-border/50 hover:bg-surface-hover/30 transition-colors cursor-pointer hover-lift rounded-2xl m-2 glass block" onClick={() => setUsuarioParaEditar(u)}>
+              <div 
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    setUsuarioParaEditar(u);
+                  }
+                }}
+                className="text-left w-full p-5 border-b border-border/50 hover:bg-surface-hover/30 transition-colors cursor-pointer hover-lift rounded-2xl m-2 glass block" 
+                onClick={() => setUsuarioParaEditar(u)}
+              >
                 <div className="flex flex-col">
                   <div className="flex items-start gap-4">
                     <Avatar nome={u.nome} url={u.fotoUrl || u.image} size="lg" />
@@ -316,7 +327,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                     )}
                   </div>
                 </div>
-              </button>
+              </div>
             )}
           />
         </div>

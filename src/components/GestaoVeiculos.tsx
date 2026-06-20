@@ -201,7 +201,18 @@ export function GestaoVeiculos() {
 
             // CARD MOBILE
             renderMobile={(v) => (
-              <button className="text-left w-full block p-5 border-b border-border/50 hover:bg-surface-hover/30 transition-colors cursor-pointer hover-lift rounded-2xl m-2 glass" onClick={() => navigate(`/admin/veiculos/${v.id}`)}>
+              <div 
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(`/admin/veiculos/${v.id}`);
+                  }
+                }}
+                className="text-left w-full block p-5 border-b border-border/50 hover:bg-surface-hover/30 transition-colors cursor-pointer hover-lift rounded-2xl m-2 glass" 
+                onClick={() => navigate(`/admin/veiculos/${v.id}`)}
+              >
                 <div className="flex justify-between items-start w-full">
                   <div className="space-y-4 w-full">
                     <div className="flex items-center gap-3">
@@ -228,7 +239,7 @@ export function GestaoVeiculos() {
                     />
                   </div>
                 </div>
-              </button>
+              </div>
             )}
           />
         </div>
