@@ -48,7 +48,7 @@ export function useAlertas() {
 
   const resolverTodosLogMutation = useMutation({
     mutationFn: async () => {
-      await api.put(`/logs/resolver-todos`);
+      return await api.put(`/logs/resolver-todos`);
     },
     onSuccess: (data: { data?: { message?: string } }) => {
       toast.success(data?.data?.message || 'Todos os logs foram arquivados com sucesso.');
