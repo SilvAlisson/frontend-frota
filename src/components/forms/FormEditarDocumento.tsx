@@ -34,10 +34,15 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
   // ✨ Extraído o control
   const { register, handleSubmit, reset, watch, control, formState: { errors, isSubmitting } } = useForm<EditDocumentoFormData>({
     resolver: zodResolver(editDocumentoSchema),
+    defaultValues: {
+      titulo: '',
+      categoria: 'OUTROS',
+      descricao: '',
+      dataValidade: null
+    }
   });
 
-  const categoriaWatch = watch('categoria');
-  const showValidade = !['LICENCA_AMBIENTAL', 'AST'].includes(categoriaWatch);
+  const showValidade = true;
 
   useEffect(() => {
     async function carregarDocumento() {
@@ -87,8 +92,8 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
     { value: 'TACOGRAFO', label: 'Tacógrafo' },
     { value: 'LAUDO_CHAPA', label: 'Laudo de Chapa' },
     { value: 'MANUTENCAO', label: 'Manutenção / Revisão' },
-    { value: 'LICENCA_AMBIENTAL', label: 'Licença Ambiental (Sem Validade)' },
-    { value: 'AST', label: 'AST - Segurança (Sem Validade)' },
+    { value: 'LICENCA_AMBIENTAL', label: 'Licença Ambiental' },
+    { value: 'AST', label: 'AST - Segurança' },
     { value: 'ATRP', label: 'ATRP' },
     {value: 'CTF IBAMA', label: 'CTF IBAMA'},
     { value: 'OUTROS', label: 'Outros Arquivos' },
