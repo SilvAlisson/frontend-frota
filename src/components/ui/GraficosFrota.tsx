@@ -75,7 +75,7 @@ export function GraficoCurvaAbastecimento({ dados, modo = 'litros' }: GraficoCur
         />
         <Tooltip
           contentStyle={TOOLTIP_STYLE}
-          formatter={(value: any) => [
+          formatter={(value: number) => [
           isLitros
             ? `${Number(value).toLocaleString('pt-BR')} L`
             : `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,

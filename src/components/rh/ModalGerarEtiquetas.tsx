@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import type { User } from '../../types';
 import { Button } from '../ui/Button';
 import { Printer, X, CheckSquare, Square, Search } from 'lucide-react';
-import { FolhaImpressaoQRCodes, PrintUser } from './FolhaImpressaoQRCodes';
+import { FolhaImpressaoQRCodes, type PrintUser } from './FolhaImpressaoQRCodes';
 import { Input } from '../ui/Input';
 
 interface ModalGerarEtiquetasProps {
