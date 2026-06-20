@@ -281,7 +281,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
                   label="Vincular a Placa Específica"
                   options={veiculosOptions}
                   {...register('veiculoId')}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  onChange={(e) => {
                     setValue('veiculoId', e.target.value);
                     if (e.target.value) setValue('tipoVeiculo', '');
                   }}
