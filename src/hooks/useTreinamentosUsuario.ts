@@ -19,7 +19,7 @@ export const treinamentoSchema = z.object({
     dataVencimento: z.string().optional().or(z.literal('')),
     descricao: z.string().optional().nullable(),
     comprovanteUrl: z.string().url('URL inválida').optional().or(z.literal('')),
-    diasAntecedenciaAlerta: z.coerce.number().int().min(1).max(365).default(30),
+    diasAntecedenciaAlerta: z.coerce.number().int().min(1).max(365),
 }).refine((data) => {
     if (!data.dataVencimento) return true; // Vitalício passa
     const realizacao = new Date(data.dataRealizacao);

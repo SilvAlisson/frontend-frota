@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
 import { toast } from 'sonner';
-import { Printer, RefreshCw, Copy, QrCode, Download, Share2, Fingerprint } from 'lucide-react';
+import { Printer, RefreshCw, QrCode, Download, Share2, Fingerprint } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { User } from '../types';
 import { ConfirmModal } from './ui/ConfirmModal';
