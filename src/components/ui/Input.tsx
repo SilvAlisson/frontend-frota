@@ -53,7 +53,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="text-xs font-bold text-text-secondary uppercase tracking-wider select-none ms-1"
+            className="text-xs font-bold text-text-secondary uppercase tracking-wider select-none ml-1"
           >
             {label}
           </label>
@@ -62,7 +62,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <div className="relative group w-full">
           {/* Ícone à Esquerda */}
           {icon && (
-            <div className="absolute inset-s-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none z-10 [&>svg]:w-5 [&>svg]:h-5 transition-colors group-focus-within:text-primary">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none z-10 [&>svg]:w-5 [&>svg]:h-5 transition-colors group-focus-within:text-primary">
               {icon}
             </div>
           )}
@@ -79,7 +79,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               icon ? "ps-10" : (variant === 'ghost' ? "ps-3" : "ps-4"),
               
               error 
-                ? "pe-12 text-ellipsis border-error border text-error focus:border-error focus:ring-error/20 placeholder:text-error/50" 
+                ? "pe-12 border-error border text-error focus:border-error focus:ring-error/20 placeholder:text-error/50" 
                 : (variant === 'default' ? "pe-4" : "pe-3"),
 
               className

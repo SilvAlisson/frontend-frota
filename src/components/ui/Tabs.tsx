@@ -29,14 +29,16 @@ export function Tabs({ tabs, activeTab, onChange, className, variant = 'segmente
               key={tab.id}
               onClick={() => onChange(tab.id)}
               className={cn(
-                "shrink-0 pb-3 px-1 sm:px-4 text-sm font-bold border-b-2 transition-all duration-300 flex items-center gap-2 outline-none select-none relative group cursor-pointer",
+                "shrink-0 pb-3 px-1 sm:px-4 text-sm font-bold border-b-2 transition-all duration-300 flex items-center gap-2 outline-none select-none relative group cursor-pointer min-h-[44px]",
                 isActive ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text-main"
               )}
             >
               {Icon && <Icon className={cn("w-4 h-4 shrink-0 transition-transform duration-300", isActive ? "scale-110" : "group-hover:scale-110")} />}
               {tab.label}
               {tab.hasNotification && (
-                <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-error rounded-full animate-pulse" />
+                <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-error rounded-full animate-pulse">
+                  <span className="sr-only">Nova notificação</span>
+                </span>
               )}
             </button>
           );
@@ -57,7 +59,7 @@ export function Tabs({ tabs, activeTab, onChange, className, variant = 'segmente
               key={tab.id}
               onClick={() => onChange(tab.id)}
               className={cn(
-                "relative flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ease-out flex-1 sm:flex-none outline-none select-none cursor-pointer",
+                "relative flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ease-out flex-1 sm:flex-none outline-none select-none cursor-pointer min-h-[44px]",
                 isActive 
                   ? "text-primary bg-surface shadow-[0_0_20px_rgba(var(--color-primary),0.2)] ring-1 ring-border/60" 
                   : "text-text-secondary hover:bg-surface/50 hover:text-text-main"
@@ -66,7 +68,9 @@ export function Tabs({ tabs, activeTab, onChange, className, variant = 'segmente
               {Icon && <Icon className={cn("w-4 h-4 transition-transform duration-300", isActive ? "scale-110 text-primary" : "text-text-muted")} />}
               {tab.label}
               {tab.hasNotification && (
-                <span className="absolute top-2 right-2.5 w-1.5 h-1.5 bg-error rounded-full animate-pulse shadow-[0_0_5px_rgba(239,68,68,0.6)]" />
+                <span className="absolute top-2 right-2.5 w-1.5 h-1.5 bg-error rounded-full animate-pulse shadow-[0_0_5px_rgba(239,68,68,0.6)]">
+                  <span className="sr-only">Nova notificação</span>
+                </span>
               )}
             </button>
           );

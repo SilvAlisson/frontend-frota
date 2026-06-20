@@ -45,14 +45,23 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
     };
   }, [isOpen, isDesktop]);
 
+  const [savedScrollY, setSavedScrollY] = useState(0);
+
+  // Armazena o scroll atual ao abrir no mobile
+  useEffect(() => {
+    if (isOpen && !isDesktop) {
+      setSavedScrollY(window.scrollY);
+    }
+  }, [isOpen, isDesktop]);
+
   // Restaura o scroll do Viewport mobile ao fechar (Bug de teclado vazio do iOS)
   useEffect(() => {
     if (!isOpen && !isDesktop) {
       setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        window.scrollTo({ top: savedScrollY });
       }, 100);
     }
-  }, [isOpen, isDesktop]);
+  }, [isOpen, isDesktop, savedScrollY]);
 
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
@@ -147,7 +156,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
     >
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-md transition-all duration-300 starting:opacity-0 starting:backdrop-blur-none"
+        className="fixed inset-0 bg-black/60 backdrop-blur-md transition-all duration-300 animate-in fade-in"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -158,7 +167,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
           "relative bg-surface rounded-[2rem] shadow-2xl shadow-black/60 border border-white/10 flex flex-col",
           "w-full max-w-lg",
           "max-h-[92dvh]",
-          "transform transition-all duration-300 ease-out starting:opacity-0 starting:scale-95 starting:translate-y-4",
+          "transform transition-all duration-300 ease-out animate-in fade-in zoom-in-95 slide-in-from-bottom-4",
           className
         )}
       >

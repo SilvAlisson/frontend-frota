@@ -24,7 +24,7 @@ export function PageHeader({
 }: PageHeaderProps) {
     return (
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-border/30 pb-6 animate-enter">
-            <div className="space-y-1">
+            <div className="space-y-1 min-w-0">
                 {breadcrumbs && breadcrumbs.length > 0 && (
                     <nav className="flex items-center gap-1.5 text-[11px] font-bold text-text-muted uppercase tracking-wider mb-2">
                         {breadcrumbs.map((crumb, idx) => (
@@ -41,11 +41,11 @@ export function PageHeader({
                         ))}
                     </nav>
                 )}
-                <h1 className="text-3xl font-black text-text-main tracking-tight font-header flex items-center gap-3">
+                <h1 className="text-3xl font-black text-text-main tracking-tight font-header flex items-center gap-3 truncate" title={typeof title === 'string' ? title : undefined}>
                     {title}
                 </h1>
                 {subtitle && (
-                    <p className="text-sm text-text-secondary font-medium leading-relaxed">
+                    <p className="text-sm text-text-secondary font-medium leading-relaxed line-clamp-2" title={typeof subtitle === 'string' ? subtitle : undefined}>
                         {subtitle}
                     </p>
                 )}

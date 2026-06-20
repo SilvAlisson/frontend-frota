@@ -7,7 +7,7 @@ const badgeVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-primary/20 text-primary border-primary/30",
+        default: "bg-primary/20 text-primary border-primary/30 hover:bg-primary/30 hover:border-primary/50 transition-colors",
         success: "bg-success/20 text-success border-success/40 hover:bg-success/30 hover:border-success/50 transition-colors", 
         warning: "bg-warning/20 text-warning border-warning/40 hover:bg-warning/30 hover:border-warning/50 transition-colors",
         danger:  "bg-error/20 text-error border-error/40 hover:bg-error/30 hover:border-error/50 transition-colors",

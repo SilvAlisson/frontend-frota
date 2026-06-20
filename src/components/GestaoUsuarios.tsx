@@ -257,30 +257,31 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                 </td>
                 <td className={`${TableStyles.td} text-right pr-8`}>
                   <div className="grid grid-cols-2 gap-1.5 w-fit ml-auto opacity-60 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" className="h-9 w-9 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => handleAbrirTreinamentosModal(u)} title="Registro de Treinamentos">
-                      <GraduationCap className="w-4 h-4" />
+                    <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => handleAbrirTreinamentosModal(u)} title="Registro de Treinamentos" aria-label={`Ver treinamentos de ${u.nome}`}>
+                      <GraduationCap className="w-5 h-5" />
                     </Button>
 
                     {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') ? (
-                      <Button variant="ghost" className="h-9 w-9 !p-0 text-text-muted hover:text-success hover:bg-success/10 rounded-xl" onClick={() => handleAbrirQrModal(u)} title="Acesso por QR Code">
-                        <QrCode className="w-4 h-4" />
+                      <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-success hover:bg-success/10 rounded-xl" onClick={() => handleAbrirQrModal(u)} title="Acesso por QR Code" aria-label={`QR Code de acesso de ${u.nome}`}>
+                        <QrCode className="w-5 h-5" />
                       </Button>
                     ) : (
                       <div /> /* Empty div to keep the grid layout aligned */
                     )}
 
-                    <Button variant="ghost" className="h-9 w-9 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => setUsuarioParaEditar(u)} title="Editar Ficha">
-                      <Edit2 className="w-4 h-4" />
+                    <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => setUsuarioParaEditar(u)} title="Editar Ficha" aria-label={`Editar ficha de ${u.nome}`}>
+                      <Edit2 className="w-5 h-5" />
                     </Button>
 
                     <Button 
                       variant="ghost" 
-                      className="h-9 w-9 !p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-xl" 
+                      className="h-11 w-11 !p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-xl" 
                       onClick={() => handleDeleteRequest(u)} 
                       disabled={isExcluindo || u.id === adminUserId} 
                       title="Inativar Integrante"
+                      aria-label={`Inativar integrante ${u.nome}`}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-5 h-5" />
                     </Button>
                   </div>
                 </td>
@@ -300,17 +301,17 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
                   </div>
 
                   <div className="mt-5 grid grid-cols-2 gap-2 border-t border-dashed border-border/60 pt-4" onClick={e => e.stopPropagation()}>
-                    <Button variant="secondary" className="text-[11px] h-10 w-full bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => handleAbrirTreinamentosModal(u)}>Treinos</Button>
-                    <Button variant="secondary" className="text-[11px] h-10 w-full bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => setUsuarioParaEditar(u)}>Editar</Button>
+                    <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => handleAbrirTreinamentosModal(u)}>Treinos</Button>
+                    <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => setUsuarioParaEditar(u)}>Editar</Button>
 
                     {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') ? (
                       <>
-                        <Button variant="secondary" className="text-[11px] h-10 w-full bg-success/10 text-success border-success/20 hover:bg-success/20 rounded-xl justify-center" onClick={() => handleAbrirQrModal(u)}>Acesso QR</Button>
-                        <Button variant="secondary" className="text-[11px] h-10 w-full bg-error/10 text-error border-error/20 hover:bg-error/20 rounded-xl justify-center" onClick={() => handleDeleteRequest(u)}>Inativar</Button>
+                        <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-success/10 text-success border-success/20 hover:bg-success/20 rounded-xl justify-center" onClick={() => handleAbrirQrModal(u)}>Acesso QR</Button>
+                        <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-error/10 text-error border-error/20 hover:bg-error/20 rounded-xl justify-center" onClick={() => handleDeleteRequest(u)}>Inativar</Button>
                       </>
                     ) : (
                       <div className="col-span-2">
-                        <Button variant="secondary" className="text-[11px] h-10 w-full bg-error/10 text-error border-error/20 hover:bg-error/20 rounded-xl justify-center" onClick={() => handleDeleteRequest(u)}>Inativar</Button>
+                        <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-error/10 text-error border-error/20 hover:bg-error/20 rounded-xl justify-center" onClick={() => handleDeleteRequest(u)}>Inativar</Button>
                       </div>
                     )}
                   </div>

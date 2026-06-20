@@ -144,7 +144,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                                         <RadixSelect.Item
                                             key={opt.value}
                                             value={String(opt.value)}
-                                            className="relative flex items-center w-full ps-8 pe-2 py-2.5 min-h-[40px] text-sm font-bold text-text-main rounded-lg outline-none cursor-pointer select-none focus:bg-primary/10 focus:text-primary data-[disabled]:text-text-muted data-[disabled]:pointer-events-none transition-colors"
+                                            className={cn(
+                                                "relative flex w-full cursor-pointer select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-bold min-h-[44px]",
+                                                "text-text-main outline-none focus:bg-surface-hover focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors"
+                                            )}
                                         >
                                             <span className="absolute inset-s-2 flex items-center justify-center w-4 h-4">
                                                 <RadixSelect.ItemIndicator>

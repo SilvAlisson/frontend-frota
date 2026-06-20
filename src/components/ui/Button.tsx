@@ -20,13 +20,13 @@ const buttonVariants = cva(
         danger: 
           "bg-error text-white shadow-sm hover:bg-error/90 hover:shadow-md",
         success: 
-          "bg-emerald-500 text-white shadow-sm hover:bg-emerald-600 hover:shadow-md",
+          "bg-success text-white shadow-sm hover:bg-success/90 hover:shadow-md",
         glass: 
           "bg-surface border border-border text-text-main hover:bg-surface-hover shadow-sm",
       },
       size: {
         default: "h-11 min-h-[44px] px-5",
-        sm: "h-9 min-h-[44px] rounded-lg px-4 text-xs",
+        sm: "h-11 min-h-[44px] rounded-lg px-4 text-xs",
         lg: "h-14 min-h-[44px] rounded-xl px-8 text-base",
         icon: "h-11 w-11 min-h-[44px] min-w-[44px] p-0",
       },

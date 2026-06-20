@@ -35,9 +35,9 @@ export const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter
 
   const styles = {
     default: { border: 'border-l-primary', iconBg: 'bg-primary/10', iconText: 'text-primary', glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(var(--color-primary),0.3)]' },
-    success: { border: 'border-l-emerald-500', iconBg: 'bg-emerald-500/10', iconText: 'text-emerald-600', glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(16,185,129,0.3)]' },
-    warning: { border: 'border-l-amber-500', iconBg: 'bg-amber-500/10', iconText: 'text-amber-600', glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(245,158,11,0.3)]' },
-    danger: { border: 'border-l-rose-500', iconBg: 'bg-rose-500/10', iconText: 'text-rose-600', glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(244,63,94,0.3)]' },
+    success: { border: 'border-l-success', iconBg: 'bg-success/10', iconText: 'text-success', glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(var(--color-success),0.3)]' },
+    warning: { border: 'border-l-warning', iconBg: 'bg-warning/10', iconText: 'text-warning', glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(var(--color-warning),0.3)]' },
+    danger: { border: 'border-l-error', iconBg: 'bg-error/10', iconText: 'text-error', glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(var(--color-error),0.3)]' },
     info: { border: 'border-l-info', iconBg: 'bg-info/10', iconText: 'text-info', glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(14,165,233,0.3)]' }
   };
 
@@ -77,8 +77,8 @@ export const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter
           className={cn(
             "block w-full text-left font-black text-text-main leading-none truncate transition-colors duration-300 tracking-tighter max-w-full",
             highlight 
-              ? "!text-2xl sm:!text-3xl lg:!text-3xl xl:!text-4xl 2xl:!text-5xl" 
-              : "!text-lg sm:!text-xl lg:!text-lg xl:!text-xl 2xl:!text-2xl"
+              ? "text-2xl sm:text-3xl lg:text-3xl xl:text-4xl 2xl:text-5xl" 
+              : "text-lg sm:text-xl lg:text-lg xl:text-xl 2xl:text-2xl"
           )}
           title={formatter(valorRaw || 0)}
         >

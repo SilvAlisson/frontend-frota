@@ -33,7 +33,7 @@ export function EmptyState({
         </p>
       )}
       {action && (
-        <div className="mt-8 animate-in slide-in-from-bottom-2 fade-in duration-700 delay-150 fill-mode-both">
+        <div className="mt-8 animate-in slide-in-from-bottom-2 fade-in duration-700">
           {action}
         </div>
       )}

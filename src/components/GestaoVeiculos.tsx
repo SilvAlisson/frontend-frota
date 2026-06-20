@@ -136,8 +136,9 @@ export function GestaoVeiculos() {
                 cell: (v: Veiculo) => (
                   <button
                     onClick={() => navigate(`/admin/veiculos/${v.id}`)}
-                    className="flex items-center gap-3 group outline-none"
+                    className="flex items-center gap-3 group focus-visible:ring-2 focus-visible:ring-primary rounded-lg"
                     title="Acessar ao Prontuário"
+                    aria-label={`Acessar prontuário do veículo placa ${v.placa}`}
                   >
                     <div className="p-2.5 bg-surface-hover rounded-xl border border-border/60 text-text-muted group-hover:bg-primary/5 group-hover:text-primary transition-all shadow-sm">
                       <Truck className="w-4 h-4" />
@@ -154,7 +155,7 @@ export function GestaoVeiculos() {
                 className: 'py-5 text-center',
                 cell: (v: Veiculo) => (
                   <div className="w-full flex flex-col gap-1 items-center justify-center text-center">
-                    <span className="text-sm font-bold text-text-main leading-tight block w-full">{v.modelo}</span>
+                    <span className="text-sm font-bold text-text-main leading-tight block w-full truncate" title={v.modelo}>{v.modelo}</span>
                     <span className="text-xs text-text-secondary font-bold uppercase tracking-wider block w-full">{v.ano} • <span className="text-data">{v.id.substring(0, 6).toUpperCase()}</span></span>
                   </div>
                 )

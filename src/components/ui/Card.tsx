@@ -10,7 +10,7 @@ const cardVariants = cva(
         default: "bg-surface border-border shadow-card",
         outline: "bg-transparent border-border shadow-none",
         glass: "bg-surface border-border shadow-float",
-        solid: "bg-surface-hover dark:bg-gray-900 border-transparent", 
+        solid: "bg-surface-hover border-transparent", 
       },
       padding: {
         none: "p-0",
@@ -47,6 +47,14 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       <div
         ref={ref}
         onClick={onClick}
+        role={isClickable ? "button" : undefined}
+        tabIndex={isClickable ? 0 : undefined}
+        onKeyDown={isClickable && onClick ? (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onClick(e as any);
+          }
+        } : undefined}
         className={cn(cardVariants({ variant, padding, isInteractive: isClickable, className }))}
         {...props}
       >
