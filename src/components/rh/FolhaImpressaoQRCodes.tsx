@@ -50,7 +50,7 @@ export function FolhaImpressaoQRCodes({ usuarios }: FolhaImpressaoQRCodesProps) 
         
         <div className="grid grid-cols-3 gap-6 auto-rows-max">
           {usuarios.map((user, index) => {
-            const qrUrl = \`\${urlBase}\${user.id}\`;
+            const qrUrl = `${urlBase}${user.id}`;
             // Força quebra de página a cada 15 etiquetas (3 colunas x 5 linhas = 15 por folha)
             const isPageBreak = (index + 1) % 15 === 0;
 
