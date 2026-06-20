@@ -8,7 +8,7 @@ import { Button } from './ui/Button';
 const MAX_BREADCRUMBS = 10;
 const breadcrumbs: string[] = [];
 
-export const addBreadcrumb = (action: string) => {
+const addBreadcrumb = (action: string) => {
   breadcrumbs.push(`[${new Date().toLocaleTimeString()}] ${action}`);
   if (breadcrumbs.length > MAX_BREADCRUMBS) breadcrumbs.shift();
 };

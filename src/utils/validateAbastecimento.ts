@@ -117,7 +117,4 @@ export function temBloqueio(anomalias: AnomaliaAbastecimento[]): boolean {
   return anomalias.some((a) => a.nivel === 'error');
 }
 
-/** Verifica se existem apenas avisos (requerem confirmação do usuário) */
-export function temAvisos(anomalias: AnomaliaAbastecimento[]): boolean {
-  return anomalias.some((a) => a.nivel === 'warning') && !temBloqueio(anomalias);
-}
+

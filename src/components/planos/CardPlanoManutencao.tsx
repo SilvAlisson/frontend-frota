@@ -4,7 +4,7 @@ import { AlertTriangle, CheckCircle, Clock, Wrench, ShieldAlert, Trash2 } from '
 import { Button } from '../ui/Button';
 import type { PlanoManutencao } from '../../hooks/usePlanosManutencao';
 
-export type StatusPlano = 'VERDE' | 'AMARELO' | 'VERMELHO';
+type StatusPlano = 'VERDE' | 'AMARELO' | 'VERMELHO';
 
 export interface PlanoProcessado extends PlanoManutencao {
   percentualDesgaste: number;
@@ -12,7 +12,7 @@ export interface PlanoProcessado extends PlanoManutencao {
   descricaoFalta: string;
 }
 
-export const STATUS_CONFIG = {
+const STATUS_CONFIG = {
   VERMELHO: { border: 'border-error/40', bg: 'bg-error/10', glow: 'shadow-[0_0_15px_rgba(239,68,68,0.2)]', icon: ShieldAlert, color: 'text-error' },
   AMARELO: { border: 'border-warning/40', bg: 'bg-warning/10', glow: 'shadow-[0_0_15px_rgba(245,158,11,0.2)]', icon: AlertTriangle, color: 'text-warning' },
   VERDE: { border: 'border-border/60', bg: 'bg-surface', glow: 'shadow-sm', icon: CheckCircle, color: 'text-success/80' }

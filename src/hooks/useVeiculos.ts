@@ -5,12 +5,6 @@ import { handleApiError } from '../utils/errorHandler';
 import { useAuth } from '../contexts/AuthContext';
 import type { Veiculo } from '../types';
 
-export type CreateVeiculoDTO = Omit<Veiculo, 'id' | 'ultimoKm' | 'status'> & {
-    kmAtual: number;
-    status?: Veiculo['status'];
-};
-
-export type UpdateVeiculoDTO = Partial<Omit<Veiculo, 'id'>> & { id: string };
 
 // --- LISTAR (GET) ---
 export function useVeiculos() {
@@ -30,43 +24,7 @@ export function useVeiculos() {
     });
 }
 
-// --- CRIAR (POST) ---
-export function useCreateVeiculo() {
-    const queryClient = useQueryClient();
 
-    return useMutation({
-        mutationFn: async (novoVeiculo: CreateVeiculoDTO) => {
-            const { data } = await api.post<Veiculo>('/veiculos', novoVeiculo);
-            return data;
-        },
-        onSuccess: () => {
-            toast.success('Veículo cadastrado com sucesso!');
-            queryClient.invalidateQueries({ queryKey: ['veiculos'] });
-        },
-        onError: (error: unknown) => {
-            handleApiError(error, 'Erro ao cadastrar veículo');
-        },
-    });
-}
-
-// --- EDITAR (PUT) ---
-export function useUpdateVeiculo() {
-    const queryClient = useQueryClient();
-
-    return useMutation({
-        mutationFn: async ({ id, ...dados }: UpdateVeiculoDTO) => {
-            const { data } = await api.put<Veiculo>(`/veiculos/${id}`, dados);
-            return data;
-        },
-        onSuccess: () => {
-            toast.success('Veículo atualizado com sucesso!');
-            queryClient.invalidateQueries({ queryKey: ['veiculos'] });
-        },
-        onError: (error: unknown) => {
-            handleApiError(error, 'Erro ao atualizar veículo');
-        },
-    });
-}
 
 // --- EXCLUIR (DELETE) ---
 export function useDeleteVeiculo() {

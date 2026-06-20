@@ -1,8 +1,8 @@
 // src/components/forms/FormRegistrarManutencao/schema.ts
 import { z } from 'zod';
 
-export const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
-export type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
+const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
+type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
 export const manutencaoSchema = z.object({
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
