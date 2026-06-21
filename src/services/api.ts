@@ -43,7 +43,7 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 30000,
+  timeout: 90000, // 90 segundos para suportar as análises complexas da IA
   withCredentials: true,
 });
 

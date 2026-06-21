@@ -12,8 +12,8 @@ export interface MensagemChat {
 // --- Hook: Consulta Geral (Chat) ---
 export function useConsultaIA() {
   return useMutation({
-    mutationFn: async (pergunta: string): Promise<string> => {
-      const { data } = await api.post('/ia/consulta', { pergunta });
+    mutationFn: async ({ pergunta, historico }: { pergunta: string, historico: { role: string, text: string }[] }): Promise<string> => {
+      const { data } = await api.post('/ia/consulta', { pergunta, historico });
       return data.resposta;
     },
   });

@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useId } from 'react';
+import { createPortal } from 'react-dom';
 import { Sparkles, X, Send, Loader2, RotateCcw, ChevronDown } from 'lucide-react';
 import { useConsultaIA, type MensagemChat } from '../../hooks/useIA';
 import { cn } from '../../lib/utils';
@@ -12,6 +13,48 @@ const SUGESTOES = [
   'Há defeitos graves em aberto?',
   'Status dos treinamentos de SST',
 ];
+
+const getLoadingMessages = (pergunta: string) => {
+  const p = pergunta.toLowerCase();
+  if (p.match(/defeito|manuten|quebra|peça|oficina|pneu|óleo/)) {
+    return [
+      'Buscando histórico de ordens de serviço...',
+      'Analisando registros de defeitos reportados...',
+      'Cruzando peças trocadas e mecânicas...',
+      'Calculando custos de oficina...',
+      'Sintetizando histórico do veículo...',
+      'Polindo os últimos detalhes...'
+    ];
+  }
+  if (p.match(/abastecimento|combust|litro|km|gasto|diesel|gasolina/)) {
+    return [
+      'Analisando histórico de abastecimentos...',
+      'Calculando médias de KM/L...',
+      'Cruzando rotas, jornadas e litragem...',
+      'Verificando custos totais na bomba...',
+      'Consolidando gastos do veículo...',
+      'Polindo os últimos detalhes...'
+    ];
+  }
+  if (p.match(/treinamento|venc|documento|cnh|sst|operador/)) {
+    return [
+      'Acessando matriz de documentos...',
+      'Verificando validades e alertas do RH...',
+      'Analisando certificados de treinamentos...',
+      'Cruzando dados de Saúde e Segurança...',
+      'Consolidando status dos colaboradores...',
+      'Polindo os últimos detalhes...'
+    ];
+  }
+  return [
+    'Analisando o banco de dados da frota...',
+    'Cruzando métricas e registros operacionais...',
+    'Inspecionando transações recentes...',
+    'Estruturando a melhor resposta...',
+    'Polindo os últimos detalhes...',
+    'Quase pronto...'
+  ];
+};
 
 // Renderiza markdown simples (negrito, bullets, quebras de linha)
 function MdText({ texto }: { texto: string }) {
@@ -45,11 +88,25 @@ export function AssistenteIA() {
   const [aberto, setAberto] = useState(false);
   const [mensagens, setMensagens] = useState<MensagemChat[]>([]);
   const [pergunta, setPergunta] = useState('');
+  const [perguntaProcessando, setPerguntaProcessando] = useState('');
+  const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputId = useId();
 
   const { mutate: consultar, isPending } = useConsultaIA();
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPending) {
+      setLoadingMsgIdx(0);
+      const msgsLength = getLoadingMessages(perguntaProcessando).length;
+      interval = setInterval(() => {
+        setLoadingMsgIdx((prev) => (prev + 1) % msgsLength);
+      }, 3500); // Transição mais rápida
+    }
+    return () => clearInterval(interval);
+  }, [isPending, perguntaProcessando]);
 
   // Só aparece para ADMIN, RH e COORDENADOR
   const ROLES_PERMITIDOS = ['ADMIN', 'RH', 'COORDENADOR'];
@@ -76,11 +133,17 @@ export function AssistenteIA() {
     const q = (texto ?? pergunta).trim();
     if (!q || isPending) return;
 
+    const historicoFormatado = mensagens.map(m => ({
+      role: m.tipo === 'usuario' ? 'user' : 'model',
+      text: m.conteudo
+    }));
+
+    setPerguntaProcessando(q);
     const novaMsg: MensagemChat = { id: crypto.randomUUID(), tipo: 'usuario', conteudo: q, timestamp: new Date() };
     setMensagens(prev => [...prev, novaMsg]);
     setPergunta('');
 
-    consultar(q, {
+    consultar({ pergunta: q, historico: historicoFormatado }, {
       onSuccess: (resposta) => {
         const respostaMsg: MensagemChat = {
           id: crypto.randomUUID(),
@@ -122,8 +185,8 @@ export function AssistenteIA() {
       </button>
 
       {/* Painel de Chat */}
-      {aberto && (
-        <div className="fixed bottom-0 right-0 z-[9999] sm:bottom-6 sm:right-6 w-full sm:w-[420px] h-[95svh] sm:h-[620px] flex flex-col bg-surface border border-border/60 sm:rounded-3xl shadow-float overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
+      {aberto && createPortal(
+        <div className="fixed bottom-0 right-0 z-[99999] sm:bottom-6 sm:right-6 w-full sm:w-[420px] h-[95svh] sm:h-[620px] flex flex-col bg-surface border border-border/60 sm:rounded-3xl shadow-float overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
 
           {/* Header */}
           <div className="flex items-center gap-3 px-5 py-4 bg-gradient-to-r from-primary/10 to-violet-600/10 border-b border-border/60 shrink-0">
@@ -209,7 +272,7 @@ export function AssistenteIA() {
                 <div className="px-4 py-3 bg-surface border border-border/60 rounded-2xl rounded-tl-sm shadow-sm">
                   <div className="flex items-center gap-2 text-text-muted text-sm">
                     <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                    <span>Analisando dados da frota...</span>
+                    <span className="animate-pulse">{getLoadingMessages(perguntaProcessando)[loadingMsgIdx] || 'Analisando...'}</span>
                   </div>
                 </div>
               </div>
@@ -240,7 +303,8 @@ export function AssistenteIA() {
             </div>
             <p className="text-[10px] text-text-muted text-center mt-2 font-medium">Respostas baseadas nos dados reais do sistema</p>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
