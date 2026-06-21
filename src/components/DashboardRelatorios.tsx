@@ -21,9 +21,9 @@ import {
 } from 'lucide-react';
 import type { Veiculo } from '../types';
 
-import { GraficoCpk } from './dashboard/GraficoCpk';
 import { GraficoPerformance } from './dashboard/GraficoPerformance';
 import type { DadoPerformance } from './dashboard/GraficoPerformance';
+import { InsightsDashboard } from './ia/InsightsDashboard';
 
 const GraficoKmVeiculo = React.lazy(() => import('./GraficoKmVeiculo').then(module => ({ default: module.GraficoKmVeiculo })));
 
@@ -239,11 +239,16 @@ export function DashboardRelatorios() {
           </div>
 
           <div className="relative z-10 w-full h-[280px]">
-            <GraficoPerformance dados={dadosPerformanceLimpos} loading={loadingPerformance} />
+            <GraficoPerformance data={dadosPerformanceLimpos} />
           </div>
         </div>
 
       </div>
+
+      {/* INSIGHTS DE IA */}
+      {kpis && !loading && (
+        <InsightsDashboard kpis={kpis} mes={mes} ano={ano} />
+      )}
 
     </div>
   );

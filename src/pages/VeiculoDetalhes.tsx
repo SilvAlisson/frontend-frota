@@ -8,6 +8,7 @@ import { useVeiculoDetalhes } from '../hooks/useVeiculoDetalhes';
 import { Skeleton } from '../components/ui/Skeleton';
 import { AbaManutencoesVeiculo } from '../components/AbaManutencoesVeiculo';
 import { AbaAbastecimentosVeiculo } from '../components/AbaAbastecimentosVeiculo';
+import { DiagnosticoVeiculo } from '../components/ia/DiagnosticoVeiculo';
 
 const GraficoKmVeiculo = React.lazy(() => import('../components/GraficoKmVeiculo').then(module => ({ default: module.GraficoKmVeiculo })));
 
@@ -144,10 +145,13 @@ export function VeiculoDetalhes() {
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 h-full">
                     
                     {abaAtiva === 'geral' && (
-                        <div className="w-full">
+                        <div className="w-full space-y-6">
                             <Suspense fallback={<div className="h-[400px] w-full flex items-center justify-center bg-surface/50 rounded-2xl border border-border/40"><Skeleton variant="card" className="w-full h-full" /></div>}>
                                 <GraficoKmVeiculo dados={dadosKm} />
                             </Suspense>
+
+                            {/* IA Diagnóstico */}
+                            {id && <DiagnosticoVeiculo veiculoId={id} />}
                         </div>
                     )}
 

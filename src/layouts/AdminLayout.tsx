@@ -18,6 +18,7 @@ import { toast } from 'sonner';
 import type { User } from '../types';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { cn } from '../lib/utils';
+import { AssistenteIA } from '../components/ia/AssistenteIA';
 // Tipo local para os logs de auditoria do polling
 interface SystemLog {
   id: string;
@@ -105,6 +106,7 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
 
       {/* Rodapé da Sidebar (User Profile) */}
       <div className="p-4 border-t border-border/30 bg-surface-hover/10 shrink-0 space-y-3 pb-safe">
+        <AssistenteIA />
 
         <div className="flex items-center gap-2 px-1 pt-2">
           

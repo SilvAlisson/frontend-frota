@@ -5,6 +5,7 @@ import { GestaoCargos } from './GestaoCargos';
 import { PainelAlertas } from './PainelAlertas';
 import type { User } from '../types';
 import { Tabs, type TabItem } from './ui/Tabs';
+import { RelatorioNarrativoRH } from './ia/RelatorioNarrativoRH';
 
 interface DashboardRHProps {
   user: User;
@@ -57,6 +58,10 @@ export function DashboardRH({ user }: DashboardRHProps) {
           onChange={setAbaAtiva}
           variant="segmented"
         />
+      </div>
+
+      <div className="mb-8">
+        <RelatorioNarrativoRH />
       </div>
 
       {/* ÁREA DE CONTEÚDO COM TRANSIÇÃO SUAVE */}
