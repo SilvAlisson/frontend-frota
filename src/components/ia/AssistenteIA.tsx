@@ -135,6 +135,27 @@ export function AssistenteIA() {
   const { consultarStream, isPending } = useIAStream();
   const { mutateAsync: enviarFeedback } = useIAFeedback();
 
+  const [mensagens, setMensagens] = useState<MensagemChat[]>(() => {
+    try {
+      const historicoSalvo = localStorage.getItem('kia_historico');
+      if (historicoSalvo) {
+        const parsed = JSON.parse(historicoSalvo);
+        return parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+      }
+    } catch (e) {
+      console.error('Erro ao ler histórico da IA', e);
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    // ✅ CORREÇÃO: Limita o histórico salvo às últimas 50 mensagens para evitar
+    // estourar o limite de 5MB do localStorage em conversas longas.
+    const MAX_HISTORICO = 50;
+    const parasSalvar = mensagens.slice(-MAX_HISTORICO);
+    localStorage.setItem('kia_historico', JSON.stringify(parasSalvar));
+  }, [mensagens]);
+
   const handleFeedback = useCallback(async (msgId: string, avaliacao: 'positivo' | 'negativo') => {
     // Busca a mensagem de resposta
     const indexIA = mensagens.findIndex(m => m.id === msgId);
@@ -172,27 +193,6 @@ export function AssistenteIA() {
       'Há defeitos graves em aberto?',
     ];
   }, [user?.role]);
-
-  const [mensagens, setMensagens] = useState<MensagemChat[]>(() => {
-    try {
-      const historicoSalvo = localStorage.getItem('kia_historico');
-      if (historicoSalvo) {
-        const parsed = JSON.parse(historicoSalvo);
-        return parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
-      }
-    } catch (e) {
-      console.error('Erro ao ler histórico da IA', e);
-    }
-    return [];
-  });
-
-  useEffect(() => {
-    // ✅ CORREÇÃO: Limita o histórico salvo às últimas 50 mensagens para evitar
-    // estourar o limite de 5MB do localStorage em conversas longas.
-    const MAX_HISTORICO = 50;
-    const parasSalvar = mensagens.slice(-MAX_HISTORICO);
-    localStorage.setItem('kia_historico', JSON.stringify(parasSalvar));
-  }, [mensagens]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
