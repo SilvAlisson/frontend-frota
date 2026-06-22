@@ -1,137 +1,225 @@
-import { useState, useRef, useEffect, useId } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo, useId } from 'react';
 import { createPortal } from 'react-dom';
-import { Sparkles, X, Send, Loader2, RotateCcw, ChevronDown } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
+import { Sparkles, X, Send, Loader2, RotateCcw, ChevronDown, AlertCircle, Copy, ThumbsUp, ThumbsDown, Check } from 'lucide-react';
 import { useConsultaIA, type MensagemChat } from '../../hooks/useIA';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
 
-const SUGESTOES = [
-  'Qual veículo teve mais custo esse mês?',
-  'Quais documentos estão vencendo?',
-  'Resumo da frota atual',
-  'Quem são os operadores mais eficientes?',
-  'Há defeitos graves em aberto?',
-  'Status dos treinamentos de SST',
-];
+const ROLES_PERMITIDOS = ['ADMIN', 'RH', 'COORDENADOR', 'ENCARREGADO'];
 
+// --- UTILITÁRIOS ---
 const getLoadingMessages = (pergunta: string) => {
   const p = pergunta.toLowerCase();
-  if (p.match(/defeito|manuten|quebra|peça|oficina|pneu|óleo/)) {
-    return [
-      'Buscando histórico de ordens de serviço...',
-      'Analisando registros de defeitos reportados...',
-      'Cruzando peças trocadas e mecânicas...',
-      'Calculando custos de oficina...',
-      'Sintetizando histórico do veículo...',
-      'Polindo os últimos detalhes...'
-    ];
-  }
-  if (p.match(/abastecimento|combust|litro|km|gasto|diesel|gasolina/)) {
-    return [
-      'Analisando histórico de abastecimentos...',
-      'Calculando médias de KM/L...',
-      'Cruzando rotas, jornadas e litragem...',
-      'Verificando custos totais na bomba...',
-      'Consolidando gastos do veículo...',
-      'Polindo os últimos detalhes...'
-    ];
-  }
-  if (p.match(/treinamento|venc|documento|cnh|sst|operador/)) {
-    return [
-      'Acessando matriz de documentos...',
-      'Verificando validades e alertas do RH...',
-      'Analisando certificados de treinamentos...',
-      'Cruzando dados de Saúde e Segurança...',
-      'Consolidando status dos colaboradores...',
-      'Polindo os últimos detalhes...'
-    ];
-  }
-  return [
-    'Analisando o banco de dados da frota...',
-    'Cruzando métricas e registros operacionais...',
-    'Inspecionando transações recentes...',
-    'Estruturando a melhor resposta...',
-    'Polindo os últimos detalhes...',
-    'Quase pronto...'
-  ];
+  if (p.match(/defeito|manuten|quebra|peça|oficina|pneu|óleo/)) return ['Buscando histórico de OS...', 'Analisando defeitos...', 'Calculando custos mecânicos...', 'Sintetizando...'];
+  if (p.match(/abastecimento|combust|litro|km|gasto|diesel|gasolina/)) return ['Analisando abastecimentos...', 'Calculando KM/L...', 'Cruzando rotas...', 'Consolidando gastos...'];
+  if (p.match(/treinamento|venc|documento|cnh|sst|operador/)) return ['Acessando matriz de documentos...', 'Verificando validades...', 'Analisando SST...', 'Sintetizando status...'];
+  return ['Analisando banco de dados...', 'Cruzando métricas...', 'Inspecionando transações...', 'Estruturando resposta...'];
 };
 
-// Renderiza markdown simples (negrito, bullets, quebras de linha)
-function MdText({ texto }: { texto: string }) {
+// --- COMPONENTES FILHOS ---
+const MdText = React.memo(({ texto }: { texto: string }) => {
   const linhas = texto.split('\n');
   return (
-    <div className="space-y-1 text-sm leading-relaxed">
+    <div className="space-y-1.5 text-sm leading-relaxed whitespace-pre-wrap word-break">
       {linhas.map((linha, i) => {
-        if (!linha.trim()) return <br key={i} />;
+        if (!linha.trim()) return <br key={i} className="select-none" />;
         const isBullet = linha.trim().startsWith('* ') || linha.trim().startsWith('- ') || linha.trim().startsWith('• ');
-        const texto = isBullet ? linha.trim().slice(2) : linha;
-        const partes = texto.split(/(\*\*[^*]+\*\*)/g);
+        const cleanLinha = isBullet ? linha.trim().slice(2) : linha;
+        
+        const partes = cleanLinha.split(/(\*\*[^*]+\*\*)/g);
         const renderizado = partes.map((p, j) =>
-          p.startsWith('**') && p.endsWith('**')
-            ? <strong key={j} className="font-bold">{p.slice(2, -2)}</strong>
-            : <span key={j}>{p}</span>
+          p.startsWith('**') && p.endsWith('**') ? (
+            <strong key={j} className="font-bold text-text-main">{p.slice(2, -2)}</strong>
+          ) : (
+            <span key={j}>{p}</span>
+          )
         );
-        if (isBullet) return (
-          <div key={i} className="flex gap-2 items-start">
-            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-            <span>{renderizado}</span>
-          </div>
-        );
-        return <p key={i}>{renderizado}</p>;
+
+        if (isBullet) {
+          return (
+            <div key={i} className="flex gap-2 items-start pl-1">
+              <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-primary/80 shrink-0" aria-hidden="true" />
+              <span>{renderizado}</span>
+            </div>
+          );
+        }
+        return <div key={i}>{renderizado}</div>;
       })}
     </div>
   );
-}
+});
+MdText.displayName = 'MdText';
 
+/**
+ * ChatBubble: Agora com Botões de Feedback (RLHF) e Copy to Clipboard
+ */
+const ChatBubble = React.memo(({ msg, userNome }: { msg: MensagemChat; userNome: string }) => {
+  const isKia = msg.tipo === 'kia';
+  const isError = msg.conteudo.includes('Desculpe, não consegui');
+  const [copiado, setCopiado] = useState(false);
+
+  const copiarTexto = () => {
+    navigator.clipboard.writeText(msg.conteudo);
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2000);
+  };
+
+  return (
+    <div className={cn("flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2 duration-300", !isKia && "flex-row-reverse")}>
+      <div className={cn(
+        "w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0 transition-transform hover:scale-105",
+        isKia 
+          ? "bg-gradient-to-br from-primary to-violet-600 text-white shadow-sm" 
+          : "bg-surface-hover border border-border/60 text-text-secondary"
+      )}>
+        {isKia ? <Sparkles className="w-4 h-4" /> : userNome.charAt(0).toUpperCase()}
+      </div>
+
+      <div className={cn(
+        "max-w-[85%] px-4 py-3 rounded-2xl relative group flex flex-col gap-1",
+        isKia 
+          ? cn("bg-surface border border-border/60 text-text-main shadow-sm rounded-tl-sm", isError && "border-red-500/30 bg-red-500/5") 
+          : "bg-primary text-white rounded-tr-sm shadow-md"
+      )}>
+        {isKia ? <MdText texto={msg.conteudo} /> : <div className="text-sm whitespace-pre-wrap">{msg.conteudo}</div>}
+        
+        {/* Footer da Bolha: Timestamp e Ações RLHF */}
+        <div className={cn("flex items-center justify-between mt-1", isKia ? "flex-row" : "flex-row-reverse")}>
+          <span className={cn("text-[10px] opacity-60 font-medium", isKia ? "text-text-muted" : "text-white")}>
+            {new Date(msg.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+          </span>
+
+          {/* Botões de Feedback apenas nas respostas da IA */}
+          {isKia && !isError && (
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button onClick={copiarTexto} className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Copiar resposta">
+                {copiado ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+              <button className="p-1.5 text-text-muted hover:text-emerald-500 hover:bg-emerald-500/10 rounded-md transition-colors" title="Resposta útil">
+                <ThumbsUp className="w-3.5 h-3.5" />
+              </button>
+              <button className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors" title="Resposta incorreta">
+                <ThumbsDown className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+});
+ChatBubble.displayName = 'ChatBubble';
+
+
+// --- COMPONENTE PRINCIPAL ---
 export function AssistenteIA() {
   const { user } = useAuth();
+  const location = useLocation(); // Consciência de Rota
+  
   const [aberto, setAberto] = useState(false);
-  const [mensagens, setMensagens] = useState<MensagemChat[]>([]);
   const [pergunta, setPergunta] = useState('');
   const [perguntaProcessando, setPerguntaProcessando] = useState('');
   const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const inputId = useId();
+
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const btnTriggerRef = useRef<HTMLButtonElement>(null);
+  const formId = useId();
 
   const { mutate: consultar, isPending } = useConsultaIA();
 
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isPending) {
-      setLoadingMsgIdx(0);
-      const msgsLength = getLoadingMessages(perguntaProcessando).length;
-      interval = setInterval(() => {
-        setLoadingMsgIdx((prev) => (prev + 1) % msgsLength);
-      }, 3500); // Transição mais rápida
+  const hasAccess = user && ROLES_PERMITIDOS.includes(user.role);
+
+  // 💡 FASE 1: Sugestões Dinâmicas (Onde o useMemo brilha!)
+  const sugestoesDinamicas = useMemo(() => {
+    if (!user) return [];
+    
+    // Sugestões específicas por Role
+    if (user.role === 'RH') {
+      return ['Quais documentos estão vencendo?', 'Status dos treinamentos de SST', 'Quais operadores têm mais infrações?'];
     }
-    return () => clearInterval(interval);
-  }, [isPending, perguntaProcessando]);
+    if (user.role === 'ENCARREGADO') {
+      return ['Há defeitos graves em aberto?', 'Quais veículos estão na oficina?', 'Resumo do plano preventivo'];
+    }
+    
+    // Sugestões padrão (Admin/Coordenador)
+    return [
+      'Qual veículo teve mais custo esse mês?',
+      'Resumo da frota atual',
+      'Quem são os operadores mais eficientes?',
+      'Há defeitos graves em aberto?',
+    ];
+  }, [user?.role]);
 
-  // Só aparece para ADMIN, RH e COORDENADOR
-  const ROLES_PERMITIDOS = ['ADMIN', 'RH', 'COORDENADOR'];
-  if (!user || !ROLES_PERMITIDOS.includes(user.role)) return null;
+  // 💡 FASE 1: Memória Persistente no LocalStorage
+  const [mensagens, setMensagens] = useState<MensagemChat[]>(() => {
+    try {
+      const historicoSalvo = localStorage.getItem('kia_historico');
+      if (historicoSalvo) {
+        // Garantir que as datas voltem como objetos Date e não strings
+        const parsed = JSON.parse(historicoSalvo);
+        return parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+      }
+    } catch (e) {
+      console.error('Erro ao ler histórico da IA', e);
+    }
+    return [];
+  });
 
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
-    }, 50);
-  };
+  // Salvar no localStorage sempre que as mensagens mudarem
+  useEffect(() => {
+    localStorage.setItem('kia_historico', JSON.stringify(mensagens));
+  }, [mensagens]);
+
+
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  useEffect(() => {
+    if (aberto) scrollToBottom();
+  }, [mensagens, aberto, isPending, scrollToBottom]);
 
   useEffect(() => {
     if (aberto) {
-      inputRef.current?.focus();
-      scrollToBottom();
+      document.body.style.overflow = 'hidden';
+      const timer = setTimeout(() => inputRef.current?.focus(), 100);
+      
+      const handleEsc = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setAberto(false);
+          btnTriggerRef.current?.focus();
+        }
+      };
+      window.addEventListener('keydown', handleEsc);
+      
+      return () => {
+        document.body.style.overflow = '';
+        clearTimeout(timer);
+        window.removeEventListener('keydown', handleEsc);
+      };
     }
   }, [aberto]);
 
   useEffect(() => {
-    scrollToBottom();
-  }, [mensagens]);
+    let interval: ReturnType<typeof setInterval>;
+    if (isPending) {
+      setLoadingMsgIdx(0);
+      const msgs = getLoadingMessages(perguntaProcessando);
+      interval = setInterval(() => {
+        setLoadingMsgIdx((prev) => (prev + 1) % msgs.length);
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isPending, perguntaProcessando]);
 
-  const enviar = (texto?: string) => {
+  // Lógica de Envio
+  const enviar = useCallback((texto?: string) => {
     const q = (texto ?? pergunta).trim();
     if (!q || isPending) return;
+
+    if (inputRef.current) inputRef.current.style.height = 'auto';
 
     const historicoFormatado = mensagens.map(m => ({
       role: m.tipo === 'usuario' ? 'user' : 'model',
@@ -143,167 +231,197 @@ export function AssistenteIA() {
     setMensagens(prev => [...prev, novaMsg]);
     setPergunta('');
 
-    consultar({ pergunta: q, historico: historicoFormatado }, {
+    // 💡 FASE 2: Consciência de Contexto (Injetar a Rota Atual)
+    const payloadConsulta = {
+      pergunta: q,
+      historico: historicoFormatado,
+      // Se o seu backend suportar, pode começar a ler isto:
+      contextoSistema: `O utilizador está atualmente na rota: ${location.pathname}` 
+    };
+
+    consultar(payloadConsulta, {
       onSuccess: (resposta) => {
-        const respostaMsg: MensagemChat = {
-          id: crypto.randomUUID(),
-          tipo: 'kia',
-          conteudo: resposta,
-          timestamp: new Date(),
-        };
-        setMensagens(prev => [...prev, respostaMsg]);
+        setMensagens(prev => [...prev, {
+          id: crypto.randomUUID(), tipo: 'kia', conteudo: resposta, timestamp: new Date(),
+        }]);
       },
       onError: () => {
         setMensagens(prev => [...prev, {
-          id: crypto.randomUUID(),
-          tipo: 'kia',
-          conteudo: 'Desculpe, não consegui processar sua consulta no momento. Tente novamente.',
-          timestamp: new Date(),
+          id: crypto.randomUUID(), tipo: 'kia', conteudo: 'Desculpe, não consegui processar sua consulta no momento. Tente novamente mais tarde.', timestamp: new Date(),
         }]);
       }
     });
+  }, [pergunta, mensagens, isPending, consultar, location.pathname]);
+
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setPergunta(e.target.value);
+    e.target.style.height = 'auto';
+    e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`;
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      enviar();
+    }
+  };
+
+  if (!hasAccess) return null;
+
+  // Função para limpar histórico fisicamente
+  const limparConversa = () => {
+    setMensagens([]);
+    localStorage.removeItem('kia_historico');
   };
 
   return (
     <>
-      {/* Botão flutuante da Kia */}
       <button
+        ref={btnTriggerRef}
         onClick={() => setAberto(prev => !prev)}
+        aria-expanded={aberto}
+        aria-controls="kia-chat-panel"
         className={cn(
-          "group relative flex items-center gap-2.5 px-4 py-3 rounded-2xl font-bold text-sm transition-all duration-300 shadow-float w-full",
+          "group relative flex items-center gap-2.5 px-4 py-3 rounded-2xl font-bold text-sm transition-all duration-300 shadow-float w-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           "bg-gradient-to-r from-primary to-violet-600 text-white hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]",
-          aberto && "opacity-90"
+          aberto && "opacity-90 scale-[0.98]"
         )}
-        aria-label="Abrir assistente Kia"
       >
         <div className="relative">
           <Sparkles className="w-5 h-5 shrink-0" />
-          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full animate-pulse border border-white/50" />
+          <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-emerald-400 rounded-full animate-pulse border border-white/30" />
         </div>
         <span className="flex-1 text-left tracking-tight">Kia — IA da Frota</span>
-        <ChevronDown className={cn("w-4 h-4 opacity-60 transition-transform duration-300", aberto && "rotate-180")} />
+        <ChevronDown className={cn("w-4 h-4 opacity-70 transition-transform duration-300", aberto && "rotate-180")} />
       </button>
 
-      {/* Painel de Chat */}
       {aberto && createPortal(
-        <div className="fixed bottom-0 right-0 z-[99999] sm:bottom-6 sm:right-6 w-full sm:w-[420px] h-[95svh] sm:h-[620px] flex flex-col bg-surface border border-border/60 sm:rounded-3xl shadow-float overflow-hidden animate-in slide-in-from-bottom-4 fade-in duration-300">
+        <>
+          <div 
+            className="fixed inset-0 z-[999998] bg-black/60 backdrop-blur-sm sm:hidden pointer-events-auto transition-opacity animate-in fade-in"
+            onClick={() => setAberto(false)}
+            aria-hidden="true"
+          />
 
-          {/* Header */}
-          <div className="flex items-center gap-3 px-5 py-4 bg-gradient-to-r from-primary/10 to-violet-600/10 border-b border-border/60 shrink-0">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-md">
-              <Sparkles className="w-5 h-5 text-white" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-black text-text-main text-sm tracking-tight">Kia — Inteligência Artificial</h3>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider">Online · Dados em tempo real</span>
+          <div 
+            id="kia-chat-panel"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="kia-title"
+            className="fixed bottom-0 left-0 right-0 sm:left-auto z-[999999] sm:bottom-6 sm:right-6 w-full sm:w-[420px] h-[92dvh] sm:h-[620px] flex flex-col bg-surface border-t sm:border border-border/60 rounded-t-[2rem] sm:rounded-3xl shadow-[0_-10px_50px_rgba(0,0,0,0.5)] sm:shadow-2xl overflow-hidden animate-in slide-in-from-bottom-6 fade-in duration-300 pointer-events-auto isolate"
+          >
+            <header className="flex items-center gap-3 px-5 py-4 bg-gradient-to-r from-primary/10 via-violet-600/5 to-transparent border-b border-border/60 shrink-0 relative overflow-hidden">
+              <div className="absolute inset-0 bg-white/5 pointer-events-none" />
+              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-md shrink-0 relative z-10">
+                <Sparkles className="w-5 h-5 text-white" />
               </div>
-            </div>
-            <div className="flex items-center gap-1">
-              {mensagens.length > 0 && (
-                <button onClick={() => setMensagens([])} className="p-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-xl transition-colors" title="Limpar conversa">
-                  <RotateCcw className="w-4 h-4" />
+              <div className="flex-1 min-w-0 relative z-10">
+                <h3 id="kia-title" className="font-black text-text-main text-sm tracking-tight truncate">
+                  Kia — Inteligência Artificial
+                </h3>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                  <span className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider truncate">Online · Assistente</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 shrink-0 relative z-10">
+                {mensagens.length > 0 && (
+                  <button 
+                    onClick={limparConversa} 
+                    className="p-2 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors focus-visible:ring-2 outline-none ring-primary"
+                    title="Limpar conversa"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                  </button>
+                )}
+                <button 
+                  onClick={() => setAberto(false)} 
+                  className="p-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-xl transition-colors focus-visible:ring-2 outline-none ring-primary"
+                >
+                  <X className="w-5 h-5" />
                 </button>
+              </div>
+            </header>
+
+            <div 
+              className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 scrollbar-thin overscroll-contain"
+              aria-live="polite"
+            >
+              {mensagens.length === 0 ? (
+                <div className="space-y-5 py-2 animate-in fade-in zoom-in-95 duration-500">
+                  <div className="bg-gradient-to-br from-primary/5 to-violet-600/5 border border-primary/10 rounded-2xl p-5 shadow-sm">
+                    <p className="text-sm text-text-secondary leading-relaxed">
+                      Olá, <strong className="text-text-main font-bold">{user.nome.split(' ')[0]}</strong>! Sou a <strong className="text-primary font-bold">Kia</strong>.
+                    </p>
+                    <p className="text-xs text-text-muted mt-3 font-medium uppercase tracking-wider">Sugestões de análise para o seu perfil:</p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {/* Renderiza as sugestões geradas pelo useMemo */}
+                    {sugestoesDinamicas.map((s) => (
+                      <button
+                        key={s}
+                        onClick={() => enviar(s)}
+                        className="text-xs px-3.5 py-2.5 bg-surface border border-border/80 hover:border-primary/40 hover:bg-primary/5 hover:text-primary hover:-translate-y-0.5 rounded-xl transition-all duration-200 text-text-secondary font-medium text-left shadow-sm active:scale-95"
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                mensagens.map((msg) => (
+                  <ChatBubble key={msg.id} msg={msg} userNome={user.nome} />
+                ))
               )}
-              <button onClick={() => setAberto(false)} className="p-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-xl transition-colors">
-                <X className="w-4 h-4" />
-              </button>
+
+              {isPending && (
+                <div className="flex gap-3 items-start animate-in fade-in zoom-in-95">
+                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-sm shrink-0">
+                    <Sparkles className="w-4 h-4 text-white animate-pulse" />
+                  </div>
+                  <div className="px-4 py-3.5 bg-surface border border-border/60 rounded-2xl rounded-tl-sm shadow-sm">
+                    <div className="flex items-center gap-2.5 text-text-muted text-sm font-medium">
+                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                      <span className="animate-pulse">{getLoadingMessages(perguntaProcessando)[loadingMsgIdx]}</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
+              <div ref={messagesEndRef} className="h-px w-full shrink-0" />
             </div>
-          </div>
 
-          {/* Área de mensagens */}
-          <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin">
-            {mensagens.length === 0 ? (
-              <div className="space-y-4 py-2">
-                <div className="bg-gradient-to-br from-primary/5 to-violet-600/5 border border-primary/10 rounded-2xl p-4">
-                  <p className="text-sm text-text-secondary leading-relaxed">
-                    Olá, <strong className="text-text-main">{user.nome.split(' ')[0]}</strong>! Sou a <strong className="text-primary">Kia</strong>, assistente de inteligência artificial do Frota KLIN. Posso analisar dados reais da sua frota, operadores, custos, SST e documentos.
-                  </p>
-                  <p className="text-xs text-text-muted mt-2 font-medium">Experimente uma das sugestões abaixo ou escreva sua pergunta:</p>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {SUGESTOES.map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => enviar(s)}
-                      className="text-xs px-3 py-2 bg-surface-hover border border-border/60 hover:border-primary/40 hover:bg-primary/5 hover:text-primary rounded-xl transition-all duration-200 text-text-secondary font-medium text-left"
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
+            <footer className="p-4 border-t border-border/60 bg-surface shrink-0">
+              <div className="relative flex items-end gap-2 bg-surface-hover border border-border/80 rounded-2xl p-1.5 focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10 transition-all shadow-inner">
+                <textarea
+                  id={formId}
+                  ref={inputRef}
+                  value={pergunta}
+                  onChange={handleInput}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Descreva o que precisa analisar..."
+                  disabled={isPending}
+                  rows={1}
+                  className="flex-1 max-h-[120px] bg-transparent text-sm text-text-main placeholder:text-text-muted outline-none disabled:opacity-50 resize-none py-2.5 px-3 scrollbar-thin"
+                />
+                <button
+                  onClick={() => enviar()}
+                  disabled={!pergunta.trim() || isPending}
+                  className="w-10 h-10 mb-0.5 bg-primary text-white rounded-xl flex items-center justify-center disabled:opacity-40 disabled:hover:scale-100 hover:bg-primary-hover hover:scale-105 active:scale-95 transition-all shrink-0 shadow-sm"
+                  aria-label="Enviar mensagem"
+                >
+                  {isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5 ml-0.5" />}
+                </button>
               </div>
-            ) : (
-              mensagens.map((msg) => (
-                <div key={msg.id} className={cn("flex gap-3 items-start", msg.tipo === 'usuario' && "flex-row-reverse")}>
-                  <div className={cn(
-                    "w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0",
-                    msg.tipo === 'kia'
-                      ? "bg-gradient-to-br from-primary to-violet-600 text-white shadow-sm"
-                      : "bg-surface-hover border border-border/60 text-text-secondary"
-                  )}>
-                    {msg.tipo === 'kia' ? <Sparkles className="w-4 h-4" /> : user.nome.charAt(0).toUpperCase()}
-                  </div>
-                  <div className={cn(
-                    "max-w-[82%] px-4 py-3 rounded-2xl",
-                    msg.tipo === 'kia'
-                      ? "bg-surface border border-border/60 text-text-main shadow-sm rounded-tl-sm"
-                      : "bg-primary text-white rounded-tr-sm"
-                  )}>
-                    {msg.tipo === 'kia' ? (
-                      <MdText texto={msg.conteudo} />
-                    ) : (
-                      <p className="text-sm">{msg.conteudo}</p>
-                    )}
-                    <span className={cn("text-[10px] mt-2 block", msg.tipo === 'kia' ? "text-text-muted" : "text-white/60")}>
-                      {msg.timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
-
-            {isPending && (
-              <div className="flex gap-3 items-start">
-                <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-sm shrink-0">
-                  <Sparkles className="w-4 h-4 text-white" />
-                </div>
-                <div className="px-4 py-3 bg-surface border border-border/60 rounded-2xl rounded-tl-sm shadow-sm">
-                  <div className="flex items-center gap-2 text-text-muted text-sm">
-                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                    <span className="animate-pulse">{getLoadingMessages(perguntaProcessando)[loadingMsgIdx] || 'Analisando...'}</span>
-                  </div>
-                </div>
+              <div className="flex items-center justify-center gap-1 mt-2.5">
+                <AlertCircle className="w-3 h-3 text-text-muted/60" />
+                <p className="text-[10px] text-text-muted/80 text-center font-medium">
+                  A Kia baseia-se em dados confidenciais do seu sistema.
+                </p>
               </div>
-            )}
+            </footer>
           </div>
-
-          {/* Input */}
-          <div className="p-4 border-t border-border/60 bg-surface shrink-0">
-            <div className="flex gap-2 items-center bg-surface-hover border border-border/60 rounded-2xl px-4 py-2 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all">
-              <input
-                id={inputId}
-                ref={inputRef}
-                type="text"
-                value={pergunta}
-                onChange={(e) => setPergunta(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && enviar()}
-                placeholder="Pergunte sobre a frota..."
-                disabled={isPending}
-                className="flex-1 bg-transparent text-sm text-text-main placeholder:text-text-muted/60 outline-none disabled:opacity-50 min-w-0"
-              />
-              <button
-                onClick={() => enviar()}
-                disabled={!pergunta.trim() || isPending}
-                className="w-8 h-8 bg-primary text-white rounded-xl flex items-center justify-center disabled:opacity-30 disabled:cursor-not-allowed hover:bg-primary-hover transition-colors shrink-0"
-              >
-                {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              </button>
-            </div>
-            <p className="text-[10px] text-text-muted text-center mt-2 font-medium">Respostas baseadas nos dados reais do sistema</p>
-          </div>
-        </div>,
+        </>,
         document.body
       )}
     </>
