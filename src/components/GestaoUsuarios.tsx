@@ -4,9 +4,8 @@ import { Button } from './ui/Button';
 import { Avatar } from './ui/Avatar';
 import { Input } from './ui/Input';
 import { ListaResponsiva } from './ui/ListaResponsiva';
-import { Badge } from './ui/Badge'; 
+import { Badge } from './ui/Badge';
 import { FormCadastrarUsuario } from './forms/FormCadastrarUsuario';
-import { FormEditarUsuario } from './forms/FormEditarUsuario';
 import { DossieIntegrante } from './rh/DossieIntegrante';
 import { ModalQrCode } from './ModalQrCode';
 import { ModalTreinamentosUsuario } from './ModalTreinamentosUsuario';
@@ -22,10 +21,10 @@ function getFirstAndLastName(fullName: string) {
   return `${parts[0]} ${parts[parts.length - 1]}`;
 }
 
-import { 
-  Trash2, Edit2, QrCode, GraduationCap, 
+import {
+  Trash2, Edit2, QrCode, GraduationCap,
   Search, Download, Plus, Users, Printer
-} from 'lucide-react'; 
+} from 'lucide-react';
 
 import { PageHeader } from './ui/PageHeader';
 import { SmartFAB } from './ui/SmartFAB';
@@ -66,7 +65,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
       toast.error("Ação bloqueada: Não pode remover o seu próprio Usuário.");
       return;
     }
-    
+
     openModal('CONFIRM', {
       title: "Inativar ou Remover Integrante",
       description: `Tem certeza que deseja inativar ou remover as credenciais de acesso de ${user.nome}? Se o usuário possuir histórico, ele será apenas inativado para manter o histórico da frota.`,
@@ -85,7 +84,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
           user={{ ...user, loginToken: user.loginToken ?? undefined }}
           onClose={() => closeModal(modalId)}
           onUpdate={() => {
-             refetch();
+            refetch();
           }}
         />
       )
@@ -98,8 +97,8 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
         <ModalTreinamentosUsuario
           usuario={user}
           onClose={() => {
-              closeModal(modalId);
-              refetch(); // Atualiza a lista caso os treinos alterem o status do operador
+            closeModal(modalId);
+            refetch(); // Atualiza a lista caso os treinos alterem o status do operador
           }}
         />
       )
@@ -164,7 +163,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
   if (usuarioParaEditar) {
     return (
       <div className="animate-in fade-in duration-500">
-        <DossieIntegrante 
+        <DossieIntegrante
           userId={usuarioParaEditar.id}
           onClose={() => setUsuarioParaEditar(null)}
         />
@@ -208,129 +207,129 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
           }
         />
 
-      {/* LISTAGEM RESPONSIVA */}
-      {isLoading ? (
-        <div className="space-y-3">
-          {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 bg-surface-hover/50 rounded-2xl animate-pulse border border-border/40" />)}
-        </div>
-      ) : usuariosFiltrados.length === 0 ? (
-        <EmptyState 
+        {/* LISTAGEM RESPONSIVA */}
+        {isLoading ? (
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 bg-surface-hover/50 rounded-2xl animate-pulse border border-border/40" />)}
+          </div>
+        ) : usuariosFiltrados.length === 0 ? (
+          <EmptyState
             icon={Users}
             title={busca ? "Nenhum integrante encontrado" : "Diretório Vazio"}
             description={busca ? "Tente usar outros termos de pesquisa." : "Adicione o primeiro integrante para começar."}
-        />
-      ) : (
-        <div className="bg-surface rounded-3xl shadow-sm border border-border/60 overflow-hidden">
-          <ListaResponsiva
-            itens={usuariosFiltrados}
-            emptyMessage="" // Já tratado pelo EmptyState acima
+          />
+        ) : (
+          <div className="bg-surface rounded-3xl shadow-sm border border-border/60 overflow-hidden">
+            <ListaResponsiva
+              itens={usuariosFiltrados}
+              emptyMessage="" // Já tratado pelo EmptyState acima
 
-            // --- DESKTOP ---
-            desktopHeader={
-              <>
-                <th className={`${TableStyles.th} pl-8 text-left w-2/5`}>Integrante</th>
-                <th className={`${TableStyles.th} text-center w-1/4`}>Estatuto Operacional</th>
-                <th className={`${TableStyles.th} text-right pr-8 w-1/4`}>Gestão</th>
-              </>
-            }
-            renderDesktop={(u) => (
-              <>
-                <td className={`${TableStyles.td} pl-8`}>
-                  <div className="flex items-center gap-4 min-w-0">
-                    <Avatar nome={u.nome} url={u.fotoUrl || u.image} />
-                    <span className="font-bold text-text-main text-base tracking-tight truncate" title={u.nome}>{getFirstAndLastName(u.nome)}</span>
-                  </div>
-                </td>
-                <td className={`${TableStyles.td} text-center`}>
-                  <div className="w-full flex flex-col items-center justify-center gap-1.5 text-center">
-                    <BadgeRole role={u.role} />
-                    {u.matricula && <span className="text-[10px] text-text-muted font-mono font-bold uppercase tracking-widest bg-surface-hover px-1.5 py-0.5 rounded border border-border/50 block w-fit truncate">ID: {u.matricula}</span>}
-                  </div>
-                </td>
-                <td className={`${TableStyles.td} text-right pr-8`}>
-                  <div className="grid grid-cols-2 gap-1.5 w-fit ml-auto opacity-60 group-hover:opacity-100 transition-opacity">
-                    <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => handleAbrirTreinamentosModal(u)} title="Registro de Treinamentos" aria-label={`Ver treinamentos de ${u.nome}`}>
-                      <GraduationCap className="w-5 h-5" />
-                    </Button>
-
-                    {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') ? (
-                      <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-success hover:bg-success/10 rounded-xl" onClick={() => handleAbrirQrModal(u)} title="Acesso por QR Code" aria-label={`QR Code de acesso de ${u.nome}`}>
-                        <QrCode className="w-5 h-5" />
-                      </Button>
-                    ) : (
-                      <div /> /* Empty div to keep the grid layout aligned */
-                    )}
-
-                    <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => setUsuarioParaEditar(u)} title="Editar Ficha" aria-label={`Editar ficha de ${u.nome}`}>
-                      <Edit2 className="w-5 h-5" />
-                    </Button>
-
-                    <Button 
-                      variant="ghost" 
-                      className="h-11 w-11 !p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-xl" 
-                      onClick={() => handleDeleteRequest(u)} 
-                      disabled={isExcluindo || u.id === adminUserId} 
-                      title="Inativar Integrante"
-                      aria-label={`Inativar integrante ${u.nome}`}
-                    >
-                      <Trash2 className="w-5 h-5" />
-                    </Button>
-                  </div>
-                </td>
-              </>
-            )}
-
-            // --- MOBILE (Cards) ---
-            renderMobile={(u) => (
-              <div 
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setUsuarioParaEditar(u);
-                  }
-                }}
-                className="text-left w-full p-5 border-b border-border/50 hover:bg-surface-hover/30 transition-colors cursor-pointer hover-lift rounded-2xl m-2 glass block" 
-                onClick={() => setUsuarioParaEditar(u)}
-              >
-                <div className="flex flex-col">
-                  <div className="flex items-start gap-4">
-                    <Avatar nome={u.nome} url={u.fotoUrl || u.image} size="lg" />
-                    <div className="flex flex-col gap-0.5 justify-center mt-1">
-                      <h3 className="font-black text-text-main text-lg tracking-tight leading-none mb-1.5">{getFirstAndLastName(u.nome)}</h3>
+              // --- DESKTOP ---
+              desktopHeader={
+                <>
+                  <th className={`${TableStyles.th} pl-8 text-left w-2/5`}>Integrante</th>
+                  <th className={`${TableStyles.th} text-center w-1/4`}>Estatuto Operacional</th>
+                  <th className={`${TableStyles.th} text-right pr-8 w-1/4`}>Gestão</th>
+                </>
+              }
+              renderDesktop={(u) => (
+                <>
+                  <td className={`${TableStyles.td} pl-8`}>
+                    <div className="flex items-center gap-4 min-w-0">
+                      <Avatar nome={u.nome} url={u.fotoUrl || u.image} />
+                      <span className="font-bold text-text-main text-base tracking-tight truncate" title={u.nome}>{getFirstAndLastName(u.nome)}</span>
+                    </div>
+                  </td>
+                  <td className={`${TableStyles.td} text-center`}>
+                    <div className="w-full flex flex-col items-center justify-center gap-1.5 text-center">
                       <BadgeRole role={u.role} />
+                      {u.matricula && <span className="text-[10px] text-text-muted font-mono font-bold uppercase tracking-widest bg-surface-hover px-1.5 py-0.5 rounded border border-border/50 block w-fit truncate">ID: {u.matricula}</span>}
+                    </div>
+                  </td>
+                  <td className={`${TableStyles.td} text-right pr-8`}>
+                    <div className="grid grid-cols-2 gap-1.5 w-fit ml-auto opacity-60 group-hover:opacity-100 transition-opacity">
+                      <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => handleAbrirTreinamentosModal(u)} title="Registro de Treinamentos" aria-label={`Ver treinamentos de ${u.nome}`}>
+                        <GraduationCap className="w-5 h-5" />
+                      </Button>
+
+                      {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') ? (
+                        <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-success hover:bg-success/10 rounded-xl" onClick={() => handleAbrirQrModal(u)} title="Acesso por QR Code" aria-label={`QR Code de acesso de ${u.nome}`}>
+                          <QrCode className="w-5 h-5" />
+                        </Button>
+                      ) : (
+                        <div /> /* Empty div to keep the grid layout aligned */
+                      )}
+
+                      <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => setUsuarioParaEditar(u)} title="Editar Ficha" aria-label={`Editar ficha de ${u.nome}`}>
+                        <Edit2 className="w-5 h-5" />
+                      </Button>
+
+                      <Button
+                        variant="ghost"
+                        className="h-11 w-11 !p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-xl"
+                        onClick={() => handleDeleteRequest(u)}
+                        disabled={isExcluindo || u.id === adminUserId}
+                        title="Inativar Integrante"
+                        aria-label={`Inativar integrante ${u.nome}`}
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </Button>
+                    </div>
+                  </td>
+                </>
+              )}
+
+              // --- MOBILE (Cards) ---
+              renderMobile={(u) => (
+                <div
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setUsuarioParaEditar(u);
+                    }
+                  }}
+                  className="text-left w-full p-5 border-b border-border/50 hover:bg-surface-hover/30 transition-colors cursor-pointer hover-lift rounded-2xl m-2 glass block"
+                  onClick={() => setUsuarioParaEditar(u)}
+                >
+                  <div className="flex flex-col">
+                    <div className="flex items-start gap-4">
+                      <Avatar nome={u.nome} url={u.fotoUrl || u.image} size="lg" />
+                      <div className="flex flex-col gap-0.5 justify-center mt-1">
+                        <h3 className="font-black text-text-main text-lg tracking-tight leading-none mb-1.5">{getFirstAndLastName(u.nome)}</h3>
+                        <BadgeRole role={u.role} />
+                      </div>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-2 gap-2 border-t border-dashed border-border/60 pt-4" onClick={e => e.stopPropagation()}>
+                      <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => handleAbrirTreinamentosModal(u)}>Treinos</Button>
+                      <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => setUsuarioParaEditar(u)}>Editar</Button>
+
+                      {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') ? (
+                        <>
+                          <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-success/10 text-success border-success/20 hover:bg-success/20 rounded-xl justify-center" onClick={() => handleAbrirQrModal(u)}>Acesso QR</Button>
+                          <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-error/10 text-error border-error/20 hover:bg-error/20 rounded-xl justify-center" onClick={() => handleDeleteRequest(u)}>Inativar</Button>
+                        </>
+                      ) : (
+                        <div className="col-span-2">
+                          <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-error/10 text-error border-error/20 hover:bg-error/20 rounded-xl justify-center" onClick={() => handleDeleteRequest(u)}>Inativar</Button>
+                        </div>
+                      )}
                     </div>
                   </div>
-
-                  <div className="mt-5 grid grid-cols-2 gap-2 border-t border-dashed border-border/60 pt-4" onClick={e => e.stopPropagation()}>
-                    <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => handleAbrirTreinamentosModal(u)}>Treinos</Button>
-                    <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => setUsuarioParaEditar(u)}>Editar</Button>
-
-                    {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO') ? (
-                      <>
-                        <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-success/10 text-success border-success/20 hover:bg-success/20 rounded-xl justify-center" onClick={() => handleAbrirQrModal(u)}>Acesso QR</Button>
-                        <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-error/10 text-error border-error/20 hover:bg-error/20 rounded-xl justify-center" onClick={() => handleDeleteRequest(u)}>Inativar</Button>
-                      </>
-                    ) : (
-                      <div className="col-span-2">
-                        <Button variant="secondary" className="text-[11px] min-h-[44px] w-full bg-error/10 text-error border-error/20 hover:bg-error/20 rounded-xl justify-center" onClick={() => handleDeleteRequest(u)}>Inativar</Button>
-                      </div>
-                    )}
-                  </div>
                 </div>
-              </div>
-            )}
-          />
-        </div>
-      )}
+              )}
+            />
+          </div>
+        )}
 
-      <SmartFAB 
-        onClick={() => setIsCadastroOpen(true)} 
-        label="Novo Integrante" 
-      />
+        <SmartFAB
+          onClick={() => setIsCadastroOpen(true)}
+          label="Novo Integrante"
+        />
 
-    </div>
+      </div>
     </PullToRefresh>
   );
 }
@@ -340,7 +339,7 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 // Wrapper para usar o Badge oficial com mapeamento de roles
 function BadgeRole({ role }: { role: UserRole }) {
   const map: Record<string, "success" | "warning" | "neutral" | "danger" | "info"> = {
-    'ADMIN': 'danger', 
+    'ADMIN': 'danger',
     'ENCARREGADO': 'info',
     'OPERADOR': 'success',
     'RH': 'warning',
@@ -348,7 +347,7 @@ function BadgeRole({ role }: { role: UserRole }) {
   };
 
   const variant = map[role] || 'neutral';
-  
+
   return (
     <Badge variant={variant} className="shadow-sm">
       {role}

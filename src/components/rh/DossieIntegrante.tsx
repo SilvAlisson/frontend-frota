@@ -5,7 +5,7 @@ import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { FormEditarUsuario } from '../forms/FormEditarUsuario';
 import { DateHelper } from '../../lib/dateHelper';
-import { Car, Wrench, ShieldAlert, GraduationCap, Clock, ChevronLeft, ChevronRight, Activity, MapPin, CheckCircle2 } from 'lucide-react';
+import { Car, ShieldAlert, GraduationCap, ChevronLeft, ChevronRight, Activity, MapPin, CheckCircle2 } from 'lucide-react';
 
 interface DossieIntegranteProps {
   userId: string;
@@ -51,7 +51,7 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
               </Badge>
             </div>
             <p className="text-text-secondary font-medium flex items-center justify-center sm:justify-start gap-2 mb-4">
-              <span className="text-primary font-bold">{user.cargo?.nome || user.role}</span>
+              <span className="text-primary font-bold">{(user.cargo as any)?.nome || user.role}</span>
               • Matrícula: {user.matricula || 'N/A'}
             </p>
 
@@ -117,7 +117,7 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
                     <p className={`text-lg font-bold ${
                       new Date(user.profile.cnhValidade) < new Date() ? 'text-error' : 'text-success'
                     }`}>
-                      {DateHelper.format(user.profile.cnhValidade)}
+                      {DateHelper.getCompleta(user.profile.cnhValidade)}
                     </p>
                   </div>
                 </div>
@@ -157,7 +157,7 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
                             <td className="px-4 py-3">
                               {t.dataVencimento ? (
                                 <Badge variant={vencido ? 'danger' : 'success'}>
-                                  {DateHelper.format(t.dataVencimento)}
+                                  {DateHelper.getCompleta(t.dataVencimento)}
                                 </Badge>
                               ) : (
                                 <Badge variant="neutral">Sem Vencimento</Badge>
@@ -197,7 +197,7 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {jornadas.map(j => {
                       const kmRodado = (j.kmFim ?? 0) - (j.kmInicio ?? 0);
-                      const isAtiva = j.status === 'EM_ANDAMENTO';
+                      const isAtiva = !j.dataFim;
                       return (
                         <div key={j.id} className="p-5 bg-surface-hover rounded-2xl border border-border/40 flex flex-col justify-between">
                           <div className="flex justify-between items-start mb-3">
@@ -207,7 +207,7 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
                               </Badge>
                             </div>
                             <span className="text-xs font-bold text-text-muted uppercase tracking-wider">
-                              {DateHelper.format(j.dataInicio)}
+                              {DateHelper.getCompleta(j.dataInicio)}
                             </span>
                           </div>
                           
@@ -215,10 +215,10 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
                             <p className="text-sm font-bold text-text-main flex items-center gap-1.5">
                               <Car className="w-4 h-4 text-primary" /> {j.veiculo?.placa || 'Veículo Desconhecido'}
                             </p>
-                            {j.rota && (
+                            {j.observacoes && (
                               <p className="text-xs font-medium text-text-secondary flex items-start gap-1.5">
                                 <MapPin className="w-4 h-4 text-text-muted shrink-0 mt-0.5" /> 
-                                <span className="line-clamp-2">{j.rota}</span>
+                                <span className="line-clamp-2">{j.observacoes}</span>
                               </p>
                             )}
                           </div>
@@ -293,7 +293,7 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
                     <tbody className="divide-y divide-border/30">
                       {defeitos.map(d => (
                         <tr key={d.id} className="hover:bg-surface-hover/30 transition-colors">
-                          <td className="px-4 py-3 font-medium text-text-main">{DateHelper.format(d.createdAt)}</td>
+                          <td className="px-4 py-3 font-medium text-text-main">{DateHelper.getCompleta(d.createdAt)}</td>
                           <td className="px-4 py-3 font-bold text-text-main">{d.veiculo?.placa || '-'}</td>
                           <td className="px-4 py-3">
                             <span className="font-bold block text-text-main">{d.categoria}</span>
