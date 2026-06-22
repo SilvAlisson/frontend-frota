@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import type { UserRole, User, StatusOperador } from '../types';
+import { signIn } from '../lib/auth-client';
 
 export function useLogin() {
   const navigate = useNavigate();
@@ -97,7 +98,6 @@ export function useLogin() {
       const email = data.email || '';
       const password = data.password || data.senha || '';
       
-      const { signIn } = await import('../lib/auth-client');
       const { data: resData, error } = await signIn.email({
         email,
         password
