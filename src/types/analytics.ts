@@ -16,3 +16,11 @@ export type MetricType =
   | 'CUSTO_KM' 
   | null;
 
+export interface TicketDrilldown {
+  id: string;
+  data: string;
+  descricao: string;
+  valorTotal: number;
+  quantidade?: number;
+  [key: string]: unknown;
+}
