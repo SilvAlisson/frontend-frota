@@ -163,3 +163,20 @@ export function useRelatorioRH() {
     },
   });
 }
+
+// ============================================================================
+// 👍👎 HOOK: ENVIAR FEEDBACK DA IA
+// ============================================================================
+export function useIAFeedback() {
+  return useMutation({
+    mutationFn: async (payload: {
+      mensagemId: string;
+      pergunta: string;
+      respostaIA: string;
+      avaliacao: 'positivo' | 'negativo';
+      contextoRota?: string;
+    }): Promise<void> => {
+      await api.post(`/ia/feedback/${payload.mensagemId}`, payload);
+    },
+  });
+}

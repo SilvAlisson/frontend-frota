@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, useMemo, useId } from 
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Sparkles, X, Send, Loader2, RotateCcw, ChevronDown, AlertCircle, Copy, ThumbsUp, ThumbsDown, Check } from 'lucide-react';
-import { useIAStream, type MensagemChat } from '../../hooks/useIA';
+import { useIAStream, useIAFeedback, type MensagemChat } from '../../hooks/useIA';
 import { MdText } from './MdText';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
@@ -21,7 +21,7 @@ const getLoadingMessages = (pergunta: string) => {
 /**
  * ChatBubble: Agora com Cursor de Digitação em tempo real
  */
-const ChatBubble = React.memo(({ msg, userNome }: { msg: MensagemChat; userNome: string }) => {
+const ChatBubble = React.memo(({ msg, userNome, onFeedback }: { msg: MensagemChat; userNome: string; onFeedback?: (msgId: string, avaliacao: 'positivo' | 'negativo') => void }) => {
   const isKia = msg.tipo === 'kia';
   const isError = msg.conteudo.includes('Desculpe, não consegui');
   const [copiado, setCopiado] = useState(false);
@@ -37,9 +37,9 @@ const ChatBubble = React.memo(({ msg, userNome }: { msg: MensagemChat; userNome:
   };
 
   const darFeedback = (tipo: 'positivo' | 'negativo') => {
-    // Alterna: clicar duas vezes no mesmo botão desfaz
-    setFeedback(prev => prev === tipo ? 'neutro' : tipo);
-    // TODO: enviar para /ia/feedback quando a rota estiver pronta
+    if (feedback !== 'neutro') return; // Bloqueia mudança após avaliar
+    setFeedback(tipo);
+    if (onFeedback) onFeedback(msg.id, tipo);
   };
 
   return (
@@ -133,6 +133,27 @@ export function AssistenteIA() {
 
   // 👈 Usando a nova função de Streaming
   const { consultarStream, isPending } = useIAStream();
+  const { mutateAsync: enviarFeedback } = useIAFeedback();
+
+  const handleFeedback = useCallback(async (msgId: string, avaliacao: 'positivo' | 'negativo') => {
+    // Busca a mensagem de resposta
+    const indexIA = mensagens.findIndex(m => m.id === msgId);
+    if (indexIA <= 0) return;
+
+    // A pergunta será a última mensagem do usuário antes desta
+    const msgIA = mensagens[indexIA];
+    const msgUser = [...mensagens].slice(0, indexIA).reverse().find(m => m.tipo === 'usuario');
+
+    if (msgIA && msgUser) {
+      await enviarFeedback({
+        mensagemId: msgIA.id,
+        pergunta: msgUser.conteudo,
+        respostaIA: msgIA.conteudo,
+        avaliacao,
+        contextoRota: location.pathname
+      }).catch(console.error);
+    }
+  }, [mensagens, enviarFeedback, location.pathname]);
 
   const hasAccess = user && ROLES_PERMITIDOS.includes(user.role);
 
@@ -375,7 +396,7 @@ export function AssistenteIA() {
                 </div>
               ) : (
                 mensagens.map((msg) => (
-                  <ChatBubble key={msg.id} msg={msg} userNome={user.nome} />
+                  <ChatBubble key={msg.id} msg={msg} userNome={user.nome} onFeedback={handleFeedback} />
                 ))
               )}
 
