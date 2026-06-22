@@ -7,6 +7,7 @@ import { ListaResponsiva } from './ui/ListaResponsiva';
 import { Badge } from './ui/Badge'; 
 import { FormCadastrarUsuario } from './forms/FormCadastrarUsuario';
 import { FormEditarUsuario } from './forms/FormEditarUsuario';
+import { DossieIntegrante } from './rh/DossieIntegrante';
 import { ModalQrCode } from './ModalQrCode';
 import { ModalTreinamentosUsuario } from './ModalTreinamentosUsuario';
 import { ModalGerarEtiquetas } from './rh/ModalGerarEtiquetas';
@@ -162,20 +163,11 @@ export function GestaoUsuarios({ adminUserId }: GestaoUsuariosProps) {
 
   if (usuarioParaEditar) {
     return (
-      <div className="animate-in slide-in-from-right duration-500">
-        <button
-          className="mb-4 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit"
-          onClick={() => setUsuarioParaEditar(null)}
-        >
-          <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar para o diretório
-        </button>
-        <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-2xl mx-auto">
-          <FormEditarUsuario
-            userId={usuarioParaEditar.id}
-            onSuccess={() => { setUsuarioParaEditar(null); refetch(); }}
-            onCancelar={() => setUsuarioParaEditar(null)}
-          />
-        </div>
+      <div className="animate-in fade-in duration-500">
+        <DossieIntegrante 
+          userId={usuarioParaEditar.id}
+          onClose={() => setUsuarioParaEditar(null)}
+        />
       </div>
     );
   }
