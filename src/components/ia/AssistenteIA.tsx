@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, useId } from 'react';
 import { createPortal } from 'react-dom';
-import { useLocation } from 'react-router-dom';
-import { Sparkles, X, Send, Loader2, RotateCcw, ChevronDown, AlertCircle, Copy, ThumbsUp, ThumbsDown, Check } from 'lucide-react';
-import { useConsultaIA, type MensagemChat } from '../../hooks/useIA';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Sparkles, X, Send, Loader2, RotateCcw, ChevronDown, AlertCircle, Copy, ThumbsUp, ThumbsDown, Check, CarFront } from 'lucide-react';
+import { useIAStream, type MensagemChat } from '../../hooks/useIA'; // 👈 Atualizado para o novo hook
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -17,34 +17,73 @@ const getLoadingMessages = (pergunta: string) => {
   return ['Analisando banco de dados...', 'Cruzando métricas...', 'Inspecionando transações...', 'Estruturando resposta...'];
 };
 
+// --- COMPONENTES VISUAIS (WIDGETS) ---
+const WidgetVeiculo = ({ placa }: { placa: string }) => {
+  const navigate = useNavigate();
+  return (
+    <div 
+      onClick={() => navigate(`/veiculos/${placa}`)}
+      className="mt-3 mb-3 p-3.5 bg-surface-hover border border-border/80 rounded-xl flex items-center gap-4 shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group active:scale-[0.98]"
+    >
+      <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0">
+        <CarFront className="w-5 h-5" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <h4 className="font-bold text-sm text-text-main uppercase tracking-wider">{placa}</h4>
+        <p className="text-[11px] text-text-muted truncate">Clique para abrir o dossiê completo</p>
+      </div>
+      <div className="text-xs font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shrink-0 pr-1">
+        Abrir &rarr;
+      </div>
+    </div>
+  );
+};
+
 // --- COMPONENTES FILHOS ---
 const MdText = React.memo(({ texto }: { texto: string }) => {
-  const linhas = texto.split('\n');
-  return (
-    <div className="space-y-1.5 text-sm leading-relaxed whitespace-pre-wrap word-break">
-      {linhas.map((linha, i) => {
-        if (!linha.trim()) return <br key={i} className="select-none" />;
-        const isBullet = linha.trim().startsWith('* ') || linha.trim().startsWith('- ') || linha.trim().startsWith('• ');
-        const cleanLinha = isBullet ? linha.trim().slice(2) : linha;
-        
-        const partes = cleanLinha.split(/(\*\*[^*]+\*\*)/g);
-        const renderizado = partes.map((p, j) =>
-          p.startsWith('**') && p.endsWith('**') ? (
-            <strong key={j} className="font-bold text-text-main">{p.slice(2, -2)}</strong>
-          ) : (
-            <span key={j}>{p}</span>
-          )
-        );
+  // Primeiro, separamos o texto por Widgets Visuais
+  const blocos = texto.split(/(\[WIDGET:VEICULO:[^\]]+\])/g);
 
-        if (isBullet) {
-          return (
-            <div key={i} className="flex gap-2 items-start pl-1">
-              <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-primary/80 shrink-0" aria-hidden="true" />
-              <span>{renderizado}</span>
-            </div>
-          );
+  return (
+    <div className="space-y-1.5 text-sm leading-relaxed whitespace-pre-wrap word-break relative">
+      {blocos.map((bloco, idx) => {
+        // Se for um Widget, renderizamos o Cartão
+        if (bloco.startsWith('[WIDGET:VEICULO:')) {
+          const placa = bloco.replace('[WIDGET:VEICULO:', '').replace(']', '');
+          return <WidgetVeiculo key={`widget-${idx}`} placa={placa} />;
         }
-        return <div key={i}>{renderizado}</div>;
+        if (!bloco.trim()) return null;
+
+        // Processamento padrão de Markdown (Negrito e Bullets)
+        const linhas = bloco.split('\n');
+        return (
+          <React.Fragment key={`text-block-${idx}`}>
+            {linhas.map((linha, i) => {
+              if (!linha.trim()) return <br key={`br-${i}`} className="select-none" />;
+              const isBullet = linha.trim().startsWith('* ') || linha.trim().startsWith('- ') || linha.trim().startsWith('• ');
+              const cleanLinha = isBullet ? linha.trim().slice(2) : linha;
+              
+              const partes = cleanLinha.split(/(\*\*[^*]+\*\*)/g);
+              const renderizado = partes.map((p, j) =>
+                p.startsWith('**') && p.endsWith('**') ? (
+                  <strong key={j} className="font-bold text-text-main">{p.slice(2, -2)}</strong>
+                ) : (
+                  <span key={j}>{p}</span>
+                )
+              );
+
+              if (isBullet) {
+                return (
+                  <div key={`line-${i}`} className="flex gap-2 items-start pl-1">
+                    <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-primary/80 shrink-0" aria-hidden="true" />
+                    <span>{renderizado}</span>
+                  </div>
+                );
+              }
+              return <div key={`line-${i}`}>{renderizado}</div>;
+            })}
+          </React.Fragment>
+        );
       })}
     </div>
   );
@@ -52,7 +91,7 @@ const MdText = React.memo(({ texto }: { texto: string }) => {
 MdText.displayName = 'MdText';
 
 /**
- * ChatBubble: Agora com Botões de Feedback (RLHF) e Copy to Clipboard
+ * ChatBubble: Agora com Cursor de Digitação em tempo real
  */
 const ChatBubble = React.memo(({ msg, userNome }: { msg: MensagemChat; userNome: string }) => {
   const isKia = msg.tipo === 'kia';
@@ -60,7 +99,9 @@ const ChatBubble = React.memo(({ msg, userNome }: { msg: MensagemChat; userNome:
   const [copiado, setCopiado] = useState(false);
 
   const copiarTexto = () => {
-    navigator.clipboard.writeText(msg.conteudo);
+    // Remove as tags de Widget antes de copiar
+    const textoLimpo = msg.conteudo.replace(/\[WIDGET:[A-Z]+:[^\]]+\]/g, '');
+    navigator.clipboard.writeText(textoLimpo);
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2000);
   };
@@ -68,10 +109,11 @@ const ChatBubble = React.memo(({ msg, userNome }: { msg: MensagemChat; userNome:
   return (
     <div className={cn("flex gap-3 items-start animate-in fade-in slide-in-from-bottom-2 duration-300", !isKia && "flex-row-reverse")}>
       <div className={cn(
-        "w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0 transition-transform hover:scale-105",
+        "w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black shrink-0 transition-transform",
         isKia 
           ? "bg-gradient-to-br from-primary to-violet-600 text-white shadow-sm" 
-          : "bg-surface-hover border border-border/60 text-text-secondary"
+          : "bg-surface-hover border border-border/60 text-text-secondary",
+        msg.isStreaming && isKia && "animate-pulse" // Animação de pulso enquanto digita
       )}>
         {isKia ? <Sparkles className="w-4 h-4" /> : userNome.charAt(0).toUpperCase()}
       </div>
@@ -82,40 +124,48 @@ const ChatBubble = React.memo(({ msg, userNome }: { msg: MensagemChat; userNome:
           ? cn("bg-surface border border-border/60 text-text-main shadow-sm rounded-tl-sm", isError && "border-red-500/30 bg-red-500/5") 
           : "bg-primary text-white rounded-tr-sm shadow-md"
       )}>
-        {isKia ? <MdText texto={msg.conteudo} /> : <div className="text-sm whitespace-pre-wrap">{msg.conteudo}</div>}
+        {/* Adiciona o texto e o cursor piscante se estiver no modo Streaming */}
+        {isKia ? (
+          <div>
+            <MdText texto={msg.conteudo} />
+            {msg.isStreaming && <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1 align-middle" />}
+          </div>
+        ) : (
+          <div className="text-sm whitespace-pre-wrap">{msg.conteudo}</div>
+        )}
         
-        {/* Footer da Bolha: Timestamp e Ações RLHF */}
-        <div className={cn("flex items-center justify-between mt-1", isKia ? "flex-row" : "flex-row-reverse")}>
-          <span className={cn("text-[10px] opacity-60 font-medium", isKia ? "text-text-muted" : "text-white")}>
-            {new Date(msg.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-          </span>
+        {/* Footer da Bolha só aparece quando a IA termina de digitar */}
+        {!msg.isStreaming && (
+          <div className={cn("flex items-center justify-between mt-1", isKia ? "flex-row" : "flex-row-reverse")}>
+            <span className={cn("text-[10px] opacity-60 font-medium", isKia ? "text-text-muted" : "text-white")}>
+              {new Date(msg.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+            </span>
 
-          {/* Botões de Feedback apenas nas respostas da IA */}
-          {isKia && !isError && (
-            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <button onClick={copiarTexto} className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Copiar resposta">
-                {copiado ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-              </button>
-              <button className="p-1.5 text-text-muted hover:text-emerald-500 hover:bg-emerald-500/10 rounded-md transition-colors" title="Resposta útil">
-                <ThumbsUp className="w-3.5 h-3.5" />
-              </button>
-              <button className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors" title="Resposta incorreta">
-                <ThumbsDown className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
-        </div>
+            {isKia && !isError && (
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={copiarTexto} className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Copiar resposta">
+                  {copiado ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+                <button className="p-1.5 text-text-muted hover:text-emerald-500 hover:bg-emerald-500/10 rounded-md transition-colors" title="Resposta útil">
+                  <ThumbsUp className="w-3.5 h-3.5" />
+                </button>
+                <button className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors" title="Resposta incorreta">
+                  <ThumbsDown className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
 });
 ChatBubble.displayName = 'ChatBubble';
 
-
 // --- COMPONENTE PRINCIPAL ---
 export function AssistenteIA() {
   const { user } = useAuth();
-  const location = useLocation(); // Consciência de Rota
+  const location = useLocation();
   
   const [aberto, setAberto] = useState(false);
   const [pergunta, setPergunta] = useState('');
@@ -127,23 +177,19 @@ export function AssistenteIA() {
   const btnTriggerRef = useRef<HTMLButtonElement>(null);
   const formId = useId();
 
-  const { mutate: consultar, isPending } = useConsultaIA();
+  // 👈 Usando a nova função de Streaming
+  const { consultarStream, isPending } = useIAStream();
 
   const hasAccess = user && ROLES_PERMITIDOS.includes(user.role);
 
-  // 💡 FASE 1: Sugestões Dinâmicas (Onde o useMemo brilha!)
   const sugestoesDinamicas = useMemo(() => {
     if (!user) return [];
-    
-    // Sugestões específicas por Role
     if (user.role === 'RH') {
       return ['Quais documentos estão vencendo?', 'Status dos treinamentos de SST', 'Quais operadores têm mais infrações?'];
     }
     if (user.role === 'ENCARREGADO') {
       return ['Há defeitos graves em aberto?', 'Quais veículos estão na oficina?', 'Resumo do plano preventivo'];
     }
-    
-    // Sugestões padrão (Admin/Coordenador)
     return [
       'Qual veículo teve mais custo esse mês?',
       'Resumo da frota atual',
@@ -152,12 +198,10 @@ export function AssistenteIA() {
     ];
   }, [user?.role]);
 
-  // 💡 FASE 1: Memória Persistente no LocalStorage
   const [mensagens, setMensagens] = useState<MensagemChat[]>(() => {
     try {
       const historicoSalvo = localStorage.getItem('kia_historico');
       if (historicoSalvo) {
-        // Garantir que as datas voltem como objetos Date e não strings
         const parsed = JSON.parse(historicoSalvo);
         return parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
       }
@@ -167,11 +211,9 @@ export function AssistenteIA() {
     return [];
   });
 
-  // Salvar no localStorage sempre que as mensagens mudarem
   useEffect(() => {
     localStorage.setItem('kia_historico', JSON.stringify(mensagens));
   }, [mensagens]);
-
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -179,7 +221,7 @@ export function AssistenteIA() {
 
   useEffect(() => {
     if (aberto) scrollToBottom();
-  }, [mensagens, aberto, isPending, scrollToBottom]);
+  }, [mensagens, aberto, scrollToBottom]);
 
   useEffect(() => {
     if (aberto) {
@@ -214,8 +256,8 @@ export function AssistenteIA() {
     return () => clearInterval(interval);
   }, [isPending, perguntaProcessando]);
 
-  // Lógica de Envio
-  const enviar = useCallback((texto?: string) => {
+  // 👈 NOVA Lógica de Envio (Streaming)
+  const enviar = useCallback(async (texto?: string) => {
     const q = (texto ?? pergunta).trim();
     if (!q || isPending) return;
 
@@ -231,27 +273,29 @@ export function AssistenteIA() {
     setMensagens(prev => [...prev, novaMsg]);
     setPergunta('');
 
-    // 💡 FASE 2: Consciência de Contexto (Injetar a Rota Atual)
-    const payloadConsulta = {
+    await consultarStream({
       pergunta: q,
-      historico: historicoFormatado,
-      // Se o seu backend suportar, pode começar a ler isto:
-      contextoSistema: `O utilizador está atualmente na rota: ${location.pathname}` 
-    };
-
-    consultar(payloadConsulta, {
-      onSuccess: (resposta) => {
-        setMensagens(prev => [...prev, {
-          id: crypto.randomUUID(), tipo: 'kia', conteudo: resposta, timestamp: new Date(),
-        }]);
+      contextoSistema: `O utilizador está atualmente na rota: ${location.pathname}`,
+      historico: historicoFormatado
+    }, {
+      // Inicia o balão da KIA vazio e com a flag isStreaming = true
+      onStart: (msgId) => {
+        setMensagens(prev => [...prev, { id: msgId, tipo: 'kia', conteudo: '', timestamp: new Date(), isStreaming: true }]);
       },
+      // Vai concatenando o texto letra a letra
+      onChunk: (msgId, chunk) => {
+        setMensagens(prev => prev.map(m => m.id === msgId ? { ...m, conteudo: m.conteudo + chunk } : m));
+      },
+      // Desliga o modo digitação
+      onFinish: (msgId) => {
+        setMensagens(prev => prev.map(m => m.id === msgId ? { ...m, isStreaming: false } : m));
+      },
+      // Em caso de erro
       onError: () => {
-        setMensagens(prev => [...prev, {
-          id: crypto.randomUUID(), tipo: 'kia', conteudo: 'Desculpe, não consegui processar sua consulta no momento. Tente novamente mais tarde.', timestamp: new Date(),
-        }]);
+        setMensagens(prev => [...prev, { id: crypto.randomUUID(), tipo: 'kia', conteudo: 'Desculpe, não consegui processar sua consulta no momento. A conexão com o banco de dados falhou.', timestamp: new Date() }]);
       }
     });
-  }, [pergunta, mensagens, isPending, consultar, location.pathname]);
+  }, [pergunta, mensagens, isPending, consultarStream, location.pathname]);
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPergunta(e.target.value);
@@ -268,7 +312,6 @@ export function AssistenteIA() {
 
   if (!hasAccess) return null;
 
-  // Função para limpar histórico fisicamente
   const limparConversa = () => {
     setMensagens([]);
     localStorage.removeItem('kia_historico');
@@ -343,8 +386,9 @@ export function AssistenteIA() {
               </div>
             </header>
 
+            {/* 👈 CORREÇÃO PRINCIPAL DO SCROLL: min-h-0 */}
             <div 
-              className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5 scrollbar-thin overscroll-contain"
+              className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-5 space-y-5 scrollbar-thin overscroll-contain"
               aria-live="polite"
             >
               {mensagens.length === 0 ? (
@@ -356,7 +400,6 @@ export function AssistenteIA() {
                     <p className="text-xs text-text-muted mt-3 font-medium uppercase tracking-wider">Sugestões de análise para o seu perfil:</p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {/* Renderiza as sugestões geradas pelo useMemo */}
                     {sugestoesDinamicas.map((s) => (
                       <button
                         key={s}
@@ -374,7 +417,8 @@ export function AssistenteIA() {
                 ))
               )}
 
-              {isPending && (
+              {/* Loader customizado enquanto a IA está a processar antes de cuspir o stream */}
+              {isPending && mensagens[mensagens.length - 1]?.tipo === 'usuario' && (
                 <div className="flex gap-3 items-start animate-in fade-in zoom-in-95">
                   <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-sm shrink-0">
                     <Sparkles className="w-4 h-4 text-white animate-pulse" />
