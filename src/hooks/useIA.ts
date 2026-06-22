@@ -12,14 +12,14 @@ export interface MensagemChat {
 }
 
 // ============================================================================
-// 🚀 HOOK: CONSULTA VIA STREAMING (O NOVO MOTOR DA KIA)
+// 🚀 HOOK: CONSULTA VIA STREAMING (O MOTOR DA KIA)
 // Consome a rota SSE (Server-Sent Events) para latência zero
 // ============================================================================
 export function useIAStream() {
   const [isPending, setIsPending] = useState(false);
 
   const consultarStream = useCallback(async (
-    payload: { pergunta: string; contextoSistema: string; historico?: any[] },
+    payload: { pergunta: string; contextoSistema: string; historico?: { role: string; text: string }[] },
     callbacks: {
       onStart: (msgId: string) => void;
       onChunk: (msgId: string, chunk: string) => void;
@@ -32,14 +32,14 @@ export function useIAStream() {
     callbacks.onStart(msgId);
 
     try {
-      // 1. Resgata o token do Fallback (QR Code) diretamente da sessão
+      // Resgata o token do Fallback (QR Code) diretamente da sessão
       const token = sessionStorage.getItem('authToken');
-      
-      // 2. Monta os cabeçalhos emulando o interceptor do api.ts
+
+      // Monta os cabeçalhos emulando o interceptor do api.ts
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      
+
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
@@ -48,52 +48,66 @@ export function useIAStream() {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/ia/consultar-stream`, {
         method: 'POST',
         headers,
-        credentials: 'include', // 👈 VITAL: Garante que os Cookies do better-auth viajam (equivalente a withCredentials: true)
-        body: JSON.stringify(payload)
+        credentials: 'include', // VITAL: Garante que os Cookies do better-auth viajam
+        body: JSON.stringify(payload),
       });
 
-      if (!response.ok) throw new Error('Falha na resposta do servidor');
+      if (!response.ok) throw new Error(`Falha na resposta do servidor: ${response.status}`);
       if (!response.body) throw new Error('ReadableStream não suportado pelo navegador');
 
       const reader = response.body.getReader();
       const decoder = new TextDecoder('utf-8');
 
-      while (true) {
+      // ✅ CORREÇÃO: Buffer acumulador para lidar com chunks SSE fragmentados.
+      // A Fetch API pode entregar bytes em pedaços arbitrários — um evento SSE
+      // pode chegar partido ao meio. O buffer garante que só processamos eventos
+      // completos (separados por \n\n).
+      let buffer = '';
+      let streamFinished = false;
+
+      while (!streamFinished) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        const chunkText = decoder.decode(value, { stream: true });
-        
-        // O SSE separa os blocos de dados por quebras duplas de linha
-        const lines = chunkText.split('\n\n');
-        
-        for (const line of lines) {
-          if (line.startsWith('data: ')) {
-            const dataStr = line.substring(6); // Remove o prefixo 'data: '
-            if (!dataStr.trim()) continue;
+        buffer += decoder.decode(value, { stream: true });
 
-            try {
-              const data = JSON.parse(dataStr);
-              
-              if (data.done) {
-                break;
-              }
-              
-              if (data.error) {
-                console.error('[useIAStream] Erro retornado pelo stream:', data.error);
-                callbacks.onError();
-                break;
-              }
-              
-              if (data.text) {
-                callbacks.onChunk(msgId, data.text);
-              }
-            } catch (e) {
-              console.warn('[useIAStream] Erro ao fazer parse do chunk SSE:', e, 'Dado original:', dataStr);
+        // Quebra o buffer em eventos SSE completos (delimitados por \n\n)
+        const events = buffer.split('\n\n');
+
+        // O último elemento pode estar incompleto — guardamos para o próximo chunk
+        buffer = events.pop() ?? '';
+
+        for (const event of events) {
+          const dataLine = event.split('\n').find(l => l.startsWith('data: '));
+          if (!dataLine) continue;
+
+          const dataStr = dataLine.substring(6).trim();
+          if (!dataStr) continue;
+
+          try {
+            const data = JSON.parse(dataStr);
+
+            if (data.done) {
+              streamFinished = true;
+              break;
             }
+
+            if (data.error) {
+              console.error('[useIAStream] Erro retornado pelo stream:', data.error);
+              callbacks.onError();
+              streamFinished = true;
+              break;
+            }
+
+            if (data.text) {
+              callbacks.onChunk(msgId, data.text);
+            }
+          } catch (e) {
+            console.warn('[useIAStream] Erro ao fazer parse do evento SSE:', e, '| Evento:', dataStr);
           }
         }
       }
+
       callbacks.onFinish(msgId);
     } catch (error) {
       console.error('[useIAStream] Erro fatal ao consumir stream:', error);
@@ -101,21 +115,9 @@ export function useIAStream() {
     } finally {
       setIsPending(false);
     }
-  }, []); // Removemos a dependência do `token` que vinha do AuthContext
+  }, []);
 
   return { consultarStream, isPending };
-}
-
-// ============================================================================
-// ⚠️ HOOK LEGADO: CONSULTA GERAL SÍNCRONA
-// ============================================================================
-export function useConsultaIA() {
-  return useMutation({
-    mutationFn: async ({ pergunta, historico }: { pergunta: string, historico: { role: string, text: string }[] }): Promise<string> => {
-      const { data } = await api.post('/ia/consulta', { pergunta, historico });
-      return data.resposta;
-    },
-  });
 }
 
 // ============================================================================
@@ -144,7 +146,7 @@ export function useInsightsKPIs() {
 export function useAnaliseVeiculo() {
   return useMutation({
     mutationFn: async (veiculoId: string): Promise<{ diagnostico: string; veiculo: { placa: string; modelo: string } }> => {
-      const { data } = await api.get(`/ia/analise-veiculo/${veiculoId}`);
+      const { data } = await api.post('/ia/analise-veiculo', { veiculoId });
       return data;
     },
   });

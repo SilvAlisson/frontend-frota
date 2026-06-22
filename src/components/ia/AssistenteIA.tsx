@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Sparkles, X, Send, Loader2, RotateCcw, ChevronDown, AlertCircle, Copy, ThumbsUp, ThumbsDown, Check, CarFront } from 'lucide-react';
-import { useIAStream, type MensagemChat } from '../../hooks/useIA'; // 👈 Atualizado para o novo hook
+import { Sparkles, X, Send, Loader2, RotateCcw, ChevronDown, AlertCircle, Copy, ThumbsUp, ThumbsDown, Check } from 'lucide-react';
+import { useIAStream, type MensagemChat } from '../../hooks/useIA';
+import { MdText } from './MdText';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -17,79 +18,6 @@ const getLoadingMessages = (pergunta: string) => {
   return ['Analisando banco de dados...', 'Cruzando métricas...', 'Inspecionando transações...', 'Estruturando resposta...'];
 };
 
-// --- COMPONENTES VISUAIS (WIDGETS) ---
-const WidgetVeiculo = ({ placa }: { placa: string }) => {
-  const navigate = useNavigate();
-  return (
-    <div 
-      onClick={() => navigate(`/veiculos/${placa}`)}
-      className="mt-3 mb-3 p-3.5 bg-surface-hover border border-border/80 rounded-xl flex items-center gap-4 shadow-sm hover:border-primary/50 hover:shadow-md transition-all cursor-pointer group active:scale-[0.98]"
-    >
-      <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-600 shrink-0">
-        <CarFront className="w-5 h-5" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <h4 className="font-bold text-sm text-text-main uppercase tracking-wider">{placa}</h4>
-        <p className="text-[11px] text-text-muted truncate">Clique para abrir o dossiê completo</p>
-      </div>
-      <div className="text-xs font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shrink-0 pr-1">
-        Abrir &rarr;
-      </div>
-    </div>
-  );
-};
-
-// --- COMPONENTES FILHOS ---
-const MdText = React.memo(({ texto }: { texto: string }) => {
-  // Primeiro, separamos o texto por Widgets Visuais
-  const blocos = texto.split(/(\[WIDGET:VEICULO:[^\]]+\])/g);
-
-  return (
-    <div className="space-y-1.5 text-sm leading-relaxed whitespace-pre-wrap word-break relative">
-      {blocos.map((bloco, idx) => {
-        // Se for um Widget, renderizamos o Cartão
-        if (bloco.startsWith('[WIDGET:VEICULO:')) {
-          const placa = bloco.replace('[WIDGET:VEICULO:', '').replace(']', '');
-          return <WidgetVeiculo key={`widget-${idx}`} placa={placa} />;
-        }
-        if (!bloco.trim()) return null;
-
-        // Processamento padrão de Markdown (Negrito e Bullets)
-        const linhas = bloco.split('\n');
-        return (
-          <React.Fragment key={`text-block-${idx}`}>
-            {linhas.map((linha, i) => {
-              if (!linha.trim()) return <br key={`br-${i}`} className="select-none" />;
-              const isBullet = linha.trim().startsWith('* ') || linha.trim().startsWith('- ') || linha.trim().startsWith('• ');
-              const cleanLinha = isBullet ? linha.trim().slice(2) : linha;
-              
-              const partes = cleanLinha.split(/(\*\*[^*]+\*\*)/g);
-              const renderizado = partes.map((p, j) =>
-                p.startsWith('**') && p.endsWith('**') ? (
-                  <strong key={j} className="font-bold text-text-main">{p.slice(2, -2)}</strong>
-                ) : (
-                  <span key={j}>{p}</span>
-                )
-              );
-
-              if (isBullet) {
-                return (
-                  <div key={`line-${i}`} className="flex gap-2 items-start pl-1">
-                    <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-primary/80 shrink-0" aria-hidden="true" />
-                    <span>{renderizado}</span>
-                  </div>
-                );
-              }
-              return <div key={`line-${i}`}>{renderizado}</div>;
-            })}
-          </React.Fragment>
-        );
-      })}
-    </div>
-  );
-});
-MdText.displayName = 'MdText';
-
 /**
  * ChatBubble: Agora com Cursor de Digitação em tempo real
  */
@@ -97,6 +25,8 @@ const ChatBubble = React.memo(({ msg, userNome }: { msg: MensagemChat; userNome:
   const isKia = msg.tipo === 'kia';
   const isError = msg.conteudo.includes('Desculpe, não consegui');
   const [copiado, setCopiado] = useState(false);
+  // 'neutro' | 'positivo' | 'negativo'
+  const [feedback, setFeedback] = useState<'neutro' | 'positivo' | 'negativo'>('neutro');
 
   const copiarTexto = () => {
     // Remove as tags de Widget antes de copiar
@@ -104,6 +34,12 @@ const ChatBubble = React.memo(({ msg, userNome }: { msg: MensagemChat; userNome:
     navigator.clipboard.writeText(textoLimpo);
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2000);
+  };
+
+  const darFeedback = (tipo: 'positivo' | 'negativo') => {
+    // Alterna: clicar duas vezes no mesmo botão desfaz
+    setFeedback(prev => prev === tipo ? 'neutro' : tipo);
+    // TODO: enviar para /ia/feedback quando a rota estiver pronta
   };
 
   return (
@@ -127,7 +63,7 @@ const ChatBubble = React.memo(({ msg, userNome }: { msg: MensagemChat; userNome:
         {/* Adiciona o texto e o cursor piscante se estiver no modo Streaming */}
         {isKia ? (
           <div>
-            <MdText texto={msg.conteudo} />
+            <MdText texto={msg.conteudo} comWidgets />
             {msg.isStreaming && <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1 align-middle" />}
           </div>
         ) : (
@@ -146,10 +82,28 @@ const ChatBubble = React.memo(({ msg, userNome }: { msg: MensagemChat; userNome:
                 <button onClick={copiarTexto} className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Copiar resposta">
                   {copiado ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
-                <button className="p-1.5 text-text-muted hover:text-emerald-500 hover:bg-emerald-500/10 rounded-md transition-colors" title="Resposta útil">
+                <button
+                  onClick={() => darFeedback('positivo')}
+                  className={cn(
+                    "p-1.5 rounded-md transition-colors",
+                    feedback === 'positivo'
+                      ? "text-emerald-500 bg-emerald-500/15"
+                      : "text-text-muted hover:text-emerald-500 hover:bg-emerald-500/10"
+                  )}
+                  title="Resposta útil"
+                >
                   <ThumbsUp className="w-3.5 h-3.5" />
                 </button>
-                <button className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors" title="Resposta incorreta">
+                <button
+                  onClick={() => darFeedback('negativo')}
+                  className={cn(
+                    "p-1.5 rounded-md transition-colors",
+                    feedback === 'negativo'
+                      ? "text-red-500 bg-red-500/15"
+                      : "text-text-muted hover:text-red-500 hover:bg-red-500/10"
+                  )}
+                  title="Resposta incorreta"
+                >
                   <ThumbsDown className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -212,7 +166,11 @@ export function AssistenteIA() {
   });
 
   useEffect(() => {
-    localStorage.setItem('kia_historico', JSON.stringify(mensagens));
+    // ✅ CORREÇÃO: Limita o histórico salvo às últimas 50 mensagens para evitar
+    // estourar o limite de 5MB do localStorage em conversas longas.
+    const MAX_HISTORICO = 50;
+    const parasSalvar = mensagens.slice(-MAX_HISTORICO);
+    localStorage.setItem('kia_historico', JSON.stringify(parasSalvar));
   }, [mensagens]);
 
   const scrollToBottom = useCallback(() => {
@@ -263,10 +221,14 @@ export function AssistenteIA() {
 
     if (inputRef.current) inputRef.current.style.height = 'auto';
 
-    const historicoFormatado = mensagens.map(m => ({
-      role: m.tipo === 'usuario' ? 'user' : 'model',
-      text: m.conteudo
-    }));
+    // ✅ CORREÇÃO: Filtra mensagens incompletas (streaming interrompido) e
+    // vazias antes de enviar ao backend — evita contexto corrompido.
+    const historicoFormatado = mensagens
+      .filter(m => !m.isStreaming && m.conteudo.trim().length > 0)
+      .map(m => ({
+        role: m.tipo === 'usuario' ? 'user' : 'model',
+        text: m.conteudo,
+      }));
 
     setPerguntaProcessando(q);
     const novaMsg: MensagemChat = { id: crypto.randomUUID(), tipo: 'usuario', conteudo: q, timestamp: new Date() };

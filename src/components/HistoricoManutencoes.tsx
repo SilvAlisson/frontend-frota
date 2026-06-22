@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import { DateHelper } from '../lib/dateHelper';
@@ -60,9 +61,25 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
   const { openModal } = useModalStore();
 
   // --- ESTADOS DA UI ---
+  const [searchParams, setSearchParams] = useSearchParams();
   const [visibleCount, setVisibleCount] = useState(ITENS_POR_PAGINA);
   const [editingOS, setEditingOS] = useState<OrdemServico | null>(null);
   const [isNovaOSOpen, setIsNovaOSOpen] = useState(false);
+
+  const actionQuery = searchParams.get('action');
+  const queryVeiculoId = searchParams.get('veiculoId');
+
+  useEffect(() => {
+    if (actionQuery === 'nova') {
+      setIsNovaOSOpen(true);
+      if (queryVeiculoId && !filtros.veiculoId) {
+        setFiltros(prev => ({ ...prev, veiculoId: queryVeiculoId }));
+      }
+      // Remove action da url
+      searchParams.delete('action');
+      setSearchParams(searchParams, { replace: true });
+    }
+  }, [actionQuery, queryVeiculoId]);
 
   const canEdit = ['ADMIN', 'ENCARREGADO', 'COORDENADOR'].includes(userRole);
   const canDelete = ['ADMIN', 'COORDENADOR'].includes(userRole);

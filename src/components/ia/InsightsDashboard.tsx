@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Sparkles, Loader2, RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useInsightsKPIs } from '../../hooks/useIA';
+import { MdText } from './MdText';
 
 interface InsightsDashboardProps {
   kpis: Record<string, unknown>;
@@ -8,32 +9,6 @@ interface InsightsDashboardProps {
   ano: number;
 }
 
-// Renderiza markdown simples
-function MdText({ texto }: { texto: string }) {
-  const linhas = texto.split('\n');
-  return (
-    <div className="space-y-1.5 text-sm leading-relaxed">
-      {linhas.map((linha, i) => {
-        if (!linha.trim()) return null;
-        const isBullet = linha.trim().startsWith('* ') || linha.trim().startsWith('- ') || linha.trim().startsWith('• ');
-        const conteudo = isBullet ? linha.trim().slice(2) : linha;
-        const partes = conteudo.split(/(\*\*[^*]+\*\*)/g);
-        const renderizado = partes.map((p, j) =>
-          p.startsWith('**') && p.endsWith('**')
-            ? <strong key={j} className="font-bold text-text-main">{p.slice(2, -2)}</strong>
-            : <span key={j}>{p}</span>
-        );
-        if (isBullet) return (
-          <div key={i} className="flex gap-2 items-start">
-            <span className="mt-2 w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-            <span className="text-text-secondary">{renderizado}</span>
-          </div>
-        );
-        return <p key={i} className="text-text-secondary">{renderizado}</p>;
-      })}
-    </div>
-  );
-}
 
 export function InsightsDashboard({ kpis, mes, ano }: InsightsDashboardProps) {
   const [insights, setInsights] = useState<string | null>(null);

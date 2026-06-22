@@ -80,7 +80,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
       if (isPrevisao || alerta.nivel === 'VENCIDO') {
         navigate('/admin/planos');
       } else {
-        navigate(`/admin/manutencoes/nova?veiculoId=${alerta.veiculoId}`);
+        navigate(`/admin/manutencoes?action=nova&veiculoId=${alerta.veiculoId}`);
       }
     }
   };
