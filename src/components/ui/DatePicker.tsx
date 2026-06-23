@@ -70,7 +70,11 @@ export function DatePicker({
               }}
               disabled={disableFuture ? { after: new Date() } : disabled}
               locale={ptBR}
-              showOutsideDays={false}
+              showOutsideDays={true}
+              fixedWeeks={true}
+              captionLayout="dropdown"
+              startMonth={new Date(1950, 0)}
+              endMonth={new Date(2050, 11)}
               className="p-1"
               labels={{
                 labelPrevious: () => "Mês anterior",
@@ -80,7 +84,10 @@ export function DatePicker({
                 months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
                 month: "space-y-4",
                 caption: "flex justify-center pt-1 relative items-center",
-                caption_label: "text-sm font-black text-text-main",
+                caption_label: "text-sm font-black text-text-main hidden", // Esconde a label padrão para mostrar os selects
+                dropdowns: "flex justify-center gap-2",
+                dropdown_root: "relative flex items-center text-sm font-black text-text-main bg-surface-hover/50 rounded-lg border border-border/50 px-2 py-1",
+                dropdown: "bg-transparent w-full h-full text-text-main outline-none appearance-none cursor-pointer absolute inset-0 opacity-0 z-10",
                 nav: "space-x-1 flex items-center",
                 nav_button: cn(
                   "h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100 border border-border/50 rounded-md flex items-center justify-center transition-opacity"
