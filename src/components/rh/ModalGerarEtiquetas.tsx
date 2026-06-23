@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import type { User } from '../../types';
 import { Button } from '../ui/Button';
-import { Printer, X, CheckSquare, Square, Search } from 'lucide-react';
+import { Modal } from '../ui/Modal';
+import { Printer, Search, CheckSquare, Square } from 'lucide-react';
 import { FolhaImpressaoQRCodes, type PrintUser } from './FolhaImpressaoQRCodes';
 import { Input } from '../ui/Input';
 
@@ -70,101 +71,88 @@ export function ModalGerarEtiquetas({ usuarios, onClose }: ModalGerarEtiquetasPr
 
   return (
     <>
-      <div className="bg-surface p-6 rounded-3xl shadow-xl border border-border max-w-2xl w-full relative no-print max-h-[90vh] flex flex-col">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6 shrink-0">
-          <div>
-            <h2 className="text-2xl font-black text-text-main flex items-center gap-2">
-              <Printer className="w-6 h-6 text-primary" /> 
-              Gerar Etiquetas de Capacetes
-            </h2>
-            <p className="text-sm text-text-secondary mt-1">
-              Selecione os colaboradores para gerar a grade de QR Codes (Dossiê).
-            </p>
-          </div>
-          <button 
-            onClick={onClose}
-            className="p-2 hover:bg-surface-hover rounded-full transition-colors text-text-muted hover:text-text-main"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+      <Modal isOpen={true} onClose={onClose} title="Gerar Etiquetas de Capacetes" className="max-w-2xl">
+        <div className="flex flex-col h-full gap-4">
+          <p className="text-sm text-text-secondary">
+            Selecione os colaboradores para gerar a grade de QR Codes (Dossiê).
+          </p>
 
-        {/* Filtros */}
-        <div className="flex gap-4 items-center mb-4 shrink-0">
-          <div className="flex-1">
-            <Input 
-              placeholder="Buscar por nome, matrícula ou cargo..."
-              value={busca}
-              onChange={e => setBusca(e.target.value)}
-              icon={<Search className="w-4 h-4 text-text-muted" />}
-              containerClassName="!mb-0"
-            />
-          </div>
-          <Button 
-            variant="secondary" 
-            onClick={handleToggleSelectAll}
-            className="whitespace-nowrap"
-          >
-            {allSelected ? <Square className="w-4 h-4 mr-2" /> : <CheckSquare className="w-4 h-4 mr-2" />}
-            {allSelected ? 'Desmarcar Todos' : 'Selecionar Todos'}
-          </Button>
-        </div>
-
-        {/* Lista */}
-        <div className="flex-1 overflow-y-auto min-h-[300px] border border-border/50 rounded-xl bg-surface-hover/20">
-          {usuariosFiltrados.length === 0 ? (
-            <div className="flex items-center justify-center h-full text-text-muted">
-              Nenhum colaborador encontrado.
+          {/* Filtros */}
+          <div className="flex gap-4 items-center shrink-0">
+            <div className="flex-1">
+              <Input 
+                placeholder="Buscar por nome, matrícula ou cargo..."
+                value={busca}
+                onChange={e => setBusca(e.target.value)}
+                icon={<Search className="w-4 h-4 text-text-muted" />}
+                containerClassName="!mb-0"
+              />
             </div>
-          ) : (
-            <div className="divide-y divide-border/50">
-              {usuariosFiltrados.map(user => (
-                <div 
-                  key={user.id}
-                  onClick={() => handleToggleUser(user.id)}
-                  className="flex items-center justify-between p-3 hover:bg-surface-hover cursor-pointer transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="text-primary">
-                      {selectedIds.has(user.id) ? (
-                        <CheckSquare className="w-5 h-5" />
-                      ) : (
-                        <Square className="w-5 h-5 text-text-muted" />
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-bold text-text-main leading-none">{user.nome}</p>
-                      <div className="flex gap-2 mt-1">
-                        <span className="text-xs text-text-secondary uppercase">{user.role}</span>
-                        {user.matricula && (
-                          <span className="text-xs font-mono text-text-muted bg-surface-hover px-1 rounded border border-border/50">
-                            {user.matricula}
-                          </span>
+            <Button 
+              variant="secondary" 
+              onClick={handleToggleSelectAll}
+              className="whitespace-nowrap"
+            >
+              {allSelected ? <Square className="w-4 h-4 mr-2" /> : <CheckSquare className="w-4 h-4 mr-2" />}
+              {allSelected ? 'Desmarcar Todos' : 'Selecionar Todos'}
+            </Button>
+          </div>
+
+          {/* Lista */}
+          <div className="overflow-y-auto min-h-[300px] max-h-[50vh] border border-border/50 rounded-xl bg-surface-hover/20">
+            {usuariosFiltrados.length === 0 ? (
+              <div className="flex items-center justify-center h-full text-text-muted">
+                Nenhum colaborador encontrado.
+              </div>
+            ) : (
+              <div className="divide-y divide-border/50">
+                {usuariosFiltrados.map(user => (
+                  <div 
+                    key={user.id}
+                    onClick={() => handleToggleUser(user.id)}
+                    className="flex items-center justify-between p-3 hover:bg-surface-hover cursor-pointer transition-colors"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="text-primary">
+                        {selectedIds.has(user.id) ? (
+                          <CheckSquare className="w-5 h-5" />
+                        ) : (
+                          <Square className="w-5 h-5 text-text-muted" />
                         )}
+                      </div>
+                      <div>
+                        <p className="font-bold text-text-main leading-none">{user.nome}</p>
+                        <div className="flex gap-2 mt-1">
+                          <span className="text-xs text-text-secondary uppercase">{user.role}</span>
+                          {user.matricula && (
+                            <span className="text-xs font-mono text-text-muted bg-surface-hover px-1 rounded border border-border/50">
+                              {user.matricula}
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {/* Footer Actions */}
-        <div className="mt-6 flex justify-end gap-3 shrink-0 pt-4 border-t border-border/50">
-          <Button variant="secondary" onClick={onClose}>
-            Cancelar
-          </Button>
-          <Button 
-            onClick={handleImprimir}
-            disabled={selectedIds.size === 0}
-            icon={<Printer className="w-4 h-4" />}
-          >
-            Gerar Impressão ({selectedIds.size})
-          </Button>
+          {/* Footer Actions */}
+          <div className="mt-2 flex justify-end gap-3 shrink-0 pt-4 border-t border-border/50">
+            <Button variant="secondary" onClick={onClose}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleImprimir}
+              disabled={selectedIds.size === 0}
+              icon={<Printer className="w-4 h-4" />}
+            >
+              Gerar Impressão ({selectedIds.size})
+            </Button>
+          </div>
         </div>
-      </div>
+      </Modal>
 
       {/* Componente Oculto de Impressão */}
       <FolhaImpressaoQRCodes usuarios={selectedUsersToPrint} />
