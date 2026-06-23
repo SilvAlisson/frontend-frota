@@ -12,10 +12,26 @@ const ROLES_PERMITIDOS = ['ADMIN', 'RH', 'COORDENADOR', 'ENCARREGADO'];
 // --- UTILITÁRIOS ---
 const getLoadingMessages = (pergunta: string) => {
   const p = pergunta.toLowerCase();
-  if (p.match(/defeito|manuten|quebra|peça|oficina|pneu|óleo/)) return ['Buscando histórico de OS...', 'Analisando defeitos...', 'Calculando custos mecânicos...', 'Sintetizando...'];
-  if (p.match(/abastecimento|combust|litro|km|gasto|diesel|gasolina/)) return ['Analisando abastecimentos...', 'Calculando KM/L...', 'Cruzando rotas...', 'Consolidando gastos...'];
-  if (p.match(/treinamento|venc|documento|cnh|sst|operador/)) return ['Acessando matriz de documentos...', 'Verificando validades...', 'Analisando SST...', 'Sintetizando status...'];
-  return ['Analisando banco de dados...', 'Cruzando métricas...', 'Inspecionando transações...', 'Estruturando resposta...'];
+  if (p.match(/defeito|manuten|quebra|peça|oficina|pneu|óleo/)) return ['Buscando histórico de OS', 'Analisando defeitos', 'Calculando custos mecânicos', 'Sintetizando'];
+  if (p.match(/abastecimento|combust|litro|km|gasto|diesel|gasolina/)) return ['Analisando abastecimentos', 'Calculando KM/L', 'Cruzando rotas', 'Consolidando gastos'];
+  if (p.match(/treinamento|venc|documento|cnh|sst|operador/)) return ['Acessando matriz de documentos', 'Verificando validades', 'Analisando SST', 'Sintetizando status'];
+  return ['Analisando banco de dados', 'Cruzando métricas', 'Inspecionando transações', 'Estruturando resposta'];
+};
+
+/**
+ * Componente para animar os pontinhos de "Pensando..." de forma humana
+ */
+const BlinkingDots = () => {
+  const [dots, setDots] = useState('');
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDots(prev => prev.length >= 3 ? '' : prev + '.');
+    }, 400);
+    return () => clearInterval(interval);
+  }, []);
+
+  return <span className="inline-block w-4 text-left font-bold tracking-widest">{dots}</span>;
 };
 
 /**
@@ -411,9 +427,11 @@ export function AssistenteIA() {
                     <Sparkles className="w-4 h-4 text-white animate-pulse" />
                   </div>
                   <div className="px-4 py-3.5 bg-surface border border-border/60 rounded-2xl rounded-tl-sm shadow-sm">
-                    <div className="flex items-center gap-2.5 text-text-muted text-sm font-medium">
-                      <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                      <span className="animate-pulse">{getLoadingMessages(perguntaProcessando)[loadingMsgIdx]}</span>
+                    <div className="flex items-center gap-1.5 text-text-muted text-sm font-medium">
+                      <span className="text-primary font-bold">
+                        {getLoadingMessages(perguntaProcessando)[loadingMsgIdx]}
+                      </span>
+                      <BlinkingDots />
                     </div>
                   </div>
                 </div>
