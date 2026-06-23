@@ -22,7 +22,7 @@ export function FolhaImpressaoQRCodes({ usuarios }: FolhaImpressaoQRCodesProps) 
   const urlBase = window.location.origin + '/dossie/';
 
   return (
-    <div className="hidden print:block fixed inset-0 bg-white z-[9999] overflow-visible">
+    <div className="hidden print:block absolute top-0 left-0 w-full bg-white z-[9999] min-h-screen">
       <style>
         {`
           @page {
@@ -45,14 +45,14 @@ export function FolhaImpressaoQRCodes({ usuarios }: FolhaImpressaoQRCodesProps) 
         `}
       </style>
 
-      <div className="w-full h-full bg-white text-black pt-2 pb-4 px-4">
+      <div className="w-full bg-white text-black pt-2 pb-4 px-4">
         <h1 className="text-center font-bold text-lg mb-3">Etiquetas de Capacetes - Dossiê Digital</h1>
         
         <div className="grid grid-cols-3 gap-6 auto-rows-max">
           {usuarios.map((user, index) => {
             const qrUrl = `${urlBase}${user.id}`;
-            // Força quebra de página a cada 15 etiquetas (3 colunas x 5 linhas = 15 por folha)
-            const isPageBreak = (index + 1) % 15 === 0;
+            // Força quebra de página a cada 12 etiquetas (3 colunas x 4 linhas = 12 por folha A4)
+            const isPageBreak = (index + 1) % 12 === 0;
 
             return (
               <React.Fragment key={user.id}>
