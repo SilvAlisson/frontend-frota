@@ -54,6 +54,9 @@ export function FolhaImpressaoQRCodes({ usuarios }: FolhaImpressaoQRCodesProps) 
         <div className="grid grid-cols-3 gap-6 auto-rows-max">
           {usuarios.map((user) => {
             const qrUrl = `${urlBase}${user.id}`;
+            const nameParts = user.nome.trim().split(' ');
+            const firstName = nameParts[0];
+            const restName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
 
             return (
               <div key={user.id} className="flex flex-col items-center justify-center border-2 border-dashed border-gray-400 p-4 rounded-xl relative break-inside-avoid">
@@ -63,18 +66,23 @@ export function FolhaImpressaoQRCodes({ usuarios }: FolhaImpressaoQRCodesProps) 
                 <div className="bg-white p-2 rounded-lg shadow-sm border border-gray-200">
                   <QRCodeSVG 
                     value={qrUrl} 
-                    size={120} 
+                    size={160} 
                     level="H" 
                     includeMargin={false} 
                   />
                 </div>
                 
-                <div className="mt-3 text-center w-full">
-                  <p className="font-bold text-[14px] leading-tight line-clamp-2 uppercase">
-                    {user.nome.split(' ').slice(0, 2).join(' ')}
+                <div className="mt-3 text-center w-full overflow-hidden px-1">
+                  <p className="font-bold text-[16px] leading-tight uppercase truncate">
+                    {firstName}
                   </p>
+                  {restName && (
+                    <p className="font-bold text-[13px] text-gray-800 leading-tight uppercase truncate mt-0.5">
+                      {restName}
+                    </p>
+                  )}
                   {user.cargo && (
-                    <p className="text-[10px] text-gray-600 font-semibold uppercase mt-1 truncate">
+                    <p className="text-[11px] text-gray-600 font-semibold uppercase mt-1 truncate">
                       {user.cargo}
                     </p>
                   )}
