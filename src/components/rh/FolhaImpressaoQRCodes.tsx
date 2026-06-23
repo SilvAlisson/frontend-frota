@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
 
 export interface PrintUser {
@@ -21,8 +22,8 @@ export function FolhaImpressaoQRCodes({ usuarios }: FolhaImpressaoQRCodesProps) 
 
   const urlBase = window.location.origin + '/dossie/';
 
-  return (
-    <div className="hidden print:block absolute top-0 left-0 w-full bg-white z-[9999] min-h-screen">
+  return createPortal(
+    <div id="print-container" className="hidden print:block absolute top-0 left-0 w-full bg-white z-[9999] min-h-screen">
       <style>
         {`
           @page {
@@ -30,6 +31,10 @@ export function FolhaImpressaoQRCodes({ usuarios }: FolhaImpressaoQRCodesProps) 
             margin: 10mm;
           }
           @media print {
+            /* Esconde toda a interface do app (incluindo modals) e mostra apenas o contêiner de impressão */
+            body > :not(#print-container) {
+              display: none !important;
+            }
             body {
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
@@ -38,9 +43,6 @@ export function FolhaImpressaoQRCodes({ usuarios }: FolhaImpressaoQRCodesProps) 
             .no-print {
               display: none !important;
             }
-            .print-page-break {
-              page-break-after: always;
-            }
           }
         `}
       </style>
@@ -48,49 +50,46 @@ export function FolhaImpressaoQRCodes({ usuarios }: FolhaImpressaoQRCodesProps) 
       <div className="w-full bg-white text-black pt-2 pb-4 px-4">
         <h1 className="text-center font-bold text-lg mb-3">Etiquetas de Capacetes - Dossiê Digital</h1>
         
+        {/* Usamos grid normal. O break-inside-avoid no filho cuida da paginação automática! */}
         <div className="grid grid-cols-3 gap-6 auto-rows-max">
-          {usuarios.map((user, index) => {
+          {usuarios.map((user) => {
             const qrUrl = `${urlBase}${user.id}`;
-            // Força quebra de página a cada 12 etiquetas (3 colunas x 4 linhas = 12 por folha A4)
-            const isPageBreak = (index + 1) % 12 === 0;
 
             return (
-              <React.Fragment key={user.id}>
-                <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-400 p-4 rounded-xl relative break-inside-avoid">
-                  {/* Tesoura icon hint - top left */}
-                  <span className="absolute -top-3 -left-2 text-gray-400 text-lg">✂️</span>
-                  
-                  <div className="bg-white p-2 rounded-lg shadow-sm border border-gray-200">
-                    <QRCodeSVG 
-                      value={qrUrl} 
-                      size={120} 
-                      level="H" 
-                      includeMargin={false} 
-                    />
-                  </div>
-                  
-                  <div className="mt-3 text-center w-full">
-                    <p className="font-bold text-[14px] leading-tight line-clamp-2 uppercase">
-                      {user.nome.split(' ').slice(0, 2).join(' ')}
-                    </p>
-                    {user.cargo && (
-                      <p className="text-[10px] text-gray-600 font-semibold uppercase mt-1 truncate">
-                        {user.cargo}
-                      </p>
-                    )}
-                    {user.matricula && (
-                      <p className="text-[10px] text-gray-500 mt-0.5">
-                        MAT: {user.matricula}
-                      </p>
-                    )}
-                  </div>
+              <div key={user.id} className="flex flex-col items-center justify-center border-2 border-dashed border-gray-400 p-4 rounded-xl relative break-inside-avoid">
+                {/* Tesoura icon hint - top left */}
+                <span className="absolute -top-3 -left-2 text-gray-400 text-lg">✂️</span>
+                
+                <div className="bg-white p-2 rounded-lg shadow-sm border border-gray-200">
+                  <QRCodeSVG 
+                    value={qrUrl} 
+                    size={120} 
+                    level="H" 
+                    includeMargin={false} 
+                  />
                 </div>
-                {isPageBreak && <div className="print-page-break col-span-3"></div>}
-              </React.Fragment>
+                
+                <div className="mt-3 text-center w-full">
+                  <p className="font-bold text-[14px] leading-tight line-clamp-2 uppercase">
+                    {user.nome.split(' ').slice(0, 2).join(' ')}
+                  </p>
+                  {user.cargo && (
+                    <p className="text-[10px] text-gray-600 font-semibold uppercase mt-1 truncate">
+                      {user.cargo}
+                    </p>
+                  )}
+                  {user.matricula && (
+                    <p className="text-[10px] text-gray-500 mt-0.5">
+                      MAT: {user.matricula}
+                    </p>
+                  )}
+                </div>
+              </div>
             );
           })}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
