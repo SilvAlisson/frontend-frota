@@ -261,13 +261,17 @@ export function AssistenteIA() {
       contextoSistema: `O utilizador está atualmente na rota: ${location.pathname}`,
       historico: historicoFormatado
     }, {
-      // Inicia o balão da KIA vazio e com a flag isStreaming = true
-      onStart: (msgId) => {
-        setMensagens(prev => [...prev, { id: msgId, tipo: 'kia', conteudo: '', timestamp: new Date(), isStreaming: true }]);
-      },
-      // Vai concatenando o texto letra a letra
+      // Não cria o balão imediatamente. Isso permite que o Loader de "Pensando..." fique visível.
+      onStart: (msgId) => {},
+      // Cria o balão no primeiro chunk e concatena os próximos
       onChunk: (msgId, chunk) => {
-        setMensagens(prev => prev.map(m => m.id === msgId ? { ...m, conteudo: m.conteudo + chunk } : m));
+        setMensagens(prev => {
+          const exists = prev.some(m => m.id === msgId);
+          if (!exists) {
+            return [...prev, { id: msgId, tipo: 'kia', conteudo: chunk, timestamp: new Date(), isStreaming: true }];
+          }
+          return prev.map(m => m.id === msgId ? { ...m, conteudo: m.conteudo + chunk } : m);
+        });
       },
       // Desliga o modo digitação
       onFinish: (msgId) => {
