@@ -56,9 +56,10 @@ interface FormEditarUsuarioProps {
   userId: string;
   onSuccess: () => void;
   onCancelar: () => void;
+  variant?: 'modal' | 'embedded';
 }
 
-export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarUsuarioProps) {
+export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'modal' }: FormEditarUsuarioProps) {
   const [loadingData, setLoadingData] = useState(true);
   const [cargos, setCargos] = useState<Cargo[]>([]);
 
@@ -223,24 +224,35 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
   }
 
   return (
-    <div className="bg-surface rounded-2xl shadow-float border border-border/60 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-300">
+    <div className={variant === 'modal' ? "bg-surface rounded-2xl shadow-float border border-border/60 overflow-hidden flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95 duration-300" : "flex flex-col animate-in fade-in duration-300"}>
 
       {/* HEADER PREMIUM */}
-      <div className="bg-gradient-to-r from-background to-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex justify-between items-center shrink-0">
-        <div>
-          <h3 className="text-xl font-black text-text-main tracking-tight flex items-center gap-2">
-            <div className="p-1.5 bg-primary/10 rounded-lg text-primary shadow-sm">
-              <User className="w-6 h-6" />
-            </div>
-            Editar Colaborador
-          </h3>
-          <p className="text-sm text-text-secondary font-medium mt-1">Atualize informações de acesso e credenciais profissionais.</p>
+      {variant === 'modal' ? (
+        <div className="bg-gradient-to-r from-background to-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex justify-between items-center shrink-0">
+          <div>
+            <h3 className="text-xl font-black text-text-main tracking-tight flex items-center gap-2">
+              <div className="p-1.5 bg-primary/10 rounded-lg text-primary shadow-sm">
+                <User className="w-6 h-6" />
+              </div>
+              Editar Colaborador
+            </h3>
+            <p className="text-sm text-text-secondary font-medium mt-1">Atualize informações de acesso e credenciais profissionais.</p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="mb-6 flex justify-between items-center shrink-0">
+          <div>
+            <h2 className="text-xl font-bold text-text-main flex items-center gap-2">
+              <User className="w-5 h-5 text-primary" /> Informações Pessoais e Acesso
+            </h2>
+            <p className="text-sm text-text-secondary font-medium mt-1">Atualize as credenciais e dados cadastrais do colaborador.</p>
+          </div>
+        </div>
+      )}
 
       <form className="flex flex-col flex-1 min-h-0" onSubmit={handleSubmit(onSubmit, () => hapticError())}>
 
-        <div className="p-6 sm:p-8 space-y-8 overflow-y-auto scrollbar-thin">
+        <div className={`${variant === 'modal' ? 'p-6 sm:p-8' : ''} space-y-8 overflow-y-auto scrollbar-thin`}>
 
           {/* AVATAR UPLOAD (Redesenhado) */}
           <div className="flex flex-col items-center mb-2">
@@ -396,7 +408,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar }: FormEditarU
         </div>
 
         {/* FOOTER PREMIUM */}
-        <div className="px-6 sm:px-8 py-5 bg-surface-hover/30 border-t border-border/60 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
+        <div className={`${variant === 'modal' ? 'px-6 sm:px-8 py-5 bg-surface-hover/30 border-t mt-0' : 'pt-6 border-t mt-8'} border-border/60 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0`}>
           <Button
             type="button"
             variant="ghost"

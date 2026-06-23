@@ -84,12 +84,12 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
         
         {/* ABA: DADOS CADASTRAIS (EDIÇÃO) */}
         {activeTab === 'geral' && (
-          <div className="max-w-2xl mx-auto">
-            <h2 className="text-xl font-bold text-text-main mb-6">Informações Pessoais e Acesso</h2>
+          <div className="animate-in fade-in">
             <FormEditarUsuario
               userId={user.id}
               onSuccess={() => {}} // O componente FormEditarUsuario já faz o toast e invalidate
               onCancelar={() => setActiveTab('produtividade')}
+              variant="embedded"
             />
           </div>
         )}
