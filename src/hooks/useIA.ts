@@ -64,6 +64,33 @@ export function useIAStream() {
       // completos (separados por \n\n).
       let buffer = '';
       let streamFinished = false;
+      let queue = '';
+      let isFlushing = false;
+      let networkDone = false;
+
+      const processQueue = async () => {
+        if (isFlushing) return;
+        isFlushing = true;
+        while (queue.length > 0) {
+          // Acelera a digitação dinamicamente se a fila estiver muito longa (textos grandes)
+          const take = queue.length > 200 ? 4 : queue.length > 80 ? 2 : 1;
+          const chunk = queue.substring(0, take);
+          queue = queue.substring(take);
+          
+          callbacks.onChunk(msgId, chunk);
+          
+          // Delay humano simulado: 10ms a 25ms
+          const delay = 10 + Math.random() * 15;
+          await new Promise(r => setTimeout(r, delay));
+        }
+        isFlushing = false;
+        
+        // Só termina oficialmente quando a rede fechar E a fila de digitação esvaziar
+        if (networkDone && queue.length === 0) {
+          callbacks.onFinish(msgId);
+          setIsPending(false);
+        }
+      };
 
       while (!streamFinished) {
         const { done, value } = await reader.read();
@@ -100,7 +127,9 @@ export function useIAStream() {
             }
 
             if (data.text) {
-              callbacks.onChunk(msgId, data.text);
+              // Em vez de cuspir direto, enfileira para a digitação humanizada
+              queue += data.text;
+              processQueue();
             }
           } catch (e) {
             console.warn('[useIAStream] Erro ao fazer parse do evento SSE:', e, '| Evento:', dataStr);
@@ -108,11 +137,14 @@ export function useIAStream() {
         }
       }
 
-      callbacks.onFinish(msgId);
+      networkDone = true;
+      if (!isFlushing && queue.length === 0) {
+        callbacks.onFinish(msgId);
+        setIsPending(false);
+      }
     } catch (error) {
       console.error('[useIAStream] Erro fatal ao consumir stream:', error);
       callbacks.onError();
-    } finally {
       setIsPending(false);
     }
   }, []);
