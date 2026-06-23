@@ -48,7 +48,7 @@ export function FolhaImpressaoQRCodes({ usuarios }: FolhaImpressaoQRCodesProps) 
       </style>
 
       <div className="w-full bg-white text-black pt-2 pb-4 px-4">
-        <h1 className="text-center font-bold text-lg mb-3">Etiquetas de Capacetes - Dossiê Digital</h1>
+        <h1 className="text-center font-bold text-2xl mb-6">Etiquetas de Capacetes - Dossiê Digital</h1>
         
         {/* Usamos grid normal. O break-inside-avoid no filho cuida da paginação automática! */}
         <div className="grid grid-cols-3 gap-6 auto-rows-max">
