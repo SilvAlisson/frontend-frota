@@ -1,17 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
-  Menu, X, LogOut, Sun, Moon
+  Menu, X
 } from 'lucide-react';
 import { Drawer } from 'vaul'; 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { ConfirmModal } from '../components/ui/ConfirmModal'; 
 import { Button } from '../components/ui/Button';
 import { Avatar } from '../components/ui/Avatar';
 import { MENU_ITEMS } from '../config/navigation';
 import { Tooltip, TooltipTrigger, TooltipContent } from '../components/ui/Tooltip';
-import { useTheme } from '../contexts/ThemeContext';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
@@ -32,39 +30,37 @@ interface SystemLog {
 interface SidebarContentProps {
   onClose?: () => void;
   user: User | null;
-  onLogout: () => void;
-  theme: 'light' | 'dark';
-  toggleTheme: () => void;
 }
 
-// ðŸ› ï¸ Extraímos o miolo da Sidebar para reaproveitarmos no Desktop e no Mobile
-function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: SidebarContentProps) {
+// 🛠️ Extraímos o miolo da Sidebar para reaproveitarmos no Desktop e no Mobile
+function SidebarContent({ onClose, user }: SidebarContentProps) {
   const location = useLocation();
 
   return (
     <>
-      {/* Header da Sidebar */}
-      <div className="flex h-[72px] items-center justify-between px-6 border-b border-border/60 shrink-0">
-        <Link to="/admin" className="flex items-center gap-3 group cursor-pointer">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-hover text-white flex items-center justify-center font-black text-lg shadow-inner group-hover:scale-105 transition-transform duration-300">
-            K
-          </div>
-          <div>
-            <span className="block font-header font-black text-[16px] text-text-main tracking-tight leading-none">FROTA <span className="text-primary">KLIN</span></span>
-            <span className="block text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-1 opacity-80">Workspace</span>
-          </div>
-        </Link>
-        
-        {/* Botão de Fechar (Só aparece se existir a prop onClose - ou seja, no mobile/notebook) */}
+      {/* Topo do Sidebar - Foto do Usuário e Nome */}
+      <div className="flex flex-col items-center justify-center pt-8 pb-6 border-b border-border/60 shrink-0 relative bg-surface">
         {onClose && (
           <Button variant="ghost" size="icon"
             onClick={onClose} 
-            className="xl:hidden p-2 -mr-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-lg transition-colors touch-target focus-ring"
-            aria-label="Fechar menu"
+            className="absolute top-4 right-4 xl:hidden p-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-lg transition-colors"
           >
             <X className="w-5 h-5" />
           </Button>
         )}
+        
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Link to="/minha-conta" className="group flex flex-col items-center gap-3 mt-4">
+              <Avatar url={user?.fotoUrl} nome={user?.nome} size="lg" className="w-20 h-20 border-4 border-surface shadow-md group-hover:border-primary/50 transition-colors" />
+              <div className="text-center px-4">
+                <p className="text-base font-black text-text-main leading-tight group-hover:text-primary transition-colors">{user?.nome}</p>
+                <p className="text-xs font-bold text-text-muted uppercase tracking-wider mt-1">{user?.role || 'Acesso Restrito'}</p>
+              </div>
+            </Link>
+          </TooltipTrigger>
+          <TooltipContent side="right">Acessar Minha Conta</TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Lista de Navegação (Scrollável) */}
@@ -104,57 +100,9 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
         ))}
       </div>
 
-      {/* Rodapé da Sidebar (User Profile) */}
+      {/* Rodapé da Sidebar (Apenas IA) */}
       <div className="p-4 border-t border-border/30 bg-surface-hover/10 shrink-0 space-y-3 pb-safe">
         <AssistenteIA />
-
-        <div className="flex items-center gap-2 px-1 pt-2">
-          
-          {/* Info */}
-          <div className="overflow-hidden flex-1 px-1">
-            <p className="text-sm font-black text-text-main truncate leading-tight">{user?.nome}</p>
-            <p className="text-[10px] font-bold text-text-muted uppercase tracking-wider truncate mt-0.5">{user?.role || 'Acesso Restrito'}</p>
-          </div>
-
-          {/* ✨ Botão Minha Conta (Agora é a foto do usuário) */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Link
-                to="/minha-conta"
-                className="hover:scale-105 active:scale-95 transition-transform shrink-0 touch-target focus-ring rounded-full"
-                aria-label="Minha Conta"
-              >
-                <Avatar url={user?.fotoUrl} nome={user?.nome} size="md" className="border-2 border-primary/20 hover:border-primary/60 transition-colors shadow-sm" />
-              </Link>
-            </TooltipTrigger>
-            <TooltipContent side="top">Minha Conta</TooltipContent>
-          </Tooltip>
-
-          {/* ✨ Botão de Tema */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="ghost" 
-                onClick={toggleTheme} 
-                className="!p-2 w-10 h-10 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl transition-colors shrink-0 touch-target focus-ring"
-                aria-label={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
-              >
-                {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top">Alterar Tema</TooltipContent>
-          </Tooltip>
-
-          {/* Logout */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" onClick={onLogout} className="!p-2 w-10 h-10 text-text-muted hover:text-error hover:bg-error/10 rounded-xl transition-colors shrink-0 touch-target focus-ring" aria-label="Sair">
-                <LogOut className="w-5 h-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent side="top" className="bg-error/10 text-error border-error/20">Sair do Sistema</TooltipContent>
-          </Tooltip>
-        </div>
       </div>
     </>
   );
@@ -164,14 +112,9 @@ function SidebarContent({ onClose, user, onLogout, theme, toggleTheme }: Sidebar
 
 export function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   
-  const { logout, user } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const location = useLocation();
-  
-  // 🌗 Instancia o Hook do Tema
-  const { theme, toggleTheme } = useTheme();
 
   // 🔔 Hook de Push Notifications
   const { isSupported, subscription, subscribeToPush } = usePushNotifications();
@@ -251,24 +194,13 @@ export function AdminLayout() {
     }
   }, [latestLogs]);
 
-  const handleLogout = async () => {
-    setIsLogoutModalOpen(false);
-    await logout(); 
-    navigate('/login');
-  };
-
   return (
     <div className="flex h-[100dvh] bg-background w-full overflow-hidden selection:bg-primary/20 selection:text-primary">
       
       {/* 💻 VISÃO DESKTOP: Sidebar Estática (Só aparece em xl+) */}
       {!isShareMode && (
         <aside className="hidden xl:flex w-[280px] flex-col bg-surface border-r border-border h-full relative z-10 shrink-0">
-           <SidebarContent 
-              user={user}
-              onLogout={() => setIsLogoutModalOpen(true)}
-              theme={theme}
-              toggleTheme={toggleTheme}
-           />
+           <SidebarContent user={user} />
         </aside>
       )}
 
@@ -284,13 +216,7 @@ export function AdminLayout() {
                 <Drawer.Description>Acesso às áreas da Frota KLIN.</Drawer.Description>
               </div>
               
-              <SidebarContent 
-                onClose={() => setIsSidebarOpen(false)} 
-                user={user}
-                onLogout={() => setIsLogoutModalOpen(true)}
-                theme={theme}
-                toggleTheme={toggleTheme}
-              />
+              <SidebarContent onClose={() => setIsSidebarOpen(false)} user={user} />
             </Drawer.Content>
           </Drawer.Portal>
         </Drawer.Root>
@@ -299,43 +225,23 @@ export function AdminLayout() {
       {/* Área Principal */}
       <div className="flex-1 flex flex-col min-w-0 h-full relative">
         
+        {/* Menu Mobile Flutuante */}
+        {!isShareMode && (
+          <div className="absolute top-4 left-4 z-40 xl:hidden">
+            <Button variant="ghost" size="icon"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setIsSidebarOpen(true);
+                }}
+                className="p-2 text-text-main hover:bg-surface-hover rounded-xl shadow-md bg-surface border border-border/50"
+            >
+                <Menu className="w-6 h-6" />
+            </Button>
+          </div>
+        )}
+
         <main className="flex-1 overflow-y-auto overflow-x-hidden bg-background scrollbar-thin scroll-smooth relative flex flex-col">
             
-            {/* Header Mobile (Aparece só em < xl) */}
-            {!isShareMode && (
-              <header className="xl:hidden flex items-center justify-between px-4 h-[72px] bg-surface sticky top-0 z-30 border-b border-border shadow-sm shrink-0">
-                  <div className="flex items-center gap-3">
-                      <Button variant="ghost" size="icon"
-                          onClick={(e) => {
-                            e.currentTarget.blur();
-                            setIsSidebarOpen(true);
-                          }}
-                          className="p-2 -ml-2 text-text-main hover:bg-surface-hover rounded-xl active:scale-95 transition-all touch-target focus-ring"
-                          aria-label="Abrir menu"
-                      >
-                          <Menu className="w-6 h-6" />
-                      </Button>
-                      <div className="flex items-center gap-2">
-                         <span className="font-header font-black text-lg text-text-main tracking-tight">FROTA <span className="text-primary">KLIN</span></span>
-                      </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-3">
-                    {/* ✨ Botão de Tema também no Header Mobile */}
-                    <Button variant="ghost" size="icon"
-                      onClick={toggleTheme}
-                      className="p-2 text-text-muted hover:text-primary transition-colors touch-target focus-ring"
-                      aria-label="Alternar Tema"
-                    >
-                      {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-                    </Button>
-
-                    {/* Avatar Mobile */}
-                    <Avatar url={user?.fotoUrl} nome={user?.nome} size="sm" className="w-9 h-9" />
-                  </div>
-              </header>
-            )}
-
             {/* Conteúdo das Páginas (Outlet) com Transição Suave Framer Motion */}
             <AnimatePresence mode="wait">
               <motion.div 
@@ -353,17 +259,6 @@ export function AdminLayout() {
             </AnimatePresence>
         </main>
       </div>
-
-      {/* Modais Globais */}
-      <ConfirmModal
-        isOpen={isLogoutModalOpen}
-        onCancel={() => setIsLogoutModalOpen(false)}
-        onConfirm={handleLogout}
-        title="Encerrar Sessão"
-        description="Tem certeza que deseja fechar a sua sessão e sair do sistema?"
-        confirmLabel="Sair do Sistema?"
-        variant="danger"
-      />
     </div>
   );
 }

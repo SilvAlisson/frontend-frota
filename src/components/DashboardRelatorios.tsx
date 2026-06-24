@@ -13,11 +13,15 @@ import { Button } from './ui/Button';
 import { Select } from './ui/Select';
 import { Skeleton } from './ui/Skeleton';
 import { KpiCard } from './ui/KpiCard';
-
+import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
+import { ConfirmModal } from './ui/ConfirmModal';
+import { Tooltip, TooltipTrigger, TooltipContent } from './ui/Tooltip';
+import { useNavigate } from 'react-router-dom';
 import {
   Fuel, Wrench, Gauge, DollarSign, Activity,
   Droplets, TrendingUp, FileSpreadsheet,
-  BarChart2, LineChart, Filter
+  BarChart2, LineChart, Filter, Sun, Moon, LogOut
 } from 'lucide-react';
 import type { Veiculo } from '../types';
 
@@ -50,6 +54,16 @@ export function DashboardRelatorios() {
   const [mes, setMes] = useState(new Date().getMonth() + 1);
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState<string>('');
 
+  const { theme, toggleTheme } = useTheme();
+  const { logout } = useAuth();
+  const navigate = useNavigate();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLogoutModalOpen(false);
+    await logout();
+    navigate('/login');
+  };
   const openAnalytics = (metric: string, title: string) => {
     openModal('ANALYTICS', { metric, title });
   };
@@ -128,6 +142,14 @@ export function DashboardRelatorios() {
                 <Button variant="secondary" onClick={handleExportar} className="h-12 w-full mt-2 bg-success/10 text-success hover:bg-success/20 hover:text-success border-success/20 shadow-none transition-colors" icon={<FileSpreadsheet className="w-5 h-5 ml-1" />}>
                   Exportar Relatório Excel
                 </Button>
+                <div className="flex gap-2 w-full mt-2">
+                  <Button variant="secondary" onClick={toggleTheme} className="h-12 flex-1 bg-surface hover:bg-surface-hover shadow-sm transition-colors" icon={theme === 'light' ? <Moon className="w-5 h-5 ml-1" /> : <Sun className="w-5 h-5 ml-1" />}>
+                    {theme === 'light' ? 'Tema Escuro' : 'Tema Claro'}
+                  </Button>
+                  <Button variant="secondary" onClick={() => setIsLogoutModalOpen(true)} className="h-12 flex-1 bg-error/10 text-error hover:bg-error/20 hover:text-error border-error/20 shadow-sm transition-colors" icon={<LogOut className="w-5 h-5 ml-1" />}>
+                    Sair
+                  </Button>
+                </div>
               </div>
             </div>
           </details>
@@ -144,15 +166,40 @@ export function DashboardRelatorios() {
             <div className="flex-1 min-w-[150px] lg:w-[180px] xl:w-56">
               <Select value={veiculoIdFiltro} onChange={(e: { target: { value: string } }) => setVeiculoIdFiltro(e.target.value)} options={opcoesVeiculos} className="h-10 border-none bg-surface-hover/50 hover:bg-surface-hover shadow-none text-xs xl:text-sm font-bold focus:ring-0" containerClassName="!mb-0" />
             </div>
-            <div className="flex justify-end pl-1 xl:pl-0">
+            <div className="flex justify-end pl-1 xl:pl-0 gap-2">
               <Button
                 variant="secondary"
                 onClick={handleExportar}
-                className="h-10 w-10 p-0 rounded-xl bg-success/10 text-success hover:bg-success/20 hover:text-success border-success/20 shadow-none transition-colors"
-                title="Exportar Relatório Excel"
-                aria-label="Exportar Relatório Excel"
-                icon={<FileSpreadsheet className="w-4 h-4 sm:w-5 sm:h-5 mx-auto" />}
-              />
+                className="h-10 px-3 xl:px-4 bg-success/10 text-success hover:bg-success/20 hover:text-success border-success/20 shadow-none text-xs xl:text-sm transition-colors"
+                icon={<FileSpreadsheet className="w-4 h-4 xl:w-5 xl:h-5 ml-1 xl:ml-2" />}
+              >
+                <span className="hidden xl:inline">Exportar Excel</span>
+                <span className="xl:hidden">Excel</span>
+              </Button>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon"
+                    onClick={toggleTheme}
+                    className="p-2 text-text-muted hover:text-primary transition-colors bg-surface-hover/50 hover:bg-surface-hover shadow-none rounded-xl h-10 w-10 hidden sm:flex"
+                  >
+                    {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Alternar Tema</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon"
+                    onClick={() => setIsLogoutModalOpen(true)}
+                    className="p-2 text-text-muted hover:text-error transition-colors bg-surface-hover/50 hover:bg-surface-hover shadow-none rounded-xl h-10 w-10 hidden sm:flex"
+                  >
+                    <LogOut className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Sair do Sistema</TooltipContent>
+              </Tooltip>
             </div>
           </div>
         </div>
@@ -251,6 +298,15 @@ export function DashboardRelatorios() {
         <InsightsDashboard kpis={kpis} mes={mes} ano={ano} />
       )}
 
+      <ConfirmModal
+        isOpen={isLogoutModalOpen}
+        onCancel={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleLogout}
+        title="Encerrar Sessão"
+        description="Tem certeza que deseja fechar a sua sessão e sair do sistema?"
+        confirmLabel="Sair do Sistema?"
+        variant="danger"
+      />
     </div>
   );
 }
