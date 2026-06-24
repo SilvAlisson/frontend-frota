@@ -1,82 +1,96 @@
-import { useState } from 'react';
-import { Users, Briefcase, AlertTriangle, ShieldCheck } from 'lucide-react';
-import { GestaoUsuarios } from './GestaoUsuarios';
-import { GestaoCargos } from './GestaoCargos';
-import { PainelAlertas } from './PainelAlertas';
 import type { User } from '../types';
-import { Tabs, type TabItem } from './ui/Tabs';
+import { Users, ShieldCheck, GraduationCap, FileWarning } from 'lucide-react';
 import { RelatorioNarrativoRH } from './ia/RelatorioNarrativoRH';
+import { useDashboardRH } from '../hooks/useDashboardRH';
+import { KpiCard } from './ui/KpiCard';
+import { GraficoSST } from './rh/GraficoSST';
+import { DashboardCompliance } from './rh/DashboardCompliance';
 
 interface DashboardRHProps {
   user: User;
 }
 
 export function DashboardRH({ user }: DashboardRHProps) {
-  const [abaAtiva, setAbaAtiva] = useState('usuarios');
+  const { data: dashboardData, isLoading } = useDashboardRH();
 
-  // Estrutura de dados para as Abas
-  const abas: TabItem[] = [
-    {
-      id: 'usuarios', 
-      label: 'Colaboradores', 
-      icon: Users
-    },
-    {
-      id: 'cargos', 
-      label: 'Cargos & Treinamentos', 
-      icon: Briefcase
-    },
-    {
-      id: 'alertas', 
-      label: 'Alertas & Vencimentos', 
-      icon: AlertTriangle,
-      hasNotification: true // A bolinha vermelha animada!
-    },
-  ];
+  const formatNum = (val: number | undefined) => (val ?? 0).toLocaleString('pt-BR');
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-in fade-in zoom-in-95 duration-500 pb-24">
       
-      {/* HEADER PREMIUM & FILTROS (Estilo macOS / Flutuante) */}
-      <div className="flex flex-col xl:flex-row items-start xl:items-end justify-between gap-6 border-b border-border/60 pb-6 sticky top-0 bg-background/80 backdrop-blur-xl z-20 pt-2 -mt-2">
-        <div>
-          <h2 className="text-2xl sm:text-3xl font-black text-text-main tracking-tight leading-none flex items-center gap-3">
-             <div className="p-2.5 bg-primary/10 rounded-2xl text-primary shadow-inner border border-primary/20">
-                <ShieldCheck className="w-7 h-7" />
-             </div>
-             Gestão de Pessoas
-          </h2>
-          <p className="text-sm text-text-secondary font-medium mt-2">
-             Administração de Equipes, cargos operacionais e documentação legal.
-          </p>
-        </div>
-
-        {/* ? O NOSSO NOVO COMPONENTE TABS */}
-        <Tabs 
-          tabs={abas}
-          activeTab={abaAtiva}
-          onChange={setAbaAtiva}
-          variant="segmented"
-        />
+      {/* HEADER DE BOAS VINDAS */}
+      <div className="flex flex-col gap-1 mb-2">
+        <h2 className="text-2xl font-black text-text-main tracking-tight">
+          Olá, {user.nome.split(' ')[0]}!
+        </h2>
+        <p className="text-sm text-text-secondary">
+          Visão geral de Recursos Humanos, SST e Compliance.
+        </p>
       </div>
 
-      <div className="mb-8">
-        <RelatorioNarrativoRH />
-      </div>
+      {/* KPI GRID PREMIUM */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+            <KpiCard 
+              titulo="Integrantes Ativos" 
+              valorRaw={dashboardData?.kpis.totalIntegrantes} 
+              formatter={formatNum} 
+              descricao="Total da força de trabalho" 
+              loading={isLoading} 
+              variant="success" 
+              icon={<Users className="w-4 h-4 sm:w-5 sm:h-5" />} 
+            />
+            <KpiCard 
+              titulo="Treinamentos Críticos" 
+              valorRaw={dashboardData?.kpis.treinamentosCriticos} 
+              formatter={formatNum} 
+              descricao="Vencendo nos próximos 30 dias" 
+              loading={isLoading} 
+              variant={(dashboardData?.kpis.treinamentosCriticos || 0) > 0 ? 'warning' : 'success'} 
+              icon={<GraduationCap className="w-4 h-4 sm:w-5 sm:h-5" />} 
+            />
+            <KpiCard 
+              titulo="CNHs a Vencer" 
+              valorRaw={dashboardData?.kpis.cnhsCriticas} 
+              formatter={formatNum} 
+              descricao="Motoristas com CNH crítica (<30d)" 
+              loading={isLoading} 
+              variant={(dashboardData?.kpis.cnhsCriticas || 0) > 0 ? 'warning' : 'success'} 
+              icon={<FileWarning className="w-4 h-4 sm:w-5 sm:h-5" />} 
+            />
+            <KpiCard 
+              titulo="Ações SST Pendentes" 
+              valorRaw={dashboardData?.kpis.sstPendentes} 
+              formatter={formatNum} 
+              descricao="Ações atrasadas ou pendentes" 
+              loading={isLoading} 
+              variant={(dashboardData?.kpis.sstPendentes || 0) > 0 ? 'danger' : 'success'} 
+              icon={<ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />} 
+            />
+          </div>
 
-      {/* ÁREA DE CONTEÚDO COM TRANSIÇÃO SUAVE */}
-      <div className="bg-surface shadow-sm hover:shadow-md rounded-[2rem] p-6 sm:p-8 border border-border/60 min-h-[600px] relative overflow-hidden transition-all duration-500">
-        
-        {/* Usamos a chave (key) no wrapper de animação para forçar o React a re-renderizar a animação de entrada quando a aba muda */}
-        <div key={abaAtiva} className="animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">
-            {abaAtiva === 'alertas' && <PainelAlertas />}
-            {abaAtiva === 'usuarios' && <GestaoUsuarios adminUserId={user.id} />}
-            {abaAtiva === 'cargos' && <GestaoCargos />}
-        </div>
+          {/* DASHBOARD DE RISCO E COMPLIANCE */}
+          <DashboardCompliance />
 
-      </div>
+          {/* GRÁFICOS ANALÍTICOS & RELATÓRIO IA */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+            <div className="bg-surface rounded-[2rem] border border-border/60 shadow-sm p-5 sm:p-6 lg:p-8 relative flex flex-col group h-full">
+              <div className="flex items-start justify-between mb-4 sm:mb-6 relative z-10 shrink-0">
+                <div>
+                  <h4 className="font-header text-base sm:text-lg font-black text-text-main tracking-tight flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                    Panorama de SST
+                  </h4>
+                </div>
+              </div>
+              <div className="relative z-10 w-full flex-1 flex flex-col justify-center min-h-[220px]">
+                <GraficoSST dados={dashboardData?.graficos.panoramaSST || []} />
+              </div>
+            </div>
+
+            <div className="h-full">
+              <RelatorioNarrativoRH />
+            </div>
+          </div>
     </div>
   );
 }
-
-

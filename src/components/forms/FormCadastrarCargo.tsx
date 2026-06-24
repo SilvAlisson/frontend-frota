@@ -137,7 +137,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
                 label="Escopo da Função"
                 {...register('descricao')}
                 rows={3}
-                placeholder="Quais as principais responsabilidades deste colaborador?"
+                placeholder="Quais as principais responsabilidades deste integrante?"
                 disabled={isSubmitting}
                 autoResize={false}
               />

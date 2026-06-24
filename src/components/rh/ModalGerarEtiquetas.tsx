@@ -74,7 +74,7 @@ export function ModalGerarEtiquetas({ usuarios, onClose }: ModalGerarEtiquetasPr
       <Modal isOpen={true} onClose={onClose} title="Gerar Etiquetas de Capacetes" className="max-w-2xl">
         <div className="flex flex-col h-full gap-4">
           <p className="text-sm text-text-secondary">
-            Selecione os colaboradores para gerar a grade de QR Codes (Dossiê).
+            Selecione os integrantes para gerar a grade de QR Codes (Dossiê).
           </p>
 
           {/* Filtros */}
@@ -102,7 +102,7 @@ export function ModalGerarEtiquetas({ usuarios, onClose }: ModalGerarEtiquetasPr
           <div className="overflow-y-auto min-h-[300px] max-h-[50vh] border border-border/50 rounded-xl bg-surface-hover/20">
             {usuariosFiltrados.length === 0 ? (
               <div className="flex items-center justify-center h-full text-text-muted">
-                Nenhum colaborador encontrado.
+                Nenhum integrante encontrado.
               </div>
             ) : (
               <div className="divide-y divide-border/50">

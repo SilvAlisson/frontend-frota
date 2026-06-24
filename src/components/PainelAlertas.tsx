@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { 
-  AlertTriangle, CheckCircle2, Loader2, 
-  Timer, UserX, Bug, ShieldAlert 
+import {
+  AlertTriangle, CheckCircle2,
+  Timer, UserX, Bug, ShieldAlert
 } from 'lucide-react';
 import type { Alerta } from '../types';
 import { AnimatePresence } from 'framer-motion';
@@ -11,6 +11,7 @@ import { haptics } from '../utils/haptics';
 
 // Hooks Globais
 import { useAlertas } from '../hooks/useAlertas';
+import { useAuth } from '../contexts/AuthContext';
 
 // Componentes Elite
 import { Modal } from './ui/Modal';
@@ -19,7 +20,7 @@ import { Callout } from './ui/Callout';
 import { Button } from './ui/Button';
 import { CardAlerta } from './alertas/CardAlerta';
 
-interface PainelAlertasProps { 
+interface PainelAlertasProps {
   onAlertaClick?: (alerta: Alerta) => void;
 }
 
@@ -30,8 +31,11 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
   const [alertaOcioso, setAlertaOcioso] = useState<Alerta | null>(null);
   const [alertaAuditoria, setAlertaAuditoria] = useState<Alerta | null>(null);
 
+  const { user } = useAuth();
+  const isRH = user?.role === 'RH';
+
   const {
-    alertas,
+    alertas: alertasRaw,
     isLoading,
     isError,
     refetch,
@@ -43,6 +47,11 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
     isResolvendoTodosLogs,
     dismissLocal
   } = useAlertas();
+
+  // Filtra itens operacionais para o RH
+  const alertas = isRH
+    ? alertasRaw.filter(a => a.tipo === 'SST' || a.tipo === 'OPERADOR_OCIOSO')
+    : alertasRaw;
 
   // --- COMPORTAMENTO DO CLIQUE NOS ALERTAS ---
   const handleAlertaClick = (alerta: Alerta) => {
@@ -75,7 +84,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
       navigate(`/admin/veiculos/${alerta.veiculoId}?tab=documentos`);
     } else if (alerta.tipo === 'MANUTENCAO') {
       const isPrevisao = alerta.mensagem.toUpperCase().includes('PREVISÃO');
-      
+
       // Correção do redirecionamento de PREVISÃO e VENCIDO
       if (isPrevisao || alerta.nivel === 'VENCIDO') {
         navigate('/admin/planos');
@@ -88,9 +97,19 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
   // --- LOADING (Premium Skeleton) ---
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 opacity-60 gap-4 animate-in fade-in duration-500">
-        <Loader2 className="w-10 h-10 text-primary animate-spin" />
-        <p className="text-sm text-text-secondary font-black uppercase tracking-widest animate-pulse">Analisando métricas da frota...</p>
+      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="flex items-center justify-between border-b border-border/60 pb-4">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-surface-hover animate-pulse" />
+            <div className="h-7 w-48 bg-surface-hover animate-pulse rounded-lg" />
+          </div>
+          <div className="h-6 w-24 bg-surface-hover animate-pulse rounded-lg" />
+        </div>
+        <div className="grid gap-4 auto-rows-max">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="h-[90px] sm:h-[104px] w-full bg-surface border border-border/40 rounded-2xl animate-pulse" />
+          ))}
+        </div>
       </div>
     );
   }
@@ -117,9 +136,9 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
   if (alertas.length === 0) {
     return (
       <div className="pt-8 animate-in zoom-in-95 duration-500">
-        <EmptyState 
-          icon={CheckCircle2} 
-          title="Tudo em Ordem!" 
+        <EmptyState
+          icon={CheckCircle2}
+          title="Tudo em Ordem!"
           description="Nenhuma manutenção, certificação ou documento pendente na frota neste momento."
         />
       </div>
@@ -130,7 +149,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
   return (
     <>
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-        
+
         {/* Cabeçalho do Painel */}
         <div className="flex items-center justify-between border-b border-border/60 pb-4">
           <h3 className="text-xl sm:text-2xl font-black text-text-main flex items-center gap-3 tracking-tight">
@@ -139,7 +158,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
             </div>
             Painel de Atenção
           </h3>
-          
+
           <span className="bg-error/10 text-error text-[10px] sm:text-xs font-black uppercase tracking-widest px-3 py-1.5 rounded-lg border border-error/20 shadow-sm flex items-center gap-2">
             <span className="relative flex h-2 w-2 hidden sm:flex">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-error opacity-75"></span>
@@ -152,9 +171,9 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
         {/* Ação em Massa para Logs */}
         {alertas.filter(a => a.tipo === 'ERRO_SISTEMA' || a.tipo === 'TENTATIVA_FRAUDE').length > 1 && (
           <div className="flex justify-end mt-2 mb-4">
-            <Button 
-              variant="danger" 
-              size="sm" 
+            <Button
+              variant="danger"
+              size="sm"
               onClick={async () => {
                 haptics.heavy();
                 await resolverTodosLogs();
@@ -172,10 +191,10 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
         <div className="grid gap-4 auto-rows-max">
           <AnimatePresence>
             {alertas.map((alerta, index) => (
-              <CardAlerta 
+              <CardAlerta
                 key={`${alerta.tipo}-${alerta.veiculoId || alerta.usuarioId || alerta.logId || ''}-${index}`}
-                alerta={alerta} 
-                onClick={() => handleAlertaClick(alerta)} 
+                alerta={alerta}
+                onClick={() => handleAlertaClick(alerta)}
                 onDismiss={() => {
                   haptics.heavy();
                   dismissLocal(alerta);
@@ -188,9 +207,9 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
       </div>
 
       {/*  MODAL DE OCIOSIDADE (Renderizado por cima de tudo) */}
-      <Modal 
-        isOpen={!!alertaOcioso} 
-        onClose={() => setAlertaOcioso(null)} 
+      <Modal
+        isOpen={!!alertaOcioso}
+        onClose={() => setAlertaOcioso(null)}
         title="Triagem de Inatividade"
       >
         {alertaOcioso && (
@@ -198,31 +217,31 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
             <div className="w-14 h-14 bg-stone-500/10 rounded-full flex items-center justify-center mx-auto mb-6 border border-stone-500/20">
               {alertaOcioso.tipo === 'VEICULO_OCIOSO' ? <Timer className="w-7 h-7 text-stone-600" /> : <UserX className="w-7 h-7 text-stone-600" />}
             </div>
-            
+
             <p className="text-text-secondary text-sm font-medium mb-8 leading-relaxed">
               {alertaOcioso.mensagem}
             </p>
 
             <div className="space-y-3 w-full">
               <Button
-                disabled={isResolvendoOciosidade} 
+                disabled={isResolvendoOciosidade}
                 isLoading={isResolvendoOciosidade}
                 onClick={async () => {
                   const isVeiculo = alertaOcioso.tipo === 'VEICULO_OCIOSO';
                   const id = isVeiculo ? alertaOcioso.veiculoId! : alertaOcioso.usuarioId!;
                   const status = isVeiculo ? 'EM_MANUTENCAO' : 'ATESTADO';
-                  
+
                   try {
                     await resolverOciosidade({ isVeiculo, id, status });
                     setAlertaOcioso(null);
-                  } catch (e) {}
+                  } catch (e) { }
                 }}
                 variant="primary"
                 className="w-full py-6 text-sm font-black shadow-lg"
               >
                 {alertaOcioso.tipo === 'VEICULO_OCIOSO' ? 'Sim, está na Oficina (Manutenção)' : 'Sim, está de Atestado/Férias'}
               </Button>
-              
+
               <Button
                 disabled={isResolvendoOciosidade}
                 onClick={() => {
@@ -249,8 +268,8 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
       </Modal>
 
       {/*  MODAL DE AUDITORIA (Renderizado por cima de tudo) */}
-      <Modal 
-        isOpen={!!alertaAuditoria} 
+      <Modal
+        isOpen={!!alertaAuditoria}
         onClose={() => setAlertaAuditoria(null)}
         title="Auditoria de Sistema"
       >
@@ -266,14 +285,14 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
 
             <div className="space-y-3 w-full">
               <Button
-                disabled={isResolvendoLog} 
+                disabled={isResolvendoLog}
                 isLoading={isResolvendoLog}
                 onClick={async () => {
                   if (alertaAuditoria.logId) {
                     try {
                       await resolverLog(alertaAuditoria.logId);
                       setAlertaAuditoria(null);
-                    } catch (e) {}
+                    } catch (e) { }
                   }
                 }}
                 variant="danger"
@@ -281,7 +300,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
               >
                 Ciente, Marcar como Corrigido
               </Button>
-              
+
               <Button
                 disabled={isResolvendoLog}
                 onClick={() => setAlertaAuditoria(null)}

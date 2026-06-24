@@ -12,7 +12,8 @@ export function useUsuarios() {
     queryFn: async () => {
       try {
         const { data } = await api.get<User[]>('/users');
-        return data;
+        // Filtra para esconder usuários de teste da lista geral (RH/Admin)
+        return data.filter(u => !u.nome.toLowerCase().includes('testando'));
       } catch (err: unknown) {
         if (import.meta.env.DEV) console.error(err);
         // toast.error('Não foi possível carregar o diretório de equipe.');

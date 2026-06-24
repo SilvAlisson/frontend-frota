@@ -151,9 +151,9 @@ export function ConfirmModal({
             <Drawer.Overlay className="fixed inset-0 bg-black/60 backdrop-blur-md z-overlay" />
             <Drawer.Content 
               className="bg-surface flex flex-col rounded-t-[2rem] fixed bottom-0 left-0 right-0 z-modal outline-none border-t border-white/10 shadow-[0_-10px_50px_rgba(0,0,0,0.5)]"
-              aria-labelledby={titleId}
-              aria-describedby={descId}
             >
+              <Drawer.Title className="sr-only">{title || "Confirmação"}</Drawer.Title>
+              <Drawer.Description className="sr-only">Conteúdo de confirmação</Drawer.Description>
               <div className="mx-auto w-12 h-1.5 flex-shrink-0 rounded-full bg-border/80 mt-4 mb-2" />
               <div className="p-6 pb-safe">
                 {content}

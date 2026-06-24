@@ -8,6 +8,7 @@ const DossiePublico = lazy(() => import('./pages/DossiePublico').then(m => ({ de
 import { LoginScreen } from './pages/LoginScreen';
 // COMPONENTES DINÂMICOS (Lazy Loading)
 const AdminLayout = lazy(() => import('./layouts/AdminLayout').then(m => ({ default: m.AdminLayout })));
+const RHLayout = lazy(() => import('./layouts/RHLayout').then(m => ({ default: m.RHLayout })));
 const DashboardOperador = lazy(() => import('./components/DashboardOperador').then(m => ({ default: m.DashboardOperador })));
 const DashboardEncarregado = lazy(() => import('./components/DashboardEncarregado').then(m => ({ default: m.DashboardEncarregado })));
 const DashboardRH = lazy(() => import('./components/DashboardRH').then(m => ({ default: m.DashboardRH })));
@@ -28,6 +29,7 @@ const GestaoSST = lazy(() => import('./components/GestaoSST').then(m => ({ defau
 
 const PainelPlanosPreventivos = lazy(() => import('./components/PainelPlanosPreventivos').then(m => ({ default: m.PainelPlanosPreventivos })));
 const MinhaContaPage = lazy(() => import('./pages/MinhaContaPage').then(m => ({ default: m.MinhaContaPage })));
+const MatrizQualificacaoPage = lazy(() => import('./pages/MatrizQualificacaoPage').then(m => ({ default: m.MatrizQualificacaoPage })));
 
 const LoadingScreen = () => (
   <div className="flex flex-col items-center justify-center h-screen bg-background">
@@ -94,8 +96,23 @@ function RootDashboardRouter() {
     );
   }
 
-  // ADMIN, COORDENADOR e RH vão para o layout com menu lateral
+// ADMIN, COORDENADOR e RH vão para o layout com menu lateral
   return <Navigate to="/admin" replace />;
+}
+
+/**
+ * RoleBasedAdminLayout: Decide qual Layout carregar (AdminLayout vs RHLayout)
+ */
+function RoleBasedAdminLayout() {
+  const { user, loading } = useAuth();
+  
+  if (loading || !user) return <LoadingScreen />;
+
+  if (user.role === 'RH') {
+    return <RHLayout />;
+  }
+
+  return <AdminLayout />;
 }
 
 export function Router() {
@@ -124,7 +141,7 @@ export function Router() {
         {/* Rotas de Admin */}
         <Route path="/admin" element={
           <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'RH']}>
-            <AdminLayout />
+            <RoleBasedAdminLayout />
           </PrivateRoute>
         }>
           
@@ -158,8 +175,14 @@ export function Router() {
           <Route path="cargos" element={<GestaoCargos />} />
 
           <Route path="sst" element={
-            <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR']}>
+            <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'RH']}>
               <GestaoSST />
+            </PrivateRoute>
+          } />
+
+          <Route path="matriz" element={
+            <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'RH']}>
+              <MatrizQualificacaoPage />
             </PrivateRoute>
           } />
 

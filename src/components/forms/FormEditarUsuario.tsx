@@ -203,7 +203,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
       loading: 'A guardar alterações...',
       success: () => {
         setTimeout(onSuccess, 800);
-        return 'Perfil do colaborador atualizado!';
+        return 'Perfil do integrante atualizado!';
       },
       error: (err) => {
         if (import.meta.env.DEV) console.error(err);
@@ -234,7 +234,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
               <div className="p-1.5 bg-primary/10 rounded-lg text-primary shadow-sm">
                 <User className="w-6 h-6" />
               </div>
-              Editar Colaborador
+              Editar Integrante
             </h3>
             <p className="text-sm text-text-secondary font-medium mt-1">Atualize informações de acesso e credenciais profissionais.</p>
           </div>
@@ -245,7 +245,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
             <h2 className="text-xl font-bold text-text-main flex items-center gap-2">
               <User className="w-5 h-5 text-primary" /> Informações Pessoais e Acesso
             </h2>
-            <p className="text-sm text-text-secondary font-medium mt-1">Atualize as credenciais e dados cadastrais do colaborador.</p>
+            <p className="text-sm text-text-secondary font-medium mt-1">Atualize as credenciais e dados cadastrais do integrante.</p>
           </div>
         </div>
       )}

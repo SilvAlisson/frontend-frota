@@ -22,6 +22,8 @@ import { Skeleton } from './ui/Skeleton';
 import { hapticError } from '../lib/haptics';
 import { toast } from 'sonner';
 import { uploadToR2 } from '../services/uploadService';
+import { useMatrizQualificacao } from '../hooks/useMatrizQualificacao';
+import { XCircle } from 'lucide-react';
 
 // ─────────────────────────────────────────────────────────────────
 // Tipos locais
@@ -110,7 +112,11 @@ function formatDate(d: string): string {
 export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
     const { treinamentos, loading, addTreinamento, removeTreinamento, importarPlanilha } =
         useTreinamentosUsuario(usuario.id);
+    const { data: matriz } = useMatrizQualificacao();
     const { openModal, closeModal } = useModalStore();
+
+    const userMatriz = matriz?.find(m => m.userId === usuario.id);
+    const faltantes = userMatriz?.exigencias.filter(e => e.status === 'FALTANTE') || [];
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -284,10 +290,10 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
                         {/* Título Mobile Only */}
                         <div className="md:hidden mb-8">
                             <h3 className="text-2xl font-black text-text-main tracking-tight">
-                                Registro de Formação
+                                Prontuário Digital SSMA
                             </h3>
                             <p className="text-sm font-medium text-text-secondary mt-1 opacity-90">
-                                Monitorize a validade técnica e conformidade deste integrante.
+                                Dossiê completo de certificações, ASO e requisitos do cargo.
                             </p>
                         </div>
 
@@ -426,10 +432,10 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
                         <div className="hidden md:flex p-6 sm:p-8 border-b border-border/60 justify-between items-center bg-surface sticky top-0 z-10 shrink-0 gap-4">
                             <div className="flex-1">
                                 <h3 className="text-2xl font-black text-text-main tracking-tight">
-                                    Registro de Formação
+                                    Prontuário Digital SSMA
                                 </h3>
                                 <p className="text-sm font-medium text-text-secondary mt-1 opacity-90">
-                                    Monitorize a validade técnica e conformidade deste integrante.
+                                    Dossiê completo de certificações, ASO e requisitos do cargo.
                                 </p>
                             </div>
 
@@ -464,6 +470,28 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
                             >
                                 Gerar Crachá Público
                             </Button>
+
+                            {/* PENDÊNCIAS OBRIGATÓRIAS */}
+                            {faltantes.length > 0 && (
+                                <div className="mb-8 space-y-3">
+                                    <h4 className="text-xs font-black text-error uppercase tracking-[0.2em] flex items-center gap-2">
+                                        <AlertTriangle className="w-4 h-4" /> Pendências do Cargo
+                                    </h4>
+                                    {faltantes.map(f => (
+                                        <div key={f.nome} className="bg-error/5 border border-error/20 rounded-xl p-4 flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-error/10 text-error flex items-center justify-center">
+                                                    <XCircle className="w-4 h-4" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-bold text-error">{f.nome}</p>
+                                                    <p className="text-xs text-error/80">Requisito obrigatório não realizado</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
 
                             {loading ? (
                                 <div className="grid gap-4 auto-rows-max">

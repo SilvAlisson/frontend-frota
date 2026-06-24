@@ -136,6 +136,7 @@ ChatBubble.displayName = 'ChatBubble';
 export function AssistenteIA() {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   
   const [aberto, setAberto] = useState(false);
   const [pergunta, setPergunta] = useState('');
@@ -156,6 +157,17 @@ export function AssistenteIA() {
       const historicoSalvo = localStorage.getItem('kia_historico');
       if (historicoSalvo) {
         const parsed = JSON.parse(historicoSalvo);
+        
+        // Expiração de Sessão (Best Practice): Limpa se inativo por > 2 horas
+        if (parsed.length > 0) {
+          const ultimaMsg = parsed[parsed.length - 1];
+          const tempoInativo = Date.now() - new Date(ultimaMsg.timestamp).getTime();
+          if (tempoInativo > 2 * 60 * 60 * 1000) {
+            localStorage.removeItem('kia_historico');
+            return [];
+          }
+        }
+
         return parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
       }
     } catch (e) {
@@ -277,8 +289,13 @@ export function AssistenteIA() {
       contextoSistema: `O utilizador está atualmente na rota: ${location.pathname}`,
       historico: historicoFormatado
     }, {
-      // Não cria o balão imediatamente. Isso permite que o Loader de "Pensando..." fique visível.
-      onStart: (msgId) => {},
+      // Cria o balão fantasma de "Pensando..." com o msgId
+      onStart: (msgId) => {
+        setMensagens(prev => [
+          ...prev, 
+          { id: msgId, tipo: 'kia', conteudo: '', timestamp: new Date(), isStreaming: true }
+        ]);
+      },
       // Cria o balão no primeiro chunk e concatena os próximos
       onChunk: (msgId, chunk) => {
         setMensagens(prev => {
@@ -289,9 +306,23 @@ export function AssistenteIA() {
           return prev.map(m => m.id === msgId ? { ...m, conteudo: m.conteudo + chunk } : m);
         });
       },
-      // Desliga o modo digitação
+      // Desliga o modo digitação e intercepta navegação
       onFinish: (msgId) => {
-        setMensagens(prev => prev.map(m => m.id === msgId ? { ...m, isStreaming: false } : m));
+        setMensagens(prev => prev.map(m => {
+          if (m.id === msgId) {
+            const match = m.conteudo.match(/\[NAVIGATE:([^\]]+)\]/i) || m.conteudo.match(/\[ROUTE:([^\]]+)\]/i);
+            if (match) {
+              const rota = match[1].trim();
+              setTimeout(() => {
+                navigate(rota);
+                setAberto(false);
+              }, 1500); // Aguarda o usuário ler a resposta
+              return { ...m, isStreaming: false, conteudo: m.conteudo.replace(match[0], '').trim() || 'Redirecionando...' };
+            }
+            return { ...m, isStreaming: false };
+          }
+          return m;
+        }));
       },
       // Em caso de erro
       onError: () => {
@@ -415,26 +446,26 @@ export function AssistenteIA() {
                   </div>
                 </div>
               ) : (
-                mensagens.map((msg) => (
-                  <ChatBubble key={msg.id} msg={msg} userNome={user.nome} onFeedback={handleFeedback} />
-                ))
-              )}
-
-              {/* Loader customizado enquanto a IA está a processar antes de cuspir o stream */}
-              {isPending && mensagens[mensagens.length - 1]?.tipo === 'usuario' && (
-                <div className="flex gap-3 items-start animate-in fade-in zoom-in-95">
-                  <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-sm shrink-0">
-                    <Sparkles className="w-4 h-4 text-white animate-pulse" />
-                  </div>
-                  <div className="px-4 py-3.5 bg-surface border border-border/60 rounded-2xl rounded-tl-sm shadow-sm">
-                    <div className="flex items-center gap-1.5 text-text-muted text-sm font-medium">
-                      <span className="text-primary font-bold">
-                        {getLoadingMessages(perguntaProcessando)[loadingMsgIdx]}
-                      </span>
-                      <BlinkingDots />
-                    </div>
-                  </div>
-                </div>
+                mensagens.map((msg) => {
+                  if (msg.tipo === 'kia' && !msg.conteudo) {
+                    return (
+                      <div key={msg.id} className="flex gap-3 items-start animate-in fade-in zoom-in-95">
+                        <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-primary to-violet-600 flex items-center justify-center shadow-sm shrink-0">
+                          <Sparkles className="w-4 h-4 text-white animate-pulse" />
+                        </div>
+                        <div className="px-4 py-3.5 bg-surface border border-border/60 rounded-2xl rounded-tl-sm shadow-sm">
+                          <div className="flex items-center gap-1.5 text-text-muted text-sm font-medium">
+                            <span className="text-primary font-bold">
+                              {getLoadingMessages(perguntaProcessando)[loadingMsgIdx]}
+                            </span>
+                            <BlinkingDots />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return <ChatBubble key={msg.id} msg={msg} userNome={user.nome} onFeedback={handleFeedback} />;
+                })
               )}
               
               <div ref={messagesEndRef} className="h-px w-full shrink-0" />

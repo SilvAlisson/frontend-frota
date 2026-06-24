@@ -17,7 +17,11 @@ export function useVeiculos() {
                 ? '/veiculos/operacao'
                 : '/veiculos';
             const { data } = await api.get<Veiculo[]>(endpoint);
-            return data;
+            // Filtra veículos de teste para não poluírem a lista
+            return data.filter(v => 
+                !v.placa.toLowerCase().includes('test') && 
+                !v.modelo.toLowerCase().includes('test')
+            );
         },
         staleTime: 1000 * 60 * 5,
         enabled: !!user,

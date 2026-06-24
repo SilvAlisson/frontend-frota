@@ -73,7 +73,7 @@ export function RelatorioNarrativoRH() {
         </div>
         <div className="flex-1">
           <h3 className="text-sm font-black text-text-main tracking-tight">Relatório Executivo de RH</h3>
-          <p className="text-[11px] text-text-muted font-medium">Gerado pela Kia · Análise de colaboradores, treinamentos e SST</p>
+          <p className="text-[11px] text-text-muted font-medium">Gerado pela Kia · Análise de integrantes, treinamentos e SST</p>
         </div>
         <div className="flex items-center gap-2">
           {relatorio && (
@@ -115,7 +115,7 @@ export function RelatorioNarrativoRH() {
           </div>
           <div className="text-center">
             <p className="text-sm font-bold text-text-secondary">Analisando dados de RH...</p>
-            <p className="text-xs text-text-muted mt-1">Treinamentos, SST, colaboradores e documentos</p>
+            <p className="text-xs text-text-muted mt-1">Treinamentos, SST, integrantes e documentos</p>
           </div>
         </div>
       )}

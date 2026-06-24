@@ -254,7 +254,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
       <ConfirmModal
         isOpen={confirmRegenerar}
         title="Renovar QR Code"
-        description="Gerar um novo código invalidará o crachá anterior permanentemente. O colaborador precisará de um novo crachá impresso."
+        description="Gerar um novo código invalidará o crachá anterior permanentemente. O integrante precisará de um novo crachá impresso."
         variant="warning"
         confirmLabel="Sim, Renovar"
         onConfirm={() => { setConfirmRegenerar(false); executarGerarToken(); }}

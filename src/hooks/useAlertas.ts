@@ -11,7 +11,11 @@ export function useAlertas() {
     queryKey: ['alertas'],
     queryFn: async () => {
       const { data } = await api.get<Alerta[]>('/relatorios/alertas');
-      return data;
+      // Oculta alertas de veículos ou operadores de teste (ex: "testando")
+      return data.filter(a => 
+        !a.mensagem.toLowerCase().includes('testando') && 
+        !a.mensagem.toLowerCase().includes('teste')
+      );
     },
     staleTime: 1000 * 60 * 1,
     refetchInterval: 1000 * 30

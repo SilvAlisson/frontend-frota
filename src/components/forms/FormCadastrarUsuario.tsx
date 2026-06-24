@@ -122,7 +122,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
         setFotoFile(null);
         setPreviewUrl(null);
         setTimeout(onSuccess, 500);
-        return 'Colaborador cadastrado com sucesso!';
+        return 'Integrante cadastrado com sucesso!';
       },
       error: (err) => {
         if (import.meta.env.DEV) console.error(err);
@@ -148,7 +148,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       {/* Header Premium */}
       <div className="bg-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex justify-between items-center shrink-0">
         <div>
-          <h3 className="text-xl font-black text-text-main tracking-tight">Novo Colaborador</h3>
+          <h3 className="text-xl font-black text-text-main tracking-tight">Novo Integrante</h3>
           <p className="text-sm text-text-secondary font-medium mt-0.5">Cadastro de acesso e perfil profissional.</p>
         </div>
         <div className="p-3 bg-primary/10 rounded-xl border border-primary/20 shadow-inner text-primary">
@@ -332,7 +332,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
             icon={<UserPlus className="w-4 h-4" />} // ✨ CORREÇÃO AQUI
             className="w-full sm:w-auto shadow-button hover:shadow-float px-8"
           >
-            Cadastrar Colaborador
+            Cadastrar Integrante
           </Button>
         </div>
 

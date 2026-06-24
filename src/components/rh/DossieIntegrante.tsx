@@ -51,7 +51,7 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
               </Badge>
             </div>
             <p className="text-text-secondary font-medium flex items-center justify-center sm:justify-start gap-2 mb-4">
-              <span className="text-primary font-bold">{(user.cargo as any)?.nome || user.role}</span>
+              <span className="text-primary font-bold">{(user.cargo as { nome?: string })?.nome || user.role}</span>
               • Matrícula: {user.matricula || 'N/A'}
             </p>
 
@@ -115,9 +115,9 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
                   <div className="p-4 bg-surface-hover rounded-2xl border border-border/40">
                     <p className="text-xs text-text-muted font-bold uppercase tracking-wider mb-1">Validade</p>
                     <p className={`text-lg font-bold ${
-                      new Date(user.profile.cnhValidade) < new Date() ? 'text-error' : 'text-success'
+                      user.profile.cnhValidade && new Date(user.profile.cnhValidade) < new Date() ? 'text-error' : 'text-success'
                     }`}>
-                      {DateHelper.getCompleta(user.profile.cnhValidade)}
+                      {user.profile.cnhValidade ? DateHelper.getCompleta(user.profile.cnhValidade) : 'Não informada'}
                     </p>
                   </div>
                 </div>

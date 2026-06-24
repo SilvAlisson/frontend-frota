@@ -264,7 +264,7 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
                                         <h2 className="text-lg font-black uppercase text-text-main flex items-center gap-2">
                                           <Navigation className="w-5 h-5 text-primary" /> Jornadas em Andamento
                                         </h2>
-                                        <p className="text-xs font-bold text-text-muted mt-1">Acompanhamento em tempo real dos colaboradores em operação.</p>
+                                        <p className="text-xs font-bold text-text-muted mt-1">Acompanhamento em tempo real dos integrantes em operação.</p>
                                      </div>
                                      <Button variant="ghost" size="sm" onClick={() => setView('MONITORAMENTO')} className="text-[10px] uppercase tracking-widest px-4 h-8 bg-primary/10 hover:bg-primary/20 text-primary">
                                         Monitor Completo
