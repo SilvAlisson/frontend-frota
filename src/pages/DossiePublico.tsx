@@ -98,9 +98,28 @@ export function DossiePublico() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center">
-        <Loader2 className="w-12 h-12 text-primary animate-spin mb-4" />
-        <p className="text-sm font-black uppercase tracking-widest text-text-muted animate-pulse">Carregando Dossiê...</p>
+      <div className="min-h-screen bg-background pb-12 font-sans selection:bg-primary/30">
+        <header className="bg-surface border-b border-border/60 p-6 flex flex-col items-center justify-center sticky top-0 z-40 shadow-sm">
+           <div className="h-8 w-32 bg-surface-hover animate-pulse rounded-lg mb-1" />
+           <div className="h-3 w-40 bg-surface-hover animate-pulse rounded" />
+        </header>
+        <main className="max-w-md mx-auto px-4 pt-8">
+          <div className="bg-surface rounded-[2rem] p-6 sm:p-8 shadow-lg border border-border/60 flex flex-col items-center text-center relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-24 bg-surface-hover animate-pulse"></div>
+            <div className="w-24 h-24 rounded-3xl bg-background border-4 border-background shadow-md z-10 overflow-hidden mb-4 animate-pulse" />
+            <div className="h-6 w-3/4 bg-surface-hover animate-pulse rounded-lg mb-3" />
+            <div className="flex gap-2">
+               <div className="h-6 w-24 bg-surface-hover animate-pulse rounded-lg" />
+               <div className="h-6 w-20 bg-surface-hover animate-pulse rounded-lg" />
+            </div>
+          </div>
+          <div className="h-4 w-48 bg-surface-hover animate-pulse rounded mt-10 mb-4 ml-2" />
+          <div className="space-y-4">
+            {[1, 2].map(i => (
+              <div key={i} className="bg-surface rounded-3xl p-5 border border-border/60 h-32 animate-pulse" />
+            ))}
+          </div>
+        </main>
       </div>
     );
   }

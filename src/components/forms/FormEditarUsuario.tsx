@@ -257,10 +257,12 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
           {/* AVATAR UPLOAD (Redesenhado) */}
           <div className="flex flex-col items-center mb-2">
             <input type="file" accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileSelect} disabled={isLocked} />
-            <div
+            <button
+              type="button"
               onClick={() => !isLocked && fileInputRef.current?.click()}
               className={`w-28 h-28 rounded-full bg-surface-hover border-4 border-surface shadow-md cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all relative group overflow-hidden ring-2 ring-border/50 ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}`}
               title="Alterar foto de perfil"
+              aria-label="Alterar foto de perfil"
             >
               {previewUrl || fotoAtualUrl ? (
                 <img src={previewUrl || fotoAtualUrl!} alt="Perfil" className="w-full h-full object-cover" />
@@ -273,7 +275,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
                 <Camera className="w-6 h-6 text-white mb-1" />
                 <span className="text-[10px] font-bold text-white uppercase tracking-wider">Mudar Foto</span>
               </div>
-            </div>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-5">
