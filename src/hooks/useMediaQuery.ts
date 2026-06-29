@@ -12,16 +12,8 @@ export function useMediaQuery(query: string): boolean {
     const mediaQueryList = window.matchMedia(query);
     const listener = (event: MediaQueryListEvent) => setMatches(event.matches);
     
-    // Suporte moderno
-    if (mediaQueryList.addEventListener) {
-      mediaQueryList.addEventListener('change', listener);
-      return () => mediaQueryList.removeEventListener('change', listener);
-    } 
-    // Fallback safari antigo
-    else if (mediaQueryList.addListener) {
-      mediaQueryList.addListener(listener);
-      return () => mediaQueryList.removeListener(listener);
-    }
+    mediaQueryList.addEventListener('change', listener);
+    return () => mediaQueryList.removeEventListener('change', listener);
   }, [query]);
 
   return matches;

@@ -11,7 +11,7 @@ import { Modal } from './ui/Modal';
 
 import { EmptyState } from './ui/EmptyState';
 import { Avatar } from './ui/Avatar';
-import { SmartFAB } from './ui/SmartFAB';
+import { Button } from './ui/Button';
 import { Skeleton } from './ui/Skeleton';
 import confetti from 'canvas-confetti';
 

@@ -213,8 +213,17 @@ export function MinhaContaPage() {
     };
 
     if (loading || !user) return (
-        <div className="min-h-screen bg-background flex items-center justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary" />
+        <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8 max-w-2xl mx-auto space-y-6">
+            <div className="flex items-center gap-4 mb-8">
+                <div className="w-12 h-12 rounded-xl bg-surface animate-pulse" />
+                <div className="space-y-2 flex-1">
+                    <div className="h-6 w-1/3 bg-surface rounded-lg animate-pulse" />
+                    <div className="h-4 w-1/4 bg-surface rounded-lg animate-pulse" />
+                </div>
+            </div>
+            {[1, 2, 3].map(i => (
+                <div key={i} className="h-40 w-full bg-surface/50 border border-border/40 rounded-3xl animate-pulse" />
+            ))}
         </div>
     );
 

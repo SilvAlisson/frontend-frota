@@ -15,8 +15,8 @@ export function useLongPress({
   onClick
 }: UseLongPressOptions) {
   const [longPressTriggered, setLongPressTriggered] = useState(false);
-  
-  // SOLUÇÃO DO ERRO TS2503: Tipagem dinâmica baseada no retorno nativo do setTimeout do ambiente
+
+  //  Tipagem dinâmica baseada no retorno nativo do setTimeout do ambiente
   const timeout = useRef<ReturnType<typeof setTimeout>>();
   const target = useRef<EventTarget>();
 
@@ -27,7 +27,7 @@ export function useLongPress({
 
       timeout.current = setTimeout(() => {
         setLongPressTriggered(true);
-        // CORREÇÃO: Alinhado com a chamada padrão de feedback tátil do seu sistema
+        // Alinhado com a chamada padrão de feedback tátil do seu sistema
         haptics.light();
         onLongPress(event);
       }, delay);

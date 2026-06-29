@@ -1,4 +1,4 @@
-import { Variants } from 'framer-motion';
+import type { Variants } from 'framer-motion';
 
 // Animação de entrada fluida para páginas/telas inteiras
 export const pageVariants: Variants = {
