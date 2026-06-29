@@ -22,6 +22,8 @@ import { useFiltragemVeiculos } from '../hooks/useFiltragemVeiculos';
 import React, { Suspense } from 'react';
 import { PullToRefresh } from './ui/PullToRefresh';
 import { SmartFAB } from './ui/SmartFAB';
+import { SaudeVeiculoBar } from './ui/SaudeVeiculoBar';
+import { calculateVehicleHealth } from '../lib/veiculoHelper';
 
 // --- FORMS (LAZY LOADED) ---
 const FormCadastrarVeiculo = React.lazy(() => import('./forms/FormCadastrarVeiculo').then(module => ({ default: module.FormCadastrarVeiculo })));
@@ -125,7 +127,7 @@ export function GestaoVeiculos() {
           <DataTable
             data={veiculosFinais}
             emptyMessage=""
-            desktopGridCols="grid-cols-[2fr_2fr_1.5fr_1.5fr_1fr]"
+            desktopGridCols="grid-cols-[2fr_1.5fr_1fr_1.5fr_1.5fr_1fr]"
 
             // CONFIGURAÇÃO DE COLUNAS DESKTOP
             columns={[
@@ -170,6 +172,14 @@ export function GestaoVeiculos() {
                       {v.tipoCombustivel.replace(/_/g, ' ')}
                     </span>
                   </div>
+                )
+              },
+              {
+                header: 'Saúde do Veículo',
+                headerClassName: 'text-center',
+                className: 'py-5 text-center px-4 w-48',
+                cell: (v: Veiculo) => (
+                  <SaudeVeiculoBar score={calculateVehicleHealth(v)} />
                 )
               },
               {
@@ -226,7 +236,8 @@ export function GestaoVeiculos() {
                     </div>
                     <div>
                       <h3 className="text-sm font-bold text-text-main leading-tight">{v.modelo}</h3>
-                      <p className="text-xs font-bold uppercase tracking-wider text-text-secondary mt-1">{v.tipoVeiculo} • {v.ano}</p>
+                      <p className="text-xs font-bold uppercase tracking-wider text-text-secondary mt-1 mb-3">{v.tipoVeiculo} • {v.ano}</p>
+                      <SaudeVeiculoBar score={calculateVehicleHealth(v)} />
                     </div>
                   </div>
 
