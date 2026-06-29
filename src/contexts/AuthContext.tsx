@@ -15,36 +15,50 @@ const AuthContext = createContext<AuthContextData>({} as AuthContextData);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: sessionData, isPending: isSessionLoading } = useSession();
   
-  // Fallback para QR Code (que usa Token manual no sessionStorage)
-  const [manualUser, setManualUser] = useState<User | null>(() => {
-    const storedUser = sessionStorage.getItem('authUser');
-    if (storedUser) {
-        try {
-            const parsed = JSON.parse(storedUser);
-            if (parsed && typeof parsed === 'object') {
-                if (parsed.image && !parsed.fotoUrl) {
-                    parsed.fotoUrl = parsed.image;
-                }
-                if (parsed.name && !parsed.nome) {
-                    parsed.nome = parsed.name;
-                }
-            }
-            return parsed;
-        } catch {
-            return null;
-        }
-    }
-    return null;
-  });
-
+  // Session validada remotamente, não mais injetada de forma cega do sessionStorage
+  const [manualUser, setManualUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Validação segura contra a API para evitar Client-Side Role Escalation
   useEffect(() => {
-    // Libera o carregamento se a sessão resolver OU se já tivermos um usuário manual em memória
-    if (!isSessionLoading || manualUser) {
-      setLoading(false);
+    const validateManualSession = async () => {
+      const token = sessionStorage.getItem('authToken');
+      if (!token) {
+        if (!isSessionLoading) setLoading(false);
+        return;
+      }
+
+      try {
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+        const res = await fetch(`${backendUrl}/api/users/me`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        
+        if (!res.ok) throw new Error('Sessão manual inválida ou expirada');
+        
+        const userData = await res.json();
+        
+        if (userData.image && !userData.fotoUrl) userData.fotoUrl = userData.image;
+        if (userData.name && !userData.nome) userData.nome = userData.name;
+
+        // Sobrescreve o lixo local com a verdade absoluta do DB
+        sessionStorage.setItem('authUser', JSON.stringify(userData));
+        setManualUser(userData);
+      } catch (err) {
+        // Mitigação imediata: token falso detectado = apaga tudo
+        sessionStorage.removeItem('authToken');
+        sessionStorage.removeItem('authUser');
+        setManualUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Só inicia a validação Bearer após o BetterAuth terminar de checar os cookies
+    if (!isSessionLoading) {
+      validateManualSession();
     }
-  }, [isSessionLoading, manualUser]);
+  }, [isSessionLoading]);
 
   // Derived state: Usa o user do BetterAuth (Cookie) prioritariamente, ou o manualUser (QR Code Bearer)
   // Mapeia .image para .fotoUrl e .name para .nome para manter compatibilidade com o frontend inteiro
