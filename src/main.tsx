@@ -63,6 +63,31 @@ import { setupGlobalErrorLogging } from './services/logger';
 
 setupGlobalErrorLogging();
 
+window.addEventListener('error', (e) => {
+  const errDiv = document.createElement('div');
+  errDiv.style.position = 'fixed';
+  errDiv.style.top = '0';
+  errDiv.style.left = '0';
+  errDiv.style.background = 'red';
+  errDiv.style.color = 'white';
+  errDiv.style.padding = '20px';
+  errDiv.style.zIndex = '999999';
+  errDiv.innerHTML = `<h3>Error</h3><pre>${e.error?.stack || e.message}</pre>`;
+  document.body.appendChild(errDiv);
+});
+window.addEventListener('unhandledrejection', (e) => {
+  const errDiv = document.createElement('div');
+  errDiv.style.position = 'fixed';
+  errDiv.style.top = '0';
+  errDiv.style.left = '0';
+  errDiv.style.background = 'orange';
+  errDiv.style.color = 'white';
+  errDiv.style.padding = '20px';
+  errDiv.style.zIndex = '999999';
+  errDiv.innerHTML = `<h3>Unhandled Rejection</h3><pre>${e.reason?.stack || e.reason}</pre>`;
+  document.body.appendChild(errDiv);
+});
+
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');
 

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePasskeyGuard } from '../hooks/usePasskeyGuard';
 import { BiometryRegisterModal } from './BiometryRegisterModal';
-import { Fingerprint, X } from 'lucide-react';
+import { Fingerprint, X, Zap } from 'lucide-react';
 import { Button } from './ui/Button';
 
 export function BiometryOnboardingBanner() {
@@ -52,8 +52,8 @@ export function BiometryOnboardingBanner() {
                                     <Fingerprint className="w-5 h-5 text-primary animate-pulse" />
                                 </div>
                                 <div>
-                                    <h3 className="text-sm font-black text-text-main">
-                                        Acesse mais rápido! ⚡
+                                    <h3 className="text-sm font-black text-text-main flex items-center gap-1.5">
+                                        Acesse mais rápido! <Zap className="w-4 h-4 text-primary" />
                                     </h3>
                                     <p className="text-xs text-text-muted mt-1 leading-relaxed">
                                         Cadastre sua digital ou rosto neste dispositivo para não precisar mais digitar senha.

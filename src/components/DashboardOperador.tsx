@@ -11,8 +11,9 @@ import { Modal } from './ui/Modal';
 
 import { EmptyState } from './ui/EmptyState';
 import { Avatar } from './ui/Avatar';
-import { Button } from './ui/Button';
+import { SmartFAB } from './ui/SmartFAB';
 import { Skeleton } from './ui/Skeleton';
+import confetti from 'canvas-confetti';
 
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -101,6 +102,18 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
   await Promise.all([refetchUsuarios(), refetchVeiculos(), refetchJornadas()]);
   vibrateSuccess();
   setTimeout(() => setIsRefreshing(false), 800);
+ };
+
+ const handleJornadaFinalizada = async () => {
+  confetti({
+   particleCount: 150,
+   spread: 70,
+   origin: { y: 0.6 },
+   colors: ['#10B981', '#06B6D4', '#3B82F6'], // Success, Primary, Secondary
+   zIndex: 9999
+  });
+  vibrateSuccess();
+  await refetchJornadas();
  };
 
  // 🛡️ FILTRO BLINDADO — só minhas jornadas
@@ -243,7 +256,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
          <JornadaCard
           key={jornada.id}
           jornada={jornada}
-          onJornadaFinalizada={() => refetchJornadas()}
+          onJornadaFinalizada={handleJornadaFinalizada}
          />
         ))}
        </div>

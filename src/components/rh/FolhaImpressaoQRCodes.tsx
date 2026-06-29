@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom';
 import { QRCodeSVG } from 'qrcode.react';
+import { Scissors } from 'lucide-react';
 
 export interface PrintUser {
   id: string;
@@ -59,8 +60,10 @@ export function FolhaImpressaoQRCodes({ usuarios }: FolhaImpressaoQRCodesProps) 
 
             return (
               <div key={user.id} className="flex flex-col items-center justify-center border-2 border-dashed border-gray-400 p-4 rounded-xl relative break-inside-avoid">
-                {/* Tesoura icon hint - top left */}
-                <span className="absolute -top-3 -left-2 text-gray-400 text-lg">✂️</span>
+                {/* Scissors icon hint - cut guide */}
+                <span className="absolute -top-3 -left-2 text-gray-400" title="Linha de corte">
+                  <Scissors className="w-4 h-4" />
+                </span>
 
                 <div className="bg-white p-2 rounded-lg shadow-sm border border-gray-200">
                   <QRCodeSVG

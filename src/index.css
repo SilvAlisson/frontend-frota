@@ -40,12 +40,16 @@
 
   --color-error: var(--error);
   --color-error-foreground: var(--error-foreground);
+  --color-error-soft: var(--error-soft);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-warning-soft: var(--warning-soft);
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
+  --color-success-soft: var(--success-soft);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+  --color-info-soft: var(--info-soft);
 
   /* --- PALETA ESTENDIDA DE GRÁFICOS (DRILL-DOWN) --- */
   --color-chart-1: var(--chart-1);
@@ -65,6 +69,7 @@
   --shadow-card: var(--shadow-card-val);
   --shadow-float: var(--shadow-float-val);
   --shadow-button: var(--shadow-button-val);
+  --shadow-float-primary: 0 8px 24px -4px color-mix(in srgb, var(--primary) 35%, transparent);
 
   /* --- 4. CONFIGURAÇÕES GERAIS --- */
   --font-sans: "Chivo", ui-sans-serif, system-ui;
@@ -235,12 +240,16 @@
 
     --error: oklch(0.63 0.22 29);
     --error-foreground: oklch(1 0 0);
+    --error-soft: color-mix(in srgb, oklch(0.63 0.22 29) 12%, transparent);
     --warning: oklch(0.75 0.15 85);
     --warning-foreground: oklch(1 0 0);
+    --warning-soft: color-mix(in srgb, oklch(0.75 0.15 85) 12%, transparent);
     --success: oklch(0.68 0.12 165); /* KLIN Sea Green (Logo right wing) */
     --success-foreground: oklch(1 0 0);
+    --success-soft: color-mix(in srgb, oklch(0.68 0.12 165) 12%, transparent);
     --info: oklch(0.60 0.15 240);
     --info-foreground: oklch(1 0 0);
+    --info-soft: color-mix(in srgb, oklch(0.60 0.15 240) 12%, transparent);
 
     /* --- PALETA ESTENDIDA DE GRÁFICOS (DRILL-DOWN) - CLARO --- */
     --chart-1: var(--color-klin-500);
@@ -286,12 +295,16 @@
 
     --error: oklch(0.65 0.20 29);
     --error-foreground: oklch(1 0 0);
+    --error-soft: color-mix(in srgb, oklch(0.65 0.20 29) 15%, transparent);
     --warning: oklch(0.80 0.15 85);
     --warning-foreground: oklch(0.15 0.01 240);
+    --warning-soft: color-mix(in srgb, oklch(0.80 0.15 85) 15%, transparent);
     --success: oklch(0.68 0.12 165); /* KLIN Sea Green */
     --success-foreground: oklch(1 0 0);
+    --success-soft: color-mix(in srgb, oklch(0.68 0.12 165) 15%, transparent);
     --info: oklch(0.65 0.15 240);
     --info-foreground: oklch(1 0 0);
+    --info-soft: color-mix(in srgb, oklch(0.65 0.15 240) 15%, transparent);
 
     /* --- PALETA ESTENDIDA DE GRÁFICOS (DRILL-DOWN) - ESCURO --- */
     --chart-1: var(--color-klin-300);
@@ -421,7 +434,64 @@
     @apply min-h-[48px] min-w-[48px];
   }
 
-  /* --- OPENMONETIS INSPIRED (BLOB & DELAYS) --- */
+}
+
+/* --- TIPOGRAFIA HIERÁRQUICA (Anti-Vibe-Code) --- */
+/* Garante hierarquia visual consistente em todo o sistema */
+  @utility heading-display {
+    @apply font-header text-4xl font-black tracking-tight text-text-main leading-none;
+  }
+  @utility heading-1 {
+    @apply font-header text-2xl font-bold tracking-tight text-text-main leading-tight;
+  }
+  @utility heading-2 {
+    @apply font-header text-lg font-semibold text-text-main leading-snug;
+  }
+  @utility heading-3 {
+    @apply font-sans text-base font-semibold text-text-main;
+  }
+  @utility label-ui {
+    @apply font-sans text-[10px] font-black tracking-[0.15em] uppercase text-text-muted;
+  }
+  @utility data-value {
+    @apply font-mono text-sm tabular-nums font-bold text-text-main;
+  }
+
+  /* --- STATUS BADGES PREMIUM (Usando as variantes *-soft) --- */
+  @utility badge-success {
+    background: var(--success-soft);
+    color: var(--success);
+    border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+  }
+  @utility badge-error {
+    background: var(--error-soft);
+    color: var(--error);
+    border: 1px solid color-mix(in srgb, var(--error) 25%, transparent);
+  }
+  @utility badge-warning {
+    background: var(--warning-soft);
+    color: var(--warning);
+    border: 1px solid color-mix(in srgb, var(--warning) 25%, transparent);
+  }
+  @utility badge-info {
+    background: var(--info-soft);
+    color: var(--info);
+    border: 1px solid color-mix(in srgb, var(--info) 25%, transparent);
+  }
+
+@layer utilities {
+  /* --- GLASSMORPHISM REAL (Dark mode premium) --- */
+  .dark .glass-premium {
+    background: color-mix(in srgb, var(--surface) 75%, transparent);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid color-mix(in srgb, white 8%, transparent);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, white 5%, transparent),
+      0 20px 40px -10px color-mix(in srgb, black 55%, transparent);
+  }
+
+  /* --- BLOB / OPENMONETIS INSPIRED --- */
   .animate-blob {
     animation: blob 10s infinite alternate ease-in-out;
   }

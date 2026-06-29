@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Drawer } from 'vaul';
+import { motion, AnimatePresence } from 'framer-motion';
 
 function useMediaQuery(query: string) {
   const [matches, setMatches] = useState(false);
@@ -76,7 +77,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!mounted || !isOpen) return null;
+  if (!mounted) return null;
 
   // --- MODO MOBILE (GAVETA / DRAWER - VAUL) ---
   if (!isDesktop) {
@@ -147,30 +148,39 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
 
   // --- MODO DESKTOP (PORTAL + MODAL FIXO) ---
   return createPortal(
-    <div
-      className="fixed inset-0 z-modal flex items-center justify-center p-3 sm:p-6"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={title ? titleId : undefined}
-      aria-describedby={undefined} 
-    >
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-md transition-all duration-300 animate-in fade-in"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+    <AnimatePresence>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-modal flex items-center justify-center p-3 sm:p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={title ? titleId : undefined}
+          aria-describedby={undefined} 
+        >
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="fixed inset-0 bg-black/60 backdrop-blur-md"
+            onClick={onClose}
+            aria-hidden="true"
+          />
 
-      {/* Card do Modal */}
-      <div
-        className={cn(
-          "relative bg-surface rounded-[2rem] shadow-2xl shadow-black/60 border border-white/10 flex flex-col",
-          "w-full max-w-lg",
-          "max-h-[92dvh]",
-          "transform transition-all duration-300 ease-out animate-in fade-in zoom-in-95 slide-in-from-bottom-4",
-          className
-        )}
-      >
+          {/* Card do Modal */}
+          <motion.div
+            initial={{ opacity: 0, y: 15, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 15, scale: 0.96 }}
+            transition={{ type: "spring", bounce: 0.15, duration: 0.4 }}
+            className={cn(
+              "relative bg-surface rounded-[2rem] shadow-2xl shadow-black/60 border border-white/10 flex flex-col",
+              "w-full max-w-lg",
+              "max-h-[92dvh]",
+              className
+            )}
+          >
         {/* Header */}
         <div className="flex items-center justify-between px-5 sm:px-6 py-4 sm:py-5 border-b border-border/50 shrink-0 bg-surface/95 backdrop-blur rounded-t-[2rem] z-10">
           {title ? (
@@ -195,8 +205,10 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
             {children}
           </div>
         </div>
+        </motion.div>
       </div>
-    </div>,
+      )}
+    </AnimatePresence>,
     document.body
   );
 }

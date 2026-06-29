@@ -1,4 +1,4 @@
-import { Calendar, Camera, ImageOff, Edit, Trash2, ChevronDown } from 'lucide-react';
+import { Calendar, Camera, ImageOff, Edit, Trash2, ChevronDown, AlertTriangle } from 'lucide-react';
 import { DateHelper } from '../../lib/dateHelper';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -85,10 +85,13 @@ export function TabelaJornadas({
                       )}
                       {j.observacoes && (
                         <div 
-                          className={`mt-1 text-[10px] font-medium max-w-[200px] line-clamp-2 leading-tight ${j.observacoes.includes('⚠️') ? 'text-amber-600 dark:text-amber-500' : 'text-text-muted'}`}
+                          className={`mt-1 text-[10px] font-medium max-w-[200px] line-clamp-2 leading-tight flex items-start gap-1 ${j.observacoes.includes('⚠️') ? 'text-amber-600 dark:text-amber-500' : 'text-text-muted'}`}
                           title={j.observacoes}
                         >
-                          {j.observacoes.includes('⚠️') ? j.observacoes : `Obs: ${j.observacoes}`}
+                          {j.observacoes.includes('⚠️') && <AlertTriangle className="w-3 h-3 shrink-0 mt-0.5" />}
+                          {j.observacoes.includes('⚠️') 
+                            ? j.observacoes.replace(/⚠️\s*/g, '') 
+                            : `Obs: ${j.observacoes}`}
                         </div>
                       )}
                     </div>
@@ -209,12 +212,15 @@ export function TabelaJornadas({
                   </div>
 
                   {j.observacoes && (
-                    <div className={`p-2.5 rounded-xl border text-[10px] font-medium leading-relaxed ${
+                    <div className={`p-2.5 rounded-xl border text-[10px] font-medium leading-relaxed flex items-start gap-2 ${
                       j.observacoes.includes('⚠️') 
                         ? 'bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-500' 
                         : 'bg-surface-hover border-border text-text-muted'
                     }`}>
-                      {j.observacoes}
+                      {j.observacoes.includes('⚠️') && <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />}
+                      {j.observacoes.includes('⚠️') 
+                        ? j.observacoes.replace(/⚠️\s*/g, '') 
+                        : j.observacoes}
                     </div>
                   )}
 

@@ -82,17 +82,23 @@ export function DashboardSST({ estatisticas, alertas }: DashboardSSTProps) {
         <ProgressBar value={estatisticas.progresso} />
 
         <div className="grid sm:grid-cols-2 gap-4 pt-2">
-          {estatisticas.porPrograma.map(({ programa, total, realizadas, progresso }) => (
-            <div key={programa} className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className={cn('text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded border', PROGRAMA_CORES[programa])}>
-                  {programa}
-                </span>
-                <span className="text-xs text-text-muted font-bold">{realizadas}/{total} · {progresso}%</span>
-              </div>
-              <ProgressBar value={progresso} />
+          {estatisticas.porPrograma.length === 0 ? (
+            <div className="col-span-full py-6 text-center text-text-muted font-medium bg-surface-hover/30 rounded-xl border border-dashed border-border/60">
+              Nenhum plano de ação registrado no momento.
             </div>
-          ))}
+          ) : (
+            estatisticas.porPrograma.map(({ programa, total, realizadas, progresso }) => (
+              <div key={programa} className="space-y-2">
+                <div className="flex justify-between items-center">
+                  <span className={cn('text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded border', PROGRAMA_CORES[programa])}>
+                    {programa}
+                  </span>
+                  <span className="text-xs text-text-muted font-bold">{realizadas}/{total} · {progresso}%</span>
+                </div>
+                <ProgressBar value={progresso} />
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -106,7 +112,13 @@ export function DashboardSST({ estatisticas, alertas }: DashboardSSTProps) {
             </span>
           )}
         </h3>
-        <PainelAlertas alertas={alertas} />
+        {alertas.length === 0 ? (
+          <div className="py-6 text-center text-text-muted font-medium bg-surface-hover/30 rounded-xl border border-dashed border-border/60">
+            Nenhum alerta de vencimento pendente.
+          </div>
+        ) : (
+          <PainelAlertas alertas={alertas} />
+        )}
       </div>
     </div>
   );

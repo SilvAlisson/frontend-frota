@@ -112,6 +112,8 @@ function logToAuditTracker(error: AxiosError, duration: number, userLogadoInfo: 
   }).catch(() => null);
 }
 
+let isUnauthorizedAlertShown = false;
+
 // --- Interceptor de Resposta ---
 api.interceptors.response.use(
   (response) => {
@@ -138,9 +140,13 @@ api.interceptors.response.use(
 
     if (error.response?.status === 401) {
       const isLoginPage = window.location.pathname.includes('/login');
-      if (!isLoginPage) {
+      if (!isLoginPage && !isUnauthorizedAlertShown) {
+        isUnauthorizedAlertShown = true;
         window.dispatchEvent(new Event('auth:unauthorized'));
-        toast.error('Sua sessão expirou por segurança. Por favor, acesse novamente.');
+        toast.error('Sua sessão expirou por segurança. Por favor, acesse novamente.', { id: 'unauthorized-toast' });
+        
+        // Reset after 5 seconds to prevent permanent lock if user doesn't redirect
+        setTimeout(() => { isUnauthorizedAlertShown = false; }, 5000);
       }
       (error as CustomAxiosError)._toastHandled = true;
       return Promise.reject(error);

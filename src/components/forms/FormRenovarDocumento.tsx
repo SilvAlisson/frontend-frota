@@ -9,7 +9,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { DatePicker } from '../ui/DatePicker';
 import { Textarea } from '../ui/Textarea';
-import { FileText, RefreshCcw, UploadCloud, Loader2 } from 'lucide-react';
+import { FileText, RefreshCcw, UploadCloud, Loader2, XCircle } from 'lucide-react';
 import { uploadToR2 } from '../../services/uploadService';
 import { hapticError } from '../../lib/haptics';
 
@@ -158,7 +158,7 @@ export function FormRenovarDocumento({ documentoId, onSuccess, onCancel }: FormR
                 </Button>
               </div>
             )}
-            {errors.arquivoUrl && <p className="text-error text-[11px] font-bold mt-2 flex items-center gap-1">❌ {errors.arquivoUrl.message}</p>}
+            {errors.arquivoUrl && <p className="text-error text-[11px] font-bold mt-2 flex items-center gap-1"><XCircle className="w-3.5 h-3.5 shrink-0" /> {errors.arquivoUrl.message}</p>}
           </div>
 
           <div className="md:col-span-2">
