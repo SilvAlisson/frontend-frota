@@ -1,6 +1,7 @@
 import { createContext, useContext, type ReactNode, useEffect, useState, useCallback, useMemo } from 'react';
 import { useSession, signOut as betterSignOut } from '../lib/auth-client';
 import type { User } from '../types';
+import { RENDER_API_BASE_URL } from '../config';
 
 interface AuthContextData {
   user: User | null;
@@ -29,8 +30,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
 
       try {
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
-        const res = await fetch(`${backendUrl}/api/users/me`, {
+        // Usa a URL da API, substituindo fallback por VITE_BACKEND_URL ou RENDER_API_BASE_URL
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || RENDER_API_BASE_URL.replace(/\/api$/, '');
+        const urlToFetch = backendUrl.includes('/api') ? `${backendUrl}/users/me` : `${backendUrl}/api/users/me`;
+        
+        const res = await fetch(urlToFetch, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
