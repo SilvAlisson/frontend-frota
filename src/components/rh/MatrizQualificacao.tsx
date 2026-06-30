@@ -193,38 +193,45 @@ export function MatrizQualificacao() {
 
               <div className="p-5 flex-1 flex flex-col">
                 {/* Header do Card */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
+                <div className="flex items-start justify-between mb-4 gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
                     <Avatar 
-                      nome={user.nome} 
+                      nome={user.nome}
+                      url={user.fotoUrl}
                       className={clsx(
-                        "ring-2 ring-offset-2 ring-offset-surface",
+                        "ring-2 ring-offset-2 ring-offset-surface shrink-0", // shrink-0 garante que o avatar não diminui
                         user.statusGlobal === 'CRITICO' ? "ring-red-500" : 
                         user.statusGlobal === 'ATENCAO' ? "ring-yellow-500" : "ring-green-500"
                       )} 
                     />
-                    <div>
-                      <h4 className="font-bold text-text-main text-sm truncate max-w-[160px]">{user.nome}</h4>
-                      <p className="text-xs text-text-secondary font-medium">{user.cargo}</p>
+                    <div className="min-w-0"> {/* min-w-0 é crucial para o truncate funcionar dentro do flex */}
+                      <h4 className="font-bold text-text-main text-sm truncate" title={user.nome}>
+                        {user.nome}
+                      </h4>
+                      <p className="text-xs text-text-secondary font-medium truncate" title={user.cargo}>
+                        {user.cargo}
+                      </p>
                     </div>
                   </div>
                   
                   {/* Status Global Visual */}
-                  {user.statusGlobal === 'CRITICO' && (
-                    <div className="flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-md border border-red-100">
-                      <ShieldAlert className="w-3.5 h-3.5" /> Bloqueio
-                    </div>
-                  )}
-                  {user.statusGlobal === 'ATENCAO' && (
-                    <div className="flex items-center gap-1 text-xs font-bold text-yellow-700 bg-yellow-50 px-2 py-1 rounded-md border border-yellow-100">
-                      <AlertCircle className="w-3.5 h-3.5" /> Vencendo
-                    </div>
-                  )}
-                  {user.statusGlobal === 'CONFORME' && (
-                    <div className="flex items-center gap-1 text-xs font-bold text-green-700 bg-green-50 px-2 py-1 rounded-md border border-green-100">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> 100% OK
-                    </div>
-                  )}
+                  <div className="shrink-0 whitespace-nowrap"> {/* 🛡️ ADICIONADO: Proteção contra quebra de linha */}
+                    {user.statusGlobal === 'CRITICO' && (
+                      <div className="flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-md border border-red-100">
+                        <ShieldAlert className="w-3.5 h-3.5" /> Bloqueio
+                      </div>
+                    )}
+                    {user.statusGlobal === 'ATENCAO' && (
+                      <div className="flex items-center gap-1 text-xs font-bold text-yellow-700 bg-yellow-50 px-2 py-1 rounded-md border border-yellow-100">
+                        <AlertCircle className="w-3.5 h-3.5" /> Vencendo
+                      </div>
+                    )}
+                    {user.statusGlobal === 'CONFORME' && (
+                      <div className="flex items-center gap-1 text-xs font-bold text-green-700 bg-green-50 px-2 py-1 rounded-md border border-green-100">
+                        <CheckCircle2 className="w-3.5 h-3.5" /> 100% OK
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Lista de Treinamentos/Exigências */}
