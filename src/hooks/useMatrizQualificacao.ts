@@ -12,7 +12,7 @@ export interface IntegranteMatriz {
   userId: string;
   nome: string;
   cargo: string;
-  fotoUrl?: string | null;
+  image?: string | null;
   exigencias: Exigencia[];
 }
 

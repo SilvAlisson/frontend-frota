@@ -197,7 +197,7 @@ export function MatrizQualificacao() {
                   <div className="flex items-center gap-3 min-w-0">
                     <Avatar 
                       nome={user.nome}
-                      url={user.fotoUrl}
+                      url={user.image}
                       className={clsx(
                         "ring-2 ring-offset-2 ring-offset-surface shrink-0", // shrink-0 garante que o avatar não diminui
                         user.statusGlobal === 'CRITICO' ? "ring-red-500" : 
