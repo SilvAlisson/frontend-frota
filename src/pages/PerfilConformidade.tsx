@@ -6,23 +6,54 @@ import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
 import { DateHelper } from '../lib/dateHelper';
 import { ModalGerenciarTreinamento } from '../components/rh/ModalGerenciarTreinamento';
+import { exportarParaExcel } from '../utils';
 import { 
   Car, GraduationCap, HeartPulse, ArrowLeft, 
   UploadCloud, FileText, BellRing, Calendar, Plus, Save,
-  AlertTriangle, ShieldAlert
+  AlertTriangle, ShieldAlert, Download
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import clsx from 'clsx';
 import { toast } from 'sonner';
 
+// 🧠 MOTOR INTELIGENTE DE REGRAS (REGEX)
+// Ignora espaços, traços, acentos, maiúsculas e minúsculas.
+const REGRAS_SSMA = {
+  nr11: (n: string) => /nr[-_\s]?11/i.test(n),
+  nr35: (n: string) => /nr[-_\s]?35/i.test(n),
+  direcaoDefensiva: (n: string) => /dire[cç][aã]o\s*defensiva/i.test(n),
+  epi: (n: string) => /epi|equipamento\s*de\s*prote[cç][aã]o/i.test(n),
+  lideranca: (n: string) => /lideran[cç]a/i.test(n),
+  integracao: (n: string) => /integra[cç][aã]o/i.test(n),
+  riscos: (n: string) => /risco/i.test(n),
+};
+
 // 🧠 DICIONÁRIO DE REQUISITOS SSMA POR CARGO
-const DICIONARIO_REQUISITOS: Record<string, string[]> = {
-  'OPERADOR': ['NR-11 Operação de Poliguindaste', 'NR-35 Trabalho em Altura', 'Direção Defensiva'],
-  'AUXILIAR_OPERACIONAL': ['NR-11 Movimentação de Carga', 'Treinamento de EPI'],
-  'ENCARREGADO': ['NR-11 Movimentação de Carga', 'NR-35 Trabalho em Altura', 'Liderança em SSMA'],
-  'ADMIN': ['Integração SSMA'],
-  'RH': ['Integração SSMA'],
-  'COORDENADOR': ['Integração SSMA', 'Gestão de Riscos'],
+const DICIONARIO_REQUISITOS: Record<string, { id: string, display: string, check: (nome: string) => boolean }[]> = {
+  'OPERADOR': [
+    { id: 'req-nr11', display: 'NR-11 Operação de Poliguindaste', check: REGRAS_SSMA.nr11 },
+    { id: 'req-nr35', display: 'NR-35 Trabalho em Altura', check: REGRAS_SSMA.nr35 },
+    { id: 'req-dir', display: 'Direção Defensiva', check: REGRAS_SSMA.direcaoDefensiva },
+  ],
+  'AUXILIAR_OPERACIONAL': [
+    { id: 'req-nr11', display: 'NR-11 Movimentação de Carga', check: REGRAS_SSMA.nr11 },
+    { id: 'req-epi', display: 'Treinamento de EPI', check: REGRAS_SSMA.epi },
+  ],
+  'ENCARREGADO': [
+    { id: 'req-nr11', display: 'NR-11 Movimentação de Carga', check: REGRAS_SSMA.nr11 },
+    { id: 'req-nr35', display: 'NR-35 Trabalho em Altura', check: REGRAS_SSMA.nr35 },
+    { id: 'req-lid', display: 'Liderança em SSMA', check: REGRAS_SSMA.lideranca },
+  ],
+  'ADMIN': [
+    { id: 'req-int', display: 'Integração SSMA', check: REGRAS_SSMA.integracao },
+  ],
+  'RH': [
+    { id: 'req-int', display: 'Integração SSMA', check: REGRAS_SSMA.integracao },
+  ],
+  'COORDENADOR': [
+    { id: 'req-int', display: 'Integração SSMA', check: REGRAS_SSMA.integracao },
+    { id: 'req-risc', display: 'Gestão de Riscos', check: REGRAS_SSMA.riscos },
+  ],
 };
 
 export function PerfilConformidade() {
@@ -36,7 +67,7 @@ export function PerfilConformidade() {
   const [isModalNROpen, setIsModalNROpen] = useState(false);
   const [treinamentoPreDefinido, setTreinamentoPreDefinido] = useState<string>('');
 
-  // 🧠 MOTOR DE REGRAS: Cruza o Dicionário com os Treinamentos do Integrante
+  // 🧠 CRUZAMENTO INTELIGENTE (Fuzzy Matching)
   const matrizTreinamentos = useMemo(() => {
     if (!dossie) return [];
     
@@ -44,29 +75,45 @@ export function PerfilConformidade() {
     const exigidos = DICIONARIO_REQUISITOS[dossie.user.role] || [];
     const hoje = new Date();
 
-    const matrizProcessada = exigidos.map(nomeExigido => {
-      const encontrado = realizados.find(t => t.nome === nomeExigido);
+    const matrizProcessada: any[] = [];
+    const treinamentosUtilizados = new Set<string>(); // Evita duplicar cursos
+
+    // 1. Processa os requisitos obrigatórios do cargo
+    exigidos.forEach(req => {
+      // Usa o Regex (check) para encontrar qual certificado do integrante atende a este requisito
+      const encontrados = realizados.filter(t => req.check(t.nome));
       
-      if (encontrado) {
+      if (encontrados.length > 0) {
+        // Se o integrante tiver vários, ordena para usar a mais recente
+        encontrados.sort((a, b) => {
+          if (!a.dataVencimento) return -1;
+          if (!b.dataVencimento) return 1;
+          return new Date(b.dataVencimento).getTime() - new Date(a.dataVencimento).getTime();
+        });
+        
+        const principal = encontrados[0];
+        treinamentosUtilizados.add(principal.id); // Marca como usado
+        
         let status = 'VÁLIDO';
-        if (encontrado.dataVencimento) {
-          const vencimento = new Date(encontrado.dataVencimento);
+        if (principal.dataVencimento) {
+          const vencimento = new Date(principal.dataVencimento);
           const diasRestantes = Math.ceil((vencimento.getTime() - hoje.getTime()) / (1000 * 3600 * 24));
-          const alertaDias = (encontrado as any).diasAntecedenciaAlerta || 30;
+          const alertaDias = (principal as any).diasAntecedenciaAlerta || 30;
           
           if (diasRestantes < 0) status = 'VENCIDO';
           else if (diasRestantes <= alertaDias) status = 'VENCENDO';
         }
-        return { ...encontrado, status, isExtra: false };
+        
+        matrizProcessada.push({ ...principal, nomeExigido: req.display, status, isExtra: false });
+      } else {
+        // Se o Regex não encontrou nada parecido, é FALTANTE
+        matrizProcessada.push({ id: req.id, nome: req.display, nomeExigido: req.display, status: 'FALTANTE', isExtra: false });
       }
-      
-      // Se não encontrou, é uma pendência grave
-      return { id: `faltante-${nomeExigido}`, nome: nomeExigido, status: 'FALTANTE', isExtra: false };
     });
 
-    // Adiciona os extras (cursos que ele fez, mas que não são obrigatórios para o cargo atual)
+    // 2. Processa os "Extras" (Cursos que ele tem e que não foram sugados pelas regras acima)
     realizados.forEach(t => {
-      if (!exigidos.includes(t.nome)) {
+      if (!treinamentosUtilizados.has(t.id)) {
         let status = 'VÁLIDO';
         if (t.dataVencimento) {
           const vencimento = new Date(t.dataVencimento);
@@ -107,6 +154,30 @@ export function PerfilConformidade() {
   const abrirModalLivre = () => {
     setTreinamentoPreDefinido('');
     setIsModalNROpen(true);
+  };
+
+  // 📊 EXPORTAR EXCEL INDIVIDUAL
+  const handleExportarIndividual = () => {
+    if (matrizTreinamentos.length === 0) return;
+
+    const promessa = new Promise((resolve) => {
+      const dados = matrizTreinamentos.map(t => ({
+        'Treinamento / NR': t.nomeExigido || t.nome,
+        'Tipo': (t as any).isExtra ? 'Extra' : 'Obrigatório',
+        'Status': t.status,
+        'Vencimento': (t as any).dataVencimento ? DateHelper.getCompleta((t as any).dataVencimento) : 'Sem Vencimento'
+      }));
+
+      const nomeFicheiro = `Conformidade_${user.nome.replace(/\s+/g, '_')}.xlsx`;
+      exportarParaExcel(dados, nomeFicheiro);
+      resolve(true);
+    });
+
+    toast.promise(promessa, { 
+      loading: 'A gerar relatório...', 
+      success: 'Dossiê exportado com sucesso!', 
+      error: 'Erro na exportação.' 
+    });
   };
 
   return (
@@ -195,7 +266,14 @@ export function PerfilConformidade() {
                     </h3>
                     <p className="text-text-secondary text-sm mt-1">Gira as certificações obrigatórias com base no cargo e adicione extras.</p>
                   </div>
-                  <Button size="sm" onClick={abrirModalLivre} icon={<Plus className="w-4 h-4" />}>Nova NR Extra</Button>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <Button variant="secondary" size="sm" onClick={handleExportarIndividual} icon={<Download className="w-4 h-4 text-primary" />}>
+                      Exportar Excel
+                    </Button>
+                    <Button size="sm" onClick={abrirModalLivre} icon={<Plus className="w-4 h-4" />}>
+                      Nova NR Extra
+                    </Button>
+                  </div>
                 </div>
 
                 <div className="space-y-4">
@@ -209,7 +287,7 @@ export function PerfilConformidade() {
                               <ShieldAlert className="w-5 h-5 text-red-600" />
                             </div>
                             <div>
-                              <h4 className="font-black text-red-600 text-base">{t.nome}</h4>
+                              <h4 className="font-black text-red-600 text-base">{t.nomeExigido || t.nome}</h4>
                               <p className="text-xs font-bold text-red-600/70 mt-0.5 uppercase tracking-wider">Requisito Obrigatório Faltante</p>
                             </div>
                           </div>
@@ -226,7 +304,7 @@ export function PerfilConformidade() {
                         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
                           <div>
                             <div className="flex items-center gap-2">
-                              <h4 className="font-bold text-text-main text-base">{t.nome}</h4>
+                              <h4 className="font-bold text-text-main text-base">{t.nomeExigido || t.nome}</h4>
                               {(t as any).isExtra && <Badge variant="neutral" className="!text-[10px] !py-0">Extra</Badge>}
                             </div>
                             <div className="flex items-center gap-3 text-xs font-medium mt-1">
@@ -283,8 +361,7 @@ export function PerfilConformidade() {
             {/* 🩺 ABA: SAÚDE Ocupacional (ASO) */}
             {activeTab === 'aso' && (
               <div className="animate-in fade-in slide-in-from-bottom-2 space-y-6">
-                 {/* Conteúdo do ASO mantido idêntico ao passo anterior... */}
-                 <div>
+                <div>
                   <h3 className="text-xl font-black text-text-main flex items-center gap-2">
                     <HeartPulse className="w-6 h-6 text-primary" /> Saúde Ocupacional
                   </h3>
@@ -333,7 +410,6 @@ export function PerfilConformidade() {
             {/* 🚗 ABA: CNH (Apenas Operadores) */}
             {activeTab === 'cnh' && isOperador && (
                <div className="animate-in fade-in slide-in-from-bottom-2 space-y-6">
-                {/* Conteúdo da CNH mantido idêntico ao passo anterior... */}
                 <div>
                   <h3 className="text-xl font-black text-text-main flex items-center gap-2">
                     <Car className="w-6 h-6 text-primary" /> Registo de Habilitação (CNH)
