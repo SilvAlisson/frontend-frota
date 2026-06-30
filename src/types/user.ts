@@ -1,4 +1,4 @@
-export type UserRole = 'ADMIN' | 'ENCARREGADO' | 'OPERADOR' | 'RH' | 'COORDENADOR';
+export type UserRole = 'ADMIN' | 'ENCARREGADO' | 'OPERADOR' | 'RH' | 'COORDENADOR' | 'AUXILIAR_OPERACIONAL';
 export type StatusOperador = 'ATIVO' | 'FERIAS' | 'ATESTADO' | 'AFASTADO';
 
 export type CategoriaCNH = 'A' | 'B' | 'C' | 'D' | 'E' | 'AB' | 'AC' | 'AD' | 'AE';
