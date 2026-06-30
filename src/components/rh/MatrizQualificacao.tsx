@@ -6,6 +6,7 @@ import { Input } from '../ui/Input';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Modal } from '../ui/Modal';
+import { Skeleton } from '../ui/Skeleton';
 import { DossieIntegrante } from './DossieIntegrante';
 
 // Tipos de Status Global
@@ -22,12 +23,10 @@ export function MatrizQualificacao() {
     if (!matriz) return [];
 
     return matriz.map(user => {
-      // 1. Calcula os totais
       const total = user.exigencias.length;
       const validos = user.exigencias.filter(e => e.status === 'VÁLIDO').length;
       const saudePercentual = total > 0 ? Math.round((validos / total) * 100) : 0;
 
-      // 2. Define o Status Global do Integrante
       let statusGlobal: GlobalStatus = 'CONFORME';
       if (user.exigencias.some(e => e.status === 'VENCIDO' || e.status === 'FALTANTE')) {
         statusGlobal = 'CRITICO';
@@ -35,7 +34,6 @@ export function MatrizQualificacao() {
         statusGlobal = 'ATENCAO';
       }
 
-      // 3. Ordena as exigências DENTRO do card (Problemas primeiro)
       const exigenciasOrdenadas = [...user.exigencias].sort((a, b) => {
         const peso = { 'FALTANTE': 3, 'VENCIDO': 3, 'VENCENDO': 2, 'VÁLIDO': 1 };
         return peso[b.status] - peso[a.status];
@@ -43,24 +41,66 @@ export function MatrizQualificacao() {
 
       return { ...user, statusGlobal, saudePercentual, exigenciasOrdenadas, validos, total };
     })
-    // 4. Aplica os Filtros (Busca de texto e Filtro de Status)
     .filter(u => {
       const matchBusca = u.nome.toLowerCase().includes(busca.toLowerCase()) || u.cargo.toLowerCase().includes(busca.toLowerCase());
       const matchStatus = filtroStatus === 'TODOS' || u.statusGlobal === filtroStatus;
       return matchBusca && matchStatus;
     })
-    // 5. Ordena a Grelha (Críticos no topo > Atenção > Conformes)
     .sort((a, b) => {
       const pesoGlobal = { 'CRITICO': 3, 'ATENCAO': 2, 'CONFORME': 1 };
       return pesoGlobal[b.statusGlobal] - pesoGlobal[a.statusGlobal];
     });
   }, [matriz, busca, filtroStatus]);
 
+  // 🦴 SKELETON LOADING (Novo Padrão)
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center p-20 space-y-4">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary"></div>
-        <p className="text-text-muted font-medium animate-pulse">Analisando conformidade SSMA...</p>
+      <div className="space-y-6 animate-in fade-in duration-500">
+        {/* Skeleton do Header */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-surface p-5 rounded-2xl border border-border/60 shadow-sm">
+          <div className="space-y-3 w-full lg:w-auto">
+            <Skeleton variant="title" className="w-64 sm:w-80 h-7" />
+            <Skeleton variant="text" className="w-48 sm:w-60 h-4" />
+          </div>
+          <div className="flex gap-3 w-full lg:w-auto">
+            <Skeleton variant="default" className="h-10 w-full lg:w-[260px] rounded-xl" />
+            <Skeleton variant="default" className="h-10 w-48 hidden sm:block rounded-xl" />
+          </div>
+        </div>
+
+        {/* Skeleton da Grelha de Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <div key={i} className="flex flex-col bg-surface rounded-2xl border border-border/60 shadow-sm overflow-hidden h-[310px]">
+              {/* Barra de Progresso Fantasma */}
+              <Skeleton variant="default" className="h-1.5 w-full rounded-none" />
+              
+              <div className="p-5 flex-1 flex flex-col">
+                {/* Header do Card Fantasma (Avatar + Nome) */}
+                <div className="flex items-center gap-3 mb-6">
+                  <Skeleton variant="circle" className="w-10 h-10 shrink-0" />
+                  <div className="w-full space-y-2">
+                    <Skeleton variant="text" className="h-4 w-3/4" />
+                    <Skeleton variant="text" className="h-3 w-1/2" />
+                  </div>
+                </div>
+
+                {/* Lista de Treinamentos Fantasma */}
+                <div className="space-y-2.5 flex-1 mt-2">
+                  <Skeleton variant="default" className="h-9 w-full rounded-lg" />
+                  <Skeleton variant="default" className="h-9 w-full rounded-lg" />
+                  <Skeleton variant="default" className="h-9 w-full rounded-lg" />
+                </div>
+
+                {/* Footer do Card Fantasma */}
+                <div className="mt-5 pt-4 border-t border-border/40 flex justify-between items-center">
+                  <Skeleton variant="text" className="h-3 w-20 m-0" />
+                  <Skeleton variant="text" className="h-3 w-24 m-0" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -126,7 +166,6 @@ export function MatrizQualificacao() {
       {/* GRELHA DE CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {integrantesProcessados.map((user) => {
-          // Revelação Progressiva: Mostra apenas os 4 primeiros itens, agrupa o resto.
           const itensVisiveis = user.exigenciasOrdenadas.slice(0, 4);
           const itensOcultos = user.exigenciasOrdenadas.length - 4;
 
@@ -249,7 +288,6 @@ export function MatrizQualificacao() {
   );
 }
 
-// Componente utilitário para os ícones de status (Emvolvido em SPAN para corrigir as Props do Lucide)
 function IndicadorStatus({ status }: { status: Exigencia['status'] }) {
   if (status === 'VÁLIDO') {
     return <span title="Válido"><CheckCircle2 className="w-4 h-4 text-green-500" /></span>;
@@ -257,6 +295,5 @@ function IndicadorStatus({ status }: { status: Exigencia['status'] }) {
   if (status === 'VENCENDO') {
     return <span title="Vencendo"><AlertCircle className="w-4 h-4 text-yellow-500" /></span>;
   }
-  // Vencido ou Faltante
   return <span title="Pendência/Vencido"><XCircle className="w-4 h-4 text-red-500" /></span>;
 }
