@@ -26,6 +26,7 @@ const HistoricoManutencoes = lazy(() => import('./components/HistoricoManutencoe
 const HistoricoAbastecimentos = lazy(() => import('./components/HistoricoAbastecimentos').then(m => ({ default: m.HistoricoAbastecimentos })));
 const HistoricoJornadas = lazy(() => import('./components/HistoricoJornadas').then(m => ({ default: m.HistoricoJornadas })));
 const GestaoSST = lazy(() => import('./components/GestaoSST').then(m => ({ default: m.GestaoSST })));
+import { PerfilConformidade } from './pages/PerfilConformidade';
 
 const PainelPlanosPreventivos = lazy(() => import('./components/PainelPlanosPreventivos').then(m => ({ default: m.PainelPlanosPreventivos })));
 const MinhaContaPage = lazy(() => import('./pages/MinhaContaPage').then(m => ({ default: m.MinhaContaPage })));
@@ -55,9 +56,6 @@ function PrivateRoute({ children, allowedRoles }: { children: React.ReactNode, a
   return <>{children}</>;
 }
 
-/**
- * AdminIndex: Decide qual Dashboard carregar dentro do AdminLayout 
- */
 function AdminIndex() {
   const { user, loading } = useAuth();
 
@@ -70,9 +68,6 @@ function AdminIndex() {
   return <DashboardRelatorios />; // Default para ADMIN e COORDENADOR
 }
 
-/**
- * RootDashboardRouter: Decide o que exibir na URL "/"
- */
 function RootDashboardRouter() {
   const { user, loading } = useAuth();
 
@@ -96,13 +91,9 @@ function RootDashboardRouter() {
     );
   }
 
-// ADMIN, COORDENADOR e RH vão para o layout com menu lateral
   return <Navigate to="/admin" replace />;
 }
 
-/**
- * RoleBasedAdminLayout: Decide qual Layout carregar (AdminLayout vs RHLayout)
- */
 function RoleBasedAdminLayout() {
   const { user, loading } = useAuth();
   
@@ -122,16 +113,14 @@ export function Router() {
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
         <Route path="/login" element={<LoginScreen />} />
-        {/* Rota Pública do QR Code do Integrante */}
         <Route path="/dossie/:id" element={<DossiePublico />} />
-        {/* Rota Raiz (Dashboards Operacionais Isoladas) */}
+        
         <Route path="/" element={
           <PrivateRoute>
             <RootDashboardRouter />
           </PrivateRoute>
         } />
 
-        {/* Perfil Universal */}
         <Route path="/minha-conta" element={
           <PrivateRoute>
             <MinhaContaPage />
@@ -146,13 +135,10 @@ export function Router() {
         }>
           
           <Route index element={<AdminIndex />} />
-
           <Route path="alertas" element={<PainelAlertas />} />
           <Route path="ranking" element={<RankingOperadores />} />
-
           <Route path="manutencoes" element={<HistoricoManutencoes userRole={user?.role || ''} />} />
           <Route path="abastecimentos" element={<HistoricoAbastecimentos userRole={user?.role || ''} />} />
-
           <Route path="jornadas" element={<HistoricoJornadas userRole={user?.role} />} />
 
           <Route path="veiculos">
@@ -160,18 +146,17 @@ export function Router() {
             <Route path=":id" element={<VeiculoDetalhes />} />
           </Route>
 
+          {/*  Prop adminUserId removida */}
           <Route path="integrantes" element={
             <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'RH']}>
-              <GestaoUsuarios adminUserId={user?.id || ''} />
+              <GestaoUsuarios /> 
             </PrivateRoute>
           } />
 
           <Route path="produtos" element={<GestaoProdutos />} />
           <Route path="fornecedores" element={<GestaoFornecedores />} />
           <Route path="documentos" element={<GestaoDocumentos />} />
-          
           <Route path="planos" element={<PainelPlanosPreventivos />} />
-          
           <Route path="cargos" element={<GestaoCargos />} />
 
           <Route path="sst" element={
@@ -186,7 +171,13 @@ export function Router() {
             </PrivateRoute>
           } />
 
-          {/* Auditoria movida para DENTRO do /admin */}
+          {/*  Rota independente configurada corretamente */}
+          <Route path="conformidade/:id" element={
+            <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'RH']}>
+              <PerfilConformidade />
+            </PrivateRoute>
+          } />
+
           <Route path="auditoria" element={
             <PrivateRoute allowedRoles={['ADMIN']}>
               <GestaoAuditoria />

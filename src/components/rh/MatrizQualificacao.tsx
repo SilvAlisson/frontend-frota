@@ -1,22 +1,25 @@
-import { useMatrizQualificacao, type IntegranteMatriz, type Exigencia } from '../../hooks/useMatrizQualificacao';
-import { Search, AlertCircle, CheckCircle2, XCircle, ChevronRight, FileCheck, ShieldAlert } from 'lucide-react';
+import { useMatrizQualificacao, type Exigencia } from '../../hooks/useMatrizQualificacao';
+import { Search, AlertCircle, CheckCircle2, XCircle, ChevronRight, FileCheck, ShieldAlert, Plus } from 'lucide-react';
 import { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import { Input } from '../ui/Input';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
-import { Modal } from '../ui/Modal';
 import { Skeleton } from '../ui/Skeleton';
-import { DossieIntegrante } from './DossieIntegrante';
+import { Button } from '../ui/Button';
+import { FormCadastrarUsuario } from '../forms/FormCadastrarUsuario';
+import { SmartFAB } from '../ui/SmartFAB';
 
 // Tipos de Status Global
 type GlobalStatus = 'CRITICO' | 'ATENCAO' | 'CONFORME';
 
 export function MatrizQualificacao() {
-  const { data: matriz, isLoading } = useMatrizQualificacao();
+  const { data: matriz, isLoading, refetch } = useMatrizQualificacao();
   const [busca, setBusca] = useState('');
   const [filtroStatus, setFiltroStatus] = useState<GlobalStatus | 'TODOS'>('TODOS');
-  const [integranteSelecionado, setIntegranteSelecionado] = useState<IntegranteMatriz | null>(null);
+  const [isCadastroOpen, setIsCadastroOpen] = useState(false); // ✨ NOVO: Estado de Cadastro
+  const navigate = useNavigate();
 
   // 🧠 LÓGICA INTELIGENTE: Processamento, Saúde e Ordenação
   const integrantesProcessados = useMemo(() => {
@@ -52,11 +55,33 @@ export function MatrizQualificacao() {
     });
   }, [matriz, busca, filtroStatus]);
 
-  // 🦴 SKELETON LOADING (Novo Padrão)
+  // --- RENDERIZAÇÃO DO FORMULÁRIO DE ADMISSÃO (RH) ---
+  if (isCadastroOpen) {
+    return (
+      <div className="animate-in slide-in-from-right duration-500 max-w-2xl mx-auto mt-4">
+        <button
+          className="mb-4 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit"
+          onClick={() => setIsCadastroOpen(false)}
+        >
+          <span className="p-1.5 bg-surface-hover rounded-lg border border-border/60">←</span> Voltar para a Matriz
+        </button>
+        <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60">
+          <FormCadastrarUsuario
+            onSuccess={() => { 
+              setIsCadastroOpen(false); 
+              if(refetch) refetch(); 
+            }}
+            onCancelar={() => setIsCadastroOpen(false)}
+          />
+        </div>
+      </div>
+    );
+  }
+
+  // 🦴 SKELETON LOADING
   if (isLoading) {
     return (
       <div className="space-y-6 animate-in fade-in duration-500">
-        {/* Skeleton do Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-surface p-5 rounded-2xl border border-border/60 shadow-sm">
           <div className="space-y-3 w-full lg:w-auto">
             <Skeleton variant="title" className="w-64 sm:w-80 h-7" />
@@ -67,16 +92,11 @@ export function MatrizQualificacao() {
             <Skeleton variant="default" className="h-10 w-48 hidden sm:block rounded-xl" />
           </div>
         </div>
-
-        {/* Skeleton da Grelha de Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <div key={i} className="flex flex-col bg-surface rounded-2xl border border-border/60 shadow-sm overflow-hidden h-[310px]">
-              {/* Barra de Progresso Fantasma */}
               <Skeleton variant="default" className="h-1.5 w-full rounded-none" />
-              
               <div className="p-5 flex-1 flex flex-col">
-                {/* Header do Card Fantasma (Avatar + Nome) */}
                 <div className="flex items-center gap-3 mb-6">
                   <Skeleton variant="circle" className="w-10 h-10 shrink-0" />
                   <div className="w-full space-y-2">
@@ -84,15 +104,11 @@ export function MatrizQualificacao() {
                     <Skeleton variant="text" className="h-3 w-1/2" />
                   </div>
                 </div>
-
-                {/* Lista de Treinamentos Fantasma */}
                 <div className="space-y-2.5 flex-1 mt-2">
                   <Skeleton variant="default" className="h-9 w-full rounded-lg" />
                   <Skeleton variant="default" className="h-9 w-full rounded-lg" />
                   <Skeleton variant="default" className="h-9 w-full rounded-lg" />
                 </div>
-
-                {/* Footer do Card Fantasma */}
                 <div className="mt-5 pt-4 border-t border-border/40 flex justify-between items-center">
                   <Skeleton variant="text" className="h-3 w-20 m-0" />
                   <Skeleton variant="text" className="h-3 w-24 m-0" />
@@ -110,13 +126,16 @@ export function MatrizQualificacao() {
       <div className="p-12 text-center bg-surface rounded-2xl border border-border/60">
         <FileCheck className="w-12 h-12 text-border/60 mx-auto mb-4" />
         <h3 className="text-lg font-bold text-text-main">Matriz Vazia</h3>
-        <p className="text-text-secondary mt-1">Nenhum integrante com exigências foi encontrado.</p>
+        <p className="text-text-secondary mt-1 mb-6">Nenhum integrante com exigências foi encontrado.</p>
+        <Button onClick={() => setIsCadastroOpen(true)} icon={<Plus className="w-4 h-4" />}>
+          Cadastrar Primeiro Integrante
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-10">
       {/* HEADER DA PÁGINA COM FILTROS */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-surface p-5 rounded-2xl border border-border/60 shadow-sm">
         <div>
@@ -135,7 +154,8 @@ export function MatrizQualificacao() {
             placeholder="Buscar integrante ou cargo..."
             value={busca}
             onChange={e => setBusca(e.target.value)}
-            className="bg-background min-w-[260px]"
+            className="bg-background min-w-[220px]"
+            containerClassName="!mb-0"
           />
           
           <div className="flex items-center bg-background rounded-lg border border-border/60 p-1">
@@ -160,6 +180,15 @@ export function MatrizQualificacao() {
               Atenção
             </button>
           </div>
+
+          {/* ✨ NOVO: Botão de Cadastro (Oculto em Mobile porque usamos o SmartFAB) */}
+          <Button 
+            onClick={() => setIsCadastroOpen(true)} 
+            className="hidden sm:flex whitespace-nowrap h-10 shadow-button hover:shadow-float-primary" 
+            icon={<Plus className="w-4 h-4" />}
+          >
+            Novo Integrante
+          </Button>
         </div>
       </div>
 
@@ -172,14 +201,14 @@ export function MatrizQualificacao() {
           return (
             <div 
               key={user.userId} 
-              onClick={() => setIntegranteSelecionado(user)}
+              // 🔄 CORRIGIDO: Rota exata com /admin
+              onClick={() => navigate(`/admin/conformidade/${user.userId}`)}
               className={clsx(
                 "group flex flex-col bg-surface rounded-2xl border transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-1 overflow-hidden",
                 user.statusGlobal === 'CRITICO' ? "border-red-500/30" : 
                 user.statusGlobal === 'ATENCAO' ? "border-yellow-500/30" : "border-border/60"
               )}
             >
-              {/* Topo do Card: Barra de Progresso de Saúde */}
               <div className="h-1.5 w-full bg-background flex">
                 <div 
                   className={clsx(
@@ -192,19 +221,18 @@ export function MatrizQualificacao() {
               </div>
 
               <div className="p-5 flex-1 flex flex-col">
-                {/* Header do Card */}
                 <div className="flex items-start justify-between mb-4 gap-2">
                   <div className="flex items-center gap-3 min-w-0">
                     <Avatar 
                       nome={user.nome}
                       url={user.image}
                       className={clsx(
-                        "ring-2 ring-offset-2 ring-offset-surface shrink-0", // shrink-0 garante que o avatar não diminui
+                        "ring-2 ring-offset-2 ring-offset-surface shrink-0",
                         user.statusGlobal === 'CRITICO' ? "ring-red-500" : 
                         user.statusGlobal === 'ATENCAO' ? "ring-yellow-500" : "ring-green-500"
                       )} 
                     />
-                    <div className="min-w-0"> {/* min-w-0 é crucial para o truncate funcionar dentro do flex */}
+                    <div className="min-w-0">
                       <h4 className="font-bold text-text-main text-sm truncate" title={user.nome}>
                         {user.nome}
                       </h4>
@@ -214,8 +242,7 @@ export function MatrizQualificacao() {
                     </div>
                   </div>
                   
-                  {/* Status Global Visual */}
-                  <div className="shrink-0 whitespace-nowrap"> {/* 🛡️ ADICIONADO: Proteção contra quebra de linha */}
+                  <div className="shrink-0 whitespace-nowrap">
                     {user.statusGlobal === 'CRITICO' && (
                       <div className="flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-md border border-red-100">
                         <ShieldAlert className="w-3.5 h-3.5" /> Bloqueio
@@ -234,7 +261,6 @@ export function MatrizQualificacao() {
                   </div>
                 </div>
 
-                {/* Lista de Treinamentos/Exigências */}
                 <div className="flex-1 mt-2 space-y-2">
                   {itensVisiveis.map((exigencia, idx) => (
                     <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-background/50 border border-border/40">
@@ -261,13 +287,12 @@ export function MatrizQualificacao() {
                   )}
                 </div>
 
-                {/* Footer do Card */}
                 <div className="mt-5 pt-4 border-t border-border/40 flex items-center justify-between group-hover:border-border transition-colors">
                   <div className="text-xs text-text-secondary font-medium">
                     <span className="font-bold text-text-main">{user.validos}</span> de {user.total} válidos
                   </div>
                   <div className="text-primary text-xs font-bold flex items-center group-hover:translate-x-1 transition-transform">
-                    Abrir Dossiê <ChevronRight className="w-4 h-4 ml-1" />
+                    Portal RH <ChevronRight className="w-4 h-4 ml-1" />
                   </div>
                 </div>
               </div>
@@ -276,21 +301,7 @@ export function MatrizQualificacao() {
         })}
       </div>
 
-      {/* MODAL: O Dossiê Detalhado */}
-      <Modal
-        isOpen={!!integranteSelecionado}
-        onClose={() => setIntegranteSelecionado(null)}
-        title={integranteSelecionado ? `Dossiê: ${integranteSelecionado.nome}` : 'Dossiê'}
-        className="max-w-4xl w-full"
-      >
-        {integranteSelecionado && (
-          <DossieIntegrante 
-            userId={integranteSelecionado.userId} 
-            onClose={() => setIntegranteSelecionado(null)} 
-          />
-        )}
-      </Modal>
-
+      <SmartFAB onClick={() => setIsCadastroOpen(true)} label="Novo Integrante" />
     </div>
   );
 }
