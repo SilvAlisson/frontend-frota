@@ -17,6 +17,22 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
   const [page, setPage] = useState(1);
   const { data: dossie, isLoading } = useIntegranteDossie(userId, page);
 
+  // Derive isMotorista safely before the early return to use it in the useEffect
+  const userRole = dossie?.user ? ((dossie.user.cargo as { nome?: string })?.nome || dossie.user.role) : null;
+  const isMotorista = userRole === 'OPERADOR';
+
+  // 🔴 CORREÇÃO CRÍTICA: useEffect não pode ficar após um early return (if (isLoading) return)
+  // Isso causa o erro React #310 (Rendered fewer hooks than expected) ao carregar dados.
+  useEffect(() => {
+    if (dossie?.user) {
+      if (isMotorista) {
+        setActiveTab('produtividade');
+      } else {
+        setActiveTab('qualificacao');
+      }
+    }
+  }, [isMotorista, dossie?.user]);
+
   if (isLoading || !dossie) {
     return (
       <div className="animate-in slide-in-from-right duration-500 min-h-[60vh] flex flex-col items-center justify-center">
@@ -30,17 +46,7 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
   const treinamentos = user.treinamentos || [];
   const defeitos = user.defeitosRegistrados || [];
 
-  const userRole = (user.cargo as { nome?: string })?.nome || user.role;
-  const isMotorista = userRole === 'OPERADOR';
   const isEquipeCampo = ['OPERADOR', 'ENCARREGADO', 'AUXILIAR_OPERACIONAL'].includes(userRole as string);
-
-  useEffect(() => {
-    if (isMotorista) {
-      setActiveTab('produtividade');
-    } else {
-      setActiveTab('qualificacao');
-    }
-  }, [isMotorista]);
 
   const abasDisponiveis = [
     ...(isMotorista ? [{ id: 'produtividade', label: 'Produtividade & Operação' }] : []),
