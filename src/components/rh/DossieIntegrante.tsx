@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useIntegranteDossie } from '../../hooks/useIntegranteDossie';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
@@ -13,7 +13,7 @@ interface DossieIntegranteProps {
 }
 
 export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
-  const [activeTab, setActiveTab] = useState<'geral' | 'qualificacao' | 'produtividade'>('produtividade');
+  const [activeTab, setActiveTab] = useState<'geral' | 'qualificacao' | 'produtividade'>('qualificacao');
   const [page, setPage] = useState(1);
   const { data: dossie, isLoading } = useIntegranteDossie(userId, page);
 
@@ -29,6 +29,27 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
   const { user, jornadas, pagination } = dossie;
   const treinamentos = user.treinamentos || [];
   const defeitos = user.defeitosRegistrados || [];
+
+  const userRole = (user.cargo as { nome?: string })?.nome || user.role;
+  const isMotorista = userRole === 'OPERADOR';
+  const isEquipeCampo = ['OPERADOR', 'ENCARREGADO', 'AUXILIAR_OPERACIONAL'].includes(userRole as string);
+
+  useEffect(() => {
+    if (isMotorista) {
+      setActiveTab('produtividade');
+    } else {
+      setActiveTab('qualificacao');
+    }
+  }, [isMotorista]);
+
+  const abasDisponiveis = [
+    ...(isMotorista ? [{ id: 'produtividade', label: 'Produtividade & Operação' }] : []),
+    { 
+      id: 'qualificacao', 
+      label: isMotorista ? 'Qualificação (CNH/ASO/NRs)' : 'Qualificação (ASO/NRs)' 
+    },
+    { id: 'geral', label: 'Dados Cadastrais' }
+  ];
 
   return (
     <div className="animate-in slide-in-from-right duration-500 pb-10">
@@ -56,24 +77,15 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
             </p>
 
             <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-              <button
-                onClick={() => setActiveTab('produtividade')}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${activeTab === 'produtividade' ? 'bg-primary text-white shadow-md' : 'bg-surface-hover text-text-secondary hover:text-primary'}`}
-              >
-                Produtividade & Operação
-              </button>
-              <button
-                onClick={() => setActiveTab('qualificacao')}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${activeTab === 'qualificacao' ? 'bg-primary text-white shadow-md' : 'bg-surface-hover text-text-secondary hover:text-primary'}`}
-              >
-                Qualificação (CNH/ASO)
-              </button>
-              <button
-                onClick={() => setActiveTab('geral')}
-                className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${activeTab === 'geral' ? 'bg-primary text-white shadow-md' : 'bg-surface-hover text-text-secondary hover:text-primary'}`}
-              >
-                Dados Cadastrais
-              </button>
+              {abasDisponiveis.map(aba => (
+                <button
+                  key={aba.id}
+                  onClick={() => setActiveTab(aba.id as 'geral' | 'qualificacao' | 'produtividade')}
+                  className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${activeTab === aba.id ? 'bg-primary text-white shadow-md' : 'bg-surface-hover text-text-secondary hover:text-primary'}`}
+                >
+                  {aba.label}
+                </button>
+              ))}
             </div>
           </div>
         </div>
@@ -98,10 +110,11 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
         {activeTab === 'qualificacao' && (
           <div className="space-y-8 animate-in fade-in">
             {/* CNH SECTION */}
-            <section>
-              <h2 className="text-xl font-bold text-text-main flex items-center gap-2 mb-4">
-                <Car className="w-5 h-5 text-primary" /> Dados da CNH
-              </h2>
+            {isMotorista && (
+              <section>
+                <h2 className="text-xl font-bold text-text-main flex items-center gap-2 mb-4">
+                  <Car className="w-5 h-5 text-primary" /> Dados da CNH
+                </h2>
               {user.profile?.cnhNumero ? (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="p-4 bg-surface-hover rounded-2xl border border-border/40">
@@ -126,7 +139,8 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
                   <p className="text-text-muted font-medium">Nenhuma CNH cadastrada neste perfil.</p>
                 </div>
               )}
-            </section>
+              </section>
+            )}
 
             {/* TREINAMENTOS SECTION */}
             <section>
@@ -179,7 +193,7 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
         )}
 
         {/* ABA: PRODUTIVIDADE */}
-        {activeTab === 'produtividade' && (
+        {activeTab === 'produtividade' && isMotorista && (
           <div className="space-y-8 animate-in fade-in">
             {/* JORNADAS SECTION */}
             <section>
