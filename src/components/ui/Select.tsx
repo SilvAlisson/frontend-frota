@@ -1,4 +1,4 @@
-import React, { forwardRef, useState, useEffect } from 'react';
+import React, { forwardRef, useState, useEffect, useLayoutEffect } from 'react';
 import { cn } from '../../lib/utils';
 import * as RadixSelect from '@radix-ui/react-select';
 import { ChevronDown, Check, AlertCircle } from 'lucide-react';
@@ -42,6 +42,20 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         const generatedId = React.useId();
         const selectId = id || generatedId;
 
+        // Combinação de Refs para podermos acessar o elemento nativo
+        const localRef = React.useRef<HTMLSelectElement>(null);
+        const setRefs = React.useCallback(
+            (node: HTMLSelectElement | null) => {
+                localRef.current = node;
+                if (typeof ref === 'function') {
+                    ref(node);
+                } else if (ref) {
+                    (ref as React.MutableRefObject<HTMLSelectElement | null>).current = node;
+                }
+            },
+            [ref]
+        );
+
         // Intercepta a opção vazia que o HTML antigo usava
         const emptyOption = options.find(opt => String(opt.value) === '');
         const validOptions = options.filter(opt => String(opt.value) !== '');
@@ -63,6 +77,53 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 setInternalValue(''); // Garante estado controlado mesmo limpando o input
             }
         }, [value]);
+
+        // ✨ Sincroniza o Radix Select com o React Hook Form via interceptação do setter nativo.
+        //
+        // Por que useLayoutEffect e não useEffect?
+        //   O RHF seta element.value no ref callback, que roda ANTES de qualquer effect.
+        //   Com useLayoutEffect, instalamos o interceptor E lemos o valor atual em uma
+        //   única janela sincrôna antes do browser pintar, capturando os defaultValues
+        //   que o RHF já teria escrito no elemento.
+        //
+        // Cobre dois casos:
+        //   1. defaultValues: valor já está no element no momento que o effect roda.
+        //   2. reset(): interceptor captura futuras escritas programaticas do RHF.
+        useLayoutEffect(() => {
+            const select = localRef.current;
+            if (!select) return;
+
+            const proto = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+            if (!proto?.set || !proto?.get) return;
+
+            const originalSet = proto.set;
+            const originalGet = proto.get;
+
+            // Instala interceptor para capturar reset() / setValue() do RHF
+            Object.defineProperty(select, 'value', {
+                set(v: string) {
+                    originalSet.call(this, v);
+                    setInternalValue(v);
+                },
+                get() {
+                    return originalGet.call(this);
+                },
+                configurable: true,
+            });
+
+            // Leitura inicial: sincroniza qualquer valor que o RHF já escreveu
+            // via defaultValues antes deste effect rodar.
+            const currentDomValue = originalGet.call(select);
+            if (currentDomValue && currentDomValue !== internalValue) {
+                setInternalValue(currentDomValue);
+            }
+
+            return () => {
+                // Remove a propriedade própria ao desmontar, restaurando o acesso ao prototype
+                try { delete (select as unknown as Record<string, unknown>).value; } catch (_) { /* noop */ }
+            };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, []);
 
         const handleValueChange = (newValue: string) => {
             setInternalValue(newValue);
@@ -169,7 +230,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
                 {/* Input oculto para o react-hook-form */}
                 <select
-                    ref={ref}
+                    ref={setRefs}
                     name={name}
                     //  CORREÇÃO 3: Aqui o HTML nativo exige que não seja undefined
                     value={internalValue}

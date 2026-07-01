@@ -133,7 +133,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
           matricula: user.matricula || '',
           role: roleValida,
           password: '',
-          cargoId: user.cargoId || '',
+          cargoId: user.cargoId || (user.cargo as { id?: string } | null)?.id || '',
           cnhNumero: user.cnhNumero || '',
           cnhCategoria: user.cnhCategoria || '',
           // Corrige datas para inputs de formato date HTML (YYYY-MM-DD)
