@@ -69,14 +69,42 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             value !== undefined && value !== null ? String(value) : ''
         );
 
+        // Sincroniza quando o RHF atualiza o value via prop (reset, setValue, defaultValues)
         useEffect(() => {
-            //   Atualização segura do ciclo de vida
             if (value !== undefined && value !== null) {
                 setInternalValue(String(value));
             } else {
-                setInternalValue(''); // Garante estado controlado mesmo limpando o input
+                setInternalValue('');
             }
         }, [value]);
+
+        // ✨ CORREÇÃO PRINCIPAL: Re-sincroniza quando as options chegam assincronamente.
+        //
+        // Cenário problemático (causa do bug de campos em branco):
+        //   1. Modal abre → reset({ operadorId: 'xyz' }) seta internalValue = 'xyz'
+        //   2. Radix recebe value='xyz' mas options=[] → lista vazia → mostra placeholder
+        //   3. 500ms depois → options=[{value:'xyz', label:'João'}] chegam da API
+        //   4. BUG: internalValue já é 'xyz' → useEffect[value] NÃO roda (value não mudou)
+        //   5. Radix continua mostrando placeholder porque não houve re-render do value
+        //
+        // Correção: quando options muda E temos um internalValue válido,
+        // forçamos um ciclo: '' → internalValue, para que o Radix encontre a opção.
+        const optionsKey = options.map(o => o.value).join(',');
+        useEffect(() => {
+            if (internalValue) {
+                // Força o Radix a re-avaliar o value após as options chegarem
+                setInternalValue(prev => {
+                    // Retornar o mesmo valor força re-render do Radix com a lista agora populada
+                    return prev;
+                });
+                // Usa um micro-ciclo para garantir que o Radix veja a mudança
+                const v = internalValue;
+                setInternalValue('');
+                // setTimeout 0 coloca no final da fila de microtasks, após o Radix processar
+                Promise.resolve().then(() => setInternalValue(v));
+            }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        }, [optionsKey]);
 
         // ✨ Sincroniza o Radix Select com o React Hook Form via interceptação do setter nativo.
         //
