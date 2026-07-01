@@ -1,5 +1,5 @@
-import { useState, useRef } from 'react';
-import { useForm } from 'react-hook-form';
+import { useState, useRef, useEffect } from 'react';
+import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
@@ -10,27 +10,43 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { UserPlus, Camera, Calendar, CreditCard, User, Briefcase, Mail, KeyRound, Hash } from 'lucide-react';
+import { UserPlus, Camera, Calendar, CreditCard, User, Briefcase, Mail, KeyRound, Hash, GraduationCap, X, Plus } from 'lucide-react';
 import { hapticError } from '../../lib/haptics';
 
 // Tipos e Constantes
-interface Cargo { id: string; nome: string; }
-const ROLES = ["OPERADOR", "ENCARREGADO", "ADMIN", "RH", "COORDENADOR"] as const;
+interface CargoRequisito {
+  id: string;
+  nome: string;
+  validadeMeses: number;
+  diasAntecedenciaAlerta: number;
+}
+interface Cargo { id: string; nome: string; requisitos?: CargoRequisito[]; }
+const ROLES = ["OPERADOR", "ENCARREGADO", "ADMIN", "RH", "COORDENADOR", "AUXILIAR_OPERACIONAL"] as const;
 
-// Schema de ValidaÃ§Ã£o (CompatÃ­vel com Zod V4)
+// Schema de Validação
+const treinamentoSchema = z.object({
+  nome: z.string().min(1, "Obrigatório"),
+  dataRealizacao: z.string().min(1, "Obrigatório"),
+  dataVencimento: z.string().optional().nullable(),
+  diasAntecedenciaAlerta: z.union([z.string(), z.number()]).transform(v => Number(v)).refine(v => !isNaN(v) && v >= 1, "Mínimo 1"),
+});
+
 const usuarioSchema = z.object({
   nome: z.string().min(3, "Nome muito curto").transform(val => val.trim()),
-  email: z.string().email("Email invÃ¡lido").toLowerCase(),
-  password: z.string().min(6, "MÃ­nimo 6 caracteres"),
+  email: z.string().email("Email inválido").toLowerCase(),
+  password: z.string().min(6, "Mínimo 6 caracteres"),
   matricula: z.string().optional().nullable(),
-  role: z.enum(ROLES, { error: "FunÃ§Ã£o invÃ¡lida" }),
+  role: z.enum(ROLES, { error: "Função inválida" }),
+  dataAdmissao: z.string().min(1, "Data de admissão obrigatória"),
+  cargoId: z.string().min(1, "Cargo obrigatório"),
 
-  // Campos RH (Opcionais/Condicionais)
-  cargoId: z.string().optional().nullable(),
+  // CNH (Opcionais/Condicionais)
   cnhNumero: z.string().optional().nullable(),
   cnhCategoria: z.string().optional().nullable(),
   cnhValidade: z.string().optional().nullable(),
-  dataAdmissao: z.string().optional().nullable(),
+  
+  // Treinamentos Obrigatórios
+  treinamentos: z.array(treinamentoSchema).optional(),
 });
 
 type UsuarioFormInput = z.infer<typeof usuarioSchema>;
@@ -44,6 +60,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
   const [fotoFile, setFotoFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [loadingStep, setLoadingStep] = useState('');
 
   const { data: cargos = [], isLoading: loadCargos } = useQuery<Cargo[]>({
     queryKey: ['cargos-select'],
@@ -58,6 +75,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
     register,
     handleSubmit,
     watch,
+    control,
     reset,
     formState: { errors, isSubmitting }
   } = useForm<UsuarioFormInput>({
@@ -69,12 +87,40 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       cnhCategoria: '',
       cnhValidade: '',
       dataAdmissao: '',
-      matricula: ''
+      matricula: '',
+      treinamentos: []
     },
     mode: 'onBlur'
   });
 
+  const { fields, append, remove, replace } = useFieldArray({
+    control,
+    name: "treinamentos"
+  });
+
   const roleSelecionada = watch('role');
+  const cargoIdSelecionado = watch('cargoId');
+  const treinamentosWatch = watch('treinamentos');
+
+  // Ao mudar de cargo, atualizar os treinamentos obrigatórios
+  useEffect(() => {
+    if (cargoIdSelecionado && cargos.length > 0) {
+      const cargo = cargos.find(c => c.id === cargoIdSelecionado);
+      if (cargo && cargo.requisitos) {
+        // Popula o form com os requisitos do cargo
+        replace(cargo.requisitos.map(req => ({
+          nome: req.nome,
+          dataRealizacao: '',
+          dataVencimento: '',
+          diasAntecedenciaAlerta: req.diasAntecedenciaAlerta || 30
+        })));
+      } else {
+        replace([]);
+      }
+    } else {
+      replace([]);
+    }
+  }, [cargoIdSelecionado, cargos, replace]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -85,6 +131,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
   };
 
   const onSubmit = async (data: UsuarioFormInput) => {
+    setLoadingStep('Criando conta...');
     let finalFotoUrl = null;
 
     if (fotoFile) {
@@ -95,6 +142,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       } catch (err) {
         if (import.meta.env.DEV) console.error("Erro upload:", err);
         toast.error("Falha ao enviar foto de perfil.");
+        setLoadingStep('');
         return;
       }
     }
@@ -106,32 +154,49 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       email: DOMPurify.sanitize(data.email),
       matricula: data.matricula ? DOMPurify.sanitize(data.matricula) : null,
       fotoUrl: finalFotoUrl,
-      cargoId: isOp && data.cargoId ? data.cargoId : null,
+      cargoId: data.cargoId,
       cnhNumero: isOp && data.cnhNumero ? data.cnhNumero : null,
       cnhCategoria: isOp && data.cnhCategoria ? data.cnhCategoria : null,
       cnhValidade: isOp && data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
-      dataAdmissao: data.dataAdmissao ? new Date(data.dataAdmissao).toISOString() : null,
+      dataAdmissao: new Date(data.dataAdmissao).toISOString(),
     };
 
-    const promise = api.post('/users/register', payload);
+    try {
+      // Fase 1: Cadastrar Usuário
+      const userRes = await api.post('/users/register', payload);
+      const newUserId = userRes.data.user?.id || userRes.data.id;
 
-    toast.promise(promise, {
-      loading: 'Criando conta...',
-      success: () => {
-        reset();
-        setFotoFile(null);
-        setPreviewUrl(null);
-        setTimeout(onSuccess, 500);
-        return 'Integrante cadastrado com sucesso!';
-      },
-      error: (err) => {
-        if (import.meta.env.DEV) console.error(err);
-        return err.response?.data?.error || 'Erro ao cadastrar. Verifique o email.';
+      // Fase 2: Cadastrar Treinamentos
+      if (data.treinamentos && data.treinamentos.length > 0) {
+        setLoadingStep('Registrando treinamentos...');
+        const promessasTreinamentos = data.treinamentos.map(treinamento => {
+          return api.post('/treinamentos', {
+            userId: newUserId,
+            nome: treinamento.nome,
+            dataRealizacao: new Date(treinamento.dataRealizacao).toISOString(),
+            dataVencimento: treinamento.dataVencimento ? new Date(treinamento.dataVencimento).toISOString() : null,
+            diasAntecedenciaAlerta: treinamento.diasAntecedenciaAlerta
+          });
+        });
+
+        await Promise.all(promessasTreinamentos);
       }
-    });
+
+      toast.success('Integrante cadastrado com sucesso!');
+      reset();
+      setFotoFile(null);
+      setPreviewUrl(null);
+      setLoadingStep('');
+      setTimeout(onSuccess, 500);
+
+    } catch (err: any) {
+      if (import.meta.env.DEV) console.error(err);
+      toast.error(err.response?.data?.error || 'Erro ao cadastrar. Verifique o email.');
+      setLoadingStep('');
+      hapticError();
+    }
   };
 
-  // FormataÃ§Ã£o das opÃ§Ãµes para o Select
   const roleOptions = ROLES.map(r => ({
     value: r,
     label: r.charAt(0) + r.slice(1).toLowerCase().replace('_', ' ')
@@ -145,11 +210,11 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
   return (
     <div className="bg-surface rounded-2xl shadow-float border border-border/60 overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
 
-      {/* Header Premium */}
+      {/* Header */}
       <div className="bg-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex justify-between items-center shrink-0">
         <div>
           <h3 className="text-xl font-black text-text-main tracking-tight">Novo Integrante</h3>
-          <p className="text-sm text-text-secondary font-medium mt-0.5">Cadastro de acesso e perfil profissional.</p>
+          <p className="text-sm text-text-secondary font-medium mt-0.5">Cadastro de acesso, cargo e qualificações.</p>
         </div>
         <div className="p-3 bg-primary/10 rounded-xl border border-primary/20 shadow-inner text-primary">
           <UserPlus className="w-6 h-6" />
@@ -186,7 +251,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
 
             <div className="md:col-span-2 flex items-center gap-2 border-b border-border/50 pb-2">
               <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
-              <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Dados de Acesso</label>
+              <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Dados de Acesso e Cargo</label>
             </div>
 
             <div className="md:col-span-2">
@@ -194,7 +259,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
                 label="Nome Completo"
                 icon={<User className="w-4 h-4 text-text-muted" />}
                 {...register('nome')}
-                placeholder="Ex: JoÃ£o da Silva"
+                placeholder="Ex: João da Silva"
                 error={errors.nome?.message}
                 disabled={isSubmitting}
               />
@@ -222,12 +287,33 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
                 error={errors.password?.message}
                 disabled={isSubmitting}
               />
-              <span className="absolute right-3 top-3 text-[10px] text-text-secondary font-bold pointer-events-none">MÃ­n. 6 chars</span>
+              <span className="absolute right-3 top-3 text-[10px] text-text-secondary font-bold pointer-events-none">Mín. 6 chars</span>
+            </div>
+
+            <div>
+              <Select
+                label="Nível de Acesso (Função)"
+                options={roleOptions}
+                {...register('role')}
+                error={errors.role?.message}
+                disabled={isSubmitting}
+              />
             </div>
 
             <div>
               <Input
-                label="MatrÃ­cula"
+                label="Data de Admissão"
+                type="date"
+                icon={<Calendar className="w-4 h-4 text-primary/70" />}
+                {...register('dataAdmissao')}
+                error={errors.dataAdmissao?.message}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div>
+              <Input
+                label="Matrícula"
                 icon={<Hash className="w-4 h-4 text-text-muted" />}
                 {...register('matricula')}
                 placeholder="12345"
@@ -237,16 +323,17 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
 
             <div>
               <Select
-                label="NÃ­vel de Acesso (FunÃ§Ã£o)"
-                options={roleOptions}
-                {...register('role')}
-                error={errors.role?.message}
-                disabled={isSubmitting}
+                label="Cargo Oficial"
+                options={cargoOptions}
+                placeholder="Selecione o cargo..."
+                {...register('cargoId')}
+                error={errors.cargoId?.message}
+                disabled={isSubmitting || loadCargos}
               />
             </div>
           </div>
 
-          {/* SeÃ§Ã£o RH Condicional com AnimaÃ§Ã£o */}
+          {/* Seção RH Condicional com Animação - Somente Motorista precisa de CNH */}
           {roleSelecionada === 'OPERADOR' && (
             <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20 animate-in slide-in-from-top-4 duration-300">
               <div className="flex items-center gap-2 mb-5 border-b border-primary/10 pb-2">
@@ -257,19 +344,9 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="md:col-span-2">
-                  <Select
-                    label="Cargo Oficial"
-                    options={cargoOptions}
-                    placeholder="Selecione o cargo..."
-                    {...register('cargoId')}
-                    disabled={isSubmitting || loadCargos}
-                  />
-                </div>
-
                 <div>
                   <Input
-                    label="NÂº da CNH"
+                    label="Nº da CNH"
                     icon={<CreditCard className="w-4 h-4 text-primary/70" />}
                     {...register('cnhNumero')}
                     placeholder="Registro da Carteira"
@@ -299,23 +376,103 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
                     />
                   </div>
                 </div>
-
-                <div className="md:col-span-2">
-                  <Input
-                    label="Data de AdmissÃ£o"
-                    type="date"
-                    icon={<Calendar className="w-4 h-4 text-primary/70" />}
-                    {...register('dataAdmissao')}
-                    disabled={isSubmitting}
-                  />
-                </div>
               </div>
             </div>
           )}
+
+          {/* ? NOVA SEÇÃO: Qualificação Inicial (Treinamentos Obrigatórios) */}
+          {cargoIdSelecionado && (
+            <div className="animate-in slide-in-from-top-4 duration-300">
+              <div className="flex items-center justify-between border-b border-border/50 pb-2 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
+                  <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Qualificação SSMA Obrigatória</label>
+                </div>
+                <div className="text-[10px] text-text-secondary font-bold">Baseado no cargo selecionado</div>
+              </div>
+
+              {fields.length === 0 ? (
+                <div className="p-4 bg-surface-hover rounded-xl border border-dashed border-border/60 text-center">
+                  <p className="text-sm text-text-muted">Este cargo não possui treinamentos obrigatórios.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {fields.map((field, index) => (
+                    <div key={field.id} className="p-4 bg-surface-hover rounded-xl border border-border/40 relative group">
+                      <div className="flex flex-col md:flex-row gap-4 items-start">
+                        <div className="flex-1 w-full">
+                          <Input
+                            label="Nome do Treinamento"
+                            {...register(`treinamentos.${index}.nome`)}
+                            disabled={isSubmitting}
+                            error={errors.treinamentos?.[index]?.nome?.message}
+                          />
+                        </div>
+                        <div className="w-full md:w-40">
+                          <Input
+                            label="Realização"
+                            type="date"
+                            {...register(`treinamentos.${index}.dataRealizacao`)}
+                            disabled={isSubmitting}
+                            error={errors.treinamentos?.[index]?.dataRealizacao?.message}
+                          />
+                        </div>
+                        <div className="w-full md:w-40">
+                          <Input
+                            label="Vencimento"
+                            type="date"
+                            {...register(`treinamentos.${index}.dataVencimento`)}
+                            disabled={isSubmitting}
+                          />
+                        </div>
+                        <div className="w-full md:w-32">
+                          <Input
+                            label="Aviso (dias)"
+                            type="number"
+                            min="1"
+                            {...register(`treinamentos.${index}.diasAntecedenciaAlerta`)}
+                            disabled={isSubmitting}
+                            error={errors.treinamentos?.[index]?.diasAntecedenciaAlerta?.message}
+                          />
+                        </div>
+                      </div>
+                      
+                      <button 
+                        type="button" 
+                        onClick={() => remove(index)}
+                        className="absolute -top-2 -right-2 bg-red-100 text-red-600 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity border border-red-200 shadow-sm"
+                        title="Remover este treinamento"
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={() => append({ nome: '', dataRealizacao: '', dataVencimento: '', diasAntecedenciaAlerta: 30 })}
+                disabled={isSubmitting}
+                className="mt-4 w-full sm:w-auto"
+                icon={<Plus className="w-4 h-4" />}
+              >
+                Adicionar Outro Treinamento
+              </Button>
+            </div>
+          )}
+
         </div>
 
-        {/* Footer Premium */}
-        <div className="px-6 sm:px-8 py-5 bg-surface-hover/50 border-t border-border/60 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
+        {/* Footer */}
+        <div className="px-6 sm:px-8 py-5 bg-surface-hover/50 border-t border-border/60 flex flex-col-reverse sm:flex-row justify-end items-center gap-3 shrink-0">
+          {isSubmitting && (
+            <span className="text-sm font-bold text-primary animate-pulse w-full text-center sm:text-left sm:w-auto mr-auto">
+              {loadingStep}
+            </span>
+          )}
           <Button
             type="button"
             variant="ghost"
@@ -329,7 +486,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
             type="submit"
             variant="primary"
             isLoading={isSubmitting}
-            icon={<UserPlus className="w-4 h-4" />} // âœ¨ CORREÃ‡ÃƒO AQUI
+            icon={<UserPlus className="w-4 h-4" />}
             className="w-full sm:w-auto shadow-button hover:shadow-float px-8"
           >
             Cadastrar Integrante
@@ -340,5 +497,3 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
     </div>
   );
 }
-
-
