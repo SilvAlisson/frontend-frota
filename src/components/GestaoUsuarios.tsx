@@ -4,6 +4,7 @@ import { Button } from './ui/Button';
 import { Avatar } from './ui/Avatar';
 import { Input } from './ui/Input';
 import { ListaResponsiva } from './ui/ListaResponsiva';
+import { Select } from './ui/Select';
 import { Badge } from './ui/Badge';
 import { DossieIntegrante } from './rh/DossieIntegrante';
 import { ModalQrCode } from './ModalQrCode';
@@ -132,19 +133,23 @@ export function GestaoUsuarios() {
 
               <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0 hide-scrollbar">
                 {/* Filtro Rápido de Cargos */}
-                <select 
-                  className="h-11 px-3 rounded-xl bg-surface-hover/50 border-none text-sm font-bold text-text-secondary focus:ring-2 focus:ring-primary outline-none cursor-pointer border border-border/60"
-                  value={filtroRole}
-                  onChange={(e) => setFiltroRole(e.target.value)}
-                >
-                  <option value="TODOS">Todos os Cargos</option>
-                  <option value="OPERADOR">Operadores</option>
-                  <option value="AUXILIAR_OPERACIONAL">Auxiliares</option>
-                  <option value="ENCARREGADO">Encarregados</option>
-                  <option value="COORDENADOR">Coordenadores</option>
-                  <option value="RH">Equipe RH</option>
-                  <option value="ADMIN">Administradores</option>
-                </select>
+                <div className="w-48 shrink-0">
+                  <Select
+                    value={filtroRole}
+                    onChange={(e: any) => setFiltroRole(e.target.value)}
+                    containerClassName="!mb-0"
+                    className="h-11 border border-border/60 bg-surface-hover/50 font-bold"
+                    options={[
+                      { value: "TODOS", label: "Todos os Cargos" },
+                      { value: "OPERADOR", label: "Operadores" },
+                      { value: "AUXILIAR_OPERACIONAL", label: "Auxiliares" },
+                      { value: "ENCARREGADO", label: "Encarregados" },
+                      { value: "COORDENADOR", label: "Coordenadores" },
+                      { value: "RH", label: "Equipe RH" },
+                      { value: "ADMIN", label: "Administradores" }
+                    ]}
+                  />
+                </div>
 
                 <Button variant="secondary" onClick={handleExportar} className="whitespace-nowrap flex-1 sm:flex-none h-11" icon={<Download className="w-4 h-4" />}>
                   Excel
