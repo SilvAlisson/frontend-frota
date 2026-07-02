@@ -79,7 +79,7 @@ function getStatusConfig(vencimento: string | null | undefined): StatusConfig {
     };
 }
 
-export function AbaTreinamentos({ userId, nomeUsuario }: { userId: string, nomeUsuario: string }) {
+export function AbaTreinamentos({ userId, nomeUsuario, role }: { userId: string, nomeUsuario: string, role?: string }) {
     const { openModal, closeModal } = useModalStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -222,13 +222,15 @@ export function AbaTreinamentos({ userId, nomeUsuario }: { userId: string, nomeU
                     <GraduationCap className="w-6 h-6 text-primary" /> Histórico de Treinamentos
                 </h3>
                 <div className="flex items-center gap-3">
-                    <Button
-                        variant="secondary"
-                        onClick={handleImprimirEtiqueta}
-                        title="Imprimir Etiqueta para Capacete"
-                    >
-                        <Printer className="w-4 h-4 mr-2" /> QR Code
-                    </Button>
+                    {role && ['OPERADOR', 'ENCARREGADO', 'AUXILIAR_OPERACIONAL'].includes(role) && (
+                        <Button
+                            variant="secondary"
+                            onClick={handleImprimirEtiqueta}
+                            title="Imprimir Etiqueta para Capacete"
+                        >
+                            <Printer className="w-4 h-4 mr-2" /> QR Code
+                        </Button>
+                    )}
 
                     <Button
                         variant="secondary"
@@ -366,6 +368,11 @@ export function AbaTreinamentos({ userId, nomeUsuario }: { userId: string, nomeU
                                             </h4>
                                         </div>
                                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
+                                            {role && ['OPERADOR', 'ENCARREGADO', 'AUXILIAR_OPERACIONAL'].includes(role) && (
+                                                <Button variant="secondary" className="h-10 border-border/40 text-text-muted hover:text-text-main group" onClick={() => openModal('QR_CRACHA', { usuario: { id: userId, nome: nomeUsuario, role } })}>
+                                                    <QrCode className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" /> QR Code
+                                                </Button>
+                                            )}
                                             <span className="text-sm text-text-secondary flex items-center gap-1.5 font-medium">
                                                 <CheckCircle2 className="w-4 h-4 text-success" />
                                                 Concluído em: {new Date(t.dataConclusao).toLocaleDateString('pt-BR')}

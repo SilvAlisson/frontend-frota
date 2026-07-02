@@ -92,7 +92,7 @@ export function MatrizDetalheUsuario() {
         <div className="flex-1 w-full bg-surface rounded-[2rem] border border-border/60 shadow-sm p-6 sm:p-8 min-h-[600px]">
           {activeTab === 'treinamentos' && (
             <div className="animate-in fade-in">
-               <AbaTreinamentos userId={user.id} nomeUsuario={user.nome} />
+               <AbaTreinamentos userId={user.id} nomeUsuario={user.nome} role={user.role} />
             </div>
           )}
           {activeTab === 'aso' && (

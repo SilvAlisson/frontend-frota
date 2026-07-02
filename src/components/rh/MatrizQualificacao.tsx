@@ -1,4 +1,4 @@
-import { useMatrizQualificacao, type Exigencia, type IntegranteMatriz } from '../../hooks/useMatrizQualificacao';
+import { useMatrizQualificacao, type Exigencia } from '../../hooks/useMatrizQualificacao';
 import { Search, AlertCircle, CheckCircle2, XCircle, ChevronRight, FileCheck, ShieldAlert, Plus } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';

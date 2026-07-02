@@ -10,7 +10,11 @@ import type { TreinamentoRealizado } from '../types';
 // ─────────────────────────────────────────────────────────────────
 export const treinamentoSchema = z.object({
     nome: z.string().min(2, 'Nome deve ter ao menos 2 caracteres')
-           .transform(val => val.toUpperCase().replace(/\s+/g, ' ').trim()), // Remove espaços duplos
+           .transform(val => {
+               let n = val.toUpperCase().replace(/\s+/g, ' ').trim();
+               n = n.replace(/^NR[\s\-]*(\d+.*)$/, 'NR $1');
+               return n;
+           }),
     dataRealizacao: z.string().min(1, 'Data de emissão obrigatória').refine(data => {
         const hoje = new Date();
         hoje.setHours(23, 59, 59, 999);
@@ -126,7 +130,7 @@ export function useTreinamentosUsuario(userId: string) {
             toast.error(`A certificação "${duplicado.nome}" já está ativa!`, {
                 description: "Para renovar, edite ou exclua o registro existente."
             });
-            return Promise.reject(new Error("Treinamento duplicado")); // Mata a execução aqui
+            return; // Interrompe a execução, toast já exibido
         }
         const payload: CreateTreinamentoPayload = {
             userId,
@@ -198,7 +202,7 @@ export function useTreinamentosUsuario(userId: string) {
             success: count => `${count} certificações importadas com sucesso!`,
             error: err => (err instanceof Error ? err.message : 'Falha na importação do arquivo.'),
         });
-        return promise;
+        return promise.catch(() => 0); // Evita o Unhandled Promise Rejection
     };
 
     return { treinamentos, loading, addTreinamento, removeTreinamento, importarPlanilha };
