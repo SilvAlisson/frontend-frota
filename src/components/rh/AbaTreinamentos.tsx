@@ -98,6 +98,7 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
     const [certificadoFile, setCertificadoFile] = useState<File | null>(null);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [isImporting, setIsImporting] = useState(false);
 
     const {
         treinamentos,
@@ -164,9 +165,11 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
+        setIsImporting(true);
         try {
             await importarPlanilha(file);
         } finally {
+            setIsImporting(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
         }
     };
