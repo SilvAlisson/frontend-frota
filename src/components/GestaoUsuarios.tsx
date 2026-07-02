@@ -174,29 +174,29 @@ export function GestaoUsuarios() {
               itens={usuariosFiltrados}
               emptyMessage=""
 
-              // --- DESKTOP ---
+              desktopGridCols="grid-cols-[2fr_1fr_1fr]"
               desktopHeader={
                 <>
-                  <th className={`${TableStyles.th} pl-8 text-left w-2/5`}>Integrante</th>
-                  <th className={`${TableStyles.th} text-center w-1/4`}>Estatuto Operacional</th>
-                  <th className={`${TableStyles.th} text-right pr-8 w-1/4`}>Ações Operacionais</th>
+                  <th className={`${TableStyles.th} pl-8 justify-start`}>Integrante</th>
+                  <th className={`${TableStyles.th} justify-center`}>Estatuto Operacional</th>
+                  <th className={`${TableStyles.th} justify-end pr-8`}>Ações Operacionais</th>
                 </>
               }
               renderDesktop={(u) => (
                 <>
-                  <td className={`${TableStyles.td} pl-8`}>
+                  <td className={`${TableStyles.td} pl-8 justify-start`}>
                     <div className="flex items-center gap-4 min-w-0">
                       <Avatar nome={u.nome} url={(u as any).fotoUrl || u.image} />
                       <span className="font-bold text-text-main text-base tracking-tight truncate" title={u.nome}>{getFirstAndLastName(u.nome)}</span>
                     </div>
                   </td>
-                  <td className={`${TableStyles.td} text-center`}>
+                  <td className={`${TableStyles.td} justify-center`}>
                     <div className="w-full flex flex-col items-center justify-center gap-1.5 text-center">
                       <BadgeRole role={u.role} />
                       {u.matricula && <span className="text-[10px] text-text-muted font-mono font-bold uppercase tracking-widest bg-surface-hover px-1.5 py-0.5 rounded border border-border/50 block w-fit truncate">ID: {u.matricula}</span>}
                     </div>
                   </td>
-                  <td className={`${TableStyles.td} text-right pr-8`}>
+                  <td className={`${TableStyles.td} justify-end pr-8`}>
                     <div className="grid grid-cols-2 gap-1.5 w-fit ml-auto opacity-60 group-hover:opacity-100 transition-opacity">
                       
                       {/* Botão focado no Histórico do Integrante */}

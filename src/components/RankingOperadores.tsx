@@ -138,21 +138,22 @@ export function RankingOperadores() {
               itens={ranking}
               emptyMessage="Nenhum dado consolidado encontrado para este período."
 
+              desktopGridCols="grid-cols-[1fr_2fr_1fr_1fr_1fr]"
               // HEADER
               desktopHeader={
                 <>
-                  <th className={`${TableStyles.th} pl-8 py-5 text-center`}>Posição</th>
-                  <th className={`${TableStyles.th} w-full text-left`}>Veículo</th>
-                  <th className={`${TableStyles.th} text-right whitespace-nowrap`}>Eficiência (Km/L)</th>
-                  <th className={`${TableStyles.th} text-right whitespace-nowrap`}>Distância (KM)</th>
-                  <th className={`${TableStyles.th} text-right pr-8 whitespace-nowrap`}>Consumo Total</th>
+                  <th className={`${TableStyles.th} pl-8 py-5 justify-center`}>Posição</th>
+                  <th className={`${TableStyles.th} justify-start`}>Veículo</th>
+                  <th className={`${TableStyles.th} justify-end whitespace-nowrap`}>Eficiência (Km/L)</th>
+                  <th className={`${TableStyles.th} justify-end whitespace-nowrap`}>Distância (KM)</th>
+                  <th className={`${TableStyles.th} justify-end pr-8 whitespace-nowrap`}>Consumo Total</th>
                 </>
               }
 
               // ROW
               renderDesktop={(v, idx) => (
                 <>
-                  <td className={`${TableStyles.td} text-center pl-8`}>
+                  <td className={`${TableStyles.td} justify-center pl-8`}>
                     <span className={`inline-flex items-center justify-center w-8 h-8 rounded-xl text-sm font-black shadow-sm border ${
                         idx === 0 ? 'bg-yellow-500/10 text-yellow-600 border-yellow-500/30' :
                         idx === 1 ? 'bg-slate-500/10 text-slate-500 border-slate-500/30' :
@@ -163,7 +164,7 @@ export function RankingOperadores() {
                     </span>
                   </td>
 
-                  <td className={`${TableStyles.td} w-full text-left`}>
+                  <td className={`${TableStyles.td} justify-start`}>
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary shadow-inner shrink-0 group-hover:scale-105 transition-transform">
                         <Truck className="w-5 h-5" />
@@ -175,9 +176,10 @@ export function RankingOperadores() {
                     </div>
                   </td>
 
-                  <td className={`${TableStyles.td} text-right whitespace-nowrap`}>
+                  <td className={`${TableStyles.td} justify-end whitespace-nowrap`}>
                     <div className="flex flex-col items-end gap-1.5 w-full">
-                      <div className="flex items-center justify-end gap-2 w-full">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <MapPin className="w-3.5 h-3.5 text-text-muted" />
                         {isConsumoRuim(v.kml) && (
                           <span title="Consumo Crítico - Alerta de Manutenção">
                              <AlertTriangle className="w-4 h-4 text-error animate-pulse" />
@@ -196,11 +198,11 @@ export function RankingOperadores() {
                     </div>
                   </td>
 
-                  <td className={`${TableStyles.td} text-right font-mono font-bold text-text-secondary text-base whitespace-nowrap`}>
+                  <td className={`${TableStyles.td} justify-end font-mono font-bold text-text-secondary text-base whitespace-nowrap`}>
                      {fmtNum(v.totalKM)} <span className="text-[10px] text-text-muted uppercase tracking-widest ml-0.5">km</span>
                   </td>
 
-                  <td className={`${TableStyles.td} text-right font-mono font-bold text-text-secondary text-base pr-8 whitespace-nowrap`}>
+                  <td className={`${TableStyles.td} justify-end font-mono font-bold text-text-secondary text-base pr-8 whitespace-nowrap`}>
                      {fmtNum(v.totalLitros)} <span className="text-[10px] text-text-muted uppercase tracking-widest ml-0.5">L</span>
                   </td>
                 </>

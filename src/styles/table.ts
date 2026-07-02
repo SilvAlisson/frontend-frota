@@ -3,7 +3,7 @@ export const TableStyles = {
   wrapper: "w-full overflow-x-auto rounded-2xl border border-border/30 shadow-sm glass-premium custom-scrollbar",
 
   // Cabeçalho: Fonte mais legível, responsiva e com contraste aprimorado
-  th: "px-4 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider bg-surface-hover/10 border-b border-border/30 flex items-center min-w-0 first:pl-6 last:pr-6",
+  th: "px-4 py-4 text-xs font-semibold text-text-secondary uppercase tracking-wider border-b border-border/30 flex items-center min-w-0 first:pl-6 last:pr-6",
 
   // Células: Texto base com contraste alto
   td: "px-4 py-4 text-sm font-medium text-text-main border-b border-border/20 flex items-center min-w-0 first:pl-6 last:pr-6",
