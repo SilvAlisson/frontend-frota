@@ -12,6 +12,15 @@ import { Skeleton } from '../ui/Skeleton';
 import { uploadToR2 } from '../../services/uploadService';
 import { toast } from 'sonner';
 import { DateHelper } from '../../lib/dateHelper';
+import { useModalStore } from '../../hooks/useModalStore';
+
+const ASO_LABELS: Record<string, string> = {
+  'ADMISSIONAL': 'Admissional',
+  'PERIODICO': 'Periódico',
+  'MUDANCA_RISCO': 'Mudança de Risco',
+  'RETORNO_TRABALHO': 'Retorno ao Trabalho',
+  'DEMISSIONAL': 'Demissional'
+};
 
 const asoFormSchema = z.object({
   tipo: z.enum(['ADMISSIONAL', 'PERIODICO', 'MUDANCA_RISCO', 'RETORNO_TRABALHO', 'DEMISSIONAL'], { required_error: 'Selecione o tipo de ASO' }),
@@ -32,6 +41,7 @@ export function AbaAso({ userId }: AbaAsoProps) {
   const { listarQuery, criarMutation, deletarMutation } = useAso(userId);
   const { data: asos, isLoading } = listarQuery;
   const [isFormOpen, setIsFormOpen] = useState(false);
+  const { openModal, closeModal } = useModalStore();
 
   const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<AsoFormData>({
     resolver: zodResolver(asoFormSchema),
@@ -53,12 +63,16 @@ export function AbaAso({ userId }: AbaAsoProps) {
         toast.success('Upload concluído!', { id: 'upload-aso' });
       }
 
-      await criarMutation.mutateAsync({
+      await toast.promise(criarMutation.mutateAsync({
         ...data,
         userId,
         comprovanteUrl,
         dataVencimento: data.dataVencimento || null,
-      } as any);
+      } as any), {
+        loading: 'Registrando ASO...',
+        success: 'ASO registrado com sucesso!',
+        error: 'Erro ao registrar ASO'
+      });
 
       reset();
       setArquivo(null);
@@ -73,10 +87,11 @@ export function AbaAso({ userId }: AbaAsoProps) {
 
   const getStatusInfo = (vencimento: string | null | undefined) => {
     if (!vencimento) return { label: 'Válido', color: 'text-success', bg: 'bg-success/10' };
-    const date = new Date(vencimento);
+    const [year, month, day] = vencimento.split('T')[0].split('-').map(Number);
+    const vencUTC = Date.UTC(year, month - 1, day);
     const now = new Date();
-    const diff = date.getTime() - now.getTime();
-    const days = Math.ceil(diff / (1000 * 3600 * 24));
+    const hojeUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+    const days = Math.ceil((vencUTC - hojeUTC) / (1000 * 3600 * 24));
 
     if (days < 0) return { label: 'Vencido', color: 'text-error', bg: 'bg-error/10' };
     if (days < 30) return { label: 'Expira Brevemente', color: 'text-warning-600', bg: 'bg-warning-500/10' };
@@ -188,7 +203,7 @@ export function AbaAso({ userId }: AbaAsoProps) {
                       <HeartPulse className="w-6 h-6" />
                     </div>
                     <div>
-                      <h4 className="font-bold text-text-main text-lg">{aso.tipo.replace('_', ' ')}</h4>
+                      <h4 className="font-bold text-text-main text-lg">{ASO_LABELS[aso.tipo] || aso.tipo}</h4>
                       <span className="text-xs font-bold uppercase tracking-wider text-text-muted flex items-center gap-1">
                         <Calendar className="w-3 h-3" /> Realizado: {DateHelper.getCompleta(aso.dataRealizacao)}
                       </span>
@@ -217,9 +232,19 @@ export function AbaAso({ userId }: AbaAsoProps) {
                 
                 <button 
                   onClick={() => {
-                    if (window.confirm('Tem certeza que deseja excluir este ASO?')) {
-                      deletarMutation.mutate(aso.id);
-                    }
+                    const modalId = openModal('CONFIRM', {
+                      title: 'Excluir ASO',
+                      description: 'Tem certeza que deseja excluir este ASO?',
+                      variant: 'danger',
+                      confirmLabel: 'Sim, Excluir',
+                      onConfirm: async () => {
+                        try {
+                          await deletarMutation.mutateAsync(aso.id);
+                        } finally {
+                          closeModal(modalId);
+                        }
+                      }
+                    });
                   }}
                   className="text-error/70 hover:text-error opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-error/5 hover:bg-error/10 rounded-lg"
                 >

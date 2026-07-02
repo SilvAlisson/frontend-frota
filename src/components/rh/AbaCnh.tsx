@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
 import { toast } from 'sonner';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Input } from '../ui/Input';
 import { Button } from '../ui/Button';
 import { UserCircle, Car, Loader2, Save } from 'lucide-react';
@@ -22,53 +23,52 @@ interface AbaCnhProps {
 }
 
 export function AbaCnh({ userId }: AbaCnhProps) {
-  const [isLoading, setIsLoading] = useState(true);
-  
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<CnhFormData>({
+  const queryClient = useQueryClient();
+
+  const { data: user, isLoading } = useQuery({
+    queryKey: ['user-cnh', userId],
+    queryFn: async () => {
+      const response = await api.get(`/users/${userId}`);
+      return response.data;
+    }
+  });
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<CnhFormData>({
     resolver: zodResolver(cnhSchema),
   });
 
   useEffect(() => {
-    let isMounted = true;
-    api.get(`/users/${userId}`).then((res) => {
-      if (isMounted) {
-        const user = res.data;
-        reset({
-          cnhNumero: user.cnhNumero || '',
-          cnhCategoria: user.cnhCategoria || '',
-          cnhValidade: user.cnhValidade ? user.cnhValidade.split('T')[0] : '',
-        });
-        setIsLoading(false);
-      }
-    }).catch(err => {
-      console.error(err);
-      toast.error('Erro ao carregar dados da CNH.');
-      setIsLoading(false);
-    });
+    if (user) {
+      reset({
+        cnhNumero: user.cnhNumero || '',
+        cnhCategoria: user.cnhCategoria || '',
+        cnhValidade: user.cnhValidade ? user.cnhValidade.split('T')[0] : '',
+      });
+    }
+  }, [user, reset]);
 
-    return () => { isMounted = false; };
-  }, [userId, reset]);
+  const mutation = useMutation({
+    mutationFn: async (payload: any) => {
+      await api.put(`/users/${userId}`, payload);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['user-cnh', userId] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      queryClient.invalidateQueries({ queryKey: ['rh-kpis'] });
+    }
+  });
 
   const onSubmit = async (data: CnhFormData) => {
-    try {
-      const payload = {
-        ...data,
-        cnhValidade: data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
-      };
-      
-      // We will send a PUT to /users/:id to update only the profile fields.
-      // The backend expects all user fields, but sending undefined for others might leave them untouched? 
-      // Actually, looking at UserController.update, it uses what is sent. 
-      // If we don't send `role`, `nome`, etc., they will be `undefined` and thus not updated.
-      // But we should fetch the current user and send it back just in case?
-      // UserController does: role !== undefined ? role : undefined. So it only updates if provided!
-      
-      await api.put(`/users/${userId}`, payload);
-      toast.success('Dados da CNH atualizados com sucesso!');
-    } catch (err) {
-      console.error(err);
-      toast.error('Erro ao atualizar CNH.');
-    }
+    const payload = {
+      ...data,
+      cnhValidade: data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
+    };
+    
+    await toast.promise(mutation.mutateAsync(payload), {
+      loading: 'Salvando alterações...',
+      success: 'Dados da CNH atualizados com sucesso!',
+      error: 'Erro ao atualizar CNH.'
+    });
   };
 
   if (isLoading) {
@@ -124,8 +124,8 @@ export function AbaCnh({ userId }: AbaCnhProps) {
         </div>
 
         <div className="mt-8 flex justify-end">
-          <Button type="submit" disabled={isSubmitting} className="min-w-[200px]">
-            {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar Alterações</>}
+          <Button type="submit" disabled={mutation.isPending} className="min-w-[200px]">
+            {mutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar Alterações</>}
           </Button>
         </div>
       </form>

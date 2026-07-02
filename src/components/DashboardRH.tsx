@@ -4,14 +4,16 @@ import { RelatorioNarrativoRH } from './ia/RelatorioNarrativoRH';
 import { useDashboardRH } from '../hooks/useDashboardRH';
 import { KpiCard } from './ui/KpiCard';
 import { GraficoSST } from './rh/GraficoSST';
+import { GraficoCargos } from './rh/GraficoCargos';
 import { DashboardCompliance } from './rh/DashboardCompliance';
+import { Callout } from './ui/Callout';
 
 interface DashboardRHProps {
   user: User;
 }
 
 export function DashboardRH({ user }: DashboardRHProps) {
-  const { data: dashboardData, isLoading } = useDashboardRH();
+  const { data: dashboardData, isLoading, isError } = useDashboardRH();
 
   const formatNum = (val: number | undefined) => (val ?? 0).toLocaleString('pt-BR');
 
@@ -27,6 +29,16 @@ export function DashboardRH({ user }: DashboardRHProps) {
           Visão geral de Recursos Humanos, SST e Compliance.
         </p>
       </div>
+
+      {isError && (
+        <Callout
+          variant="danger"
+          title="Erro ao carregar dados"
+          className="mb-6"
+        >
+          Não foi possível conectar com o servidor para buscar os indicadores. Os dados exibidos podem estar desatualizados ou incorretos.
+        </Callout>
+      )}
 
       {/* KPI GRID PREMIUM */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
@@ -72,7 +84,7 @@ export function DashboardRH({ user }: DashboardRHProps) {
           <DashboardCompliance />
 
           {/* GRÁFICOS ANALÍTICOS & RELATÓRIO IA */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6">
             <div className="bg-surface rounded-[2rem] border border-border/60 shadow-sm p-5 sm:p-6 lg:p-8 relative flex flex-col group h-full">
               <div className="flex items-start justify-between mb-4 sm:mb-6 relative z-10 shrink-0">
                 <div>
@@ -84,6 +96,20 @@ export function DashboardRH({ user }: DashboardRHProps) {
               </div>
               <div className="relative z-10 w-full flex-1 flex flex-col justify-center min-h-[220px]">
                 <GraficoSST dados={dashboardData?.graficos.panoramaSST || []} />
+              </div>
+            </div>
+
+            <div className="bg-surface rounded-[2rem] border border-border/60 shadow-sm p-5 sm:p-6 lg:p-8 relative flex flex-col group h-full">
+              <div className="flex items-start justify-between mb-4 sm:mb-6 relative z-10 shrink-0">
+                <div>
+                  <h4 className="font-header text-base sm:text-lg font-black text-text-main tracking-tight flex items-center gap-2">
+                    <Users className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
+                    Distribuição de Cargos
+                  </h4>
+                </div>
+              </div>
+              <div className="relative z-10 w-full flex-1 flex flex-col justify-center min-h-[220px]">
+                <GraficoCargos dados={dashboardData?.graficos.distribuicaoCargos || []} />
               </div>
             </div>
 
