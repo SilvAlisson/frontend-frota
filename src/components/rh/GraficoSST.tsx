@@ -7,10 +7,28 @@ interface GraficoSSTProps {
 }
 
 const getSstColor = (status: string) => {
-  if (status === 'REALIZADO') return '#16a34a';
-  if (status === 'PENDENTE') return '#eab308';
-  if (status === 'ATRASADO') return '#dc2626';
+  if (status === 'REALIZADO' || status === 'Válidos') return '#16a34a';
+  if (status === 'PENDENTE' || status === 'Vencendo') return '#eab308';
+  if (status === 'ATRASADO' || status === 'Vencidos') return '#dc2626';
   return '#94a3b8';
+};
+
+const CustomTooltip = ({ active, payload }: any) => {
+  if (active && payload && payload.length) {
+    const data = payload[0];
+    return (
+      <div className="bg-surface border border-border/60 shadow-lg rounded-xl p-3 text-sm">
+        <div className="flex items-center gap-2">
+           <span className="w-3 h-3 rounded-full" style={{ backgroundColor: data.payload.fill || getSstColor(data.name) }} />
+           <span className="font-bold text-text-main">{data.name}</span>
+        </div>
+        <div className="mt-1 text-text-secondary font-medium pl-5">
+           <span className="font-black text-text-main">{data.value}</span> {data.value === 1 ? 'integrante' : 'integrantes'}
+        </div>
+      </div>
+    );
+  }
+  return null;
 };
 
 export function GraficoSST({ dados }: GraficoSSTProps) {
@@ -35,10 +53,7 @@ export function GraficoSST({ dados }: GraficoSSTProps) {
               <Cell key={`cell-${index}`} fill={getSstColor(entry.name)} />
             ))}
           </Pie>
-          <Tooltip 
-            formatter={(value: number | undefined) => [value ?? 0, 'Ações']}
-            contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-          />
+          <Tooltip content={<CustomTooltip />} />
           <Legend verticalAlign="bottom" height={36} />
         </PieChart>
       </ResponsiveContainer>

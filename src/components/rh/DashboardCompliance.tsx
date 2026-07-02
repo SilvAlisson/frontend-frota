@@ -1,6 +1,7 @@
-import { AlertTriangle, ShieldAlert, FileWarning, Activity, AlertOctagon } from 'lucide-react';
+import { AlertTriangle, ShieldAlert, FileWarning, Activity, AlertOctagon, ShieldCheck } from 'lucide-react';
 import { useMatrizQualificacao } from '../../hooks/useMatrizQualificacao';
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import clsx from 'clsx';
 
 export function DashboardCompliance() {
@@ -19,7 +20,7 @@ export function DashboardCompliance() {
   if (!matriz || matriz.length === 0) return null;
 
   // Extrair alertas
-  const alertas: { tipo: string; titulo: string; cor: string; icone: React.ElementType; integrantes: { nome: string; detalhe: string }[] }[] = [
+  const alertas: { tipo: string; titulo: string; cor: string; icone: React.ElementType; integrantes: { id: string; nome: string; detalhe: string }[] }[] = [
     { tipo: 'CNH_CRITICA', titulo: 'CNHs Críticas', cor: 'red', icone: FileWarning, integrantes: [] },
     { tipo: 'ASO_CRITICO', titulo: 'ASOs Críticos', cor: 'orange', icone: Activity, integrantes: [] },
     { tipo: 'FIT_TEST_CRITICO', titulo: 'Fit Tests Críticos', cor: 'purple', icone: ShieldAlert, integrantes: [] },
@@ -32,13 +33,13 @@ export function DashboardCompliance() {
         const detalhe = `${exig.nome} (${exig.status})`;
 
         if (exig.tipo === 'CNH') {
-          alertas[0].integrantes.push({ nome: user.nome, detalhe });
+          alertas[0].integrantes.push({ id: user.id, nome: user.nome, detalhe });
         } else if (exig.tipo === 'ASO') {
-          alertas[1].integrantes.push({ nome: user.nome, detalhe });
+          alertas[1].integrantes.push({ id: user.id, nome: user.nome, detalhe });
         } else if (exig.tipo === 'FIT_TEST') {
-          alertas[2].integrantes.push({ nome: user.nome, detalhe });
+          alertas[2].integrantes.push({ id: user.id, nome: user.nome, detalhe });
         } else {
-          alertas[3].integrantes.push({ nome: user.nome, detalhe });
+          alertas[3].integrantes.push({ id: user.id, nome: user.nome, detalhe });
         }
       }
     });
@@ -51,7 +52,7 @@ export function DashboardCompliance() {
     return (
       <div className="bg-green-500/10 border border-green-500/20 text-green-500 rounded-2xl p-6 flex items-center gap-4">
         <div className="p-3 bg-green-500/20 rounded-full">
-          <ShieldAlert className="w-6 h-6" />
+          <ShieldCheck className="w-6 h-6" />
         </div>
         <div>
           <h3 className="text-lg font-black tracking-tight">Compliance em 100%</h3>
@@ -99,10 +100,10 @@ export function DashboardCompliance() {
               {isActive && (
                 <div className="mt-4 pt-4 border-t border-current/20 space-y-2 relative z-10 max-h-48 overflow-y-auto custom-scrollbar">
                   {alerta.integrantes.map((int, i) => (
-                    <div key={i} className="flex flex-col text-sm bg-background/50 rounded p-2">
-                      <span className="font-bold truncate">{int.nome}</span>
+                    <Link to={`/dossie/${int.id}`} key={i} className="flex flex-col text-sm bg-background/50 rounded p-2 hover:bg-background/80 transition-colors">
+                      <span className="font-bold truncate text-text-main">{int.nome}</span>
                       <span className="opacity-80 text-xs truncate">{int.detalhe}</span>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               )}

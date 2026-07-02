@@ -361,6 +361,23 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                         icon={GraduationCap}
                         title="Nenhum treinamento registrado"
                         description="Comece adicionando certificações ou importando uma planilha."
+                        action={
+                            <Button
+                                variant="primary"
+                                onClick={() => {
+                                    reset({
+                                        nome: 'Integração SSMA',
+                                        dataRealizacao: new Date().toISOString().split('T')[0],
+                                        diasAntecedenciaAlerta: 30
+                                    });
+                                    setShowAddForm(true);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Cadastrar Integração SSMA
+                            </Button>
+                        }
                     />
                 ) : (
                     treinamentos.map((t) => {

@@ -38,7 +38,7 @@ export function MatrizQualificacao() {
       }
 
       const exigenciasOrdenadas = [...user.exigencias].sort((a, b) => {
-        const peso = { 'FALTANTE': 3, 'VENCIDO': 3, 'VENCENDO': 2, 'VÁLIDO': 1 };
+        const peso = { 'VENCIDO': 4, 'VENCENDO': 3, 'FALTANTE': 2, 'VÁLIDO': 1 };
         return peso[b.status] - peso[a.status];
       });
 
