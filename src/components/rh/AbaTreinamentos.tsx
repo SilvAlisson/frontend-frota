@@ -216,7 +216,7 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
         `);
     };
 
-    if (isLoading) {
+    if (loading) {
         return (
             <div className="space-y-4">
                 <Skeleton className="h-24 w-full rounded-2xl" />
