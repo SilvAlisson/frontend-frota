@@ -18,7 +18,7 @@ export function MatrizQualificacao() {
   const { data: matriz, isLoading, refetch } = useMatrizQualificacao();
   const [busca, setBusca] = useState('');
   const [filtroStatus, setFiltroStatus] = useState<GlobalStatus | 'TODOS'>('TODOS');
-  const [isCadastroOpen, setIsCadastroOpen] = useState(false); // ✨ NOVO: Estado de Cadastro
+  const [isCadastroOpen, setIsCadastroOpen] = useState(false);
   const navigate = useNavigate();
 
   // 🧠 LÓGICA INTELIGENTE: Processamento, Saúde e Ordenação
@@ -44,15 +44,15 @@ export function MatrizQualificacao() {
 
       return { ...user, statusGlobal, saudePercentual, exigenciasOrdenadas, validos, total };
     })
-    .filter(u => {
-      const matchBusca = u.nome.toLowerCase().includes(busca.toLowerCase()) || u.cargo.toLowerCase().includes(busca.toLowerCase());
-      const matchStatus = filtroStatus === 'TODOS' || u.statusGlobal === filtroStatus;
-      return matchBusca && matchStatus;
-    })
-    .sort((a, b) => {
-      const pesoGlobal = { 'CRITICO': 3, 'ATENCAO': 2, 'CONFORME': 1 };
-      return pesoGlobal[b.statusGlobal] - pesoGlobal[a.statusGlobal];
-    });
+      .filter(u => {
+        const matchBusca = u.nome.toLowerCase().includes(busca.toLowerCase()) || u.cargo.toLowerCase().includes(busca.toLowerCase());
+        const matchStatus = filtroStatus === 'TODOS' || u.statusGlobal === filtroStatus;
+        return matchBusca && matchStatus;
+      })
+      .sort((a, b) => {
+        const pesoGlobal = { 'CRITICO': 3, 'ATENCAO': 2, 'CONFORME': 1 };
+        return pesoGlobal[b.statusGlobal] - pesoGlobal[a.statusGlobal];
+      });
   }, [matriz, busca, filtroStatus]);
 
   // --- RENDERIZAÇÃO DO FORMULÁRIO DE ADMISSÃO (RH) ---
@@ -67,9 +67,9 @@ export function MatrizQualificacao() {
         </button>
         <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60">
           <FormCadastrarUsuario
-            onSuccess={() => { 
-              setIsCadastroOpen(false); 
-              if(refetch) refetch(); 
+            onSuccess={() => {
+              setIsCadastroOpen(false);
+              if (refetch) refetch();
             }}
             onCancelar={() => setIsCadastroOpen(false)}
           />
@@ -147,9 +147,9 @@ export function MatrizQualificacao() {
             Gestão inteligente de treinamentos, CNH e ASO da frota.
           </p>
         </div>
-        
+
         <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
-          <Input 
+          <Input
             icon={<Search className="w-4 h-4 text-text-muted" />}
             placeholder="Buscar integrante ou cargo..."
             value={busca}
@@ -157,22 +157,22 @@ export function MatrizQualificacao() {
             className="bg-background min-w-[220px]"
             containerClassName="!mb-0"
           />
-          
+
           <div className="flex items-center bg-background rounded-lg border border-border/60 p-1">
-            <button 
+            <button
               onClick={() => setFiltroStatus('TODOS')}
               className={clsx("px-3 py-1.5 text-xs font-bold rounded-md transition-colors", filtroStatus === 'TODOS' ? "bg-text-main text-surface" : "text-text-secondary hover:bg-surface")}
             >
               Todos
             </button>
-            <button 
+            <button
               onClick={() => setFiltroStatus('CRITICO')}
               className={clsx("px-3 py-1.5 text-xs font-bold rounded-md transition-colors flex items-center gap-1.5", filtroStatus === 'CRITICO' ? "bg-red-50 text-red-600 border border-red-200/50 shadow-sm" : "text-text-secondary hover:bg-surface")}
             >
               <XCircle className={clsx("w-3.5 h-3.5", filtroStatus === 'CRITICO' ? "text-red-600" : "text-red-500")} />
               Crítico
             </button>
-            <button 
+            <button
               onClick={() => setFiltroStatus('ATENCAO')}
               className={clsx("px-3 py-1.5 text-xs font-bold rounded-md transition-colors flex items-center gap-1.5", filtroStatus === 'ATENCAO' ? "bg-yellow-50 text-yellow-700 border border-yellow-200/50 shadow-sm" : "text-text-secondary hover:bg-surface")}
             >
@@ -181,10 +181,10 @@ export function MatrizQualificacao() {
             </button>
           </div>
 
-          {/* ✨ NOVO: Botão de Cadastro (Oculto em Mobile porque usamos o SmartFAB) */}
-          <Button 
-            onClick={() => setIsCadastroOpen(true)} 
-            className="hidden sm:flex whitespace-nowrap h-10 shadow-button hover:shadow-float-primary" 
+          {/*   Botão de Cadastro (Oculto em Mobile porque usamos o SmartFAB) */}
+          <Button
+            onClick={() => setIsCadastroOpen(true)}
+            className="hidden sm:flex whitespace-nowrap h-10 shadow-button hover:shadow-float-primary"
             icon={<Plus className="w-4 h-4" />}
           >
             Novo Integrante
@@ -199,21 +199,21 @@ export function MatrizQualificacao() {
           const itensOcultos = user.exigenciasOrdenadas.length - 4;
 
           return (
-            <div 
-              key={user.userId} 
+            <div
+              key={user.userId}
               onClick={() => navigate(`/admin/matriz/${user.userId}`)}
               className={clsx(
                 "group flex flex-col bg-surface rounded-2xl border transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-1 overflow-hidden",
-                user.statusGlobal === 'CRITICO' ? "border-red-500/30" : 
-                user.statusGlobal === 'ATENCAO' ? "border-yellow-500/30" : "border-border/60"
+                user.statusGlobal === 'CRITICO' ? "border-red-500/30" :
+                  user.statusGlobal === 'ATENCAO' ? "border-yellow-500/30" : "border-border/60"
               )}
             >
               <div className="h-1.5 w-full bg-background flex">
-                <div 
+                <div
                   className={clsx(
                     "h-full transition-all duration-500",
-                    user.statusGlobal === 'CRITICO' ? "bg-red-500" : 
-                    user.statusGlobal === 'ATENCAO' ? "bg-yellow-500" : "bg-green-500"
+                    user.statusGlobal === 'CRITICO' ? "bg-red-500" :
+                      user.statusGlobal === 'ATENCAO' ? "bg-yellow-500" : "bg-green-500"
                   )}
                   style={{ width: `${user.saudePercentual}%` }}
                 />
@@ -222,14 +222,14 @@ export function MatrizQualificacao() {
               <div className="p-5 flex-1 flex flex-col">
                 <div className="flex items-start justify-between mb-4 gap-2">
                   <div className="flex items-center gap-3 min-w-0">
-                    <Avatar 
+                    <Avatar
                       nome={user.nome}
                       url={user.image}
                       className={clsx(
                         "ring-2 ring-offset-2 ring-offset-surface shrink-0",
-                        user.statusGlobal === 'CRITICO' ? "ring-red-500" : 
-                        user.statusGlobal === 'ATENCAO' ? "ring-yellow-500" : "ring-green-500"
-                      )} 
+                        user.statusGlobal === 'CRITICO' ? "ring-red-500" :
+                          user.statusGlobal === 'ATENCAO' ? "ring-yellow-500" : "ring-green-500"
+                      )}
                     />
                     <div className="min-w-0">
                       <h4 className="font-bold text-text-main text-sm truncate" title={user.nome}>
@@ -240,7 +240,7 @@ export function MatrizQualificacao() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div className="shrink-0 whitespace-nowrap">
                     {user.statusGlobal === 'CRITICO' && (
                       <div className="flex items-center gap-1 text-xs font-bold text-red-600 bg-red-50 px-2 py-1 rounded-md border border-red-100">
