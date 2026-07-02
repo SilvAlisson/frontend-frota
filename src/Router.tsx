@@ -31,6 +31,7 @@ import { PerfilConformidade } from './pages/PerfilConformidade';
 const PainelPlanosPreventivos = lazy(() => import('./components/PainelPlanosPreventivos').then(m => ({ default: m.PainelPlanosPreventivos })));
 const MinhaContaPage = lazy(() => import('./pages/MinhaContaPage').then(m => ({ default: m.MinhaContaPage })));
 const MatrizQualificacaoPage = lazy(() => import('./pages/MatrizQualificacaoPage').then(m => ({ default: m.MatrizQualificacaoPage })));
+const MatrizDetalheUsuario = lazy(() => import('./pages/MatrizDetalheUsuario').then(m => ({ default: m.MatrizDetalheUsuario })));
 
 const LoadingScreen = () => (
   <div className="flex flex-col items-center justify-center h-screen bg-background">
@@ -165,11 +166,18 @@ export function Router() {
             </PrivateRoute>
           } />
 
-          <Route path="matriz" element={
-            <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'RH']}>
-              <MatrizQualificacaoPage />
-            </PrivateRoute>
-          } />
+          <Route path="matriz">
+            <Route index element={
+              <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'RH']}>
+                <MatrizQualificacaoPage />
+              </PrivateRoute>
+            } />
+            <Route path=":id" element={
+              <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'RH']}>
+                <MatrizDetalheUsuario />
+              </PrivateRoute>
+            } />
+          </Route>
 
           {/*  Rota independente configurada corretamente */}
           <Route path="conformidade/:id" element={

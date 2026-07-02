@@ -3,9 +3,8 @@ import { useIntegranteDossie } from '../../hooks/useIntegranteDossie';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { FormEditarUsuario } from '../forms/FormEditarUsuario';
 import { DateHelper } from '../../lib/dateHelper';
-import { Car, ShieldAlert, GraduationCap, ChevronLeft, ChevronRight, Activity, MapPin, CheckCircle2 } from 'lucide-react';
+import { Car, ShieldAlert, ChevronLeft, ChevronRight, Activity, MapPin, CheckCircle2 } from 'lucide-react';
 
 interface DossieIntegranteProps {
   userId: string;
@@ -13,25 +12,11 @@ interface DossieIntegranteProps {
 }
 
 export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
-  const [activeTab, setActiveTab] = useState<'geral' | 'qualificacao' | 'produtividade'>('qualificacao');
   const [page, setPage] = useState(1);
   const { data: dossie, isLoading } = useIntegranteDossie(userId, page);
 
-  // Derive isMotorista safely before the early return to use it in the useEffect
   const userRole = dossie?.user ? ((dossie.user.cargo as { nome?: string })?.nome || dossie.user.role) : null;
   const isMotorista = userRole === 'OPERADOR';
-
-  // 🔴 CORREÇÃO CRÍTICA: useEffect não pode ficar após um early return (if (isLoading) return)
-  // Isso causa o erro React #310 (Rendered fewer hooks than expected) ao carregar dados.
-  useEffect(() => {
-    if (dossie?.user) {
-      if (isMotorista) {
-        setActiveTab('produtividade');
-      } else {
-        setActiveTab('qualificacao');
-      }
-    }
-  }, [isMotorista, dossie?.user]);
 
   if (isLoading || !dossie) {
     return (
@@ -45,17 +30,6 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
   const { user, jornadas, pagination } = dossie;
   const treinamentos = user.treinamentos || [];
   const defeitos = user.defeitosRegistrados || [];
-
-  const isEquipeCampo = ['OPERADOR', 'ENCARREGADO', 'AUXILIAR_OPERACIONAL'].includes(userRole as string);
-
-  const abasDisponiveis = [
-    ...(isMotorista ? [{ id: 'produtividade', label: 'Produtividade & Operação' }] : []),
-    { 
-      id: 'qualificacao', 
-      label: isMotorista ? 'Qualificação (CNH/ASO/NRs)' : 'Qualificação (ASO/NRs)' 
-    },
-    { id: 'geral', label: 'Dados Cadastrais' }
-  ];
 
   return (
     <div className="animate-in slide-in-from-right duration-500 pb-10">
@@ -82,124 +56,14 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
               • Matrícula: {user.matricula || 'N/A'}
             </p>
 
-            <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
-              {abasDisponiveis.map(aba => (
-                <button
-                  key={aba.id}
-                  onClick={() => setActiveTab(aba.id as 'geral' | 'qualificacao' | 'produtividade')}
-                  className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${activeTab === aba.id ? 'bg-primary text-white shadow-md' : 'bg-surface-hover text-text-secondary hover:text-primary'}`}
-                >
-                  {aba.label}
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       </div>
 
-      {/* CONTEÚDO DAS ABAS */}
+      {/* CONTEÚDO OPERACIONAL */}
       <div className="bg-surface rounded-3xl shadow-sm border border-border/60 p-6 sm:p-8">
-        
-        {/* ABA: DADOS CADASTRAIS (EDIÇÃO) */}
-        {activeTab === 'geral' && (
-          <div className="animate-in fade-in">
-            <FormEditarUsuario
-              userId={user.id}
-              onSuccess={() => {}} // O componente FormEditarUsuario já faz o toast e invalidate
-              onCancelar={() => setActiveTab('produtividade')}
-              variant="embedded"
-            />
-          </div>
-        )}
 
-        {/* ABA: QUALIFICAÇÃO */}
-        {activeTab === 'qualificacao' && (
-          <div className="space-y-8 animate-in fade-in">
-            {/* CNH SECTION */}
-            {isMotorista && (
-              <section>
-                <h2 className="text-xl font-bold text-text-main flex items-center gap-2 mb-4">
-                  <Car className="w-5 h-5 text-primary" /> Dados da CNH
-                </h2>
-              {user.profile?.cnhNumero ? (
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  <div className="p-4 bg-surface-hover rounded-2xl border border-border/40">
-                    <p className="text-xs text-text-muted font-bold uppercase tracking-wider mb-1">Nº Registro</p>
-                    <p className="text-lg font-bold text-text-main">{user.profile.cnhNumero}</p>
-                  </div>
-                  <div className="p-4 bg-surface-hover rounded-2xl border border-border/40">
-                    <p className="text-xs text-text-muted font-bold uppercase tracking-wider mb-1">Categoria</p>
-                    <p className="text-lg font-bold text-text-main">{user.profile.cnhCategoria}</p>
-                  </div>
-                  <div className="p-4 bg-surface-hover rounded-2xl border border-border/40">
-                    <p className="text-xs text-text-muted font-bold uppercase tracking-wider mb-1">Validade</p>
-                    <p className={`text-lg font-bold ${
-                      user.profile.cnhValidade && new Date(user.profile.cnhValidade) < new Date() ? 'text-error' : 'text-success'
-                    }`}>
-                      {user.profile.cnhValidade ? DateHelper.getCompleta(user.profile.cnhValidade) : 'Não informada'}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <div className="p-6 bg-surface-hover rounded-2xl border border-dashed border-border/60 text-center">
-                  <p className="text-text-muted font-medium">Nenhuma CNH cadastrada neste perfil.</p>
-                </div>
-              )}
-              </section>
-            )}
-
-            {/* TREINAMENTOS SECTION */}
-            <section>
-              <h2 className="text-xl font-bold text-text-main flex items-center gap-2 mb-4">
-                <GraduationCap className="w-5 h-5 text-primary" /> Treinamentos e ASOs
-              </h2>
-              {treinamentos.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm text-text-secondary border-collapse">
-                    <thead className="bg-surface-hover">
-                      <tr>
-                        <th className="px-4 py-3 font-bold text-text-main uppercase text-xs tracking-wider rounded-l-xl">Treinamento</th>
-                        <th className="px-4 py-3 font-bold text-text-main uppercase text-xs tracking-wider">Certificado</th>
-                        <th className="px-4 py-3 font-bold text-text-main uppercase text-xs tracking-wider rounded-r-xl">Vencimento</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/30">
-                      {treinamentos.map(t => {
-                        const vencido = t.dataVencimento ? new Date(t.dataVencimento) < new Date() : false;
-                        return (
-                          <tr key={t.id} className="hover:bg-surface-hover/30 transition-colors">
-                            <td className="px-4 py-3 font-medium text-text-main">{t.nome}</td>
-                            <td className="px-4 py-3">
-                              {t.certificadoUrl ? (
-                                <a href={t.certificadoUrl} target="_blank" rel="noopener noreferrer" className="text-primary font-bold hover:underline">Ver Documento</a>
-                              ) : '-'}
-                            </td>
-                            <td className="px-4 py-3">
-                              {t.dataVencimento ? (
-                                <Badge variant={vencido ? 'danger' : 'success'}>
-                                  {DateHelper.getCompleta(t.dataVencimento)}
-                                </Badge>
-                              ) : (
-                                <Badge variant="neutral">Sem Vencimento</Badge>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <div className="p-6 bg-surface-hover rounded-2xl border border-dashed border-border/60 text-center">
-                  <p className="text-text-muted font-medium">Nenhum treinamento registrado.</p>
-                </div>
-              )}
-            </section>
-          </div>
-        )}
-
-        {/* ABA: PRODUTIVIDADE */}
-        {activeTab === 'produtividade' && isMotorista && (
+        {isMotorista ? (
           <div className="space-y-8 animate-in fade-in">
             {/* JORNADAS SECTION */}
             <section>
@@ -336,6 +200,16 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
                 </div>
               )}
             </section>
+          </div>
+        ) : (
+          <div className="p-10 text-center">
+             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-surface-hover border border-border/50 mb-4">
+                <Activity className="w-8 h-8 text-text-muted" />
+             </div>
+             <h3 className="text-lg font-bold text-text-main">Histórico Operacional Vazio</h3>
+             <p className="text-text-secondary mt-1">
+               Este perfil não atua como Operador de Campo, logo não possui histórico de jornadas e defeitos.
+             </p>
           </div>
         )}
 

@@ -31,8 +31,8 @@ interface FormEditarDocumentoProps {
 export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEditarDocumentoProps) {
   const queryClient = useQueryClient();
 
-  // ✨ Extraído o control
-  const { register, handleSubmit, reset, watch, control, formState: { errors, isSubmitting } } = useForm<EditDocumentoFormData>({
+  //  Extraído o control
+  const { register, handleSubmit, reset, control, formState: { errors, isSubmitting } } = useForm<EditDocumentoFormData>({
     resolver: zodResolver(editDocumentoSchema),
     defaultValues: {
       titulo: '',
@@ -49,7 +49,7 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
       try {
         const response = await api.get(`/documentos-legais/${documentoId}`);
         const doc = response.data;
-        
+
         reset({
           titulo: doc.titulo,
           categoria: doc.categoria,
@@ -67,7 +67,7 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
   const mutation = useMutation({
     mutationFn: async (dados: EditDocumentoFormData) => {
       if (!showValidade) dados.dataValidade = null;
-      
+
       const payload = {
         ...dados,
         dataValidade: dados.dataValidade ? new Date(dados.dataValidade + 'T12:00:00.000Z').toISOString() : null,
@@ -95,7 +95,7 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
     { value: 'LICENCA_AMBIENTAL', label: 'Licença Ambiental' },
     { value: 'AST', label: 'AST - Segurança' },
     { value: 'ATRP', label: 'ATRP' },
-    {value: 'CTF IBAMA', label: 'CTF IBAMA'},
+    { value: 'CTF IBAMA', label: 'CTF IBAMA' },
     { value: 'OUTROS', label: 'Outros Arquivos' },
   ];
 
@@ -105,25 +105,25 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
     <form onSubmit={handleSubmit((d) => mutation.mutate(d), () => hapticError())} className="flex flex-col space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div className="md:col-span-2">
-          <Input 
-            label="Título do Documento" 
+          <Input
+            label="Título do Documento"
             icon={<FileText className="w-4 h-4 text-text-muted" />}
-            {...register('titulo')} 
-            error={errors.titulo?.message} 
+            {...register('titulo')}
+            error={errors.titulo?.message}
             disabled={isFormLocked}
           />
         </div>
-        
-        <Select 
-          label="Categoria / Tipo" 
-          options={CATEGORIAS_OPTIONS} 
+
+        <Select
+          label="Categoria / Tipo"
+          options={CATEGORIAS_OPTIONS}
           icon={<Tag className="w-4 h-4" />}
-          {...register('categoria')} 
-          error={errors.categoria?.message} 
+          {...register('categoria')}
+          error={errors.categoria?.message}
           disabled={isFormLocked}
         />
-        
-        {/* ✨ DatePicker acoplado via Controller */}
+
+        {/*  DatePicker acoplado via Controller */}
         {showValidade ? (
           <Controller
             control={control}

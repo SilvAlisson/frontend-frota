@@ -10,8 +10,6 @@ import { Skeleton } from '../ui/Skeleton';
 import { Button } from '../ui/Button';
 import { FormCadastrarUsuario } from '../forms/FormCadastrarUsuario';
 import { SmartFAB } from '../ui/SmartFAB';
-import { Modal } from '../ui/Modal';
-import { DossieIntegrante } from './DossieIntegrante';
 
 // Tipos de Status Global
 type GlobalStatus = 'CRITICO' | 'ATENCAO' | 'CONFORME';
@@ -21,7 +19,6 @@ export function MatrizQualificacao() {
   const [busca, setBusca] = useState('');
   const [filtroStatus, setFiltroStatus] = useState<GlobalStatus | 'TODOS'>('TODOS');
   const [isCadastroOpen, setIsCadastroOpen] = useState(false); // ✨ NOVO: Estado de Cadastro
-  const [integranteSelecionado, setIntegranteSelecionado] = useState<IntegranteMatriz | null>(null);
   const navigate = useNavigate();
 
   // 🧠 LÓGICA INTELIGENTE: Processamento, Saúde e Ordenação
@@ -204,8 +201,7 @@ export function MatrizQualificacao() {
           return (
             <div 
               key={user.userId} 
-              // 🔄 CORRIGIDO: Integração com Modal em vez de redirecionamento total
-              onClick={() => setIntegranteSelecionado(user)}
+              onClick={() => navigate(`/admin/matriz/${user.userId}`)}
               className={clsx(
                 "group flex flex-col bg-surface rounded-2xl border transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-1 overflow-hidden",
                 user.statusGlobal === 'CRITICO' ? "border-red-500/30" : 
@@ -305,21 +301,6 @@ export function MatrizQualificacao() {
       </div>
 
       <SmartFAB onClick={() => setIsCadastroOpen(true)} label="Novo Integrante" />
-
-      {/* MODAL: O Dossiê Detalhado */}
-      <Modal
-        isOpen={!!integranteSelecionado}
-        onClose={() => setIntegranteSelecionado(null)}
-        title={integranteSelecionado ? `Dossiê: ${integranteSelecionado.nome}` : 'Dossiê'}
-        maxWidth="4xl"
-      >
-        {integranteSelecionado && (
-          <DossieIntegrante 
-            userId={integranteSelecionado.userId} 
-            onClose={() => setIntegranteSelecionado(null)}
-          />
-        )}
-      </Modal>
     </div>
   );
 }
