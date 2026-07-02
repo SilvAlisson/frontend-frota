@@ -115,6 +115,9 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
         formState: { errors, isSubmitting },
     } = useForm<TreinamentoForm>({
         resolver: zodResolver(treinamentoSchema),
+        defaultValues: {
+            diasAntecedenciaAlerta: 30,
+        },
     });
 
     const onSubmit = async (data: TreinamentoForm) => {
@@ -291,8 +294,8 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                             <Input
                                 label="Data de Conclusão"
                                 type="date"
-                                {...register('dataConclusao')}
-                                error={errors.dataConclusao?.message}
+                                {...register('dataRealizacao')}
+                                error={errors.dataRealizacao?.message}
                             />
                         </div>
 
@@ -329,8 +332,8 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                                 label="Observações (Opcional)"
                                 placeholder="Carga horária, instituição provedora, etc..."
                                 rows={2}
-                                {...register('observacoes')}
-                                error={errors.observacoes?.message}
+                                {...register('descricao')}
+                                error={errors.descricao?.message}
                             />
                         </div>
                     </div>
@@ -391,10 +394,10 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                                                 <CheckCircle2 className={`w-4 h-4 ${isPendente ? 'text-text-muted opacity-50' : 'text-success'}`} />
                                                 {isPendente ? 'Aguardando envio' : `Concluído em: ${new Date(t.dataRealizacao).toLocaleDateString('pt-BR')}`}
                                             </span>
-                                            {t.observacoes && (
+                                            {t.descricao && (
                                                 <span className="text-sm text-text-muted italic flex items-center gap-1.5">
                                                     <FileSpreadsheet className="w-4 h-4" />
-                                                    {t.observacoes}
+                                                    {t.descricao}
                                                 </span>
                                             )}
                                         </div>
