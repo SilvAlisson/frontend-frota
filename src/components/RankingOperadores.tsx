@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
-import { Trophy, Download, Truck, AlertTriangle, Calendar, Loader2 } from 'lucide-react';
+import { Trophy, Download, Truck, AlertTriangle, Calendar, Loader2, MapPin } from 'lucide-react';
 
 // Hooks Globais
 import { useRankingVeiculos } from '../hooks/useRankingVeiculos';
