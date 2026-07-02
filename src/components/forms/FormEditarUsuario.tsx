@@ -186,7 +186,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
       matricula: data.matricula ? DOMPurify.sanitize(data.matricula) : null,
       role: data.role,
       fotoUrl: finalFotoUrl,
-      cargoId: isOperador && data.cargoId ? data.cargoId : null,
+      cargoId: data.cargoId || null,
       cnhNumero: isOperador && data.cnhNumero ? data.cnhNumero : null,
       cnhCategoria: isOperador && data.cnhCategoria ? data.cnhCategoria : null,
       cnhValidade: isOperador && data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
@@ -339,6 +339,16 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
                 disabled={isLocked}
               />
             </div>
+
+            <div className="md:col-span-2">
+              <Select
+                label="Cargo Profissional"
+                options={cargoOptions}
+                icon={<Briefcase className="w-4 h-4 text-text-muted" />}
+                {...register('cargoId')}
+                disabled={isLocked}
+              />
+            </div>
           </div>
 
           {/* SEÇÃO RH CONDICIONAL (MOTORISTAS) */}
@@ -352,15 +362,6 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div className="md:col-span-2">
-                  <Select
-                    label="Cargo Profissional"
-                    options={cargoOptions}
-                    icon={<Briefcase className="w-4 h-4 text-text-muted" />}
-                    {...register('cargoId')}
-                    disabled={isLocked}
-                  />
-                </div>
 
                 <div>
                   <Input

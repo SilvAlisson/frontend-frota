@@ -10,6 +10,7 @@ export interface User {
   matricula: string | null;
   role: UserRole;
   cargo: string | null;
+  cargoId?: string | null;
   fotoUrl?: string | null;
   image?: string | null;
   loginToken?: string | null;

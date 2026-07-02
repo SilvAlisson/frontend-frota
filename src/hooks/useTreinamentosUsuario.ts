@@ -1,3 +1,4 @@
+import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
@@ -84,28 +85,74 @@ function getCellValue(row: ExcelJS.Row, colIndex: number): string | null {
 // ─────────────────────────────────────────────────────────────────
 // Hook principal
 // ─────────────────────────────────────────────────────────────────
-export function useTreinamentosUsuario(userId: string) {
+export function useTreinamentosUsuario(userId: string, cargoId?: string | null) {
     const queryClient = useQueryClient();
     const queryKey = ['treinamentos', userId] as const;
+    const cargoQueryKey = ['cargos'] as const;
 
-    // ── Leitura ──────────────────────────────────────────────────
-    const { data: treinamentos = [], isLoading: loading } = useQuery<TreinamentoRealizado[]>({
+    // ── Leitura de Cargos (Para extrair obrigações) ──────────────
+    const { data: cargos = [], isLoading: loadingCargos } = useQuery<any[]>({
+        queryKey: cargoQueryKey,
+        queryFn: async () => {
+            const { data } = await api.get<any[]>('/cargos');
+            return data;
+        },
+        staleTime: 1000 * 60 * 5, // 5 min cache
+        enabled: !!cargoId, // Só busca se tiver cargo associado
+    });
+
+    const { data: rawTreinamentos = [], isLoading: loadingTreinamentos } = useQuery<TreinamentoRealizado[]>({
         queryKey,
         queryFn: async () => {
             try {
                 const { data } = await api.get<TreinamentoRealizado[]>(
                     `/treinamentos/usuario/${userId}`
                 );
-                return sortByDateDesc(data);
+                return data;
             } catch (err: unknown) {
-                // 404 = usuário não tem treinamentos — retorna lista vazia, não é erro
                 const status = (err as { response?: { status?: number } })?.response?.status;
                 if (status === 404) return [];
                 throw err;
             }
         },
-        staleTime: 1000 * 60 * 2, // 2 min de cache
+        staleTime: 1000 * 60 * 2,
     });
+
+    // ── Mesclagem (Realizados + Pendentes) ───────────────────────
+    const treinamentos = React.useMemo(() => {
+        const normalize = (n: string) => n.toUpperCase().replace(/\s+/g, ' ').trim();
+        const realizados = sortByDateDesc(rawTreinamentos).map(t => ({ ...t, status: 'CONCLUIDO' as const, isObrigatorio: false }));
+        const mapaRealizados = new Map(realizados.map(t => [normalize(t.nome), t]));
+
+        const cargoUsuario = cargos.find(c => c.id === cargoId);
+        
+        if (cargoUsuario && cargoUsuario.requisitos) {
+            cargoUsuario.requisitos.forEach((req: any) => {
+                const normName = normalize(req.nome);
+                if (mapaRealizados.has(normName)) {
+                    const existente = mapaRealizados.get(normName)!;
+                    existente.isObrigatorio = true;
+                } else {
+                    realizados.push({
+                        id: `pending-${req.id}`,
+                        nome: req.nome,
+                        dataRealizacao: '',
+                        userId,
+                        status: 'PENDENTE',
+                        isObrigatorio: true,
+                        diasAntecedenciaAlerta: req.diasAntecedenciaAlerta
+                    } as any);
+                }
+            });
+        }
+
+        return realizados.sort((a, b) => {
+            if (a.status !== b.status) return a.status === 'PENDENTE' ? -1 : 1;
+            return new Date(b.dataRealizacao).getTime() - new Date(a.dataRealizacao).getTime();
+        });
+    }, [rawTreinamentos, cargos, cargoId, userId]);
+
+    const loading = loadingTreinamentos || loadingCargos;
 
     // ── Mutations ────────────────────────────────────────────────
     const addMutation = useMutation({

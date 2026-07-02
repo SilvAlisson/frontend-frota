@@ -23,4 +23,6 @@ export interface TreinamentoRealizado {
   dataVencimento?: string | null;
   comprovanteUrl?: string | null;
   userId: string;
+  status?: 'CONCLUIDO' | 'PENDENTE';
+  isObrigatorio?: boolean;
 }

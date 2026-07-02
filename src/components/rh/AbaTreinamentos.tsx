@@ -31,7 +31,18 @@ interface StatusConfig {
     label: string;
 }
 
-function getStatusConfig(vencimento: string | null | undefined): StatusConfig {
+function getStatusConfig(vencimento: string | null | undefined, statusBase?: 'CONCLUIDO' | 'PENDENTE'): StatusConfig {
+    if (statusBase === 'PENDENTE') {
+        return {
+            indicatorBg: 'bg-border/60',
+            badgeBg: 'bg-surface-hover',
+            textColor: 'text-text-secondary',
+            border: 'border-border',
+            Icon: AlertTriangle,
+            label: 'Obrigatório (Pendente)',
+        };
+    }
+
     if (!vencimento) {
         return {
             indicatorBg: 'bg-info',
@@ -79,7 +90,7 @@ function getStatusConfig(vencimento: string | null | undefined): StatusConfig {
     };
 }
 
-export function AbaTreinamentos({ userId, nomeUsuario, role }: { userId: string, nomeUsuario: string, role?: string }) {
+export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId: string, nomeUsuario: string, role?: string, cargoId?: string | null }) {
     const { openModal, closeModal } = useModalStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -89,13 +100,12 @@ export function AbaTreinamentos({ userId, nomeUsuario, role }: { userId: string,
     const [isUploading, setIsUploading] = useState(false);
 
     const {
-        data: treinamentos,
-        isLoading,
+        treinamentos,
+        loading,
         addTreinamento,
         removeTreinamento,
-        importarPlanilha,
-        isImporting
-    } = useTreinamentosUsuario(userId);
+        importarPlanilha
+    } = useTreinamentosUsuario(userId, cargoId);
 
     const {
         register,
@@ -348,8 +358,9 @@ export function AbaTreinamentos({ userId, nomeUsuario, role }: { userId: string,
                     />
                 ) : (
                     treinamentos.map((t) => {
-                        const status = getStatusConfig(t.dataVencimento);
+                        const status = getStatusConfig(t.dataVencimento, (t as any).status);
                         const StatusIcon = status.Icon;
+                        const isPendente = (t as any).status === 'PENDENTE';
 
                         return (
                             <div
@@ -373,9 +384,9 @@ export function AbaTreinamentos({ userId, nomeUsuario, role }: { userId: string,
                                                     <QrCode className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" /> QR Code
                                                 </Button>
                                             )}
-                                            <span className="text-sm text-text-secondary flex items-center gap-1.5 font-medium">
-                                                <CheckCircle2 className="w-4 h-4 text-success" />
-                                                Concluído em: {new Date(t.dataConclusao).toLocaleDateString('pt-BR')}
+                                            <span className={`text-sm flex items-center gap-1.5 font-medium ${isPendente ? 'text-text-muted' : 'text-text-secondary'}`}>
+                                                <CheckCircle2 className={`w-4 h-4 ${isPendente ? 'text-text-muted opacity-50' : 'text-success'}`} />
+                                                {isPendente ? 'Aguardando envio' : `Concluído em: ${new Date(t.dataRealizacao).toLocaleDateString('pt-BR')}`}
                                             </span>
                                             {t.observacoes && (
                                                 <span className="text-sm text-text-muted italic flex items-center gap-1.5">
@@ -391,7 +402,7 @@ export function AbaTreinamentos({ userId, nomeUsuario, role }: { userId: string,
                                         <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-sm font-bold shadow-sm ${status.badgeBg} ${status.textColor} ${status.border}`}>
                                             <StatusIcon className="w-4 h-4" />
                                             {status.label}
-                                            {t.dataVencimento && (
+                                            {t.dataVencimento && !isPendente && (
                                                 <span className="ml-1 opacity-80 font-semibold">
                                                     ({new Date(t.dataVencimento).toLocaleDateString('pt-BR')})
                                                 </span>
@@ -399,26 +410,49 @@ export function AbaTreinamentos({ userId, nomeUsuario, role }: { userId: string,
                                         </div>
 
                                         <div className="flex items-center gap-2">
-                                            {t.certificadoUrl && (
+                                            {isPendente ? (
                                                 <Button
-                                                    variant="secondary"
+                                                    variant="primary"
                                                     size="sm"
-                                                    className="h-8 text-xs font-bold"
-                                                    onClick={() => window.open(t.certificadoUrl!, '_blank')}
+                                                    className="h-8 text-xs font-bold w-full"
+                                                    onClick={() => {
+                                                        // Pre-fill form
+                                                        reset({
+                                                            nome: t.nome,
+                                                            dataRealizacao: new Date().toISOString().split('T')[0],
+                                                            diasAntecedenciaAlerta: (t as any).diasAntecedenciaAlerta || 30
+                                                        });
+                                                        setShowAddForm(true);
+                                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                    }}
                                                 >
-                                                    Ver Certificado
+                                                    <Plus className="w-4 h-4 mr-1" />
+                                                    Lançar
                                                 </Button>
+                                            ) : (
+                                                <>
+                                                    {t.comprovanteUrl && (
+                                                        <Button
+                                                            variant="secondary"
+                                                            size="sm"
+                                                            className="h-8 text-xs font-bold"
+                                                            onClick={() => window.open(t.comprovanteUrl!, '_blank')}
+                                                        >
+                                                            Ver Certificado
+                                                        </Button>
+                                                    )}
+                                                    <Button
+                                                        variant="danger"
+                                                        size="sm"
+                                                        className="h-8 px-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                                                        onClick={() => confirmExclusao(t.id, t.nome)}
+                                                        disabled={deletingId === t.id}
+                                                        title="Excluir Registro"
+                                                    >
+                                                        {deletingId === t.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                                    </Button>
+                                                </>
                                             )}
-                                            <Button
-                                                variant="danger"
-                                                size="sm"
-                                                className="h-8 px-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-                                                onClick={() => confirmExclusao(t.id, t.nome)}
-                                                disabled={deletingId === t.id}
-                                                title="Excluir Registro"
-                                            >
-                                                {deletingId === t.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                                            </Button>
                                         </div>
                                     </div>
                                 </div>
