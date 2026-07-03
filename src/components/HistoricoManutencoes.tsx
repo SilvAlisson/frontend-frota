@@ -9,6 +9,7 @@ import type { OrdemServico } from '../types';
 import { useVeiculos } from '../hooks/useVeiculos';
 import { useHistoricoManutencoes, type FiltrosManutencao as IFiltrosManutencao } from '../hooks/useHistoricoManutencoes';
 import { useModalStore } from '../hooks/useModalStore';
+import { api } from '../services/api';
 
 // --- UI COMPONENTS ---
 import { PageHeader } from './ui/PageHeader';
@@ -65,6 +66,20 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
   const [visibleCount, setVisibleCount] = useState(ITENS_POR_PAGINA);
   const [editingOS, setEditingOS] = useState<OrdemServico | null>(null);
   const [isNovaOSOpen, setIsNovaOSOpen] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(false);
+
+  // Busca OS completa (com itens, veículo, fornecedor) antes de abrir o modal de edição
+  const handleEditar = async (os: OrdemServico) => {
+    setLoadingEdit(true);
+    try {
+      const { data } = await api.get(`/manutencoes/${os.id}`);
+      setEditingOS(data);
+    } catch {
+      toast.error('Erro ao carregar dados da manutenção para edição.');
+    } finally {
+      setLoadingEdit(false);
+    }
+  };
 
   const actionQuery = searchParams.get('action');
   const queryVeiculoId = searchParams.get('veiculoId');
@@ -166,7 +181,7 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
             loading={loading}
             canEdit={canEdit}
             canDelete={canDelete}
-            onEditar={setEditingOS}
+            onEditar={handleEditar}
             onExcluir={(id) => {
               openModal('CONFIRM', {
                 title: "Eliminar Registro de Oficina",
