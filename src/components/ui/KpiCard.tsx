@@ -15,12 +15,13 @@ export interface KpiCardProps {
   highlight?: boolean;
   variant?: 'default' | 'success' | 'warning' | 'danger' | 'info';
   icon?: React.ReactNode;
+  className?: string;
 }
 
-export const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descricao, onClick, loading, highlight, variant = 'default', icon }: KpiCardProps) {
+export const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter, descricao, onClick, loading, highlight, variant = 'default', icon, className }: KpiCardProps) {
   if (loading) {
     return (
-      <Card className={cn("flex flex-col justify-between overflow-hidden border-border/40 glass rounded-2xl", highlight ? "min-h-[160px]" : "min-h-[140px]")}>
+      <Card className={cn("flex flex-col justify-between overflow-hidden border-border/40 glass rounded-2xl", highlight ? "min-h-[160px]" : "min-h-[140px]", className)}>
         <div className="flex justify-between items-start w-full p-4 relative z-10">
           <Skeleton variant="text" className="w-24 mt-2" />
           <Skeleton variant="default" className="h-10 w-10 rounded-xl" />
@@ -58,7 +59,8 @@ export const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter
         "relative flex flex-col justify-between h-full cursor-pointer overflow-hidden group glass hover-lift rounded-2xl",
         "border-l-[4px] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background", 
         style.border, style.glow,
-        highlight ? "min-h-[160px]" : "min-h-[140px]"
+        highlight ? "min-h-[160px]" : "min-h-[140px]",
+        className
       )}
     >
       <div className="flex justify-between items-start shrink-0 mb-1 relative z-10 p-3 sm:p-4 pb-0 min-w-0">

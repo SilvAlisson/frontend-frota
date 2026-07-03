@@ -7,8 +7,9 @@ import { ConfirmModal } from './ui/ConfirmModal';
 import { parseDecimal, formatKmVisual } from '../utils';
 import { toast } from 'sonner';
 import { hapticError } from '../lib/haptics';
-import { Gauge, Play, AlertTriangle } from 'lucide-react';
+import { Gauge, Play, AlertTriangle, ShieldAlert } from 'lucide-react';
 import type { User, Veiculo, Jornada } from '../types';
+import { api } from '../services/api';
 
 interface IniciarJornadaProps {
   usuarios: User[];
@@ -31,6 +32,7 @@ export function IniciarJornada({
   const [kmInicio, setKmInicio] = useState('');
   const [avisoVeiculo, setAvisoVeiculo] = useState('');
   const [loading, setLoading] = useState(false);
+  const [cnhAviso, setCnhAviso] = useState<{ compativel: boolean, mensagem: string, risco: string } | null>(null);
 
   const [modalAberto, setModalAberto] = useState(false);
   const [formDataParaModal, setFormDataParaModal] = useState<{
@@ -75,6 +77,14 @@ export function IniciarJornada({
       const horaInicio = new Date(jornadaExistente.dataInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
       setAvisoVeiculo(`ATENÇÃO: Este veículo está em uso por ${nomeMotorista} desde às ${horaInicio}.`);
     }
+
+    // Validar CNH
+    api.get(`/rh/validar-cnh-veiculo/${operadorLogadoId}?veiculoId=${veiculoIdSelecionado}`)
+      .then(res => setCnhAviso(res.data))
+      .catch(err => {
+        console.error('Erro ao validar CNH', err);
+        setCnhAviso(null);
+      });
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -172,6 +182,16 @@ export function IniciarJornada({
               <div className="flex-1">
                 <p className="font-bold mb-0.5">Veículo em uso</p>
                 {avisoVeiculo.replace('ATENÇÃO: ', '')}
+              </div>
+            </div>
+          )}
+
+          {cnhAviso && !cnhAviso.compativel && (
+            <div className="mt-3 flex items-start gap-3 p-3 rounded-lg bg-error-500/10 border border-error-500/20 text-error-700 text-xs font-medium animate-in slide-in-from-top-1">
+              <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <p className="font-bold mb-0.5">Alerta de Compliance (CNH)</p>
+                {cnhAviso.mensagem}
               </div>
             </div>
           )}

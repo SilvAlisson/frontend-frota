@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
+import { handleApiError } from '../utils/errorHandler';
 
 export interface Aso {
   id: string;
@@ -40,8 +41,7 @@ export function useAso(userId: string) {
       toast.success('ASO registrado com sucesso!');
     },
     onError: (err) => {
-      console.error(err);
-      toast.error('Erro ao registrar ASO.');
+      handleApiError(err);
     },
   });
 
@@ -55,8 +55,7 @@ export function useAso(userId: string) {
       toast.success('ASO excluído com sucesso.');
     },
     onError: (err) => {
-      console.error(err);
-      toast.error('Erro ao excluir ASO.');
+      handleApiError(err);
     },
   });
 

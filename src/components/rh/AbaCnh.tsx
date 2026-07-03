@@ -6,6 +6,7 @@ import { api } from '../../services/api';
 import { toast } from 'sonner';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Input } from '../ui/Input';
+import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
 import { UserCircle, Car, Loader2, Save } from 'lucide-react';
 import { Skeleton } from '../ui/Skeleton';
@@ -96,22 +97,23 @@ export function AbaCnh({ userId }: AbaCnhProps) {
             />
           </div>
           <div>
-            <label className="text-sm font-bold text-text-secondary mb-1.5 block">Categoria</label>
-            <select
+            <Select
+              label="Categoria"
+              placeholder="Selecione..."
+              options={[
+                { value: 'A', label: 'A (Moto)' },
+                { value: 'B', label: 'B (Carro)' },
+                { value: 'C', label: 'C (Caminhão)' },
+                { value: 'D', label: 'D (Ônibus)' },
+                { value: 'E', label: 'E (Carreta)' },
+                { value: 'AB', label: 'AB (Moto e Carro)' },
+                { value: 'AC', label: 'AC (Moto e Caminhão)' },
+                { value: 'AD', label: 'AD (Moto e Ônibus)' },
+                { value: 'AE', label: 'AE (Moto e Carreta)' }
+              ]}
               {...register('cnhCategoria')}
-              className="w-full bg-surface border border-border/60 rounded-xl px-4 py-2.5 text-text-main focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-            >
-              <option value="">Selecione...</option>
-              <option value="A">A (Moto)</option>
-              <option value="B">B (Carro)</option>
-              <option value="C">C (Caminhão)</option>
-              <option value="D">D (Ônibus)</option>
-              <option value="E">E (Carreta)</option>
-              <option value="AB">AB (Moto e Carro)</option>
-              <option value="AC">AC (Moto e Caminhão)</option>
-              <option value="AD">AD (Moto e Ônibus)</option>
-              <option value="AE">AE (Moto e Carreta)</option>
-            </select>
+              error={errors.cnhCategoria?.message}
+            />
           </div>
           <div>
             <Input

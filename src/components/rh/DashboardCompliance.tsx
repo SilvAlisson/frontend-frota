@@ -2,11 +2,14 @@ import { AlertTriangle, ShieldAlert, FileWarning, Activity, AlertOctagon, Shield
 import { useMatrizQualificacao } from '../../hooks/useMatrizQualificacao';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import clsx from 'clsx';
-
+import { cn } from '../../lib/utils';
+import { Button } from '../ui/Button';
+import { Download, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 export function DashboardCompliance() {
   const { data: matriz, isLoading } = useMatrizQualificacao();
   const [filtroExpandido, setFiltroExpandido] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   if (isLoading) {
     return (
@@ -62,11 +65,62 @@ export function DashboardCompliance() {
     );
   }
 
+  const handleExportCSV = async () => {
+    if (!alertasAtivos.length) return;
+    try {
+      setIsExporting(true);
+      const ExcelJS = (await import('exceljs')).default;
+      const { saveAs } = (await import('file-saver')).default || await import('file-saver');
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet('Alertas de Compliance');
+
+      worksheet.columns = [
+        { header: 'Nome do Integrante', key: 'nome', width: 40 },
+        { header: 'Tipo do Alerta', key: 'tipo', width: 25 },
+        { header: 'Detalhes / Vencimento', key: 'detalhe', width: 45 },
+      ];
+
+      worksheet.getRow(1).font = { bold: true };
+      worksheet.getRow(1).fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD3D3D3' } };
+
+      alertasAtivos.forEach(alerta => {
+        alerta.integrantes.forEach(int => {
+          worksheet.addRow({
+            nome: int.nome,
+            tipo: alerta.titulo,
+            detalhe: int.detalhe
+          });
+        });
+      });
+
+      const buffer = await workbook.csv.writeBuffer();
+      const blob = new Blob([buffer], { type: 'text/csv;charset=utf-8;' });
+      saveAs(blob, `Alertas_Compliance_RH_${new Date().toISOString().split('T')[0]}.csv`);
+      toast.success('Relatório CSV exportado com sucesso!');
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao exportar o relatório.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 mb-4">
-        <AlertOctagon className="w-6 h-6 text-danger animate-pulse" />
-        <h3 className="text-xl font-black text-text-main tracking-tight">Risco & Compliance</h3>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div className="flex items-center gap-3">
+          <AlertOctagon className="w-6 h-6 text-danger animate-pulse" />
+          <h3 className="text-xl font-black text-text-main tracking-tight">Risco & Compliance</h3>
+        </div>
+        <Button 
+          variant="secondary" 
+          onClick={handleExportCSV} 
+          disabled={isExporting || alertasAtivos.length === 0}
+          className="w-full sm:w-auto font-bold shadow-sm"
+        >
+          {isExporting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Gerando...</> : <><Download className="w-4 h-4 mr-2" /> Exportar Alertas CSV</>}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -78,7 +132,7 @@ export function DashboardCompliance() {
             <div 
               key={alerta.tipo}
               onClick={() => setFiltroExpandido(isActive ? null : alerta.tipo)}
-              className={clsx(
+              className={cn(
                 "cursor-pointer transition-all duration-300 rounded-2xl p-5 border relative overflow-hidden group",
                 isActive ? "ring-2 ring-offset-2 ring-offset-background" : "hover:-translate-y-1 hover:shadow-lg",
                 alerta.cor === 'red' ? 'bg-red-500/10 border-red-500/20 text-red-500 ring-red-500' :
@@ -92,7 +146,7 @@ export function DashboardCompliance() {
                   <h4 className="text-3xl font-black">{alerta.integrantes.length}</h4>
                   <p className="text-sm font-bold mt-1 opacity-80">{alerta.titulo}</p>
                 </div>
-                <div className={clsx("p-3 rounded-full", `bg-${alerta.cor}-500/20`)}>
+                <div className={cn("p-3 rounded-full", `bg-${alerta.cor}-500/20`)}>
                   <Icon className="w-6 h-6" />
                 </div>
               </div>

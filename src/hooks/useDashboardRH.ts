@@ -18,11 +18,11 @@ export interface RHDashboardData {
   graficos: RHGraficos;
 }
 
-export function useDashboardRH() {
+export function useDashboardRH(dias: number = 30) {
   return useQuery<RHDashboardData>({
-    queryKey: ['rh-kpis'],
+    queryKey: ['rh-kpis', dias],
     queryFn: async () => {
-      const response = await api.get('/rh/kpis');
+      const response = await api.get(`/rh/kpis?dias=${dias}`);
       return response.data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutos de cache

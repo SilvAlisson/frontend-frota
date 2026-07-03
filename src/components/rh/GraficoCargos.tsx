@@ -6,7 +6,14 @@ interface GraficoCargosProps {
   dados: { name: string; value: number }[];
 }
 
-const COLORS = ['#2563eb', '#16a34a', '#eab308', '#dc2626', '#9333ea', '#06b6d4'];
+const COLORS = [
+  'var(--color-primary)', 
+  'var(--color-success)', 
+  'var(--color-warning)', 
+  'var(--color-info)', 
+  'var(--color-error)', 
+  'var(--color-klin-500)'
+];
 
 export function GraficoCargos({ dados }: GraficoCargosProps) {
   if (!dados || dados.length === 0) {

@@ -21,11 +21,7 @@ export function useMatrizQualificacao() {
     queryKey: ['matriz-qualificacao'],
     queryFn: async () => {
       const response = await api.get('/rh/matriz');
-      // Filtra usuários de teste usando regex de palavra exata para não ocultar acidentalmente nomes reais
-      return response.data.filter((u: IntegranteMatriz) => {
-        const nome = u.nome.toLowerCase();
-        return !/\btest(?:e|ando)\b/i.test(nome);
-      });
+      return response.data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutos de cache
   });

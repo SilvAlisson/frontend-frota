@@ -1,7 +1,10 @@
 import type { User } from '../types';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { Users, ShieldCheck, GraduationCap, FileWarning } from 'lucide-react';
 import { RelatorioNarrativoRH } from './ia/RelatorioNarrativoRH';
 import { useDashboardRH } from '../hooks/useDashboardRH';
+import { Select } from './ui/Select';
 import { KpiCard } from './ui/KpiCard';
 import { GraficoSST } from './rh/GraficoSST';
 import { GraficoCargos } from './rh/GraficoCargos';
@@ -13,7 +16,8 @@ interface DashboardRHProps {
 }
 
 export function DashboardRH({ user }: DashboardRHProps) {
-  const { data: dashboardData, isLoading, isError } = useDashboardRH();
+  const [diasFiltro, setDiasFiltro] = useState<number>(30);
+  const { data: dashboardData, isLoading, isError } = useDashboardRH(diasFiltro);
 
   const formatNum = (val: number | undefined) => (val ?? 0).toLocaleString('pt-BR');
 
@@ -21,13 +25,27 @@ export function DashboardRH({ user }: DashboardRHProps) {
     <div className="space-y-6 sm:space-y-8 animate-in fade-in zoom-in-95 duration-500 pb-24">
       
       {/* HEADER DE BOAS VINDAS */}
-      <div className="flex flex-col gap-1 mb-2">
-        <h2 className="text-2xl font-black text-text-main tracking-tight">
-          Olá, {user.nome.split(' ')[0]}!
-        </h2>
-        <p className="text-sm text-text-secondary">
-          Visão geral de Recursos Humanos, SST e Compliance.
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-2">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-2xl font-black text-text-main tracking-tight">
+            Olá, {user.nome.split(' ')[0]}!
+          </h2>
+          <p className="text-sm text-text-secondary">
+            Visão geral de Recursos Humanos, SST e Compliance.
+          </p>
+        </div>
+        <div className="w-full sm:w-48">
+          <Select 
+            value={diasFiltro}
+            onChange={(e) => setDiasFiltro(Number(e.target.value))}
+            options={[
+              { value: 30, label: 'Próximos 30 dias' },
+              { value: 60, label: 'Próximos 60 dias' },
+              { value: 90, label: 'Próximos 90 dias' },
+              { value: 180, label: 'Próximos 180 dias' },
+            ]}
+          />
+        </div>
       </div>
 
       {isError && (
@@ -42,42 +60,54 @@ export function DashboardRH({ user }: DashboardRHProps) {
 
       {/* KPI GRID PREMIUM */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-            <KpiCard 
-              titulo="Integrantes Ativos" 
-              valorRaw={dashboardData?.kpis.totalIntegrantes} 
-              formatter={formatNum} 
-              descricao="Total da força de trabalho" 
-              loading={isLoading} 
-              variant="success" 
-              icon={<Users className="w-4 h-4 sm:w-5 sm:h-5" />} 
-            />
-            <KpiCard 
-              titulo="Treinamentos Críticos" 
-              valorRaw={dashboardData?.kpis.treinamentosCriticos} 
-              formatter={formatNum} 
-              descricao="Vencendo nos próximos 30 dias" 
-              loading={isLoading} 
-              variant={(dashboardData?.kpis.treinamentosCriticos || 0) > 0 ? 'warning' : 'success'} 
-              icon={<GraduationCap className="w-4 h-4 sm:w-5 sm:h-5" />} 
-            />
-            <KpiCard 
-              titulo="CNHs a Vencer" 
-              valorRaw={dashboardData?.kpis.cnhsCriticas} 
-              formatter={formatNum} 
-              descricao="Motoristas com CNH crítica (<30d)" 
-              loading={isLoading} 
-              variant={(dashboardData?.kpis.cnhsCriticas || 0) > 0 ? 'warning' : 'success'} 
-              icon={<FileWarning className="w-4 h-4 sm:w-5 sm:h-5" />} 
-            />
-            <KpiCard 
-              titulo="Ações SST Pendentes" 
-              valorRaw={dashboardData?.kpis.sstPendentes} 
-              formatter={formatNum} 
-              descricao="Ações atrasadas ou pendentes" 
-              loading={isLoading} 
-              variant={(dashboardData?.kpis.sstPendentes || 0) > 0 ? 'danger' : 'success'} 
-              icon={<ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />} 
-            />
+            <Link to="/admin/integrantes">
+              <KpiCard 
+                titulo="Integrantes Ativos" 
+                valorRaw={dashboardData?.kpis.totalIntegrantes} 
+                formatter={formatNum} 
+                descricao="Total da força de trabalho" 
+                loading={isLoading} 
+                variant="success" 
+                icon={<Users className="w-4 h-4 sm:w-5 sm:h-5" />} 
+                className="hover:scale-[1.02] transition-transform"
+              />
+            </Link>
+            <Link to="/admin/integrantes?alerta=treinamento">
+              <KpiCard 
+                titulo="Treinamentos Críticos" 
+                valorRaw={dashboardData?.kpis.treinamentosCriticos} 
+                formatter={formatNum} 
+                descricao={`Vencendo nos próximos ${diasFiltro} dias`} 
+                loading={isLoading} 
+                variant={(dashboardData?.kpis.treinamentosCriticos || 0) > 0 ? 'warning' : 'success'} 
+                icon={<GraduationCap className="w-4 h-4 sm:w-5 sm:h-5" />} 
+                className="hover:scale-[1.02] transition-transform"
+              />
+            </Link>
+            <Link to="/admin/integrantes?alerta=cnh">
+              <KpiCard 
+                titulo="CNHs a Vencer" 
+                valorRaw={dashboardData?.kpis.cnhsCriticas} 
+                formatter={formatNum} 
+                descricao={`Motoristas com CNH crítica (<${diasFiltro}d)`} 
+                loading={isLoading} 
+                variant={(dashboardData?.kpis.cnhsCriticas || 0) > 0 ? 'warning' : 'success'} 
+                icon={<FileWarning className="w-4 h-4 sm:w-5 sm:h-5" />} 
+                className="hover:scale-[1.02] transition-transform"
+              />
+            </Link>
+            <Link to="/admin/integrantes?alerta=sst">
+              <KpiCard 
+                titulo="Ações SST Pendentes" 
+                valorRaw={dashboardData?.kpis.sstPendentes} 
+                formatter={formatNum} 
+                descricao="Ações atrasadas ou pendentes" 
+                loading={isLoading} 
+                variant={(dashboardData?.kpis.sstPendentes || 0) > 0 ? 'danger' : 'success'} 
+                icon={<ShieldCheck className="w-4 h-4 sm:w-5 sm:h-5" />} 
+                className="hover:scale-[1.02] transition-transform"
+              />
+            </Link>
           </div>
 
           {/* DASHBOARD DE RISCO E COMPLIANCE */}
