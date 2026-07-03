@@ -106,6 +106,11 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
   })), [cargos]);
 
   // --- FETCH DADOS ---
+  const resetRef = useRef(reset);
+  const onCancelarRef = useRef(onCancelar);
+  resetRef.current = reset;
+  onCancelarRef.current = onCancelar;
+
   useEffect(() => {
     if (!userId) return;
     let isMounted = true;
@@ -127,7 +132,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
 
         setFotoAtualUrl(user.fotoUrl || null);
 
-        reset({
+        resetRef.current({
           nome: user.nome || '',
           email: user.email || '',
           matricula: user.matricula || '',
@@ -144,7 +149,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
         if (import.meta.env.DEV) console.error(err);
         if (isMounted) {
           toast.error("Erro ao carregar os dados de perfil.");
-          onCancelar();
+          onCancelarRef.current();
         }
       } finally {
         if (isMounted) setLoadingData(false);
@@ -153,7 +158,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
 
     carregarTudo();
     return () => { isMounted = false; };
-  }, [userId, reset, onCancelar]);
+  }, [userId]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {

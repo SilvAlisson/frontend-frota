@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useIntegranteDossie } from '../hooks/useIntegranteDossie';
 import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
@@ -45,6 +45,8 @@ export function MatrizDetalheUsuario() {
   const badgeTreinamento = getBadge('TREINAMENTO');
   const badgeAso = getBadge('ASO');
   const badgeCnh = getBadge('CNH');
+
+  const handleCancelarCadastro = useCallback(() => setActiveTab('treinamentos'), []);
 
   return (
     <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500 pb-10 max-w-[1400px] mx-auto">
@@ -126,17 +128,16 @@ export function MatrizDetalheUsuario() {
                <AbaCnh userId={user.id} />
             </div>
           )}
-          {activeTab === 'cadastral' && (
-            <div className="animate-in fade-in">
-               <h3 className="text-xl font-bold text-text-main mb-6">Dados Cadastrais</h3>
-               <FormEditarUsuario
-                 userId={user.id}
-                 onSuccess={() => {}} // Hook interno já invalida queries
-                 onCancelar={() => setActiveTab('treinamentos')}
-                 variant="embedded"
-               />
-            </div>
-          )}
+          {/* SEMPRE monta, só esconde com CSS para evitar desmontar e perder o estado do form e forçar re-fetch */}
+          <div className={activeTab === 'cadastral' ? 'block animate-in fade-in' : 'hidden'}>
+            <h3 className="text-xl font-bold text-text-main mb-6">Dados Cadastrais</h3>
+            <FormEditarUsuario
+              userId={user.id}
+              onSuccess={() => {}} // Hook interno já invalida queries
+              onCancelar={handleCancelarCadastro}
+              variant="embedded"
+            />
+          </div>
         </div>
       </div>
     </div>

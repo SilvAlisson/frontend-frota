@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -89,6 +89,11 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
   ], []);
 
   // --- CARREGAMENTO INICIAL ---
+  const resetRef = useRef(reset);
+  const onCancelarRef = useRef(onCancelar);
+  resetRef.current = reset;
+  onCancelarRef.current = onCancelar;
+
   useEffect(() => {
     if (!veiculoId) return;
     
@@ -112,7 +117,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
             placaFormatada = `${placaFormatada.substring(0, 3)}-${placaFormatada.substring(3)}`;
         }
 
-        reset({
+        resetRef.current({
           placa: placaFormatada,
           marca: veiculo.marca || '',
           modelo: veiculo.modelo,
@@ -129,7 +134,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
         if (import.meta.env.DEV) console.error(err);
         if (isMounted) {
             toast.error('Erro ao Acessar à ficha do veículo.');
-            onCancelar();
+            onCancelarRef.current();
         }
       } finally {
         if (isMounted) setLoadingData(false);
@@ -138,7 +143,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
     fetchVeiculo();
     
     return () => { isMounted = false; };
-  }, [veiculoId, reset, onCancelar]);
+  }, [veiculoId]);
 
   const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setValue("ultimoKm", formatKmVisual(e.target.value));
