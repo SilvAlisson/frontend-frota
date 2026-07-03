@@ -83,9 +83,9 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
   })), []);
   
   const statusOptions = useMemo(() => [
-    { label: 'ðŸŸ¢ Ativo (Em Operação)', value: 'ATIVO' },
-    { label: 'ðŸ”§ Em Manutenção (Oficina)', value: 'EM_MANUTENCAO' },
-    { label: 'ðŸ”´ Inativo (Baixado/Vendido)', value: 'INATIVO' }
+    { label: 'Ativo (Em Operação)', value: 'ATIVO' },
+    { label: 'Em Manutenção (Oficina)', value: 'EM_MANUTENCAO' },
+    { label: 'Inativo (Fora de Operação)', value: 'INATIVO' }
   ], []);
 
   // --- CARREGAMENTO INICIAL ---

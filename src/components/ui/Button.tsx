@@ -61,7 +61,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         onPointerDown={handlePointerDown}
-        // ðŸ›¡ï¸ TRAVA DUPLO-CLIQUE: Fica disabled se estiver carregando
+        //  Fica disabled se estiver carregando
         disabled={disabled || isLoading}
         {...props}
       >
