@@ -33,26 +33,29 @@ export function Step1DadosOperacionais() {
     [veiculos]
   );
 
-  // IDENTIFICADOR DE VEÍCULO LEVE
-  const isVeiculoLeve = useMemo(() => {
+  // 1. IDENTIFICADOR SEGURO DE FROTA PESADA
+  // Mapeia os tipos que exigem capacitação. Qualquer outro será tratado como leve/livre.
+  const isVeiculoPesado = useMemo(() => {
     const v = veiculos.find((veiculo: Veiculo) => veiculo.id === veiculoIdSelecionado);
-    return v && ['UTILITARIO', 'LEVE', 'OUTRO'].includes(v.tipoVeiculo || '');
+    const tiposRestritos = ['POLIGUINDASTE', 'VACUO', 'MUNCK', 'CAMINHAO', 'PESADO'];
+    
+    return v ? tiposRestritos.includes(v.tipoVeiculo?.toUpperCase() || '') : false;
   }, [veiculoIdSelecionado, veiculos]);
 
-  // FILTRO DINÂMICO DE RESPONSÁVEIS
+  // 2. FILTRO DINÂMICO INTELIGENTE
   const operadorOptions = useMemo(() => {
     return usuarios
-      .filter(u => !u.nome.startsWith('[INATIVO]'))
+      .filter(u => !u.nome.startsWith('[INATIVO]')) // Remove inativos
       .filter(u => {
-        if (isVeiculoLeve) {
-           // Carros leves são dirigidos pela gestão/encarregados e NÃO pelos operadores
-           return ['ENCARREGADO', 'RH', 'COORDENADOR', 'ADMIN'].includes(u.role);
+        if (isVeiculoPesado) {
+           // Trava: Apenas Operadores OU integrantes com interinidade ativa
+           return u.role === 'OPERADOR' || u.permiteOperacao === true; 
         }
-        // Caminhões e pesados são dirigidos EXCLUSIVAMENTE pelos operadores
-        return u.role === 'OPERADOR';
+        // Liberação: Se for veículo leve, qualquer integrante ativo da equipe pode abastecer
+        return true;
       })
       .map(u => ({ value: u.id, label: u.nome }));
-  }, [usuarios, isVeiculoLeve]);
+  }, [usuarios, isVeiculoPesado]);
 
   useEffect(() => {
     if (veiculoIdSelecionado) {
@@ -86,7 +89,7 @@ export function Step1DadosOperacionais() {
 
         {/* containerClassName="md:col-span-2" */}
         <Select
-          label={isVeiculoLeve ? "Responsável (Gestão/Encarregado)" : "Operador / Motorista"}
+          label={isVeiculoPesado ? "Operador / Motorista" : "Integrante Responsável"}
           options={operadorOptions}
           icon={<User className="w-4 h-4" />}
           {...register('operadorId')}
@@ -98,7 +101,7 @@ export function Step1DadosOperacionais() {
           <div className="flex flex-col">
             <Input
               label="KM do Painel (Hodômetro)"
-              type="tel" // 🚨 Ajuste crucial: Trocado para 'tel' para garantir o teclado numérico inquebrável
+              type="tel" // 🚨 Ajuste crucial: Mantido para garantir o teclado numérico inquebrável
               icon={<Gauge className="w-4 h-4 text-primary" />} 
               inputMode="numeric"
               {...register('kmAtual')}
@@ -129,7 +132,7 @@ export function Step1DadosOperacionais() {
         {/* CALLOUT DE AVISO DE KM INCONSISTENTE */}
         {isKmInvalido && (
           <div className="md:col-span-2 animate-in fade-in zoom-in-95 duration-300">
-            <Callout variant="warning" title="Odómetro Inconsistente" icon={AlertTriangle}>
+            <Callout variant="warning" title="Odômetro Inconsistente" icon={AlertTriangle}>
               O valor digitado (<strong className="font-mono">{kmAtualNum.toLocaleString('pt-BR')}</strong>) é <strong>menor</strong> que o último KM Registrado na base de dados para este veículo. Confirme se os dados estão corretos antes de avançar.
             </Callout>
           </div>

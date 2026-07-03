@@ -15,6 +15,7 @@ export interface User {
   image?: string | null;
   loginToken?: string | null;
   status?: StatusOperador;
+  permiteOperacao?: boolean;
 
   cnhNumero?: string | null;
   cnhCategoria?: CategoriaCNH | string | null;
@@ -26,4 +27,5 @@ export interface UsuarioSimplificado {
   id: string;
   nome: string;
   role: string;
+  permiteOperacao?: boolean;
 }
