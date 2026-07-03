@@ -21,7 +21,7 @@ function getFirstAndLastName(fullName: string) {
 }
 
 import {
-  QrCode, Search, Download, Users, Printer, Activity
+  QrCode, Search, Download, Users, Printer, Activity, UserPlus, UserX
 } from 'lucide-react';
 
 import { PageHeader } from './ui/PageHeader';
@@ -30,12 +30,22 @@ import { PullToRefresh } from './ui/PullToRefresh';
 import { useUsuarios } from '../hooks/useUsuarios';
 import { useModalStore } from '../hooks/useModalStore';
 import { useDebounce } from '../hooks/useDebounce';
+import { ConfirmInativar } from './ui/ConfirmInativar';
+import { ModalNovoIntegrante } from './rh/ModalNovoIntegrante';
+import { useCargos } from '../hooks/useCargos';
+import { api } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export function GestaoUsuarios() {
   // Apenas estados de visualização operacional
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<User | null>(null);
   const [busca, setBusca] = useState('');
   const [filtroRole, setFiltroRole] = useState<string>('TODOS');
+  
+  const [usuarioParaInativar, setUsuarioParaInativar] = useState<User | null>(null);
+  const [novoIntegranteOpen, setNovoIntegranteOpen] = useState(false);
+  const { data: cargos = [] } = useCargos();
+  const { user: currentUser } = useAuth();
 
   const { usuarios, isLoading, refetch } = useUsuarios();
   const { openModal, closeModal } = useModalStore();
@@ -157,6 +167,11 @@ export function GestaoUsuarios() {
                 <Button variant="secondary" onClick={handleAbrirEtiquetasModal} className="whitespace-nowrap flex-1 sm:flex-none h-11 shadow-sm border-border" icon={<Printer className="w-4 h-4 text-primary" />}>
                   Imprimir QRs
                 </Button>
+                {currentUser && ['ADMIN', 'RH'].includes(currentUser.role) && (
+                  <Button variant="primary" onClick={() => setNovoIntegranteOpen(true)} className="whitespace-nowrap flex-1 sm:flex-none h-11" icon={<UserPlus className="w-4 h-4" />}>
+                    Novo Integrante
+                  </Button>
+                )}
               </div>
             </div>
           }
@@ -218,6 +233,16 @@ export function GestaoUsuarios() {
                         <div /> 
                       )}
 
+                      {currentUser && ['ADMIN', 'RH'].includes(currentUser.role) && (
+                        <Button
+                          variant="ghost"
+                          className="h-11 w-11 !p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-xl col-span-2 mt-1"
+                          onClick={() => setUsuarioParaInativar(u)}
+                          title="Desligar Integrante"
+                        >
+                          <UserX className="w-5 h-5 mx-auto" />
+                        </Button>
+                      )}
                     </div>
                   </td>
                 </>
@@ -263,6 +288,31 @@ export function GestaoUsuarios() {
             />
           </div>
         )}
+
+        <ConfirmInativar
+          isOpen={!!usuarioParaInativar}
+          onClose={() => setUsuarioParaInativar(null)}
+          onConfirm={async () => {
+            if (!usuarioParaInativar) return;
+            try {
+              await api.delete(`/users/${usuarioParaInativar.id}`);
+              toast.success('Integrante desligado com sucesso');
+              refetch();
+            } finally {
+              setUsuarioParaInativar(null);
+            }
+          }}
+          userName={usuarioParaInativar?.nome || ''}
+          isLoading={false}
+        />
+
+        <ModalNovoIntegrante
+          isOpen={novoIntegranteOpen}
+          onClose={() => setNovoIntegranteOpen(false)}
+          onSuccess={refetch}
+          cargos={cargos}
+        />
+
       </div>
     </PullToRefresh>
   );
