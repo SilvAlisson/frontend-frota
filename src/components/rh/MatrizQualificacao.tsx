@@ -1,5 +1,5 @@
 import { useMatrizQualificacao, type Exigencia } from '../../hooks/useMatrizQualificacao';
-import { Search, AlertCircle, CheckCircle2, XCircle, ChevronRight, FileCheck, ShieldAlert, Plus } from 'lucide-react';
+import { Search, AlertCircle, CheckCircle2, XCircle, ChevronRight, FileCheck, ShieldAlert, Plus, UserX } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
@@ -8,8 +8,12 @@ import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Skeleton } from '../ui/Skeleton';
 import { Button } from '../ui/Button';
-import { FormCadastrarUsuario } from '../forms/FormCadastrarUsuario';
 import { SmartFAB } from '../ui/SmartFAB';
+import { ConfirmInativar } from '../ui/ConfirmInativar';
+import { ModalNovoIntegrante } from './ModalNovoIntegrante';
+import { useCargos } from '../../hooks/useCargos';
+import { api } from '../../services/api';
+import { toast } from 'sonner';
 
 // Tipos de Status Global
 type GlobalStatus = 'CRITICO' | 'ATENCAO' | 'CONFORME';
@@ -18,7 +22,9 @@ export function MatrizQualificacao() {
   const { data: matriz, isLoading, refetch } = useMatrizQualificacao();
   const [busca, setBusca] = useState('');
   const [filtroStatus, setFiltroStatus] = useState<GlobalStatus | 'TODOS'>('TODOS');
-  const [isCadastroOpen, setIsCadastroOpen] = useState(false);
+  const [novoIntegranteOpen, setNovoIntegranteOpen] = useState(false);
+  const [usuarioParaInativar, setUsuarioParaInativar] = useState<{ id: string; nome: string } | null>(null);
+  const { data: cargos = [] } = useCargos();
   const navigate = useNavigate();
 
   // 🧠 LÓGICA INTELIGENTE: Processamento, Saúde e Ordenação
@@ -56,27 +62,7 @@ export function MatrizQualificacao() {
   }, [matriz, busca, filtroStatus]);
 
   // --- RENDERIZAÇÃO DO FORMULÁRIO DE ADMISSÃO (RH) ---
-  if (isCadastroOpen) {
-    return (
-      <div className="animate-in slide-in-from-right duration-500 max-w-2xl mx-auto mt-4">
-        <button
-          className="mb-4 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit"
-          onClick={() => setIsCadastroOpen(false)}
-        >
-          <span className="p-1.5 bg-surface-hover rounded-lg border border-border/60">←</span> Voltar para a Matriz
-        </button>
-        <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60">
-          <FormCadastrarUsuario
-            onSuccess={() => {
-              setIsCadastroOpen(false);
-              if (refetch) refetch();
-            }}
-            onCancelar={() => setIsCadastroOpen(false)}
-          />
-        </div>
-      </div>
-    );
-  }
+  // (Agora gerenciado pelo ModalNovoIntegrante, nada a renderizar inline)
 
   // 🦴 SKELETON LOADING
   if (isLoading) {
@@ -183,7 +169,7 @@ export function MatrizQualificacao() {
 
           {/*   Botão de Cadastro (Oculto em Mobile porque usamos o SmartFAB) */}
           <Button
-            onClick={() => setIsCadastroOpen(true)}
+            onClick={() => setNovoIntegranteOpen(true)}
             className="hidden sm:flex whitespace-nowrap h-10 shadow-button hover:shadow-float-primary"
             icon={<Plus className="w-4 h-4" />}
           >
@@ -300,7 +286,31 @@ export function MatrizQualificacao() {
         })}
       </div>
 
-      <SmartFAB onClick={() => setIsCadastroOpen(true)} label="Novo Integrante" />
+      <SmartFAB onClick={() => setNovoIntegranteOpen(true)} label="Novo Integrante" />
+
+      <ModalNovoIntegrante
+        isOpen={novoIntegranteOpen}
+        onClose={() => setNovoIntegranteOpen(false)}
+        onSuccess={refetch}
+        cargos={cargos}
+      />
+
+      <ConfirmInativar
+        isOpen={!!usuarioParaInativar}
+        onClose={() => setUsuarioParaInativar(null)}
+        onConfirm={async () => {
+          if (!usuarioParaInativar) return;
+          try {
+            await api.delete(`/users/${usuarioParaInativar.id}`);
+            toast.success('Integrante desligado com sucesso');
+            refetch();
+          } finally {
+            setUsuarioParaInativar(null);
+          }
+        }}
+        userName={usuarioParaInativar?.nome || ''}
+        isLoading={false}
+      />
     </div>
   );
 }
