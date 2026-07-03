@@ -15,9 +15,12 @@ export function MatrizDetalheUsuario() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'treinamentos' | 'aso' | 'cnh' | 'cadastral'>('treinamentos');
 
-  // Reusing the hook used for the dossie to get the user data
+  // 1. Busca os dados do dossiê
   const { data: dossie, isLoading } = useIntegranteDossie(id || '', 1);
+  
+  const { data: matriz } = useMatrizQualificacao();
 
+  // 2. Early return de carregamento (após a declaração de TODOS os hooks)
   if (isLoading || !dossie) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
@@ -29,7 +32,7 @@ export function MatrizDetalheUsuario() {
 
   const { user } = dossie;
 
-  const { data: matriz } = useMatrizQualificacao();
+  // Processa a matriz agora que temos certeza que passou do loading
   const matrizUser = matriz?.find(u => u.userId === (id || ''));
 
   const getBadge = (tipo: 'TREINAMENTO' | 'ASO' | 'CNH') => {
