@@ -212,7 +212,22 @@ export function GestaoUsuarios() {
                   </td>
                   <td className={`${TableStyles.td} justify-center`}>
                     <div className="w-full flex flex-col items-center justify-center gap-1.5 text-center">
-                      <BadgeRole role={u.role} />
+                      {/* Cargo real (cargo.nome) ou fallback para role */}
+                      {u.cargo?.nome ? (
+                        <Badge variant="info" className="shadow-sm">
+                          {u.cargo.nome}
+                        </Badge>
+                      ) : (
+                        <BadgeRole role={u.role} />
+                      )}
+
+                      {/* Role do sistema como subtítulo (menor) se for diferente do cargo */}
+                      {u.cargo?.nome && u.cargo.nome.toUpperCase() !== u.role.replace('_', ' ') && (
+                        <span className="text-[9px] text-text-muted font-mono uppercase tracking-wider bg-surface-hover px-1.5 py-0.5 rounded border border-border/50">
+                          Permissão: {u.role.replace('_', ' ')}
+                        </span>
+                      )}
+
                       {u.matricula && <span className="text-[10px] text-text-muted font-mono font-bold uppercase tracking-widest bg-surface-hover px-1.5 py-0.5 rounded border border-border/50 block w-fit truncate">ID: {u.matricula}</span>}
                     </div>
                   </td>
@@ -267,7 +282,16 @@ export function GestaoUsuarios() {
                       <Avatar nome={u.nome} url={(u as any).fotoUrl || u.image} size="lg" />
                       <div className="flex flex-col gap-0.5 justify-center mt-1">
                         <h3 className="font-black text-text-main text-lg tracking-tight leading-none mb-1.5">{getFirstAndLastName(u.nome)}</h3>
-                        <BadgeRole role={u.role} />
+                        {u.cargo?.nome ? (
+                          <Badge variant="info" className="shadow-sm">{u.cargo.nome}</Badge>
+                        ) : (
+                          <BadgeRole role={u.role} />
+                        )}
+                        {u.cargo?.nome && u.cargo.nome.toUpperCase() !== u.role.replace('_', ' ') && (
+                          <span className="text-[9px] text-text-muted font-mono uppercase tracking-wider mt-1 block">
+                            Permissão: {u.role.replace('_', ' ')}
+                          </span>
+                        )}
                       </div>
                     </div>
 

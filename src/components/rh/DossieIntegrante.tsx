@@ -4,7 +4,7 @@ import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { DateHelper } from '../../lib/dateHelper';
-import { Car, ShieldAlert, ChevronLeft, ChevronRight, Activity, MapPin, CheckCircle2 } from 'lucide-react';
+import { Car, ShieldAlert, ChevronLeft, ChevronRight, Activity, MapPin, CheckCircle2, Clock, UserCog } from 'lucide-react';
 
 interface DossieIntegranteProps {
   userId: string;
@@ -15,8 +15,13 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
   const [page, setPage] = useState(1);
   const { data: dossie, isLoading } = useIntegranteDossie(userId, page);
 
-  const userRole = dossie?.user ? ((dossie.user.cargo as { nome?: string })?.nome || dossie.user.role) : null;
-  const isMotorista = userRole === 'OPERADOR';
+  // Cargo atual (para exibição)
+  const cargoAtual = dossie?.user ? ((dossie.user.cargo as { nome?: string })?.nome || dossie.user.role) : null;
+
+  // 🔧 CORREÇÃO: Histórico aparece se TEM jornadas, não apenas se é operador atual
+  const temJornadas = (dossie?.jornadas?.length ?? 0) > 0;
+  const temDefeitos = (dossie?.user?.defeitosRegistrados?.length ?? 0) > 0;
+  const mostraHistoricoOperacional = temJornadas || temDefeitos || cargoAtual === 'OPERADOR';
 
   if (isLoading || !dossie) {
     return (
@@ -33,7 +38,7 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
 
   return (
     <div className="animate-in slide-in-from-right duration-500 pb-10">
-      {/* HEADER DE NAVEGAÇÃO E RESUMO */}
+      {/* HEADER */}
       <div className="mb-6">
         <button
           className="mb-4 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit"
@@ -52,19 +57,26 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
               </Badge>
             </div>
             <p className="text-text-secondary font-medium flex items-center justify-center sm:justify-start gap-2 mb-4">
-              <span className="text-primary font-bold">{(user.cargo as { nome?: string })?.nome || user.role}</span>
+              <span className="text-primary font-bold">{cargoAtual}</span>
               • Matrícula: {user.matricula || 'N/A'}
             </p>
 
+            {/* Badge indicando que tem histórico operacional */}
+            {temJornadas && cargoAtual !== 'OPERADOR' && (
+              <div className="mt-2 inline-flex items-center gap-1.5 px-3 py-1 bg-primary/10 text-primary text-xs font-bold rounded-full border border-primary/20">
+                <UserCog className="w-3 h-3" />
+                <span>{pagination.total} jornada{pagination.total > 1 ? 's' : ''} como operador</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* CONTEÚDO OPERACIONAL */}
+      {/* CONTEÚDO */}
       <div className="bg-surface rounded-3xl shadow-sm border border-border/60 p-6 sm:p-8">
-
-        {isMotorista ? (
+        {mostraHistoricoOperacional ? (
           <div className="space-y-8 animate-in fade-in">
+
             {/* JORNADAS SECTION */}
             <section>
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-4">
@@ -72,16 +84,20 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
                   <Activity className="w-5 h-5 text-primary" /> Histórico de Jornadas
                 </h2>
                 <div className="bg-primary/10 text-primary px-4 py-2 rounded-xl font-bold text-sm">
-                  Total Registrado: {pagination.total} jornadas
+                  Total Registrado: {pagination.total} jornad{pagination.total !== 1 ? 'as' : 'a'}
                 </div>
               </div>
 
-              {jornadas.length > 0 ? (
+              {temJornadas ? (
                 <>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
                     {jornadas.map(j => {
                       const kmRodado = (j.kmFim ?? 0) - (j.kmInicio ?? 0);
                       const isAtiva = !j.dataFim;
+                      const duracao = j.dataFim
+                        ? Math.max(1, Math.round((new Date(j.dataFim).getTime() - new Date(j.dataInicio).getTime()) / (1000 * 60 * 60)))
+                        : null;
+
                       return (
                         <div key={j.id} className="p-5 bg-surface-hover rounded-2xl border border-border/40 flex flex-col justify-between">
                           <div className="flex justify-between items-start mb-3">
@@ -94,14 +110,14 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
                               {DateHelper.getCompleta(j.dataInicio)}
                             </span>
                           </div>
-                          
+
                           <div className="space-y-1.5 mb-4">
                             <p className="text-sm font-bold text-text-main flex items-center gap-1.5">
                               <Car className="w-4 h-4 text-primary" /> {j.veiculo?.placa || 'Veículo Desconhecido'}
                             </p>
                             {j.observacoes && (
                               <p className="text-xs font-medium text-text-secondary flex items-start gap-1.5">
-                                <MapPin className="w-4 h-4 text-text-muted shrink-0 mt-0.5" /> 
+                                <MapPin className="w-4 h-4 text-text-muted shrink-0 mt-0.5" />
                                 <span className="line-clamp-2">{j.observacoes}</span>
                               </p>
                             )}
@@ -115,9 +131,7 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
                             <div className="flex flex-col text-right">
                               <span className="text-xs text-text-muted font-bold">Duração</span>
                               <span className="font-bold text-text-secondary">
-                                {j.dataFim 
-                                  ? `${Math.max(1, Math.round((new Date(j.dataFim).getTime() - new Date(j.dataInicio).getTime()) / (1000 * 60 * 60)))}h`
-                                  : '-'}
+                                {duracao ? `${duracao}h` : (isAtiva ? 'Em andamento' : '-')}
                               </span>
                             </div>
                           </div>
@@ -153,7 +167,8 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
                 </>
               ) : (
                 <div className="p-6 bg-surface-hover rounded-2xl border border-dashed border-border/60 text-center">
-                  <p className="text-text-muted font-medium">Nenhuma jornada operacional registrada nos últimos 30 dias.</p>
+                  <Activity className="w-12 h-12 text-text-muted mx-auto mb-3" />
+                  <p className="text-text-muted font-medium">Nenhuma jornada operacional registrada.</p>
                 </div>
               )}
             </section>
@@ -200,19 +215,25 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
                 </div>
               )}
             </section>
+
           </div>
         ) : (
+          // Usuário NUNCA atuou como operador E não tem defeitos
           <div className="p-10 text-center">
-             <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-surface-hover border border-border/50 mb-4">
-                <Activity className="w-8 h-8 text-text-muted" />
-             </div>
-             <h3 className="text-lg font-bold text-text-main">Histórico Operacional Vazio</h3>
-             <p className="text-text-secondary mt-1">
-               Este perfil não atua como Operador de Campo, logo não possui histórico de jornadas e defeitos.
-             </p>
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-surface-hover border border-border/50 mb-4">
+              <Activity className="w-8 h-8 text-text-muted" />
+            </div>
+            <h3 className="text-lg font-bold text-text-main">Histórico Operacional Vazio</h3>
+            <p className="text-text-secondary mt-1 max-w-md mx-auto">
+              Este integrante não possui jornadas nem defeitos registrados como operador de campo.
+            </p>
+            {cargoAtual === 'OPERADOR' && (
+              <p className="text-xs text-text-muted mt-3 italic">
+                Cargo atual: Operador — jornadas aparecerão aqui quando iniciarem turnos.
+              </p>
+            )}
           </div>
         )}
-
       </div>
     </div>
   );
