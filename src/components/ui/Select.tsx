@@ -58,6 +58,29 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
         const [internalValue, setInternalValue] = useState<string>(() => toSafeString(value));
 
+        // --- INÍCIO: DETECTOR DE CONTROLLED/UNCONTROLLED SOLICITADO ---
+        const previous = useRef(value);
+        useEffect(() => {
+            if (previous.current !== value) {
+                console.group(`SELECT ${name}`);
+                console.log("Anterior:", previous.current);
+                console.log("Atual:", value);
+                console.log("Internal:", internalValue);
+
+                if (
+                    (previous.current === undefined) !==
+                    (value === undefined)
+                ) {
+                    console.error("⚠️ Mudou controlled/uncontrolled");
+                    console.trace();
+                }
+
+                console.groupEnd();
+                previous.current = value;
+            }
+        }, [value, name, internalValue]);
+        // --- FIM: DETECTOR ---
+
         // 1. Intercepta valores externos (Prop React)
         useEffect(() => {
             const next = toSafeString(value);
