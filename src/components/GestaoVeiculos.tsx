@@ -32,6 +32,7 @@ const FormEditarVeiculo = React.lazy(() => import('./forms/FormEditarVeiculo').t
 
 export function GestaoVeiculos() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   // Estados de Controle
   const [isCadastroOpen, setIsCadastroOpen] = useState(false);
