@@ -88,68 +88,69 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
     { label: 'Inativo (Fora de Operação)', value: 'INATIVO' }
   ], []);
 
-  // --- CARREGAMENTO INICIAL ---
-  const resetRef = useRef(reset);
-  const onCancelarRef = useRef(onCancelar);
-  resetRef.current = reset;
-  onCancelarRef.current = onCancelar;
+  // Refs estáveis (declaradas ANTES do useEffect que as usa)
+    const resetRef = useRef(reset);
+    const onCancelarRef = useRef(onCancelar);
+    resetRef.current = reset;
+    onCancelarRef.current = onCancelar;
 
-  useEffect(() => {
-    if (!veiculoId) return;
+    // --- CARREGAMENTO INICIAL ---
+    useEffect(() => {
+      if (!veiculoId) return;
     
-    let isMounted = true;
+      let isMounted = true;
     
-    const fetchVeiculo = async () => {
-      setLoadingData(true);
-      try {
-        const { data: veiculo } = await api.get(`/veiculos/${veiculoId}`);
-        if (!isMounted) return;
+      const fetchVeiculo = async () => {
+        setLoadingData(true);
+        try {
+          const { data: veiculo } = await api.get(`/veiculos/${veiculoId}`);
+          if (!isMounted) return;
 
-        const isTipoVeiculo = (v: unknown): v is typeof tiposDeVeiculo[number] => typeof v === 'string' && tiposDeVeiculo.includes(v as typeof tiposDeVeiculo[number]);
-        const isTipoCombustivel = (v: unknown): v is typeof tiposDeCombustivel[number] => typeof v === 'string' && tiposDeCombustivel.includes(v as typeof tiposDeCombustivel[number]);
+          const isTipoVeiculo = (v: unknown): v is typeof tiposDeVeiculo[number] => typeof v === 'string' && tiposDeVeiculo.includes(v as typeof tiposDeVeiculo[number]);
+          const isTipoCombustivel = (v: unknown): v is typeof tiposDeCombustivel[number] => typeof v === 'string' && tiposDeCombustivel.includes(v as typeof tiposDeCombustivel[number]);
 
-        const tipoVeiculoSafe = isTipoVeiculo(veiculo.tipoVeiculo) ? veiculo.tipoVeiculo : 'OUTRO';
-        const tipoCombustivelSafe = isTipoCombustivel(veiculo.tipoCombustivel) ? veiculo.tipoCombustivel : 'DIESEL_S10';
+          const tipoVeiculoSafe = isTipoVeiculo(veiculo.tipoVeiculo) ? veiculo.tipoVeiculo : 'OUTRO';
+          const tipoCombustivelSafe = isTipoCombustivel(veiculo.tipoCombustivel) ? veiculo.tipoCombustivel : 'DIESEL_S10';
         
-        // Garante que a placa entra formatada com hífen no formulário caso venha sem do backend
-        let placaFormatada = veiculo.placa || '';
-        if (placaFormatada.length === 7 && !placaFormatada.includes('-')) {
-            placaFormatada = `${placaFormatada.substring(0, 3)}-${placaFormatada.substring(3)}`;
-        }
+          // Garante que a placa entra formatada com hífen no formulário caso venha sem do backend
+          let placaFormatada = veiculo.placa || '';
+          if (placaFormatada.length === 7 && !placaFormatada.includes('-')) {
+              placaFormatada = `${placaFormatada.substring(0, 3)}-${placaFormatada.substring(3)}`;
+          }
 
-        resetRef.current({
-          placa: placaFormatada,
-          marca: veiculo.marca || '',
-          modelo: veiculo.modelo,
-          ano: veiculo.ano,
-          tipoVeiculo: tipoVeiculoSafe,
-          tipoCombustivel: tipoCombustivelSafe,
-          capacidadeTanque: veiculo.capacidadeTanque || 0,
-          status: veiculo.status || 'ATIVO',
-          ultimoKm: formatKmVisual(veiculo.ultimoKm),
-          vencimentoCiv: veiculo.vencimentoCiv ? new Date(veiculo.vencimentoCiv).toISOString().split('T')[0] : '',
-          vencimentoCipp: veiculo.vencimentoCipp ? new Date(veiculo.vencimentoCipp).toISOString().split('T')[0] : ''
-        });
-      } catch (err) {
-        if (import.meta.env.DEV) console.error(err);
-        if (isMounted) {
-            toast.error('Erro ao Acessar à ficha do veículo.');
-            onCancelarRef.current();
+          resetRef.current({
+            placa: placaFormatada,
+            marca: veiculo.marca || '',
+            modelo: veiculo.modelo,
+            ano: veiculo.ano,
+            tipoVeiculo: tipoVeiculoSafe,
+            tipoCombustivel: tipoCombustivelSafe,
+            capacidadeTanque: veiculo.capacidadeTanque ?? 0,
+            status: veiculo.status || 'ATIVO',
+            ultimoKm: formatKmVisual(veiculo.ultimoKm),
+            vencimentoCiv: veiculo.vencimentoCiv ? new Date(veiculo.vencimentoCiv).toISOString().split('T')[0] : '',
+            vencimentoCipp: veiculo.vencimentoCipp ? new Date(veiculo.vencimentoCipp).toISOString().split('T')[0] : ''
+          });
+        } catch (err) {
+          if (import.meta.env.DEV) console.error(err);
+          if (isMounted) {
+              toast.error('Erro ao Acessar à ficha do veículo.');
+              onCancelarRef.current();
+          }
+        } finally {
+          if (isMounted) setLoadingData(false);
         }
-      } finally {
-        if (isMounted) setLoadingData(false);
-      }
-    };
-    fetchVeiculo();
+      };
+      fetchVeiculo();
     
-    return () => { isMounted = false; };
-  }, [veiculoId]);
+      return () => { isMounted = false; };
+    }, [veiculoId]);
 
-  const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setValue("ultimoKm", formatKmVisual(e.target.value));
-  };
+    const handleKmChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setValue("ultimoKm", formatKmVisual(e.target.value));
+    };
 
-  const onSubmit = async (data: VeiculoFormOutput) => {
+    const onSubmit = async (data: VeiculoFormOutput) => {
     const formatarDataIsoSegura = (dateStr: string | null | undefined) => {
       if (!dateStr) return null;
       return new Date(`${dateStr}T12:00:00`).toISOString();
@@ -160,7 +161,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
       placa: data.placa.replace('-', ''), // Removemos o hífen antes de enviar para DB
       vencimentoCiv: formatarDataIsoSegura(data.vencimentoCiv),
       vencimentoCipp: formatarDataIsoSegura(data.vencimentoCipp),
-      capacidadeTanque: data.capacidadeTanque || null,
+      capacidadeTanque: data.capacidadeTanque !== undefined && data.capacidadeTanque !== '' ? data.capacidadeTanque : null,
       tipoVeiculo: data.tipoVeiculo || null,
       kmAtual: parseDecimal(data.ultimoKm) 
     };

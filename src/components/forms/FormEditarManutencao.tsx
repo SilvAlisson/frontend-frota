@@ -117,7 +117,7 @@ export function FormEditarManutencao({
    tipo: osParaEditar.tipo,
    alvo: osParaEditar.veiculoId ? 'VEICULO' : 'OUTROS',
    veiculoId: osParaEditar.veiculoId || '',
-   kmAtual: osParaEditar.kmAtual ? formatKmVisual(String(osParaEditar.kmAtual)) : '',
+   kmAtual: (osParaEditar.kmAtual !== undefined && osParaEditar.kmAtual !== null) ? formatKmVisual(String(osParaEditar.kmAtual)) : '',
    numeroCA: caExistente,
    fornecedorId: osParaEditar.fornecedorId,
    // Correção de timezone
