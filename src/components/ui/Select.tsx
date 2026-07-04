@@ -218,9 +218,6 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
                             <RadixSelect.Viewport className="p-1 max-h-[min(280px,var(--radix-select-content-available-height))] overflow-y-auto scrollbar-thin">
                                 <RadixSelect.Group>
-                                    <RadixSelect.Item value="" style={{ display: 'none' }}>
-                                        <RadixSelect.ItemText>{displayPlaceholder}</RadixSelect.ItemText>
-                                    </RadixSelect.Item>
                                     {validOptions.map((opt) => (
                                         <RadixSelect.Item
                                             key={opt.value}
