@@ -3,8 +3,6 @@ import { cn } from '../../lib/utils';
 import * as RadixSelect from '@radix-ui/react-select';
 import { ChevronDown, Check, AlertCircle } from 'lucide-react';
 
-
-
 export interface SelectOption {
     value: string | number;
     label: string;
@@ -21,8 +19,6 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
     onChange?: (event: { target: { name?: string; value: string } }) => void;
 }
 
-// Converte qualquer valor externo para string controlada ('') ou valor real.
-// NUNCA retorna undefined — isso evita o warning de React.
 const toSafeString = (v: string | number | undefined | null): string => {
     if (v === undefined || v === null || v === '') return '';
     return String(v);
@@ -45,11 +41,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         children,
         ...rest
     }, ref) => {
+        const selectId = id || React.useId();
 
-        const generatedId = React.useId();
-        const selectId = id || generatedId;
-
-        // Ref para o <select> nativo oculto (usado pelo react-hook-form)
         const localRef = useRef<HTMLSelectElement>(null);
         const setRefs = useCallback(
             (node: HTMLSelectElement | null) => {
@@ -63,24 +56,15 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             [ref]
         );
 
-        // Estado interno SEMPRE é string — nunca undefined.
-        // Inicializado com o valor externo (ou '' se não houver).
         const [internalValue, setInternalValue] = useState<string>(() => toSafeString(value));
 
-        // ─── SINCRONIZAÇÃO COM PROP EXTERNA ────────────────────────────────────────
-        // Roda quando a prop `value` muda (ex: reset() externo fora do RHF, ou
-        // componente controlado simples como <Select value={mes} .../>).
-        // Usa comparação para evitar re-renders desnecessários.
+        // 1. Intercepta valores externos (Prop React)
         useEffect(() => {
             const next = toSafeString(value);
             setInternalValue(prev => (prev !== next ? next : prev));
         }, [value]);
 
-        // ─── INTERCEPTOR DO REACT-HOOK-FORM ────────────────────────────────────────
-        // O RHF escreve diretamente em `element.value` via ref (em reset() e setValue()).
-        // Interceptamos esse setter nativo para sincronizar o estado React.
-        // useLayoutEffect garante que o interceptor é instalado ANTES do primeiro paint,
-        // capturando defaultValues que o RHF escreve no ref callback.
+        // 2. Intercepta setters do DOM (React Hook Form)
         useLayoutEffect(() => {
             const select = localRef.current;
             if (!select) return;
@@ -93,8 +77,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
             Object.defineProperty(select, 'value', {
                 set(v: unknown) {
-                    // Garante que o DOM nativo SEMPRE recebe uma string
                     const safe = toSafeString(v as string | number | undefined | null);
+                    // O browser pode rejeitar esse set se a <option> ainda não existir (async),
+                    // mas nós salvamos no estado React para repassar ao Radix e sincronizar depois.
                     originalSet.call(this, safe);
                     setInternalValue(safe);
                 },
@@ -104,63 +89,54 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 configurable: true,
             });
 
-            // Captura valor que o RHF já escreveu antes deste effect rodar
             const domValue = originalGet.call(select);
             if (domValue) {
                 setInternalValue(prev => (prev !== domValue ? domValue : prev));
             }
 
             return () => {
-                try {
-                    delete (select as unknown as Record<string, unknown>).value;
-                } catch (_) { /* noop */ }
+                try { delete (select as any).value; } catch (_) { /* noop */ }
             };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
-        // ─── RE-SINCRONIZAÇÃO QUANDO OPTIONS CHEGAM ASSINCRONAMENTE ────────────────
-        // Problema: reset({ campo: 'VALOR' }) roda ANTES das options chegarem da API.
-        // Radix tem o value mas não encontra a option → mostra placeholder.
-        // Solução: quando options mudam e temos um valor, forçamos Radix a re-avaliar
-        // usando o mecanismo de key do próprio Radix (resetKey).
-        const [resetKey, setResetKey] = useState(0);
-        const optionsKey = options.map(o => String(o.value)).join(',');
-        const prevOptionsKeyRef = useRef('');
-        const internalValueRef = useRef(internalValue);
-        internalValueRef.current = internalValue;
-
+        // 3. Garante sincronia do DOM quando as opções carregam assincronamente
         useEffect(() => {
-            // Só age quando as options realmente mudaram (de [] para dados reais)
-            if (optionsKey !== prevOptionsKeyRef.current) {
-                prevOptionsKeyRef.current = optionsKey;
-                // Se temos um valor E as options acabaram de chegar (de vazio para preenchido)
-                if (internalValueRef.current && optionsKey) {
-                    // Força Radix a remontar e reavaliar o value contra as novas options
-                    setResetKey(k => k + 1);
+            const select = localRef.current;
+            if (!select || !internalValue) return;
+
+            // Se o browser rejeitou o valor antes porque não existiam options,
+            // agora que as options renderizaram, aplicamos novamente.
+            if (select.value !== internalValue) {
+                const proto = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+                if (proto?.set) {
+                    proto.set.call(select, internalValue);
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
                 }
             }
-        }, [optionsKey]);
+        }, [options, internalValue]);
 
-        // ─── HANDLER DE MUDANÇA PELO USUÁRIO ──────────────────────────────────────
+        // 4. Handler de interações do usuário no Radix
         const handleValueChange = (newValue: string) => {
             setInternalValue(newValue);
+            
+            const select = localRef.current;
+            if (select) {
+                const proto = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+                if (proto?.set) {
+                    proto.set.call(select, newValue);
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+
             if (onChange) {
-                onChange({
-                    target: { name, value: newValue }
-                });
+                onChange({ target: { name, value: newValue } });
             }
         };
 
-        // Intercepta a opção vazia que o HTML antigo usava
         const emptyOption = options.find(opt => String(opt.value) === '');
         const validOptions = options.filter(opt => String(opt.value) !== '');
         const displayPlaceholder = emptyOption ? emptyOption.label : (placeholder || 'Selecione uma opção');
 
-        // ─── VALOR PARA O RADIX ────────────────────────────────────────────────────
-        // Radix Select usa `undefined` para indicar "nenhum item selecionado"
-        // e exibir o placeholder. Isso é diferente do <select> nativo:
-        // o Radix NÃO emite o warning de React pois é um componente customizado.
-        // O warning vem apenas do <select> nativo, que recebe `internalValue` (sempre string).
         const radixValue = internalValue === '' ? undefined : internalValue;
 
         return (
@@ -175,7 +151,6 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 )}
 
                 <RadixSelect.Root
-                    key={resetKey}
                     value={radixValue}
                     onValueChange={handleValueChange}
                     disabled={disabled}
@@ -247,21 +222,25 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                     </RadixSelect.Portal>
                 </RadixSelect.Root>
 
-                {/* <select> nativo oculto — lido pelo react-hook-form via ref.
-                    Recebe SEMPRE uma string (nunca undefined) para evitar o warning
-                    "uncontrolled to controlled" do React. */}
+                {/* 
+                    ATENÇÃO: O elemento nativo <select> NÃO DEVE receber a prop `value={internalValue}`!
+                    Se recebermos, o React tenta gerenciar o estado nativamente (componente controlado),
+                    e conflita com o interceptor `Object.defineProperty`, gerando o warning 
+                    "changing from uncontrolled to controlled".
+                    Mantemos ele como `defaultValue` para inicializar, e deixamos o React Hook Form / Interceptor
+                    trabalharem sem interferência do React.
+                */}
                 <select
                     ref={setRefs}
                     name={name}
-                    value={internalValue}
-                    onChange={() => {}}
+                    defaultValue={toSafeString(value)}
                     className="sr-only pointer-events-none"
                     aria-hidden="true"
                     tabIndex={-1}
                     {...rest}
                 >
-                    {emptyOption && <option value="" disabled>{emptyOption.label}</option>}
-                    {!emptyOption && <option value="" disabled>{displayPlaceholder}</option>}
+                    {emptyOption && <option value="">{emptyOption.label}</option>}
+                    {!emptyOption && <option value="">{displayPlaceholder}</option>}
                     {validOptions.map((opt) => (
                         <option key={opt.value} value={opt.value}>
                             {opt.label}
