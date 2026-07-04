@@ -130,8 +130,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             // Instala interceptor para capturar reset() / setValue() do RHF
             Object.defineProperty(select, 'value', {
                 set(v: string | undefined | null) {
-                    originalSet.call(this, v);
-                    setInternalValue(v !== undefined && v !== null ? String(v) : '');
+                    const safeValue = v !== undefined && v !== null ? String(v) : '';
+                    originalSet.call(this, safeValue);
+                    setInternalValue(safeValue);
                 },
                 get() {
                     return originalGet.call(this);
