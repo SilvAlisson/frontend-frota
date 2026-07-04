@@ -1,4 +1,4 @@
-import React, { forwardRef, useState, useEffect, useLayoutEffect } from 'react';
+import React, { forwardRef, useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { cn } from '../../lib/utils';
 import * as RadixSelect from '@radix-ui/react-select';
 import { ChevronDown, Check, AlertCircle } from 'lucide-react';
@@ -21,6 +21,13 @@ interface SelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>
     onChange?: (event: { target: { name?: string; value: string } }) => void;
 }
 
+// Converte qualquer valor externo para string controlada ('') ou valor real.
+// NUNCA retorna undefined — isso evita o warning de React.
+const toSafeString = (v: string | number | undefined | null): string => {
+    if (v === undefined || v === null || v === '') return '';
+    return String(v);
+};
+
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     ({
         label,
@@ -42,11 +49,11 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         const generatedId = React.useId();
         const selectId = id || generatedId;
 
-        // Combinação de Refs para podermos acessar o elemento nativo
-        const localRef = React.useRef<HTMLSelectElement>(null);
-        const setRefs = React.useCallback(
+        // Ref para o <select> nativo oculto (usado pelo react-hook-form)
+        const localRef = useRef<HTMLSelectElement>(null);
+        const setRefs = useCallback(
             (node: HTMLSelectElement | null) => {
-                localRef.current = node;
+                (localRef as React.MutableRefObject<HTMLSelectElement | null>).current = node;
                 if (typeof ref === 'function') {
                     ref(node);
                 } else if (ref) {
@@ -56,67 +63,24 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             [ref]
         );
 
-        // Intercepta a opção vazia que o HTML antigo usava
-        const emptyOption = options.find(opt => String(opt.value) === '');
-        const validOptions = options.filter(opt => String(opt.value) !== '');
-        
-        // Usa a label da opção vazia como Placeholder do Radix
-        const displayPlaceholder = emptyOption ? emptyOption.label : (placeholder || "Selecione uma opção");
+        // Estado interno SEMPRE é string — nunca undefined.
+        // Inicializado com o valor externo (ou '' se não houver).
+        const [internalValue, setInternalValue] = useState<string>(() => toSafeString(value));
 
-        //   A trava para evitar "uncontrolled to controlled". 
-        // Nunca deixamos a string vazia, se for null/undefined vira ''.
-        const [internalValue, setInternalValue] = useState<string>(
-            value !== undefined && value !== null ? String(value) : ''
-        );
-
-        // Sincroniza quando o RHF atualiza o value via prop (reset, setValue, defaultValues)
+        // ─── SINCRONIZAÇÃO COM PROP EXTERNA ────────────────────────────────────────
+        // Roda quando a prop `value` muda (ex: reset() externo fora do RHF, ou
+        // componente controlado simples como <Select value={mes} .../>).
+        // Usa comparação para evitar re-renders desnecessários.
         useEffect(() => {
-            if (value !== undefined && value !== null) {
-                setInternalValue(String(value));
-            } else {
-                setInternalValue('');
-            }
+            const next = toSafeString(value);
+            setInternalValue(prev => (prev !== next ? next : prev));
         }, [value]);
 
-        // ✨ CORREÇÃO PRINCIPAL: Re-sincroniza quando as options chegam assincronamente.
-        //
-        // Cenário problemático (causa do bug de campos em branco):
-        //   1. Modal abre → reset({ operadorId: 'xyz' }) seta internalValue = 'xyz'
-        //   2. Radix recebe value='xyz' mas options=[] → lista vazia → mostra placeholder
-        //   3. 500ms depois → options=[{value:'xyz', label:'João'}] chegam da API
-        //   4. BUG: internalValue já é 'xyz' → useEffect[value] NÃO roda (value não mudou)
-        //   5. Radix continua mostrando placeholder porque não houve re-render do value
-        //
-        // Correção: quando options muda E temos um internalValue válido,
-        // forçamos um ciclo: '' → internalValue, para que o Radix encontre a opção.
-        const optionsKey = options.map(o => o.value).join(',');
-        useEffect(() => {
-            if (internalValue) {
-                // Força o Radix a re-avaliar o value após as options chegarem
-                setInternalValue(prev => {
-                    // Retornar o mesmo valor força re-render do Radix com a lista agora populada
-                    return prev;
-                });
-                // Usa um micro-ciclo para garantir que o Radix veja a mudança
-                const v = internalValue;
-                setInternalValue('');
-                // setTimeout 0 coloca no final da fila de microtasks, após o Radix processar
-                Promise.resolve().then(() => setInternalValue(v));
-            }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [optionsKey]);
-
-        // ✨ Sincroniza o Radix Select com o React Hook Form via interceptação do setter nativo.
-        //
-        // Por que useLayoutEffect e não useEffect?
-        //   O RHF seta element.value no ref callback, que roda ANTES de qualquer effect.
-        //   Com useLayoutEffect, instalamos o interceptor E lemos o valor atual em uma
-        //   única janela sincrôna antes do browser pintar, capturando os defaultValues
-        //   que o RHF já teria escrito no elemento.
-        //
-        // Cobre dois casos:
-        //   1. defaultValues: valor já está no element no momento que o effect roda.
-        //   2. reset(): interceptor captura futuras escritas programaticas do RHF.
+        // ─── INTERCEPTOR DO REACT-HOOK-FORM ────────────────────────────────────────
+        // O RHF escreve diretamente em `element.value` via ref (em reset() e setValue()).
+        // Interceptamos esse setter nativo para sincronizar o estado React.
+        // useLayoutEffect garante que o interceptor é instalado ANTES do primeiro paint,
+        // capturando defaultValues que o RHF escreve no ref callback.
         useLayoutEffect(() => {
             const select = localRef.current;
             if (!select) return;
@@ -127,12 +91,12 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             const originalSet = proto.set;
             const originalGet = proto.get;
 
-            // Instala interceptor para capturar reset() / setValue() do RHF
             Object.defineProperty(select, 'value', {
-                set(v: string | undefined | null) {
-                    const safeValue = v !== undefined && v !== null ? String(v) : '';
-                    originalSet.call(this, safeValue);
-                    setInternalValue(safeValue);
+                set(v: unknown) {
+                    // Garante que o DOM nativo SEMPRE recebe uma string
+                    const safe = toSafeString(v as string | number | undefined | null);
+                    originalSet.call(this, safe);
+                    setInternalValue(safe);
                 },
                 get() {
                     return originalGet.call(this);
@@ -140,32 +104,63 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 configurable: true,
             });
 
-            // Leitura inicial: sincroniza qualquer valor que o RHF já escreveu
-            // via defaultValues antes deste effect rodar.
-            const currentDomValue = originalGet.call(select);
-            if (currentDomValue && currentDomValue !== internalValue) {
-                setInternalValue(currentDomValue);
+            // Captura valor que o RHF já escreveu antes deste effect rodar
+            const domValue = originalGet.call(select);
+            if (domValue) {
+                setInternalValue(prev => (prev !== domValue ? domValue : prev));
             }
 
             return () => {
-                // Remove a propriedade própria ao desmontar, restaurando o acesso ao prototype
-                try { delete (select as unknown as Record<string, unknown>).value; } catch (_) { /* noop */ }
+                try {
+                    delete (select as unknown as Record<string, unknown>).value;
+                } catch (_) { /* noop */ }
             };
         // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
+        // ─── RE-SINCRONIZAÇÃO QUANDO OPTIONS CHEGAM ASSINCRONAMENTE ────────────────
+        // Problema: reset({ campo: 'VALOR' }) roda ANTES das options chegarem da API.
+        // Radix tem o value mas não encontra a option → mostra placeholder.
+        // Solução: quando options mudam e temos um valor, forçamos Radix a re-avaliar
+        // usando o mecanismo de key do próprio Radix (resetKey).
+        const [resetKey, setResetKey] = useState(0);
+        const optionsKey = options.map(o => String(o.value)).join(',');
+        const prevOptionsKeyRef = useRef('');
+        const internalValueRef = useRef(internalValue);
+        internalValueRef.current = internalValue;
+
+        useEffect(() => {
+            // Só age quando as options realmente mudaram (de [] para dados reais)
+            if (optionsKey !== prevOptionsKeyRef.current) {
+                prevOptionsKeyRef.current = optionsKey;
+                // Se temos um valor E as options acabaram de chegar (de vazio para preenchido)
+                if (internalValueRef.current && optionsKey) {
+                    // Força Radix a remontar e reavaliar o value contra as novas options
+                    setResetKey(k => k + 1);
+                }
+            }
+        }, [optionsKey]);
+
+        // ─── HANDLER DE MUDANÇA PELO USUÁRIO ──────────────────────────────────────
         const handleValueChange = (newValue: string) => {
             setInternalValue(newValue);
             if (onChange) {
                 onChange({
-                    target: {
-                        name: name,
-                        value: newValue
-                    }
+                    target: { name, value: newValue }
                 });
             }
         };
 
+        // Intercepta a opção vazia que o HTML antigo usava
+        const emptyOption = options.find(opt => String(opt.value) === '');
+        const validOptions = options.filter(opt => String(opt.value) !== '');
+        const displayPlaceholder = emptyOption ? emptyOption.label : (placeholder || 'Selecione uma opção');
+
+        // ─── VALOR PARA O RADIX ────────────────────────────────────────────────────
+        // Radix Select usa `undefined` para indicar "nenhum item selecionado"
+        // e exibir o placeholder. Isso é diferente do <select> nativo:
+        // o Radix NÃO emite o warning de React pois é um componente customizado.
+        // O warning vem apenas do <select> nativo, que recebe `internalValue` (sempre string).
         const radixValue = internalValue === '' ? undefined : internalValue;
 
         return (
@@ -180,6 +175,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                 )}
 
                 <RadixSelect.Root
+                    key={resetKey}
                     value={radixValue}
                     onValueChange={handleValueChange}
                     disabled={disabled}
@@ -214,7 +210,6 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         <RadixSelect.Content
                             position="popper"
                             sideOffset={6}
-                            // avoidCollisions faz o popover virar para cima se não couber abaixo
                             avoidCollisions={true}
                             collisionPadding={8}
                             className="z-[9999] w-[var(--radix-select-trigger-width)] min-w-[200px] max-h-[var(--radix-select-content-available-height)] overflow-hidden bg-surface rounded-xl border border-border/60 shadow-float data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
@@ -223,11 +218,6 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                                 <ChevronDown className="w-4 h-4 rotate-180" />
                             </RadixSelect.ScrollUpButton>
 
-                            {/*
-                             * Viewport: usa a variável CSS do Radix que representa o espaço realmente
-                             * disponível (considerando a posição do trigger + colisões de viewport).
-                             * O max-h de 280px serve como teto absoluto para listas muito longas.
-                             */}
                             <RadixSelect.Viewport className="p-1 max-h-[min(280px,var(--radix-select-content-available-height))] overflow-y-auto scrollbar-thin">
                                 <RadixSelect.Group>
                                     {validOptions.map((opt) => (
@@ -257,13 +247,14 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                     </RadixSelect.Portal>
                 </RadixSelect.Root>
 
-                {/* Input oculto para o react-hook-form */}
+                {/* <select> nativo oculto — lido pelo react-hook-form via ref.
+                    Recebe SEMPRE uma string (nunca undefined) para evitar o warning
+                    "uncontrolled to controlled" do React. */}
                 <select
                     ref={setRefs}
                     name={name}
-                    //  CORREÇÃO 3: Aqui o HTML nativo exige que não seja undefined
                     value={internalValue}
-                    onChange={() => {}} 
+                    onChange={() => {}}
                     className="sr-only pointer-events-none"
                     aria-hidden="true"
                     tabIndex={-1}
