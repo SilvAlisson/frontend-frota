@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import { DateHelper } from '../lib/dateHelper';
@@ -37,6 +38,7 @@ const ITENS_POR_PAGINA = 20;
 
 export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManutencoesProps) {
   const { data: veiculos = [] } = useVeiculos();
+  const queryClient = useQueryClient();
 
   // --- ESTADOS DE FILTROS ---
   const [filtros, setFiltros] = useState<IFiltrosManutencao>({
@@ -211,7 +213,12 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
         >
           {isNovaOSOpen && (
             <FormRegistrarManutencao
-              onSuccess={() => { setIsNovaOSOpen(false); refetch(); }}
+              onSuccess={() => { 
+                setIsNovaOSOpen(false); 
+                queryClient.invalidateQueries({ queryKey: ['manutencoes', 'recentes'] });
+                queryClient.invalidateQueries({ queryKey: ['manutencoes'] });
+                refetch(); 
+              }}
               onClose={() => setIsNovaOSOpen(false)}
             />
           )}
@@ -226,7 +233,13 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
           {editingOS && (
             <FormEditarManutencao
               osParaEditar={editingOS as unknown as React.ComponentProps<typeof FormEditarManutencao>['osParaEditar']}
-              onSuccess={() => { setEditingOS(null); refetch(); }}
+              onSuccess={() => { 
+                queryClient.invalidateQueries({ queryKey: ['manutencoes', 'recentes'] });
+                queryClient.invalidateQueries({ queryKey: ['manutencao', editingOS.id] });
+                queryClient.invalidateQueries({ queryKey: ['manutencoes'] });
+                setEditingOS(null); 
+                refetch(); 
+              }}
               onClose={() => setEditingOS(null)}
             />
           )}

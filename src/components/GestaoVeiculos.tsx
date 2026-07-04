@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Veiculo } from '../types';
 import { Search, Truck } from 'lucide-react';
 
@@ -284,7 +285,13 @@ export function GestaoVeiculos() {
             <Suspense fallback={<div className="p-4 space-y-4"><Skeleton variant="title" /><Skeleton variant="tableRow" className="h-24" /><Skeleton variant="tableRow" className="h-24" /></div>}>
               <FormEditarVeiculo
                 veiculoId={veiculoParaEditar.id}
-                onSuccess={() => { setVeiculoParaEditar(null); refetch(); }}
+                onSuccess={() => { 
+                  queryClient.invalidateQueries({ queryKey: ['veiculo', veiculoParaEditar.id] });
+                  queryClient.invalidateQueries({ queryKey: ['veiculo', veiculoParaEditar.id, 'detalhes'] });
+                  queryClient.invalidateQueries({ queryKey: ['veiculos'] });
+                  setVeiculoParaEditar(null); 
+                  refetch(); 
+                }}
                 onCancelar={() => setVeiculoParaEditar(null)}
               />
             </Suspense>

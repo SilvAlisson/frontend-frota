@@ -1,5 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useCallback } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useIntegranteDossie } from '../hooks/useIntegranteDossie';
 import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
@@ -13,6 +14,7 @@ import { useMatrizQualificacao } from '../hooks/useMatrizQualificacao';
 export function MatrizDetalheUsuario() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<'treinamentos' | 'aso' | 'cnh' | 'cadastral'>('treinamentos');
 
   // 1. Busca os dados do dossiê
@@ -133,7 +135,11 @@ export function MatrizDetalheUsuario() {
             <h3 className="text-xl font-bold text-text-main mb-6">Dados Cadastrais</h3>
             <FormEditarUsuario
               userId={user.id}
-              onSuccess={() => {}} // Hook interno já invalida queries
+              onSuccess={() => {
+                queryClient.invalidateQueries({ queryKey: ['users'] });
+                queryClient.invalidateQueries({ queryKey: ['integranteDossie', user.id] });
+                queryClient.invalidateQueries({ queryKey: ['matriz-qualificacao'] });
+              }}
               onCancelar={handleCancelarCadastro}
               variant="embedded"
             />
