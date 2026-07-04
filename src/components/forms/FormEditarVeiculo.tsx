@@ -68,7 +68,20 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
     formState: { errors, isSubmitting }
   } = useForm<VeiculoFormInput, unknown, VeiculoFormOutput>({ 
     resolver: zodResolver(veiculoSchema),
-    mode: 'onBlur'
+    mode: 'onBlur',
+    defaultValues: {
+      placa: '',
+      marca: '',
+      modelo: '',
+      ano: '' as unknown as number,
+      tipoVeiculo: 'LEVE',
+      tipoCombustivel: 'DIESEL_S10',
+      capacidadeTanque: '' as unknown as number,
+      status: 'ATIVO',
+      ultimoKm: '' as unknown as number,
+      vencimentoCiv: '',
+      vencimentoCipp: ''
+    }
   });
 
   // Opções para Selects Mapeadas para legibilidade
