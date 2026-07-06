@@ -83,71 +83,59 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
         // 1. Intercepta valores externos (Prop React)
         useEffect(() => {
-            const next = toSafeString(value);
-            setInternalValue(prev => (prev !== next ? next : prev));
+            if (value !== undefined) {
+                const next = toSafeString(value);
+                setInternalValue(prev => (prev !== next ? next : prev));
+            }
         }, [value]);
 
-        // 2. Intercepta setters do DOM (React Hook Form)
+        // 2 & 3. Sincronização agressiva e interceptores para React Hook Form
         useLayoutEffect(() => {
             const select = localRef.current;
             if (!select) return;
 
-            const proto = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
-            if (!proto?.set || !proto?.get) return;
-
-            const originalSet = proto.set;
-            const originalGet = proto.get;
-
-            Object.defineProperty(select, 'value', {
-                set(v: unknown) {
-                    const safe = toSafeString(v as string | number | undefined | null);
-                    // O browser pode rejeitar esse set se a <option> ainda não existir (async),
-                    // mas nós salvamos no estado React para repassar ao Radix e sincronizar depois.
-                    originalSet.call(this, safe);
-                    setInternalValue(safe);
-                },
-                get() {
-                    return originalGet.call(this);
-                },
-                configurable: true,
-            });
-
-            const domValue = originalGet.call(select);
-            if (domValue) {
-                setInternalValue(prev => (prev !== domValue ? domValue : prev));
-            }
-
-            return () => {
-                try { delete (select as any).value; } catch (_) { /* noop */ }
-            };
-        }, []);
-
-        // 3. Garante sincronia do DOM e intercepta option.selected (usado pelo RHF no reset)
-        useEffect(() => {
-            const select = localRef.current;
-            if (!select) return;
-
-            // Sincroniza valor inicial async caso o select.value nativo não bata com o internal
-            if (internalValue && select.value !== internalValue) {
-                const proto = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
-                if (proto?.set) {
-                    proto.set.call(select, internalValue);
-                    select.dispatchEvent(new Event('change', { bubbles: true }));
+            let count = 0;
+            // Intervalo de segurança para capturar injeção assíncrona do RHF
+            const interval = setInterval(() => {
+                const domValue = select.value;
+                if (domValue) {
+                    setInternalValue(prev => (prev !== domValue ? domValue : prev));
                 }
-            }
-
-            // O React Hook Form (RHF) usa `option.selected = true` no `reset()`.
-            // Isso não dispara `select.value = ...` nem emite eventos, então precisamos
-            // interceptar o setter de `selected` nas <option> para saber quando o RHF alterou o valor.
-            const optionProto = Object.getOwnPropertyDescriptor(HTMLOptionElement.prototype, 'selected');
-            if (!optionProto?.set) return;
-            const originalOptionSet = optionProto.set;
-
-            const interceptOptions = () => {
                 for (let i = 0; i < select.options.length; i++) {
                     const opt = select.options[i];
-                    if (!(opt as any).__intercepted) {
-                        (opt as any).__intercepted = true;
+                    if (opt.selected && opt.value) {
+                        setInternalValue(prev => (prev !== opt.value ? opt.value : prev));
+                    }
+                }
+                if (++count > 20) clearInterval(interval);
+            }, 50);
+
+            // Intercepta propriedades nativas
+            const selectProto = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+            if (selectProto?.set && selectProto?.get) {
+                const originalSet = selectProto.set;
+                const originalGet = selectProto.get;
+                Object.defineProperty(select, 'value', {
+                    set(v: unknown) {
+                        const safe = toSafeString(v as string | number | undefined | null);
+                        originalSet.call(this, safe);
+                        setInternalValue(safe);
+                    },
+                    get() {
+                        return originalGet.call(this);
+                    },
+                    configurable: true,
+                });
+            }
+
+            const optionProto = Object.getOwnPropertyDescriptor(HTMLOptionElement.prototype, 'selected');
+            if (optionProto?.set) {
+                const originalOptionSet = optionProto.set;
+                for (let i = 0; i < select.options.length; i++) {
+                    const opt = select.options[i];
+                    const optExt = opt as HTMLOptionElement & { __intercepted?: boolean };
+                    if (!optExt.__intercepted) {
+                        optExt.__intercepted = true;
                         Object.defineProperty(opt, 'selected', {
                             set(v: boolean) {
                                 originalOptionSet.call(this, v);
@@ -162,17 +150,26 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         });
                     }
                 }
+            }
+
+            return () => {
+                clearInterval(interval);
+                try { delete (select as Record<string, unknown>).value; } catch (_) { /* noop */ }
             };
+        }, [options]);
 
-            interceptOptions();
-
-            const observer = new MutationObserver(() => {
-                interceptOptions();
-            });
-            observer.observe(select, { childList: true });
-
-            return () => observer.disconnect();
-        }, [options, internalValue]);
+        // Sincroniza valor inicial async caso o select.value nativo não bata com o internal
+        useEffect(() => {
+            const select = localRef.current;
+            if (!select) return;
+            if (internalValue && select.value !== internalValue) {
+                const proto = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+                if (proto?.set) {
+                    proto.set.call(select, internalValue);
+                    select.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+        }, [internalValue]);
 
         // 4. Handler de interações do usuário no Radix
         const handleValueChange = (newValue: string) => {

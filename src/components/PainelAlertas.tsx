@@ -234,7 +234,9 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
                   try {
                     await resolverOciosidade({ isVeiculo, id, status });
                     setAlertaOcioso(null);
-                  } catch (e) { }
+                  } catch (e) {
+                    console.error("[PainelAlertas] Erro ao resolver ociosidade:", e);
+                  }
                 }}
                 variant="primary"
                 className="w-full py-6 text-sm font-black shadow-lg"
@@ -292,7 +294,9 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
                     try {
                       await resolverLog(alertaAuditoria.logId);
                       setAlertaAuditoria(null);
-                    } catch (e) { }
+                    } catch (e) {
+                      console.error("[PainelAlertas] Erro ao resolver log:", e);
+                    }
                   }
                 }}
                 variant="danger"

@@ -82,6 +82,7 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
         onItemAdded(response);
       }
     } catch (err) {
+      console.error("[ModalGerenciarServicos] Erro ao gerenciar serviço:", err);
       // O hook já dispara o toast e faz log
     }
   };

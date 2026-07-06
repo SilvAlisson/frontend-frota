@@ -1,9 +1,12 @@
-import React, { useEffect, useState, useId } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Drawer } from 'vaul';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useScrollLock } from '../../hooks/useScrollLock';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useIsMounted } from '../../hooks/useIsMounted';
 
 function useMediaQuery(query: string) {
   const [matches, setMatches] = useState(false);
@@ -29,53 +32,10 @@ interface ModalProps {
 export function Modal({ isOpen, onClose, title, children, className, nested = false }: ModalProps) {
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const titleId = useId();
+  const mounted = useIsMounted();
 
-  // Bloqueia o scroll do body quando o modal desktop abre
-  useEffect(() => {
-    if (isOpen && isDesktop) {
-      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-      document.body.style.paddingRight = `${scrollbarWidth}px`;
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
-    }
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.paddingRight = '';
-    };
-  }, [isOpen, isDesktop]);
-
-  const [savedScrollY, setSavedScrollY] = useState(0);
-
-  // Armazena o scroll atual ao abrir no mobile
-  useEffect(() => {
-    if (isOpen && !isDesktop) {
-      setSavedScrollY(window.scrollY);
-    }
-  }, [isOpen, isDesktop]);
-
-  // Restaura o scroll do Viewport mobile ao fechar (Bug de teclado vazio do iOS)
-  useEffect(() => {
-    if (!isOpen && !isDesktop) {
-      setTimeout(() => {
-        window.scrollTo({ top: savedScrollY });
-      }, 100);
-    }
-  }, [isOpen, isDesktop, savedScrollY]);
-
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  // Acessibilidade: Fechar via ESC
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  useScrollLock(isOpen, isDesktop);
+  useEscapeKey(isOpen, onClose);
 
   if (!mounted) return null;
 

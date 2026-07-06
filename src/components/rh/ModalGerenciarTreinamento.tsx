@@ -55,7 +55,8 @@ export function ModalGerenciarTreinamento({ userId, treinamentoPreDefinido, carg
 
       onSuccess();
       onClose();
-    } catch {
+    } catch (e) {
+      if (import.meta.env.DEV) console.error("Erro ao adicionar treinamento:", e);
       // addTreinamento já exibe toast de erro via toast.promise internamente
     } finally {
       setIsSubmitting(false);

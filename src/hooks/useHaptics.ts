@@ -15,7 +15,7 @@ export function useHaptics() {
     try {
       navigator.vibrate(10);
     } catch (e) {
-      // Ignorar erros se bloqueado pelo navegador
+      console.error("[useHaptics] Haptics API error (light):", e);
     }
   }, [isSupported]);
 
@@ -25,7 +25,7 @@ export function useHaptics() {
     try {
       navigator.vibrate(40);
     } catch (e) {
-      // Ignorar
+      console.error("[useHaptics] Haptics API error (medium):", e);
     }
   }, [isSupported]);
 
@@ -35,7 +35,7 @@ export function useHaptics() {
     try {
       navigator.vibrate([30, 60, 40]);
     } catch (e) {
-      // Ignorar
+      console.error("[useHaptics] Haptics API error (success):", e);
     }
   }, [isSupported]);
 
@@ -45,7 +45,7 @@ export function useHaptics() {
     try {
       navigator.vibrate([50, 50, 50, 50, 50]);
     } catch (e) {
-      // Ignorar
+      console.error("[useHaptics] Haptics API error (error):", e);
     }
   }, [isSupported]);
 

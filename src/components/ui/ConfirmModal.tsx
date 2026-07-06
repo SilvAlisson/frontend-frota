@@ -1,9 +1,12 @@
-import { useEffect, useState, useId } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { createPortal } from 'react-dom';
 import { Button } from '../ui/Button';
 import { AlertTriangle, Info, CheckCircle2, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { Drawer } from 'vaul';
+import { useScrollLock } from '../../hooks/useScrollLock';
+import { useEscapeKey } from '../../hooks/useEscapeKey';
+import { useIsMounted } from '../../hooks/useIsMounted';
 
 type ModalVariant = 'danger' | 'primary' | 'warning' | 'success';
 
@@ -45,34 +48,13 @@ export function ConfirmModal({
     const isDesktop = useMediaQuery("(min-width: 768px)");
     const titleId = useId();
     const descId = useId();
+    const mounted = useIsMounted();
 
-    // Lock de scroll do body (Desktop)
-    useEffect(() => {
-        if (isOpen && isDesktop) {
-            const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-            document.body.style.paddingRight = `${scrollbarWidth}px`;
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = '';
-            document.body.style.paddingRight = '';
-        }
-        return () => {
-            document.body.style.overflow = '';
-            document.body.style.paddingRight = '';
-        };
-    }, [isOpen, isDesktop]);
+    useScrollLock(isOpen, isDesktop);
 
-    // Fechar via ESC
-    useEffect(() => {
-        const handleEsc = (e: KeyboardEvent) => {
-            if (e.key === 'Escape' && !isLoading) onCancel();
-        };
-        if (isOpen) window.addEventListener('keydown', handleEsc);
-        return () => window.removeEventListener('keydown', handleEsc);
-    }, [isOpen, isLoading, onCancel]);
-
-    const [mounted, setMounted] = useState(false);
-    useEffect(() => setMounted(true), []);
+    useEscapeKey(isOpen, () => {
+        if (!isLoading) onCancel();
+    });
 
     if (!mounted || !isOpen) return null;
 

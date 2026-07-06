@@ -514,6 +514,16 @@
   a, button, input, select, textarea, [role="button"] {
     touch-action: manipulation;
   }
+
+  /* Ocultar setas nativas em inputs numéricos */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+  }
 }
 
 /* --- SCROLLBAR GLOBALMENTE --- */

@@ -74,7 +74,7 @@ function getUserInfoForLog(): string {
       const user = JSON.parse(userStorage);
       return `ID: ${user.id} | Nome: ${user.nome} | Cargo: ${user.role}`;
     }
-  } catch { /* Silencioso */ }
+  } catch (e) { console.error("[API] Erro ao ler usuário do sessionStorage:", e); }
   return 'Deslogado / Desconhecido';
 }
 

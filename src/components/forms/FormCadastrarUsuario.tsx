@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+Ôªøimport { useState, useRef, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -23,29 +23,29 @@ interface CargoRequisito {
 interface Cargo { id: string; nome: string; requisitos?: CargoRequisito[]; }
 const ROLES = ["OPERADOR", "ENCARREGADO", "ADMIN", "RH", "COORDENADOR", "AUXILIAR_OPERACIONAL"] as const;
 
-// Schema de ValidaÁ„o
+// Schema de Valida√ß√£o
 const treinamentoSchema = z.object({
-  nome: z.string().min(1, "ObrigatÛrio"),
-  dataRealizacao: z.string().min(1, "ObrigatÛrio"),
+  nome: z.string().min(1, "Obrigat√≥rio"),
+  dataRealizacao: z.string().min(1, "Obrigat√≥rio"),
   dataVencimento: z.string().optional().nullable(),
-  diasAntecedenciaAlerta: z.union([z.string(), z.number()]).transform(v => Number(v)).refine(v => !isNaN(v) && v >= 1, "MÌnimo 1"),
+  diasAntecedenciaAlerta: z.union([z.string(), z.number()]).transform(v => Number(v)).refine(v => !isNaN(v) && v >= 1, "M√≠nimo 1"),
 });
 
 const usuarioSchema = z.object({
   nome: z.string().min(3, "Nome muito curto").transform(val => val.trim()),
-  email: z.string().email("Email inv·lido").toLowerCase(),
-  password: z.string().min(6, "MÌnimo 6 caracteres"),
+  email: z.string().email("Email inv√°lido").toLowerCase(),
+  password: z.string().min(6, "M√≠nimo 6 caracteres"),
   matricula: z.string().optional().nullable(),
-  role: z.enum(ROLES, { error: "FunÁ„o inv·lida" }),
-  dataAdmissao: z.string().min(1, "Data de admiss„o obrigatÛria"),
-  cargoId: z.string().min(1, "Cargo obrigatÛrio"),
+  role: z.enum(ROLES, { error: "Fun√ß√£o inv√°lida" }),
+  dataAdmissao: z.string().min(1, "Data de admiss√£o obrigat√≥ria"),
+  cargoId: z.string().min(1, "Cargo obrigat√≥rio"),
 
   // CNH (Opcionais/Condicionais)
   cnhNumero: z.string().optional().nullable(),
   cnhCategoria: z.string().optional().nullable(),
   cnhValidade: z.string().optional().nullable(),
   
-  // Treinamentos ObrigatÛrios
+  // Treinamentos Obrigat√≥rios
   treinamentos: z.array(treinamentoSchema).optional(),
 });
 
@@ -62,7 +62,8 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loadingStep, setLoadingStep] = useState('');
 
-  const { data: cargos = [], isLoading: loadCargos } = useQuery<Cargo[]>({
+  const EMPTY_ARRAY = [];
+  const { data: cargos = EMPTY_ARRAY, isLoading: loadCargos } = useQuery<Cargo[]>({
     queryKey: ['cargos-select'],
     queryFn: async () => {
       const response = await api.get('/cargos');
@@ -102,7 +103,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
   const cargoIdSelecionado = watch('cargoId');
   const treinamentosWatch = watch('treinamentos');
 
-  // Ao mudar de cargo, atualizar os treinamentos obrigatÛrios
+  // Ao mudar de cargo, atualizar os treinamentos obrigat√≥rios
   useEffect(() => {
     if (cargoIdSelecionado && cargos.length > 0) {
       const cargo = cargos.find(c => c.id === cargoIdSelecionado);
@@ -162,7 +163,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
     };
 
     try {
-      // Fase 1: Cadastrar Usu·rio
+      // Fase 1: Cadastrar Usu√°rio
       const userRes = await api.post('/users/register', payload);
       const newUserId = userRes.data.user?.id || userRes.data.id;
 
@@ -214,7 +215,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       <div className="bg-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex justify-between items-center shrink-0">
         <div>
           <h3 className="text-xl font-black text-text-main tracking-tight">Novo Integrante</h3>
-          <p className="text-sm text-text-secondary font-medium mt-0.5">Cadastro de acesso, cargo e qualificaÁıes.</p>
+          <p className="text-sm text-text-secondary font-medium mt-0.5">Cadastro de acesso, cargo e qualifica√ß√µes.</p>
         </div>
         <div className="p-3 bg-primary/10 rounded-xl border border-primary/20 shadow-inner text-primary">
           <UserPlus className="w-6 h-6" />
@@ -259,7 +260,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
                 label="Nome Completo"
                 icon={<User className="w-4 h-4 text-text-muted" />}
                 {...register('nome')}
-                placeholder="Ex: Jo„o da Silva"
+                placeholder="Ex: Jo√£o da Silva"
                 error={errors.nome?.message}
                 disabled={isSubmitting}
               />
@@ -287,12 +288,12 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
                 error={errors.password?.message}
                 disabled={isSubmitting}
               />
-              <span className="absolute right-3 top-3 text-[10px] text-text-secondary font-bold pointer-events-none">MÌn. 6 chars</span>
+              <span className="absolute right-3 top-3 text-[10px] text-text-secondary font-bold pointer-events-none">M√≠n. 6 chars</span>
             </div>
 
             <div>
               <Select
-                label="NÌvel de Acesso (FunÁ„o)"
+                label="N√≠vel de Acesso (Fun√ß√£o)"
                 options={roleOptions}
                 {...register('role')}
                 error={errors.role?.message}
@@ -302,7 +303,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
 
             <div>
               <Input
-                label="Data de Admiss„o"
+                label="Data de Admiss√£o"
                 type="date"
                 icon={<Calendar className="w-4 h-4 text-primary/70" />}
                 {...register('dataAdmissao')}
@@ -313,7 +314,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
 
             <div>
               <Input
-                label="MatrÌcula"
+                label="Matr√≠cula"
                 icon={<Hash className="w-4 h-4 text-text-muted" />}
                 {...register('matricula')}
                 placeholder="12345"
@@ -333,7 +334,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
             </div>
           </div>
 
-          {/* SeÁ„o RH Condicional com AnimaÁ„o - Somente Motorista precisa de CNH */}
+          {/* Se√ß√£o RH Condicional com Anima√ß√£o - Somente Motorista precisa de CNH */}
           {roleSelecionada === 'OPERADOR' && (
             <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20 animate-in slide-in-from-top-4 duration-300">
               <div className="flex items-center gap-2 mb-5 border-b border-primary/10 pb-2">
@@ -346,7 +347,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <Input
-                    label="N∫ da CNH"
+                    label="N¬∫ da CNH"
                     icon={<CreditCard className="w-4 h-4 text-primary/70" />}
                     {...register('cnhNumero')}
                     placeholder="Registro da Carteira"
@@ -380,20 +381,20 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
             </div>
           )}
 
-          {/* ? NOVA SE«√O: QualificaÁ„o Inicial (Treinamentos ObrigatÛrios) */}
+          {/* ? NOVA SE√á√ÉO: Qualifica√ß√£o Inicial (Treinamentos Obrigat√≥rios) */}
           {cargoIdSelecionado && (
             <div className="animate-in slide-in-from-top-4 duration-300">
               <div className="flex items-center justify-between border-b border-border/50 pb-2 mb-4">
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
-                  <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">QualificaÁ„o SSMA ObrigatÛria</label>
+                  <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase">Qualifica√ß√£o SSMA Obrigat√≥ria</label>
                 </div>
                 <div className="text-[10px] text-text-secondary font-bold">Baseado no cargo selecionado</div>
               </div>
 
               {fields.length === 0 ? (
                 <div className="p-4 bg-surface-hover rounded-xl border border-dashed border-border/60 text-center">
-                  <p className="text-sm text-text-muted">Este cargo n„o possui treinamentos obrigatÛrios.</p>
+                  <p className="text-sm text-text-muted">Este cargo n√£o possui treinamentos obrigat√≥rios.</p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -410,7 +411,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
                         </div>
                         <div className="w-full md:w-40">
                           <Input
-                            label="RealizaÁ„o"
+                            label="Realiza√ß√£o"
                             type="date"
                             {...register(`treinamentos.${index}.dataRealizacao`)}
                             disabled={isSubmitting}
@@ -497,3 +498,4 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
     </div>
   );
 }
+

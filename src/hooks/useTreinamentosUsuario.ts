@@ -91,10 +91,20 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
     const cargoQueryKey = ['cargos'] as const;
 
     // ── Leitura de Cargos (Para extrair obrigações) ──────────────
-    const { data: cargos = [], isLoading: loadingCargos } = useQuery<any[]>({
+    interface Requisito {
+        id: string;
+        nome: string;
+        diasAntecedenciaAlerta: number;
+    }
+    interface CargoResponse {
+        id: string;
+        requisitos?: Requisito[];
+    }
+    
+    const { data: cargos = [], isLoading: loadingCargos } = useQuery<CargoResponse[]>({
         queryKey: cargoQueryKey,
         queryFn: async () => {
-            const { data } = await api.get<any[]>('/cargos');
+            const { data } = await api.get<CargoResponse[]>('/cargos');
             return data;
         },
         staleTime: 1000 * 60 * 5, // 5 min cache
@@ -127,7 +137,7 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
         const cargoUsuario = cargos.find(c => c.id === cargoId);
         
         if (cargoUsuario && cargoUsuario.requisitos) {
-            cargoUsuario.requisitos.forEach((req: any) => {
+            cargoUsuario.requisitos.forEach((req: Requisito) => {
                 const normName = normalize(req.nome);
                 if (mapaRealizados.has(normName)) {
                     const existente = mapaRealizados.get(normName)!;
@@ -141,7 +151,7 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
                         status: 'PENDENTE',
                         isObrigatorio: true,
                         diasAntecedenciaAlerta: req.diasAntecedenciaAlerta
-                    } as any);
+                    } as unknown as typeof realizados[0]);
                 }
             });
         }

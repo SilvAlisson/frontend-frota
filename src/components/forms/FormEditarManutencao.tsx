@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { useForm, useFieldArray, useWatch, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -83,15 +84,15 @@ interface ManutencaoParaEditar {
  itens: ManutencaoItem[];
 }
 
-interface FormEditarManutencaoProps {
+interface FormEditarManutencaoInternoProps {
  osParaEditar: ManutencaoParaEditar;
  onSuccess: () => void;
  onClose: () => void;
 }
 
-export function FormEditarManutencao({
+function FormEditarManutencaoInterno({
  osParaEditar, onSuccess, onClose
-}: FormEditarManutencaoProps) {
+}: FormEditarManutencaoInternoProps) {
 
  // 📡 BUSCA INDEPENDENTE COM CACHE
  const { data: veiculos = [], isLoading: loadV } = useVeiculos();
@@ -242,16 +243,7 @@ export function FormEditarManutencao({
   }
  };
 
- const isLocked = isSubmitting || uploading || isLoadingDados;
-
- if (isLoadingDados) {
-  return (
-   <div className="flex flex-col items-center justify-center h-[400px] gap-4 text-primary/60 animate-in fade-in">
-    <Loader2 className="w-10 h-10 animate-spin" />
-    <span className="text-sm font-bold uppercase tracking-widest animate-pulse">Sincronizando Banco de Dados...</span>
-   </div>
-  );
- }
+ const isLocked = isSubmitting || uploading;
 
  return (
   <div className="flex flex-col h-full w-full bg-surface rounded-2xl shadow-float border border-border/60 overflow-hidden max-h-[90vh] animate-in fade-in zoom-in-95 duration-300">
@@ -274,7 +266,7 @@ export function FormEditarManutencao({
 
    <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="flex-1 flex flex-col overflow-hidden min-h-0">
 
-    <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-8 scrollbar-thin">
+    <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-8 custom-scrollbar">
 
      {/* TABS DE TIPO */}
      <div className="flex gap-3 bg-surface-hover/30 p-1.5 rounded-xl border border-border/60 shadow-inner">
@@ -292,8 +284,8 @@ export function FormEditarManutencao({
       ))}
      </div>
 
-     <div className="flex flex-col lg:flex-row gap-8">
-      {/* --- COLUNA ESQUERDA: FOTO E ALVO --- */}
+     <div className="flex flex-col-reverse lg:flex-row-reverse gap-8">
+      {/* --- COLUNA DIREITA: FOTO E ALVO --- */}
       <div className="w-full lg:w-1/3 flex flex-col gap-6">
 
        {/* 1. SELEÇÃO DE ALVO */}
@@ -302,9 +294,9 @@ export function FormEditarManutencao({
          <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
          Alvo da OS
         </label>
-        <div className="flex gap-3">
+        <div className="flex flex-col gap-3">
          {ALVOS_MANUTENCAO.map(alvo => (
-          <label key={alvo} className={`flex items-center justify-center gap-2 cursor-pointer p-3 border-2 rounded-xl w-full transition-all ${alvoSelecionado === alvo ? 'border-primary bg-primary/5 shadow-sm' : 'border-border/60 hover:border-primary/40 bg-surface'}`}>
+          <label key={alvo} className={`flex items-center justify-start gap-3 cursor-pointer p-4 border-2 rounded-xl w-full transition-all ${alvoSelecionado === alvo ? 'border-primary bg-primary/5 shadow-sm' : 'border-border/60 hover:border-primary/40 bg-surface'}`}>
            <input
             type="radio"
             value={alvo}
@@ -312,11 +304,11 @@ export function FormEditarManutencao({
             className="accent-primary w-4 h-4 hidden"
             disabled={isLocked}
            />
-           <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${alvoSelecionado === alvo ? 'border-primary' : 'border-text-muted/40'}`}>
+           <div className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center ${alvoSelecionado === alvo ? 'border-primary' : 'border-text-muted/40'}`}>
             {alvoSelecionado === alvo && <div className="w-2 h-2 bg-primary rounded-full" />}
            </div>
            <span className={`text-xs font-black uppercase tracking-wider ${alvoSelecionado === alvo ? 'text-primary' : 'text-text-secondary'}`}>
-            {alvo === 'VEICULO' ? 'Veículo' : 'Equipemento'}
+            {alvo === 'VEICULO' ? 'Veículo' : 'Equipamento'}
            </span>
           </label>
          ))}
@@ -324,11 +316,11 @@ export function FormEditarManutencao({
        </div>
 
        {/* UPLOAD FOTO */}
-       <div className="space-y-2 flex-1">
-        <label className="text-[10px] font-black text-text-secondary tracking-[0.2em] uppercase ml-1">
+       <div className="space-y-2 flex flex-col flex-1 min-h-[250px]">
+        <label className="text-[10px] font-black text-text-secondary tracking-[0.2em] uppercase ml-1 shrink-0">
          Comprovante (NF/OS)
         </label>
-        <div className="relative h-full min-h-[250px] bg-surface-hover/30 rounded-2xl border-2 border-dashed border-border/60 flex flex-col items-center justify-center overflow-hidden group hover:border-primary/50 transition-colors cursor-pointer shadow-sm">
+        <div className="relative w-full aspect-square sm:aspect-video lg:aspect-auto lg:h-full lg:max-h-[350px] bg-surface-hover/30 rounded-2xl border-2 border-dashed border-border/60 flex flex-col items-center justify-center overflow-hidden group hover:border-primary/50 transition-colors cursor-pointer shadow-sm">
          {uploading ? (
           <div className="flex flex-col items-center gap-3">
            <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -336,7 +328,7 @@ export function FormEditarManutencao({
           </div>
          ) : previewFoto ? (
           <>
-           <img src={previewFoto} alt="Nota Fiscal" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+           <img src={previewFoto} alt="Nota Fiscal" className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" />
            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 backdrop-blur-sm pointer-events-none">
             <ImageIcon className="w-8 h-8 text-white" />
             <span className="text-white text-[10px] font-black bg-white/20 px-3 py-1.5 rounded-lg uppercase tracking-widest backdrop-blur-md">Trocar Imagem</span>
@@ -451,64 +443,93 @@ export function FormEditarManutencao({
         </div>
 
         <div className="space-y-4">
-         {fields.map((field, index) => (
-          <div key={field.id} className="bg-surface-hover/20 p-5 rounded-2xl border border-border/60 relative group hover:border-primary/40 transition-colors shadow-sm">
-           {fields.length > 1 && (
-            <Button
-             type="button"
-             variant="danger"
-             size="icon"
-             onClick={() => remove(index)}
-             disabled={isLocked}
-             className="absolute -top-3 -right-3 w-8 h-8 rounded-full shadow-md z-10 transition-all opacity-100 lg:opacity-0 lg:group-hover:opacity-100"
-            >
-             <Trash2 className="w-4 h-4" />
-            </Button>
-           )}
+         {fields.map((field, index) => {
+          const itemVal = Number(itensWatch?.[index]?.valorPorUnidade?.toString().replace(',', '.') || 0);
+          const itemQtd = Number(itensWatch?.[index]?.quantidade || 0);
+          const subtotal = itemVal * itemQtd;
 
-           <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
-            <div className="md:col-span-6">
-             <Select
-              label="Peça / Serviço"
-              options={produtosOpcoes}
-              {...register(`itens.${index}.produtoId` as const)}
-              disabled={isLocked}
-              error={errors.itens?.[index]?.produtoId?.message}
-              containerClassName="!mb-0"
-             />
-            </div>
-            <div className="md:col-span-3">
-             <Input
-              label="Qtd"
-              type="number" inputMode="decimal"
-              step="any"
-              {...register(`itens.${index}.quantidade` as const)}
-              className="text-center font-mono font-bold"
-              disabled={isLocked}
-              error={errors.itens?.[index]?.quantidade?.message as string}
-              containerClassName="!mb-0"
-             />
-            </div>
-            <div className="md:col-span-3">
-             <Input
-              label="R$ Unitário"
-              type="tel"
-              inputMode="numeric"
-              {...register(`itens.${index}.valorPorUnidade` as const, {
-               onChange: (e) => {
-                e.target.value = formatarDinheiro(e.target.value);
-                setValue(`itens.${index}.valorPorUnidade`, e.target.value);
-               }
-              })}
-              className="text-right font-mono font-black text-emerald-600"
-              disabled={isLocked}
-              error={errors.itens?.[index]?.valorPorUnidade?.message as string}
-              containerClassName="!mb-0"
-             />
+          return (
+           <div key={field.id} className="bg-surface-hover/20 p-4 rounded-2xl border border-border/60 shadow-sm transition-colors hover:border-primary/30">
+            <div className="flex flex-col 2xl:flex-row gap-4 2xl:gap-3 items-start 2xl:items-end w-full">
+             
+             {/* PRODUTO / SERVIÇO */}
+             <div className="w-full 2xl:flex-1 min-w-0">
+              <Select
+               label="Peça / Serviço"
+               options={produtosOpcoes}
+               {...register(`itens.${index}.produtoId` as const)}
+               disabled={isLocked}
+               error={errors.itens?.[index]?.produtoId?.message}
+               containerClassName="!mb-0"
+              />
+             </div>
+
+             {/* GRUPO DE VALORES */}
+             <div className="w-full 2xl:w-auto flex flex-row flex-wrap sm:flex-nowrap gap-3 items-end">
+              
+              <div className="w-[80px] shrink-0">
+               <Input
+                label="Qtd"
+                type="number" inputMode="decimal"
+                step="any"
+                {...register(`itens.${index}.quantidade` as const)}
+                className="text-center font-mono font-bold px-2"
+                disabled={isLocked}
+                error={errors.itens?.[index]?.quantidade?.message as string}
+                containerClassName="!mb-0"
+               />
+              </div>
+
+              <div className="flex-1 sm:w-[130px] sm:flex-none shrink-0">
+               <Input
+                label="R$ Unit"
+                type="tel"
+                inputMode="numeric"
+                {...register(`itens.${index}.valorPorUnidade` as const, {
+                 onChange: (e) => {
+                  e.target.value = formatarDinheiro(e.target.value);
+                  setValue(`itens.${index}.valorPorUnidade`, e.target.value);
+                 }
+                })}
+                className="text-right font-mono font-black text-emerald-600 px-3"
+                disabled={isLocked}
+                error={errors.itens?.[index]?.valorPorUnidade?.message as string}
+                containerClassName="!mb-0"
+               />
+              </div>
+
+              <div className="flex-1 sm:w-[140px] sm:flex-none shrink-0">
+               <div className="flex flex-col gap-1.5 w-full">
+                <label className="text-xs font-bold text-text-secondary uppercase tracking-wider select-none ms-1">Subtotal</label>
+                <div className="h-11 flex items-center justify-end px-3 bg-surface border border-border/60 rounded-xl font-mono font-bold text-primary truncate shadow-sm">
+                 {subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                </div>
+               </div>
+              </div>
+
+              <div className="shrink-0 flex items-center justify-center">
+               {fields.length > 1 ? (
+                <Button
+                 type="button"
+                 variant="ghost"
+                 size="icon"
+                 onClick={() => remove(index)}
+                 disabled={isLocked}
+                 className="w-11 h-11 text-error hover:bg-error-soft rounded-xl transition-colors border border-transparent hover:border-error/20"
+                 title="Remover Item"
+                >
+                 <Trash2 className="w-5 h-5" />
+                </Button>
+               ) : (
+                <div className="w-11 h-11" />
+               )}
+              </div>
+             </div>
+
             </div>
            </div>
-          </div>
-         ))}
+          );
+         })}
         </div>
 
         <Button
@@ -554,5 +575,26 @@ export function FormEditarManutencao({
  );
 }
 
+interface FormEditarManutencaoProps {
+ manutencaoId: string;
+ onSuccess: () => void;
+ onClose: () => void;
+}
 
+export function FormEditarManutencao({ manutencaoId, onSuccess, onClose }: FormEditarManutencaoProps) {
+ const { data: osParaEditar, isLoading: loadOS } = useQuery<ManutencaoParaEditar>({
+  queryKey: ['manutencao', manutencaoId],
+  queryFn: async () => (await api.get(`/manutencoes/${manutencaoId}`)).data,
+ });
 
+ if (loadOS || !osParaEditar) {
+  return (
+   <div className="flex flex-col h-full w-full bg-surface rounded-2xl shadow-float border border-border/60 items-center justify-center min-h-[400px] gap-4 text-primary/60 animate-in fade-in zoom-in-95 duration-300">
+    <Loader2 className="w-10 h-10 animate-spin" />
+    <span className="text-sm font-bold uppercase tracking-widest animate-pulse">Carregando Ordem de Serviço...</span>
+   </div>
+  );
+ }
+
+ return <FormEditarManutencaoInterno osParaEditar={osParaEditar} onSuccess={onSuccess} onClose={onClose} />;
+}

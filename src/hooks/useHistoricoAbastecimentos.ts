@@ -1,7 +1,9 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useMemo } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 import type { Abastecimento } from '../types';
+import { useFornecedores } from './useFornecedores';
 
 interface FiltrosAbastecimento {
   dataInicio: string;
@@ -13,24 +15,20 @@ interface FiltrosAbastecimento {
 }
 
 export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
-  const [historico, setHistorico] = useState<Abastecimento[]>([]);
-  const [fornecedores, setFornecedores] = useState<{id: string, nome: string}[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const queryClient = useQueryClient();
+  
+  // Use o hook cacheado
+  const { data: fornecedores = [] } = useFornecedores();
 
-  // Busca fornecedores
-  useEffect(() => {
-    api.get('/fornecedores')
-      .then(res => setFornecedores(res.data))
-      .catch(err => { 
-        if (import.meta.env.DEV) console.error("Erro ao carregar fornecedores", err);
-      });
-  }, []);
+  const queryKey = [
+    'abastecimentos', 'recentes', 
+    filtros.dataInicio, filtros.dataFim, 
+    filtros.veiculoId, filtros.tipoProduto, filtros.status
+  ];
 
-  const fetchHistorico = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const { data: historico = [], isLoading: loading, error, refetch } = useQuery({
+    queryKey,
+    queryFn: async () => {
       const params: Record<string, string> = {};
       if (filtros.dataInicio) params.dataInicio = filtros.dataInicio;
       if (filtros.dataFim) params.dataFim = filtros.dataFim;
@@ -39,24 +37,17 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
       if (filtros.status) params.status = filtros.status;
 
       const response = await api.get('/abastecimentos/recentes', { params });
-      setHistorico(response.data);
-    } catch (err: unknown) {
-      const e = err instanceof Error ? err : new Error('Falha ao carregar abastecimentos.');
-      setError(e);
-      toast.error(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [filtros.dataInicio, filtros.dataFim, filtros.veiculoId, filtros.tipoProduto, filtros.status]);
-
-  useEffect(() => {
-    fetchHistorico();
-  }, [fetchHistorico]);
+      return response.data as Abastecimento[];
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutos de cache
+  });
 
   const handleDelete = async (id: string) => {
     try {
       await api.delete(`/abastecimentos/${id}`);
-      setHistorico(prev => prev.filter(ab => ab.id !== id));
+      queryClient.setQueryData(queryKey, (old: Abastecimento[] | undefined) => 
+        old ? old.filter(ab => ab.id !== id) : []
+      );
       toast.success('Abastecimento removido.');
     } catch (err: unknown) {
       toast.error('Erro ao remover abastecimento.');
@@ -66,7 +57,9 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
   const aprovarAbastecimento = async (id: string) => {
     try {
       await api.put(`/abastecimentos/${id}`, { status: 'APROVADO' });
-      setHistorico(prev => prev.filter(ab => ab.id !== id));
+      queryClient.setQueryData(queryKey, (old: Abastecimento[] | undefined) => 
+        old ? old.filter(ab => ab.id !== id) : []
+      );
       toast.success('Abastecimento aprovado e KM registrado com sucesso!');
     } catch (err: unknown) {
       const e = err instanceof Error ? err : new Error('Falha ao aprovar.');
@@ -75,7 +68,7 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
   };
 
   const historicoFiltrado = useMemo(() => {
-    return historico.filter(ab => {
+    return historico.filter((ab: Abastecimento) => {
       if (!filtros.fornecedorId) return true;
       return ab.fornecedor?.id === filtros.fornecedorId || ab.fornecedorId === filtros.fornecedorId;
     });
@@ -117,7 +110,7 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
     estatisticas,
     loading,
     error,
-    refetch: fetchHistorico,
+    refetch,
     handleDelete,
     aprovarAbastecimento
   };

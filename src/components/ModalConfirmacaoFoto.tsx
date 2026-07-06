@@ -71,7 +71,7 @@ export function ModalConfirmacaoFoto<T extends Record<string, unknown>>({
         setFoto(imagemComprimida);
 
       } catch (error) {
-        if (import.meta.env.DEV) console.error("Erro ao processar imagem:", error);
+        console.error("[ModalConfirmacaoFoto] Erro ao processar imagem:", error);
         hapticError();
         toast.error("Erro ao processar a foto. Tente novamente.");
         setFoto(null);
@@ -100,7 +100,8 @@ export function ModalConfirmacaoFoto<T extends Record<string, unknown>>({
       onSuccess(data);
       safeOnClose();
     } catch (error: unknown) {
-      // o hook já exibe toast de erro
+      console.error("[ModalConfirmacaoFoto] Erro ao enviar foto:", error);
+      toast.error("Erro ao enviar a foto. Tente novamente.");
     }
   };
 

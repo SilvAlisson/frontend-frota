@@ -26,6 +26,7 @@ import { useUsuarios } from '../../hooks/useUsuarios';
 import { useProdutos } from '../../hooks/useProdutos';
 import { useFornecedores } from '../../hooks/useFornecedores';
 import { desformatarDinheiro, formatarDinheiro } from '../../lib/formatters';
+import { formatKmVisual } from '../../utils';
 import { validarAbastecimento, temBloqueio, type AnomaliaAbastecimento } from '../../utils/validateAbastecimento';
 import { comprimirImagem } from '../../utils/imageCompressor';
 
@@ -40,7 +41,13 @@ const editSchema = z.object({
   veiculoId: z.string().min(1, "Veículo obrigatório"),
   operadorId: z.string().optional(),
   fornecedorId: z.string().min(1, "Fornecedor obrigatório"),
-  kmOdometro: z.union([z.string(), z.number()]).transform(v => Number(v)).refine(v => !isNaN(v) && v >= 1, "Inválido"),
+  kmOdometro: z.union([z.string(), z.number()]).transform(v => {
+    if (typeof v === 'string') {
+      const num = Number(v.replace(/\./g, '').replace(',', '.'));
+      return isNaN(num) ? 0 : num;
+    }
+    return v;
+  }).refine(v => !isNaN(v) && v >= 1, "Inválido"),
   dataHora: z.string().min(1, "Data obrigatória"),
   placaCartaoUsado: z.string().optional().nullable(),
   justificativa: z.string().optional().nullable(),
@@ -77,7 +84,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
     retry: 1
   });
 
-  const isLoadingDados = loadU || loadV || loadP || loadF || loadingAbs;
+  const isLoadingDados = loadingAbs;
 
   // Filtros de Selects
   const produtosCombustivel = useMemo(() => produtos.filter(p => ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo)), [produtos]);
@@ -115,7 +122,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
         veiculoId: abastecimento.veiculoId ?? '',
         operadorId: abastecimento.operador?.id ?? usuarios.find(u => u.nome === abastecimento.operador?.nome)?.id ?? '',
         fornecedorId: abastecimento.fornecedorId ?? fornecedores.find(f => f.nome === abastecimento.fornecedor?.nome)?.id ?? '',
-        kmOdometro: Number(abastecimento.kmOdometro),
+        kmOdometro: abastecimento.kmOdometro ? formatKmVisual(String(abastecimento.kmOdometro)) : '',
         dataHora: new Date(new Date(abastecimento.dataHora).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16),
         placaCartaoUsado: abastecimento.placaCartaoUsado ?? '',
         justificativa: abastecimento.justificativa ?? '',
@@ -282,7 +289,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
               </div>
 
               <div className="md:col-span-4">
-                <Input label="Hodômetro Atual" type="number" inputMode="numeric" {...register('kmOdometro')} error={errors.kmOdometro?.message as string} disabled={isLocked} className="font-mono font-bold text-lg text-primary" />
+                <Input label="Hodômetro Atual" type="tel" inputMode="numeric" {...register('kmOdometro', { onChange: (e) => { setValue('kmOdometro', formatKmVisual(e.target.value)); } })} error={errors.kmOdometro?.message as string} disabled={isLocked} className="font-mono font-bold text-lg text-primary" />
               </div>
 
               <div className="md:col-span-4">

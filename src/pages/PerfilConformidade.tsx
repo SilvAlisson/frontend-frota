@@ -67,6 +67,18 @@ export function PerfilConformidade() {
   const [isModalNROpen, setIsModalNROpen] = useState(false);
   const [treinamentoPreDefinido, setTreinamentoPreDefinido] = useState<string>('');
 
+  // Interface para tipagem da matriz de treinamentos
+  interface MatrizTreinamento {
+    id: string;
+    nome: string;
+    nomeExigido?: string;
+    status: string;
+    isExtra: boolean;
+    dataVencimento?: string | null;
+    diasAntecedenciaAlerta?: number;
+    certificadoUrl?: string;
+  }
+
   // 🧠 CRUZAMENTO INTELIGENTE (Fuzzy Matching)
   const matrizTreinamentos = useMemo(() => {
     if (!dossie) return [];
@@ -75,7 +87,7 @@ export function PerfilConformidade() {
     const exigidos = DICIONARIO_REQUISITOS[dossie.user.role] || [];
     const hoje = new Date();
 
-    const matrizProcessada: any[] = [];
+    const matrizProcessada: MatrizTreinamento[] = [];
     const treinamentosUtilizados = new Set<string>(); // Evita duplicar cursos
 
     // 1. Processa os requisitos obrigatórios do cargo
@@ -98,7 +110,7 @@ export function PerfilConformidade() {
         if (principal.dataVencimento) {
           const vencimento = new Date(principal.dataVencimento);
           const diasRestantes = Math.ceil((vencimento.getTime() - hoje.getTime()) / (1000 * 3600 * 24));
-          const alertaDias = (principal as any).diasAntecedenciaAlerta || 30;
+          const alertaDias = (principal as { diasAntecedenciaAlerta?: number }).diasAntecedenciaAlerta || 30;
           
           if (diasRestantes < 0) status = 'VENCIDO';
           else if (diasRestantes <= alertaDias) status = 'VENCENDO';
@@ -119,7 +131,7 @@ export function PerfilConformidade() {
           const vencimento = new Date(t.dataVencimento);
           const diasRestantes = Math.ceil((vencimento.getTime() - hoje.getTime()) / (1000 * 3600 * 24));
           if (diasRestantes < 0) status = 'VENCIDO';
-          else if (diasRestantes <= ((t as any).diasAntecedenciaAlerta || 30)) status = 'VENCENDO';
+          else if (diasRestantes <= ((t as { diasAntecedenciaAlerta?: number }).diasAntecedenciaAlerta || 30)) status = 'VENCENDO';
         }
         matrizProcessada.push({ ...t, status, isExtra: true });
       }
@@ -163,9 +175,9 @@ export function PerfilConformidade() {
     const promessa = new Promise((resolve) => {
       const dados = matrizTreinamentos.map(t => ({
         'Treinamento / NR': t.nomeExigido || t.nome,
-        'Tipo': (t as any).isExtra ? 'Extra' : 'Obrigatório',
+        'Tipo': t.isExtra ? 'Extra' : 'Obrigatório',
         'Status': t.status,
-        'Vencimento': (t as any).dataVencimento ? DateHelper.getCompleta((t as any).dataVencimento) : 'Sem Vencimento'
+        'Vencimento': t.dataVencimento ? DateHelper.getCompleta(t.dataVencimento) : 'Sem Vencimento'
       }));
 
       const nomeFicheiro = `Conformidade_${user.nome.replace(/\s+/g, '_')}.xlsx`;
@@ -201,7 +213,7 @@ export function PerfilConformidade() {
             
             <Avatar 
               nome={user.nome} 
-              url={user.fotoUrl || (user as any).image} 
+              url={user.fotoUrl || (user as { image?: string }).image} 
               size="2xl" 
               className="w-32 h-32 mb-5 shadow-md border-4 border-surface z-10 relative" 
             />
@@ -305,7 +317,7 @@ export function PerfilConformidade() {
                           <div>
                             <div className="flex items-center gap-2">
                               <h4 className="font-bold text-text-main text-base">{t.nomeExigido || t.nome}</h4>
-                              {(t as any).isExtra && <Badge variant="neutral" className="!text-[10px] !py-0">Extra</Badge>}
+                              {t.isExtra && <Badge variant="neutral" className="!text-[10px] !py-0">Extra</Badge>}
                             </div>
                             <div className="flex items-center gap-3 text-xs font-medium mt-1">
                               <span className={clsx("px-2 py-0.5 rounded border font-bold uppercase", 
@@ -317,7 +329,7 @@ export function PerfilConformidade() {
                               </span>
                               <span className="text-text-muted flex items-center gap-1">
                                 <Calendar className="w-3.5 h-3.5" /> 
-                                {(t as any).dataVencimento ? `Vence em: ${DateHelper.getCompleta((t as any).dataVencimento)}` : 'Sem validade'}
+                                {t.dataVencimento ? `Vence em: ${DateHelper.getCompleta(t.dataVencimento)}` : 'Sem validade'}
                               </span>
                             </div>
                           </div>
@@ -326,7 +338,7 @@ export function PerfilConformidade() {
                             <BellRing className="w-4 h-4 text-text-muted ml-2" />
                             <select 
                               className="bg-transparent text-sm font-bold text-text-main border-none outline-none cursor-pointer pr-2"
-                              defaultValue={(t as any).diasAntecedenciaAlerta || 30}
+                              defaultValue={t.diasAntecedenciaAlerta || 30}
                             >
                               <option value="15">Avisar 15 dias antes</option>
                               <option value="30">Avisar 30 dias antes</option>
@@ -337,8 +349,8 @@ export function PerfilConformidade() {
                         </div>
 
                         <div className="pt-4 border-t border-dashed border-border/60 flex items-center justify-between">
-                          {(t as any).certificadoUrl ? (
-                            <a href={(t as any).certificadoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-bold text-primary hover:underline">
+                          {t.certificadoUrl ? (
+                            <a href={t.certificadoUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-sm font-bold text-primary hover:underline">
                               <FileText className="w-4 h-4" /> Ver Certificado em PDF
                             </a>
                           ) : (
@@ -348,7 +360,7 @@ export function PerfilConformidade() {
                           )}
                           
                           <Button variant="secondary" size="sm" onClick={handleFakeUpload} icon={<UploadCloud className="w-4 h-4" />}>
-                            {(t as any).certificadoUrl ? 'Atualizar PDF' : 'Anexar PDF'}
+                            {t.certificadoUrl ? 'Atualizar PDF' : 'Anexar PDF'}
                           </Button>
                         </div>
                       </div>

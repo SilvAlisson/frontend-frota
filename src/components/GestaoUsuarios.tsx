@@ -139,7 +139,7 @@ export function GestaoUsuarios() {
                 <div className="w-48 shrink-0">
                   <Select
                     value={filtroRole}
-                    onChange={(e: any) => setFiltroRole(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFiltroRole(e.target.value)}
                     containerClassName="!mb-0"
                     className="h-11 border border-border/60 bg-surface-hover/50 font-bold"
                     options={[
@@ -199,7 +199,7 @@ export function GestaoUsuarios() {
                 <>
                   <td className={`${TableStyles.td} pl-8 justify-start`}>
                     <div className="flex items-center gap-4 min-w-0">
-                      <Avatar nome={u.nome} url={(u as any).fotoUrl || u.image} />
+                      <Avatar nome={u.nome} url={(u as { fotoUrl?: string }).fotoUrl || u.image} />
                       <span className="font-bold text-text-main text-base tracking-tight truncate" title={u.nome}>{getFirstAndLastName(u.nome)}</span>
                     </div>
                   </td>
@@ -262,7 +262,7 @@ export function GestaoUsuarios() {
                 >
                   <div className="flex flex-col">
                     <div className="flex items-start gap-4">
-                      <Avatar nome={u.nome} url={(u as any).fotoUrl || u.image} size="lg" />
+                      <Avatar nome={u.nome} url={(u as { fotoUrl?: string }).fotoUrl || u.image} size="lg" />
                       <div className="flex flex-col gap-0.5 justify-center mt-1">
                         <h3 className="font-black text-text-main text-lg tracking-tight leading-none mb-1.5">{getFirstAndLastName(u.nome)}</h3>
                         {u.cargo?.nome ? (

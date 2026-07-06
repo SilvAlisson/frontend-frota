@@ -66,22 +66,8 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
   // --- ESTADOS DA UI ---
   const [searchParams, setSearchParams] = useSearchParams();
   const [visibleCount, setVisibleCount] = useState(ITENS_POR_PAGINA);
-  const [editingOS, setEditingOS] = useState<OrdemServico | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [isNovaOSOpen, setIsNovaOSOpen] = useState(false);
-  const [loadingEdit, setLoadingEdit] = useState(false);
-
-  // Busca OS completa (com itens, veículo, fornecedor) antes de abrir o modal de edição
-  const handleEditar = async (os: OrdemServico) => {
-    setLoadingEdit(true);
-    try {
-      const { data } = await api.get(`/manutencoes/${os.id}`);
-      setEditingOS(data);
-    } catch {
-      toast.error('Erro ao carregar dados da manutenção para edição.');
-    } finally {
-      setLoadingEdit(false);
-    }
-  };
 
   const actionQuery = searchParams.get('action');
   const queryVeiculoId = searchParams.get('veiculoId');
@@ -183,7 +169,7 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
             loading={loading}
             canEdit={canEdit}
             canDelete={canDelete}
-            onEditar={handleEditar}
+            onEditar={(os) => setEditingId(os.id)}
             onExcluir={(id) => {
               openModal('CONFIRM', {
                 title: "Eliminar Registro de Oficina",
@@ -225,22 +211,22 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
         </Modal>
 
         <Modal
-          isOpen={!!editingOS}
-          onClose={() => setEditingOS(null)}
+          isOpen={!!editingId}
+          onClose={() => setEditingId(null)}
           title="Gestão de Manutenção"
           className="max-w-3xl"
         >
-          {editingOS && (
+          {editingId && (
             <FormEditarManutencao
-              osParaEditar={editingOS as unknown as React.ComponentProps<typeof FormEditarManutencao>['osParaEditar']}
+              manutencaoId={editingId}
               onSuccess={() => { 
                 queryClient.invalidateQueries({ queryKey: ['manutencoes', 'recentes'] });
-                queryClient.invalidateQueries({ queryKey: ['manutencao', editingOS.id] });
+                queryClient.invalidateQueries({ queryKey: ['manutencao', editingId] });
                 queryClient.invalidateQueries({ queryKey: ['manutencoes'] });
-                setEditingOS(null); 
+                setEditingId(null); 
                 refetch(); 
               }}
-              onClose={() => setEditingOS(null)}
+              onClose={() => setEditingId(null)}
             />
           )}
         </Modal>

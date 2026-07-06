@@ -212,7 +212,7 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                 <body>
                     <div class="etiqueta">
                         <h2 style="margin: 0 0 10px 0; font-size: 16px; font-weight: 900;">FROTA KLIN</h2>
-                        <img src="${qrCodeImageUrl}" style="width: 140px; height: 140px; display: block; margin: 0 auto;" />
+                        <img src="${qrCodeImageUrl}" alt="QR Code do crachá" style="width: 140px; height: 140px; display: block; margin: 0 auto;" />
                         <p style="margin: 10px 0 0 0; font-size: 14px; font-weight: bold; text-transform: uppercase;">${nomeUsuario}</p>
                         <p style="margin: 5px 0 0 0; font-size: 10px; color: #333; font-weight: bold;">AUDITORIA DE SSMA</p>
                     </div>
@@ -381,9 +381,9 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                     />
                 ) : (
                     treinamentos.map((t) => {
-                        const status = getStatusConfig(t.dataVencimento, (t as any).status);
+                        const status = getStatusConfig(t.dataVencimento, (t as { status?: 'CONCLUIDO' | 'PENDENTE' }).status);
                         const StatusIcon = status.Icon;
-                        const isPendente = (t as any).status === 'PENDENTE';
+                        const isPendente = (t as { status?: 'CONCLUIDO' | 'PENDENTE' }).status === 'PENDENTE';
 
                         return (
                             <div
@@ -443,7 +443,7 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                                                         reset({
                                                             nome: t.nome,
                                                             dataRealizacao: new Date().toISOString().split('T')[0],
-                                                            diasAntecedenciaAlerta: (t as any).diasAntecedenciaAlerta || 30
+                                                            diasAntecedenciaAlerta: (t as { diasAntecedenciaAlerta?: number }).diasAntecedenciaAlerta || 30
                                                         });
                                                         setShowAddForm(true);
                                                         window.scrollTo({ top: 0, behavior: 'smooth' });

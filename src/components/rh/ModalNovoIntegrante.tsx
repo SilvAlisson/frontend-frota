@@ -53,6 +53,7 @@ export function ModalNovoIntegrante({ isOpen, onClose, onSuccess, cargos }: Moda
       onSuccess();
       onClose();
     } catch (err) {
+      if (import.meta.env.DEV) console.error("Erro ao registrar novo integrante:", err);
       // handleApiError já mostra toast
     } finally {
       setIsSubmitting(false);

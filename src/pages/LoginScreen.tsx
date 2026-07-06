@@ -31,7 +31,8 @@ export function LoginScreen() {
     try {
       await loginWithCredentials(data);
     } catch (err: unknown) {
-      // erros tratados no hook
+      console.error("[LoginScreen] Erro no login com credenciais:", err);
+      toast.error(err instanceof Error ? err.message : 'Falha ao realizar login. Verifique suas credenciais.');
     } finally {
       setIsSubmittingForm(false);
     }
@@ -42,7 +43,8 @@ export function LoginScreen() {
     try {
       await loginWithManualQr(token);
     } catch (err: unknown) {
-      // erros tratados no hook
+      console.error("[LoginScreen] Erro no login com QR code:", err);
+      toast.error(err instanceof Error ? err.message : 'Falha ao realizar login com QR code.');
     } finally {
       setIsSubmittingForm(false);
     }

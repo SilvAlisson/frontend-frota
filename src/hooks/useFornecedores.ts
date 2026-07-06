@@ -18,7 +18,8 @@ export function useFornecedores() {
         // toast.error('Não foi possível carregar a lista de parceiros.');
         throw err;
       }
-    }
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutos de cache
   });
 
   const excluirFornecedorMutation = useMutation({
