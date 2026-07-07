@@ -18,7 +18,7 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
   const queryClient = useQueryClient();
   
   // Use o hook cacheado
-  const { data: fornecedores = [] } = useFornecedores();
+  const { fornecedores = [] } = useFornecedores();
 
   const queryKey = [
     'abastecimentos', 'recentes', 

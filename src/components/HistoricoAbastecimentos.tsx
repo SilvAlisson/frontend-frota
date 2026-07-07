@@ -151,7 +151,7 @@ export function HistoricoAbastecimentos({ userRole, filtroInicial }: HistoricoAb
   };
 
   return (
-    <PullToRefresh onRefresh={refetch}>
+    <PullToRefresh onRefresh={async () => { await refetch(); }}>
       <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <PageHeader 
           title="Boletim de Abastecimentos"

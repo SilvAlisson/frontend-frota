@@ -75,10 +75,10 @@ export function GraficoCurvaAbastecimento({ dados, modo = 'litros' }: GraficoCur
         />
         <Tooltip
           contentStyle={TOOLTIP_STYLE}
-          formatter={(value: number) => [
+          formatter={(value: number | undefined) => [
           isLitros
-            ? `${Number(value).toLocaleString('pt-BR')} L`
-            : `R$ ${Number(value).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+            ? `${Number(value ?? 0).toLocaleString('pt-BR')} L`
+            : `R$ ${Number(value ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
           label
         ]}
           labelStyle={{ color: 'var(--color-text-muted)', fontSize: 10, marginBottom: 4 }}

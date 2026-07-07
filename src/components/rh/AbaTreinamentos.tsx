@@ -10,7 +10,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Textarea } from '../ui/Textarea';
 import {
-    Trash2, Calendar, AlertTriangle, Loader2,
+    Trash2, AlertTriangle, Loader2,
     CheckCircle2, FileSpreadsheet, Plus, GraduationCap,
     UploadCloud, QrCode, Printer,
 } from 'lucide-react';
@@ -127,8 +127,11 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
 
             if (certificadoFile) {
                 try {
+                    const fileName = `certificado-${Date.now()}-${certificadoFile.name}`;
                     comprovanteUrl = await uploadToR2(
                         certificadoFile,
+                        fileName,
+                        certificadoFile.type || 'application/octet-stream',
                         'certificados'
                     );
                 } catch {
@@ -305,7 +308,7 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                                 type="date"
                                 {...register('dataVencimento')}
                                 error={errors.dataVencimento?.message}
-                                description="Deixe em branco se for vitalício"
+                                placeholder="Deixe em branco se for vitalício"
                             />
                         </div>
 
@@ -403,7 +406,7 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                                         </div>
                                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
                                             {role && ['OPERADOR', 'ENCARREGADO', 'AUXILIAR_OPERACIONAL'].includes(role) && (
-                                                <Button variant="secondary" className="h-10 border-border/40 text-text-muted hover:text-text-main group" onClick={() => openModal('QR_CRACHA', { usuario: { id: userId, nome: nomeUsuario, role } })}>
+                                                <Button variant="secondary" className="h-10 border-border/40 text-text-muted hover:text-text-main group" onClick={() => openModal('CUSTOM', { modalType: 'QR_CRACHA', usuario: { id: userId, nome: nomeUsuario, role } })}>
                                                     <QrCode className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" /> QR Code
                                                 </Button>
                                             )}

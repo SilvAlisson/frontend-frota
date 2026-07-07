@@ -32,6 +32,7 @@ const PainelPlanosPreventivos = lazy(() => import('./components/PainelPlanosPrev
 const MinhaContaPage = lazy(() => import('./pages/MinhaContaPage').then(m => ({ default: m.MinhaContaPage })));
 const MatrizQualificacaoPage = lazy(() => import('./pages/MatrizQualificacaoPage').then(m => ({ default: m.MatrizQualificacaoPage })));
 const MatrizDetalheUsuario = lazy(() => import('./pages/MatrizDetalheUsuario').then(m => ({ default: m.MatrizDetalheUsuario })));
+const ConvocacoesPage = lazy(() => import('./pages/ConvocacoesPage').then(m => ({ default: m.ConvocacoesPage })));
 
 const LoadingScreen = () => (
   <div className="flex flex-col items-center justify-center h-screen bg-background">
@@ -178,6 +179,12 @@ export function Router() {
               </PrivateRoute>
             } />
           </Route>
+
+          <Route path="convocacoes" element={
+            <PrivateRoute allowedRoles={['ADMIN', 'RH']}>
+              <ConvocacoesPage />
+            </PrivateRoute>
+          } />
 
           {/*  Rota independente configurada corretamente */}
           <Route path="conformidade/:id" element={

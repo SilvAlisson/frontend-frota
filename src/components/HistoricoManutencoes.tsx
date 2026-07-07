@@ -4,13 +4,11 @@ import { useQueryClient } from '@tanstack/react-query';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
 import { DateHelper } from '../lib/dateHelper';
-import type { OrdemServico } from '../types';
 
 // --- HOOKS E ABSTRAÇÕES ---
 import { useVeiculos } from '../hooks/useVeiculos';
 import { useHistoricoManutencoes, type FiltrosManutencao as IFiltrosManutencao } from '../hooks/useHistoricoManutencoes';
 import { useModalStore } from '../hooks/useModalStore';
-import { api } from '../services/api';
 
 // --- UI COMPONENTS ---
 import { PageHeader } from './ui/PageHeader';
@@ -134,7 +132,7 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
   ], [fornecedores]);
 
   return (
-    <PullToRefresh onRefresh={refetch}>
+    <PullToRefresh onRefresh={async () => { await refetch(); }}>
       <div className="space-y-6 sm:space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <PageHeader
           title="Boletim de Manutenções"

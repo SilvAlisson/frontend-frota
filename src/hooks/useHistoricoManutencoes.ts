@@ -14,7 +14,7 @@ export interface FiltrosManutencao {
 
 export function useHistoricoManutencoes(filtros: FiltrosManutencao) {
   const queryClient = useQueryClient();
-  const { data: fornecedores = [] } = useFornecedores();
+  const { fornecedores = [] } = useFornecedores();
 
   const queryKey = [
     'manutencoes', 'recentes',

@@ -8,7 +8,7 @@ import { uploadToR2 } from '../../services/uploadService';
 import { toast } from 'sonner';
 import { hapticError } from '../../lib/haptics';
 import {
-   Save, Plus, X, User as UserIcon, Truck,
+  Save, Plus, X, User as UserIcon, Truck,
   MapPin, Calendar, CreditCard, Image as ImageIcon, Loader2
 } from 'lucide-react';
 
@@ -72,10 +72,10 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const [dadosPendentes, setDadosPendentes] = useState<EditFormOutput | null>(null);
 
   // 📡 DADOS GLOBAIS COM CACHE
-  const { usuarios = [], isLoading: loadU } = useUsuarios();
-  const { data: veiculos = [], isLoading: loadV } = useVeiculos();
-  const { produtos = [], loading: loadP } = useProdutos();
-  const { fornecedores = [], isLoading: loadF } = useFornecedores();
+  const { usuarios = [] } = useUsuarios();
+  const { data: veiculos = [] } = useVeiculos();
+  const { produtos = [] } = useProdutos();
+  const { fornecedores = [] } = useFornecedores();
 
   // 1. Query Específica do Abastecimento
   const { data: abastecimento, isLoading: loadingAbs } = useQuery<Abastecimento>({
@@ -275,7 +275,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
 
             {/* ✨ MÁGICA DO GRID AQUI: 12 Colunas fluidas evitando o empilhamento */}
             <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-              
+
               <div className="md:col-span-6">
                 <Select label="Veículo Oficial" options={veiculosOptions} icon={<Truck className="w-4 h-4" />} {...register('veiculoId')} error={errors.veiculoId?.message} disabled={isLocked} />
               </div>

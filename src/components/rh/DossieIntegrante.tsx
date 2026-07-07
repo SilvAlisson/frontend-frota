@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useIntegranteDossie } from '../../hooks/useIntegranteDossie';
 import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { DateHelper } from '../../lib/dateHelper';
-import { Car, ShieldAlert, ChevronLeft, ChevronRight, Activity, MapPin, CheckCircle2, Clock, UserCog } from 'lucide-react';
+import { Car, ShieldAlert, ChevronLeft, ChevronRight, Activity, MapPin, CheckCircle2, UserCog } from 'lucide-react';
 
 interface DossieIntegranteProps {
   userId: string;
@@ -33,7 +33,7 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
   }
 
   const { user, jornadas, pagination } = dossie;
-  const treinamentos = user.treinamentos || [];
+
   const defeitos = user.defeitosRegistrados || [];
 
   return (

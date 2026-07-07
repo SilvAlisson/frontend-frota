@@ -1,5 +1,5 @@
 import { useMatrizQualificacao, type Exigencia } from '../../hooks/useMatrizQualificacao';
-import { Search, AlertCircle, CheckCircle2, XCircle, ChevronRight, FileCheck, ShieldAlert, Plus, UserX } from 'lucide-react';
+import { Search, AlertCircle, CheckCircle2, XCircle, ChevronRight, FileCheck, ShieldAlert, Plus } from 'lucide-react';
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
@@ -113,7 +113,7 @@ export function MatrizQualificacao() {
         <FileCheck className="w-12 h-12 text-border/60 mx-auto mb-4" />
         <h3 className="text-lg font-bold text-text-main">Matriz Vazia</h3>
         <p className="text-text-secondary mt-1 mb-6">Nenhum integrante com exigências foi encontrado.</p>
-        <Button onClick={() => setIsCadastroOpen(true)} icon={<Plus className="w-4 h-4" />}>
+        <Button onClick={() => setNovoIntegranteOpen(true)} icon={<Plus className="w-4 h-4" />}>
           Cadastrar Primeiro Integrante
         </Button>
       </div>

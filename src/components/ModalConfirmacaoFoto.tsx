@@ -6,6 +6,7 @@ import { Modal } from './ui/Modal';
 import { toast } from 'sonner';
 import { hapticError } from '../lib/haptics';
 import { Camera, Loader2, Check, AlertCircle } from 'lucide-react';
+import { ModalAlertaSSMA } from './rh/ModalAlertaSSMA';
 
 // Estilos padronizados Premium
 const fileInputContainer = "relative border-2 border-dashed border-border/60 rounded-3xl p-4 hover:bg-surface-hover transition-all duration-300 cursor-pointer group hover:border-primary/50 flex flex-col items-center justify-center min-h-[280px] overflow-hidden bg-surface shadow-sm";
@@ -40,6 +41,10 @@ export function ModalConfirmacaoFoto<T extends Record<string, unknown>>({
   const [foto, setFoto] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [processandoFoto, setProcessandoFoto] = useState(false);
+
+  // Estados do Modal SSMA
+  const [bloqueiosSSMA, setBloqueiosSSMA] = useState<string[]>([]);
+  const [modalSSMAOpen, setModalSSMAOpen] = useState(false);
 
   const { submitPhoto, loading } = usePhotoSubmit<T>();
 
@@ -99,7 +104,14 @@ export function ModalConfirmacaoFoto<T extends Record<string, unknown>>({
       });
       onSuccess(data);
       safeOnClose();
-    } catch (error: unknown) {
+    } catch (error: any) {
+      if (error.response?.status === 403 && error.response?.data?.bloqueios) {
+        hapticError();
+        setBloqueiosSSMA(error.response.data.bloqueios);
+        setModalSSMAOpen(true);
+        return; // Interrompe o fluxo e não exibe o toast genérico
+      }
+      
       console.error("[ModalConfirmacaoFoto] Erro ao enviar foto:", error);
       toast.error("Erro ao enviar a foto. Tente novamente.");
     }
@@ -224,6 +236,16 @@ export function ModalConfirmacaoFoto<T extends Record<string, unknown>>({
         </div>
 
       </div>
+
+      {/* 🛡️ MODAL DE BLOQUEIO OPERACIONAL (SSMA) */}
+      <ModalAlertaSSMA 
+        isOpen={modalSSMAOpen}
+        bloqueios={bloqueiosSSMA}
+        onClose={() => {
+          setModalSSMAOpen(false);
+          safeOnClose(); // Força o fechamento também da tela de foto, retornando o usuário
+        }}
+      />
     </Modal>
   );
 }

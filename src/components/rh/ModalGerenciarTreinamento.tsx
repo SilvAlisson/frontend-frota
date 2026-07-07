@@ -37,7 +37,8 @@ export function ModalGerenciarTreinamento({ userId, treinamentoPreDefinido, carg
 
       if (arquivoPdf) {
         try {
-          comprovanteUrl = await uploadToR2(arquivoPdf, 'certificados');
+          const fileName = `certificado-${Date.now()}-${arquivoPdf.name}`;
+          comprovanteUrl = await uploadToR2(arquivoPdf, fileName, arquivoPdf.type || 'application/octet-stream', 'certificados');
         } catch {
           toast.error('Falha no upload do certificado. Verifique o arquivo e tente novamente.');
           return;
@@ -108,7 +109,7 @@ export function ModalGerenciarTreinamento({ userId, treinamentoPreDefinido, carg
               type="date"
               value={dataValidade}
               onChange={(e) => setDataValidade(e.target.value)}
-              description="Deixe em branco se for vitalício"
+              placeholder="Deixe em branco se for vitalício"
             />
           </div>
 

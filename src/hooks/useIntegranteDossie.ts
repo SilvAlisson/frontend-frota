@@ -1,6 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
-import type { User, Jornada, Treinamento, DefeitoVeiculo } from '../types';
+import type { User, Jornada, TreinamentoRealizado } from '../types';
+
+interface DefeitoVeiculo {
+  id: string;
+  descricao: string;
+  categoria: string;
+  status: string;
+  criadoEm: string;
+  createdAt: string;
+}
 
 export interface DossieResponse {
   user: User & {
@@ -10,7 +19,7 @@ export interface DossieResponse {
       cnhCategoria?: string | null;
       cnhValidade?: string | null;
     } | null;
-    treinamentos: Treinamento[];
+    treinamentos: TreinamentoRealizado[];
     defeitosRegistrados: (DefeitoVeiculo & { veiculo?: { placa: string } })[];
   };
   jornadas: (Jornada & { veiculo?: { placa: string } })[];

@@ -36,13 +36,13 @@ export function DashboardCompliance() {
         const detalhe = `${exig.nome} (${exig.status})`;
 
         if (exig.tipo === 'CNH') {
-          alertas[0].integrantes.push({ id: user.id, nome: user.nome, detalhe });
+          alertas[0].integrantes.push({ id: user.userId, nome: user.nome, detalhe });
         } else if (exig.tipo === 'ASO') {
-          alertas[1].integrantes.push({ id: user.id, nome: user.nome, detalhe });
+          alertas[1].integrantes.push({ id: user.userId, nome: user.nome, detalhe });
         } else if (exig.tipo === 'FIT_TEST') {
-          alertas[2].integrantes.push({ id: user.id, nome: user.nome, detalhe });
+          alertas[2].integrantes.push({ id: user.userId, nome: user.nome, detalhe });
         } else {
-          alertas[3].integrantes.push({ id: user.id, nome: user.nome, detalhe });
+          alertas[3].integrantes.push({ id: user.userId, nome: user.nome, detalhe });
         }
       }
     });

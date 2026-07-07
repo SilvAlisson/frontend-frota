@@ -2,8 +2,6 @@
 import { z } from 'zod';
 
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
-type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
-
 export const manutencaoSchema = z.object({
   tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
   alvo: z.enum(ALVOS_MANUTENCAO),

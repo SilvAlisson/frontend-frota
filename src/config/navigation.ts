@@ -66,6 +66,7 @@ export const MENU_ITEMS: MenuGroup[] = [
     items: [
       { icon: ShieldCheck, label: 'Gestão de SST', path: '/admin/sst', highlight: true },
       { icon: FileBadge, label: 'Matriz de Qualificação', path: '/admin/matriz' },
+      { icon: Users, label: 'Convocações em Lote', path: '/admin/convocacoes' },
     ]
   },
   

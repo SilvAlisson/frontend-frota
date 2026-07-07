@@ -154,7 +154,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
             return () => {
                 clearInterval(interval);
-                try { delete (select as Record<string, unknown>).value; } catch (_) { /* noop */ }
+                try { delete ((select as unknown) as Record<string, unknown>).value; } catch (_) { /* noop */ }
             };
         }, [options]);
 
