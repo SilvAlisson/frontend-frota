@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
-import { ShieldCheck, AlertTriangle, Calendar, FileSpreadsheet, CheckCircle2, Loader2, GraduationCap } from 'lucide-react';
+import { ShieldCheck, AlertTriangle, Calendar, FileSpreadsheet, CheckCircle2, GraduationCap } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 // Tipagem baseada no que a API vai nos devolver
@@ -140,9 +140,9 @@ export function DossiePublico() {
     <div className="min-h-screen bg-background pb-12 font-sans selection:bg-primary/30">
       {/* HEADER CORPORATIVO DA KLIN */}
       <header className="bg-surface border-b border-border/60 p-6 flex flex-col items-center justify-center sticky top-0 z-40 shadow-sm">
-         <span className="font-header font-black text-2xl text-text-main tracking-tight uppercase">FROTA <span className="text-primary">KLIN</span></span>
+         <span className="font-header font-black text-2xl text-text-main tracking-tight uppercase"> Treinamentos <span className="text-primary">KLIN</span></span>
          <p className="text-[10px] font-bold text-text-secondary uppercase tracking-[0.2em] mt-1 flex items-center gap-1.5">
-           <ShieldCheck className="w-3.5 h-3.5 text-success" /> Validação Oficial
+           <ShieldCheck className="w-3.5 h-3.5 text-success" /> Acompanhamento de Treinamentos
          </p>
       </header>
 
