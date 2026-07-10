@@ -12,7 +12,7 @@ const canVibrate = typeof window !== 'undefined' && 'vibrate' in navigator;
  */
 export const hapticLight = () => {
   if (canVibrate) {
-    try { navigator.vibrate(10); } catch (e) { console.error("Haptics API error:", e); }
+    try { navigator.vibrate(10); } catch (e) { logger.debug("Haptics API error:", e); }
   }
 };
 
@@ -23,7 +23,7 @@ export const hapticLight = () => {
  */
 export const hapticSuccess = () => {
   if (canVibrate) {
-    try { navigator.vibrate([30, 50, 30]); } catch (e) { console.error("Haptics API error:", e); }
+    try { navigator.vibrate([30, 50, 30]); } catch (e) { logger.debug("Haptics API error:", e); }
   }
 };
 
@@ -33,6 +33,6 @@ export const hapticSuccess = () => {
  */
 export const hapticError = () => {
   if (canVibrate) {
-    try { navigator.vibrate([50, 50, 50, 50, 50]); } catch (e) { console.error("Haptics API error:", e); }
+    try { navigator.vibrate([50, 50, 50, 50, 50]); } catch (e) { logger.debug("Haptics API error:", e); }
   }
 };

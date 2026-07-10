@@ -6,6 +6,7 @@ import { useIAStream, useIAFeedback, type MensagemChat } from '../../hooks/useIA
 import { MdText } from './MdText';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
+import { logger } from '../../lib/logger';
 
 const ROLES_PERMITIDOS = ['ADMIN', 'RH', 'COORDENADOR', 'ENCARREGADO'];
 
@@ -171,7 +172,7 @@ export function AssistenteIA() {
         return parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
       }
     } catch (e) {
-      console.error('Erro ao ler histórico da IA', e);
+      logger.error('Erro ao ler histórico da IA', e);
     }
     return [];
   });
@@ -200,7 +201,7 @@ export function AssistenteIA() {
         respostaIA: msgIA.conteudo,
         avaliacao,
         contextoRota: location.pathname
-      }).catch(console.error);
+      }).catch((e) => logger.error(e));
     }
   }, [mensagens, enviarFeedback, location.pathname]);
 

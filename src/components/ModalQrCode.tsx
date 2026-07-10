@@ -12,6 +12,7 @@ import { ConfirmModal } from './ui/ConfirmModal';
 import { useReactToPrint } from 'react-to-print';
 import { useWebAuthn } from '../hooks/useWebAuthn';
 import { logger } from '../lib/logger';
+import { env } from '../config/env';
 
 interface ModalQrCodeProps {
   user: User & { loginToken?: string };
@@ -27,9 +28,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   const [confirmRegenerar, setConfirmRegenerar] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
-  const isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const vercelUrl = "https://klinfrota.vercel.app";
-  const baseUrl = import.meta.env.VITE_APP_URL || (isLocalhost ? vercelUrl : window.location.origin);
+  const baseUrl = env.frontendUrl;
   const tokenFinal = tokenAtual || user.matricula || undefined;
   const loginUrl = tokenFinal ? `${baseUrl}/login?magicToken=${tokenFinal}` : '';
 

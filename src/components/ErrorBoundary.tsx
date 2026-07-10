@@ -3,6 +3,7 @@ import { api, sanitizePayload } from '../services/api';
 import { getDeviceContext } from '../utils/errorHandler';
 import { ServerCrash, RefreshCcw, Loader2 } from 'lucide-react';
 import { Button } from './ui/Button';
+import { logger } from '../lib/logger';
 
 // SISTEMA DE BREADCRUMBS: Guarda os últimos 10 cliques do usuário silenciosamente
 const MAX_BREADCRUMBS = 10;
@@ -112,7 +113,7 @@ export class ErrorBoundary extends Component<Props, State> {
         this.setState({ errorId: res.data.id });
       }
     }).catch(() => {
-      console.warn('Falha ao enviar telemetria para a Central de Auditoria.');
+      logger.error('Falha ao enviar telemetria para a Central de Auditoria.');
     });
   };
 

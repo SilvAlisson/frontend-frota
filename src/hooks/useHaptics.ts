@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { logger } from '../lib/logger';
 
 /**
  * Hook para adicionar micro-interações táteis (Vibração) em dispositivos mobile.
@@ -15,7 +16,7 @@ export function useHaptics() {
     try {
       navigator.vibrate(10);
     } catch (e) {
-      console.error("[useHaptics] Haptics API error (light):", e);
+      logger.error("[useHaptics] Haptics API error (light):", e);
     }
   }, [isSupported]);
 
@@ -25,7 +26,7 @@ export function useHaptics() {
     try {
       navigator.vibrate(40);
     } catch (e) {
-      console.error("[useHaptics] Haptics API error (medium):", e);
+      logger.error("[useHaptics] Haptics API error (medium):", e);
     }
   }, [isSupported]);
 
@@ -35,7 +36,7 @@ export function useHaptics() {
     try {
       navigator.vibrate([30, 60, 40]);
     } catch (e) {
-      console.error("[useHaptics] Haptics API error (success):", e);
+      logger.error("[useHaptics] Haptics API error (success):", e);
     }
   }, [isSupported]);
 
@@ -45,7 +46,7 @@ export function useHaptics() {
     try {
       navigator.vibrate([50, 50, 50, 50, 50]);
     } catch (e) {
-      console.error("[useHaptics] Haptics API error (error):", e);
+      logger.error("[useHaptics] Haptics API error (error):", e);
     }
   }, [isSupported]);
 

@@ -4,4 +4,5 @@ export const env = {
   apiUrl: import.meta.env.VITE_API_URL || 'http://localhost:3001',
   hotjarId: import.meta.env.VITE_HOTJAR_ID,
   sentryDsn: import.meta.env.VITE_SENTRY_DSN,
+  frontendUrl: import.meta.env.VITE_FRONTEND_URL || (typeof window !== 'undefined' ? window.location.origin : 'https://klinfrota.vercel.app'),
 };
