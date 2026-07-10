@@ -46,7 +46,11 @@ export function AbaAso({ userId }: AbaAsoProps) {
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<AsoFormData>({
     resolver: zodResolver(asoFormSchema),
-    defaultValues: { resultado: 'APTO' }
+    defaultValues: { 
+      resultado: 'APTO',
+      medico: 'Ageval Rodrigues Dória',
+      crm: '1331/AL'
+    }
   });
 
   const [arquivo, setArquivo] = useState<File | null>(null);
@@ -81,7 +85,11 @@ export function AbaAso({ userId }: AbaAsoProps) {
         error: 'Erro ao registrar ASO'
       });
 
-      reset();
+      reset({ 
+        resultado: 'APTO', 
+        medico: 'Ageval Rodrigues Dória', 
+        crm: '1331/AL' 
+      }); 
       setArquivo(null);
       setIsFormOpen(false);
     } catch (error) {
