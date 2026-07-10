@@ -8,7 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
-import { UserCircle, Car, Loader2, Save } from 'lucide-react';
+import { UserCircle, Loader2, Save } from 'lucide-react';
 import { Skeleton } from '../ui/Skeleton';
 
 const cnhSchema = z.object({

@@ -3,10 +3,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAso } from '../../hooks/useAso';
-import type { AsoForm } from '../../hooks/useAso';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
-import { HeartPulse, UploadCloud, Loader2, Trash2, Calendar, FileCheck, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { HeartPulse, UploadCloud, Loader2, Trash2, Calendar, FileCheck } from 'lucide-react';
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
 import { uploadToR2 } from '../../services/uploadService';
@@ -23,11 +22,12 @@ const ASO_LABELS: Record<string, string> = {
   'DEMISSIONAL': 'Demissional'
 };
 
+// 1. CORREÇÃO DO ZOD: Utilização da propriedade 'message' esperada pela tipagem atual
 const asoFormSchema = z.object({
-  tipo: z.enum(['ADMISSIONAL', 'PERIODICO', 'MUDANCA_RISCO', 'RETORNO_TRABALHO', 'DEMISSIONAL'], { required_error: 'Selecione o tipo de ASO' }),
+  tipo: z.enum(['ADMISSIONAL', 'PERIODICO', 'MUDANCA_RISCO', 'RETORNO_TRABALHO', 'DEMISSIONAL'], { message: 'Selecione o tipo de ASO' }),
   dataRealizacao: z.string().min(1, 'Data de realização é obrigatória'),
   dataVencimento: z.string().optional(),
-  resultado: z.enum(['APTO', 'INAPTO'], { required_error: 'Selecione o resultado' }),
+  resultado: z.enum(['APTO', 'INAPTO'], { message: 'Selecione o resultado' }),
   medico: z.string().optional(),
   crm: z.string().optional(),
 });
@@ -44,7 +44,7 @@ export function AbaAso({ userId }: AbaAsoProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const { openModal, closeModal } = useModalStore();
 
-  const { register, handleSubmit, formState: { errors }, reset, watch } = useForm<AsoFormData>({
+  const { register, handleSubmit, formState: { errors }, reset } = useForm<AsoFormData>({
     resolver: zodResolver(asoFormSchema),
     defaultValues: { resultado: 'APTO' }
   });
@@ -59,10 +59,16 @@ export function AbaAso({ userId }: AbaAsoProps) {
       let comprovanteUrl = undefined;
 
       if (arquivo) {
-        toast.loading('Fazendo upload do comprovante...', { id: 'upload-aso' });
-        comprovanteUrl = await uploadToR2(arquivo, 'asos');
-        toast.success('Upload concluído!', { id: 'upload-aso' });
-      }
+  toast.loading('Fazendo upload do comprovante...', { id: 'upload-aso' });
+  
+  // 1. Blindagem: Sanitizar o nome removendo espaços e caracteres especiais para não quebrar o Regex do backend
+  const nomeSanitizado = arquivo.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+  
+  // 2. Envio com a assinatura correta: (file, originalName, contentType, folder)
+  comprovanteUrl = await uploadToR2(arquivo, nomeSanitizado, arquivo.type, 'asos');
+  
+  toast.success('Upload concluído!', { id: 'upload-aso' });
+}
 
       await toast.promise(criarMutation.mutateAsync({
         ...data,
@@ -147,6 +153,7 @@ export function AbaAso({ userId }: AbaAsoProps) {
                 <option value="APTO">Apto</option>
                 <option value="INAPTO">Inapto</option>
               </select>
+              {errors.resultado && <span className="text-error text-xs font-medium mt-1">{errors.resultado.message}</span>}
             </div>
 
             <div>
