@@ -126,18 +126,24 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
             let comprovanteUrl: string | undefined;
 
             if (certificadoFile) {
+                toast.loading('Fazendo upload do certificado...', { id: 'upload-cert' });
                 try {
-                    const fileName = `certificado-${Date.now()}-${certificadoFile.name}`;
+                    // Blindagem Dupla: Sanitiza o nome do arquivo para garantir passagem pelo Regex do backend
+                    const safeName = certificadoFile.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+                    const fileName = `certificado-${Date.now()}-${safeName}`;
+                    
                     comprovanteUrl = await uploadToR2(
                         certificadoFile,
                         fileName,
-                        certificadoFile.type || 'application/octet-stream',
+                        certificadoFile.type || 'application/pdf',
                         'certificados'
                     );
+                    toast.success('Upload concluído!', { id: 'upload-cert' });
                 } catch {
+                    toast.dismiss('upload-cert');
                     hapticError();
                     toast.error('Falha no upload do certificado. Verifique o arquivo e tente novamente.');
-                    return;
+                    return; // Interrompe se o upload falhar
                 }
             }
 
