@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo, useEffect } from 'react';
 import { api } from '../services/api';
 import { toast } from 'sonner';
 import type { Jornada } from '../types';
+import { logger } from '../lib/logger';
 
 export interface JornadaHistorico extends Jornada {
   kmPercorrido?: number;
@@ -35,10 +36,9 @@ export function useHistoricoJornadas(filtros: FiltrosJornada) {
       const response = await api.get('/jornadas/historico', { params });
       setHistorico(response.data);
     } catch (err: unknown) {
-      if (import.meta.env.DEV) console.error('Erro no fetch de histórico:', err);
+      logger.apiError(err, 'Erro ao carregar histórico de jornadas.');
       const e = err instanceof Error ? err : new Error('Não foi possível carregar o histórico.');
       setError(e);
-      toast.error(e.message);
     } finally {
       setLoading(false);
     }
@@ -54,8 +54,7 @@ export function useHistoricoJornadas(filtros: FiltrosJornada) {
       setHistorico(prev => prev.filter(item => item.id !== id));
       toast.success('Registro excluído com sucesso.');
     } catch (err: unknown) {
-      if (import.meta.env.DEV) console.error("Erro ao excluir:", err);
-      toast.error('Erro ao excluir jornada.');
+      logger.apiError(err, 'Erro ao excluir jornada.');
     }
   };
 

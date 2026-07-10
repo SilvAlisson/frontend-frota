@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { hapticError } from '../lib/haptics';
 import { Camera, Loader2, Check, AlertCircle } from 'lucide-react';
 import { ModalAlertaSSMA } from './rh/ModalAlertaSSMA';
+import { logger } from '../lib/logger';
 
 // Estilos padronizados Premium
 const fileInputContainer = "relative border-2 border-dashed border-border/60 rounded-3xl p-4 hover:bg-surface-hover transition-all duration-300 cursor-pointer group hover:border-primary/50 flex flex-col items-center justify-center min-h-[280px] overflow-hidden bg-surface shadow-sm";
@@ -76,7 +77,7 @@ export function ModalConfirmacaoFoto<T extends Record<string, unknown>>({
         setFoto(imagemComprimida);
 
       } catch (error) {
-        console.error("[ModalConfirmacaoFoto] Erro ao processar imagem:", error);
+        logger.apiError(error, 'Erro ao processar imagem.');
         hapticError();
         toast.error("Erro ao processar a foto. Tente novamente.");
         setFoto(null);
@@ -111,9 +112,7 @@ export function ModalConfirmacaoFoto<T extends Record<string, unknown>>({
         setModalSSMAOpen(true);
         return; // Interrompe o fluxo e não exibe o toast genérico
       }
-      
-      console.error("[ModalConfirmacaoFoto] Erro ao enviar foto:", error);
-      toast.error("Erro ao enviar a foto. Tente novamente.");
+      logger.apiError(error, 'Erro ao enviar foto. Tente novamente.');
     }
   };
 

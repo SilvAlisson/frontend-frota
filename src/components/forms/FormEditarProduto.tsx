@@ -12,6 +12,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select'; 
 import { hapticError } from '../../lib/haptics';
+import { logger } from '../../lib/logger';
 
 const tipos = ["PECA", "SERVICO", "COMBUSTIVEL", "ADITIVO", "LUBRIFICANTE", "PNEU", "OUTROS"] as const;
 
@@ -105,9 +106,8 @@ export function FormEditarProduto({ produtoId, onSuccess, onCancelar }: FormEdit
           valorReferencia: data.valorReferencia || 0
         });
       } catch (err) {
-        if (import.meta.env.DEV) console.error(err);
+        logger.apiError(err, 'Falha ao carregar os detalhes do produto.');
         if (isMounted) {
-            toast.error("Falha ao carregar os detalhes do produto.");
             onCancelar();
         }
       } finally {

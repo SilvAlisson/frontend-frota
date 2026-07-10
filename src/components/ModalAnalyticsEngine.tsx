@@ -6,6 +6,7 @@ import type { DrilldownDataPoint, MetricType } from '../types/analytics';
 import { PieChartDrilldown } from './charts/PieChartDrilldown';
 import { BarChartTemporal } from './charts/BarChartTemporal';
 import { ANALYTICS_STRATEGIES } from '../hooks/useAnalyticsStrategy';
+import { logger } from '../lib/logger';
 
 interface ModalAnalyticsProps {
   isOpen: boolean;
@@ -38,7 +39,7 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
       const data = await strategy.fetchMacro();
       setDataNivel1(data);
     } catch (err: unknown) {
-      if (import.meta.env.DEV) console.error(err);
+      logger.debug("Erro ao carregar dados macro", err);
       toast.error("Erro ao carregar dados macro");
     } finally {
       setLoading(false);
@@ -80,7 +81,7 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
         setLevel(3);
       }
     } catch (err: unknown) {
-      if (import.meta.env.DEV) console.error(err);
+      logger.debug("Erro ao carregar detalhes", err);
       toast.error("Erro ao carregar detalhes");
     } finally {
       setLoading(false);
@@ -97,7 +98,7 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
       setDataNivel3(data);
       setLevel(3);
     } catch (err: unknown) {
-      if (import.meta.env.DEV) console.error(err);
+      logger.debug("Erro ao carregar evolução temporal", err);
       toast.error("Erro ao carregar evolução temporal");
     } finally {
       setLoading(false);
@@ -114,7 +115,7 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
       setDataNivel4(data);
       setLevel(4);
     } catch (err: unknown) {
-      if (import.meta.env.DEV) console.error(err);
+      logger.debug("Erro ao carregar detalhamento final", err);
       toast.error("Erro ao carregar detalhamento final");
     } finally {
       setLoading(false);

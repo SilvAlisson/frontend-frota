@@ -1,6 +1,7 @@
 import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { toast } from 'sonner';
+import { logger } from './lib/logger';
 
 
 
@@ -159,8 +160,7 @@ export const exportarParaExcel = async <T extends Record<string, unknown>>(data:
     saveAs(blob, fileNameFull);
 
   } catch (error) {
-    if (import.meta.env.DEV) console.error("Erro ao exportar para Excel:", error);
-    toast.error("Ocorreu um erro ao gerar o arquivo Excel.");
+    logger.apiError(error, 'Erro ao gerar o arquivo Excel.');
   }
 };
 

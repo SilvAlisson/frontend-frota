@@ -6,6 +6,7 @@ import { Select } from '../ui/Select';
 import { useUsuarios } from '../../hooks/useUsuarios';
 import { api } from '../../services/api';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { Loader2, Users } from 'lucide-react';
 import type { ProgramaMacro } from '../../hooks/useProgramas';
 
@@ -86,8 +87,7 @@ export function ModalNovaConvocacao({ isOpen, onClose, onSuccess, programasExist
       toast.success('Convocação disparada com sucesso!');
       onSuccess();
     } catch (error: any) {
-      console.error(error);
-      toast.error(error.response?.data?.error || 'Erro ao criar convocação.');
+      logger.apiError(error, 'Erro ao criar convocação.');
     } finally {
       setLoading(false);
     }

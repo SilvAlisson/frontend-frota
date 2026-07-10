@@ -13,6 +13,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select'; 
 import { hapticError } from '../../lib/haptics';
+import { logger } from '../../lib/logger';
 
 const tiposFornecedor = ["POSTO", "OFICINA", "LAVA_JATO", "SEGURADORA", "OUTROS"] as const;
 
@@ -103,9 +104,8 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
         });
 
       } catch (error) {
-        if (import.meta.env.DEV) console.error(error);
+        logger.apiError(error, 'Erro ao carregar dados do parceiro.');
         if (isMounted) {
-            toast.error('Erro ao carregar dados do parceiro.');
             onCancelar();
         }
       } finally {
@@ -146,7 +146,7 @@ export function FormEditarFornecedor({ fornecedorId, onSuccess, onCancelar }: Pr
             error: (err) => err.response?.data?.error || 'Falha ao atualizar.'
         });
     } catch(e) {
-        if (import.meta.env.DEV) console.error(e);
+        logger.debug('Erro ao processar dados do fornecedor:', e);
         toast.error('Ocorreu um erro ao processar os dados.');
     }
   };

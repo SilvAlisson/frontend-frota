@@ -9,6 +9,7 @@ import { Select } from '../ui/Select';
 import { toast } from 'sonner';
 import { Package, Save, Layers, Archive, AlertTriangle } from 'lucide-react';
 import { hapticError } from '../../lib/haptics';
+import { logger } from '../../lib/logger';
 
 const tipos = ["PECA", "SERVICO", "COMBUSTIVEL", "ADITIVO", "LUBRIFICANTE", "PNEU", "OUTROS"] as const;
 
@@ -87,7 +88,7 @@ export function FormCadastrarProduto({ onSuccess, onCancelar }: FormProps) {
         error: (err) => err.response?.data?.error || 'Erro ao cadastrar item.'
       });
     } catch (e) {
-      if (import.meta.env.DEV) console.error(e);
+      logger.debug('Erro inesperado ao processar formulário:', e);
       toast.error('Erro inesperado ao processar formulário.');
     }
   };

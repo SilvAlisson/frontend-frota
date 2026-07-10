@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { FILTRO_TODOS } from '../config/constants';
+import { logger } from '../lib/logger';
 
 // Tipos extraídos para garantir Strict Typing
 export interface PlanoManutencao {
@@ -56,7 +57,7 @@ export function usePlanosManutencao(veiculoId?: string, filtroCategoria?: string
         const res = await api.get<PlanoManutencao[]>(url);
         return res.data;
       } catch (err) {
-        if (import.meta.env.DEV) console.error("Falha ao carregar planos:", err);
+        logger.debug('Falha ao carregar planos de manutenção:', err);
         return [];
       }
     },

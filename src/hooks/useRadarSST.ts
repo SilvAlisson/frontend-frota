@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
+import { logger } from '../lib/logger';
 
 export interface RadarCard {
   id: string;
@@ -38,8 +39,7 @@ export function useRadarSST() {
       toast.success('Radar atualizado com sucesso!');
     },
     onError: (error) => {
-      console.error(error);
-      toast.error('Erro ao atualizar agendamento do Radar.');
+      logger.apiError(error, 'Erro ao atualizar agendamento do Radar.');
     }
   });
 

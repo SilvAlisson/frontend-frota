@@ -11,6 +11,7 @@ import type { User } from '../types';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { useReactToPrint } from 'react-to-print';
 import { useWebAuthn } from '../hooks/useWebAuthn';
+import { logger } from '../lib/logger';
 
 interface ModalQrCodeProps {
   user: User & { loginToken?: string };
@@ -53,8 +54,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
       toast.success("Credencial atualizada com sucesso!");
       if (onUpdate) onUpdate();
     } catch (error) {
-      if (import.meta.env.DEV) console.error(error);
-      toast.error("Erro ao gerar credencial.");
+      logger.apiError(error, 'Erro ao gerar credencial.');
     } finally {
       setLoading(false);
     }
@@ -77,7 +77,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
         });
         toast.success("Compartilhado com sucesso!");
       } catch (err) {
-        if (import.meta.env.DEV) console.log("Erro ao compartilhar ou compartilhamento cancelado", err);
+        logger.debug('Erro ao compartilhar ou compartilhamento cancelado:', err);
       }
     } else {
       handleCopyLink();

@@ -11,6 +11,7 @@ import { LoginFormCredentials, type LoginFormValues } from '../components/forms/
 import { LoginFormQR } from '../components/forms/FormLogin/LoginFormQR';
 import { Skeleton } from '../components/ui/Skeleton';
 import { toast } from 'sonner';
+import { logger } from '../lib/logger';
 
 export function LoginScreen() {
   const { theme, toggleTheme } = useTheme();
@@ -31,8 +32,7 @@ export function LoginScreen() {
     try {
       await loginWithCredentials(data);
     } catch (err: unknown) {
-      console.error("[LoginScreen] Erro no login com credenciais:", err);
-      toast.error(err instanceof Error ? err.message : 'Falha ao realizar login. Verifique suas credenciais.');
+      logger.apiError(err, 'Falha ao realizar login. Verifique suas credenciais.');
     } finally {
       setIsSubmittingForm(false);
     }
@@ -43,8 +43,7 @@ export function LoginScreen() {
     try {
       await loginWithManualQr(token);
     } catch (err: unknown) {
-      console.error("[LoginScreen] Erro no login com QR code:", err);
-      toast.error(err instanceof Error ? err.message : 'Falha ao realizar login com QR code.');
+      logger.apiError(err, 'Falha ao realizar login com QR code.');
     } finally {
       setIsSubmittingForm(false);
     }

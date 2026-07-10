@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { toast } from 'sonner';
 import axios from 'axios';
 import type { User } from '../types';
+import { logger } from '../lib/logger';
 
 export function useUsuarios() {
   const queryClient = useQueryClient();
@@ -15,7 +16,7 @@ export function useUsuarios() {
         // Filtra para esconder usuários de teste da lista geral (RH/Admin)
         return data.filter(u => !u.nome.toLowerCase().includes('testando'));
       } catch (err: unknown) {
-        if (import.meta.env.DEV) console.error(err);
+        logger.debug('Erro ao carregar usuários:', err);
         // toast.error('Não foi possível carregar o diretório de equipe.');
         throw err;
       }

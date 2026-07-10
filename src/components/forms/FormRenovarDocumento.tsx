@@ -12,6 +12,7 @@ import { Textarea } from '../ui/Textarea';
 import { FileText, RefreshCcw, UploadCloud, Loader2, XCircle } from 'lucide-react';
 import { uploadToR2 } from '../../services/uploadService';
 import { hapticError } from '../../lib/haptics';
+import { logger } from '../../lib/logger';
 
 const renovarDocumentoSchema = z.object({
   titulo: z.string().min(3, "O título precisa ter pelo menos 3 letras"),
@@ -84,8 +85,7 @@ export function FormRenovarDocumento({ documentoId, onSuccess, onCancel }: FormR
       setValue('arquivoUrl', publicUrlString, { shouldValidate: true });
       toast.success('Novo arquivo anexado com sucesso na nuvem!');
     } catch (error) {
-      if (import.meta.env.DEV) console.error(error);
-      toast.error('Erro ao fazer upload do arquivo para o Supabase.');
+      logger.apiError(error, 'Erro ao fazer upload do arquivo.');
     } finally {
       setIsUploading(false);
     }

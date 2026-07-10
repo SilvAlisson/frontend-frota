@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
+import { logger } from '../lib/logger';
 
 export interface VeiculoRanking {
   id: string;
@@ -20,7 +21,7 @@ export function useRankingVeiculos(ano: number, mes: number) {
         });
         return data;
       } catch (error) {
-        if (import.meta.env.DEV) console.error(error);
+        logger.debug('Erro ao carregar ranking de veículos:', error);
         // toast.error('Erro ao carregar ranking da frota.');
         throw error;
       }

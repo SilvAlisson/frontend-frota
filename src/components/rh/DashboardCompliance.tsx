@@ -6,6 +6,7 @@ import { cn } from '../../lib/utils';
 import { Button } from '../ui/Button';
 import { Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 export function DashboardCompliance() {
   const { data: matriz, isLoading } = useMatrizQualificacao();
   const [filtroExpandido, setFiltroExpandido] = useState<string | null>(null);
@@ -99,8 +100,7 @@ export function DashboardCompliance() {
       saveAs(blob, `Alertas_Compliance_RH_${new Date().toISOString().split('T')[0]}.csv`);
       toast.success('Relatório CSV exportado com sucesso!');
     } catch (error) {
-      console.error(error);
-      toast.error('Erro ao exportar o relatório.');
+      logger.apiError(error, 'Erro ao exportar o relatório.');
     } finally {
       setIsExporting(false);
     }

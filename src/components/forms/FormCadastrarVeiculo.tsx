@@ -12,6 +12,7 @@ import { Select } from '../ui/Select';
 import { toast } from 'sonner';
 import { Save } from 'lucide-react';
 import { hapticError } from '../../lib/haptics';
+import { logger } from '../../lib/logger';
 
 // --- CONFIGURAÇÃO DAS CATEGORIAS ---
 const CATEGORIAS_VEICULO = ['POLIGUINDASTE', 'VACUO', 'MUNCK', 'LEVE', 'OUTRO'] as const;
@@ -103,9 +104,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
       setTimeout(onSuccess, 500);
 
     } catch (error: unknown) {
-      if (import.meta.env.DEV) console.error(error);
-      const apiError = (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
-      toast.error(apiError || 'Erro ao cadastrar. Verifique a placa.');
+      logger.apiError(error, 'Erro ao cadastrar veículo.');
     }
   };
 

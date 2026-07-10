@@ -14,6 +14,7 @@ import { Select } from '../ui/Select';
 // --- UTILS ---
 import { formatKmVisual, parseDecimal } from '../../utils';
 import { hapticError } from '../../lib/haptics';
+import { logger } from '../../lib/logger';
 
 const tiposDeVeiculo = ["POLIGUINDASTE", "VACUO", "MUNCK", "UTILITARIO", "LEVE", "OUTRO"] as const;
 const tiposDeCombustivel = ["DIESEL_S10", "GASOLINA_COMUM", "ETANOL", "GNV"] as const;
@@ -145,9 +146,8 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
             vencimentoCipp: veiculo.vencimentoCipp ? new Date(veiculo.vencimentoCipp).toISOString().split('T')[0] : ''
           });
         } catch (err) {
-          if (import.meta.env.DEV) console.error(err);
+          logger.apiError(err, 'Erro ao acessar a ficha do veículo.');
           if (isMounted) {
-              toast.error('Erro ao Acessar à ficha do veículo.');
               onCancelarRef.current();
           }
         } finally {
@@ -184,9 +184,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
       toast.success('Registro do Veículo atualizado com sucesso!');
       onSuccess();
     } catch (e: unknown) {
-      if (import.meta.env.DEV) console.error(e);
-      const apiError = (e as { response?: { data?: { error?: string } } })?.response?.data?.error;
-      toast.error(apiError || 'Falha ao salvar as alterações. Verifique os dados.');
+      logger.apiError(e, 'Falha ao salvar as alterações do veículo.');
     }
   };
 

@@ -15,6 +15,7 @@ import { Textarea } from '../ui/Textarea';
 // --- UTILS ---
 import { formatKmVisual, parseKmInteligente } from '../../utils';
 import { hapticError } from '../../lib/haptics';
+import { logger } from '../../lib/logger';
 
 // --- SCHEMA ZOD V4 COMPATÍVEL ---
 const editJornadaFormSchema = z.object({
@@ -124,9 +125,8 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
 
         reset(formData);
       } catch (err) {
-        if (import.meta.env.DEV) console.error("Erro ao carregar dados:", err);
+        logger.apiError(err, 'Falha ao carregar o Registro da jornada.');
         if (isMounted) {
-            toast.error("Falha ao carregar o Registro da jornada.");
             onCancelar();
         }
       } finally {
@@ -180,9 +180,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
       toast.success('Jornada retificada com sucesso!');
       onSuccess();
     } catch (err: unknown) {
-      if (import.meta.env.DEV) console.error(err);
-      const apiError = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
-      toast.error(apiError || 'Ocorreu um erro ao gravar as alterações.');
+      logger.apiError(err, 'Erro ao gravar as alterações da jornada.');
     } finally {
       setLoading(false);
     }

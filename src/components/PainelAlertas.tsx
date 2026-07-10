@@ -8,6 +8,7 @@ import {
 import type { Alerta } from '../types';
 import { AnimatePresence } from 'framer-motion';
 import { haptics } from '../utils/haptics';
+import { logger } from '../lib/logger';
 
 // Hooks Globais
 import { useAlertas } from '../hooks/useAlertas';
@@ -235,7 +236,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
                     await resolverOciosidade({ isVeiculo, id, status });
                     setAlertaOcioso(null);
                   } catch (e) {
-                    console.error("[PainelAlertas] Erro ao resolver ociosidade:", e);
+                    logger.apiError(e, 'Erro ao resolver ociosidade.');
                   }
                 }}
                 variant="primary"
@@ -295,7 +296,7 @@ export function PainelAlertas({ onAlertaClick }: PainelAlertasProps) {
                       await resolverLog(alertaAuditoria.logId);
                       setAlertaAuditoria(null);
                     } catch (e) {
-                      console.error("[PainelAlertas] Erro ao resolver log:", e);
+                      logger.apiError(e, 'Erro ao resolver log de auditoria.');
                     }
                   }
                 }}

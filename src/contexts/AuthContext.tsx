@@ -2,6 +2,7 @@ import { createContext, useContext, type ReactNode, useEffect, useState, useCall
 import { useSession, signOut as betterSignOut } from '../lib/auth-client';
 import type { User } from '../types';
 import { RENDER_API_BASE_URL } from '../config';
+import { logger } from '../lib/logger';
 
 interface AuthContextData {
   user: User | null;
@@ -98,7 +99,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
         await betterSignOut();
     } catch(e) {
-        console.error(e);
+        logger.debug('Erro silencioso ao fazer sign out:', e);
     }
   }, []);
 

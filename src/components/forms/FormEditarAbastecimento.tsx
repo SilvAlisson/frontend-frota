@@ -7,6 +7,7 @@ import { api } from '../../services/api';
 import { uploadToR2 } from '../../services/uploadService';
 import { toast } from 'sonner';
 import { hapticError } from '../../lib/haptics';
+import { logger } from '../../lib/logger';
 import {
   Save, Plus, X, User as UserIcon, Truck,
   MapPin, Calendar, CreditCard, Image as ImageIcon, Loader2
@@ -151,8 +152,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
       setPreviewFoto(publicUrlString);
       toast.success("Foto atualizada!");
     } catch (error) {
-      if (import.meta.env.DEV) console.error(error);
-      toast.error("Erro ao enviar foto.");
+      logger.apiError(error, 'Erro ao enviar foto.');
     } finally {
       setUploading(false);
     }

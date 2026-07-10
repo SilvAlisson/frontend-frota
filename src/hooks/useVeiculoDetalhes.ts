@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import type { DadosEvolucaoKm, Veiculo, OrdemServico, Abastecimento } from '../types';
+import { logger } from '../lib/logger';
 
 export type VeiculoCompleto = Veiculo & {
   resumoFinanceiro?: unknown;
@@ -20,7 +21,7 @@ export function useVeiculoDetalhes(id?: string) {
         const res = await api.get<VeiculoCompleto>(`/veiculos/${id}/detalhes`);
         return res.data;
       } catch (err) {
-        if (import.meta.env.DEV) console.error("Erro crítico na API:", err);
+        logger.apiError(err, 'Erro crítico ao buscar dados do veículo.');
         navigate('/admin/veiculos');
         throw err;
       }
@@ -37,7 +38,7 @@ export function useVeiculoDetalhes(id?: string) {
         const res = await api.get<DadosEvolucaoKm[]>(`/relatorios/evolucao-km?veiculoId=${id}&dias=7`);
         return res.data || [];
       } catch (err) {
-        console.warn("Falha no gráfico, carregando resto da página.");
+        logger.debug('Falha ao buscar gráfico de KM:', err);
         return [];
       }
     },

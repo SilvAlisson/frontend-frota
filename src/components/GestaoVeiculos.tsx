@@ -25,6 +25,7 @@ import { PullToRefresh } from './ui/PullToRefresh';
 import { SmartFAB } from './ui/SmartFAB';
 import { SaudeVeiculoBar } from './ui/SaudeVeiculoBar';
 import { calculateVehicleHealth } from '../lib/veiculoHelper';
+import { logger } from '../lib/logger';
 
 // --- FORMS (LAZY LOADED) ---
 const FormCadastrarVeiculo = React.lazy(() => import('./forms/FormCadastrarVeiculo').then(module => ({ default: module.FormCadastrarVeiculo })));
@@ -62,7 +63,7 @@ export function GestaoVeiculos() {
     try {
       await deleteVeiculo(veiculoParaExcluir);
     } catch (error) {
-      if (import.meta.env.DEV) console.error('[DELETE_VEICULO_ERROR]', error);
+      logger.apiError(error, 'Erro ao excluir veículo.');
     } finally {
       setVeiculoParaExcluir(null);
     }

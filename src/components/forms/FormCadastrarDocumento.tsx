@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { uploadToR2 } from '../../services/uploadService';
 import { useCreateDocumento } from '../../hooks/useDocumentosLegais';
 import { hapticError } from '../../lib/haptics';
+import { logger } from '../../lib/logger';
 import { useVeiculos } from '../../hooks/useVeiculos';
 import { toast } from 'sonner';
 import { UploadCloud, FileText, Truck, Save, AlertTriangle, Loader2 } from 'lucide-react';
@@ -108,7 +109,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
       });
 
     } catch (error) {
-      if (import.meta.env.DEV) console.error(error);
+      logger.debug('Erro ao fazer upload do arquivo:', error);
       toast.error("Erro ao fazer upload do arquivo.");
     } finally {
       setUploading(false);

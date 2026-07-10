@@ -5,6 +5,7 @@ import { X, UploadCloud, GraduationCap, Calendar, BellRing, FileCheck } from 'lu
 import { useTreinamentosUsuario } from '../../hooks/useTreinamentosUsuario';
 import { uploadToR2 } from '../../services/uploadService';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 
 interface ModalGerenciarTreinamentoProps {
   userId: string;
@@ -57,7 +58,7 @@ export function ModalGerenciarTreinamento({ userId, treinamentoPreDefinido, carg
       onSuccess();
       onClose();
     } catch (e) {
-      if (import.meta.env.DEV) console.error("Erro ao adicionar treinamento:", e);
+      logger.debug('Erro ao adicionar treinamento:', e);
       // addTreinamento já exibe toast de erro via toast.promise internamente
     } finally {
       setIsSubmitting(false);

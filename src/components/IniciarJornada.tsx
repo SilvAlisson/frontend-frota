@@ -7,6 +7,7 @@ import { ConfirmModal } from './ui/ConfirmModal';
 import { parseDecimal, formatKmVisual } from '../utils';
 import { toast } from 'sonner';
 import { hapticError } from '../lib/haptics';
+import { logger } from '../lib/logger';
 import { Gauge, Play, AlertTriangle, ShieldAlert } from 'lucide-react';
 import type { User, Veiculo, Jornada } from '../types';
 import { api } from '../services/api';
@@ -82,7 +83,7 @@ export function IniciarJornada({
     api.get(`/rh/validar-cnh-veiculo/${operadorLogadoId}?veiculoId=${veiculoIdSelecionado}`)
       .then(res => setCnhAviso(res.data))
       .catch(err => {
-        console.error('Erro ao validar CNH', err);
+        logger.apiError(err, 'Erro ao validar CNH.');
         setCnhAviso(null);
       });
   };

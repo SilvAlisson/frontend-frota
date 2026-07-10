@@ -28,6 +28,7 @@ import { useFornecedores } from '../../hooks/useFornecedores';
 import { parseDecimal, formatKmVisual } from '../../utils';
 import { desformatarDinheiro, formatarDinheiro } from '../../lib/formatters';
 import { hapticError } from '../../lib/haptics';
+import { logger } from '../../lib/logger';
 import { comprimirImagem } from '../../utils/imageCompressor';
 
 const ALVOS_MANUTENCAO = ['VEICULO', 'OUTROS'] as const;
@@ -207,8 +208,7 @@ function FormEditarManutencaoInterno({
    setPreviewFoto(publicUrlString);
    toast.success("Foto atualizada com sucesso!");
   } catch (error) {
-   if (import.meta.env.DEV) console.error(error);
-   toast.error("Erro ao enviar foto.");
+   logger.apiError(error, 'Erro ao enviar foto.');
   } finally {
    setUploading(false);
   }
@@ -238,8 +238,7 @@ function FormEditarManutencaoInterno({
    toast.success("Ordem de Serviço atualizada!");
    onSuccess();
   } catch (error) {
-   if (import.meta.env.DEV) console.error(error);
-   toast.error("Erro ao atualizar registro.");
+   logger.apiError(error, 'Erro ao atualizar Ordem de Serviço.');
   }
  };
 

@@ -5,6 +5,7 @@ import { signIn, passkey } from '../lib/auth-client';
 import { useAuth } from '../contexts/AuthContext';
 import { api } from '../services/api';
 import type { User, UserRole } from '../types';
+import { logger } from '../lib/logger';
 
 export interface PasskeyDevice {
     id: string;
@@ -68,7 +69,7 @@ export function useWebAuthn() {
             });
 
             if (res?.error) {
-                console.error('[useWebAuthn] registerDevice error from server:', res.error);
+                logger.debug('[useWebAuthn] registerDevice server error:', res.error);
                 toast.error(`Falha ao registrar biometria: ${res.error.message || res.error.statusText || 'Erro no servidor'}`);
                 return false;
             }
@@ -93,7 +94,7 @@ export function useWebAuthn() {
             } else {
                 toast.error(`Erro no sensor: ${err.message || err.name || 'Desconhecido'}`);
             }
-            if (import.meta.env.DEV) console.error('[useWebAuthn] registerDevice:', error);
+            logger.debug('[useWebAuthn] registerDevice error:', error);
             return false;
         } finally {
             setIsRegistering(false);
@@ -162,7 +163,7 @@ export function useWebAuthn() {
             } else {
                 toast.error('Falha ao ler biometria. Tente novamente.');
             }
-            if (import.meta.env.DEV) console.error('[useWebAuthn] loginWithDevice:', error);
+            logger.debug('[useWebAuthn] loginWithDevice error:', error);
             return false;
         } finally {
             setIsAuthenticating(false);

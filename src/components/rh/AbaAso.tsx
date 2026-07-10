@@ -13,6 +13,7 @@ import { uploadToR2 } from '../../services/uploadService';
 import { toast } from 'sonner';
 import { DateHelper } from '../../lib/dateHelper';
 import { useModalStore } from '../../hooks/useModalStore';
+import { logger } from '../../lib/logger';
 
 const ASO_LABELS: Record<string, string> = {
   'ADMISSIONAL': 'Admissional',
@@ -78,7 +79,7 @@ export function AbaAso({ userId }: AbaAsoProps) {
       setArquivo(null);
       setIsFormOpen(false);
     } catch (error) {
-      console.error(error);
+      logger.apiError(error, 'Erro ao registrar ASO.');
       toast.dismiss('upload-aso');
     } finally {
       setIsUploading(false);

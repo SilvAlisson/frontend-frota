@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { Button } from './ui/Button';
 import { FormCadastrarCargo } from './forms/FormCadastrarCargo';
 import { toast } from 'sonner';
+import { logger } from '../lib/logger';
 import { Trash2, Plus, Briefcase, GraduationCap, AlertTriangle, Loader2 } from 'lucide-react';
 import type { Cargo } from '../types';
 
@@ -29,8 +30,7 @@ export function GestaoCargos() {
       const { data } = await api.get<Cargo[]>('/cargos');
       setCargos(data);
     } catch (err) {
-      if (import.meta.env.DEV) console.error("Erro ao carregar cargos:", err);
-      toast.error("Não foi possível carregar o diretório de cargos.");
+      logger.apiError(err, 'Erro ao carregar cargos.');
     } finally {
       setLoading(false);
     }
@@ -59,7 +59,7 @@ export function GestaoCargos() {
       error: (err) => {
         setDeletingId(null);
         setCargoParaExcluir(null);
-        if (import.meta.env.DEV) console.error("Erro ao deletar cargo:", err);
+        logger.debug('Erro ao deletar cargo:', err);
         return 'Erro: Não é possível remover cargos com integrantes ou treinos ativos vinculados.';
       }
     });

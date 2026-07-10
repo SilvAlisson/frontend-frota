@@ -17,6 +17,7 @@ import {
     Calendar, ChevronLeft, Bell, BellRing
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { logger } from '../lib/logger';
 
 const alterarSenhaSchema = z.object({
     senhaAtual: z.string().min(1, 'Digite sua senha atual'),
@@ -205,8 +206,7 @@ export function MinhaContaPage() {
                 toast.success('Notificações ativadas com sucesso!');
             }
         } catch (error) {
-            console.error('Erro ao configurar notificações push:', error);
-            toast.error('Ocorreu um erro ao configurar notificações.');
+            logger.apiError(error, 'Erro ao configurar notificações push.');
         } finally {
             setIsSubscribingPush(false);
         }

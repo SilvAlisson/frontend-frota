@@ -4,6 +4,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { api } from '../../services/api';
 import { toast } from 'sonner';
+import { logger } from '../../lib/logger';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
@@ -53,7 +54,7 @@ export function ModalNovoIntegrante({ isOpen, onClose, onSuccess, cargos }: Moda
       onSuccess();
       onClose();
     } catch (err) {
-      if (import.meta.env.DEV) console.error("Erro ao registrar novo integrante:", err);
+      logger.debug('Erro ao registrar novo integrante:', err);
       // handleApiError já mostra toast
     } finally {
       setIsSubmitting(false);

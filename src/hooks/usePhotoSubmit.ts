@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { api } from '../services/api';
 import { uploadToR2 } from '../services/uploadService';
 import { toast } from 'sonner';
+import { logger } from '../lib/logger';
 
 interface SubmitParams<T> {
   foto: File;
@@ -54,7 +55,7 @@ export function usePhotoSubmit<T extends Record<string, unknown>>() {
       toast.success('Informações gravadas com sucesso!');
       return response?.data;
     } catch (error: unknown) {
-      if (import.meta.env.DEV) console.error('Erro ao confirmar foto:', error);
+      logger.debug('Erro ao confirmar foto:', error);
       if (!(error as Record<string, unknown>)?._toastHandled) {
         toast.error('Erro ao processar imagem ou salvar dados.');
       }

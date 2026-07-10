@@ -3,6 +3,7 @@ import { api } from '../services/api';
 import { toast } from 'sonner';
 import { exportarParaExcel } from '../utils';
 import axios from 'axios';
+import { logger } from '../lib/logger';
 
 export interface Produto {
   id: string;
@@ -27,7 +28,7 @@ export function useProdutos() {
       const response = await api.get('/produtos');
       setProdutos(response.data);
     } catch (err: unknown) {
-      if (import.meta.env.DEV) console.error(err);
+      logger.debug('Erro ao carregar produtos:', err);
       // toast.error('Falha ao carregar catálogo.');
     } finally {
       setLoading(false);

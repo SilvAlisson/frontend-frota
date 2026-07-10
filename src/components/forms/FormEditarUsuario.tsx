@@ -13,6 +13,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { hapticError } from '../../lib/haptics';
+import { logger } from '../../lib/logger';
 
 interface Cargo {
   id: string;
@@ -146,9 +147,8 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
           dataAdmissao: user.dataAdmissao ? user.dataAdmissao.split('T')[0] : '',
         });
       } catch (err) {
-        if (import.meta.env.DEV) console.error(err);
+        logger.apiError(err, 'Erro ao carregar os dados de perfil.');
         if (isMounted) {
-          toast.error("Erro ao carregar os dados de perfil.");
           onCancelarRef.current();
         }
       } finally {
@@ -179,7 +179,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
         const fileName = `perfil-${userId}-${Date.now()}.${fileExt}`;
         finalFotoUrl = await uploadToR2(fotoFile, fileName, fotoFile.type || 'image/jpeg', 'usuarios');
       } catch (err) {
-        if (import.meta.env.DEV) console.error(err);
+        logger.debug('Erro ao atualizar foto de perfil:', err);
         toast.error("Erro ao atualizar foto de perfil.");
         return;
       }
@@ -211,7 +211,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
         return 'Perfil do integrante atualizado!';
       },
       error: (err) => {
-        if (import.meta.env.DEV) console.error(err);
+        logger.debug('Erro ao atualizar dados de usuário:', err);
         return err.response?.data?.error || 'Falha ao atualizar dados.';
       }
     });

@@ -5,6 +5,7 @@ import { z } from 'zod';
 import { useProdutos, type Produto, type AddProdutoData } from '../hooks/useProdutos';
 import { useModalStore } from '../hooks/useModalStore';
 import { Settings, Package, Sparkles, Trash2, Lightbulb, Box, Loader2, Droplets, Grid } from 'lucide-react';
+import { logger } from '../lib/logger';
 
 // --- DESIGN SYSTEM ---
 import { Button } from './ui/Button';
@@ -81,9 +82,8 @@ export function ModalGerenciarServicos({ onClose, onItemAdded }: ModalGerenciarS
       if (onItemAdded) {
         onItemAdded(response);
       }
-    } catch (err) {
-      console.error("[ModalGerenciarServicos] Erro ao gerenciar serviço:", err);
-      // O hook já dispara o toast e faz log
+    } catch (err: unknown) {
+      logger.apiError(err, 'Erro ao gerenciar serviço.');
     }
   };
 

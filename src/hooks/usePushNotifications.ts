@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../services/api';
 import { toast } from 'sonner';
+import { logger } from '../lib/logger';
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -64,7 +65,7 @@ export function usePushNotifications() {
       return true;
 
     } catch (error) {
-      if (import.meta.env.DEV) console.error('Erro ao assinar push:', error);
+      logger.apiError(error, 'Erro ao configurar notificações no dispositivo.');
       // toast.error("Erro ao configurar notificações no dispositivo.");
       return false;
     }

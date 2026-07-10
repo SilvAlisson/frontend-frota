@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { UserPlus, Camera, Calendar, CreditCard, User, Briefcase, Mail, KeyRound, Hash, GraduationCap, X, Plus } from 'lucide-react';
 import { hapticError } from '../../lib/haptics';
+import { logger } from '../../lib/logger';
 
 // Tipos e Constantes
 interface CargoRequisito {
@@ -141,7 +142,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
         const fileName = `perfil-${Date.now()}.${fileExt}`;
         finalFotoUrl = await uploadToR2(fotoFile, fileName, fotoFile.type || 'image/jpeg', 'usuarios');
       } catch (err) {
-        if (import.meta.env.DEV) console.error("Erro upload:", err);
+        logger.debug('Erro upload de foto de perfil:', err);
         toast.error("Falha ao enviar foto de perfil.");
         setLoadingStep('');
         return;
@@ -191,8 +192,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       setTimeout(onSuccess, 500);
 
     } catch (err: any) {
-      if (import.meta.env.DEV) console.error(err);
-      toast.error(err.response?.data?.error || 'Erro ao cadastrar. Verifique o email.');
+      logger.apiError(err, 'Erro ao cadastrar usuário.');
       setLoadingStep('');
       hapticError();
     }

@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 import { Store, Save, Check, Layers, Loader2, Info } from 'lucide-react';
 import type { Produto } from '../../types';
 import { hapticError } from '../../lib/haptics';
+import { logger } from '../../lib/logger';
 
 const tipos = ["POSTO", "OFICINA", "LAVA_JATO", "SEGURADORA", "OUTROS"] as const;
 
@@ -65,7 +66,7 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormProps) {
       .then(res => {
         if(isMounted) setProdutosDisponiveis(res.data);
       })
-      .catch(err => { if (import.meta.env.DEV) console.error("Erro ao carregar produtos", err); })
+      .catch(err => { logger.debug('Erro ao carregar produtos:', err); })
       .finally(() => {
         if(isMounted) setLoadingProdutos(false);
       });
@@ -102,7 +103,7 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormProps) {
             error: (err) => err.response?.data?.error || 'Erro ao cadastrar fornecedor.'
         });
     } catch(e) {
-        if (import.meta.env.DEV) console.error(e);
+        logger.debug('Erro ao processar dados do fornecedor:', e);
         toast.error('Ocorreu um erro ao processar os dados.');
     }
   };

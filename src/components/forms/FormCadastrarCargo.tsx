@@ -11,6 +11,7 @@ import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Textarea } from '../ui/Textarea';
 import { hapticError } from '../../lib/haptics';
+import { logger } from '../../lib/logger';
 
 // --- SCHEMA ZOD V4 COMPATÍVEL ---
 // Usamos a união string/number no input para evitar o erro de "unknown" do Zod v4,
@@ -87,7 +88,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
             }
         });
     } catch (e) {
-        if (import.meta.env.DEV) console.error(e);
+        logger.debug('Erro inesperado ao salvar cargo:', e);
         toast.error("Erro inesperado ao salvar cargo.");
     }
   };
