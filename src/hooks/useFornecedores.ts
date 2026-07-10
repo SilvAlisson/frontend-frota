@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 import type { Fornecedor } from '../types';
 import { logger } from '../lib/logger';
+import { env } from '../config/env';
 
 export function useFornecedores() {
   const queryClient = useQueryClient();
@@ -15,7 +16,7 @@ export function useFornecedores() {
         const { data } = await api.get<Fornecedor[]>('/fornecedores');
         return data;
       } catch (err: unknown) {
-        if (import.meta.env.DEV) logger.debug('Erro ao carregar fornecedores:', err);
+        if (env.isDev) logger.debug('Erro ao carregar fornecedores:', err);
         // toast.error('Não foi possível carregar a lista de parceiros.');
         throw err;
       }

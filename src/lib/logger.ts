@@ -10,6 +10,7 @@
  */
 
 import * as Sentry from '@sentry/react';
+import { env } from '../config/env';
 import { api } from '../services/api';
 import { handleApiError } from '../utils/errorHandler';
 
@@ -32,11 +33,10 @@ const logger = {
 
   /**
    * Nível 2: Debug (somente em desenvolvimento)
-   * O Vite substitui import.meta.env.DEV por `false` em produção,
-   * eliminando o bloco inteiro do bundle final via tree-shaking.
+   * Usando env.isDev de forma agnóstica de bundler
    */
   debug(...args: unknown[]): void {
-    if (import.meta.env.DEV) {
+    if (env.isDev) {
       console.log('[DEBUG]', ...args);
     }
   },
@@ -87,7 +87,7 @@ const logger = {
    * @param context - Mensagem amigável para o usuário.
    */
   critical(error: unknown, context?: string): void {
-    if (!import.meta.env.DEV) {
+    if (!env.isDev) {
       Sentry.captureException(error);
     } else {
       // Em dev, mostra o erro completo no console para facilitar o debug

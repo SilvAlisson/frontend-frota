@@ -32,17 +32,10 @@ export function useIAStream() {
     callbacks.onStart(msgId);
 
     try {
-      // Resgata o token do Fallback (QR Code) diretamente da sessão
-      const token = sessionStorage.getItem('authToken');
-
-      // Monta os cabeçalhos emulando o interceptor do api.ts
+      // Usa `withCredentials: true` via instância configurada do api.ts
       const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       };
-
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
 
       // Usamos a Fetch API nativa pois o Axios não é ideal para ler Streams puros
       const response = await fetch(`${import.meta.env.VITE_API_URL}/ia/consultar-stream`, {

@@ -54,8 +54,8 @@ export function useLogin() {
         if (data.user?.email) {
             localStorage.setItem('klin_passkey_email', data.user.email);
         }
-
-        login(data);
+        // Invalida a query de sessão para forçar o recarregamento
+        login();
         toast.success(`Bem-vindo, ${data.user.nome.split(' ')[0]}!`);
 
         setIsMagicLoggingIn(false);
@@ -110,12 +110,8 @@ export function useLogin() {
       if (resData) {
         // Fallback robusto contra bloqueio de Third-Party Cookies (Ex: Chrome Incognito, Edge)
         // O Better Auth retorna a sessão completa. Extraímos o token para usar como Bearer Header
-        const payload = resData as typeof resData & { session?: { token?: string }, token?: string };
-        const tokenStr = payload.session?.token || payload.token;
-        
-        if (tokenStr) {
-          sessionStorage.setItem('authToken', tokenStr);
-        }
+        const payload = data as { session?: { token?: string }, token?: string, user: typeof appUser };
+        // Cookies are set automatically by Better Auth or our custom AuthController.
 
         // 🔥 SOLUÇÃO: Salva o email logado como âncora para a próxima tentativa de biometria
         if (resData.user?.email) {
@@ -145,7 +141,8 @@ export function useLogin() {
             status: (userPayload.status as StatusOperador) || 'ATIVO',
         };
 
-        login({ user: appUser });
+        // Autenticação aceita via Passkey nativa
+        login();
         toast.success('Acesso Autorizado. Bem-vindo de volta!');
       }
     } catch (err: unknown) {
@@ -178,7 +175,7 @@ export function useLogin() {
           localStorage.setItem('klin_passkey_email', data.user.email);
       }
       
-      login(data);
+      login();
       toast.dismiss(toastId);
       toast.success('Acesso Autorizado!');
     } catch (err: unknown) {

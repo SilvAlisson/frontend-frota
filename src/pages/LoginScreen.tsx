@@ -57,7 +57,7 @@ export function LoginScreen() {
     }
     
     await loginWithDevice((token, user) => {
-      login({ token, user });
+      login();
     }, typeof emailFromForm === 'string' ? emailFromForm : undefined); 
   };
 

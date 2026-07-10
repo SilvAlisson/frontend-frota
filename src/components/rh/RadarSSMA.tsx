@@ -45,7 +45,7 @@ export function RadarSSMA() {
     const [movedCard] = sourceCards.splice(source.index, 1);
     
     // Atualiza optimisticamente UI
-    movedCard.coluna = destColumnId as any;
+    movedCard.coluna = destColumnId as 'CRITICO' | 'ALERTA' | 'ATENCAO' | 'AGENDADO';
     destCards.splice(destination.index, 0, movedCard);
 
     setBoard({

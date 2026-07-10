@@ -8,6 +8,7 @@ import Hotjar from '@hotjar/browser';
 import { AuthProvider } from './contexts/AuthContext';
 import App from './App';
 import './index.css';
+import { env } from './config/env';
 
 // Registro oficial do PWA para auto-update silencioso e cache inteligente
 import 'virtual:pwa-register';
@@ -15,20 +16,20 @@ import 'virtual:pwa-register';
 
 
 // Inicialização Hotjar (Silenciosa se não configurado)
-const hotjarId = Number(import.meta.env.VITE_HOTJAR_ID) || 0;
+const hotjarId = Number(env.hotjarId) || 0;
 if (hotjarId) {
   Hotjar.init(hotjarId, 6);
 }
 
 // Inicialização do Sentry
 Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN as string,
+  dsn: env.sentryDsn as string,
   integrations: [
     Sentry.browserTracingIntegration(),
     Sentry.replayIntegration(),
   ],
   // 10% das transações em produção — evita estouro de cota
-  tracesSampleRate: import.meta.env.PROD ? 0.1 : 1.0,
+  tracesSampleRate: env.isProd ? 0.1 : 1.0,
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1.0,
 });
@@ -39,14 +40,14 @@ const queryClient = new QueryClient({
     onError: (error) => {
       // Captura erros de buscas (GET) automaticamente
       Sentry.captureException(error);
-      if (import.meta.env.DEV) console.error('Erro capturado pelo React Query (Query):', error);
+      if (env.isDev) console.error('Erro capturado pelo React Query (Query):', error);
     },
   }),
   mutationCache: new MutationCache({
     onError: (error) => {
       // Captura erros de mutações (POST, PUT, DELETE) automaticamente
       Sentry.captureException(error);
-      if (import.meta.env.DEV) console.error('Erro capturado pelo React Query (Mutation):', error);
+      if (env.isDev) console.error('Erro capturado pelo React Query (Mutation):', error);
     },
   }),
   defaultOptions: {

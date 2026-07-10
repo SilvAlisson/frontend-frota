@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { Router } from './Router';
+import { env } from './config/env';
 import { Toaster } from 'sonner';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { TooltipProvider } from './components/ui/Tooltip';
@@ -10,7 +11,7 @@ import { BiometryOnboardingBanner } from './components/BiometryOnboardingBanner'
 
 // 🛠️ DevTools: Carregado dinamicamente APENAS em desenvolvimento.
 // Em produção, o Vite faz tree-shaking e ZERO bytes desta lib vão para o bundle.
-const ReactQueryDevtools = import.meta.env.DEV
+const ReactQueryDevtools = env.isDev
   ? lazy(() =>
       import('@tanstack/react-query-devtools').then((m) => ({
         default: m.ReactQueryDevtools,
@@ -36,8 +37,8 @@ function AppContent() {
           fontFamily: 'var(--font-sans)',
         }}
       />
-      {/* 🟢 DevTools: Apenas em desenvolvimento */}
-      {import.meta.env.DEV && (
+      {/* 🛠️ DevTools: Apenas em desenvolvimento */}
+      {env.isDev && (
         <Suspense fallback={null}>
           <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />
         </Suspense>

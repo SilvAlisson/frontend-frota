@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { toast } from 'sonner';
+import { env } from '../config/env';
 import type { CustomAxiosError } from '../services/api';
 
 /**
@@ -60,9 +61,9 @@ export function handleApiError(error: unknown, defaultMessage = 'Ocorreu um erro
         }
     }
     else if (error instanceof Error) {
-        //  Uso de import.meta.env.DEV (padrão Vite) em vez de process.env
-        if (import.meta.env.DEV) {
-            if (import.meta.env.DEV) console.error('[Non-Axios Error]', error);
+        //  Uso de env (agnóstico) em vez de process.env
+        if (env.isDev) {
+            console.error('[Non-Axios Error]', error);
         }
         // message = error.message; // Opcional
     }

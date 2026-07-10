@@ -79,7 +79,7 @@ export function AbaAso({ userId }: AbaAsoProps) {
         userId,
         comprovanteUrl,
         dataVencimento: data.dataVencimento || null,
-      } as any), {
+      }), {
         loading: 'Registrando ASO...',
         success: 'ASO registrado com sucesso!',
         error: 'Erro ao registrar ASO'

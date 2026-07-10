@@ -76,7 +76,7 @@ export function ModalNovoIntegrante({ isOpen, onClose, onSuccess, cargos }: Moda
             <label className="text-sm font-bold text-text-secondary mb-1.5 block">Função</label>
             <Select
               value={watch('role') || 'OPERADOR'}
-              onChange={(e) => setValue('role', e.target.value as any)}
+              onChange={(e) => setValue('role', e.target.value as 'OPERADOR' | 'ENCARREGADO' | 'AUXILIAR_OPERACIONAL' | 'RH' | 'COORDENADOR')}
               options={[
                 { value: 'OPERADOR', label: 'Operador' },
                 { value: 'ENCARREGADO', label: 'Encarregado' },

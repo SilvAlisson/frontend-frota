@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,8 +8,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
-import { UserCircle, Loader2, Save } from 'lucide-react';
+import { UserCircle, Car, Loader2, Save, UploadCloud, FileCheck } from 'lucide-react';
 import { Skeleton } from '../ui/Skeleton';
+import { uploadToR2 } from '../../services/uploadService';
+import { hapticError } from '../../lib/haptics';
 
 const cnhSchema = z.object({
   cnhNumero: z.string().optional().nullable(),
@@ -26,6 +28,10 @@ interface AbaCnhProps {
 export function AbaCnh({ userId }: AbaCnhProps) {
   const queryClient = useQueryClient();
 
+  const [arquivo, setArquivo] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const { data: user, isLoading } = useQuery({
     queryKey: ['user-cnh', userId],
     queryFn: async () => {
@@ -40,10 +46,11 @@ export function AbaCnh({ userId }: AbaCnhProps) {
 
   useEffect(() => {
     if (user) {
+      const profile = user.profile || user;
       reset({
-        cnhNumero: user.cnhNumero || '',
-        cnhCategoria: user.cnhCategoria || '',
-        cnhValidade: user.cnhValidade ? user.cnhValidade.split('T')[0] : '',
+        cnhNumero: profile.cnhNumero || '',
+        cnhCategoria: profile.cnhCategoria || '',
+        cnhValidade: profile.cnhValidade ? profile.cnhValidade.split('T')[0] : '',
       });
     }
   }, [user, reset]);
@@ -60,16 +67,41 @@ export function AbaCnh({ userId }: AbaCnhProps) {
   });
 
   const onSubmit = async (data: CnhFormData) => {
-    const payload = {
-      ...data,
-      cnhValidade: data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
-    };
-    
-    await toast.promise(mutation.mutateAsync(payload), {
-      loading: 'Salvando alterações...',
-      success: 'Dados da CNH atualizados com sucesso!',
-      error: 'Erro ao atualizar CNH.'
-    });
+    try {
+      setIsUploading(true);
+      let fotoCnhUrl: string | undefined = undefined;
+
+      if (arquivo) {
+        try {
+          const fileName = `cnh-${Date.now()}-${arquivo.name}`;
+          fotoCnhUrl = await uploadToR2(
+            arquivo,
+            fileName,
+            arquivo.type || 'application/octet-stream',
+            'documentos'
+          );
+        } catch {
+          hapticError();
+          toast.error('Falha no upload da foto da CNH.');
+          return;
+        }
+      }
+
+      const payload = {
+        ...data,
+        cnhValidade: data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
+        ...(fotoCnhUrl ? { fotoCnhUrl } : {})
+      };
+      
+      await toast.promise(mutation.mutateAsync(payload), {
+        loading: 'Salvando alterações...',
+        success: 'Dados da CNH atualizados com sucesso!',
+        error: 'Erro ao atualizar CNH.'
+      });
+      setArquivo(null); // Clear selected file after successful save
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   if (isLoading) {
@@ -79,6 +111,9 @@ export function AbaCnh({ userId }: AbaCnhProps) {
       </div>
     );
   }
+
+  // Fallback to get fotoCnhUrl Se estiver no profile ou direto no user
+  const fotoAtualUrl = user?.profile?.fotoCnhUrl || user?.fotoCnhUrl;
 
   return (
     <div className="space-y-6 animate-in fade-in">
@@ -125,9 +160,40 @@ export function AbaCnh({ userId }: AbaCnhProps) {
           </div>
         </div>
 
+        <div className="mt-8 mb-6">
+            <label className="text-sm font-bold text-text-secondary mb-1.5 block">Evidência CNH (PDF/Imagem)</label>
+            <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,image/*" onChange={(e) => setArquivo(e.target.files?.[0] || null)} />
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed border-primary/30 rounded-xl p-6 text-center cursor-pointer hover:bg-primary/5 transition-colors group"
+            >
+              {arquivo ? (
+                <div className="flex flex-col items-center">
+                  <FileCheck className="w-8 h-8 text-primary mb-2" />
+                  <span className="font-medium text-text-main">{arquivo.name}</span>
+                  <span className="text-xs text-text-muted mt-1">Clique para trocar de arquivo</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center">
+                  <UploadCloud className="w-8 h-8 text-text-muted group-hover:text-primary transition-colors mb-2" />
+                  <span className="font-medium text-text-main">Anexar Arquivo da CNH</span>
+                  <span className="text-xs text-text-muted mt-1">Formatos aceitos: PDF, JPG, PNG</span>
+                </div>
+              )}
+            </div>
+            
+            {fotoAtualUrl && (
+              <div className="mt-3 flex justify-start">
+                <a href={fotoAtualUrl} target="_blank" rel="noreferrer" className="text-primary text-sm font-bold hover:underline flex items-center gap-1">
+                  <FileCheck className="w-4 h-4" /> Ver Arquivo Atual
+                </a>
+              </div>
+            )}
+        </div>
+
         <div className="mt-8 flex justify-end">
-          <Button type="submit" disabled={mutation.isPending} className="min-w-[200px]">
-            {mutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar Alterações</>}
+          <Button type="submit" disabled={mutation.isPending || isUploading} className="min-w-[200px]">
+            {mutation.isPending || isUploading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar Alterações</>}
           </Button>
         </div>
       </form>

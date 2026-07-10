@@ -40,22 +40,16 @@ export const sanitizePayload = (payload: unknown): unknown => {
 // Cria a instância do Axios com configurações otimizadas
 export const api = axios.create({
   baseURL: RENDER_API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
   timeout: 90000, // 90 segundos para suportar as análises complexas da IA
-  withCredentials: true,
 });
 
 // --- Interceptor de Requisição ---
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig & { metadata?: unknown }) => {
-    const token = sessionStorage.getItem('authToken');
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-
     // ⏱️ Injeta o relógio para medir a latência exata
     config.metadata = { startTime: new Date() };
 
@@ -69,13 +63,10 @@ api.interceptors.request.use(
 // --- Helper Functions para Tratamento de Erros ---
 function getUserInfoForLog(): string {
   try {
-    const userStorage = sessionStorage.getItem('authUser');
-    if (userStorage) {
-      const user = JSON.parse(userStorage);
-      return `ID: ${user.id} | Nome: ${user.nome} | Cargo: ${user.role}`;
-    }
-  } catch (e) { /* Intencional: console nativo p/ evitar dependência circular com logger.ts */ console.error("[API] Erro ao ler sessão:", e); }
-  return 'Deslogado / Desconhecido';
+    return 'Sessão WebAuth (Cookies)';
+  } catch {
+    return 'Não Identificado';
+  }
 }
 
 function logToAuditTracker(error: AxiosError, duration: number, userLogadoInfo: string, method: string, urlChamada: string) {

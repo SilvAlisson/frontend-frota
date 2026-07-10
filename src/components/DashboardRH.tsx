@@ -57,7 +57,7 @@ export function DashboardRH({ user }: DashboardRHProps) {
         </div>
       </div>
 
-      <Tabs tabs={tabs} activeTab={abaAtiva} onChange={(id) => setAbaAtiva(id as any)} />
+      <Tabs tabs={tabs} activeTab={abaAtiva} onChange={(id) => setAbaAtiva(id as 'kpis' | 'radar')} />
 
       {isError && (
         <Callout
