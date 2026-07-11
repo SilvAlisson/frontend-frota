@@ -2,7 +2,6 @@ import React, { forwardRef, useState, useEffect, useLayoutEffect, useRef, useCal
 import { cn } from '../../lib/utils';
 import * as RadixSelect from '@radix-ui/react-select';
 import { ChevronDown, Check, AlertCircle } from 'lucide-react';
-import { logger } from '../../lib/logger';
 
 export interface SelectOption {
     value: string | number;
@@ -58,29 +57,6 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         );
 
         const [internalValue, setInternalValue] = useState<string>(() => toSafeString(value));
-
-        // --- INÍCIO: DETECTOR DE CONTROLLED/UNCONTROLLED SOLICITADO ---
-        const previous = useRef(value);
-        useEffect(() => {
-            if (previous.current !== value) {
-                console.group(`SELECT ${name}`);
-                logger.debug("Anterior:", previous.current);
-                logger.debug("Atual:", value);
-                logger.debug("Internal:", internalValue);
-
-                if (
-                    (previous.current === undefined) !==
-                    (value === undefined)
-                ) {
-                    logger.error("⚠️ Mudou controlled/uncontrolled");
-                    console.trace();
-                }
-
-                console.groupEnd();
-                previous.current = value;
-            }
-        }, [value, name, internalValue]);
-        // --- FIM: DETECTOR ---
 
         // 1. Intercepta valores externos (Prop React)
         useEffect(() => {

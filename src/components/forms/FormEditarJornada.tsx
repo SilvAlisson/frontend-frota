@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -86,6 +86,12 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
     label: op.nome 
   })), [operadores]);
 
+  // Refs estáveis para funções que mudam a cada render (mesmo padrão do FormEditarVeiculo)
+  const resetRef = useRef(reset);
+  const onCancelarRef = useRef(onCancelar);
+  resetRef.current = reset;
+  onCancelarRef.current = onCancelar;
+
   useEffect(() => {
     let isMounted = true;
     const loadData = async () => {
@@ -123,11 +129,11 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
           formData.kmFim = jornada.kmFim !== null ? formatKmVisual(jornada.kmFim) : '';
         }
 
-        reset(formData);
+        resetRef.current(formData);
       } catch (err) {
         logger.apiError(err, 'Falha ao carregar o Registro da jornada.');
         if (isMounted) {
-            onCancelar();
+            onCancelarRef.current();
         }
       } finally {
         if (isMounted) setFetching(false);
@@ -135,7 +141,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
     };
     loadData();
     return () => { isMounted = false; };
-  }, [jornadaId, reset, onCancelar]);
+  }, [jornadaId]); // reset e onCancelar ficam em refs estáveis — sem re-execução espúria
 
   useEffect(() => {
     if (veiculos.length > 0 && veiculoSelecionadoId) {
