@@ -71,7 +71,7 @@ export function AbaAso({ userId }: AbaAsoProps) {
   // 2. Envio com a assinatura correta: (file, originalName, contentType, folder)
   comprovanteUrl = await uploadToR2(arquivo, nomeSanitizado, arquivo.type, 'asos');
   
-  toast.success('Upload concluído!', { id: 'upload-aso' });
+  toast.dismiss('upload-aso');
 }
 
       await toast.promise(criarMutation.mutateAsync({

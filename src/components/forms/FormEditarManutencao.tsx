@@ -7,8 +7,8 @@ import { api } from '../../services/api';
 import { uploadToR2 } from '../../services/uploadService';
 import { toast } from 'sonner';
 import {
- Trash2, Plus, AlertTriangle, Wrench, Truck, Gauge,
- Check, Image as ImageIcon, Loader2
+  Trash2, Plus, AlertTriangle, Wrench, Truck, Gauge,
+  Check, Image as ImageIcon, Loader2
 } from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
@@ -36,585 +36,568 @@ type TipoManutencao = 'CORRETIVA' | 'PREVENTIVA';
 
 // --- SCHEMA ZOD V4 COMPATÍVEL ---
 const manutencaoSchema = z.object({
- tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
- alvo: z.enum(ALVOS_MANUTENCAO),
+  tipo: z.enum(["PREVENTIVA", "CORRETIVA"]),
+  alvo: z.enum(ALVOS_MANUTENCAO),
 
- veiculoId: z.string().optional().nullable(),
- kmAtual: z.string().optional().nullable(),
- numeroCA: z.string().optional().nullable(),
+  veiculoId: z.string().optional().nullable(),
+  kmAtual: z.string().optional().nullable(),
+  numeroCA: z.string().optional().nullable(),
 
- fornecedorId: z.string().min(1, "Obrigatório"),
- data: z.string().min(1, "Data inválida"),
- observacoes: z.string().optional().nullable(),
- fotoComprovanteUrl: z.string().optional().nullable(),
+  fornecedorId: z.string().min(1, "Obrigatório"),
+  data: z.string().min(1, "Data inválida"),
+  observacoes: z.string().optional().nullable(),
+  fotoComprovanteUrl: z.string().optional().nullable(),
 
- itens: z.array(z.object({
-  produtoId: z.string().min(1, "Selecione o item"),
-  quantidade: z.union([z.string(), z.number()]).transform(v => Number(v)).refine(v => !isNaN(v) && v > 0, "Qtd inválida"),
-  valorPorUnidade: z.union([z.string(), z.number()]).transform(v => typeof v === 'string' ? desformatarDinheiro(v) : Number(v)).refine(v => !isNaN(v) && v >= 0, "Valor inválido")
- })).min(1, "Adicione pelo menos um item")
+  itens: z.array(z.object({
+    produtoId: z.string().min(1, "Selecione o item"),
+    quantidade: z.union([z.string(), z.number()]).transform(v => Number(v)).refine(v => !isNaN(v) && v > 0, "Qtd inválida"),
+    valorPorUnidade: z.union([z.string(), z.number()]).transform(v => typeof v === 'string' ? desformatarDinheiro(v) : Number(v)).refine(v => !isNaN(v) && v >= 0, "Valor inválido")
+  })).min(1, "Adicione pelo menos um item")
 }).superRefine((data, ctx) => {
- if (data.alvo === 'VEICULO' && !data.veiculoId) {
-  ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Selecione o veículo", path: ["veiculoId"] });
- }
- if (data.alvo === 'OUTROS' && !data.numeroCA) {
-  ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe o nº do CA", path: ["numeroCA"] });
- }
+  if (data.alvo === 'VEICULO' && !data.veiculoId) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Selecione o veículo", path: ["veiculoId"] });
+  }
+  if (data.alvo === 'OUTROS' && !data.numeroCA) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Informe o nº do CA", path: ["numeroCA"] });
+  }
 });
 
 type ManutencaoFormInput = z.input<typeof manutencaoSchema>;
 type ManutencaoFormOutput = z.output<typeof manutencaoSchema>;
 
 interface ManutencaoItem {
- id?: string;
- produtoId: string;
- quantidade: number;
- valorPorUnidade: number;
+  id?: string;
+  produtoId: string;
+  quantidade: number;
+  valorPorUnidade: number;
 }
 
 interface ManutencaoParaEditar {
- id: string;
- tipo: 'CORRETIVA' | 'PREVENTIVA';
- alvo?: string;
- veiculoId?: string | null;
- kmAtual?: number | string | null;
- fornecedorId: string;
- data: string;
- observacoes?: string | null;
- fotoComprovanteUrl?: string | null;
- itens: ManutencaoItem[];
+  id: string;
+  tipo: 'CORRETIVA' | 'PREVENTIVA';
+  alvo?: string;
+  veiculoId?: string | null;
+  kmAtual?: number | string | null;
+  fornecedorId: string;
+  data: string;
+  observacoes?: string | null;
+  fotoComprovanteUrl?: string | null;
+  itens: ManutencaoItem[];
 }
 
 interface FormEditarManutencaoInternoProps {
- osParaEditar: ManutencaoParaEditar;
- onSuccess: () => void;
- onClose: () => void;
+  osParaEditar: ManutencaoParaEditar;
+  onSuccess: () => void;
+  onClose: () => void;
 }
 
 function FormEditarManutencaoInterno({
- osParaEditar, onSuccess, onClose
+  osParaEditar, onSuccess, onClose
 }: FormEditarManutencaoInternoProps) {
 
- // 📡 BUSCA INDEPENDENTE COM CACHE
- const { data: veiculos = [], isLoading: loadV } = useVeiculos();
- const { produtos = [], loading: loadP } = useProdutos();
- const { fornecedores = [], isLoading: loadF } = useFornecedores();
+  // 📡 BUSCA INDEPENDENTE COM CACHE
+  const { data: veiculos = [] } = useVeiculos();
+  const { produtos = [] } = useProdutos();
+  const { fornecedores = [] } = useFornecedores();
 
- const isLoadingDados = loadV || loadP || loadF;
 
- const caMatch = osParaEditar.observacoes?.match(/\[CA: (.+?)\]/);
- const caExistente = caMatch ? caMatch[1] : '';
- const obsLimpa = osParaEditar.observacoes?.replace(/\[CA: .+?\] /, '') || '';
 
- const [abaAtiva, setAbaAtiva] = useState<TipoManutencao>(osParaEditar.tipo || 'CORRETIVA');
- const [uploading, setUploading] = useState(false);
- const [previewFoto, setPreviewFoto] = useState<string | null>(null);
+  const caMatch = osParaEditar.observacoes?.match(/\[CA: (.+?)\]/);
+  const caExistente = caMatch ? caMatch[1] : '';
+  const obsLimpa = osParaEditar.observacoes?.replace(/\[CA: .+?\] /, '') || '';
 
- const {
-  register, control, handleSubmit, watch, setValue,
-  formState: { errors, isSubmitting }
- } = useForm<ManutencaoFormInput, unknown, ManutencaoFormOutput>({
-  resolver: zodResolver(manutencaoSchema),
-  defaultValues: {
-   tipo: osParaEditar.tipo,
-   alvo: osParaEditar.veiculoId ? 'VEICULO' : 'OUTROS',
-   veiculoId: osParaEditar.veiculoId || '',
-   kmAtual: (osParaEditar.kmAtual !== undefined && osParaEditar.kmAtual !== null) ? formatKmVisual(String(osParaEditar.kmAtual)) : '',
-   numeroCA: caExistente,
-   fornecedorId: osParaEditar.fornecedorId,
-   // Correção de timezone
-   data: new Date(new Date(osParaEditar.data).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10),
-   observacoes: obsLimpa,
-   fotoComprovanteUrl: osParaEditar.fotoComprovanteUrl,
-   itens: osParaEditar.itens.map((i: ManutencaoItem) => ({
-    produtoId: i.produtoId,
-    quantidade: Number(i.quantidade),
-    // Transforma para string visual caso necessite edição
-    valorPorUnidade: Number(i.valorPorUnidade).toFixed(2).replace('.', ',')
-   }))
-  },
-  mode: 'onBlur'
- });
+  const [abaAtiva, setAbaAtiva] = useState<TipoManutencao>(osParaEditar.tipo || 'CORRETIVA');
+  const [uploading, setUploading] = useState(false);
+  const [previewFoto, setPreviewFoto] = useState<string | null>(null);
 
- useEffect(() => {
-  if (osParaEditar.fotoComprovanteUrl) {
-   setPreviewFoto(osParaEditar.fotoComprovanteUrl);
-  }
- }, [osParaEditar]);
+  const {
+    register, control, handleSubmit, watch, setValue,
+    formState: { errors, isSubmitting }
+  } = useForm<ManutencaoFormInput, unknown, ManutencaoFormOutput>({
+    resolver: zodResolver(manutencaoSchema),
+    defaultValues: {
+      tipo: osParaEditar.tipo,
+      alvo: osParaEditar.veiculoId ? 'VEICULO' : 'OUTROS',
+      veiculoId: osParaEditar.veiculoId || '',
+      kmAtual: (osParaEditar.kmAtual !== undefined && osParaEditar.kmAtual !== null) ? formatKmVisual(String(osParaEditar.kmAtual)) : '',
+      numeroCA: caExistente,
+      fornecedorId: osParaEditar.fornecedorId,
+      // Correção de timezone
+      data: new Date(new Date(osParaEditar.data).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10),
+      observacoes: obsLimpa,
+      fotoComprovanteUrl: osParaEditar.fotoComprovanteUrl,
+      itens: osParaEditar.itens.map((i: ManutencaoItem) => ({
+        produtoId: i.produtoId,
+        quantidade: Number(i.quantidade),
+        // Transforma para string visual caso necessite edição
+        valorPorUnidade: Number(i.valorPorUnidade).toFixed(2).replace('.', ',')
+      }))
+    },
+    mode: 'onBlur'
+  });
 
- const { fields, append, remove } = useFieldArray({ control, name: "itens" });
+  useEffect(() => {
+    if (osParaEditar.fotoComprovanteUrl) {
+      setPreviewFoto(osParaEditar.fotoComprovanteUrl);
+    }
+  }, [osParaEditar]);
 
- const alvoSelecionado = watch('alvo');
- const fornecedorIdSelecionado = watch('fornecedorId');
- const itensWatch = useWatch({ control, name: 'itens' });
+  const { fields, append, remove } = useFieldArray({ control, name: "itens" });
 
- useEffect(() => { setValue('tipo', abaAtiva); }, [abaAtiva, setValue]);
+  const alvoSelecionado = watch('alvo');
+  const fornecedorIdSelecionado = watch('fornecedorId');
+  const itensWatch = useWatch({ control, name: 'itens' });
 
- const produtosManutencao = useMemo(() => {
-  let lista = produtos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo));
+  useEffect(() => { setValue('tipo', abaAtiva); }, [abaAtiva, setValue]);
 
-  if (fornecedorIdSelecionado) {
-   const fornecedor = fornecedores.find(f => f.id === fornecedorIdSelecionado);
-   if (fornecedor?.produtosOferecidos?.length) {
-    const ids = fornecedor.produtosOferecidos.map(p => p.id);
-    lista = lista.filter(p => ids.includes(p.id));
-   }
-  }
-  return lista.sort((a, b) => a.nome.localeCompare(b.nome));
- }, [produtos, fornecedorIdSelecionado, fornecedores]);
+  const produtosManutencao = useMemo(() => {
+    let lista = produtos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo));
 
- // Transformação para o formato do Select Inteligente
- const fornecedoresOpcoes = useMemo(() =>
-  fornecedores
-   .filter(f => {
-     if (f.tipo === 'POSTO') return false;
-     if (f.tipo === 'LAVA_JATO') return abaAtiva === 'PREVENTIVA';
-     return true;
-   })
-   .map(f => ({ value: f.id, label: f.nome })),
-  [fornecedores, abaAtiva]
- );
+    if (fornecedorIdSelecionado) {
+      const fornecedor = fornecedores.find(f => f.id === fornecedorIdSelecionado);
+      if (fornecedor?.produtosOferecidos?.length) {
+        const ids = fornecedor.produtosOferecidos.map(p => p.id);
+        lista = lista.filter(p => ids.includes(p.id));
+      }
+    }
+    return lista.sort((a, b) => a.nome.localeCompare(b.nome));
+  }, [produtos, fornecedorIdSelecionado, fornecedores]);
 
- const veiculosOpcoes = useMemo(() =>
-  veiculos.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` })),
-  [veiculos]
- );
+  // Transformação para o formato do Select Inteligente
+  const fornecedoresOpcoes = useMemo(() =>
+    fornecedores
+      .filter(f => {
+        if (f.tipo === 'POSTO') return false;
+        if (f.tipo === 'LAVA_JATO') return abaAtiva === 'PREVENTIVA';
+        return true;
+      })
+      .map(f => ({ value: f.id, label: f.nome })),
+    [fornecedores, abaAtiva]
+  );
 
- const produtosOpcoes = useMemo(() =>
-  produtosManutencao.map(p => ({ value: p.id, label: p.nome })),
-  [produtosManutencao]
- );
+  const veiculosOpcoes = useMemo(() =>
+    veiculos.map(v => ({ value: v.id, label: v.placa })),
+    [veiculos]
+  );
 
- const totalGeral = useMemo(() => {
-  return (itensWatch || []).reduce((acc, item) => {
-   const qtd = Number(item?.quantidade || 0);
-   const unit = typeof item?.valorPorUnidade === 'string' ? desformatarDinheiro(item.valorPorUnidade) : Number(item?.valorPorUnidade || 0);
-   return acc + (qtd * unit);
-  }, 0);
- }, [itensWatch]);
+  const produtosOpcoes = useMemo(() =>
+    produtosManutencao.map(p => ({ value: p.id, label: p.nome })),
+    [produtosManutencao]
+  );
 
- const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  if (!e.target.files?.length) return;
-  const file = e.target.files[0];
+  const totalGeral = useMemo(() => {
+    return (itensWatch || []).reduce((acc, item) => {
+      const qtd = Number(item?.quantidade || 0);
+      const unit = typeof item?.valorPorUnidade === 'string' ? desformatarDinheiro(item.valorPorUnidade) : Number(item?.valorPorUnidade || 0);
+      return acc + (qtd * unit);
+    }, 0);
+  }, [itensWatch]);
 
-  try {
-   setUploading(true);
-   const compressedFile = await comprimirImagem(file);
+  const handleFotoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.length) return;
+    const file = e.target.files[0];
 
-   const fileName = `manutencao-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.jpg`;
-   const publicUrlString = await uploadToR2(compressedFile, fileName, compressedFile.type || 'image/jpeg');
+    try {
+      setUploading(true);
+      const compressedFile = await comprimirImagem(file);
 
-   setValue('fotoComprovanteUrl', publicUrlString);
-   setPreviewFoto(publicUrlString);
-   toast.success("Foto atualizada com sucesso!");
-  } catch (error) {
-   logger.apiError(error, 'Erro ao enviar foto.');
-  } finally {
-   setUploading(false);
-  }
- };
+      const fileName = `manutencao-${Date.now()}-${Math.random().toString(36).substring(2, 9)}.jpg`;
+      const publicUrlString = await uploadToR2(compressedFile, fileName, compressedFile.type || 'image/jpeg');
 
- const onSubmit = async (data: ManutencaoFormOutput) => {
-  let obsFinal = data.observacoes || '';
-  if (data.alvo === 'OUTROS' && data.numeroCA) {
-   obsFinal = `[CA: ${data.numeroCA}] ${obsFinal}`;
-  }
-
-  const payload = {
-   ...data,
-   veiculoId: data.alvo === 'VEICULO' ? data.veiculoId : null,
-   kmAtual: (data.alvo === 'VEICULO' && data.kmAtual) ? parseDecimal(data.kmAtual) : null,
-   observacoes: obsFinal,
-   data: new Date(data.data + 'T12:00:00').toISOString(),
-   itens: data.itens.map(i => ({
-    produtoId: i.produtoId,
-    quantidade: i.quantidade,
-    valorPorUnidade: i.valorPorUnidade
-   }))
+      setValue('fotoComprovanteUrl', publicUrlString);
+      setPreviewFoto(publicUrlString);
+      toast.success("Foto atualizada com sucesso!");
+    } catch (error) {
+      logger.apiError(error, 'Erro ao enviar foto.');
+    } finally {
+      setUploading(false);
+    }
   };
 
-  try {
-   await api.put(`/manutencoes/${osParaEditar.id}`, payload);
-   toast.success("Ordem de Serviço atualizada!");
-   onSuccess();
-  } catch (error) {
-   logger.apiError(error, 'Erro ao atualizar Ordem de Serviço.');
-  }
- };
+  const onSubmit = async (data: ManutencaoFormOutput) => {
+    let obsFinal = data.observacoes || '';
+    if (data.alvo === 'OUTROS' && data.numeroCA) {
+      obsFinal = `[CA: ${data.numeroCA}] ${obsFinal}`;
+    }
 
- const isLocked = isSubmitting || uploading;
+    const payload = {
+      ...data,
+      veiculoId: data.alvo === 'VEICULO' ? data.veiculoId : null,
+      kmAtual: (data.alvo === 'VEICULO' && data.kmAtual) ? parseDecimal(data.kmAtual) : null,
+      observacoes: obsFinal,
+      data: new Date(data.data + 'T12:00:00').toISOString(),
+      itens: data.itens.map(i => ({
+        produtoId: i.produtoId,
+        quantidade: i.quantidade,
+        valorPorUnidade: i.valorPorUnidade
+      }))
+    };
 
- return (
-  <div className="flex flex-col h-full w-full bg-surface rounded-2xl shadow-float border border-border/60 overflow-hidden max-h-[90vh] animate-in fade-in zoom-in-95 duration-300">
+    try {
+      await api.put(`/manutencoes/${osParaEditar.id}`, payload);
+      toast.success("Ordem de Serviço atualizada!");
+      onSuccess();
+    } catch (error) {
+      logger.apiError(error, 'Erro ao atualizar Ordem de Serviço.');
+    }
+  };
 
-   {/* HEADER PREMIUM */}
-   <div className="bg-gradient-to-r from-background to-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 shrink-0">
-    <div className="flex items-center gap-3">
-     <div className="p-1.5 bg-primary/10 rounded-lg text-primary shadow-sm">
-      <Wrench className="w-6 h-6" />
-     </div>
-     <div>
-      <h3 className="text-xl font-black text-text-main tracking-tight">Editar Manutenção</h3>
-      <p className="text-sm text-text-secondary font-medium mt-0.5">Ajuste os detalhes da Ordem de Serviço.</p>
-     </div>
-    </div>
-    <Badge variant={abaAtiva === 'PREVENTIVA' ? 'success' : 'danger'} className="text-sm py-1.5 px-3 self-start sm:self-auto">
-     {abaAtiva}
-    </Badge>
-   </div>
+  const isLocked = isSubmitting || uploading;
 
-   <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="flex-1 flex flex-col overflow-hidden min-h-0">
+  return (
+    <div className="flex flex-col h-full w-full bg-surface rounded-2xl shadow-float border border-border/60 overflow-hidden max-h-[90vh] animate-in fade-in zoom-in-95 duration-300">
 
-    <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-8 custom-scrollbar">
-
-     {/* TABS DE TIPO */}
-     <div className="flex gap-3 bg-surface-hover/30 p-1.5 rounded-xl border border-border/60 shadow-inner">
-      {['CORRETIVA', 'PREVENTIVA'].map(tipo => (
-       <Button
-        key={tipo}
-        type="button"
-        variant={abaAtiva === tipo ? (tipo === 'CORRETIVA' ? 'danger' : 'success') : 'ghost'}
-        onClick={() => setAbaAtiva(tipo as TipoManutencao)}
-        disabled={isLocked}
-        className={`flex-1 py-2.5 text-xs shadow-none border-none ${abaAtiva !== tipo && 'text-text-muted hover:text-text-main hover:bg-surface-hover'}`}
-       >
-        {tipo}
-       </Button>
-      ))}
-     </div>
-
-     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-      {/* --- COLUNA ESQUERDA: DADOS TÉCNICOS --- */}
-      <div className="lg:col-span-8 space-y-8">
-
-       {/* 1. SELEÇÃO DE ALVO */}
-       <div className="space-y-3">
-        <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase flex items-center gap-2">
-         <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
-         Alvo da OS
-        </label>
-        <div className="flex flex-col gap-3">
-         {ALVOS_MANUTENCAO.map(alvo => (
-          <label key={alvo} className={`flex items-center justify-start gap-3 cursor-pointer p-4 border-2 rounded-xl w-full transition-all ${alvoSelecionado === alvo ? 'border-primary bg-primary/5 shadow-sm' : 'border-border/60 hover:border-primary/40 bg-surface'}`}>
-           <input
-            type="radio"
-            value={alvo}
-            {...register('alvo')}
-            className="accent-primary w-4 h-4 hidden"
-            disabled={isLocked}
-           />
-           <div className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center ${alvoSelecionado === alvo ? 'border-primary' : 'border-text-muted/40'}`}>
-            {alvoSelecionado === alvo && <div className="w-2 h-2 bg-primary rounded-full" />}
-           </div>
-           <span className={`text-xs font-black uppercase tracking-wider ${alvoSelecionado === alvo ? 'text-primary' : 'text-text-secondary'}`}>
-            {alvo === 'VEICULO' ? 'Veículo' : 'Equipamento'}
-           </span>
-          </label>
-         ))}
-        </div>
-       </div>
-
-       {/* UPLOAD FOTO */}
-       <div className="space-y-2 flex flex-col w-full">
-        <label className="text-[10px] font-black text-text-secondary tracking-[0.2em] uppercase ml-1 shrink-0">
-         Comprovante (NF/OS)
-        </label>
-        <div className="relative w-full aspect-video sm:aspect-[4/3] lg:aspect-square bg-surface-hover/30 rounded-2xl border-2 border-dashed border-border/60 flex flex-col items-center justify-center overflow-hidden group hover:border-primary/50 transition-colors cursor-pointer shadow-sm">
-         {uploading ? (
-          <div className="flex flex-col items-center gap-3">
-           <Loader2 className="w-8 h-8 text-primary animate-spin" />
-           <span className="text-xs font-bold text-text-muted uppercase tracking-widest">A Processar...</span>
+      {/* HEADER PREMIUM */}
+      <div className="bg-gradient-to-r from-background to-surface-hover/30 px-6 sm:px-8 py-5 border-b border-border/60 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="p-1.5 bg-primary/10 rounded-lg text-primary shadow-sm">
+            <Wrench className="w-6 h-6" />
           </div>
-         ) : previewFoto ? (
-          <>
-           <img src={previewFoto} alt="Nota Fiscal" className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" />
-           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 backdrop-blur-sm pointer-events-none">
-            <ImageIcon className="w-8 h-8 text-white" />
-            <span className="text-white text-[10px] font-black bg-white/20 px-3 py-1.5 rounded-lg uppercase tracking-widest backdrop-blur-md">Trocar Imagem</span>
-           </div>
-          </>
-         ) : (
-          <div className="text-center text-text-muted p-4 opacity-60 group-hover:opacity-100 transition-opacity">
-           <ImageIcon className="w-12 h-12 mx-auto mb-3" />
-           <p className="text-xs font-bold uppercase tracking-widest">Anexar Comprovante</p>
+          <div>
+            <h3 className="text-xl font-black text-text-main tracking-tight">Editar Manutenção</h3>
+            <p className="text-sm text-text-secondary font-medium mt-0.5">Ajuste os detalhes da Ordem de Serviço.</p>
           </div>
-         )}
-         <input
-          type="file"
-          accept="image/*"
-          className="absolute inset-0 opacity-0 cursor-pointer z-10"
-          onChange={handleFotoChange}
-          disabled={isLocked}
-         />
         </div>
-       </div>
+        <Badge variant={abaAtiva === 'PREVENTIVA' ? 'success' : 'danger'} className="text-sm py-1.5 px-3 self-start sm:self-auto">
+          {abaAtiva}
+        </Badge>
       </div>
 
-      {/* --- COLUNA DIREITA: FOTO E ALVO --- */}
-      <div className="lg:col-span-4 flex flex-col gap-6">
+      <form onSubmit={handleSubmit(onSubmit, () => hapticError())} className="flex-1 flex flex-col overflow-hidden min-h-0">
 
-       {/* 1. SELEÇÃO DE ALVO */}
-       <div className="space-y-3">
-        <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase flex items-center gap-2">
-         Alvo da OS
-        </label>
-        <div className="flex flex-col gap-3">
-         {ALVOS_MANUTENCAO.map(alvo => (
-          <label key={alvo} className={`flex items-center justify-start gap-3 cursor-pointer p-4 border-2 rounded-xl w-full transition-all ${alvoSelecionado === alvo ? 'border-primary bg-primary/5 shadow-sm' : 'border-border/60 hover:border-primary/40 bg-surface'}`}>
-           <input
-            type="radio"
-            value={alvo}
-            {...register('alvo')}
-            className="accent-primary w-4 h-4 hidden"
-            disabled={isLocked}
-           />
-           <div className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center ${alvoSelecionado === alvo ? 'border-primary' : 'border-text-muted/40'}`}>
-            {alvoSelecionado === alvo && <div className="w-2 h-2 bg-primary rounded-full" />}
-           </div>
-           <span className={`text-xs font-black uppercase tracking-wider ${alvoSelecionado === alvo ? 'text-primary' : 'text-text-secondary'}`}>
-            {alvo === 'VEICULO' ? 'Veículo' : 'Equipamento'}
-           </span>
-          </label>
-         ))}
-        </div>
-       </div>
+        <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 space-y-8 custom-scrollbar">
 
-       <div className="flex items-center gap-2 border-b border-border/50 pb-2">
-        <label className="text-[10px] font-black text-text-secondary tracking-[0.2em] uppercase">Dados Operacionais</label>
-       </div>
-
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {alvoSelecionado === 'VEICULO' ? (
-         <>
-          <Select
-           label="Veículo Oficial"
-           options={veiculosOpcoes}
-           icon={<Truck className="w-4 h-4" />}
-           {...register("veiculoId")}
-           error={errors.veiculoId?.message}
-           disabled={isLocked}
-          />
-          <Input
-           label="Hodômetro Registrado"
-           icon={<Gauge className="w-4 h-4 text-primary" />}
-           {...register("kmAtual")}
-           onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
-           error={errors.kmAtual?.message}
-           disabled={isLocked}
-           className="font-mono font-bold text-primary"
-          />
-         </>
-        ) : (
-         <div className="md:col-span-2">
-          <Input
-           label="Identificação (CA/Série do Equipemento)"
-           {...register("numeroCA")}
-           error={errors.numeroCA?.message}
-           disabled={isLocked}
-           className="font-bold"
-          />
-         </div>
-        )}
-
-        <Select
-         label="Oficina / Fornecedor"
-         options={fornecedoresOpcoes}
-         icon={<Wrench className="w-4 h-4" />}
-         {...register("fornecedorId")}
-         error={errors.fornecedorId?.message}
-         disabled={isLocked}
-        />
-
-        {/* ✨ DatePicker via Controller */}
-        <Controller
-         control={control}
-         name="data"
-         render={({ field }) => (
-          <DatePicker disableFuture
-           label="Data do Faturamento"
-           placeholder="Selecione a data"
-           date={field.value ? new Date(`${field.value}T12:00:00`) : undefined}
-           onChange={(newDate) => {
-            field.onChange(newDate ? newDate.toISOString().split('T')[0] : '');
-           }}
-           error={errors.data?.message}
-           disabled={isLocked}
-          />
-         )}
-        />
-       </div>
-
-       {/* 3. MATRIZ DE PEÇAS E SERVIÇOS */}
-       <div className="pt-4 border-t border-border/50">
-        <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-3 mb-4 px-1">
-         <div className="space-y-1">
-          <div className="flex items-center gap-2">
-           <label className="text-[10px] font-black text-text-secondary tracking-[0.2em] uppercase">Matriz de Custos</label>
-          </div>
-          {fornecedorIdSelecionado && produtosManutencao.length < produtos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)).length && (
-           <p className="text-[10px] text-info/80 font-bold flex items-center gap-1">
-            <AlertTriangle className="w-3 h-3" /> Filtro de Fornecedor Ativo
-           </p>
-          )}
-         </div>
-         <div className="bg-surface border border-border/60 px-4 py-2 rounded-xl shadow-sm flex items-center gap-3">
-          <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total OS:</span>
-          <span className="font-mono font-black text-primary text-lg">
-           {totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-          </span>
-         </div>
-        </div>
-
-        <div className="space-y-4">
-         {fields.map((field, index) => {
-          const itemVal = Number(itensWatch?.[index]?.valorPorUnidade?.toString().replace(',', '.') || 0);
-          const itemQtd = Number(itensWatch?.[index]?.quantidade || 0);
-          const subtotal = itemVal * itemQtd;
-
-          return (
-           <div key={field.id} className="bg-surface p-4 rounded-2xl border border-border/60 shadow-sm transition-colors hover:border-primary/30">
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end w-full">
-             
-             {/* PRODUTO / SERVIÇO */}
-             <div className="sm:col-span-12 md:col-span-5 min-w-0">
-              <Select
-               label="Peça / Serviço"
-               options={produtosOpcoes}
-               {...register(`itens.${index}.produtoId` as const)}
-               disabled={isLocked}
-               error={errors.itens?.[index]?.produtoId?.message}
-               containerClassName="!mb-0"
-              />
-             </div>
-
-             {/* GRUPO DE VALORES */}
-             <div className="sm:col-span-4 md:col-span-2 shrink-0">
-              <Input
-               label="Qtd"
-               type="number" inputMode="decimal"
-               step="any"
-               {...register(`itens.${index}.quantidade` as const)}
-               className="text-center font-mono font-bold px-2"
-               disabled={isLocked}
-               error={errors.itens?.[index]?.quantidade?.message as string}
-               containerClassName="!mb-0"
-              />
-             </div>
-
-             <div className="sm:col-span-4 md:col-span-2 shrink-0">
-              <Input
-               label="R$ Unit"
-               type="tel"
-               inputMode="numeric"
-               {...register(`itens.${index}.valorPorUnidade` as const, {
-                onChange: (e) => {
-                 e.target.value = formatarDinheiro(e.target.value);
-                 setValue(`itens.${index}.valorPorUnidade`, e.target.value);
-                }
-               })}
-               className="text-right font-mono font-black text-emerald-600 px-3"
-               disabled={isLocked}
-               error={errors.itens?.[index]?.valorPorUnidade?.message as string}
-               containerClassName="!mb-0"
-              />
-             </div>
-
-             <div className="sm:col-span-4 md:col-span-2 shrink-0">
-              <div className="flex flex-col gap-1.5 w-full">
-               <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wider select-none ms-1">Subtotal</label>
-               <div className="h-11 flex items-center justify-end px-3 bg-surface border border-border/60 rounded-xl font-mono font-bold text-primary truncate shadow-sm text-sm">
-                {subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-               </div>
-              </div>
-             </div>
-
-             <div className="sm:col-span-12 md:col-span-1 shrink-0 flex items-center justify-center sm:justify-end mt-2 sm:mt-0">
-              {fields.length > 1 ? (
-               <Button
+          {/* TABS DE TIPO */}
+          <div className="flex gap-3 bg-surface-hover/30 p-1.5 rounded-xl border border-border/60 shadow-inner">
+            {['CORRETIVA', 'PREVENTIVA'].map(tipo => (
+              <Button
+                key={tipo}
                 type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => remove(index)}
+                variant={abaAtiva === tipo ? (tipo === 'CORRETIVA' ? 'danger' : 'success') : 'ghost'}
+                onClick={() => setAbaAtiva(tipo as TipoManutencao)}
                 disabled={isLocked}
-                className="w-full sm:w-11 h-11 text-error hover:bg-error-soft rounded-xl transition-colors border border-border/40 hover:border-error/20"
-                title="Remover Item"
-               >
-                <Trash2 className="w-4 h-4 mr-2 sm:mr-0" />
-                <span className="sm:hidden font-bold">Remover</span>
-               </Button>
-              ) : (
-               <div className="hidden sm:block w-11 h-11" />
-              )}
-             </div>
+                className={`flex-1 py-2.5 text-xs shadow-none border-none ${abaAtiva !== tipo && 'text-text-muted hover:text-text-main hover:bg-surface-hover'}`}
+              >
+                {tipo}
+              </Button>
+            ))}
+          </div>
+
+          <div className="flex flex-col-reverse lg:grid lg:grid-cols-12 gap-6 lg:gap-8">
+            {/* --- COLUNA ESQUERDA: FORMULÁRIO (8 colunas) --- */}
+            <div className="lg:col-span-8 flex flex-col gap-6 lg:gap-8">
+
+              {/* 1. SELEÇÃO DE ALVO */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase flex items-center gap-2">
+                  <span className="w-1.5 h-4 bg-primary rounded-full shadow-sm"></span>
+                  Alvo da OS
+                </label>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {ALVOS_MANUTENCAO.map(alvo => (
+                    <label key={alvo} className={`flex items-center justify-start gap-3 cursor-pointer p-4 border-2 rounded-xl w-full transition-all ${alvoSelecionado === alvo ? 'border-primary bg-primary/5 shadow-sm' : 'border-border/60 hover:border-primary/40 bg-surface'}`}>
+                      <input
+                        type="radio"
+                        value={alvo}
+                        {...register('alvo')}
+                        className="accent-primary w-4 h-4 hidden"
+                        disabled={isLocked}
+                      />
+                      <div className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center ${alvoSelecionado === alvo ? 'border-primary' : 'border-text-muted/40'}`}>
+                        {alvoSelecionado === alvo && <div className="w-2 h-2 bg-primary rounded-full" />}
+                      </div>
+                      <span className={`text-xs font-black uppercase tracking-wider ${alvoSelecionado === alvo ? 'text-primary' : 'text-text-secondary'}`}>
+                        {alvo === 'VEICULO' ? 'Veículo' : 'Equipamento'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* 2. DADOS OPERACIONAIS */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 border-b border-border/50 pb-2">
+                  <label className="text-[10px] font-black text-text-secondary tracking-[0.2em] uppercase">Dados Operacionais</label>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {alvoSelecionado === 'VEICULO' ? (
+                    <>
+                      <Select
+                        label="Veículo Oficial"
+                        options={veiculosOpcoes}
+                        icon={<Truck className="w-4 h-4" />}
+                        {...register("veiculoId")}
+                        error={errors.veiculoId?.message}
+                        disabled={isLocked}
+                      />
+                      <Input
+                        label="Hodômetro Registrado"
+                        icon={<Gauge className="w-4 h-4 text-primary" />}
+                        {...register("kmAtual")}
+                        onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
+                        error={errors.kmAtual?.message}
+                        disabled={isLocked}
+                        className="font-mono font-bold text-primary"
+                      />
+                    </>
+                  ) : (
+                    <div className="md:col-span-2">
+                      <Input
+                        label="Identificação (CA/Série do Equipamento)"
+                        {...register("numeroCA")}
+                        error={errors.numeroCA?.message}
+                        disabled={isLocked}
+                        className="font-bold"
+                      />
+                    </div>
+                  )}
+
+                  <Select
+                    label="Oficina / Fornecedor"
+                    options={fornecedoresOpcoes}
+                    icon={<Wrench className="w-4 h-4" />}
+                    {...register("fornecedorId")}
+                    error={errors.fornecedorId?.message}
+                    disabled={isLocked}
+                  />
+
+                  {/* ✨ DatePicker via Controller */}
+                  <Controller
+                    control={control}
+                    name="data"
+                    render={({ field }) => (
+                      <DatePicker disableFuture
+                        label="Data do Faturamento"
+                        placeholder="Selecione a data"
+                        date={field.value ? new Date(`${field.value}T12:00:00`) : undefined}
+                        onChange={(newDate) => {
+                          field.onChange(newDate ? newDate.toISOString().split('T')[0] : '');
+                        }}
+                        error={errors.data?.message}
+                        disabled={isLocked}
+                      />
+                    )}
+                  />
+                </div>
+              </div>
+
             </div>
-           </div>
-          );
-         })}
+
+            {/* --- COLUNA DIREITA: FOTO (4 colunas) --- */}
+            <div className="lg:col-span-4 flex flex-col gap-6 lg:sticky lg:top-0">
+              
+              {/* UPLOAD FOTO */}
+              <div className="space-y-2 flex flex-col w-full">
+                <label className="text-[10px] font-black text-text-secondary tracking-[0.2em] uppercase ml-1 shrink-0">
+                  Comprovante (NF/OS)
+                </label>
+                <div className="relative w-full aspect-[3/4] sm:aspect-video lg:aspect-[4/5] xl:aspect-[3/4] bg-surface-hover/30 rounded-2xl border-2 border-dashed border-border/60 flex flex-col items-center justify-center overflow-hidden group hover:border-primary/50 transition-colors cursor-pointer shadow-sm">
+                  {uploading ? (
+                    <div className="flex flex-col items-center gap-3">
+                      <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                      <span className="text-xs font-bold text-text-muted uppercase tracking-widest">A Processar...</span>
+                    </div>
+                  ) : previewFoto ? (
+                    <>
+                      <img src={previewFoto} alt="Nota Fiscal" className="w-full h-full object-contain p-2 group-hover:scale-105 transition-transform duration-500" />
+                      <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-3 backdrop-blur-sm pointer-events-none">
+                        <ImageIcon className="w-8 h-8 text-white" />
+                        <span className="text-white text-[10px] font-black bg-white/20 px-3 py-1.5 rounded-lg uppercase tracking-widest backdrop-blur-md">Trocar Imagem</span>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center text-text-muted p-4 opacity-60 group-hover:opacity-100 transition-opacity">
+                      <ImageIcon className="w-12 h-12 mx-auto mb-3" />
+                      <p className="text-xs font-bold uppercase tracking-widest">Anexar Comprovante</p>
+                    </div>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 opacity-0 cursor-pointer z-10"
+                    onChange={handleFotoChange}
+                    disabled={isLocked}
+                  />
+                </div>
+              </div>
+
+            </div>
+
+            {/* --- PARTE INFERIOR: FULL WIDTH (12 colunas) --- */}
+            <div className="lg:col-span-12 flex flex-col gap-6 lg:gap-8 pt-4 border-t border-border/50">
+
+              {/* 3. MATRIZ DE PEÇAS E SERVIÇOS */}
+              <div>
+                <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-3 mb-4 px-1">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <label className="text-[10px] font-black text-text-secondary tracking-[0.2em] uppercase">Matriz de Custos</label>
+                    </div>
+                    {fornecedorIdSelecionado && produtosManutencao.length < produtos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)).length && (
+                      <p className="text-[10px] text-info/80 font-bold flex items-center gap-1">
+                        <AlertTriangle className="w-3 h-3" /> Filtro de Fornecedor Ativo
+                      </p>
+                    )}
+                  </div>
+                  <div className="bg-surface border border-border/60 px-4 py-2 rounded-xl shadow-sm flex items-center gap-3">
+                    <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total OS:</span>
+                    <span className="font-mono font-black text-primary text-lg">
+                      {totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  {fields.map((field, index) => {
+                    const itemVal = Number(itensWatch?.[index]?.valorPorUnidade?.toString().replace(',', '.') || 0);
+                    const itemQtd = Number(itensWatch?.[index]?.quantidade || 0);
+                    const subtotal = itemVal * itemQtd;
+
+                    return (
+                      <div key={field.id} className="bg-surface p-4 rounded-2xl border border-border/60 shadow-sm transition-colors hover:border-primary/30">
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end w-full">
+
+                          {/* PRODUTO / SERVIÇO */}
+                          <div className="sm:col-span-12 md:col-span-5 min-w-0">
+                            <Select
+                              label="Peça / Serviço"
+                              options={produtosOpcoes}
+                              {...register(`itens.${index}.produtoId` as const)}
+                              disabled={isLocked}
+                              error={errors.itens?.[index]?.produtoId?.message}
+                              containerClassName="!mb-0"
+                            />
+                          </div>
+
+                          {/* GRUPO DE VALORES */}
+                          <div className="sm:col-span-4 md:col-span-2 shrink-0">
+                            <Input
+                              label="Qtd"
+                              type="number" inputMode="decimal"
+                              step="any"
+                              {...register(`itens.${index}.quantidade` as const)}
+                              className="text-center font-mono font-bold px-2"
+                              disabled={isLocked}
+                              error={errors.itens?.[index]?.quantidade?.message as string}
+                              containerClassName="!mb-0"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-4 md:col-span-2 shrink-0">
+                            <Input
+                              label="R$ Unit"
+                              type="tel"
+                              inputMode="numeric"
+                              {...register(`itens.${index}.valorPorUnidade` as const, {
+                                onChange: (e) => {
+                                  e.target.value = formatarDinheiro(e.target.value);
+                                  setValue(`itens.${index}.valorPorUnidade`, e.target.value);
+                                }
+                              })}
+                              className="text-right font-mono font-black text-emerald-600 px-3"
+                              disabled={isLocked}
+                              error={errors.itens?.[index]?.valorPorUnidade?.message as string}
+                              containerClassName="!mb-0"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-4 md:col-span-2 shrink-0">
+                            <div className="flex flex-col gap-1.5 w-full">
+                              <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wider select-none ms-1">Subtotal</label>
+                              <div className="h-11 flex items-center justify-end px-3 bg-surface border border-border/60 rounded-xl font-mono font-bold text-primary truncate shadow-sm text-sm">
+                                {subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="sm:col-span-12 md:col-span-1 shrink-0 flex items-center justify-center sm:justify-end mt-2 sm:mt-0">
+                            {fields.length > 1 ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => remove(index)}
+                                disabled={isLocked}
+                                className="w-full sm:w-11 h-11 text-error hover:bg-error-soft rounded-xl transition-colors border border-border/40 hover:border-error/20"
+                                title="Remover Item"
+                              >
+                                <Trash2 className="w-4 h-4 mr-2 sm:mr-0" />
+                                <span className="sm:hidden font-bold">Remover</span>
+                              </Button>
+                            ) : (
+                              <div className="hidden sm:block w-11 h-11" />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })}
+                  className="w-full mt-4 border-dashed font-bold shadow-sm"
+                  disabled={isLocked}
+                  icon={<Plus className="w-4 h-4" />}
+                >
+                  Adicionar Item
+                </Button>
+                {errors.itens && <p className="text-[10px] text-error mt-2 font-bold flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> {errors.itens.root?.message}</p>}
+              </div>
+
+              {/* 4. OBSERVAÇÕES */}
+              <div className="pt-2">
+                <Textarea
+                  label="Parecer Técnico / Justificativa"
+                  {...register("observacoes")}
+                  rows={3}
+                  placeholder="Relatório do problema, peças substituídas ou motivo da edição..."
+                  disabled={isLocked}
+                  autoResize={false}
+                />
+              </div>
+
+            </div>
+          </div>
         </div>
 
-        <Button
-         type="button"
-         variant="secondary"
-         onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: 0 })}
-         className="w-full mt-4 border-dashed font-bold shadow-sm"
-         disabled={isLocked}
-         icon={<Plus className="w-4 h-4" />}
-        >
-         Adicionar Item
-        </Button>
-        {errors.itens && <p className="text-[10px] text-error mt-2 font-bold flex items-center gap-1"><AlertTriangle className="w-3 h-3" /> {errors.itens.root?.message}</p>}
-       </div>
-
-       {/* 4. OBSERVAÇÕES */}
-       <div className="pt-2">
-        <Textarea
-         label="Parecer Técnico / Justificativa"
-         {...register("observacoes")}
-         rows={3}
-         placeholder="Relatório do problema, peças substituídas ou motivo da edição..."
-         disabled={isLocked}
-         autoResize={false}
-        />
-       </div>
-
-      </div>
-     </div>
+        {/* FOOTER PREMIUM */}
+        <div className="px-6 sm:px-8 py-5 bg-surface-hover/30 border-t border-border/60 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
+          <Button type="button" variant="ghost" onClick={onClose} disabled={isLocked} className="w-full sm:w-auto font-bold">
+            Descartar Alterações
+          </Button>
+          <Button type="submit" isLoading={isLocked} disabled={isLocked} icon={<Check className="w-4 h-4" />} className="w-full sm:w-auto px-10 shadow-button hover:shadow-float-primary font-black uppercase tracking-tight">
+            Gravar Alterações
+          </Button>
+        </div>
+      </form>
     </div>
-
-    {/* FOOTER PREMIUM */}
-    <div className="px-6 sm:px-8 py-5 bg-surface-hover/30 border-t border-border/60 flex flex-col-reverse sm:flex-row justify-end gap-3 shrink-0">
-     <Button type="button" variant="ghost" onClick={onClose} disabled={isLocked} className="w-full sm:w-auto font-bold">
-      Descartar Alterações
-     </Button>
-     <Button type="submit" isLoading={isLocked} disabled={isLocked} icon={<Check className="w-4 h-4" />} className="w-full sm:w-auto px-10 shadow-button hover:shadow-float-primary font-black uppercase tracking-tight">
-      Gravar Alterações
-     </Button>
-    </div>
-   </form>
-  </div>
- );
+  );
 }
 
 interface FormEditarManutencaoProps {
- manutencaoId: string;
- onSuccess: () => void;
- onClose: () => void;
+  manutencaoId: string;
+  onSuccess: () => void;
+  onClose: () => void;
 }
 
 export function FormEditarManutencao({ manutencaoId, onSuccess, onClose }: FormEditarManutencaoProps) {
- const { data: osParaEditar, isLoading: loadOS } = useQuery<ManutencaoParaEditar>({
-  queryKey: ['manutencao', manutencaoId],
-  queryFn: async () => (await api.get(`/manutencoes/${manutencaoId}`)).data,
- });
+  const { data: osParaEditar, isLoading: loadOS } = useQuery<ManutencaoParaEditar>({
+    queryKey: ['manutencao', manutencaoId],
+    queryFn: async () => (await api.get(`/manutencoes/${manutencaoId}`)).data,
+  });
 
- if (loadOS || !osParaEditar) {
-  return (
-   <div className="flex flex-col h-full w-full bg-surface rounded-2xl shadow-float border border-border/60 items-center justify-center min-h-[400px] gap-4 text-primary/60 animate-in fade-in zoom-in-95 duration-300">
-    <Loader2 className="w-10 h-10 animate-spin" />
-    <span className="text-sm font-bold uppercase tracking-widest animate-pulse">Carregando Ordem de Serviço...</span>
-   </div>
-  );
- }
+  if (loadOS || !osParaEditar) {
+    return (
+      <div className="flex flex-col h-full w-full bg-surface rounded-2xl shadow-float border border-border/60 items-center justify-center min-h-[400px] gap-4 text-primary/60 animate-in fade-in zoom-in-95 duration-300">
+        <Loader2 className="w-10 h-10 animate-spin" />
+        <span className="text-sm font-bold uppercase tracking-widest animate-pulse">Carregando Ordem de Serviço...</span>
+      </div>
+    );
+  }
 
- return <FormEditarManutencaoInterno osParaEditar={osParaEditar} onSuccess={onSuccess} onClose={onClose} />;
+  return <FormEditarManutencaoInterno osParaEditar={osParaEditar} onSuccess={onSuccess} onClose={onClose} />;
 }

@@ -11,11 +11,11 @@ import type { TreinamentoRealizado } from '../types';
 // ─────────────────────────────────────────────────────────────────
 export const treinamentoSchema = z.object({
     nome: z.string().min(2, 'Nome deve ter ao menos 2 caracteres')
-           .transform(val => {
-               let n = val.toUpperCase().replace(/\s+/g, ' ').trim();
-               n = n.replace(/^NR[\s\-]*(\d+.*)$/, 'NR $1');
-               return n;
-           }),
+        .transform(val => {
+            let n = val.toUpperCase().replace(/\s+/g, ' ').trim();
+            n = n.replace(/^NR[\s\-]*(\d+.*)$/, 'NR $1');
+            return n;
+        }),
     dataRealizacao: z.string().min(1, 'Data de emissão obrigatória').refine(data => {
         const hoje = new Date();
         hoje.setHours(23, 59, 59, 999);
@@ -100,7 +100,7 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
         id: string;
         requisitos?: Requisito[];
     }
-    
+
     const { data: cargos = [], isLoading: loadingCargos } = useQuery<CargoResponse[]>({
         queryKey: cargoQueryKey,
         queryFn: async () => {
@@ -131,11 +131,12 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
     // ── Mesclagem (Realizados + Pendentes) ───────────────────────
     const treinamentos = React.useMemo(() => {
         const normalize = (n: string) => n.toUpperCase().replace(/\s+/g, ' ').trim();
-        const realizados = sortByDateDesc(rawTreinamentos).map(t => ({ ...t, status: 'CONCLUIDO' as const, isObrigatorio: false }));
+        type TreinamentoMesclado = TreinamentoRealizado & { status: 'CONCLUIDO' | 'PENDENTE'; isObrigatorio: boolean; diasAntecedenciaAlerta?: number };
+        const realizados = sortByDateDesc(rawTreinamentos).map(t => ({ ...t, status: 'CONCLUIDO' as const, isObrigatorio: false })) as TreinamentoMesclado[];
         const mapaRealizados = new Map(realizados.map(t => [normalize(t.nome), t]));
 
         const cargoUsuario = cargos.find(c => c.id === cargoId);
-        
+
         if (cargoUsuario && cargoUsuario.requisitos) {
             cargoUsuario.requisitos.forEach((req: Requisito) => {
                 const normName = normalize(req.nome);
@@ -162,7 +163,7 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
         });
     }, [rawTreinamentos, cargos, cargoId, userId]);
 
-    const loading = loadingTreinamentos || loadingCargos;
+
 
     // ── Mutations ────────────────────────────────────────────────
     const addMutation = useMutation({
@@ -180,7 +181,7 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
     const addTreinamento = async (data: TreinamentoForm): Promise<void> => {
         // 🛡️ MURALHA DE DUPLICIDADE REMOVIDA
         // O backend agora aceita recadastros (renovações) para manter o histórico.
-        
+
         const payload: CreateTreinamentoPayload = {
             userId,
             nome: data.nome,

@@ -39,6 +39,7 @@ interface VeiculoItem {
   id: string;
   placa: string;
   modelo: string;
+  tipoVeiculo?: string;
   ultimoKm?: number;
 }
 
@@ -78,13 +79,21 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
 
   const veiculosOptions = useMemo(() => veiculos.map(v => ({ 
     value: v.id, 
-    label: `${v.placa} - ${v.modelo}` 
+    label: v.placa 
   })), [veiculos]);
 
-  const operadoresOptions = useMemo(() => operadores.map(op => ({ 
-    value: op.id, 
-    label: op.nome 
-  })), [operadores]);
+  const operadoresOptions = useMemo(() => {
+    const veiculoSelecionado = veiculos.find(v => v.id === veiculoSelecionadoId);
+    const isPesado = veiculoSelecionado?.tipoVeiculo === 'PESADO' || veiculoSelecionado?.tipoVeiculo?.toUpperCase().includes('PESADO');
+
+    return operadores.filter(op => {
+      if (isPesado) return ['OPERADOR'].includes(op.role);
+      return ['OPERADOR', 'ENCARREGADO', 'RH', 'ADMIN', 'COORDENADOR'].includes(op.role);
+    }).map(op => ({ 
+      value: op.id, 
+      label: op.nome 
+    }));
+  }, [operadores, veiculos, veiculoSelecionadoId]);
 
   // Refs estáveis para funções que mudam a cada render (mesmo padrão do FormEditarVeiculo)
   const resetRef = useRef(reset);
@@ -105,7 +114,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
         if (!isMounted) return;
 
         setVeiculos(veiculosRes.data);
-        setOperadores((usersRes.data as OperadorItem[]).filter(u => ['OPERADOR', 'ENCARREGADO'].includes(u.role)));
+        setOperadores(usersRes.data as OperadorItem[]);
 
         const jornada = jornadaRes.data;
         const inicio = new Date(jornada.dataInicio);
@@ -263,7 +272,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
                     </div>
                     
                     <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_110px] gap-4">
                         <Input
                           label="Data da Saída"
                           type="date"
@@ -312,7 +321,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
                     </div>
 
                     <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-[1fr_110px] gap-4">
                         <Input
                           label="Data do Retorno"
                           type="date"

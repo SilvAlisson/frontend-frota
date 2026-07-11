@@ -90,10 +90,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   // Filtros de Selects
   const produtosCombustivel = useMemo(() => produtos.filter(p => ['COMBUSTIVEL', 'ADITIVO'].includes(p.tipo)), [produtos]);
   const fornecedoresPosto = useMemo(() => fornecedores.filter(f => f.tipo === 'POSTO'), [fornecedores]);
-  const motoristas = useMemo(() => usuarios.filter(u => ['OPERADOR', 'ENCARREGADO'].includes(u.role)), [usuarios]);
-
-  const veiculosOptions = useMemo(() => veiculos.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` })), [veiculos]);
-  const motoristasOptions = useMemo(() => motoristas.map(u => ({ value: u.id, label: u.nome })), [motoristas]);
+  const veiculosOptions = useMemo(() => veiculos.map(v => ({ value: v.id, label: v.placa })), [veiculos]);
   const fornecedoresOptions = useMemo(() => fornecedoresPosto.map(f => ({ value: f.id, label: f.nome })), [fornecedoresPosto]);
   const produtosOptions = useMemo(() => produtosCombustivel.map(p => ({ value: p.id, label: p.nome })), [produtosCombustivel]);
 
@@ -105,6 +102,19 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
 
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
   const itensWatch = useWatch({ control, name: "itens" });
+  const veiculoIdWatch = useWatch({ control, name: "veiculoId" });
+
+  const motoristasOptions = useMemo(() => {
+    const veiculoSelecionado = veiculos.find(v => v.id === veiculoIdWatch);
+    const isPesado = veiculoSelecionado?.tipoVeiculo === 'PESADO' || veiculoSelecionado?.tipoVeiculo?.toUpperCase().includes('PESADO');
+    
+    const filtrados = usuarios.filter(u => {
+      if (isPesado) return ['OPERADOR'].includes(u.role);
+      return ['OPERADOR', 'ENCARREGADO', 'RH', 'ADMIN', 'COORDENADOR'].includes(u.role);
+    });
+    return filtrados.map(u => ({ value: u.id, label: u.nome }));
+  }, [usuarios, veiculos, veiculoIdWatch]);
+
 
   const totalGeral = useMemo(() => {
     return (itensWatch || []).reduce((acc, item) => {
@@ -288,15 +298,11 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
                 <Select label="Posto Fornecedor" options={fornecedoresOptions} icon={<MapPin className="w-4 h-4" />} {...register('fornecedorId')} error={errors.fornecedorId?.message} disabled={isLocked} />
               </div>
 
-              <div className="md:col-span-4">
+              <div className="md:col-span-6">
                 <Input label="Hodômetro Atual" type="tel" inputMode="numeric" {...register('kmOdometro', { onChange: (e) => { setValue('kmOdometro', formatKmVisual(e.target.value)); } })} error={errors.kmOdometro?.message as string} disabled={isLocked} className="font-mono font-bold text-lg text-primary" />
               </div>
 
-              <div className="md:col-span-4">
-                <Input label="Cartão da Frota" maxLength={4} placeholder="Ex: 1234" icon={<CreditCard className="w-4 h-4" />} {...register('placaCartaoUsado')} disabled={isLocked} className="font-mono text-center tracking-widest font-black" />
-              </div>
-
-              <div className="md:col-span-4">
+              <div className="md:col-span-6">
                 <Input label="Data / Hora Exata" type="datetime-local" icon={<Calendar className="w-4 h-4" />} {...register('dataHora')} error={errors.dataHora?.message} disabled={isLocked} />
               </div>
             </div>

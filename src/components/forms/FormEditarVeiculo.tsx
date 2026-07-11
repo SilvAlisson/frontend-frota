@@ -74,12 +74,12 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
       placa: '',
       marca: '',
       modelo: '',
-      ano: '' as unknown as number,
+      ano: '',
       tipoVeiculo: 'LEVE',
       tipoCombustivel: 'DIESEL_S10',
-      capacidadeTanque: '' as unknown as number,
+      capacidadeTanque: '',
       status: 'ATIVO',
-      ultimoKm: '' as unknown as number,
+      ultimoKm: '',
       vencimentoCiv: '',
       vencimentoCipp: ''
     }
@@ -174,7 +174,7 @@ export function FormEditarVeiculo({ veiculoId, onSuccess, onCancelar }: FormEdit
       placa: data.placa.replace('-', ''), // Removemos o hífen antes de enviar para DB
       vencimentoCiv: formatarDataIsoSegura(data.vencimentoCiv),
       vencimentoCipp: formatarDataIsoSegura(data.vencimentoCipp),
-      capacidadeTanque: data.capacidadeTanque !== undefined && data.capacidadeTanque !== '' ? data.capacidadeTanque : null,
+      capacidadeTanque: data.capacidadeTanque !== undefined ? data.capacidadeTanque : null,
       tipoVeiculo: data.tipoVeiculo || null,
       kmAtual: parseDecimal(data.ultimoKm) 
     };

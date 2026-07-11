@@ -10,7 +10,7 @@ import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { UserPlus, Camera, Calendar, CreditCard, User, Briefcase, Mail, KeyRound, Hash, GraduationCap, X, Plus } from 'lucide-react';
+import { UserPlus, Camera, Calendar, CreditCard, User, Briefcase, Mail, KeyRound, Hash, X, Plus } from 'lucide-react';
 import { hapticError } from '../../lib/haptics';
 import { logger } from '../../lib/logger';
 
@@ -50,7 +50,8 @@ const usuarioSchema = z.object({
   treinamentos: z.array(treinamentoSchema).optional(),
 });
 
-type UsuarioFormInput = z.infer<typeof usuarioSchema>;
+type UsuarioFormInput = z.input<typeof usuarioSchema>;
+type UsuarioFormOutput = z.infer<typeof usuarioSchema>;
 
 interface FormProps {
   onSuccess: () => void;
@@ -63,7 +64,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [loadingStep, setLoadingStep] = useState('');
 
-  const EMPTY_ARRAY = [];
+  const EMPTY_ARRAY: Cargo[] = [];
   const { data: cargos = EMPTY_ARRAY, isLoading: loadCargos } = useQuery<Cargo[]>({
     queryKey: ['cargos-select'],
     queryFn: async () => {
@@ -80,7 +81,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
     control,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm<UsuarioFormInput>({
+  } = useForm<UsuarioFormInput, any, UsuarioFormOutput>({
     resolver: zodResolver(usuarioSchema),
     defaultValues: {
       role: 'OPERADOR',
@@ -102,7 +103,6 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
 
   const roleSelecionada = watch('role');
   const cargoIdSelecionado = watch('cargoId');
-  const treinamentosWatch = watch('treinamentos');
 
   // Ao mudar de cargo, atualizar os treinamentos obrigatórios
   useEffect(() => {
@@ -110,7 +110,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       const cargo = cargos.find(c => c.id === cargoIdSelecionado);
       if (cargo && cargo.requisitos) {
         // Popula o form com os requisitos do cargo
-        replace(cargo.requisitos.map(req => ({
+        replace(cargo.requisitos.map((req: CargoRequisito) => ({
           nome: req.nome,
           dataRealizacao: '',
           dataVencimento: '',
@@ -132,7 +132,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
     }
   };
 
-  const onSubmit = async (data: UsuarioFormInput) => {
+  const onSubmit = async (data: UsuarioFormOutput) => {
     setLoadingStep('Criando conta...');
     let finalFotoUrl = null;
 

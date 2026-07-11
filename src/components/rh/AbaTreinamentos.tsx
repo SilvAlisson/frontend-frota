@@ -169,7 +169,7 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                         certificadoFile.type || 'application/pdf',
                         'certificados'
                     );
-                    toast.success('Upload concluído!', { id: 'upload-cert' });
+                    toast.dismiss('upload-cert');
                 } catch {
                     toast.dismiss('upload-cert');
                     hapticError();
