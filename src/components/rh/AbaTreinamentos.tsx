@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -12,10 +12,11 @@ import { Textarea } from '../ui/Textarea';
 import {
     Trash2, AlertTriangle, Loader2,
     CheckCircle2, FileSpreadsheet, Plus, GraduationCap,
-    UploadCloud, QrCode, Printer,
+    UploadCloud, QrCode, Printer, X
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useModalStore } from '../../hooks/useModalStore';
+import { Badge } from '../ui/Badge';
 import { EmptyState } from '../ui/EmptyState';
 import { Skeleton } from '../ui/Skeleton';
 import { hapticError } from '../../lib/haptics';
@@ -31,7 +32,7 @@ interface StatusConfig {
     label: string;
 }
 
-function getStatusConfig(vencimento: string | null | undefined, statusBase?: 'CONCLUIDO' | 'PENDENTE'): StatusConfig {
+function getStatusConfig(vencimento: string | null | undefined, statusBase?: 'CONCLUIDO' | 'PENDENTE' | 'FALTANTE'): StatusConfig {
     if (statusBase === 'PENDENTE') {
         return {
             indicatorBg: 'bg-border/60',
@@ -39,7 +40,18 @@ function getStatusConfig(vencimento: string | null | undefined, statusBase?: 'CO
             textColor: 'text-text-secondary',
             border: 'border-border',
             Icon: AlertTriangle,
-            label: 'Obrigatório (Pendente)',
+            label: 'Aguardando Análise',
+        };
+    }
+
+    if (statusBase === 'FALTANTE') {
+        return {
+            indicatorBg: 'bg-error',
+            badgeBg: 'bg-error/10',
+            textColor: 'text-error',
+            border: 'border-error/20',
+            Icon: AlertTriangle,
+            label: 'Obrigatório (Faltante)',
         };
     }
 
@@ -72,10 +84,10 @@ function getStatusConfig(vencimento: string | null | undefined, statusBase?: 'CO
     }
     if (diffDias < 30) {
         return {
-            indicatorBg: 'bg-warning-500',
-            badgeBg: 'bg-warning-500/10',
-            textColor: 'text-warning-600',
-            border: 'border-warning-500/20',
+            indicatorBg: 'bg-orange-500',
+            badgeBg: 'bg-orange-500/10',
+            textColor: 'text-orange-600',
+            border: 'border-orange-500/20',
             Icon: AlertTriangle,
             label: 'Expira Brevemente',
         };
@@ -100,13 +112,32 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
     const [isUploading, setIsUploading] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
 
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setShowAddForm(false);
+            }
+        };
+        if (showAddForm) {
+            window.addEventListener('keydown', handleKeyDown);
+        }
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [showAddForm]);
+
     const {
         treinamentos,
+        cargos,
         loading,
         addTreinamento,
         removeTreinamento,
         importarPlanilha
     } = useTreinamentosUsuario(userId, cargoId);
+
+    const sugestoesDeTreinamentos = useMemo(() => {
+        if (!cargos) return [];
+        const todasAsObrigacoes = cargos.flatMap(c => c.requisitos || []).map(r => r.nome);
+        return Array.from(new Set(todasAsObrigacoes)).sort();
+    }, [cargos]);
 
     const {
         register,
@@ -206,12 +237,12 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                             justify-content: center;
                             align-items: center;
                             height: 100vh;
-                            font-family: 'Inter', Arial, sans-serif;
+                            font-family: system-ui, -apple-system, sans-serif;
                             background: #fff;
                         }
                         .etiqueta {
                             text-align: center;
-                            border: 2px solid #000;
+                            border: 2px solid #64748b;
                             padding: 15px;
                             border-radius: 8px;
                             width: fit-content;
@@ -223,7 +254,7 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                         <h2 style="margin: 0 0 10px 0; font-size: 16px; font-weight: 900;">FROTA KLIN</h2>
                         <img src="${qrCodeImageUrl}" alt="QR Code do crachá" style="width: 140px; height: 140px; display: block; margin: 0 auto;" />
                         <p style="margin: 10px 0 0 0; font-size: 14px; font-weight: bold; text-transform: uppercase;">${nomeUsuario}</p>
-                        <p style="margin: 5px 0 0 0; font-size: 10px; color: #333; font-weight: bold;">AUDITORIA DE SSMA</p>
+                        <p style="margin: 5px 0 0 0; font-size: 10px; color: #475569; font-weight: bold;">AUDITORIA DE SSMA</p>
                     </div>
                     <script>setTimeout(() => { window.print(); window.close(); }, 500);</script>
                 </body>
@@ -282,21 +313,44 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                 </div>
             </div>
 
-            {/* FORMULÁRIO DE ADIÇÃO (EXPANSÍVEL) */}
+            {/* FORMULÁRIO DE ADIÇÃO (EXPANSÍVEL / MODAL) */}
             {showAddForm && (
-                <form onSubmit={handleSubmit(onSubmit)} className="bg-surface-hover p-6 rounded-2xl border border-border/50 animate-in fade-in slide-in-from-top-4">
-                    <h3 className="text-lg font-bold text-text-main mb-4 flex items-center gap-2">
-                        <GraduationCap className="w-5 h-5 text-primary" /> Novo Treinamento / Certificação
-                    </h3>
+                <>
+                    <div 
+                        className="fixed inset-0 z-[90]" 
+                        onClick={() => setShowAddForm(false)}
+                    />
+                    <form onSubmit={handleSubmit(onSubmit)} className="bg-surface-hover p-6 rounded-2xl border border-border/50 animate-in fade-in slide-in-from-top-4 relative z-[100]">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-text-main flex items-center gap-2">
+                                <GraduationCap className="w-5 h-5 text-primary" /> Novo Treinamento / Certificação
+                            </h3>
+                            <button 
+                                type="button" 
+                                onClick={() => setShowAddForm(false)} 
+                                className="p-2 text-text-muted hover:text-text-main hover:bg-surface rounded-full transition-colors"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <Input
                                 label="Nome do Treinamento"
                                 placeholder="Ex: NR-10 Básico"
+                                list="treinamentos-sugeridos"
                                 {...register('nome')}
                                 error={errors.nome?.message}
                             />
+                            <datalist id="treinamentos-sugeridos">
+                                {sugestoesDeTreinamentos.map(nome => (
+                                    <option key={nome} value={nome} />
+                                ))}
+                            </datalist>
+                            <span className="text-[10px] text-text-muted mt-1 block px-1">
+                                Digite para ver sugestões do catálogo oficial.
+                            </span>
                         </div>
 
                         <div>
@@ -361,6 +415,7 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                         </Button>
                     </div>
                 </form>
+                </>
             )}
 
             {/* LISTAGEM DE TREINAMENTOS */}
@@ -390,9 +445,11 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                     />
                 ) : (
                     treinamentos.map((t) => {
-                        const status = getStatusConfig(t.dataVencimento, (t as { status?: 'CONCLUIDO' | 'PENDENTE' }).status);
+                        // O hook useTreinamentosUsuario gera itens com status 'PENDENTE' se faltarem
+                        const statusPass = (t.status === 'PENDENTE') ? 'PENDENTE' : 'CONCLUIDO';
+                        const status = getStatusConfig(t.dataVencimento, statusPass);
                         const StatusIcon = status.Icon;
-                        const isPendente = (t as { status?: 'CONCLUIDO' | 'PENDENTE' }).status === 'PENDENTE';
+                        const isPendente = statusPass === 'PENDENTE';
 
                         return (
                             <div
@@ -409,6 +466,11 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                                             <h4 className="text-base font-bold text-text-main truncate" title={t.nome}>
                                                 {t.nome}
                                             </h4>
+                                            {!t.isObrigatorio && (
+                                                <Badge variant="neutral" className="text-[10px] py-0 font-bold bg-surface-hover border-border/60 text-text-secondary">
+                                                    Extra
+                                                </Badge>
+                                            )}
                                         </div>
                                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
                                             {role && ['OPERADOR', 'ENCARREGADO', 'AUXILIAR_OPERACIONAL'].includes(role) && (
@@ -418,7 +480,7 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                                             )}
                                             <span className={`text-sm flex items-center gap-1.5 font-medium ${isPendente ? 'text-text-muted' : 'text-text-secondary'}`}>
                                                 <CheckCircle2 className={`w-4 h-4 ${isPendente ? 'text-text-muted opacity-50' : 'text-success'}`} />
-                                                {isPendente ? 'Aguardando envio' : `Concluído em: ${new Date(t.dataRealizacao).toLocaleDateString('pt-BR')}`}
+                                                {isPendente ? 'Aguardando envio de certificado / Não Realizado' : `Concluído em: ${new Date(t.dataRealizacao).toLocaleDateString('pt-BR')}`}
                                             </span>
                                             {t.descricao && (
                                                 <span className="text-sm text-text-muted italic flex items-center gap-1.5">

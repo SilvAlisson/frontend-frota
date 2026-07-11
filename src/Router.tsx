@@ -26,12 +26,10 @@ const HistoricoManutencoes = lazy(() => import('./components/HistoricoManutencoe
 const HistoricoAbastecimentos = lazy(() => import('./components/HistoricoAbastecimentos').then(m => ({ default: m.HistoricoAbastecimentos })));
 const HistoricoJornadas = lazy(() => import('./components/HistoricoJornadas').then(m => ({ default: m.HistoricoJornadas })));
 const GestaoSST = lazy(() => import('./components/GestaoSST').then(m => ({ default: m.GestaoSST })));
-import { PerfilConformidade } from './pages/PerfilConformidade';
-
 const PainelPlanosPreventivos = lazy(() => import('./components/PainelPlanosPreventivos').then(m => ({ default: m.PainelPlanosPreventivos })));
 const MinhaContaPage = lazy(() => import('./pages/MinhaContaPage').then(m => ({ default: m.MinhaContaPage })));
 const MatrizQualificacaoPage = lazy(() => import('./pages/MatrizQualificacaoPage').then(m => ({ default: m.MatrizQualificacaoPage })));
-const MatrizDetalheUsuario = lazy(() => import('./pages/MatrizDetalheUsuario').then(m => ({ default: m.MatrizDetalheUsuario })));
+const DossieIntegranteHub = lazy(() => import('./pages/DossieIntegranteHub').then(m => ({ default: m.DossieIntegranteHub })));
 const ConvocacoesPage = lazy(() => import('./pages/ConvocacoesPage').then(m => ({ default: m.ConvocacoesPage })));
 
 const LoadingScreen = () => (
@@ -175,7 +173,7 @@ export function Router() {
             } />
             <Route path=":id" element={
               <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'RH']}>
-                <MatrizDetalheUsuario />
+                <DossieIntegranteHub />
               </PrivateRoute>
             } />
           </Route>
@@ -186,12 +184,7 @@ export function Router() {
             </PrivateRoute>
           } />
 
-          {/*  Rota independente configurada corretamente */}
-          <Route path="conformidade/:id" element={
-            <PrivateRoute allowedRoles={['ADMIN', 'COORDENADOR', 'RH']}>
-              <PerfilConformidade />
-            </PrivateRoute>
-          } />
+
 
           <Route path="auditoria" element={
             <PrivateRoute allowedRoles={['ADMIN']}>

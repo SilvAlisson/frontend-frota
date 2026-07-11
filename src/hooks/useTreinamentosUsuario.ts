@@ -178,17 +178,9 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
 
     // ── Ações públicas ───────────────────────────────────────────
     const addTreinamento = async (data: TreinamentoForm): Promise<void> => {
-        const normalizeNome = (n: string) => n.replace(/\s+/g, '').toUpperCase();
-        const nomeAlvo = normalizeNome(data.nome);
+        // 🛡️ MURALHA DE DUPLICIDADE REMOVIDA
+        // O backend agora aceita recadastros (renovações) para manter o histórico.
         
-        const duplicado = treinamentos.find(t => normalizeNome(t.nome) === nomeAlvo);
-        
-        if (duplicado) {
-            toast.error(`A certificação "${duplicado.nome}" já está ativa!`, {
-                description: "Para renovar, edite ou exclua o registro existente."
-            });
-            return; // Interrompe a execução, toast já exibido
-        }
         const payload: CreateTreinamentoPayload = {
             userId,
             nome: data.nome,
@@ -256,11 +248,18 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
         const promise = task();
         toast.promise(promise, {
             loading: 'Lendo planilha...',
-            success: count => `${count} certificações importadas com sucesso!`,
-            error: err => (err instanceof Error ? err.message : 'Falha na importação do arquivo.'),
+            success: (n) => `${n} certificação(ões) importada(s) com sucesso!`,
+            error: (e: any) => `Erro na importação: ${e.message}`,
         });
-        return promise.catch(() => 0); // Evita o Unhandled Promise Rejection
+        return promise;
     };
 
-    return { treinamentos, loading, addTreinamento, removeTreinamento, importarPlanilha };
+    return {
+        treinamentos,
+        cargos,
+        loading: loadingTreinamentos || loadingCargos,
+        addTreinamento,
+        removeTreinamento,
+        importarPlanilha,
+    };
 }

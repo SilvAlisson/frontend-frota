@@ -198,12 +198,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                         <RadixSelect.Trigger
                             id={selectId}
                             className={cn(
-                                "flex items-center justify-between w-full h-11 text-sm bg-surface border rounded-xl transition-all duration-200 outline-none text-left",
-                                "focus:ring-2 focus:ring-primary/60 focus:ring-offset-2 focus:ring-offset-background focus:border-primary shadow-sm",
-                                "disabled:bg-surface-hover/50 disabled:text-text-muted disabled:cursor-not-allowed",
+                                "flex items-center justify-between w-full h-11 text-sm bg-surface border rounded-xl transition-all duration-300 outline-none text-left",
+                                "focus:ring-2 focus:ring-teal-500/30 focus:ring-offset-1 focus:ring-offset-background focus:border-teal-500",
+                                "shadow-[0_2px_8px_rgba(0,0,0,0.04)] hover:shadow-[0_4px_12px_rgba(0,0,0,0.06)] hover:border-teal-500/50",
+                                "disabled:bg-surface-hover/50 disabled:text-text-muted disabled:cursor-not-allowed disabled:hover:shadow-[0_2px_8px_rgba(0,0,0,0.04)] disabled:hover:border-border/60",
                                 "data-[placeholder]:text-text-muted",
                                 icon ? "ps-10 pe-4" : "px-4",
-                                !error ? "border-border/60 hover:border-border" : "border-error focus:border-error focus:ring-error/20 text-error",
+                                !error ? "border-border/60" : "border-error focus:border-error focus:ring-error/20 text-error",
                                 className
                             )}
                         >
@@ -220,7 +221,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                             sideOffset={6}
                             avoidCollisions={true}
                             collisionPadding={8}
-                            className="z-[9999] w-[var(--radix-select-trigger-width)] min-w-[200px] max-h-[var(--radix-select-content-available-height)] overflow-hidden bg-surface rounded-xl border border-border/60 shadow-float data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
+                            className="z-[9999] w-[var(--radix-select-trigger-width)] min-w-[200px] max-h-[var(--radix-select-content-available-height)] overflow-hidden bg-surface rounded-xl border border-border/40 shadow-[0_12px_36px_rgba(0,0,0,0.12)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2"
                         >
                             <RadixSelect.ScrollUpButton className="flex items-center justify-center h-[25px] bg-surface text-text-muted cursor-default hover:bg-surface-hover transition-colors">
                                 <ChevronDown className="w-4 h-4 rotate-180" />
@@ -233,13 +234,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
                                             key={opt.value}
                                             value={String(opt.value)}
                                             className={cn(
-                                                "relative flex w-full cursor-pointer select-none items-center rounded-lg py-1.5 pl-8 pr-2 text-sm font-bold min-h-[44px]",
-                                                "text-text-main outline-none focus:bg-surface-hover focus:text-primary data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors"
+                                                "relative flex w-full cursor-pointer select-none items-center rounded-md py-2 pl-8 pr-2 text-sm font-medium",
+                                                "text-text-main outline-none focus:bg-teal-50 focus:text-teal-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors"
                                             )}
                                         >
                                             <span className="absolute inset-s-2 flex items-center justify-center w-4 h-4">
                                                 <RadixSelect.ItemIndicator>
-                                                    <Check className="w-4 h-4 text-primary" />
+                                                    <Check className="w-4 h-4 text-teal-600" />
                                                 </RadixSelect.ItemIndicator>
                                             </span>
                                             <RadixSelect.ItemText>{opt.label}</RadixSelect.ItemText>

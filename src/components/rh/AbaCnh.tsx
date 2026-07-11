@@ -8,9 +8,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
-import { UserCircle, Car, Loader2, Save, UploadCloud, FileCheck } from 'lucide-react';
+import { UserCircle, Car, Loader2, Save, X } from 'lucide-react';
 import { Skeleton } from '../ui/Skeleton';
-import { uploadToR2 } from '../../services/uploadService';
 import { hapticError } from '../../lib/haptics';
 
 const cnhSchema = z.object({
@@ -23,14 +22,11 @@ type CnhFormData = z.infer<typeof cnhSchema>;
 
 interface AbaCnhProps {
   userId: string;
+  onClose?: () => void;
 }
 
-export function AbaCnh({ userId }: AbaCnhProps) {
+export function AbaCnh({ userId, onClose }: AbaCnhProps) {
   const queryClient = useQueryClient();
-
-  const [arquivo, setArquivo] = useState<File | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: user, isLoading } = useQuery({
     queryKey: ['user-cnh', userId],
@@ -55,6 +51,16 @@ export function AbaCnh({ userId }: AbaCnhProps) {
     }
   }, [user, reset]);
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && onClose) {
+        onClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
   const mutation = useMutation({
     mutationFn: async (payload: any) => {
       await api.put(`/users/${userId}`, payload);
@@ -68,29 +74,9 @@ export function AbaCnh({ userId }: AbaCnhProps) {
 
   const onSubmit = async (data: CnhFormData) => {
     try {
-      setIsUploading(true);
-      let fotoCnhUrl: string | undefined = undefined;
-
-      if (arquivo) {
-        try {
-          const fileName = `cnh-${Date.now()}-${arquivo.name}`;
-          fotoCnhUrl = await uploadToR2(
-            arquivo,
-            fileName,
-            arquivo.type || 'application/octet-stream',
-            'documentos'
-          );
-        } catch {
-          hapticError();
-          toast.error('Falha no upload da foto da CNH.');
-          return;
-        }
-      }
-
       const payload = {
         ...data,
         cnhValidade: data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
-        ...(fotoCnhUrl ? { fotoCnhUrl } : {})
       };
       
       await toast.promise(mutation.mutateAsync(payload), {
@@ -98,9 +84,9 @@ export function AbaCnh({ userId }: AbaCnhProps) {
         success: 'Dados da CNH atualizados com sucesso!',
         error: 'Erro ao atualizar CNH.'
       });
-      setArquivo(null); // Clear selected file after successful save
-    } finally {
-      setIsUploading(false);
+      if (onClose) onClose();
+    } catch (error) {
+      hapticError();
     }
   };
 
@@ -116,10 +102,21 @@ export function AbaCnh({ userId }: AbaCnhProps) {
   const fotoAtualUrl = user?.profile?.fotoCnhUrl || user?.fotoCnhUrl;
 
   return (
-    <div className="space-y-6 animate-in fade-in">
-      <h3 className="text-xl font-bold text-text-main flex items-center gap-2 mb-6">
-        <UserCircle className="w-6 h-6 text-primary" /> Carteira Nacional de Habilitação (CNH)
-      </h3>
+    <div className="space-y-6 animate-in fade-in relative">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-xl font-bold text-text-main flex items-center gap-2">
+          <UserCircle className="w-6 h-6 text-primary" /> Carteira Nacional de Habilitação (CNH)
+        </h3>
+        {onClose && (
+          <button 
+            onClick={onClose}
+            className="p-2 text-text-muted hover:bg-surface-hover rounded-full transition-colors"
+            title="Fechar (Esc)"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="bg-surface-hover p-6 sm:p-8 rounded-[2rem] border border-border/50">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -160,40 +157,14 @@ export function AbaCnh({ userId }: AbaCnhProps) {
           </div>
         </div>
 
-        <div className="mt-8 mb-6">
-            <label className="text-sm font-bold text-text-secondary mb-1.5 block">Evidência CNH (PDF/Imagem)</label>
-            <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,image/*" onChange={(e) => setArquivo(e.target.files?.[0] || null)} />
-            <div 
-              onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-primary/30 rounded-xl p-6 text-center cursor-pointer hover:bg-primary/5 transition-colors group"
-            >
-              {arquivo ? (
-                <div className="flex flex-col items-center">
-                  <FileCheck className="w-8 h-8 text-primary mb-2" />
-                  <span className="font-medium text-text-main">{arquivo.name}</span>
-                  <span className="text-xs text-text-muted mt-1">Clique para trocar de arquivo</span>
-                </div>
-              ) : (
-                <div className="flex flex-col items-center">
-                  <UploadCloud className="w-8 h-8 text-text-muted group-hover:text-primary transition-colors mb-2" />
-                  <span className="font-medium text-text-main">Anexar Arquivo da CNH</span>
-                  <span className="text-xs text-text-muted mt-1">Formatos aceitos: PDF, JPG, PNG</span>
-                </div>
-              )}
-            </div>
-            
-            {fotoAtualUrl && (
-              <div className="mt-3 flex justify-start">
-                <a href={fotoAtualUrl} target="_blank" rel="noreferrer" className="text-primary text-sm font-bold hover:underline flex items-center gap-1">
-                  <FileCheck className="w-4 h-4" /> Ver Arquivo Atual
-                </a>
-              </div>
-            )}
-        </div>
-
-        <div className="mt-8 flex justify-end">
-          <Button type="submit" disabled={mutation.isPending || isUploading} className="min-w-[200px]">
-            {mutation.isPending || isUploading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar Alterações</>}
+        <div className="mt-8 flex justify-end gap-3">
+          {onClose && (
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancelar
+            </Button>
+          )}
+          <Button type="submit" disabled={mutation.isPending} className="min-w-[200px]">
+            {mutation.isPending ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...</> : <><Save className="w-4 h-4 mr-2" /> Salvar Alterações</>}
           </Button>
         </div>
       </form>

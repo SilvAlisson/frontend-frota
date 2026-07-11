@@ -56,12 +56,12 @@ interface StatusConfig {
 function getStatusConfig(vencimento: string | null | undefined): StatusConfig {
     if (!vencimento) {
         return {
-            indicatorBg: 'bg-info',
-            badgeBg: 'bg-info/10',
-            textColor: 'text-info',
-            border: 'border-info/20',
+            indicatorBg: 'bg-primary/60',
+            badgeBg: 'bg-primary/10',
+            textColor: 'text-primary',
+            border: 'border-primary/20',
             Icon: CheckCircle2,
-            label: 'Vitalício',
+            label: 'Vitalício / Concluído',
         };
     }
 
@@ -83,10 +83,10 @@ function getStatusConfig(vencimento: string | null | undefined): StatusConfig {
     }
     if (diffDias < 30) {
         return {
-            indicatorBg: 'bg-warning-500',
-            badgeBg: 'bg-warning-500/10',
-            textColor: 'text-warning-600',
-            border: 'border-warning-500/20',
+            indicatorBg: 'bg-orange-500',
+            badgeBg: 'bg-orange-500/10',
+            textColor: 'text-orange-600',
+            border: 'border-orange-500/20',
             Icon: AlertTriangle,
             label: 'Expira Brevemente',
         };

@@ -283,9 +283,9 @@ function FormEditarManutencaoInterno({
       ))}
      </div>
 
-     <div className="flex flex-col-reverse lg:flex-row-reverse gap-8">
-      {/* --- COLUNA DIREITA: FOTO E ALVO --- */}
-      <div className="w-full lg:w-1/3 flex flex-col gap-6">
+     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
+      {/* --- COLUNA ESQUERDA: DADOS TÉCNICOS --- */}
+      <div className="lg:col-span-8 space-y-8">
 
        {/* 1. SELEÇÃO DE ALVO */}
        <div className="space-y-3">
@@ -315,11 +315,11 @@ function FormEditarManutencaoInterno({
        </div>
 
        {/* UPLOAD FOTO */}
-       <div className="space-y-2 flex flex-col flex-1 min-h-[250px]">
+       <div className="space-y-2 flex flex-col w-full">
         <label className="text-[10px] font-black text-text-secondary tracking-[0.2em] uppercase ml-1 shrink-0">
          Comprovante (NF/OS)
         </label>
-        <div className="relative w-full aspect-square sm:aspect-video lg:aspect-auto lg:h-full lg:max-h-[350px] bg-surface-hover/30 rounded-2xl border-2 border-dashed border-border/60 flex flex-col items-center justify-center overflow-hidden group hover:border-primary/50 transition-colors cursor-pointer shadow-sm">
+        <div className="relative w-full aspect-video sm:aspect-[4/3] lg:aspect-square bg-surface-hover/30 rounded-2xl border-2 border-dashed border-border/60 flex flex-col items-center justify-center overflow-hidden group hover:border-primary/50 transition-colors cursor-pointer shadow-sm">
          {uploading ? (
           <div className="flex flex-col items-center gap-3">
            <Loader2 className="w-8 h-8 text-primary animate-spin" />
@@ -350,12 +350,37 @@ function FormEditarManutencaoInterno({
        </div>
       </div>
 
-      {/* --- COLUNA DIREITA: DADOS TÉCNICOS --- */}
-      <div className="w-full lg:w-2/3 space-y-6">
+      {/* --- COLUNA DIREITA: FOTO E ALVO --- */}
+      <div className="lg:col-span-4 flex flex-col gap-6">
+
+       {/* 1. SELEÇÃO DE ALVO */}
+       <div className="space-y-3">
+        <label className="text-[10px] font-black text-primary tracking-[0.2em] uppercase flex items-center gap-2">
+         Alvo da OS
+        </label>
+        <div className="flex flex-col gap-3">
+         {ALVOS_MANUTENCAO.map(alvo => (
+          <label key={alvo} className={`flex items-center justify-start gap-3 cursor-pointer p-4 border-2 rounded-xl w-full transition-all ${alvoSelecionado === alvo ? 'border-primary bg-primary/5 shadow-sm' : 'border-border/60 hover:border-primary/40 bg-surface'}`}>
+           <input
+            type="radio"
+            value={alvo}
+            {...register('alvo')}
+            className="accent-primary w-4 h-4 hidden"
+            disabled={isLocked}
+           />
+           <div className={`w-4 h-4 shrink-0 rounded-full border flex items-center justify-center ${alvoSelecionado === alvo ? 'border-primary' : 'border-text-muted/40'}`}>
+            {alvoSelecionado === alvo && <div className="w-2 h-2 bg-primary rounded-full" />}
+           </div>
+           <span className={`text-xs font-black uppercase tracking-wider ${alvoSelecionado === alvo ? 'text-primary' : 'text-text-secondary'}`}>
+            {alvo === 'VEICULO' ? 'Veículo' : 'Equipamento'}
+           </span>
+          </label>
+         ))}
+        </div>
+       </div>
 
        <div className="flex items-center gap-2 border-b border-border/50 pb-2">
-        <span className="w-1.5 h-4 bg-amber-500 rounded-full shadow-sm"></span>
-        <label className="text-[10px] font-black text-amber-600 tracking-[0.2em] uppercase">Dados Operacionais</label>
+        <label className="text-[10px] font-black text-text-secondary tracking-[0.2em] uppercase">Dados Operacionais</label>
        </div>
 
        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -421,11 +446,10 @@ function FormEditarManutencaoInterno({
 
        {/* 3. MATRIZ DE PEÇAS E SERVIÇOS */}
        <div className="pt-4 border-t border-border/50">
-        <div className="flex justify-between items-end mb-4 px-1">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-end gap-3 mb-4 px-1">
          <div className="space-y-1">
           <div className="flex items-center gap-2">
-           <span className="w-1.5 h-4 bg-info rounded-full shadow-sm"></span>
-           <label className="text-[10px] font-black text-info tracking-[0.2em] uppercase">Matriz de Custos</label>
+           <label className="text-[10px] font-black text-text-secondary tracking-[0.2em] uppercase">Matriz de Custos</label>
           </div>
           {fornecedorIdSelecionado && produtosManutencao.length < produtos.filter(p => !['COMBUSTIVEL', 'ADITIVO', 'LAVAGEM'].includes(p.tipo)).length && (
            <p className="text-[10px] text-info/80 font-bold flex items-center gap-1">
@@ -448,11 +472,11 @@ function FormEditarManutencaoInterno({
           const subtotal = itemVal * itemQtd;
 
           return (
-           <div key={field.id} className="bg-surface-hover/20 p-4 rounded-2xl border border-border/60 shadow-sm transition-colors hover:border-primary/30">
-            <div className="flex flex-col 2xl:flex-row gap-4 2xl:gap-3 items-start 2xl:items-end w-full">
+           <div key={field.id} className="bg-surface p-4 rounded-2xl border border-border/60 shadow-sm transition-colors hover:border-primary/30">
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end w-full">
              
              {/* PRODUTO / SERVIÇO */}
-             <div className="w-full 2xl:flex-1 min-w-0">
+             <div className="sm:col-span-12 md:col-span-5 min-w-0">
               <Select
                label="Peça / Serviço"
                options={produtosOpcoes}
@@ -464,67 +488,64 @@ function FormEditarManutencaoInterno({
              </div>
 
              {/* GRUPO DE VALORES */}
-             <div className="w-full 2xl:w-auto flex flex-row flex-wrap sm:flex-nowrap gap-3 items-end">
-              
-              <div className="w-[80px] shrink-0">
-               <Input
-                label="Qtd"
-                type="number" inputMode="decimal"
-                step="any"
-                {...register(`itens.${index}.quantidade` as const)}
-                className="text-center font-mono font-bold px-2"
-                disabled={isLocked}
-                error={errors.itens?.[index]?.quantidade?.message as string}
-                containerClassName="!mb-0"
-               />
-              </div>
+             <div className="sm:col-span-4 md:col-span-2 shrink-0">
+              <Input
+               label="Qtd"
+               type="number" inputMode="decimal"
+               step="any"
+               {...register(`itens.${index}.quantidade` as const)}
+               className="text-center font-mono font-bold px-2"
+               disabled={isLocked}
+               error={errors.itens?.[index]?.quantidade?.message as string}
+               containerClassName="!mb-0"
+              />
+             </div>
 
-              <div className="flex-1 sm:w-[130px] sm:flex-none shrink-0">
-               <Input
-                label="R$ Unit"
-                type="tel"
-                inputMode="numeric"
-                {...register(`itens.${index}.valorPorUnidade` as const, {
-                 onChange: (e) => {
-                  e.target.value = formatarDinheiro(e.target.value);
-                  setValue(`itens.${index}.valorPorUnidade`, e.target.value);
-                 }
-                })}
-                className="text-right font-mono font-black text-emerald-600 px-3"
-                disabled={isLocked}
-                error={errors.itens?.[index]?.valorPorUnidade?.message as string}
-                containerClassName="!mb-0"
-               />
-              </div>
+             <div className="sm:col-span-4 md:col-span-2 shrink-0">
+              <Input
+               label="R$ Unit"
+               type="tel"
+               inputMode="numeric"
+               {...register(`itens.${index}.valorPorUnidade` as const, {
+                onChange: (e) => {
+                 e.target.value = formatarDinheiro(e.target.value);
+                 setValue(`itens.${index}.valorPorUnidade`, e.target.value);
+                }
+               })}
+               className="text-right font-mono font-black text-emerald-600 px-3"
+               disabled={isLocked}
+               error={errors.itens?.[index]?.valorPorUnidade?.message as string}
+               containerClassName="!mb-0"
+              />
+             </div>
 
-              <div className="flex-1 sm:w-[140px] sm:flex-none shrink-0">
-               <div className="flex flex-col gap-1.5 w-full">
-                <label className="text-xs font-bold text-text-secondary uppercase tracking-wider select-none ms-1">Subtotal</label>
-                <div className="h-11 flex items-center justify-end px-3 bg-surface border border-border/60 rounded-xl font-mono font-bold text-primary truncate shadow-sm">
-                 {subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                </div>
+             <div className="sm:col-span-4 md:col-span-2 shrink-0">
+              <div className="flex flex-col gap-1.5 w-full">
+               <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wider select-none ms-1">Subtotal</label>
+               <div className="h-11 flex items-center justify-end px-3 bg-surface border border-border/60 rounded-xl font-mono font-bold text-primary truncate shadow-sm text-sm">
+                {subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
                </div>
-              </div>
-
-              <div className="shrink-0 flex items-center justify-center">
-               {fields.length > 1 ? (
-                <Button
-                 type="button"
-                 variant="ghost"
-                 size="icon"
-                 onClick={() => remove(index)}
-                 disabled={isLocked}
-                 className="w-11 h-11 text-error hover:bg-error-soft rounded-xl transition-colors border border-transparent hover:border-error/20"
-                 title="Remover Item"
-                >
-                 <Trash2 className="w-5 h-5" />
-                </Button>
-               ) : (
-                <div className="w-11 h-11" />
-               )}
               </div>
              </div>
 
+             <div className="sm:col-span-12 md:col-span-1 shrink-0 flex items-center justify-center sm:justify-end mt-2 sm:mt-0">
+              {fields.length > 1 ? (
+               <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => remove(index)}
+                disabled={isLocked}
+                className="w-full sm:w-11 h-11 text-error hover:bg-error-soft rounded-xl transition-colors border border-border/40 hover:border-error/20"
+                title="Remover Item"
+               >
+                <Trash2 className="w-4 h-4 mr-2 sm:mr-0" />
+                <span className="sm:hidden font-bold">Remover</span>
+               </Button>
+              ) : (
+               <div className="hidden sm:block w-11 h-11" />
+              )}
+             </div>
             </div>
            </div>
           );

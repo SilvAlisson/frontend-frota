@@ -24,14 +24,14 @@ export function useRadarSST() {
   const query = useQuery<RadarCard[]>({
     queryKey: ['radarSST'],
     queryFn: async () => {
-      const response = await api.get('/api/rh/radar');
+      const response = await api.get('/rh/radar');
       return response.data;
     },
   });
 
   const agendarMutate = useMutation({
     mutationFn: async (payload: { userId: string, tipo: string, nomeExigencia: string, status: string }) => {
-      const response = await api.post('/api/rh/radar/agendar', payload);
+      const response = await api.post('/rh/radar/agendar', payload);
       return response.data;
     },
     onSuccess: () => {

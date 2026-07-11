@@ -574,3 +574,15 @@ html.dark {
     100% { transform: translate(0px, 0px) scale(1); }
   }
 }
+
+/* MatrizDetalheUsuario - Variant 1 Modal Form Override */
+.matriz-detalhe-page form.bg-surface-hover {
+  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+  width: 90vw; max-width: 600px; max-height: 85vh; overflow-y: auto;
+  z-index: 100;
+  background: var(--color-surface, #fefffe);
+  border-radius: 20px;
+  box-shadow: 0 24px 48px rgba(26,79,88,0.25), 0 0 0 100vw rgba(30,37,48,0.6);
+  padding: 32px !important; border: none;
+}
+

@@ -129,6 +129,7 @@ export function AbaAso({ userId }: AbaAsoProps) {
       </div>
 
       {isFormOpen && (
+
         <form onSubmit={handleSubmit(onSubmit)} className="bg-surface-hover p-6 rounded-2xl border border-border/50 animate-in fade-in slide-in-from-top-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
             <div>
@@ -143,7 +144,7 @@ export function AbaAso({ userId }: AbaAsoProps) {
               </select>
               {errors.tipo && <span className="text-error text-xs font-medium mt-1">{errors.tipo.message}</span>}
             </div>
-            
+
             <div>
               <label className="text-sm font-bold text-text-secondary mb-1.5 block">Data de Realização</label>
               <Input type="date" {...register('dataRealizacao')} />
@@ -205,6 +206,7 @@ export function AbaAso({ userId }: AbaAsoProps) {
             </Button>
           </div>
         </form>
+
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
