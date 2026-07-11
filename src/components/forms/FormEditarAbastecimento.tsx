@@ -10,7 +10,7 @@ import { hapticError } from '../../lib/haptics';
 import { logger } from '../../lib/logger';
 import {
   Save, Plus, X, User as UserIcon, Truck,
-  MapPin, Calendar, CreditCard, Image as ImageIcon, Loader2
+  MapPin, Calendar, Image as ImageIcon, Loader2
 } from 'lucide-react';
 
 // --- DESIGN SYSTEM ---
@@ -107,7 +107,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
   const motoristasOptions = useMemo(() => {
     const veiculoSelecionado = veiculos.find(v => v.id === veiculoIdWatch);
     const isPesado = veiculoSelecionado?.tipoVeiculo === 'PESADO' || veiculoSelecionado?.tipoVeiculo?.toUpperCase().includes('PESADO');
-    
+
     const filtrados = usuarios.filter(u => {
       if (isPesado) return ['OPERADOR'].includes(u.role);
       return ['OPERADOR', 'ENCARREGADO', 'RH', 'ADMIN', 'COORDENADOR'].includes(u.role);

@@ -241,7 +241,7 @@ export function AbaAso({ userId }: AbaAsoProps) {
 
               <div className="pt-4 border-t border-border/50 flex justify-between items-center">
                 {aso.comprovanteUrl ? (
-                  <a href={aso.comprovanteUrl} target="_blank" rel="noreferrer" className="text-primary text-sm font-bold hover:underline flex items-center gap-1">
+                  <a href={aso.comprovanteUrl} target="_blank" rel="noopener noreferrer" className="text-primary text-sm font-bold hover:underline flex items-center gap-1">
                     <FileCheck className="w-4 h-4" /> Ver Comprovante
                   </a>
                 ) : (

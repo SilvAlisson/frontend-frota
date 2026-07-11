@@ -106,7 +106,7 @@ export function LogItem({ log, onArquivar, isArquivando }: LogItemProps) {
                   // Se for URL de foto, vira botão!
                   if (typeof value === 'string' && value.startsWith('http')) {
                     return (
-                      <a key={key} href={value} target="_blank" rel="noreferrer" 
+                      <a key={key} href={value} target="_blank" rel="noopener noreferrer" 
                         className="flex items-center gap-1.5 text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 px-2.5 py-1 rounded-lg hover:bg-primary/20 hover:scale-105 transition-all">
                         <Camera className="w-3.5 h-3.5" /> 
                         Ver Foto de Evidência <ExternalLink className="w-3 h-3 opacity-50" />

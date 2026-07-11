@@ -561,7 +561,7 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
                                                         <a
                                                             href={treino.comprovanteUrl}
                                                             target="_blank"
-                                                            rel="noreferrer"
+                                                            rel="noopener noreferrer"
                                                             className="p-2.5 text-primary hover:bg-primary/10 rounded-xl transition-all border border-transparent hover:border-primary/20 shadow-sm bg-surface-hover flex items-center gap-2 text-xs font-bold uppercase tracking-widest"
                                                         >
                                                             <FileSpreadsheet className="w-4 h-4" /> PDF
