@@ -356,6 +356,24 @@
 /* --- CAMADA BASE (Estilos Globais) --- */
 @layer base {
 
+  /* ⚠️ GLOBAL: prefers-reduced-motion — afeta TODAS as animações/transições */
+  @media (prefers-reduced-motion: reduce) {
+    .glass,
+    .glass-premium {
+      backdrop-filter: none;
+      background: var(--surface);
+    }
+
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   /* TEMA CLARO (Default) */
   :root {
     --primary: var(--color-klin-500);
@@ -531,24 +549,6 @@
     background: var(--surface);
     border-color: var(--border);
     box-shadow: var(--shadow-float-val);
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-
-    .glass,
-    .glass-premium {
-      backdrop-filter: none;
-      background: var(--surface);
-    }
-
-    *,
-    ::before,
-    ::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-      scroll-behavior: auto !important;
-    }
   }
 
   .btn-tactile {

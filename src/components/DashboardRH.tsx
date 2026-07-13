@@ -11,6 +11,7 @@ import { GraficoCargos } from './rh/GraficoCargos';
 import { DashboardCompliance } from './rh/DashboardCompliance';
 import { RadarSSMA } from './rh/RadarSSMA';
 import { Callout } from './ui/Callout';
+import { Skeleton } from './ui/Skeleton';
 import { Tabs } from './ui/Tabs';
 import type { TabItem } from './ui/Tabs';
 
@@ -74,8 +75,12 @@ export function DashboardRH({ user }: DashboardRHProps) {
       ) : (
         <>
           {isLoading ? (
-            <div className="text-text-muted text-center py-8">Carregando...</div>
-          ) : (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+                        {[1, 2, 3, 4].map((i) => (
+                          <Skeleton key={i} variant="card" className="min-h-[160px]" />
+                        ))}
+                      </div>
+                    ) : (
             <>
               {/* KPI GRID PREMIUM */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">

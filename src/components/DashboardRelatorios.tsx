@@ -13,6 +13,7 @@ import { Button } from './ui/Button';
 import { Select } from './ui/Select';
 import { Skeleton } from './ui/Skeleton';
 import { KpiCard } from './ui/KpiCard';
+import { Callout } from './ui/Callout';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { ConfirmModal } from './ui/ConfirmModal';
@@ -68,7 +69,7 @@ export function DashboardRelatorios() {
     openModal('ANALYTICS', { metric, title });
   };
 
-  const { data: kpis, isLoading: loading } = useSumarioKPIs({ ano, mes, veiculoId: veiculoIdFiltro || undefined });
+  const { data: kpis, isLoading: loading, isError } = useSumarioKPIs({ ano, mes, veiculoId: veiculoIdFiltro || undefined });
   const { data: dadosGraficoKm = [], isLoading: loadingGrafico } = useEvolucaoKm(veiculoIdFiltro || undefined, 7);
   const { data: dadosCpk = [], isLoading: loadingCpk } = useEvolucaoCpk(veiculoIdFiltro || undefined);
   const { data: dadosPerformance = [], isLoading: loadingPerformance } = usePerformanceFrota({ ano, mes });
@@ -228,6 +229,16 @@ export function DashboardRelatorios() {
         <KpiCard titulo="Aditivos e Fluidos" valorRaw={kpis?.custoTotalAditivo} formatter={formatBRL} descricao="Consumo de Arla 32 e Óleos" loading={loading} variant="info" icon={<Droplets className="w-4 h-4 sm:w-5 sm:h-5" />} onClick={() => openAnalytics('ADITIVOS', 'Aditivos e Fluidos')} />
         <KpiCard titulo="Custo Médio / KM" valorRaw={kpis?.custoMedioPorKM} formatter={formatBRL} descricao="Indicador de rentabilidade" loading={loading} variant={(kpis?.custoMedioPorKM || 0) > 4 ? 'danger' : 'success'} icon={<Gauge className="w-4 h-4 sm:w-5 sm:h-5" />} onClick={() => openAnalytics('CUSTO_KM', 'Custo Médio / KM')} />
       </div>
+
+      {isError && (
+        <Callout
+          variant="danger"
+          title="Falha ao carregar indicadores"
+          className="animate-in fade-in slide-in-from-bottom-2 duration-500"
+        >
+          Não foi possível conectar com o servidor para buscar os KPIs. Os dados exibidos podem estar desatualizados ou incorretos.
+        </Callout>
+      )}
 
       {/* ─── SEÇÃO DE GRÁFICOS ──────────────────────────────────────────────────── */}
 

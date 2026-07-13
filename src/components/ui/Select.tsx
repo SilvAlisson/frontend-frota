@@ -1,7 +1,8 @@
 import React, { forwardRef, useState, useEffect, useLayoutEffect, useRef, useCallback } from 'react';
 import { cn } from '../../lib/utils';
 import * as RadixSelect from '@radix-ui/react-select';
-import { ChevronDown, Check, AlertCircle } from 'lucide-react';
+import { ChevronDown, Check, AlertCircle, Inbox } from 'lucide-react';
+import { EmptyState } from './EmptyState';
 
 export interface SelectOption {
     value: string | number;
@@ -229,23 +230,33 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
                             <RadixSelect.Viewport className="p-1 max-h-[min(280px,var(--radix-select-content-available-height))] overflow-y-auto scrollbar-thin">
                                 <RadixSelect.Group>
-                                    {validOptions.map((opt) => (
-                                        <RadixSelect.Item
-                                            key={opt.value}
-                                            value={String(opt.value)}
-                                            className={cn(
-                                                "relative flex w-full cursor-pointer select-none items-center rounded-md py-2 pl-8 pr-2 text-sm font-medium",
-                                                "text-text-main outline-none focus:bg-teal-50 focus:text-teal-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors"
-                                            )}
-                                        >
-                                            <span className="absolute inset-s-2 flex items-center justify-center w-4 h-4">
-                                                <RadixSelect.ItemIndicator>
-                                                    <Check className="w-4 h-4 text-teal-600" />
-                                                </RadixSelect.ItemIndicator>
-                                            </span>
-                                            <RadixSelect.ItemText>{opt.label}</RadixSelect.ItemText>
-                                        </RadixSelect.Item>
-                                    ))}
+                                    {validOptions.length === 0 ? (
+                                        <div className="p-4 flex flex-col items-center justify-center text-center">
+                                            <EmptyState
+                                                icon={Inbox}
+                                                title="Nenhuma opção disponível"
+                                                description="Não há itens cadastrados para seleção."
+                                            />
+                                        </div>
+                                    ) : (
+                                        validOptions.map((opt) => (
+                                            <RadixSelect.Item
+                                                key={opt.value}
+                                                value={String(opt.value)}
+                                                className={cn(
+                                                    "relative flex w-full cursor-pointer select-none items-center rounded-md py-2 pl-8 pr-2 text-sm font-medium",
+                                                    "text-text-main outline-none focus:bg-teal-50 focus:text-teal-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 transition-colors"
+                                                )}
+                                            >
+                                                <span className="absolute inset-s-2 flex items-center justify-center w-4 h-4">
+                                                    <RadixSelect.ItemIndicator>
+                                                        <Check className="w-4 h-4 text-teal-600" />
+                                                    </RadixSelect.ItemIndicator>
+                                                </span>
+                                                <RadixSelect.ItemText>{opt.label}</RadixSelect.ItemText>
+                                            </RadixSelect.Item>
+                                        ))
+                                    )}
                                 </RadixSelect.Group>
                             </RadixSelect.Viewport>
 

@@ -1,5 +1,6 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Skeleton } from '../ui/Skeleton';
+import { LineChart } from 'lucide-react';
 
 // Define proper typings for Recharts payload
 interface CpkPayload {
@@ -65,6 +66,14 @@ const CpkTooltip = ({ active, payload, label }: CustomTooltipProps) => {
 
 export function GraficoCpk({ dados, loading }: { dados: CpkPayload[]; loading: boolean }) {
   if (loading) return <Skeleton variant="card" className="h-[280px] w-full" />;
+  if (!dados || dados.length === 0) return (
+    <div className="h-[280px] flex flex-col items-center justify-center text-text-muted gap-3 border border-dashed border-border/60 rounded-[2rem] bg-surface/20">
+      <div className="w-10 h-10 bg-surface-hover rounded-full flex items-center justify-center">
+        <LineChart className="w-5 h-5 opacity-40" />
+      </div>
+      <p className="text-xs font-bold uppercase tracking-widest">Sem dados de CPK no período</p>
+    </div>
+  );
   return (
     <ResponsiveContainer width="100%" height={280}>
       <AreaChart data={dados} margin={{ top: 10, right: 30, left: 10, bottom: 20 }}>

@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useIntegranteDossie } from '../hooks/useIntegranteDossie';
 import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
+import { Callout } from '../components/ui/Callout';
 import { FileCheck, GraduationCap, HeartPulse, UserCircle, ChevronLeft, Car } from 'lucide-react';
 import { FormEditarUsuario } from '../components/forms/FormEditarUsuario';
 import { AbaAso } from '../components/rh/AbaAso';
@@ -19,7 +20,7 @@ export function DossieIntegranteHub() {
   const [activeTab, setActiveTab] = useState<'treinamentos' | 'aso' | 'cnh' | 'cadastral'>('treinamentos');
 
   // 1. Busca os dados do dossiê
-  const { data: dossie, isLoading } = useIntegranteDossie(id || '', 1);
+  const { data: dossie, isLoading, isError } = useIntegranteDossie(id || '', 1);
   
   const { data: matriz } = useMatrizQualificacao();
 
@@ -29,6 +30,21 @@ export function DossieIntegranteHub() {
       <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
         <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary"></div>
         <p className="text-text-secondary font-bold uppercase tracking-widest text-xs animate-pulse">Carregando Dados SSMA...</p>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] space-y-4 animate-in fade-in">
+        <Callout
+          variant="danger"
+          title="Falha ao carregar dossiê"
+          className="max-w-md text-center"
+        >
+          Não foi possível conectar com o servidor para buscar os dados do integrante. 
+          Verifique sua conexão e tente novamente.
+        </Callout>
       </div>
     );
   }
