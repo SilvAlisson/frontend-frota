@@ -473,11 +473,6 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                                             )}
                                         </div>
                                         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-2">
-                                            {role && ['OPERADOR', 'ENCARREGADO', 'AUXILIAR_OPERACIONAL'].includes(role) && (
-                                                <Button variant="secondary" className="h-10 border-border/40 text-text-muted hover:text-text-main group" onClick={() => openModal('CUSTOM', { modalType: 'QR_CRACHA', usuario: { id: userId, nome: nomeUsuario, role } })}>
-                                                    <QrCode className="w-4 h-4 text-text-muted group-hover:text-primary transition-colors" /> QR Code
-                                                </Button>
-                                            )}
                                             <span className={`text-sm flex items-center gap-1.5 font-medium ${isPendente ? 'text-text-muted' : 'text-text-secondary'}`}>
                                                 <CheckCircle2 className={`w-4 h-4 ${isPendente ? 'text-text-muted opacity-50' : 'text-success'}`} />
                                                 {isPendente ? 'Aguardando envio de certificado / Não Realizado' : `Concluído em: ${new Date(t.dataRealizacao).toLocaleDateString('pt-BR')}`}

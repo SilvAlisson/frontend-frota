@@ -26,6 +26,7 @@ import { SmartFAB } from './ui/SmartFAB';
 import { SaudeVeiculoBar } from './ui/SaudeVeiculoBar';
 import { calculateVehicleHealth } from '../lib/veiculoHelper';
 import { logger } from '../lib/logger';
+import { useAuth } from '../contexts/AuthContext';
 
 // --- FORMS (LAZY LOADED) ---
 const FormCadastrarVeiculo = React.lazy(() => import('./forms/FormCadastrarVeiculo').then(module => ({ default: module.FormCadastrarVeiculo })));
@@ -34,6 +35,7 @@ const FormEditarVeiculo = React.lazy(() => import('./forms/FormEditarVeiculo').t
 export function GestaoVeiculos() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user: currentUser } = useAuth();
 
   // Estados de Controle
   const [isCadastroOpen, setIsCadastroOpen] = useState(false);
@@ -41,7 +43,7 @@ export function GestaoVeiculos() {
   const [veiculoParaExcluir, setVeiculoParaExcluir] = useState<string | null>(null);
 
   // 📡 BUSCA INDEPENDENTE COM CACHE
-  const { data: veiculos = [], isLoading, refetch } = useVeiculos();
+  const { data: veiculos = [], isLoading, refetch } = useVeiculos({ includeTestVehicles: currentUser?.role === 'ADMIN' });
 
   // --- CONTROLE DE SWITCH DE ATIVOS ---
   const [apenasAtivos, setApenasAtivos] = useState(false);

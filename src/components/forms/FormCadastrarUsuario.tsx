@@ -191,8 +191,13 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       setLoadingStep('');
       setTimeout(onSuccess, 500);
 
-    } catch (err: any) {
-      logger.apiError(err, 'Erro ao cadastrar usuário.');
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message);
+      } else {
+        toast.error('Ocorreu um erro inesperado ao cadastrar usuário');
+      }
+    } finally {
       setLoadingStep('');
       hapticError();
     }

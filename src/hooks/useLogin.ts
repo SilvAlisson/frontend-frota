@@ -4,7 +4,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
-import type { UserRole, User, StatusOperador } from '../types';
+import type { UserRole } from '../types';
 import { signIn } from '../lib/auth-client';
 
 export function useLogin() {
@@ -25,21 +25,21 @@ export function useLogin() {
   }, [navigate]);
 
   useEffect(() => {
-    if (!magicToken || loginTokenProcessed.current) return;
+    if (!magicToken || loginTokenProcessed.current) {
+
+        return;
+    }
+
 
     loginTokenProcessed.current = true;
     setIsMagicLoggingIn(true);
 
     // 🔒 007 — Remove o token da URL IMEDIATAMENTE antes de qualquer await.
-    // Antes ficava exposto durante toda a duração da API call (~200-500ms).
-    // window.history.replaceState não causa re-render, apenas limpa a URL visível e o histórico.
     window.history.replaceState({}, document.title, window.location.pathname);
 
     const processMagicLogin = async () => {
       try {
         if (isAuthenticated && user) {
-          // Se o Admin clicou no link mágico de um operador para "testar", 
-          // bloqueamos para não sobrescrever a sessão dele e causar erros 403 na aba original.
           setIsMagicLoggingIn(false);
           handleRedirect(user.role);
           setTimeout(() => {
@@ -48,36 +48,40 @@ export function useLogin() {
           return;
         }
 
-        const { data } = await api.post('/auth-custom/login-token', { loginToken: magicToken });
+        // ─── 🆕 Better Auth Nativo: QR Code via Plugin Customizado ───
+        const { data: userLookup } = await api.post('/auth/qr-login', { loginToken: magicToken });
 
-        // 🔥 ADICIONE ISTO: Salva a âncora do operador silenciosamente
-        if (data.user?.email) {
-            localStorage.setItem('klin_passkey_email', data.user.email);
+
+
+        if (userLookup.user?.email) {
+            localStorage.setItem('klin_passkey_email', userLookup.user.email);
         }
-        // Invalida a query de sessão para forçar o recarregamento
-        login();
-        toast.success(`Bem-vindo, ${data.user.nome.split(' ')[0]}!`);
+        
+        // Invoca login() — invalida query → useSession() recarrega → encontra cookie → authenticated ✅
+        await login();
 
-        setIsMagicLoggingIn(false);
-        const role = data.user.role;
+
+        toast.success(`Bem-vindo, ${userLookup.user.nome.split(' ')[0]}!`);
+
+        const role = userLookup.user.role;
         const target = (role === 'ADMIN' || role === 'COORDENADOR') ? '/admin' : '/';
         navigate(target, { replace: true });
 
       } catch (err: unknown) {
+
         api.post('/logs', {
           level: 'FRAUD_ATTEMPT',
           source: 'FRONTEND',
           message: `Falha de Autenticação via QR/Link Mágico`,
           context: {
-            // 🔒 007 — Não logamos o token em si, apenas o tipo de erro.
-            // O token já foi removido da URL no início do processamento.
             erro: getErrorMessage(err),
             _navigator: { userAgent: navigator.userAgent }
           }
         }).catch(() => null);
 
         if (!(err as { _toastHandled?: boolean })._toastHandled) {
-            toast.error(getErrorMessage(err) || 'Crachá inválido.', { id: 'auth-error' });
+          toast.error(getErrorMessage(err) || 'Crachá inválido.', { id: 'auth-error' });
+          (err as { _toastHandled?: boolean })._toastHandled = true;
         }
         setIsMagicLoggingIn(false);
         navigate('/login', { replace: true });
@@ -88,7 +92,9 @@ export function useLogin() {
   }, [magicToken, navigate, isAuthenticated, login, logout, setSearchParams]);
 
   useEffect(() => {
+
     if (!authLoading && isAuthenticated && user?.role && !isMagicLoggingIn) {
+
       handleRedirect(user.role);
     }
   }, [isAuthenticated, user, authLoading, isMagicLoggingIn, handleRedirect]);
@@ -108,40 +114,10 @@ export function useLogin() {
       }
 
       if (resData) {
-        // Fallback robusto contra bloqueio de Third-Party Cookies (Ex: Chrome Incognito, Edge)
-        // O Better Auth retorna a sessão completa. Extraímos o token para usar como Bearer Header
-        const payload = data as { session?: { token?: string }, token?: string, user: typeof appUser };
-        // Cookies are set automatically by Better Auth or our custom AuthController.
-
-        // 🔥 SOLUÇÃO: Salva o email logado como âncora para a próxima tentativa de biometria
         if (resData.user?.email) {
             localStorage.setItem('klin_passkey_email', resData.user.email);
         }
 
-        // Better Auth não retorna JWT, o cookie é gerido automaticamente (quando permitido).
-        // O `AuthContext` irá reagir ao recarregar a sessão ou se inscrever, mas 
-        // para dar o feedback imediato, chamamos `login` simbolicamente com o user.
-        
-        const userPayload = resData.user as typeof resData.user & {
-            role?: string;
-            matricula?: string;
-            cargo?: string;
-            fotoUrl?: string;
-            status?: string;
-        };
-
-        const appUser: User = {
-            id: userPayload.id,
-            nome: userPayload.name,
-            email: userPayload.email,
-            role: (userPayload.role as UserRole) || 'OPERADOR',
-            matricula: userPayload.matricula || null,
-            cargo: userPayload.cargo || null,
-            fotoUrl: userPayload.fotoUrl || userPayload.image || null,
-            status: (userPayload.status as StatusOperador) || 'ATIVO',
-        };
-
-        // Autenticação aceita via Passkey nativa
         login();
         toast.success('Acesso Autorizado. Bem-vindo de volta!');
       }
@@ -157,6 +133,7 @@ export function useLogin() {
       }).catch(() => null);
       if (!(err as { _toastHandled?: boolean })._toastHandled) {
           toast.error((err instanceof Error ? err.message : 'Erro desconhecido') || 'E-mail ou senha incorretos.', { id: 'auth-error' });
+          (err as { _toastHandled?: boolean })._toastHandled = true;
       }
       throw err;
     }
@@ -168,16 +145,18 @@ export function useLogin() {
     const toastId = toast.loading('A validar credenciais seguras...');
 
     try {
-      const { data } = await api.post('/auth-custom/login-token', { loginToken: qrManualToken });
-      
-      // 🔥 ADICIONE ISTO: Salva a âncora do operador silenciosamente
-      if (data.user?.email) {
-          localStorage.setItem('klin_passkey_email', data.user.email);
+      // 1. 🆕 Better Auth Nativo: Chama o Plugin Customizado via API
+      const { data: userLookup } = await api.post('/auth/qr-login', { loginToken: qrManualToken });
+
+      // 2. Magic link sucesso!
+      if (userLookup.user?.email) {
+        localStorage.setItem('klin_passkey_email', userLookup.user.email);
       }
       
       login();
       toast.dismiss(toastId);
       toast.success('Acesso Autorizado!');
+
     } catch (err: unknown) {
       api.post('/logs', {
         level: 'FRAUD_ATTEMPT',
@@ -193,6 +172,7 @@ export function useLogin() {
       toast.dismiss(toastId);
       if (!(err as { _toastHandled?: boolean })._toastHandled) {
           toast.error(getErrorMessage(err) || 'Token inválido ou expirado.', { id: 'auth-error' });
+          (err as { _toastHandled?: boolean })._toastHandled = true;
       }
       throw new Error(getErrorMessage(err) || 'Token inválido ou expirado.');
     }

@@ -5,19 +5,23 @@ import axios from 'axios';
 import type { User } from '../types';
 import { logger } from '../lib/logger';
 
-export function useUsuarios() {
+export function useUsuarios(options?: { includeTestUsers?: boolean }) {
   const queryClient = useQueryClient();
 
   const usuariosQuery = useQuery({
-    queryKey: ['users'],
+    queryKey: ['users', !!options?.includeTestUsers],
     queryFn: async () => {
       try {
         const { data } = await api.get<User[]>('/users');
-        // Filtra para esconder usuários de teste da lista geral (RH/Admin)
-        return data.filter(u => !u.nome.toLowerCase().includes('testando'));
+        
+        if (options?.includeTestUsers) {
+          return data;
+        }
+
+        // Filtra para esconder usuários de teste da lista geral
+        return data.filter(u => !u.nome.toLowerCase().includes('testando') && !u.nome.toLowerCase().includes('teste'));
       } catch (err: unknown) {
         logger.debug('Erro ao carregar usuários:', err);
-        // toast.error('Não foi possível carregar o diretório de equipe.');
         throw err;
       }
     },

@@ -55,23 +55,11 @@ export function LoginScreen() {
       toast.error('Seu navegador não suporta autenticação biométrica.');
       return;
     }
-    
-    await loginWithDevice((token, user) => {
-      login();
-    }, typeof emailFromForm === 'string' ? emailFromForm : undefined); 
-  };
 
-  // --- UI: LOCK SCREEN NATIVA (server-side, não localStorage) ---
-  if (shouldShowLockScreen && !overrideLockScreen) {
-    return (
-      <LockScreen
-        isAuthenticating={isAuthenticating}
-        // Quando for na lockscreen ele puxará o e-mail do localStorage perfeitamente
-        onUnlock={() => onBiometryClick()} 
-        onUsePassword={() => setOverrideLockScreen(true)}
-      />
-    );
-  }
+    await loginWithDevice(() => {
+      login();
+    }, typeof emailFromForm === 'string' ? emailFromForm : undefined);
+  };
 
   // --- UI: SKELETON LOADER (Apenas para URL Magic Link) ---
   if (isMagicLoggingIn || authLoading) {
@@ -86,12 +74,24 @@ export function LoginScreen() {
     );
   }
 
+  // --- UI: LOCK SCREEN NATIVA (server-side, não localStorage) ---
+  if (shouldShowLockScreen && !overrideLockScreen) {
+    return (
+      <LockScreen
+        isAuthenticating={isAuthenticating}
+        // Quando for na lockscreen ele puxará o e-mail do localStorage perfeitamente
+        onUnlock={() => onBiometryClick()}
+        onUsePassword={() => setOverrideLockScreen(true)}
+      />
+    );
+  }
+
   // --- UI: TELA DE LOGIN PREMIUM ---
   return (
     <div className="min-h-screen flex bg-background font-sans selection:bg-primary/20 selection:text-primary transition-colors duration-500 overflow-hidden">
-      
+
       {/* --- BOTÃO DE TEMA FLUTUANTE (TOP RIGHT) --- */}
-      <Button 
+      <Button
         variant="glass"
         size="icon"
         onClick={toggleTheme}
@@ -175,7 +175,7 @@ export function LoginScreen() {
           </div>
 
           {mode === 'CREDENTIALS' && (
-            <LoginFormCredentials 
+            <LoginFormCredentials
               onSubmit={onCredentialsSubmit}
               onBiometryClick={onBiometryClick}
               isSubmittingAuth={isSubmittingForm}
@@ -184,7 +184,7 @@ export function LoginScreen() {
           )}
 
           {mode === 'QR' && (
-            <LoginFormQR 
+            <LoginFormQR
               onSubmit={onManualQrSubmit}
               isSubmitting={isSubmittingForm}
             />

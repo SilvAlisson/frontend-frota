@@ -3,15 +3,22 @@
  * O foco é dar "certeza sensorial" ao operador do Frota KLIN.
  */
 
-// Checa suporte de forma segura (previne quebras no lado do servidor/SSR, se houver)
-const canVibrate = typeof window !== 'undefined' && 'vibrate' in navigator;
+import { logger } from './logger';
+
+// Checa suporte de forma segura e se o usuário já interagiu com a tela (previne erro de console no magic link)
+const canVibrate = () => {
+  if (typeof window === 'undefined' || !('vibrate' in navigator)) return false;
+  // @ts-ignore - API recente do Chrome
+  if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return false;
+  return true;
+};
 
 /**
  * Vibração rápida para interações simples de UI (cliques em botões, abas, etc.)
  * Padrão: 10ms
  */
 export const hapticLight = () => {
-  if (canVibrate) {
+  if (canVibrate()) {
     try { navigator.vibrate(10); } catch (e) { logger.debug("Haptics API error:", e); }
   }
 };
@@ -22,7 +29,7 @@ export const hapticLight = () => {
  * Padrão: [30ms on, 50ms off, 30ms on]
  */
 export const hapticSuccess = () => {
-  if (canVibrate) {
+  if (canVibrate()) {
     try { navigator.vibrate([30, 50, 30]); } catch (e) { logger.debug("Haptics API error:", e); }
   }
 };
@@ -32,7 +39,7 @@ export const hapticSuccess = () => {
  * Padrão: [50, 50, 50, 50, 50]
  */
 export const hapticError = () => {
-  if (canVibrate) {
+  if (canVibrate()) {
     try { navigator.vibrate([50, 50, 50, 50, 50]); } catch (e) { logger.debug("Haptics API error:", e); }
   }
 };

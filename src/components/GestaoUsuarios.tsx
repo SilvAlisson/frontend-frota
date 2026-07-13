@@ -10,6 +10,7 @@ import { DossieIntegrante } from './rh/DossieIntegrante';
 import { ModalQrCode } from './ModalQrCode';
 import { ModalGerarEtiquetas } from './rh/ModalGerarEtiquetas';
 import { exportarParaExcel } from '../utils';
+import { FormCadastrarUsuario } from './forms/FormCadastrarUsuario';
 import { TableStyles } from '../styles/table';
 import { toast } from 'sonner';
 import { EmptyState } from './ui/EmptyState';
@@ -19,6 +20,12 @@ function getFirstAndLastName(fullName: string) {
   if (parts.length <= 1) return fullName;
   return `${parts[0]} ${parts[parts.length - 1]}`;
 }
+
+const getCargoName = (cargo: unknown): string => {
+  if (!cargo) return '';
+  if (typeof cargo === 'string') return cargo;
+  return (cargo as { nome?: string }).nome || '';
+};
 
 import {
   QrCode, Search, Download, Users, Printer, Activity, UserPlus
@@ -40,7 +47,7 @@ export function GestaoUsuarios() {
   
   const { user: currentUser } = useAuth();
 
-  const { usuarios, isLoading, refetch } = useUsuarios();
+  const { usuarios, isLoading, refetch } = useUsuarios({ includeTestUsers: currentUser?.role === 'ADMIN' });
   const { openModal, closeModal } = useModalStore();
 
   const buscaDebounced = useDebounce(busca, 300);
@@ -76,6 +83,19 @@ export function GestaoUsuarios() {
           usuarios={usuarios}
           onClose={() => closeModal(modalId)}
         />
+      )
+    });
+  };
+
+  const handleNovoIntegrante = () => {
+    const modalId = openModal('CUSTOM', {
+      content: (
+        <div className="w-full max-w-2xl">
+          <FormCadastrarUsuario 
+            onSuccess={() => { closeModal(modalId); refetch(); }}
+            onCancelar={() => closeModal(modalId)}
+          />
+        </div>
       )
     });
   };
@@ -139,7 +159,7 @@ export function GestaoUsuarios() {
                 <div className="w-48 shrink-0">
                   <Select
                     value={filtroRole}
-                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFiltroRole(e.target.value)}
+                    onChange={(e) => setFiltroRole(e.target.value)}
                     containerClassName="!mb-0"
                     className="h-11 border border-border/60 bg-surface-hover/50 font-bold"
                     options={[
@@ -161,7 +181,7 @@ export function GestaoUsuarios() {
                   Imprimir QRs
                 </Button>
                 {currentUser && ['ADMIN', 'RH'].includes(currentUser.role) && (
-                  <Button variant="primary" onClick={() => setNovoIntegranteOpen(true)} className="whitespace-nowrap flex-1 sm:flex-none h-11" icon={<UserPlus className="w-4 h-4" />}>
+                  <Button variant="primary" onClick={handleNovoIntegrante} className="whitespace-nowrap flex-1 sm:flex-none h-11" icon={<UserPlus className="w-4 h-4" />}>
                     Novo Integrante
                   </Button>
                 )}
@@ -205,17 +225,15 @@ export function GestaoUsuarios() {
                   </td>
                   <td className={`${TableStyles.td} justify-center`}>
                     <div className="w-full flex flex-col items-center justify-center gap-1.5 text-center">
-                      {/* Cargo real (cargo.nome) ou fallback para role */}
-                      {u.cargo?.nome ? (
+                      {getCargoName(u.cargo) ? (
                         <Badge variant="info" className="shadow-sm">
-                          {u.cargo.nome}
+                          {getCargoName(u.cargo)}
                         </Badge>
                       ) : (
                         <BadgeRole role={u.role} />
                       )}
 
-                      {/* Role do sistema como subtítulo (menor) se for diferente do cargo */}
-                      {u.cargo?.nome && u.cargo.nome.toUpperCase() !== u.role.replace('_', ' ') && (
+                      {getCargoName(u.cargo) && getCargoName(u.cargo).toUpperCase() !== u.role.replace('_', ' ') && (
                         <span className="text-[9px] text-text-muted font-mono uppercase tracking-wider bg-surface-hover px-1.5 py-0.5 rounded border border-border/50">
                           Permissão: {u.role.replace('_', ' ')}
                         </span>
@@ -265,12 +283,12 @@ export function GestaoUsuarios() {
                       <Avatar nome={u.nome} url={(u as { fotoUrl?: string }).fotoUrl || u.image} size="lg" />
                       <div className="flex flex-col gap-0.5 justify-center mt-1">
                         <h3 className="font-black text-text-main text-lg tracking-tight leading-none mb-1.5">{getFirstAndLastName(u.nome)}</h3>
-                        {u.cargo?.nome ? (
-                          <Badge variant="info" className="shadow-sm">{u.cargo.nome}</Badge>
+                        {getCargoName(u.cargo) ? (
+                          <Badge variant="info" className="shadow-sm">{getCargoName(u.cargo)}</Badge>
                         ) : (
                           <BadgeRole role={u.role} />
                         )}
-                        {u.cargo?.nome && u.cargo.nome.toUpperCase() !== u.role.replace('_', ' ') && (
+                        {getCargoName(u.cargo) && getCargoName(u.cargo).toUpperCase() !== u.role.replace('_', ' ') && (
                           <span className="text-[9px] text-text-muted font-mono uppercase tracking-wider mt-1 block">
                             Permissão: {u.role.replace('_', ' ')}
                           </span>

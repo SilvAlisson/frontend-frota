@@ -1,6 +1,5 @@
-import ExcelJS from 'exceljs';
+// import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { toast } from 'sonner';
 import { logger } from './lib/logger';
 
 
@@ -62,6 +61,7 @@ export const formatKmVisual = (value: string | number): string => {
 
 export const exportarParaExcel = async <T extends Record<string, unknown>>(data: T[], nomeArquivo: string) => {
   try {
+    const ExcelJS = (await import('exceljs')).default;
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('Relatório');
 
@@ -75,7 +75,7 @@ export const exportarParaExcel = async <T extends Record<string, unknown>>(data:
           const val = row[key] ? row[key].toString() : '';
           if (val.length > maxLength) maxLength = val.length;
         });
-        
+
         return {
           header: key.toUpperCase(),
           key: key,
@@ -109,7 +109,7 @@ export const exportarParaExcel = async <T extends Record<string, unknown>>(data:
         const novaLinha: Record<string, unknown> = {};
         for (const key in row) {
           let valor = row[key];
-          
+
           if (typeof valor === 'string') {
             // Se o valor for um Hyperlink (que enviamos do componente)
             if (valor.startsWith('=HYPERLINK')) {
@@ -141,7 +141,7 @@ export const exportarParaExcel = async <T extends Record<string, unknown>>(data:
             bottom: { style: 'thin', color: { argb: 'FFE5E7EB' } },
             right: { style: 'thin', color: { argb: 'FFE5E7EB' } }
           };
-          
+
           // Efeito "Zebra" para linhas pares, melhora a leitura
           if (index % 2 !== 0) {
             cell.fill = {

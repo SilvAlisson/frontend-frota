@@ -135,7 +135,7 @@ export function MinhaContaPage() {
             toast.success('Senha alterada com sucesso!');
             reset();
         } catch (err: unknown) {
-            toast.error((err as { response?: { data?: { error?: string } } }).response?.data?.error || 'Erro ao alterar senha.');
+            handleApiError(err, 'Erro ao alterar senha.');
         } finally {
             setIsAlterandoSenha(false);
         }

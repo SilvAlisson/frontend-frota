@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -8,7 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
 import { Button } from '../ui/Button';
-import { UserCircle, Car, Loader2, Save, X } from 'lucide-react';
+import { UserCircle, Loader2, Save, X } from 'lucide-react';
 import { Skeleton } from '../ui/Skeleton';
 import { hapticError } from '../../lib/haptics';
 
@@ -62,8 +62,8 @@ export function AbaCnh({ userId, onClose }: AbaCnhProps) {
   }, [onClose]);
 
   const mutation = useMutation({
-    mutationFn: async (payload: any) => {
-      await api.put(`/users/${userId}`, payload);
+    mutationFn: async (payload: { userId: string; cnhNumero?: string | null; cnhCategoria?: string | null; cnhValidade?: string | null }) => {
+      await api.put(`/users/${payload.userId}`, payload);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user-cnh', userId] });
@@ -75,6 +75,7 @@ export function AbaCnh({ userId, onClose }: AbaCnhProps) {
   const onSubmit = async (data: CnhFormData) => {
     try {
       const payload = {
+        userId,
         ...data,
         cnhValidade: data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
       };
@@ -98,8 +99,7 @@ export function AbaCnh({ userId, onClose }: AbaCnhProps) {
     );
   }
 
-  // Fallback to get fotoCnhUrl Se estiver no profile ou direto no user
-  const fotoAtualUrl = user?.profile?.fotoCnhUrl || user?.fotoCnhUrl;
+  // Unused photo URL removed
 
   return (
     <div className="space-y-6 animate-in fade-in relative">

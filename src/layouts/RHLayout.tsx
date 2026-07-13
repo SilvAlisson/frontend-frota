@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Menu, X, LogOut, Sun, Moon,
+  Menu, X, LogOut, Sun, Moon, KeyRound,
   LayoutDashboard, AlertTriangle,
   Users, Briefcase, FileBadge, ShieldCheck
 } from 'lucide-react';
@@ -15,6 +15,7 @@ import { Tooltip, TooltipTrigger, TooltipContent } from '../components/ui/Toolti
 import { useTheme } from '../contexts/ThemeContext';
 import { cn } from '../lib/utils';
 import { AssistenteIA } from '../components/ia/AssistenteIA';
+import { ModalAlterarSenha } from '../components/ModalAlterarSenha';
 import type { MenuGroup } from '../config/navigation';
 
 const MENU_ITEMS_RH: MenuGroup[] = [
@@ -119,6 +120,7 @@ function SidebarContentRH({ onClose, user }: { onClose?: () => void, user: any }
 export function RHLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isSenhaModalOpen, setIsSenhaModalOpen] = useState(false);
   
   const { logout, user } = useAuth();
   const navigate = useNavigate();
@@ -196,6 +198,19 @@ export function RHLayout() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon"
+                  onClick={() => setIsSenhaModalOpen(true)}
+                  className="p-2 text-text-muted hover:text-primary transition-colors bg-surface border border-border/50 shadow-sm rounded-xl"
+                  aria-label="Alterar Senha"
+                >
+                  <KeyRound className="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Alterar Senha</TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon"
                   onClick={() => setIsLogoutModalOpen(true)}
                   className="p-2 text-text-muted hover:text-error transition-colors bg-surface border border-border/50 shadow-sm rounded-xl"
                   aria-label="Sair"
@@ -224,6 +239,7 @@ export function RHLayout() {
         </main>
       </div>
 
+      <ModalAlterarSenha isOpen={isSenhaModalOpen} onClose={() => setIsSenhaModalOpen(false)} />
       <ConfirmModal
         isOpen={isLogoutModalOpen}
         onCancel={() => setIsLogoutModalOpen(false)}

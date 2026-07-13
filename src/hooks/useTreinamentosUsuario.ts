@@ -2,7 +2,7 @@ import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
-import ExcelJS from 'exceljs';
+// import ExcelJS from 'exceljs';
 import * as z from 'zod';
 import type { TreinamentoRealizado } from '../types';
 
@@ -72,7 +72,7 @@ function normalizeDateString(raw: string): string {
     return raw.includes('/') ? raw.split('/').reverse().join('-') : raw;
 }
 
-function getCellValue(row: ExcelJS.Row, colIndex: number): string | null {
+function getCellValue(row: any, colIndex: number): string | null {
     const cell = row.getCell(colIndex).value;
     if (cell instanceof Date) return cell.toISOString().split('T')[0];
     if (cell != null && typeof cell === 'object') {
@@ -211,6 +211,7 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
 
     const importarPlanilha = async (file: File): Promise<number> => {
         const task = async (): Promise<number> => {
+            const ExcelJS = (await import('exceljs')).default;
             const workbook = new ExcelJS.Workbook();
             await workbook.xlsx.load(await file.arrayBuffer());
 

@@ -71,9 +71,14 @@ function getUserInfoForLog(): string {
 
 function logToAuditTracker(error: AxiosError, duration: number, userLogadoInfo: string, method: string, urlChamada: string) {
   const isLogRoute = !!error.config?.url?.includes('logs');
-  if (isLogRoute || !error.response?.status || error.response.status < 400) return;
+  if (isLogRoute) return; // Nunca loga a própria rota de logs para evitar loop infinito
 
-  const level = error.response.status >= 500 ? 'CRITICAL' : 'WARNING';
+  const status = error.response?.status;
+  
+  let level = 'WARNING';
+  if (!status) level = 'ERROR'; // Falha de rede, CORS, timeout
+  else if (status >= 500) level = 'CRITICAL'; // Erros internos do servidor
+  else if (status === 401 || status === 403) level = 'SECURITY'; // Falhas de autenticação/permissão
   
   let parsedConfigData = {};
   try {
@@ -82,7 +87,7 @@ function logToAuditTracker(error: AxiosError, duration: number, userLogadoInfo: 
     parsedConfigData = { raw: error.config?.data };
   }
 
-  const context = {
+    const context = {
     ...sanitizePayload(parsedConfigData) as Record<string, unknown>,
     ...getDeviceContext(),
     _dataHoraBatida: new Date().toLocaleString('pt-BR'),
@@ -90,15 +95,15 @@ function logToAuditTracker(error: AxiosError, duration: number, userLogadoInfo: 
     _tempoDeRespostaMs: duration,
     _url: urlChamada,
     _method: method,
-    _status: error.response.status,
-    _respostaServidor: JSON.stringify(error.response.data)
+    _status: status || 'NETWORK_ERROR',
+    _respostaServidor: error.response?.data ? JSON.stringify(error.response.data) : error.message
   };
 
   api.post('/logs', {
     level,
     source: 'FRONTEND',
-    message: `[API ${error.response.status}] ${method} ${urlChamada}`,
-    stackTrace: JSON.stringify(error.response?.data) || null,
+    message: `[API ${status || 'NETWORK_ERROR'}] ${method} ${urlChamada}`,
+    stackTrace: error.response?.data ? JSON.stringify(error.response.data) : error.stack || null,
     context
   }).catch(() => null);
 }
@@ -128,6 +133,9 @@ api.interceptors.response.use(
       : 0;
 
     const userLogadoInfo = getUserInfoForLog();
+
+    // 🚀 ADICIONADO: Logar na Central de Auditorias AGORA, antes de qualquer return
+    logToAuditTracker(error, duration, userLogadoInfo, method, urlChamada);
 
     if (error.response?.status === 401) {
       const isLoginPage = window.location.pathname.includes('/login');
@@ -166,8 +174,12 @@ api.interceptors.response.use(
       toast.error('O sistema está momentaneamente instável. Já estamos atuando, tente novamente em alguns instantes.');
       (error as CustomAxiosError)._toastHandled = true;
     }
-
-    logToAuditTracker(error, duration, userLogadoInfo, method, urlChamada);
+    
+    // Fallback de erro de rede (quando a API está fora do ar ou CORS)
+    if (!error.response) {
+      toast.error('Não foi possível conectar ao servidor. Verifique sua conexão com a internet.');
+      (error as CustomAxiosError)._toastHandled = true;
+    }
     
     return Promise.reject(error);
   }

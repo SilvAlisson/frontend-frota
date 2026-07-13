@@ -7,16 +7,21 @@ import type { Veiculo } from '../types';
 
 
 // --- LISTAR (GET) ---
-export function useVeiculos() {
+export function useVeiculos(options?: { includeTestVehicles?: boolean }) {
     const { user } = useAuth();
 
     return useQuery({
-        queryKey: ['veiculos', user?.id, user?.role],
+        queryKey: ['veiculos', user?.id, user?.role, !!options?.includeTestVehicles],
         queryFn: async () => {
             const endpoint = user?.role === 'OPERADOR'
                 ? '/veiculos/operacao'
                 : '/veiculos';
             const { data } = await api.get<Veiculo[]>(endpoint);
+            
+            if (options?.includeTestVehicles) {
+                return data;
+            }
+
             // Filtra veículos de teste para não poluírem a lista
             return data.filter(v => 
                 !v.placa.toLowerCase().includes('test') && 

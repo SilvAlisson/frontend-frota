@@ -6,6 +6,7 @@ const DossiePublico = lazy(() => import('./pages/DossiePublico').then(m => ({ de
 
 // Telas de Acesso (Não-Lazy pois são os gatilhos iniciais)
 import { LoginScreen } from './pages/LoginScreen';
+import { RedefinirSenha } from './pages/RedefinirSenha';
 // COMPONENTES DINÂMICOS (Lazy Loading)
 const AdminLayout = lazy(() => import('./layouts/AdminLayout').then(m => ({ default: m.AdminLayout })));
 const RHLayout = lazy(() => import('./layouts/RHLayout').then(m => ({ default: m.RHLayout })));
@@ -42,16 +43,25 @@ const LoadingScreen = () => (
 // --- WRAPPERS DE ROTA PROTEGIDA ---
 function PrivateRoute({ children, allowedRoles }: { children: React.ReactNode, allowedRoles?: string[] }) {
   const { isAuthenticated, loading, user } = useAuth();
+  
 
-  if (loading) return <LoadingScreen />;
+
+  if (loading) {
+
+    return <LoadingScreen />;
+  }
 
   if (!isAuthenticated) {
+
     return <Navigate to="/login" replace />;
   }
 
   if (allowedRoles && user && !allowedRoles.includes(user.role)) {
+
     return <Navigate to="/" replace />;
   }
+
+
 
   return <>{children}</>;
 }
@@ -113,6 +123,7 @@ export function Router() {
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
         <Route path="/login" element={<LoginScreen />} />
+        <Route path="/redefinir-senha" element={<RedefinirSenha />} />
         <Route path="/dossie/:id" element={<DossiePublico />} />
         
         <Route path="/" element={

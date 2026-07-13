@@ -9,44 +9,51 @@ import { logger } from '../lib/logger';
 export function useHaptics() {
   
   const isSupported = typeof window !== 'undefined' && 'vibrate' in navigator;
+  
+  const canVibrate = () => {
+    if (!isSupported) return false;
+    // @ts-ignore
+    if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return false;
+    return true;
+  };
 
   // Vibração leve para cliques normais ou interações sutis (10ms)
   const vibrateLight = useCallback(() => {
-    if (!isSupported) return;
+    if (!canVibrate()) return;
     try {
       navigator.vibrate(10);
     } catch (e) {
-      logger.error("[useHaptics] Haptics API error (light):", e);
+      logger.debug("[useHaptics] Haptics API error (light):", e);
     }
   }, [isSupported]);
 
   // Vibração média para confirmações de pequenas ações (ex: abrir modal)
   const vibrateMedium = useCallback(() => {
-    if (!isSupported) return;
+    if (!canVibrate()) return;
     try {
       navigator.vibrate(40);
     } catch (e) {
-      logger.error("[useHaptics] Haptics API error (medium):", e);
+      logger.debug("[useHaptics] Haptics API error (medium):", e);
     }
   }, [isSupported]);
 
   // Vibração de sucesso: Duas vibrações curtas e agradáveis (50ms - pausa - 50ms)
   const vibrateSuccess = useCallback(() => {
-    if (!isSupported) return;
+    if (!canVibrate()) return;
     try {
       navigator.vibrate([30, 60, 40]);
     } catch (e) {
-      logger.error("[useHaptics] Haptics API error (success):", e);
+      logger.debug("[useHaptics] Haptics API error (success):", e);
     }
   }, [isSupported]);
 
   // Vibração de erro ou alerta crítico: Três vibrações rápidas (agressivo)
   const vibrateError = useCallback(() => {
-    if (!isSupported) return;
+    if (!canVibrate()) return;
     try {
       navigator.vibrate([50, 50, 50, 50, 50]);
     } catch (e) {
-      logger.error("[useHaptics] Haptics API error (error):", e);
+      logger.debug("[useHaptics] Haptics API error (error):", e);
     }
   }, [isSupported]);
 

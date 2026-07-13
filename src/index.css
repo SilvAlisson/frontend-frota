@@ -3,6 +3,10 @@
 /* 1. TIPOGRAFIA PRAGMÁTICA E INDUSTRIAL */
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=Chivo:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
+/* ⚠️ CRÍTICO (v4.3): Sem isto, dark:bg-surface, dark:text-main, etc. NÃO funcionam!
+   v4.3 usa prefers-color-scheme por padrão. Para usar classe .dark no HTML: */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   /* --- 1. CORES ESTÁTICAS (Identidade Visual KLIN) --- */
   /* Tons oceânicos/teal baseados na logo da KLIN Engenharia e Gestão Ambiental */
@@ -11,7 +15,8 @@
   --color-klin-200: oklch(0.88 0.06 215);
   --color-klin-300: oklch(0.80 0.08 215);
   --color-klin-400: oklch(0.68 0.10 215);
-  --color-klin-500: oklch(0.55 0.12 215); /* KLIN Deep Teal (Logo) */
+  --color-klin-500: oklch(0.55 0.12 215);
+  /* KLIN Deep Teal (Logo) */
   --color-klin-600: oklch(0.48 0.10 215);
   --color-klin-700: oklch(0.40 0.08 215);
   --color-klin-800: oklch(0.32 0.06 215);
@@ -87,7 +92,7 @@
   /* Hierarquia: floating → dropdown → overlay → modal → toast → max */
   --z-index-base: 0;
   --z-index-floating: 10;
-  --z-index-dropdown: 50;  /* CORRIGIDO: era 65, ficava acima do overlay */
+  --z-index-dropdown: 50;
   --z-index-overlay: 60;
   --z-index-modal: 70;
   --z-index-toast: 80;
@@ -97,19 +102,50 @@
   --animate-ghost-pulse: ghost-pulse 3s infinite ease-in-out;
   --animate-enter: enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   --animate-shimmer: shimmer 2s infinite;
+  --animate-scan: scan 1.5s ease-in-out infinite alternate;
 
   @keyframes shimmer {
-    100% { transform: translateX(100%); }
+    100% {
+      transform: translateX(100%);
+    }
   }
 
-  --transition-timing-function: ease-out;
-  --transition-duration: 300ms;
+  @keyframes scan {
+    0% {
+      transform: translateY(-100%);
+    }
+
+    100% {
+      transform: translateY(100%);
+    }
+  }
+
+  @keyframes blob {
+    0% {
+      transform: translate(0px, 0px) scale(1);
+    }
+
+    33% {
+      transform: translate(30px, -50px) scale(1.1);
+    }
+
+    66% {
+      transform: translate(-20px, 20px) scale(0.9);
+    }
+
+    100% {
+      transform: translate(0px, 0px) scale(1);
+    }
+  }
 
   @keyframes ghost-pulse {
-    0%, 100% {
+
+    0%,
+    100% {
       background-color: color-mix(in srgb, var(--surface) 100%, transparent);
       border-color: var(--border);
     }
+
     50% {
       background-color: color-mix(in srgb, var(--color-ghost-500) 8%, var(--surface));
       border-color: var(--color-ghost-500);
@@ -121,6 +157,7 @@
       opacity: 0;
       transform: translateY(8px) scale(0.98);
     }
+
     to {
       opacity: 1;
       transform: translateY(0) scale(1);
@@ -128,33 +165,63 @@
   }
 
   @keyframes fade-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
   }
 
   @keyframes fade-out {
-    from { opacity: 1; }
-    to { opacity: 0; }
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
   }
 
   @keyframes slide-in-from-bottom {
-    from { transform: translateY(var(--tw-enter-translate-y, 10px)); }
-    to { transform: translateY(0); }
+    from {
+      transform: translateY(var(--tw-enter-translate-y, 10px));
+    }
+
+    to {
+      transform: translateY(0);
+    }
   }
 
   @keyframes slide-in-from-top {
-    from { transform: translateY(var(--tw-enter-translate-y, -10px)); }
-    to { transform: translateY(0); }
+    from {
+      transform: translateY(var(--tw-enter-translate-y, -10px));
+    }
+
+    to {
+      transform: translateY(0);
+    }
   }
 
   @keyframes zoom-in {
-    from { transform: scale(var(--tw-enter-scale, 0.95)); }
-    to { transform: scale(1); }
+    from {
+      transform: scale(var(--tw-enter-scale, 0.95));
+    }
+
+    to {
+      transform: scale(1);
+    }
   }
 
   @keyframes zoom-out {
-    from { transform: scale(1); }
-    to { transform: scale(var(--tw-enter-scale, 0.95)); }
+    from {
+      transform: scale(1);
+    }
+
+    to {
+      transform: scale(var(--tw-enter-scale, 0.95));
+    }
   }
 }
 
@@ -164,9 +231,13 @@
     --tw-enter-opacity: 0;
     --tw-enter-translate-y: 10px;
     --tw-enter-scale: 0.95;
-    
+
+    /* ⚠️ Movido do @theme: --transition-* não são namespaces oficiais v4.3 */
+    --transition-timing-function: ease-out;
+    --transition-duration: 300ms;
+
     /* Força o OS a saber que estamos no light mode como padrão */
-    color-scheme: light; 
+    color-scheme: light;
   }
 }
 
@@ -185,39 +256,106 @@
     animation-direction: normal;
   }
 
-  .fade-in { animation-name: fade-in; }
-  .fade-in-0 { --tw-enter-opacity: 0; animation-name: fade-in; }
-  .fade-out-0 { animation-name: fade-out; }
+  .fade-in {
+    animation-name: fade-in;
+  }
 
-  .slide-in-from-bottom-1 { --tw-enter-translate-y: 4px; animation-name: slide-in-from-bottom; }
-  .slide-in-from-bottom-2 { --tw-enter-translate-y: 8px; animation-name: slide-in-from-bottom; }
-  .slide-in-from-bottom-4 { --tw-enter-translate-y: 16px; animation-name: slide-in-from-bottom; }
+  .fade-in-0 {
+    --tw-enter-opacity: 0;
+    animation-name: fade-in;
+  }
 
-  .slide-in-from-top-1 { --tw-enter-translate-y: -4px; animation-name: slide-in-from-top; }
-  .slide-in-from-top-2 { --tw-enter-translate-y: -8px; animation-name: slide-in-from-top; }
+  .fade-out-0 {
+    animation-name: fade-out;
+  }
+
+  .slide-in-from-bottom-1 {
+    --tw-enter-translate-y: 4px;
+    animation-name: slide-in-from-bottom;
+  }
+
+  .slide-in-from-bottom-2 {
+    --tw-enter-translate-y: 8px;
+    animation-name: slide-in-from-bottom;
+  }
+
+  .slide-in-from-bottom-4 {
+    --tw-enter-translate-y: 16px;
+    animation-name: slide-in-from-bottom;
+  }
+
+  .slide-in-from-top-1 {
+    --tw-enter-translate-y: -4px;
+    animation-name: slide-in-from-top;
+  }
+
+  .slide-in-from-top-2 {
+    --tw-enter-translate-y: -8px;
+    animation-name: slide-in-from-top;
+  }
 
   @keyframes slide-in-from-right {
-    from { transform: translateX(8px); opacity: 0; }
-    to   { transform: translateX(0);   opacity: 1; }
+    from {
+      transform: translateX(8px);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
+
   @keyframes slide-in-from-left {
-    from { transform: translateX(-8px); opacity: 0; }
-    to   { transform: translateX(0);    opacity: 1; }
+    from {
+      transform: translateX(-8px);
+      opacity: 0;
+    }
+
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
   }
-  .slide-in-from-right-2 { animation-name: slide-in-from-right; }
-  .slide-in-from-left-2  { animation-name: slide-in-from-left;  }
 
-  .zoom-in-95 { --tw-enter-scale: 0.95; animation-name: zoom-in; }
-  .zoom-out-95 { --tw-enter-scale: 0.95; animation-name: zoom-out; }
+  .slide-in-from-right-2 {
+    animation-name: slide-in-from-right;
+  }
 
-  .duration-150 { --tw-animate-duration: 150ms; }
-  .duration-200 { --tw-animate-duration: 200ms; }
-  .duration-300 { --tw-animate-duration: 300ms; }
-  .duration-500 { --tw-animate-duration: 500ms; }
+  .slide-in-from-left-2 {
+    animation-name: slide-in-from-left;
+  }
+
+  .zoom-in-95 {
+    --tw-enter-scale: 0.95;
+    animation-name: zoom-in;
+  }
+
+  .zoom-out-95 {
+    --tw-enter-scale: 0.95;
+    animation-name: zoom-out;
+  }
+
+  .duration-150 {
+    --tw-animate-duration: 150ms;
+  }
+
+  .duration-200 {
+    --tw-animate-duration: 200ms;
+  }
+
+  .duration-300 {
+    --tw-animate-duration: 300ms;
+  }
+
+  .duration-500 {
+    --tw-animate-duration: 500ms;
+  }
 }
 
 /* --- CAMADA BASE (Estilos Globais) --- */
 @layer base {
+
   /* TEMA CLARO (Default) */
   :root {
     --primary: var(--color-klin-500);
@@ -225,9 +363,12 @@
     --primary-hover: var(--color-klin-700);
     --primary-soft: var(--color-klin-50);
 
-    --background: oklch(0.98 0.008 215); /* Branco gelo base */
-    --surface: oklch(0.995 0.003 215); /* Branco gelo superfície */
-    --surface-hover: oklch(0.97 0.010 215); /* Branco gelo hover */
+    --background: oklch(0.98 0.008 215);
+    /* Branco gelo base */
+    --surface: oklch(0.995 0.003 215);
+    /* Branco gelo superfície */
+    --surface-hover: oklch(0.97 0.010 215);
+    /* Branco gelo hover */
 
     --border: oklch(0.93 0.01 240);
     --input: oklch(0.95 0.01 240);
@@ -243,7 +384,8 @@
     --warning: oklch(0.75 0.15 85);
     --warning-foreground: oklch(1 0 0);
     --warning-soft: color-mix(in srgb, oklch(0.75 0.15 85) 12%, transparent);
-    --success: oklch(0.68 0.12 165); /* KLIN Sea Green (Logo right wing) */
+    --success: oklch(0.68 0.12 165);
+    /* KLIN Sea Green (Logo right wing) */
     --success-foreground: oklch(1 0 0);
     --success-soft: color-mix(in srgb, oklch(0.68 0.12 165) 12%, transparent);
     --info: oklch(0.60 0.15 240);
@@ -272,9 +414,8 @@
 
   /* TEMA ESCURO (Apple / Vercel style) */
   .dark {
-    /* ✨ CORREÇÃO 1: Avisa o motor do Windows que tudo deve ser escuro nativamente */
-    color-scheme: dark; 
-    
+    color-scheme: dark;
+
     --primary: var(--color-klin-400);
     --primary-foreground: oklch(1 0 0);
     --primary-hover: var(--color-klin-300);
@@ -298,7 +439,8 @@
     --warning: oklch(0.80 0.15 85);
     --warning-foreground: oklch(0.15 0.01 240);
     --warning-soft: color-mix(in srgb, oklch(0.80 0.15 85) 15%, transparent);
-    --success: oklch(0.68 0.12 165); /* KLIN Sea Green */
+    --success: oklch(0.68 0.12 165);
+    /* KLIN Sea Green */
     --success-foreground: oklch(1 0 0);
     --success-soft: color-mix(in srgb, oklch(0.68 0.12 165) 15%, transparent);
     --info: oklch(0.65 0.15 240);
@@ -325,8 +467,13 @@
   }
 
   body {
-    @apply bg-background text-text-main antialiased font-sans transition-colors duration-300;
+    background-color: var(--background);
+    color: var(--text-main);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-family: var(--font-sans);
+    transition: color 300ms var(--transition-timing-function),
+      background-color 300ms var(--transition-timing-function);
     font-variant-numeric: tabular-nums;
     font-feature-settings: "cv02", "cv03", "cv04", "tnum";
     scrollbar-gutter: stable;
@@ -335,11 +482,10 @@
 
 /* --- UTILITÁRIOS PREMIUM --- */
 @layer utilities {
-  
+
   /* NOVO MOTOR DE SCROLLBARS */
   .custom-scrollbar {
     scrollbar-width: thin;
-    /* ✨ CORREÇÃO 2: Usa o text-main para contraste perfeito (branco no escuro, preto no claro) */
     scrollbar-color: color-mix(in srgb, var(--text-main) 25%, transparent) transparent;
   }
 
@@ -351,8 +497,7 @@
   .custom-scrollbar::-webkit-scrollbar-track {
     background: transparent;
   }
-  
-  /* ✨ CORREÇÃO 3: Remove o "quadrado branco" do Windows na interseção das barras */
+
   .custom-scrollbar::-webkit-scrollbar-corner {
     background: transparent;
   }
@@ -367,14 +512,16 @@
   }
 
   .glass {
-    @apply border transition-all duration-300;
+    border: 1px solid var(--border);
+    transition: all 300ms var(--transition-timing-function);
     background: var(--surface);
     border-color: var(--border);
     box-shadow: var(--shadow-card-val);
   }
 
   .glass-premium {
-    @apply border transition-all duration-300;
+    border: 1px solid var(--border);
+    transition: all 300ms var(--transition-timing-function);
     background: var(--surface);
     border-color: var(--border);
     box-shadow: var(--shadow-float-val);
@@ -387,11 +534,16 @@
   }
 
   @media (prefers-reduced-motion: reduce) {
-    .glass, .glass-premium {
+
+    .glass,
+    .glass-premium {
       backdrop-filter: none;
       background: var(--surface);
     }
-    *, ::before, ::after {
+
+    *,
+    ::before,
+    ::after {
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
@@ -400,21 +552,42 @@
   }
 
   .btn-tactile {
-    @apply transition-all active:scale-[0.97] hover:-translate-y-1 hover:shadow-button;
+    transition: all 300ms var(--transition-timing-function);
+
+    &:active {
+      transform: scale(0.97);
+    }
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-button-val);
+    }
   }
 
   .ghost-row {
-    @apply relative border-l-4 overflow-hidden transition-colors;
+    position: relative;
+    border-left: 4px solid;
+    overflow: hidden;
     animation: var(--animate-ghost-pulse);
     border-left-color: var(--color-ghost-500);
   }
 
   .text-data {
-    @apply font-mono tracking-tight text-text-secondary font-medium text-xs tabular-nums;
+    font-family: var(--font-mono);
+    letter-spacing: -0.025em;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
   }
 
   .hover-lift {
-    @apply transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-float;
+    transition: all 300ms ease-out;
+
+    &:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-float-val);
+    }
   }
 
   .safe-bottom {
@@ -426,59 +599,98 @@
   }
 
   .focus-ring {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-shadow;
+    &:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--ring), 0 0 0 4px var(--background);
+    }
   }
 
   .touch-target {
-    @apply min-h-[48px] min-w-[48px];
+    min-height: 48px;
+    min-width: 48px;
   }
 
 }
 
 /* --- TIPOGRAFIA HIERÁRQUICA (Anti-Vibe-Code) --- */
 /* Garante hierarquia visual consistente em todo o sistema */
-  @utility heading-display {
-    @apply font-header text-4xl font-black tracking-tight text-text-main leading-none;
-  }
-  @utility heading-1 {
-    @apply font-header text-2xl font-bold tracking-tight text-text-main leading-tight;
-  }
-  @utility heading-2 {
-    @apply font-header text-lg font-semibold text-text-main leading-snug;
-  }
-  @utility heading-3 {
-    @apply font-sans text-base font-semibold text-text-main;
-  }
-  @utility label-ui {
-    @apply font-sans text-[10px] font-black tracking-[0.15em] uppercase text-text-muted;
-  }
-  @utility data-value {
-    @apply font-mono text-sm tabular-nums font-bold text-text-main;
-  }
+@utility heading-display {
+  font-family: var(--font-header);
+  font-size: var(--text-4xl);
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  color: var(--text-main);
+  line-height: 1;
+}
 
-  /* --- STATUS BADGES PREMIUM (Usando as variantes *-soft) --- */
-  @utility badge-success {
-    background: var(--success-soft);
-    color: var(--success);
-    border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
-  }
-  @utility badge-error {
-    background: var(--error-soft);
-    color: var(--error);
-    border: 1px solid color-mix(in srgb, var(--error) 25%, transparent);
-  }
-  @utility badge-warning {
-    background: var(--warning-soft);
-    color: var(--warning);
-    border: 1px solid color-mix(in srgb, var(--warning) 25%, transparent);
-  }
-  @utility badge-info {
-    background: var(--info-soft);
-    color: var(--info);
-    border: 1px solid color-mix(in srgb, var(--info) 25%, transparent);
-  }
+@utility heading-1 {
+  font-family: var(--font-header);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--text-main);
+  line-height: 1.25;
+}
+
+@utility heading-2 {
+  font-family: var(--font-header);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.375;
+}
+
+@utility heading-3 {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+@utility label-ui {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+@utility data-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+/* --- STATUS BADGES PREMIUM (Usando as variantes *-soft) --- */
+@utility badge-success {
+  background: var(--success-soft);
+  color: var(--success);
+  border: 1px solid color-mix(in srgb, var(--success) 25%, transparent);
+}
+
+@utility badge-error {
+  background: var(--error-soft);
+  color: var(--error);
+  border: 1px solid color-mix(in srgb, var(--error) 25%, transparent);
+}
+
+@utility badge-warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+  border: 1px solid color-mix(in srgb, var(--warning) 25%, transparent);
+}
+
+@utility badge-info {
+  background: var(--info-soft);
+  color: var(--info);
+  border: 1px solid color-mix(in srgb, var(--info) 25%, transparent);
+}
 
 @layer utilities {
+
   /* --- GLASSMORPHISM REAL (Dark mode premium) --- */
   .dark .glass-premium {
     background: color-mix(in srgb, var(--surface) 75%, transparent);
@@ -507,10 +719,15 @@
 /* --- ACESSIBILIDADE E UX (A11Y & MOBILE) --- */
 @layer base {
   * {
-    -webkit-tap-highlight-color: transparent; 
+    -webkit-tap-highlight-color: transparent;
   }
 
-  a, button, input, select, textarea, [role="button"] {
+  a,
+  button,
+  input,
+  select,
+  textarea,
+  [role="button"] {
     touch-action: manipulation;
   }
 
@@ -520,6 +737,7 @@
     -webkit-appearance: none;
     margin: 0;
   }
+
   input[type="number"] {
     -moz-appearance: textfield;
   }
@@ -560,29 +778,20 @@ html.dark {
   background: var(--color-klin-500);
 }
 
-@theme {
-  --animate-scan: scan 1.5s ease-in-out infinite alternate;
-  @keyframes scan {
-    0% { transform: translateY(-100%); }
-    100% { transform: translateY(100%); }
-  }
-
-  @keyframes blob {
-    0% { transform: translate(0px, 0px) scale(1); }
-    33% { transform: translate(30px, -50px) scale(1.1); }
-    66% { transform: translate(-20px, 20px) scale(0.9); }
-    100% { transform: translate(0px, 0px) scale(1); }
-  }
-}
-
 /* MatrizDetalheUsuario - Variant 1 Modal Form Override */
 .matriz-detalhe-page form.bg-surface-hover {
-  position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: 90vw; max-width: 600px; max-height: 85vh; overflow-y: auto;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 90vw;
+  max-width: 600px;
+  max-height: 85vh;
+  overflow-y: auto;
   z-index: 100;
   background: var(--color-surface, #fefffe);
   border-radius: 20px;
-  box-shadow: 0 24px 48px rgba(26,79,88,0.25), 0 0 0 100vw rgba(30,37,48,0.6);
-  padding: 32px !important; border: none;
+  box-shadow: 0 24px 48px rgba(26, 79, 88, 0.25), 0 0 0 100vw rgba(30, 37, 48, 0.6);
+  padding: 32px !important;
+  border: none;
 }
-

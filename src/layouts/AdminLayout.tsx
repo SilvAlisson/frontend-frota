@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
-  Menu, X
+  Menu, X, KeyRound, LogOut
 } from 'lucide-react';
 import { Drawer } from 'vaul'; 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,6 +17,8 @@ import type { User } from '../types';
 import { usePushNotifications } from '../hooks/usePushNotifications';
 import { cn } from '../lib/utils';
 import { AssistenteIA } from '../components/ia/AssistenteIA';
+import { ModalAlterarSenha } from '../components/ModalAlterarSenha';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 // Tipo local para os logs de auditoria do polling
 interface SystemLog {
   id: string;
@@ -32,12 +34,33 @@ interface SidebarContentProps {
   user: User | null;
 }
 
-// 🛠️ Extraímos o miolo da Sidebar para reaproveitarmos no Desktop e no Mobile
+// 👉 Extraímos o miolo da Sidebar para reaproveitarmos no Desktop e no Mobile
 function SidebarContent({ onClose, user }: SidebarContentProps) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
+  const [isSenhaModalOpen, setIsSenhaModalOpen] = useState(false);
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLogoutModalOpen(false);
+    await logout();
+    navigate('/login');
+  };
 
   return (
     <>
+      <ModalAlterarSenha isOpen={isSenhaModalOpen} onClose={() => setIsSenhaModalOpen(false)} />
+      <ConfirmModal
+        isOpen={isLogoutModalOpen}
+        onCancel={() => setIsLogoutModalOpen(false)}
+        onConfirm={handleLogout}
+        title="Encerrar Sessão"
+        description="Tem certeza que deseja fechar a sua sessão e sair do sistema?"
+        confirmLabel="Sair do Sistema"
+        confirmVariant="danger"
+      />
+
       {/* Topo do Sidebar - Foto do Usuário e Nome */}
       <div className="flex flex-col items-center justify-center pt-8 pb-6 border-b border-border/60 shrink-0 relative bg-surface">
         {onClose && (
@@ -101,8 +124,30 @@ function SidebarContent({ onClose, user }: SidebarContentProps) {
       </div>
 
       {/* Rodapé da Sidebar (Apenas IA) */}
-      <div className="p-4 border-t border-border/30 bg-surface-hover/10 shrink-0 space-y-3 pb-safe">
+      <div className="p-4 border-t border-border/30 bg-surface-hover/10 shrink-0 space-y-3">
         <AssistenteIA />
+      </div>
+      
+      {/* Rodapé da Sidebar - Botões de Ação */}
+      <div className="p-4 border-t border-border/60 shrink-0 grid grid-cols-2 gap-2 bg-surface">
+        <Button 
+          variant="secondary" 
+          onClick={() => setIsSenhaModalOpen(true)}
+          className="flex-1 bg-primary/5 text-primary hover:bg-primary/10 border-primary/20 shadow-sm"
+          icon={<KeyRound className="w-4 h-4" />}
+          title="Alterar Senha"
+        >
+          Senha
+        </Button>
+        <Button 
+          variant="secondary" 
+          onClick={() => setIsLogoutModalOpen(true)}
+          className="flex-1 bg-error/10 text-error hover:bg-error/20 border-error/20 shadow-sm"
+          icon={<LogOut className="w-4 h-4" />}
+          title="Sair"
+        >
+          Sair
+        </Button>
       </div>
     </>
   );

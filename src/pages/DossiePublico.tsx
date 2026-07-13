@@ -205,7 +205,7 @@ export function DossiePublico() {
                   {treino.comprovanteUrl && (
                     <a 
                       href={treino.comprovanteUrl} 
-                      target="_blank" 
+                      target="_blank" rel="noopener noreferrer" 
                       rel="noopener noreferrer"
                       className="mt-2 flex items-center justify-center gap-2 w-full bg-primary/5 hover:bg-primary/10 text-primary border border-primary/20 rounded-xl p-3 text-xs font-black uppercase tracking-widest transition-colors shadow-sm"
                     >

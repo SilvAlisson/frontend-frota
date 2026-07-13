@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
-import axios from 'axios';
+import { handleApiError } from '../utils/errorHandler';
 import { FILTRO_TODOS } from '../config/constants';
 import { logger } from '../lib/logger';
 
@@ -74,11 +74,7 @@ export function usePlanosManutencao(veiculoId?: string, filtroCategoria?: string
       queryClient.invalidateQueries({ queryKey: ['planos'] });
     },
     onError: (err: unknown) => {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
-        toast.error(err.response.data.error);
-      } else {
-        toast.error('Erro ao registrar manutenção.');
-      }
+      handleApiError(err, 'Erro ao registrar manutenção.');
     }
   });
 
@@ -91,11 +87,7 @@ export function usePlanosManutencao(veiculoId?: string, filtroCategoria?: string
       queryClient.invalidateQueries({ queryKey: ['planos'] });
     },
     onError: (err: unknown) => {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
-        toast.error(err.response.data.error);
-      } else {
-        toast.error("Falha ao tentar remover o plano.");
-      }
+      handleApiError(err, "Falha ao tentar remover o plano.");
     }
   });
 
