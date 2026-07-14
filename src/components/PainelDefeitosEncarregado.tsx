@@ -4,6 +4,7 @@ import { GraficoDonutDefeitos } from './ui/GraficosFrota';
 import { Button } from './ui/Button';
 import { Textarea } from './ui/Textarea';
 import { Modal } from './ui/Modal';
+import { Skeleton } from './ui/Skeleton';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useDefeitos } from '../hooks/useDefeitos';
@@ -31,8 +32,12 @@ export function PainelDefeitosEncarregado() {
   const ativos = defeitos.filter(d => ['ABERTO', 'EM_ANALISE'].includes(d.status));
 
   if (isLoading) {
-    return <div className="p-8 text-center text-text-muted animate-pulse font-mono tracking-widest text-xs uppercase">Rastreando anomalias ativas...</div>;
-  }
+      return (
+        <div className="space-y-4 animate-in fade-in">
+          {[1, 2, 3, 4].map(i => <Skeleton key={i} variant="card" className="h-24 w-full" />)}
+        </div>
+      );
+    }
 
   if (ativos.length === 0) {
     return (

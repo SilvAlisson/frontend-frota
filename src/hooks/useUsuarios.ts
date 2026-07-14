@@ -48,6 +48,7 @@ export function useUsuarios(options?: { includeTestUsers?: boolean }) {
   return {
     usuarios: usuariosQuery.data || [],
     isLoading: usuariosQuery.isLoading,
+    isError: usuariosQuery.isError,
     refetch: usuariosQuery.refetch,
     excluirUsuario: excluirUsuarioMutation.mutateAsync,
     isExcluindo: excluirUsuarioMutation.isPending,

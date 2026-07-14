@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { 
   Key, Droplets, Users, LogOut, ChevronRight, 
   Wrench, Activity, AlertTriangle, ShieldCheck, Navigation,
-  BatteryCharging, Clock, CheckCircle2, QrCode
+  BatteryCharging, Clock, CheckCircle2, QrCode, Truck
 } from 'lucide-react';
 
 // Modais & Componentes
@@ -23,9 +23,9 @@ import { Button } from './ui/Button';
 import { Avatar } from './ui/Avatar';
 import { PullToRefresh } from './ui/PullToRefresh';
 import { SmartFAB } from './ui/SmartFAB';
-
-// Hooks & Contexts
-import { useAuth } from '../contexts/AuthContext';
+import { Callout } from './ui/Callout';
+import { EmptyState } from './ui/EmptyState';
+import { Skeleton } from './ui/Skeleton';
 import { useTheme } from '../contexts/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
 import type { User } from '../types';
@@ -127,10 +127,32 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
     const [modalQrCodeOpen, setModalQrCodeOpen] = useState(false);
 
     // Data Hooks
-    const { usuarios = [] } = useUsuarios();
-    const { data: veiculos = [] } = useVeiculos();
-    const { data: jornadasAbertas = [], refetch: refetchJornadas } = useJornadasAtivas();
-    const { contagemAtiva: defeitosAtivos, refetch: refetchDefeitos } = useDefeitos();
+            const { usuarios = [], isError: isErrorUsuarios } = useUsuarios();
+            const { data: veiculos = [], isError: isErrorVeiculos } = useVeiculos();
+            const { data: jornadasAbertas = [], refetch: refetchJornadas, isLoading: loadingJornadas, isError: isErrorJornadas } = useJornadasAtivas();
+            const { contagemAtiva: defeitosAtivos, refetch: refetchDefeitos, isLoading: loadingDefeitos, isError: isErrorDefeitos } = useDefeitos();
+
+            // Error handling for critical data
+            if (isErrorJornadas || isErrorDefeitos || isErrorUsuarios || isErrorVeiculos) {
+                return (
+                    <div className="flex flex-col items-center justify-center h-[60vh] space-y-4 animate-in fade-in">
+                        <Callout
+                            variant="danger"
+                            title="Falha de Sincronização"
+                            className="max-w-md text-center"
+                        >
+                            Não foi possível carregar os dados operacionais. Verifique sua conexão.
+                            <Button
+                                onClick={handleRefresh}
+                                variant="ghost" size="sm"
+                                className="text-xs font-black uppercase tracking-widest text-error hover:text-error hover:bg-error/10 mt-4"
+                            >
+                                Tentar Novamente
+                            </Button>
+                        </Callout>
+                    </div>
+                );
+            }
 
     const veiculosAtivos = veiculos.filter(v => v.status !== 'INATIVO');
     const usuariosAtivos = usuarios.filter(u => !u.nome.startsWith('[INATIVO]'));
@@ -273,11 +295,11 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
 
                                   <div className="flex-1 rounded-2xl bg-surface/50 border border-border/40 p-2 overflow-y-auto max-h-[350px] space-y-2 scrollbar-thin">
                                      {jornadasAbertas.length === 0 ? (
-                                        <div className="h-full flex flex-col items-center justify-center p-8 text-center opacity-70">
-                                          <CheckCircle2 className="w-12 h-12 text-success/60 mb-3" />
-                                          <span className="text-sm font-bold text-text-main uppercase tracking-widest">Nenhum Veículo em Rota</span>
-                                          <span className="text-xs text-text-muted mt-1">Todos os veículos encontram-se disponíveis na base neste momento.</span>
-                                        </div>
+                                        <EmptyState
+                                            icon={Truck}
+                                            title="Nenhum Veículo em Rota"
+                                            description="Todos os veículos encontram-se disponíveis na base neste momento."
+                                        />
                                      ) : (
                                         jornadasAbertas.map(jornada => (
                                           <div key={jornada.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-background border border-border/40 rounded-xl hover:border-primary/30 transition-all gap-4">
@@ -359,12 +381,16 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
     const goBack = () => setView('DASHBOARD');
 
     if (view === 'MONITORAMENTO') {
-        return (
-            <PageWrapper title="Painel de Monitoramento Vivo" onBack={goBack}>
-                <GestaoJornadas jornadasAbertas={jornadasAbertas} onJornadaFinalizadaManualmente={() => refetchJornadas().catch(err => handleApiError(err, 'Erro ao sincronizar.'))} />
-            </PageWrapper>
-        );
-    }
+            return (
+                <PageWrapper title="Painel de Monitoramento Vivo" onBack={goBack}>
+                    <GestaoJornadas 
+                        jornadasAbertas={jornadasAbertas} 
+                        onJornadaFinalizadaManualmente={() => refetchJornadas().catch(err => handleApiError(err, 'Erro ao sincronizar.'))} 
+                        isLoading={isErrorJornadas ? false : loadingJornadas}
+                    />
+                </PageWrapper>
+            );
+        }
     
     if (view === 'MINHA_JORNADA') {
         return (
