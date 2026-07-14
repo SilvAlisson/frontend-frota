@@ -27,6 +27,7 @@ import { Callout } from './ui/Callout';
 import { EmptyState } from './ui/EmptyState';
 import { Skeleton } from './ui/Skeleton';
 import { useTheme } from '../contexts/ThemeContext';
+import { useAuth } from '../contexts/AuthContext';
 import { Sun, Moon } from 'lucide-react';
 import type { User } from '../types';
 import { useUsuarios } from '../hooks/useUsuarios';
