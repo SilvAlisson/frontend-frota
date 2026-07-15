@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useForm, useFieldArray, useWatch } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -12,15 +13,16 @@ import { Input } from '../ui/Input';
 import { Textarea } from '../ui/Textarea';
 import { hapticError } from '../../lib/haptics';
 import { logger } from '../../lib/logger';
+import type { Cargo } from '../../types';
 
 // --- SCHEMA ZOD V4 COMPATÍVEL ---
-// Usamos a união string/number no input para evitar o erro de "unknown" do Zod v4,
-// mas garantimos que a saída (output) seja sempre um número processado.
+// Adicionámos o "id: z.string().optional()" nos requisitos para o backend saber quais deve atualizar
 const cargoSchema = z.object({
   nome: z.string().min(3, "Nome do cargo muito curto"),
   descricao: z.string().optional(),
   requisitos: z.array(
     z.object({
+      id: z.string().optional(),
       nome: z.string().min(2, "Obrigatório"),
       validadeMeses: z.union([z.string(), z.number()]).transform(v => Number(v)).refine(v => !isNaN(v) && v >= 0, "Mínimo 0"),
       diasAntecedenciaAlerta: z.union([z.string(), z.number()]).transform(v => Number(v)).refine(v => !isNaN(v) && v >= 1, "Mínimo 1")
@@ -28,28 +30,29 @@ const cargoSchema = z.object({
   )
 });
 
-// Separamos o que entra (Input) do que sai do Zod (Output)
 type CargoFormInput = z.input<typeof cargoSchema>;
 type CargoFormOutput = z.output<typeof cargoSchema>;
 
+//  Interface agora aceita os dados do cargo para edição
 interface FormProps {
   onSuccess: () => void;
   onCancelar: () => void;
+  cargoEdicao?: Cargo | null;
 }
 
-export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
-  // Passamos as 3 tipagens para o useForm para o Resolver trabalhar em paz
+export function FormCadastrarCargo({ onSuccess, onCancelar, cargoEdicao }: FormProps) {
   const {
     register,
     control,
     handleSubmit,
+    reset,
     formState: { errors, isSubmitting }
   } = useForm<CargoFormInput, unknown, CargoFormOutput>({
     resolver: zodResolver(cargoSchema),
     defaultValues: {
       nome: '',
       descricao: '',
-      requisitos: [{ nome: '', validadeMeses: 12, diasAntecedenciaAlerta: 30 }]
+      requisitos: [] // Começamos vazio para não haver conflitos na edição
     }
   });
 
@@ -58,10 +61,33 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
     name: "requisitos"
   });
 
-  // Monitoriza os valores para os badges informativos em tempo real
   const requisitosWatch = useWatch({ control, name: 'requisitos' });
 
-  // onSubmit recebe o Output (dados já limpos e convertidos para números pelo Zod)
+  // 🔥 LÓGICA DE AUTO-PREENCHIMENTO: Preenche o formulário se estivermos a editar
+  useEffect(() => {
+    if (cargoEdicao) {
+      reset({
+        nome: cargoEdicao.nome,
+        descricao: cargoEdicao.descricao || '',
+        requisitos: cargoEdicao.requisitos && cargoEdicao.requisitos.length > 0 
+          ? cargoEdicao.requisitos.map(req => ({
+              id: req.id,
+              nome: req.nome,
+              validadeMeses: req.validadeMeses,
+              diasAntecedenciaAlerta: req.diasAntecedenciaAlerta
+            })) 
+          : []
+      });
+    } else {
+      // Se for um novo cargo, garante que colocamos um campo vazio por defeito
+      reset({ 
+        nome: '', 
+        descricao: '', 
+        requisitos: [{ nome: '', validadeMeses: 12, diasAntecedenciaAlerta: 30 }] 
+      });
+    }
+  }, [cargoEdicao, reset]);
+
   const onSubmit = async (data: CargoFormOutput) => {
     try {
         const payload = {
@@ -74,13 +100,19 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
             }))
         };
 
-        const promise = api.post('/cargos', payload);
+        //  DECISÃO INTELIGENTE: POST ou PUT dependendo se estamos a editar ou a criar
+        let promise;
+        if (cargoEdicao) {
+            promise = api.put(`/cargos/${cargoEdicao.id}`, payload);
+        } else {
+            promise = api.post('/cargos', payload);
+        }
 
         toast.promise(promise, {
-            loading: 'Estruturando novo cargo...',
+            loading: cargoEdicao ? 'A guardar alterações...' : 'A estruturar novo cargo...',
             success: () => {
                 setTimeout(onSuccess, 500);
-                return 'Cargo e Matriz de Treinamento Registrados!';
+                return cargoEdicao ? 'Cargo atualizado com sucesso!' : 'Cargo e Matriz de Treinamento Registados!';
             },
             error: (err: unknown) => {
               const apiErr = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
@@ -103,7 +135,10 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
             <Briefcase className="w-6 h-6" />
           </div>
           <div>
-            <h3 className="text-xl font-black text-text-main tracking-tight leading-none">Novo Cargo</h3>
+            {/* Dinamismo no Título */}
+            <h3 className="text-xl font-black text-text-main tracking-tight leading-none">
+                {cargoEdicao ? 'Editar Cargo' : 'Novo Cargo'}
+            </h3>
             <p className="text-sm text-text-secondary font-medium mt-1.5 flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
               Gestão de Matriz de Treinamento
@@ -127,7 +162,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
               <Input
                 label="Título Profissional"
                 {...register('nome')}
-                placeholder="Ex: TÉCNICO DE OPERAÇÕES II"
+                placeholder="Ex: TÉCNICO EM EDIFICAÇÕES I"
                 error={errors.nome?.message}
                 className="uppercase font-black tracking-wide text-primary placeholder:font-normal placeholder:tracking-normal"
                 autoFocus
@@ -261,12 +296,10 @@ export function FormCadastrarCargo({ onSuccess, onCancelar }: FormProps) {
             icon={<Save className="w-4 h-4" />} 
             className="px-12 shadow-button hover:shadow-float-primary transition-all font-black uppercase tracking-tight"
           >
-            Finalizar Cadastro
+            {cargoEdicao ? 'Salvar Alterações' : 'Finalizar Cadastro'}
           </Button>
         </div>
       </form>
     </div>
   );
 }
-
-

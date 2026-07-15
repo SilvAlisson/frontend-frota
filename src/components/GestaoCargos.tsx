@@ -4,10 +4,10 @@ import { Button } from './ui/Button';
 import { FormCadastrarCargo } from './forms/FormCadastrarCargo';
 import { toast } from 'sonner';
 import { logger } from '../lib/logger';
-import { Trash2, Plus, Briefcase, GraduationCap, AlertTriangle, Loader2 } from 'lucide-react';
+import { Trash2, Plus, Briefcase, GraduationCap, AlertTriangle, Loader2, Pencil } from 'lucide-react';
 import type { Cargo } from '../types';
 
-// ? Nossos Componentes de Elite
+// 💎 Nossos Componentes de Elite
 import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
 import { Callout } from './ui/Callout';
@@ -17,10 +17,11 @@ import { SmartFAB } from './ui/SmartFAB';
 
 export function GestaoCargos() {
   const [cargos, setCargos] = useState<Cargo[]>([]);
-  const [modo, setModo] = useState<'listando' | 'adicionando'>('listando');
+  const [modo, setModo] = useState<'listando' | 'adicionando' | 'editando'>('listando');
   const [loading, setLoading] = useState(true);
   
-  // Estados para a Exclusão Segura
+  // Estados para Edição e Exclusão
+  const [cargoParaEditar, setCargoParaEditar] = useState<Cargo | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [cargoParaExcluir, setCargoParaExcluir] = useState<Cargo | null>(null);
 
@@ -40,7 +41,7 @@ export function GestaoCargos() {
     fetchCargos();
   }, []);
 
-  // --- NOVA LÓGICA DE EXCLUSÃO (ConfirmModal) ---
+  // --- LÓGICA DE EXCLUSÃO (ConfirmModal) ---
   const handleExecuteDelete = async () => {
     if (!cargoParaExcluir) return;
 
@@ -60,14 +61,20 @@ export function GestaoCargos() {
         setDeletingId(null);
         setCargoParaExcluir(null);
         logger.debug('Erro ao deletar cargo:', err);
-        return 'Erro: Não é possível remover cargos com integrantes ou treinos ativos vinculados.';
+        return 'Erro: Não é possível remover cargos com integrantes ou treinamentos ativos vinculados.';
       }
     });
   };
 
   const handleSucesso = () => {
     setModo('listando');
+    setCargoParaEditar(null);
     fetchCargos();
+  };
+
+  const handleCancelarForm = () => {
+    setModo('listando');
+    setCargoParaEditar(null);
   };
 
   return (
@@ -81,21 +88,30 @@ export function GestaoCargos() {
             <div className="p-2 bg-primary/10 rounded-xl text-primary shadow-sm shrink-0">
               <Briefcase className="w-6 h-6" />
             </div>
-            Cargos & Requisitos
+            {modo === 'editando' ? 'Editar Cargo' : 'Cargos & Requisitos'}
           </span>
         }
-        subtitle="Estruture as funções da Equipe e defina os treinamentos obrigatórios (Matriz de Qualificação)."
+        subtitle={
+          modo === 'editando' 
+            ? `Atualize as funções e exigências (NRs) do cargo: ${cargoParaEditar?.nome}` 
+            : "Estruture as funções da Equipe e defina os treinamentos obrigatórios (Matriz de Qualificação)."
+        }
         actionLabel={modo === 'listando' ? "Novo Cargo" : undefined}
         onAction={modo === 'listando' ? () => setModo('adicionando') : undefined}
       />
 
-      {/* FORMULÁRIO DE CADASTRO COM TRANSIÇÃO */}
-      {modo === 'adicionando' && (
+      {/* FORMULÁRIO DE CADASTRO/EDIÇÃO COM TRANSIÇÃO */}
+      {(modo === 'adicionando' || modo === 'editando') && (
         <div className="bg-surface p-6 sm:p-8 rounded-3xl shadow-sm border border-border/60 max-w-2xl mx-auto transform transition-all animate-in slide-in-from-right-8 duration-300">
-           <div className="mb-6 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit" onClick={() => setModo('listando')}>
-            <span className="p-1.5 bg-surface-hover rounded-lg">?</span> Voltar para a listagem
+           <div className="mb-6 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit" onClick={handleCancelarForm}>
+            <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar para a listagem
           </div>
-          <FormCadastrarCargo onSuccess={handleSucesso} onCancelar={() => setModo('listando')} />
+          
+          <FormCadastrarCargo 
+            cargoEdicao={cargoParaEditar} // Passamos os dados do cargo a ser editado
+            onSuccess={handleSucesso} 
+            onCancelar={handleCancelarForm} 
+          />
         </div>
       )}
 
@@ -108,7 +124,7 @@ export function GestaoCargos() {
             </div>
           ) : cargos.length === 0 ? (
             
-            // ? NOSSO EMPTY STATE SUBSTITUINDO O CÓDIGO MANUAL
+            // 💎 NOSSO EMPTY STATE
             <div className="pt-8">
                 <EmptyState 
                     icon={Briefcase} 
@@ -138,7 +154,21 @@ export function GestaoCargos() {
                       </p>
                     </div>
 
+                    {/* GRUPO DE BOTÕES: Editar e Excluir */}
                     <div className="flex gap-1 bg-surface-hover/50 rounded-xl p-1 border border-border/40 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-4">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="w-8 h-8 min-w-[32px] min-h-[32px] text-text-muted hover:text-primary hover:bg-primary/10 rounded-lg transition-all shadow-sm"
+                          onClick={() => {
+                            setCargoParaEditar(cargo);
+                            setModo('editando');
+                          }}
+                          title="Editar Cargo"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </Button>
+
                         <Button
                           variant="ghost"
                           size="icon"
@@ -194,7 +224,7 @@ export function GestaoCargos() {
         </>
       )}
 
-      {/* ? CONFIRM MODAL COM CALLOUT INTEGRADO */}
+      {/* ⚠️ CONFIRM MODAL COM CALLOUT INTEGRADO */}
       <ConfirmModal 
         isOpen={!!cargoParaExcluir}
         onCancel={() => setCargoParaExcluir(null)}
@@ -206,7 +236,7 @@ export function GestaoCargos() {
                  Tem certeza que deseja remover a função <strong className="text-text-main font-black">"{cargoParaExcluir?.nome}"</strong> da estrutura da empresa?
              </p>
              <Callout variant="warning" title="Impacto Estrutural" icon={AlertTriangle}>
-                 Se houverem integrantes atualmente vinculados a este cargo, a exclusão será bloqueada pela base de dados. Caso contrário, todos os requisitos e matrizes de qualificação desta função seráo perdidos.
+                 Se houverem integrantes atualmente vinculados a este cargo, a exclusão será bloqueada pela base de dados. Caso contrário, todos os requisitos e matrizes de qualificação desta função serão perdidos.
              </Callout>
           </div>
         }
@@ -225,5 +255,3 @@ export function GestaoCargos() {
     </PullToRefresh>
   );
 }
-
-
