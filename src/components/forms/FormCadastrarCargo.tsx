@@ -195,7 +195,7 @@ export function FormCadastrarCargo({ onSuccess, onCancelar, cargoEdicao }: FormP
                 disabled={isSubmitting}
                 className="h-11 md:h-9 px-4 text-xs font-black uppercase tracking-tighter shadow-sm border-amber-200 hover:bg-amber-50"
               >
-                + Adicionar Requisito
+                + Adicionar Treinamento
               </Button>
             </div>
 
