@@ -7,17 +7,44 @@ import { Button } from '../ui/Button';
 import { Download, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { logger } from '../../lib/logger';
+import { EmptyState } from '../ui/EmptyState';
+import { Skeleton } from '../ui/Skeleton';
+import { Callout } from '../ui/Callout';
 export function DashboardCompliance() {
-  const { data: matriz, isLoading } = useMatrizQualificacao();
+  const { data: matriz, isLoading, isError, refetch } = useMatrizQualificacao();
   const [filtroExpandido, setFiltroExpandido] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
 
   if (isLoading) {
     return (
-      <div className="flex items-center gap-2 p-6 bg-surface border border-border/60 rounded-2xl animate-pulse">
-        <div className="w-6 h-6 rounded-full bg-border/40" />
-        <div className="h-4 bg-border/40 rounded w-48" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} variant="card" className="min-h-[180px]" />
+        ))}
       </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <Callout 
+        variant="danger" 
+        title="Falha ao carregar compliance" 
+        className="mb-6"
+        action={<Button variant="outline" size="sm" onClick={() => refetch()}>Tentar Novamente</Button>}
+      >
+        Não foi possível conectar com o servidor para buscar os alertas de compliance.
+      </Callout>
+    );
+  }
+
+  if (!matriz || matriz.length === 0) {
+    return (
+      <EmptyState
+        icon={ShieldCheck}
+        title="Sem Dados de Matriz"
+        description="Nenhum colaborador encontrado na base de qualificação."
+      />
     );
   }
 

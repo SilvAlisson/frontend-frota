@@ -23,9 +23,10 @@ const calloutVariants = cva(
 interface CalloutProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof calloutVariants> {
  title: string;
  icon?: React.ElementType;
+ action?: React.ReactNode;
 }
 
-export function Callout({ className, variant, title, icon: Icon, children, ...props }: CalloutProps) {
+export function Callout({ className, variant, title, icon: Icon, action, children, ...props }: CalloutProps) {
  // Define ícones padrão caso nenhum seja fornecido
  const DefaultIcon = 
   variant === 'danger' ? AlertCircle : 
@@ -58,6 +59,11 @@ export function Callout({ className, variant, title, icon: Icon, children, ...pr
      {children}
     </div>
    </div>
+   {action && (
+    <div className="mt-4 flex sm:mt-0 sm:flex-shrink-0 sm:items-center">
+     {action}
+    </div>
+   )}
   </div>
  );
 }

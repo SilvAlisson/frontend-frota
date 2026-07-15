@@ -18,6 +18,7 @@ import confetti from 'canvas-confetti';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
+import { ConfirmModal } from './ui/ConfirmModal';
 import type { User } from '../types';
 import { cn } from '../lib/utils';
 
@@ -88,6 +89,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
  const [modalDefeitoOpen, setModalDefeitoOpen] = useState(false);
  const [modalHistoricoOpen, setModalHistoricoOpen] = useState(false);
  const [modalDocumentosOpen, setModalDocumentosOpen] = useState(false);
+ const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
  // 📡 BUSCA DOS DADOS COM CACHE
  const { usuarios = [], refetch: refetchUsuarios, isLoading: loadingUsuarios } = useUsuarios();
@@ -186,9 +188,9 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
       <Button
        variant="ghost"
        size="icon"
-       onClick={async () => {
+       onClick={() => {
         vibrateMedium();
-        await logout();
+        setIsLogoutModalOpen(true);
        }}
        className="w-11 h-11 touch-target rounded-xl bg-error/5 border border-error/10 hover:bg-error/20 flex items-center justify-center text-error transition-all hover:rotate-12 focus-ring"
        aria-label="Sair"
@@ -339,6 +341,19 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
      </div>
     )}
    </Modal>
+
+   <ConfirmModal
+    isOpen={isLogoutModalOpen}
+    onCancel={() => setIsLogoutModalOpen(false)}
+    onConfirm={async () => {
+     setIsLogoutModalOpen(false);
+     await logout();
+    }}
+    title="Encerrar Sessão"
+    description="Tem certeza que deseja fechar a sua sessão e sair do sistema?"
+    confirmLabel="Sair do Sistema"
+    variant="danger"
+   />
 
   </div>
  );

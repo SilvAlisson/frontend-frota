@@ -47,6 +47,7 @@ export function useRadarSST() {
     cards: query.data || [],
     isLoading: query.isLoading,
     isError: query.isError,
-    agendarItem: agendarMutate.mutateAsync
+    agendarItem: agendarMutate.mutateAsync,
+    refetch: query.refetch
   };
 }

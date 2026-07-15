@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
 const GestaoAuditoria = lazy(() => import('./components/GestaoAuditoria').then(m => ({ default: m.GestaoAuditoria })));
+const GestaoConfiguracoes = lazy(() => import('./components/GestaoConfiguracoes').then(m => ({ default: m.GestaoConfiguracoes })));
 const DossiePublico = lazy(() => import('./pages/DossiePublico').then(m => ({ default: m.DossiePublico })));
 
 // Telas de Acesso (Não-Lazy pois são os gatilhos iniciais)
@@ -200,6 +201,12 @@ export function Router() {
           <Route path="auditoria" element={
             <PrivateRoute allowedRoles={['ADMIN']}>
               <GestaoAuditoria />
+            </PrivateRoute>
+          } />
+
+          <Route path="configuracoes" element={
+            <PrivateRoute allowedRoles={['ADMIN', 'RH']}>
+              <GestaoConfiguracoes />
             </PrivateRoute>
           } />
 

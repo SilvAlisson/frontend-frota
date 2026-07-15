@@ -11,7 +11,8 @@ import {
   FileBadge,
   ShieldCheck,
   Briefcase,
-  Activity
+  Activity,
+  Settings
 } from 'lucide-react';
 
 import React from 'react';
@@ -75,7 +76,8 @@ export const MENU_ITEMS: MenuGroup[] = [
     title: 'Sistema',
     roles: ['ADMIN'], 
     items: [
-      { icon: Activity, label: 'Auditoria e Logs', path: '/admin/auditoria' }
+      { icon: Activity, label: 'Auditoria e Logs', path: '/admin/auditoria' },
+      { icon: Settings, label: 'Configurações', path: '/admin/configuracoes' }
     ]
   }
 ];

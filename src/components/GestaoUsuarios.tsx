@@ -9,6 +9,7 @@ import { Badge } from './ui/Badge';
 import { DossieIntegrante } from './rh/DossieIntegrante';
 import { ModalQrCode } from './ModalQrCode';
 import { ModalGerarEtiquetas } from './rh/ModalGerarEtiquetas';
+import { ConfirmModal } from './ui/ConfirmModal';
 import { exportarParaExcel } from '../utils';
 import { FormCadastrarUsuario } from './forms/FormCadastrarUsuario';
 import { TableStyles } from '../styles/table';
@@ -28,7 +29,7 @@ const getCargoName = (cargo: unknown): string => {
 };
 
 import {
-  QrCode, Search, Download, Users, Printer, Activity, UserPlus
+  QrCode, Search, Download, Users, Printer, Activity, UserPlus, UserMinus
 } from 'lucide-react';
 
 import { PageHeader } from './ui/PageHeader';
@@ -42,12 +43,13 @@ import { useAuth } from '../contexts/AuthContext';
 export function GestaoUsuarios() {
   // Apenas estados de visualização operacional
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<User | null>(null);
+  const [usuarioParaInativar, setUsuarioParaInativar] = useState<User | null>(null);
   const [busca, setBusca] = useState('');
   const [filtroRole, setFiltroRole] = useState<string>('TODOS');
   
   const { user: currentUser } = useAuth();
 
-  const { usuarios, isLoading, refetch } = useUsuarios({ includeTestUsers: currentUser?.role === 'ADMIN' });
+  const { usuarios, isLoading, refetch, excluirUsuario } = useUsuarios({ includeTestUsers: currentUser?.role === 'ADMIN' });
   const { openModal, closeModal } = useModalStore();
 
   const buscaDebounced = useDebounce(busca, 300);
@@ -243,7 +245,7 @@ export function GestaoUsuarios() {
                     </div>
                   </td>
                   <td className={`${TableStyles.td} justify-end pr-8`}>
-                    <div className="grid grid-cols-2 gap-1.5 w-fit ml-auto opacity-60 group-hover:opacity-100 transition-opacity">
+                    <div className="grid grid-cols-3 gap-1.5 w-fit ml-auto opacity-60 group-hover:opacity-100 transition-opacity">
                       
                       {/* Botão focado no Histórico do Integrante */}
                       <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => setUsuarioSelecionado(u)} title="Ver Histórico Operacional" aria-label={`Ver histórico de ${u.nome}`}>
@@ -257,6 +259,15 @@ export function GestaoUsuarios() {
                         </Button>
                       ) : (
                         <div /> 
+                      )}
+
+                      {/* Botão para inativar usuário (Apenas ADMIN/RH e não pode ser si mesmo) */}
+                      {(currentUser?.role === 'ADMIN' || currentUser?.role === 'RH') && u.id !== currentUser?.id && u.status === 'ATIVO' ? (
+                        <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-xl" onClick={() => setUsuarioParaInativar(u)} title="Inativar Colaborador" aria-label={`Inativar ${u.nome}`}>
+                          <UserMinus className="w-5 h-5" />
+                        </Button>
+                      ) : (
+                        <div />
                       )}
 
                     </div>
@@ -296,23 +307,49 @@ export function GestaoUsuarios() {
                       </div>
                     </div>
 
-                    <div className="mt-5 flex gap-2 border-t border-dashed border-border/60 pt-4" onClick={e => e.stopPropagation()}>
-                      <Button variant="secondary" className="text-[11px] min-h-[44px] flex-1 bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => setUsuarioSelecionado(u)}>
-                        <Activity className="w-3.5 h-3.5 mr-1.5" /> Histórico
-                      </Button>
-
-                      {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO' || u.role === 'AUXILIAR_OPERACIONAL') && (
-                        <Button variant="secondary" className="text-[11px] min-h-[44px] flex-1 bg-success/10 text-success border-success/20 hover:bg-success/20 rounded-xl justify-center" onClick={() => handleAbrirQrModal(u)}>
-                          <QrCode className="w-3.5 h-3.5 mr-1.5" /> QR Code
+                      <div className="mt-5 flex gap-2 flex-wrap border-t border-dashed border-border/60 pt-4" onClick={e => e.stopPropagation()}>
+                        <Button variant="secondary" className="text-[11px] min-h-[44px] flex-1 min-w-[30%] bg-surface border-border/60 shadow-sm rounded-xl justify-center" onClick={() => setUsuarioSelecionado(u)}>
+                          <Activity className="w-3.5 h-3.5 mr-1.5" /> Histórico
                         </Button>
-                      )}
-                    </div>
+
+                        {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO' || u.role === 'AUXILIAR_OPERACIONAL') && (
+                          <Button variant="secondary" className="text-[11px] min-h-[44px] flex-1 min-w-[30%] bg-success/10 text-success border-success/20 hover:bg-success/20 rounded-xl justify-center" onClick={() => handleAbrirQrModal(u)}>
+                            <QrCode className="w-3.5 h-3.5 mr-1.5" /> QR Code
+                          </Button>
+                        )}
+
+                        {(currentUser?.role === 'ADMIN' || currentUser?.role === 'RH') && u.id !== currentUser?.id && u.status === 'ATIVO' && (
+                          <Button variant="secondary" className="text-[11px] min-h-[44px] flex-1 min-w-[30%] bg-error/5 text-error border-error/20 hover:bg-error/10 rounded-xl justify-center" onClick={() => setUsuarioParaInativar(u)}>
+                            <UserMinus className="w-3.5 h-3.5 mr-1.5" /> Inativar
+                          </Button>
+                        )}
+                      </div>
                   </div>
                 </div>
               )}
             />
           </div>
         )}
+
+        <ConfirmModal
+          isOpen={!!usuarioParaInativar}
+          onCancel={() => setUsuarioParaInativar(null)}
+          onConfirm={async () => {
+            if (usuarioParaInativar) {
+              try {
+                await excluirUsuario(usuarioParaInativar.id);
+                toast.success('Colaborador inativado com sucesso.');
+                setUsuarioParaInativar(null);
+              } catch (error) {
+                toast.error('Erro ao inativar colaborador.');
+              }
+            }
+          }}
+          title="Inativar Colaborador"
+          description={`Tem certeza que deseja inativar o colaborador ${usuarioParaInativar?.nome}? O login dele será bloqueado imediatamente.`}
+          confirmLabel="Inativar Colaborador"
+          variant="danger"
+        />
       </div>
     </PullToRefresh>
   );

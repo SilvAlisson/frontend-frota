@@ -58,7 +58,7 @@ function SidebarContent({ onClose, user }: SidebarContentProps) {
         title="Encerrar Sessão"
         description="Tem certeza que deseja fechar a sua sessão e sair do sistema?"
         confirmLabel="Sair do Sistema"
-        confirmVariant="danger"
+        variant="danger"
       />
 
       {/* Topo do Sidebar - Foto do Usuário e Nome */}

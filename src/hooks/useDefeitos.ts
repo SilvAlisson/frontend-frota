@@ -72,6 +72,7 @@ export function useDefeitos(status?: 'ABERTO' | 'EM_ANALISE' | 'RESOLVIDO') {
   return {
     defeitos: query.data || [],
     isLoading: query.isLoading,
+    isError: query.isError,
     refetch: query.refetch,
     contagemAtiva: countAtivosQuery.data || 0,
     registrarDefeito: registrarMutation,

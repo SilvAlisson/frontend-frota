@@ -5,6 +5,8 @@ import type { RadarCard } from '../../hooks/useRadarSST';
 import { AlertTriangle, Clock, CalendarCheck, ShieldAlert, User } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { format } from 'date-fns';
+import { Skeleton } from '../ui/Skeleton';
+import { Callout } from '../ui/Callout';
 
 const COLUNAS = [
   { id: 'CRITICO', titulo: 'Crítico (Vencido / < 15 dias)', icone: <ShieldAlert className="w-5 h-5 text-error" />, corHeader: 'bg-error-soft border-error/30' },
@@ -14,7 +16,7 @@ const COLUNAS = [
 ];
 
 export function RadarSSMA() {
-  const { cards, isLoading, agendarItem } = useRadarSST();
+  const { cards, isLoading, isError, agendarItem, refetch } = useRadarSST();
   const [board, setBoard] = useState<Record<string, RadarCard[]>>({
     CRITICO: [], ALERTA: [], ATENCAO: [], AGENDADO: []
   });
@@ -59,12 +61,44 @@ export function RadarSSMA() {
       await agendarItem({ userId: movedCard.userId, tipo: movedCard.tipo, nomeExigencia: movedCard.nomeExigencia, status: 'AGENDADO' });
     } else if (sourceColumnId === 'AGENDADO') {
       // Remover agendamento 
-      await agendarItem({ userId: movedCard.userId, tipo: movedCard.tipo, nomeExigencia: movedCard.nomeExigencia, status: 'REMOVIDO' }); // O status != AGENDADO fará ele recalcular a coluna base original depois do invalidate
+      await agendarItem({ userId: movedCard.userId, tipo: movedCard.tipo, nomeExigencia: movedCard.nomeExigencia, status: 'REMOVIDO' });
     }
   };
 
   if (isLoading) {
-    return <div className="p-8 text-center text-text-muted">Carregando Radar SSMA...</div>;
+    return (
+      <div className="w-full h-full overflow-x-auto pb-4">
+        <div className="flex gap-4 min-w-max h-full items-start">
+          {COLUNAS.map(col => (
+            <div key={col.id} className="w-80 flex flex-col h-full max-h-[800px]">
+              <div className={`flex items-center gap-2 p-3 rounded-t-lg border border-b-0 ${col.corHeader}`}>
+                {col.icone}
+                <h3 className="font-semibold text-text-main">{col.titulo}</h3>
+              </div>
+              <div className="flex-1 overflow-y-auto p-2 bg-surface border border-border rounded-b-lg min-h-[150px]">
+                {[1, 2, 3].map(i => (
+                  <Skeleton key={i} variant="card" className="h-32 w-full mb-3" />
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="p-8 text-center animate-in fade-in">
+        <Callout 
+          variant="danger" 
+          title="Falha ao carregar Radar SSMA"
+          action={<button onClick={() => refetch()} className="font-bold underline ml-4 hover:opacity-80">Tentar Novamente</button>}
+        >
+          Não foi possível conectar com o servidor para buscar os dados do Radar SST.
+        </Callout>
+      </div>
+    );
   }
 
   return (

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { 
   Key, Droplets, Users, LogOut, ChevronRight, 
   Wrench, Activity, AlertTriangle, ShieldCheck, Navigation,
-  BatteryCharging, Clock, CheckCircle2, QrCode, Truck
+  BatteryCharging, Clock, QrCode, Truck
 } from 'lucide-react';
 
 // Modais & Componentes
@@ -25,7 +25,6 @@ import { PullToRefresh } from './ui/PullToRefresh';
 import { SmartFAB } from './ui/SmartFAB';
 import { Callout } from './ui/Callout';
 import { EmptyState } from './ui/EmptyState';
-import { Skeleton } from './ui/Skeleton';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Sun, Moon } from 'lucide-react';
@@ -131,7 +130,12 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
             const { usuarios = [], isError: isErrorUsuarios } = useUsuarios();
             const { data: veiculos = [], isError: isErrorVeiculos } = useVeiculos();
             const { data: jornadasAbertas = [], refetch: refetchJornadas, isLoading: loadingJornadas, isError: isErrorJornadas } = useJornadasAtivas();
-            const { contagemAtiva: defeitosAtivos, refetch: refetchDefeitos, isLoading: loadingDefeitos, isError: isErrorDefeitos } = useDefeitos();
+            const { contagemAtiva: defeitosAtivos, refetch: refetchDefeitos, isError: isErrorDefeitos } = useDefeitos();
+
+            const handleRefresh = async () => {
+              refetchJornadas();
+              if (refetchDefeitos) refetchDefeitos();
+            };
 
             // Error handling for critical data
             if (isErrorJornadas || isErrorDefeitos || isErrorUsuarios || isErrorVeiculos) {
@@ -169,11 +173,6 @@ export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
     // Métricas HUD
     const frotaDisponivel = Math.max(veiculosAtivos.length - equipeNaRua, 0);
     const frotaUsoPercent = veiculosAtivos.length ? Math.round((equipeNaRua / veiculosAtivos.length) * 100) : 0;
-
-    const handleRefresh = async () => {
-      refetchJornadas();
-      if (refetchDefeitos) refetchDefeitos();
-    };
 
     // --- VIEW: DASHBOARD TÁTICO BENTO-GRID ---
     if (view === 'DASHBOARD') {

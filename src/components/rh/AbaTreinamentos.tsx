@@ -12,7 +12,7 @@ import { Textarea } from '../ui/Textarea';
 import {
     Trash2, AlertTriangle, Loader2,
     CheckCircle2, FileSpreadsheet, Plus, GraduationCap,
-    UploadCloud, QrCode, Printer, X
+    UploadCloud, Printer, X
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useModalStore } from '../../hooks/useModalStore';
