@@ -28,6 +28,7 @@ const editarUsuarioSchema = z.object({
   email: z.string().email().toLowerCase(),
   matricula: z.string().optional().nullable(),
   role: z.enum(ROLES),
+  regimeTrabalho: z.enum(['TURNO', 'ADM', 'NENHUM']).optional(),
   cargoId: z.string().optional().nullable(),
   cnhNumero: z.string().optional().nullable(),
   cnhCategoria: z.string().optional().nullable(),
@@ -44,6 +45,7 @@ interface UserUpdatePayload {
   email: string;
   matricula: string | null;
   role: string;
+  regimeTrabalho?: string;
   fotoUrl: string | null;
   cargoId: string | null;
   cnhNumero: string | null;
@@ -78,7 +80,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
     formState: { errors, isSubmitting }
   } = useForm<EditarUsuarioFormInput, unknown, EditarUsuarioFormOutput>({
     resolver: zodResolver(editarUsuarioSchema),
-    defaultValues: { nome: '', email: '', matricula: '', role: 'ENCARREGADO', password: '' },
+    defaultValues: { nome: '', email: '', matricula: '', role: 'ENCARREGADO', password: '', regimeTrabalho: 'NENHUM' },
     mode: 'onBlur'
   });
 
@@ -138,6 +140,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
           email: user.email || '',
           matricula: user.matricula || '',
           role: roleValida,
+          regimeTrabalho: user.regimeTrabalho || 'NENHUM',
           password: '',
           cargoId: user.cargoId || (user.cargo as { id?: string } | null)?.id || '',
           cnhNumero: user.cnhNumero || '',
@@ -190,6 +193,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
       email: DOMPurify.sanitize(data.email),
       matricula: data.matricula ? DOMPurify.sanitize(data.matricula) : null,
       role: data.role,
+      regimeTrabalho: data.regimeTrabalho || 'NENHUM',
       fotoUrl: finalFotoUrl,
       cargoId: data.cargoId || null,
       cnhNumero: isOperador && data.cnhNumero ? data.cnhNumero : null,
@@ -344,6 +348,23 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
                 disabled={isLocked}
               />
             </div>
+
+            {roleSelecionada === 'OPERADOR' && (
+              <div>
+                <Select
+                  label="Regime de Trabalho"
+                  options={[
+                    { value: 'NENHUM', label: 'Não se aplica / Outro' },
+                    { value: 'TURNO', label: 'Regime de Turno (06h às 18h)' },
+                    { value: 'ADM', label: 'Regime ADM (07h20 às 16h40)' }
+                  ]}
+                  icon={<Calendar className="w-4 h-4 text-text-muted" />}
+                  {...register('regimeTrabalho')}
+                  error={errors.regimeTrabalho?.message}
+                  disabled={isLocked}
+                />
+              </div>
+            )}
 
             <div className="md:col-span-2">
               <Select

@@ -16,6 +16,7 @@ const novoIntegranteSchema = z.object({
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'Mínimo 6 caracteres').regex(/^(?=.*[A-Za-z])(?=.*\d)/, 'Deve conter letra e número'),
   role: z.enum(['OPERADOR', 'ENCARREGADO', 'AUXILIAR_OPERACIONAL', 'RH', 'COORDENADOR']),
+  regimeTrabalho: z.enum(['TURNO', 'ADM', 'NENHUM']).optional(),
   matricula: z.string().optional().nullable(),
   cargoId: z.string().optional().nullable(),
   cnhNumero: z.string().optional().nullable(),
@@ -38,7 +39,7 @@ export function ModalNovoIntegrante({ isOpen, onClose, onSuccess, cargos }: Moda
 
   const { register, handleSubmit, watch, formState: { errors }, setValue } = useForm<FormData>({
     resolver: zodResolver(novoIntegranteSchema),
-    defaultValues: { role: 'OPERADOR' }
+    defaultValues: { role: 'OPERADOR', regimeTrabalho: 'NENHUM' }
   });
 
   const onSubmit = async (data: FormData) => {
@@ -46,6 +47,7 @@ export function ModalNovoIntegrante({ isOpen, onClose, onSuccess, cargos }: Moda
     try {
       const payload = {
         ...data,
+        regimeTrabalho: data.regimeTrabalho || 'NENHUM',
         cnhValidade: data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
         dataAdmissao: data.dataAdmissao ? new Date(data.dataAdmissao).toISOString() : null,
       };
@@ -88,6 +90,23 @@ export function ModalNovoIntegrante({ isOpen, onClose, onSuccess, cargos }: Moda
             />
             {errors.role && <span className="text-error text-xs mt-1">{errors.role.message}</span>}
           </div>
+
+          {watch('role') === 'OPERADOR' && (
+            <div>
+              <label className="text-sm font-bold text-text-secondary mb-1.5 block">Regime de Trabalho</label>
+              <Select
+                value={watch('regimeTrabalho') || 'NENHUM'}
+                onChange={(e) => setValue('regimeTrabalho', e.target.value as 'TURNO' | 'ADM' | 'NENHUM')}
+                options={[
+                  { value: 'NENHUM', label: 'Não se aplica / Outro' },
+                  { value: 'TURNO', label: 'Regime de Turno (06h às 18h)' },
+                  { value: 'ADM', label: 'Regime ADM (07h20 às 16h40)' }
+                ]}
+                className="h-11"
+              />
+              {errors.regimeTrabalho && <span className="text-error text-xs mt-1">{errors.regimeTrabalho.message}</span>}
+            </div>
+          )}
 
           <div>
             <label className="text-sm font-bold text-text-secondary mb-1.5 block">Cargo</label>

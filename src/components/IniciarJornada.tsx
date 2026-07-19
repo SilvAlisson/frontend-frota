@@ -173,7 +173,7 @@ export function IniciarJornada({
               { value: '', label: 'Selecione o veículo...' },
               ...veiculos
                 .filter(v => v.status !== 'INATIVO')
-                .map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` }))
+                .map(v => ({ value: v.id, label: v.placa }))
             ]}
           />
 

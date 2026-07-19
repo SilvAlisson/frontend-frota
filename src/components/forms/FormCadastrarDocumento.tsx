@@ -141,7 +141,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
 
   const veiculosOptions = [
     { value: "", label: "Nenhum Veículo Específico" },
-    ...(veiculos?.map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` })) || [])
+    ...(veiculos?.map(v => ({ value: v.id, label: v.placa })) || [])
   ];
 
   const isFormLocked = uploading || isPending;

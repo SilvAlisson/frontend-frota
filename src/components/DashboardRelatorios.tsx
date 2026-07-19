@@ -107,7 +107,7 @@ export function DashboardRelatorios() {
   ], []);
 
   const opcoesVeiculos = useMemo(() => {
-    const list = veiculos.map((v: Veiculo) => ({ value: v.id, label: `${extrairPlaca(v.placa)} - ${v.modelo}` }));
+    const list = veiculos.map((v: Veiculo) => ({ value: v.id, label: extrairPlaca(v.placa) }));
     return [{ value: '', label: 'Visão Global (Todas as Placas)' }, ...list];
   }, [veiculos]);
 

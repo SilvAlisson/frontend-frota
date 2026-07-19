@@ -41,7 +41,7 @@ export function Step1DadosGerais() {
   const veiculosOpcoes = useMemo(() =>
     veiculos
       .filter(v => v.status !== 'INATIVO')
-      .map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` })),
+      .map(v => ({ value: v.id, label: v.placa })),
     [veiculos]
   );
 

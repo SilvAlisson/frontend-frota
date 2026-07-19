@@ -62,7 +62,7 @@ export function FormPlanoManutencao({ onSuccess, onCancel }: FormPlanoManutencao
   // Mapeamento para Select
   const veiculosOptions = useMemo(() => veiculos.map(v => ({
     value: v.id,
-    label: `${v.placa} - ${v.modelo}`
+    label: v.placa
   })), [veiculos]);
 
   const intervaloOptions = useMemo(() => tiposIntervalo.map(t => ({

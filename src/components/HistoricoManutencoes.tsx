@@ -123,7 +123,7 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
 
   const veiculosOptions = useMemo(() => [
     { value: "", label: "Todos os Veículos" },
-    ...veiculos.map(v => ({ value: v.id, label: `${extrairPlaca(v.placa)} - ${v.modelo}` }))
+    ...veiculos.map(v => ({ value: v.id, label: extrairPlaca(v.placa) }))
   ], [veiculos]);
 
   const fornecedoresOptions = useMemo(() => [

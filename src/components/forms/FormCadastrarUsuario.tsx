@@ -38,6 +38,7 @@ const usuarioSchema = z.object({
   password: z.string().min(6, "Mínimo 6 caracteres"),
   matricula: z.string().optional().nullable(),
   role: z.enum(ROLES, { error: "Função inválida" }),
+  regimeTrabalho: z.enum(['TURNO', 'ADM', 'NENHUM']).optional(),
   dataAdmissao: z.string().min(1, "Data de admissão obrigatória"),
   cargoId: z.string().min(1, "Cargo obrigatório"),
 
@@ -85,6 +86,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
     resolver: zodResolver(usuarioSchema),
     defaultValues: {
       role: 'OPERADOR',
+      regimeTrabalho: 'NENHUM',
       cargoId: '',
       cnhNumero: '',
       cnhCategoria: '',
@@ -157,6 +159,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       matricula: data.matricula ? DOMPurify.sanitize(data.matricula) : null,
       fotoUrl: finalFotoUrl,
       cargoId: data.cargoId,
+      regimeTrabalho: data.regimeTrabalho || 'NENHUM',
       cnhNumero: isOp && data.cnhNumero ? data.cnhNumero : null,
       cnhCategoria: isOp && data.cnhCategoria ? data.cnhCategoria : null,
       cnhValidade: isOp && data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
@@ -305,6 +308,23 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
                 disabled={isSubmitting}
               />
             </div>
+
+            {roleSelecionada === 'OPERADOR' && (
+              <div>
+                <Select
+                  label="Regime de Trabalho"
+                  options={[
+                    { value: 'NENHUM', label: 'Não se aplica / Outro' },
+                    { value: 'TURNO', label: 'Regime de Turno (06h às 18h)' },
+                    { value: 'ADM', label: 'Regime ADM (07h20 às 16h40)' }
+                  ]}
+                  {...register('regimeTrabalho')}
+                  error={errors.regimeTrabalho?.message}
+                  disabled={isSubmitting}
+                />
+              </div>
+            )}
+
 
             <div>
               <Input

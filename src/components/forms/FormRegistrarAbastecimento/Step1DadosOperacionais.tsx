@@ -22,6 +22,11 @@ export function Step1DadosOperacionais() {
   const veiculoIdSelecionado = watch('veiculoId');
   const kmAtualVisual = watch('kmAtual');
 
+  // Lógica para max date local (evitar datas futuras)
+  const agoraLocal = new Date();
+  agoraLocal.setMinutes(agoraLocal.getMinutes() - agoraLocal.getTimezoneOffset());
+  const maxDateTime = agoraLocal.toISOString().slice(0, 16);
+
   // Lógica para disparar o Callout de aviso
   const kmAtualNum = Number(kmAtualVisual?.replace(/\D/g, '')) || 0;
   const isKmInvalido = ultimoKm > 0 && kmAtualNum > 0 && kmAtualNum < ultimoKm;
@@ -29,7 +34,7 @@ export function Step1DadosOperacionais() {
   const veiculoOptions = useMemo(() =>
     veiculos
       .filter(v => v.status !== 'INATIVO')
-      .map(v => ({ value: v.id, label: `${v.placa} - ${v.modelo}` })),
+      .map(v => ({ value: v.id, label: v.placa })),
     [veiculos]
   );
 
@@ -123,6 +128,7 @@ export function Step1DadosOperacionais() {
             label="Data e Hora"
             type="datetime-local"
             icon={<Calendar className="w-4 h-4" />}
+            max={maxDateTime}
             {...register('dataHora')}
             error={errors.dataHora?.message as string}
             disabled={isLocked}

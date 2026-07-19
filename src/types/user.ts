@@ -1,5 +1,6 @@
 export type UserRole = 'ADMIN' | 'ENCARREGADO' | 'OPERADOR' | 'RH' | 'COORDENADOR' | 'AUXILIAR_OPERACIONAL';
 export type StatusOperador = 'ATIVO' | 'FERIAS' | 'ATESTADO' | 'AFASTADO';
+export type RegimeTrabalho = 'TURNO' | 'ADM' | 'NENHUM';
 
 export type CategoriaCNH = 'A' | 'B' | 'C' | 'D' | 'E' | 'AB' | 'AC' | 'AD' | 'AE';
 
@@ -16,6 +17,7 @@ export interface User {
   loginToken?: string | null;
   status?: StatusOperador;
   permiteOperacao?: boolean;
+  regimeTrabalho?: RegimeTrabalho;
 
   cnhNumero?: string | null;
   cnhCategoria?: CategoriaCNH | string | null;

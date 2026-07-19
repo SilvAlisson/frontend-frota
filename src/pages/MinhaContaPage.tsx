@@ -11,6 +11,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { api } from '../services/api';
+import { handleApiError } from '../utils/errorHandler';
 import {
     User, Shield, Key, Smartphone, Monitor, Trash2,
     Plus, Lock, Eye, EyeOff, CheckCircle, Fingerprint,
@@ -251,48 +252,50 @@ export function MinhaContaPage() {
             <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
 
                 {/* ── SEÇÃO: Perfil ─────────────────────────────────────── */}
-                <motion.section
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-surface/50 border border-border/40 rounded-3xl p-6 backdrop-blur-sm"
-                >
-                    <div className="flex items-center gap-3 mb-5">
-                        <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-                            <User className="w-4 h-4 text-primary" />
-                        </div>
-                        <h2 className="text-base font-black text-text-main uppercase tracking-widest">Perfil</h2>
-                    </div>
-
-                    <div className="flex items-center gap-4 mb-6">
-                        <Avatar nome={user.nome} url={user.fotoUrl} className="w-16 h-16 text-xl flex-shrink-0" />
-                        <div>
-                            <p className="text-xl font-black text-text-main">{user.nome}</p>
-                            <p className="text-sm text-text-muted">{user.email}</p>
-                            <span className="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold text-primary uppercase tracking-wider">
-                                {roleLabel[user.role] || user.role}
-                            </span>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-3">
-                        {user.matricula && (
-                            <div className="bg-surface-hover/50 rounded-2xl p-3">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-1">Matrícula</p>
-                                <p className="text-sm font-bold text-text-main">{user.matricula}</p>
+                {user.role !== 'OPERADOR' && (
+                    <motion.section
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="bg-surface/50 border border-border/40 rounded-3xl p-6 backdrop-blur-sm"
+                    >
+                        <div className="flex items-center gap-3 mb-5">
+                            <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                                <User className="w-4 h-4 text-primary" />
                             </div>
-                        )}
-                        {(user as { cargo?: { nome?: string } | string }).cargo && (
-                            <div className="bg-surface-hover/50 rounded-2xl p-3">
-                                <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-1">Cargo</p>
-                                <p className="text-sm font-bold text-text-main">
-                                    {typeof (user as { cargo?: { nome?: string } | string }).cargo === 'string'
-                                        ? (user as { cargo?: string }).cargo
-                                        : (user as { cargo?: { nome?: string } }).cargo?.nome}
-                                </p>
+                            <h2 className="text-base font-black text-text-main uppercase tracking-widest">Perfil</h2>
+                        </div>
+
+                        <div className="flex items-center gap-4 mb-6">
+                            <Avatar nome={user.nome} url={user.fotoUrl} className="w-16 h-16 text-xl flex-shrink-0" />
+                            <div>
+                                <p className="text-xl font-black text-text-main">{user.nome}</p>
+                                <p className="text-sm text-text-muted">{user.email}</p>
+                                <span className="inline-flex items-center gap-1 mt-1 px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-xs font-bold text-primary uppercase tracking-wider">
+                                    {roleLabel[user.role] || user.role}
+                                </span>
                             </div>
-                        )}
-                    </div>
-                </motion.section>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            {user.matricula && (
+                                <div className="bg-surface-hover/50 rounded-2xl p-3">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-1">Matrícula</p>
+                                    <p className="text-sm font-bold text-text-main">{user.matricula}</p>
+                                </div>
+                            )}
+                            {(user as { cargo?: { nome?: string } | string }).cargo && (
+                                <div className="bg-surface-hover/50 rounded-2xl p-3">
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-text-muted mb-1">Cargo</p>
+                                    <p className="text-sm font-bold text-text-main">
+                                        {typeof (user as { cargo?: { nome?: string } | string }).cargo === 'string'
+                                            ? (user as { cargo?: string }).cargo
+                                            : (user as { cargo?: { nome?: string } }).cargo?.nome}
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </motion.section>
+                )}
 
                 {/* ── SEÇÃO: Dispositivos Biométricos ───────────────────── */}
                 <motion.section
