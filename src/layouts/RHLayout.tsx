@@ -53,6 +53,7 @@ function SidebarContentRH({ onClose, user }: { onClose?: () => void, user: any }
       <div className="flex flex-col items-center justify-center pt-8 pb-6 border-b border-border/60 shrink-0 relative bg-surface">
         {onClose && (
           <Button variant="ghost" size="icon"
+            aria-label="Fechar menu"
             onClick={onClose} 
             className="absolute top-4 right-4 xl:hidden p-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-lg transition-colors"
           >
@@ -162,6 +163,7 @@ export function RHLayout() {
         <header className="flex items-center justify-between px-4 sm:px-6 h-[88px] bg-background/80 backdrop-blur-xl sticky top-0 z-30 shrink-0 border-b border-border/40">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon"
+                aria-label="Abrir menu"
                 onClick={() => setIsSidebarOpen(true)}
                 className="xl:hidden p-2 -ml-2 text-text-main hover:bg-surface-hover rounded-xl shrink-0"
             >
@@ -185,9 +187,9 @@ export function RHLayout() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon"
+                  aria-label="Alternar tema"
                   onClick={toggleTheme}
                   className="p-2 text-text-muted hover:text-primary transition-colors bg-surface border border-border/50 shadow-sm rounded-xl"
-                  aria-label="Alternar Tema"
                 >
                   {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
                 </Button>
@@ -198,9 +200,9 @@ export function RHLayout() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon"
+                  aria-label="Alterar senha"
                   onClick={() => setIsSenhaModalOpen(true)}
                   className="p-2 text-text-muted hover:text-primary transition-colors bg-surface border border-border/50 shadow-sm rounded-xl"
-                  aria-label="Alterar Senha"
                 >
                   <KeyRound className="w-4 h-4" />
                 </Button>
@@ -211,9 +213,9 @@ export function RHLayout() {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon"
+                  aria-label="Sair"
                   onClick={() => setIsLogoutModalOpen(true)}
                   className="p-2 text-text-muted hover:text-error transition-colors bg-surface border border-border/50 shadow-sm rounded-xl"
-                  aria-label="Sair"
                 >
                   <LogOut className="w-4 h-4" />
                 </Button>

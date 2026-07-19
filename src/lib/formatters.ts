@@ -1,4 +1,4 @@
-﻿
+
 /**
  * Formata uma string para o padrão de Placa Mercosul (ABC1D23) ou Antiga (ABC-1234)
  */
@@ -28,8 +28,9 @@ export const formatarPlaca = (value: string) => {
 };
 
 /**
- * Formata um número para o padrão de Moeda Real (BRL)
- * Aceita números brutos ou strings e converte para R$ 1.500,00
+ * Formata um número para o padrão de Moeda Real (BRL).
+ * Aceita número bruto (ex: 1500.5) ou string formatada (ex: "R$ 1.500,00").
+ * Uso padrão: formatBRL(1500) → "R$ 1.500,00"
  */
 export const formatarDinheiro = (value: string | number) => {
   if (!value) return '';
@@ -53,6 +54,42 @@ export const formatarDinheiro = (value: string | number) => {
 };
 
 /**
+ * Alias direto para formatação de moeda (número -> "R$ X.XXX,XX").
+ * Use este nos gráficos e tabelas que recebem `number` puro.
+ */
+export const formatBRL = (value: number) =>
+  (Number(value) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+/**
+ * Formata um número inteiro como quilômetros (ex: 152430 → "152.430 KM")
+ */
+export const formatKm = (value: number) =>
+  `${(Number(value) || 0).toLocaleString('pt-BR')} KM`;
+
+/**
+ * Formata eficiência km/l (ex: 10.5 → "10,5 km/l")
+ */
+export const formatKml = (value: number, casas = 1) =>
+  `${(Number(value) || 0).toLocaleString('pt-BR', {
+    minimumFractionDigits: casas,
+    maximumFractionDigits: casas,
+  })} km/l`;
+
+/**
+ * Formata um número com separadores pt-BR (ex: 152430 → "152.430")
+ */
+export const formatNumero = (value: number, casasDecimais = 0) =>
+  (Number(value) || 0).toLocaleString('pt-BR', {
+    minimumFractionDigits: casasDecimais,
+    maximumFractionDigits: casasDecimais,
+  });
+
+/**
+ * Formata custo por km (ex: 2.5 → "R$ 2,50 / km")
+ */
+export const formatCustoKm = (value: number) => `${formatBRL(value)} / km`;
+
+/**
  * Extrai o valor numérico bruto de uma string formatada como Dinheiro
  * Ex: "R$ 1.500,00" -> 1500.00 (Pronto para salvar no Prisma)
  */
@@ -63,4 +100,25 @@ export const desformatarDinheiro = (value: string) => {
   return Number(stringNumerica) || 0;
 };
 
+/**
+ * Formata uma data ISO para o padrão brasileiro (ex: "2025-07-19T14:00:00Z" → "19/07/2025 14:00")
+ */
+export const formatDataHora = (isoDate: string | Date) => {
+  if (!isoDate) return '--/--/----';
+  return new Date(isoDate).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+/**
+ * Formata uma data ISO para o padrão de data curta (ex: "19/07/2025")
+ */
+export const formatData = (isoDate: string | Date) => {
+  if (!isoDate) return '--/--/----';
+  return new Date(isoDate).toLocaleDateString('pt-BR');
+};
 

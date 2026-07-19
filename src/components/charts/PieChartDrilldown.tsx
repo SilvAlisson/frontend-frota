@@ -1,5 +1,7 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import type { TooltipProps } from 'recharts';
 import type { DrilldownDataPoint, MetricType } from '../../types/analytics';
+import { formatBRL, formatKml } from '../../lib/formatters';
 
 const CHART_COLORS = [
   '#2F80ED', '#EB5757', '#7CB518', '#8E44AD', '#F2994A', '#06b6d4', 
@@ -13,20 +15,16 @@ interface PieChartDrilldownProps {
 }
 
 export function PieChartDrilldown({ data, metric, onClickSlice }: PieChartDrilldownProps) {
-  const formatBRL = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
-
   const formatValue = (value: number) => {
     if (metric === 'KM_TOTAL') return `${value.toLocaleString('pt-BR')} km`;
-    if (metric === 'EFICIENCIA') return `${value.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km/l`;
+    if (metric === 'EFICIENCIA') return formatKml(value);
     if (metric === 'CUSTO_KM') return `${formatBRL(value)} / km`;
     return formatBRL(value);
   };
 
   const total = data.reduce((acc, item) => acc + item.value, 0);
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
     if (active && payload && payload.length) {
       const dataPoint = payload[0].payload as DrilldownDataPoint;
       const percentage = total > 0 ? ((dataPoint.value / total) * 100).toFixed(1) : '0.0';
@@ -41,10 +39,11 @@ export function PieChartDrilldown({ data, metric, onClickSlice }: PieChartDrilld
     return null;
   };
 
-  const CustomLegend = ({ payload }: any) => {
+  interface LegendPayloadEntry { value: string; color: string; }
+  const CustomLegend = ({ payload }: { payload?: LegendPayloadEntry[] }) => {
     return (
       <ul className="flex flex-wrap justify-center gap-x-4 gap-y-2 mt-2">
-        {payload.map((entry: any, index: number) => {
+        {(payload ?? []).map((entry, index: number) => {
           const dataPoint = data.find(d => d.name === entry.value);
           const percentage = dataPoint && total > 0 ? ((dataPoint.value / total) * 100).toFixed(1) : '0.0';
           
@@ -74,7 +73,7 @@ export function PieChartDrilldown({ data, metric, onClickSlice }: PieChartDrilld
           <Tooltip content={<CustomTooltip />} />
           <Legend content={<CustomLegend />} verticalAlign="bottom" />
           <Pie
-            data={data as any[]}
+            data={data}
             cx="50%"
             cy="45%"
             innerRadius={0}

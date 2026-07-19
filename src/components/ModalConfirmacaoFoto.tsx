@@ -3,11 +3,12 @@ import { usePhotoSubmit } from '../hooks/usePhotoSubmit';
 import { comprimirImagem } from '../utils/imageUtils';
 import { Button } from './ui/Button';
 import { Modal } from './ui/Modal';
-import { toast } from 'sonner';
 import { hapticError } from '../lib/haptics';
+import { toast } from 'sonner';
+import { logger } from '../lib/logger';
 import { Camera, Loader2, Check, AlertCircle } from 'lucide-react';
 import { ModalAlertaSSMA } from './rh/ModalAlertaSSMA';
-import { logger } from '../lib/logger';
+import axios from 'axios';
 
 // Estilos padronizados Premium
 const fileInputContainer = "relative border-2 border-dashed border-border/60 rounded-3xl p-4 hover:bg-surface-hover transition-all duration-300 cursor-pointer group hover:border-primary/50 flex flex-col items-center justify-center min-h-[280px] overflow-hidden bg-surface shadow-sm";
@@ -105,14 +106,18 @@ export function ModalConfirmacaoFoto<T extends Record<string, unknown>>({
       });
       onSuccess(data);
       safeOnClose();
-    } catch (error: any) {
-      if (error.response?.status === 403 && error.response?.data?.bloqueios) {
-        hapticError();
-        setBloqueiosSSMA(error.response.data.bloqueios);
-        setModalSSMAOpen(true);
-        return; // Interrompe o fluxo e não exibe o toast genérico
+    } catch (err: unknown) {
+      // axios.isAxiosError é o type guard correto para erros HTTP tipados
+      if (axios.isAxiosError(err) && err.response?.status === 403) {
+        const data = err.response.data as { bloqueios?: string[] };
+        if (data.bloqueios) {
+          hapticError();
+          setBloqueiosSSMA(data.bloqueios);
+          setModalSSMAOpen(true);
+          return; // Interrompe o fluxo e não exibe o toast genérico
+        }
       }
-      logger.apiError(error, 'Erro ao enviar foto. Tente novamente.');
+      logger.apiError(err, 'Erro ao enviar foto. Tente novamente.');
     }
   };
 

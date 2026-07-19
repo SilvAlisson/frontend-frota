@@ -98,12 +98,12 @@ export function DossieIntegranteHub() {
 
         {/* Horizontal Tabs */}
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none mt-6">
-          {[
+          {([
             { id: 'treinamentos', label: 'Treinamentos', icon: GraduationCap },
             { id: 'aso', label: 'Saúde (ASO)', icon: HeartPulse },
             { id: 'cadastral', label: 'Cadastro', icon: UserCircle }
-          ].map(tab => (
-            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)}
+          ] as const).map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={cn(
                 "flex items-center gap-2 px-5 py-3 rounded-xl font-bold whitespace-nowrap transition-all",
                 activeTab === tab.id ? "bg-primary text-white shadow-md" : "bg-surface border border-border/60 text-text-secondary hover:bg-surface-hover hover:text-text-main"

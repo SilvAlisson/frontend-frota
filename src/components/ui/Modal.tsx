@@ -59,7 +59,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
               className
             )}
             style={{
-              maxHeight: 'calc(100svh - 2rem)',
+              maxHeight: 'calc(100dvh - 2rem)',
               paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))'
             }}
             aria-describedby={undefined}

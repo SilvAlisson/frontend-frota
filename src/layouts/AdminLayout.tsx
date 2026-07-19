@@ -65,6 +65,7 @@ function SidebarContent({ onClose, user }: SidebarContentProps) {
       <div className="flex flex-col items-center justify-center pt-8 pb-6 border-b border-border/60 shrink-0 relative bg-surface">
         {onClose && (
           <Button variant="ghost" size="icon"
+            aria-label="Fechar menu"
             onClick={onClose} 
             className="absolute top-4 right-4 xl:hidden p-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-lg transition-colors"
           >
@@ -274,6 +275,7 @@ export function AdminLayout() {
         {!isShareMode && (
           <div className="absolute top-4 left-4 z-40 xl:hidden">
             <Button variant="ghost" size="icon"
+                aria-label="Abrir menu"
                 onClick={(e) => {
                   e.currentTarget.blur();
                   setIsSidebarOpen(true);

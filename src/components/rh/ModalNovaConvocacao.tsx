@@ -86,7 +86,7 @@ export function ModalNovaConvocacao({ isOpen, onClose, onSuccess, programasExist
 
       toast.success('Convocação disparada com sucesso!');
       onSuccess();
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.apiError(error, 'Erro ao criar convocação.');
     } finally {
       setLoading(false);

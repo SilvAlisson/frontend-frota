@@ -60,14 +60,9 @@ export function RedefinirSenha() {
 
       setIsSuccess(true);
       toast.success('Senha redefinida com sucesso!');
-    } catch (err: any) {
-      logger.error('Falha ao redefinir senha', err);
-      const msg = err?.message || err?.error?.message;
-      if (msg?.toLowerCase().includes('token') || msg?.toLowerCase().includes('invalid')) {
-        toast.error('O link de redefinição expirou ou é inválido. Por favor, solicite novamente.');
-      } else {
-        toast.error('Ocorreu um erro ao tentar redefinir a senha.');
-      }
+    } catch (err: unknown) {
+      // logger.error não existe — o correto é logger.apiError que usa handleApiError/axios.isAxiosError
+      logger.apiError(err, 'O link de redefinição expirou ou é inválido. Por favor, solicite novamente.');
     } finally {
       setIsSubmitting(false);
     }
@@ -84,7 +79,7 @@ export function RedefinirSenha() {
       <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-50">
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="rounded-full bg-surface-hover/50 backdrop-blur-sm border border-border/50 text-text-muted hover:text-text-main w-10 h-10">
+            <Button variant="ghost" size="icon" aria-label="Alternar tema" onClick={toggleTheme} className="rounded-full bg-surface-hover/50 backdrop-blur-sm border border-border/50 text-text-muted hover:text-text-main w-10 h-10">
               {theme === 'light' ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
             </Button>
           </TooltipTrigger>

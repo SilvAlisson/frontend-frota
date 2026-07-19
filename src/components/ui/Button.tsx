@@ -58,21 +58,25 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
 
     return (
       <button
-        className={cn(buttonVariants({ variant, size, className }))}
+        className={cn(buttonVariants({ variant, size, className }), "relative")}
         ref={ref}
         onPointerDown={handlePointerDown}
-        //  Fica disabled se estiver carregando
+        // Fica disabled se estiver carregando
         disabled={disabled || isLoading}
         {...props}
       >
-        {/* Se estiver carregando, mostra o spinner. Se não, mostra o ícone (caso exista) */}
-        {isLoading ? (
-          <Loader2 className="w-5 h-5 animate-spin shrink-0" />
-        ) : (
-          icon && <span className="shrink-0">{icon}</span>
+        {/* Se estiver carregando, mostra o spinner centralizado e absoluto */}
+        {isLoading && (
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+            <Loader2 className="w-5 h-5 animate-spin" />
+          </span>
         )}
         
-        {children}
+        {/* Mantém o conteúdo invisível para não perder a largura original */}
+        <span className={cn("flex items-center gap-2", isLoading && "opacity-0")}>
+          {icon && <span className="shrink-0">{icon}</span>}
+          {children}
+        </span>
       </button>
     );
   }

@@ -13,6 +13,7 @@ export function LoginFormQR({ onSubmit, isSubmitting }: LoginFormQRProps) {
 
   const onManualQrSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!qrManualToken.trim()) return;
     await onSubmit(qrManualToken);
   };
 
@@ -44,7 +45,7 @@ export function LoginFormQR({ onSubmit, isSubmitting }: LoginFormQRProps) {
         variant="secondary" 
         className="w-full h-14 text-sm font-black btn-tactile group border-border/60 hover:border-primary/50 text-text-main shadow-sm rounded-2xl uppercase tracking-widest"
         isLoading={isSubmitting}
-        disabled={isSubmitting || !qrManualToken.trim()}
+        disabled={isSubmitting}
       >
         {isSubmitting ? 'Iniciando Sessão...' : (
           <>Iniciar Sessão <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform text-primary" /></>

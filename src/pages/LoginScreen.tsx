@@ -94,6 +94,7 @@ export function LoginScreen() {
       <Button
         variant="glass"
         size="icon"
+        aria-label="Alternar tema"
         onClick={toggleTheme}
         className="fixed top-6 right-6 z-50 rounded-2xl text-text-main hover:text-primary"
         title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}

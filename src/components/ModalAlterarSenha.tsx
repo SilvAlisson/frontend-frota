@@ -64,14 +64,12 @@ export function ModalAlterarSenha({ isOpen, onClose }: ModalAlterarSenhaProps) {
 
       toast.success('Senha atualizada com sucesso! Seus outros acessos foram desconectados por segurança.');
       handleClose();
-    } catch (err: any) {
-      logger.apiError(err, 'Falha ao alterar senha');
-      
-      const errorMessage = err?.message || err?.error?.message;
-      if (errorMessage?.toLowerCase().includes('password') || errorMessage?.toLowerCase().includes('senha')) {
+    } catch (err: unknown) {
+      // logger.apiError já usa axios.isAxiosError internamente e despacha o toast correto
+      const message = logger.apiError(err, 'Falha ao alterar senha');
+      // Customização específica: override do toast para senhas incorretas
+      if (message.toLowerCase().includes('password') || message.toLowerCase().includes('senha')) {
         toast.error('A senha atual está incorreta.');
-      } else {
-        toast.error('Ocorreu um erro ao tentar alterar a senha. Tente novamente.');
       }
     } finally {
       setIsLoading(false);

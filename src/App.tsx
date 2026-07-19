@@ -8,6 +8,8 @@ import { NetworkStatus } from './components/ui/NetworkStatus';
 import { InstallPromptBanner } from './components/InstallPromptBanner';
 import { ModalProvider } from './components/ui/ModalProvider';
 import { BiometryOnboardingBanner } from './components/BiometryOnboardingBanner';
+import { MotionConfig } from 'framer-motion';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
 // 🛠️ DevTools: Carregado dinamicamente APENAS em desenvolvimento.
 // Em produção, o Vite faz tree-shaking e ZERO bytes desta lib vão para o bundle.
@@ -61,11 +63,15 @@ function AppContent() {
 
 function App() {
   return (
-    <ThemeProvider>
-      <TooltipProvider delayDuration={300}>
-        <AppContent />
-      </TooltipProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <MotionConfig reducedMotion="user">
+        <ThemeProvider>
+          <TooltipProvider delayDuration={300}>
+            <AppContent />
+          </TooltipProvider>
+        </ThemeProvider>
+      </MotionConfig>
+    </ErrorBoundary>
   );
 }
 
