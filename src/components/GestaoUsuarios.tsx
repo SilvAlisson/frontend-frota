@@ -8,6 +8,7 @@ import { Select } from './ui/Select';
 import { Badge } from './ui/Badge';
 import { DossieIntegrante } from './rh/DossieIntegrante';
 import { ModalQrCode } from './ModalQrCode';
+import { ModalCrachaTreinamentos } from './ModalCrachaTreinamentos';
 import { ModalGerarEtiquetas } from './rh/ModalGerarEtiquetas';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { exportarParaExcel } from '../utils';
@@ -29,7 +30,7 @@ const getCargoName = (cargo: unknown): string => {
 };
 
 import {
-  QrCode, Search, Download, Users, Printer, Activity, UserPlus, UserMinus
+  QrCode, Search, Download, Users, Printer, Activity, UserPlus, UserMinus, GraduationCap
 } from 'lucide-react';
 
 import { PageHeader } from './ui/PageHeader';
@@ -73,6 +74,16 @@ export function GestaoUsuarios() {
           user={{ ...user, loginToken: user.loginToken ?? undefined }}
           onClose={() => closeModal(modalId)}
           onUpdate={() => refetch()}
+        />
+      )
+    });
+
+  const handleAbrirCrachaTreinamentos = (user: User) => {
+    const modalId = openModal('CUSTOM', {
+      content: (
+        <ModalCrachaTreinamentos
+          user={user}
+          onClose={() => closeModal(modalId)}
         />
       )
     });
@@ -245,7 +256,7 @@ export function GestaoUsuarios() {
                     </div>
                   </td>
                   <td className={`${TableStyles.td} justify-end pr-8`}>
-                    <div className="grid grid-cols-3 gap-1.5 w-fit ml-auto opacity-60 group-hover:opacity-100 transition-opacity">
+                    <div className="grid grid-cols-4 gap-1.5 w-fit ml-auto opacity-60 group-hover:opacity-100 transition-opacity">
                       
                       {/* Botão focado no Histórico do Integrante */}
                       <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => setUsuarioSelecionado(u)} title="Ver Histórico Operacional" aria-label={`Ver histórico de ${u.nome}`}>
@@ -268,6 +279,12 @@ export function GestaoUsuarios() {
                         </Button>
                       ) : (
                         <div />
+                      )}
+                      {/* Crachá de Treinamentos — ADMIN, RH e ENCARREGADO */}
+                      {(currentUser?.role === 'ADMIN' || currentUser?.role === 'RH' || currentUser?.role === 'ENCARREGADO') && (
+                        <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-warning hover:bg-warning/10 rounded-xl" onClick={() => handleAbrirCrachaTreinamentos(u)} title="Crachá de Treinamentos" aria-label={`Crachá de treinamentos de ${u.nome}`}>
+                          <GraduationCap className="w-5 h-5" />
+                        </Button>
                       )}
 
                     </div>
@@ -315,6 +332,12 @@ export function GestaoUsuarios() {
                         {(u.role === 'OPERADOR' || u.role === 'ENCARREGADO' || u.role === 'AUXILIAR_OPERACIONAL') && (
                           <Button variant="secondary" className="text-[11px] min-h-[44px] flex-1 min-w-[30%] bg-success/10 text-success border-success/20 hover:bg-success/20 rounded-xl justify-center" onClick={() => handleAbrirQrModal(u)}>
                             <QrCode className="w-3.5 h-3.5 mr-1.5" /> QR Code
+                          </Button>
+                        )}
+
+                        {(currentUser?.role === 'ADMIN' || currentUser?.role === 'RH' || currentUser?.role === 'ENCARREGADO') && (
+                          <Button variant="secondary" className="text-[11px] min-h-[44px] flex-1 min-w-[30%] bg-warning/10 text-warning border-warning/20 hover:bg-warning/20 rounded-xl justify-center" onClick={() => handleAbrirCrachaTreinamentos(u)}>
+                            <GraduationCap className="w-3.5 h-3.5 mr-1.5" /> Crachá SST
                           </Button>
                         )}
 
