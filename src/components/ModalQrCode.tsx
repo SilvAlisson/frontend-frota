@@ -94,7 +94,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   });
 
   return (
-    <Modal isOpen={true} onClose={onClose} title="Identidade Funcional" className="max-w-[380px]">
+    <Modal isOpen={true} onClose={onClose} title="Qr Code Treinamentos" className="max-w-[380px]">
       <div className="flex flex-col items-center gap-6">
         <div
           ref={cardRef}
