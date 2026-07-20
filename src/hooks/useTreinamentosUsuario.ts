@@ -72,7 +72,12 @@ function normalizeDateString(raw: string): string {
     return raw.includes('/') ? raw.split('/').reverse().join('-') : raw;
 }
 
-function getCellValue(row: any, colIndex: number): string | null {
+/** Interface mínima da Row do ExcelJS — tipamos apenas o que realmente usamos */
+interface ExcelRow {
+    getCell(col: number): { value: unknown };
+}
+
+function getCellValue(row: ExcelRow, colIndex: number): string | null {
     const cell = row.getCell(colIndex).value;
     if (cell instanceof Date) return cell.toISOString().split('T')[0];
     if (cell != null && typeof cell === 'object') {
@@ -251,7 +256,7 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
         toast.promise(promise, {
             loading: 'Lendo planilha...',
             success: (n) => `${n} certificação(ões) importada(s) com sucesso!`,
-            error: (e: any) => `Erro na importação: ${e.message}`,
+            error: (e: unknown) => `Erro na importação: ${e instanceof Error ? e.message : 'erro desconhecido'}`,
         });
         return promise;
     };

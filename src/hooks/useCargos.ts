@@ -15,7 +15,7 @@ export function useCargos() {
       try {
         const { data } = await api.get('/cargos');
         return data;
-      } catch (err: any) {
+      } catch (err: unknown) {
         toast.error('Erro ao carregar os cargos');
         return [];
       }

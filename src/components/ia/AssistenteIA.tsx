@@ -169,7 +169,7 @@ export function AssistenteIA() {
           }
         }
 
-        return parsed.map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+        return (parsed as MensagemChat[]).map((m) => ({ ...m, timestamp: new Date(m.timestamp) }));
       }
     } catch (e) {
       logger.error('Erro ao ler histórico da IA', e);

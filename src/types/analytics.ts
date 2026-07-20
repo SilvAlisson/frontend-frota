@@ -22,5 +22,7 @@ export interface TicketDrilldown {
   placa?: string;
   servicoProduto: string;
   valor: number;
-  [key: string]: any;
+  // Campos opcionais retornados dependendo da categoria (MANUTENCAO inclui os)
+  os?: string;
+  quantidade?: number;
 }

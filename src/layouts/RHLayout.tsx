@@ -12,6 +12,7 @@ import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { Button } from '../components/ui/Button';
 import { Avatar } from '../components/ui/Avatar';
 import { Tooltip, TooltipTrigger, TooltipContent } from '../components/ui/Tooltip';
+import type { User } from '../types';
 import { useTheme } from '../contexts/ThemeContext';
 import { cn } from '../lib/utils';
 import { AssistenteIA } from '../components/ia/AssistenteIA';
@@ -44,7 +45,7 @@ const MENU_ITEMS_RH: MenuGroup[] = [
   }
 ];
 
-function SidebarContentRH({ onClose, user }: { onClose?: () => void, user: any }) {
+function SidebarContentRH({ onClose, user }: { onClose?: () => void, user: User }) {
   const location = useLocation();
 
   return (
