@@ -1,4 +1,4 @@
-﻿import { useRef, useMemo } from "react";
+import { useRef, useMemo } from "react";
 import { Modal } from "./ui/Modal";
 import { QRCodeSVG } from "qrcode.react";
 import { Avatar } from "./ui/Avatar";
@@ -158,6 +158,22 @@ export function ModalCrachaTreinamentos({ user, onClose }: ModalCrachaTreinament
               fgColor="#0f2b46"
             />
           </div>
+
+          {/* Rótulo ao lado direito do escudo, na base do crachá */}
+          <p
+            className="absolute font-black uppercase"
+            style={{
+              bottom: "3%",
+              left: "36%",
+              fontSize: "clamp(5px, 2cqi, 8.5px)",
+              color: "#1b4332",
+              letterSpacing: "0.2em",
+              whiteSpace: "nowrap",
+              lineHeight: 1,
+            }}
+          >
+            AUDITORIA · SST & TREINAMENTOS
+          </p>
         </div>
 
         {/* AÇÕES */}

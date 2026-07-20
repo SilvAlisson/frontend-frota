@@ -193,6 +193,22 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               </div>
             )}
           </div>
+
+          {/* Rótulo ao lado direito do escudo, na base do crachá */}
+          <p
+            className="absolute font-black uppercase"
+            style={{
+              bottom: '3%',
+              left: '36%',
+              fontSize: 'clamp(5px, 2cqi, 8.5px)',
+              color: '#1b4332',
+              letterSpacing: '0.2em',
+              whiteSpace: 'nowrap',
+              lineHeight: 1,
+            }}
+          >
+            IDENTIDADE FUNCIONAL
+          </p>
         </div>
 
         <div className="w-full flex flex-col gap-3">
