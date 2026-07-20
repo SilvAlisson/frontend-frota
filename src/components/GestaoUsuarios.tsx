@@ -262,7 +262,7 @@ export function GestaoUsuarios() {
                       )}
 
                       {/* Botão para inativar usuário (Apenas ADMIN/RH e não pode ser si mesmo) */}
-                      {(currentUser?.role === 'ADMIN' || currentUser?.role === 'RH') && u.id !== currentUser?.id && u.status === 'ATIVO' ? (
+                      {(currentUser?.role === 'ADMIN' || currentUser?.role === 'RH') && u.id !== currentUser?.id && !u.nome.startsWith('[INATIVO]') ? (
                         <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-xl" onClick={() => setUsuarioParaInativar(u)} title="Inativar Colaborador" aria-label={`Inativar ${u.nome}`}>
                           <UserMinus className="w-5 h-5" />
                         </Button>
@@ -318,7 +318,7 @@ export function GestaoUsuarios() {
                           </Button>
                         )}
 
-                        {(currentUser?.role === 'ADMIN' || currentUser?.role === 'RH') && u.id !== currentUser?.id && u.status === 'ATIVO' && (
+                        {(currentUser?.role === 'ADMIN' || currentUser?.role === 'RH') && u.id !== currentUser?.id && !u.nome.startsWith('[INATIVO]') && (
                           <Button variant="secondary" className="text-[11px] min-h-[44px] flex-1 min-w-[30%] bg-error/5 text-error border-error/20 hover:bg-error/10 rounded-xl justify-center" onClick={() => setUsuarioParaInativar(u)}>
                             <UserMinus className="w-3.5 h-3.5 mr-1.5" /> Inativar
                           </Button>
