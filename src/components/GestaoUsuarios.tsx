@@ -257,7 +257,7 @@ export function GestaoUsuarios() {
                     </div>
                   </td>
                   <td className={`${TableStyles.td} justify-end pr-8`}>
-                    <div className="grid grid-cols-4 gap-1.5 w-fit ml-auto opacity-60 group-hover:opacity-100 transition-opacity">
+                    <div className="grid grid-cols-2 gap-1 w-fit ml-auto opacity-60 group-hover:opacity-100 transition-opacity">
                       
                       {/* Botão focado no Histórico do Integrante */}
                       <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl" onClick={() => setUsuarioSelecionado(u)} title="Ver Histórico Operacional" aria-label={`Ver histórico de ${u.nome}`}>
