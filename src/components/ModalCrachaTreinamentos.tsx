@@ -24,6 +24,14 @@ export function ModalCrachaTreinamentos({ user, onClose }: ModalCrachaTreinament
   // URL pública do dossiê de treinamentos — a mesma gerada pelo ModalTreinamentosUsuario
   const publicUrl = `${window.location.origin}/dossie/${user.id}`;
 
+  // user.cargo pode ser um objeto { nome: string } ou uma string simples
+  const cargoNome = (() => {
+    const c = user.cargo;
+    if (!c) return user.role;
+    if (typeof c === 'string') return c;
+    return (c as { nome?: string }).nome || user.role;
+  })();
+
   const nameParts = useMemo(() => (user.nome || "").trim().split(" "), [user.nome]);
   const primeiroNome = nameParts[0] || "";
   const sobrenome = nameParts.slice(1).join(" ");
@@ -136,7 +144,7 @@ export function ModalCrachaTreinamentos({ user, onClose }: ModalCrachaTreinament
               whiteSpace: "nowrap",
             }}
           >
-            {user.cargo ?? user.role}
+            {cargoNome}
           </p>
 
           {/* QR Code de treinamentos */}
