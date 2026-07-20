@@ -30,3 +30,8 @@ build_output.txt
 *.cjs
 *.ps1
 DESIGN.md
+
+# Ignorar pastas de ambiente local, QA e ferramentas
+Downloads/
+.impeccable/
+docs/qa/
