@@ -76,7 +76,7 @@ export function ModalCrachaTreinamentos({ user, onClose }: ModalCrachaTreinament
           style={{
             containerType: "inline-size",
             aspectRatio: "427 / 585",
-            backgroundImage: "url(/cracha-bg.png)",
+            backgroundImage: "url(/cracha-bg-Auxiliar-Op.Equipamentos.png)",
             backgroundSize: "100% 100%",
             backgroundRepeat: "no-repeat",
             borderRadius: "5.5%",
@@ -180,7 +180,7 @@ export function ModalCrachaTreinamentos({ user, onClose }: ModalCrachaTreinament
               lineHeight: 1,
             }}
           >
-            AUDITORIA · SST & TREINAMENTOS
+            QR CODE DE TREINAMENTOS
           </p>
         </div>
 
