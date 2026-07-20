@@ -77,6 +77,7 @@ export function GestaoUsuarios() {
         />
       )
     });
+  };
 
   const handleAbrirCrachaTreinamentos = (user: User) => {
     const modalId = openModal('CUSTOM', {
