@@ -32,6 +32,14 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
   const tokenFinal = tokenAtual || user.matricula || undefined;
   const loginUrl = tokenFinal ? `${baseUrl}/login?magicToken=${tokenFinal}` : '';
 
+  // user.cargo pode ser um objeto { nome: string } ou uma string simples
+  const cargoNome = (() => {
+    const c = user.cargo;
+    if (!c) return "FUNÇÃO NÃO CADASTRADA";
+    if (typeof c === 'string') return c;
+    return (c as { nome?: string }).nome || "FUNÇÃO NÃO CADASTRADA";
+  })();
+
   const nameParts = useMemo(() => (user.nome || '').trim().split(' '), [user.nome]);
   const primeiroNome = nameParts[0] || '';
   const sobrenome = nameParts.slice(1).join(' ');
@@ -166,7 +174,7 @@ export function ModalQrCode({ user, onClose, onUpdate }: ModalQrCodeProps) {
               whiteSpace: 'nowrap',
             }}
           >
-            {user.role}
+            {cargoNome}
           </p>
 
           <div

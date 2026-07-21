@@ -275,7 +275,7 @@ export function GestaoUsuarios() {
 
                       {/* Botão para inativar usuário (Apenas ADMIN/RH e não pode ser si mesmo) */}
                       {(currentUser?.role === 'ADMIN' || currentUser?.role === 'RH') && u.id !== currentUser?.id && !u.nome.startsWith('[INATIVO]') ? (
-                        <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-xl" onClick={() => setUsuarioParaInativar(u)} title="Inativar Colaborador" aria-label={`Inativar ${u.nome}`}>
+                        <Button variant="ghost" className="h-11 w-11 !p-0 text-text-muted hover:text-error hover:bg-error/10 rounded-xl" onClick={() => setUsuarioParaInativar(u)} title="Inativar Integrante" aria-label={`Inativar ${u.nome}`}>
                           <UserMinus className="w-5 h-5" />
                         </Button>
                       ) : (
@@ -362,16 +362,16 @@ export function GestaoUsuarios() {
             if (usuarioParaInativar) {
               try {
                 await excluirUsuario(usuarioParaInativar.id);
-                toast.success('Colaborador inativado com sucesso.');
+                toast.success('Integrante inativado com sucesso.');
                 setUsuarioParaInativar(null);
               } catch (error) {
-                toast.error('Erro ao inativar colaborador.');
+                toast.error('Erro ao inativar integrante.');
               }
             }
           }}
-          title="Inativar Colaborador"
-          description={`Tem certeza que deseja inativar o colaborador ${usuarioParaInativar?.nome}? O login dele será bloqueado imediatamente.`}
-          confirmLabel="Inativar Colaborador"
+          title="Inativar Integrante"
+          description={`Tem certeza que deseja inativar o integrante ${usuarioParaInativar?.nome}? O login dele será bloqueado imediatamente.`}
+          confirmLabel="Inativar Integrante"
           variant="danger"
         />
       </div>

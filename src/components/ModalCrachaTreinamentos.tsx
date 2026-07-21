@@ -27,9 +27,9 @@ export function ModalCrachaTreinamentos({ user, onClose }: ModalCrachaTreinament
   // user.cargo pode ser um objeto { nome: string } ou uma string simples
   const cargoNome = (() => {
     const c = user.cargo;
-    if (!c) return user.role;
+    if (!c) return "FUNÇÃO NÃO CADASTRADA";
     if (typeof c === 'string') return c;
-    return (c as { nome?: string }).nome || user.role;
+    return (c as { nome?: string }).nome || "FUNÇÃO NÃO CADASTRADA";
   })();
 
   const nameParts = useMemo(() => (user.nome || "").trim().split(" "), [user.nome]);
