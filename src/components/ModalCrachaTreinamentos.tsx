@@ -172,14 +172,15 @@ export function ModalCrachaTreinamentos({ user, onClose }: ModalCrachaTreinament
             className="absolute font-black uppercase"
             style={{
               bottom: "1.8%",
-              left: "36%",
-              fontSize: "clamp(5px, 2cqi, 8.5px)",
+              left: "35.5%",
+              fontSize: "clamp(10px, 2.3cqi, 9.5px)",
               color: "#1b4332",
               letterSpacing: "0.2em",
               lineHeight: 1.5,
+              textAlign: "center",
             }}
           >
-            <span style={{ display: "block" }}>QR CODE DE</span>
+            <span style={{ display: "block" }}>QR CODE</span>
             <span style={{ display: "block" }}>TREINAMENTOS</span>
           </p>
         </div>
@@ -207,7 +208,7 @@ export function ModalCrachaTreinamentos({ user, onClose }: ModalCrachaTreinament
 
         <p className="text-[11px] text-text-muted text-center leading-relaxed -mt-2">
           Este QR Code direciona para o perfil público de treinamentos de{" "}
-          <strong>{primeiroNome}</strong>. Qualquer pessoa com o link pode consultar as validades.
+          <strong>{primeiroNome}</strong>. Qualquer pessoa com o link pode consultar seus treinamentos e validades.
         </p>
       </div>
     </Modal>
