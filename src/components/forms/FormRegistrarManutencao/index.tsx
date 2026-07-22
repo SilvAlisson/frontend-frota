@@ -63,15 +63,15 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
   const nextStep = async () => {
     if (step === 1) {
       // Valida campos da etapa 1 individualmente
-      // Usamos setError manual para garantir que os erros apareçam na tela
-      // mesmo quando o superRefine do schema completo interfere na validação
+      // Usamos setError manual para marcar os campos com erro
+      // e toast.error para garantir feedback visual imediato ao usuário
       const values = methods.getValues();
-      let step1Valid = true;
+      const camposFaltando: string[] = [];
 
       // fornecedorId sempre obrigatório na etapa 1
       if (!values.fornecedorId) {
         methods.setError('fornecedorId', { type: 'manual', message: 'Selecione o fornecedor / oficina' });
-        step1Valid = false;
+        camposFaltando.push('Oficina / Fornecedor');
       } else {
         methods.clearErrors('fornecedorId');
       }
@@ -79,7 +79,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       // data obrigatória
       if (!values.data) {
         methods.setError('data', { type: 'manual', message: 'Data é obrigatória' });
-        step1Valid = false;
+        camposFaltando.push('Data do Serviço');
       } else {
         methods.clearErrors('data');
       }
@@ -87,7 +87,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       // Veículo obrigatório apenas se alvo === 'VEICULO'
       if (values.alvo === 'VEICULO' && !values.veiculoId) {
         methods.setError('veiculoId', { type: 'manual', message: 'Selecione o veículo' });
-        step1Valid = false;
+        camposFaltando.push('Veículo');
       } else {
         methods.clearErrors('veiculoId');
       }
@@ -95,15 +95,16 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       // numeroCA obrigatório apenas se alvo === 'OUTROS'
       if (values.alvo === 'OUTROS' && !values.numeroCA) {
         methods.setError('numeroCA', { type: 'manual', message: 'Informe o nº do CA / Série' });
-        step1Valid = false;
+        camposFaltando.push('Nº CA / Série');
       } else {
         methods.clearErrors('numeroCA');
       }
 
-      if (step1Valid) {
-        setStep(s => s + 1);
-      } else {
+      if (camposFaltando.length > 0) {
+        toast.error(`Preencha os campos obrigatórios: ${camposFaltando.join(', ')}`);
         hapticError();
+      } else {
+        setStep(s => s + 1);
       }
     } else if (step === 2) {
       // Na etapa 2, valida somente os itens
@@ -111,6 +112,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       let step2Valid = true;
 
       if (!itens || itens.length === 0) {
+        toast.error('Adicione pelo menos um item de serviço / peça');
         step2Valid = false;
       } else {
         itens.forEach((item, idx) => {
@@ -127,6 +129,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
             step2Valid = false;
           }
         });
+        if (!step2Valid) toast.error('Verifique os itens: produto, quantidade e valor são obrigatórios');
       }
 
       if (step2Valid) {

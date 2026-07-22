@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useFormContext, useWatch } from 'react-hook-form';
+import { useFormContext, Controller, useWatch } from 'react-hook-form';
 import { Fuel, User, Gauge, Calendar, AlertTriangle } from 'lucide-react';
 import { Select } from '../../ui/Select';
 import { Input } from '../../ui/Input';
@@ -11,7 +11,7 @@ import type { AbastecimentoFormValues } from './schema';
 import type { Veiculo } from '../../../types';
 
 export function Step1DadosOperacionais() {
-  const { register, watch, setValue, getValues, formState: { errors, isSubmitting } } = useFormContext<AbastecimentoFormValues>();
+  const { register, control, setValue, formState: { errors, isSubmitting } } = useFormContext<AbastecimentoFormValues>();
   
   const { data: veiculos = [], isLoading: loadV } = useVeiculos();
   const { usuarios = [], isLoading: loadU } = useUsuarios();
@@ -19,8 +19,9 @@ export function Step1DadosOperacionais() {
   const isLocked = isSubmitting || loadV || loadU;
   const [ultimoKm, setUltimoKm] = useState<number>(0);
 
-  const veiculoIdSelecionado = useWatch({ name: 'veiculoId' });
-  const kmAtualVisual = useWatch({ name: 'kmAtual' });
+  // useWatch garante subscription reativa via Controller
+  const veiculoIdSelecionado = useWatch({ control, name: 'veiculoId' });
+  const kmAtualVisual = useWatch({ control, name: 'kmAtual' });
 
   // Lógica para max date local (evitar datas futuras)
   const agoraLocal = new Date();
@@ -62,12 +63,11 @@ export function Step1DadosOperacionais() {
       .map(u => ({ value: u.id, label: u.nome }));
   }, [usuarios, isVeiculoPesado]);
 
+  // Atualiza o KM de referência quando o veículo muda (via useWatch reativo)
   useEffect(() => {
     if (veiculoIdSelecionado) {
       const v = veiculos.find((v: Veiculo) => v.id === veiculoIdSelecionado);
-      if (v) {
-        setUltimoKm(v.ultimoKm || 0);
-      }
+      setUltimoKm(v?.ultimoKm || 0);
     } else {
       setUltimoKm(0);
     }
@@ -82,30 +82,42 @@ export function Step1DadosOperacionais() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         
-        <Select
-          label="Veículo da Frota"
-          options={veiculoOptions}
-          icon={<Fuel className="w-4 h-4" />}
-          {...register('veiculoId', {
-            onChange: (e) => {
-              // Atualiza o ultimoKm diretamente ao selecionar o veículo
-              const selectedId = e.target.value;
-              const v = veiculos.find((veic: Veiculo) => veic.id === selectedId);
-              setUltimoKm(v?.ultimoKm || 0);
-            }
-          })}
-          error={errors.veiculoId?.message as string}
-          disabled={isLocked}
+        {/* Controller garante integração correta com Radix UI Select */}
+        <Controller
+          control={control}
+          name="veiculoId"
+          render={({ field }) => (
+            <Select
+              label="Veículo da Frota"
+              options={veiculoOptions}
+              icon={<Fuel className="w-4 h-4" />}
+              value={field.value ?? ""}
+              onChange={(e) => {
+                field.onChange(e.target.value);
+                // Atualiza KM de referência diretamente (não depende do useEffect)
+                const v = veiculos.find((veic: Veiculo) => veic.id === e.target.value);
+                setUltimoKm(v?.ultimoKm || 0);
+              }}
+              error={errors.veiculoId?.message as string}
+              disabled={isLocked}
+            />
+          )}
         />
 
-        {/* containerClassName="md:col-span-2" */}
-        <Select
-          label={isVeiculoPesado ? "Operador / Motorista" : "Integrante Responsável"}
-          options={operadorOptions}
-          icon={<User className="w-4 h-4" />}
-          {...register('operadorId')}
-          error={errors.operadorId?.message as string}
-          disabled={isLocked}
+        <Controller
+          control={control}
+          name="operadorId"
+          render={({ field }) => (
+            <Select
+              label={isVeiculoPesado ? "Operador / Motorista" : "Integrante Responsável"}
+              options={operadorOptions}
+              icon={<User className="w-4 h-4" />}
+              value={field.value ?? ""}
+              onChange={(e) => field.onChange(e.target.value)}
+              error={errors.operadorId?.message as string}
+              disabled={isLocked}
+            />
+          )}
         />
 
         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-5 mt-2">

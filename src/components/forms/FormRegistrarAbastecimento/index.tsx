@@ -69,40 +69,44 @@ export function FormRegistrarAbastecimento({
     
     if (step === 1) {
       // Valida campos da etapa 1 individualmente com setError manual
-      // para garantir que os erros aparecam em vermelho embaixo de cada campo
+      // para garantir que os erros apareçam em vermelho embaixo de cada campo
       const values = methods.getValues();
-      let step1Valid = true;
+      const camposFaltando: string[] = [];
 
       if (!values.veiculoId) {
         methods.setError('veiculoId', { type: 'manual', message: 'Selecione o veículo' });
-        step1Valid = false;
+        camposFaltando.push('Veículo');
       } else {
         methods.clearErrors('veiculoId');
       }
 
       if (!values.operadorId) {
         methods.setError('operadorId', { type: 'manual', message: 'Selecione o integrante responsável' });
-        step1Valid = false;
+        camposFaltando.push('Integrante Responsável');
       } else {
         methods.clearErrors('operadorId');
       }
 
       if (!values.kmAtual || values.kmAtual.trim() === '') {
         methods.setError('kmAtual', { type: 'manual', message: 'KM do painel é obrigatório' });
-        step1Valid = false;
+        camposFaltando.push('KM do Painel');
       } else {
         methods.clearErrors('kmAtual');
       }
 
       if (!values.dataHora) {
         methods.setError('dataHora', { type: 'manual', message: 'Data e hora são obrigatórias' });
-        step1Valid = false;
+        camposFaltando.push('Data e Hora');
       } else {
         methods.clearErrors('dataHora');
       }
 
-      if (step1Valid) setStep(2);
-      else hapticError();
+      if (camposFaltando.length > 0) {
+        toast.error(`Preencha os campos obrigatórios: ${camposFaltando.join(', ')}`);
+        hapticError();
+      } else {
+        setStep(2);
+      }
 
     } else if (step === 2) {
       const fornecedorId = methods.getValues('fornecedorId');
