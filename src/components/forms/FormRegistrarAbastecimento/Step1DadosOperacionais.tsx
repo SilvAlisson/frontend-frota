@@ -67,14 +67,11 @@ export function Step1DadosOperacionais() {
       const v = veiculos.find((v: Veiculo) => v.id === veiculoIdSelecionado);
       if (v) {
         setUltimoKm(v.ultimoKm || 0);
-        if (v.ultimoKm && !getValues('kmAtual')) {
-          setValue('kmAtual', formatKmVisual(String(v.ultimoKm)), { shouldValidate: true });
-        }
       }
     } else {
       setUltimoKm(0);
     }
-  }, [veiculoIdSelecionado, veiculos, setValue, getValues]);
+  }, [veiculoIdSelecionado, veiculos]);
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
@@ -85,20 +82,11 @@ export function Step1DadosOperacionais() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         
-        {/* containerClassName="md:col-span-2"  */}
         <Select
           label="Veículo da Frota"
           options={veiculoOptions}
           icon={<Fuel className="w-4 h-4" />}
-          {...register('veiculoId', {
-            onChange: (e) => {
-              const selectedId = e.target.value;
-              const v = veiculos.find((veic: Veiculo) => veic.id === selectedId);
-              if (v && v.ultimoKm) {
-                setValue('kmAtual', formatKmVisual(String(v.ultimoKm)), { shouldValidate: true });
-              }
-            }
-          })}
+          {...register('veiculoId')}
           error={errors.veiculoId?.message as string}
           disabled={isLocked}
         />
@@ -117,12 +105,16 @@ export function Step1DadosOperacionais() {
           <div className="flex flex-col">
             <Input
               label="KM do Painel (Hodômetro)"
-              type="tel" // 🚨 Ajuste crucial: Mantido para garantir o teclado numérico inquebrável
+              type="tel"
               icon={<Gauge className="w-4 h-4 text-primary" />} 
               inputMode="numeric"
-              {...register('kmAtual')}
-              onChange={(e) => setValue("kmAtual", formatKmVisual(e.target.value))}
-              placeholder={ultimoKm > 0 ? `Ref: ${ultimoKm}` : "Ex: 15.000"}
+              {...register('kmAtual', {
+                onChange: (e) => {
+                  const formatted = formatKmVisual(e.target.value);
+                  setValue('kmAtual', formatted, { shouldValidate: true });
+                }
+              })}
+              placeholder={ultimoKm > 0 ? `Ex: ${ultimoKm.toLocaleString('pt-BR')}` : "Ex: 15.000"}
               error={errors.kmAtual?.message as string}
               className="font-mono text-lg font-black text-primary"
               disabled={isLocked}

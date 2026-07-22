@@ -2,18 +2,16 @@ import { z } from 'zod';
 
 export const abastecimentoSchema = z.object({
   veiculoId: z.string().min(1, "Selecione o veículo"),
-  operadorId: z.string().min(1, "Selecione o motorista"),
-  fornecedorId: z.string().min(1, "Selecione o posto"),
-  kmAtual: z.string().min(1, "KM Obrigatório"),
-  dataHora: z.string(),
+  operadorId: z.string().min(1, "Selecione o integrante responsável"),
+  kmAtual: z.string().min(1, "KM do painel é obrigatório"),
+  dataHora: z.string().min(1, "Data e hora são obrigatórias"),
   observacoes: z.string().optional(),
+  fornecedorId: z.string().optional(),
   itens: z.array(z.object({
-    produtoId: z.string().min(1, "Selecione o produto"),
-    quantidade: z.union([z.string(), z.number()])
-      .transform((val) => Number(val))
-      .refine((val: number) => !isNaN(val) && val >= 0.01, "Qtd inválida"),
-    valorUnitario: z.string().min(1, "Valor inválido"), 
-  })).min(1, "Adicione pelo menos um item")
+    produtoId: z.string().optional(),
+    quantidade: z.union([z.string(), z.number()]).optional(),
+    valorUnitario: z.string().optional(), 
+  })).optional()
 });
 
 export type AbastecimentoFormValues = z.output<typeof abastecimentoSchema>;

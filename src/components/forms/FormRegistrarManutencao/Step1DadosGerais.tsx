@@ -52,10 +52,7 @@ export function Step1DadosGerais() {
     }
     const veiculo = veiculos.find(v => v.id === veiculoIdSelecionado);
     setUltimoKmRegistrado(veiculo?.ultimoKm || 0);
-    if (veiculo?.ultimoKm && !getValues('kmAtual')) {
-      setValue('kmAtual', formatKmVisual(String(veiculo.ultimoKm)));
-    }
-  }, [veiculoIdSelecionado, alvoSelecionado, veiculos, setValue, getValues]);
+  }, [veiculoIdSelecionado, alvoSelecionado, veiculos]);
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-2">
@@ -133,13 +130,7 @@ export function Step1DadosGerais() {
                   options={veiculosOpcoes}
                   icon={<Truck className="w-4 h-4" />}
                   value={field.value ?? ""}
-                  onChange={(e) => {
-                    field.onChange(e.target.value);
-                    const veic = veiculos.find(v => v.id === e.target.value);
-                    if (veic?.ultimoKm) {
-                      setValue('kmAtual', formatKmVisual(String(veic.ultimoKm)));
-                    }
-                  }}
+                  onChange={(e) => field.onChange(e.target.value)}
                   error={errors.veiculoId?.message}
                   disabled={isLocked}
                 />

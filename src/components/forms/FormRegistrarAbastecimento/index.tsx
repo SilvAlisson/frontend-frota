@@ -72,8 +72,38 @@ export function FormRegistrarAbastecimento({
       if (isValid) setStep(2);
       else hapticError();
     } else if (step === 2) {
-      const isValid = await trigger(['fornecedorId', 'itens']);
-      if (isValid) setStep(3);
+      const fornecedorId = methods.getValues('fornecedorId');
+      const itens = methods.getValues('itens');
+      
+      let step2Valid = true;
+      if (!fornecedorId) {
+        methods.setError('fornecedorId', { type: 'manual', message: 'Selecione o posto / fornecedor' });
+        step2Valid = false;
+      } else {
+        methods.clearErrors('fornecedorId');
+      }
+
+      if (!itens || itens.length === 0) {
+        toast.error('Adicione pelo menos um produto ao abastecimento');
+        step2Valid = false;
+      } else {
+        itens.forEach((item, idx) => {
+          if (!item.produtoId) {
+            methods.setError(`itens.${idx}.produtoId`, { type: 'manual', message: 'Selecione o produto' });
+            step2Valid = false;
+          }
+          if (!item.quantidade || Number(item.quantidade) <= 0) {
+            methods.setError(`itens.${idx}.quantidade`, { type: 'manual', message: 'Quantidade inválida' });
+            step2Valid = false;
+          }
+          if (!item.valorUnitario || desformatarDinheiro(String(item.valorUnitario)) <= 0) {
+            methods.setError(`itens.${idx}.valorUnitario`, { type: 'manual', message: 'Valor unitário inválido' });
+            step2Valid = false;
+          }
+        });
+      }
+
+      if (step2Valid) setStep(3);
       else hapticError();
     } else if (step === 3) {
       await handleSubmit(onSubmit, () => hapticError())(e);
