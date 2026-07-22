@@ -114,7 +114,7 @@ export function Step1DadosOperacionais() {
                   setValue('kmAtual', formatted, { shouldValidate: true });
                 }
               })}
-              placeholder={ultimoKm > 0 ? `Ex: ${ultimoKm.toLocaleString('pt-BR')}` : "Ex: 15.000"}
+              placeholder={ultimoKm > 0 ? `Ref: ${ultimoKm.toLocaleString('pt-BR')}` : "Ex: 15.000"}
               error={errors.kmAtual?.message as string}
               className="font-mono text-lg font-black text-primary"
               disabled={isLocked}

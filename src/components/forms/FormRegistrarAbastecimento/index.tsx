@@ -57,8 +57,8 @@ export function FormRegistrarAbastecimento({
       observacoes: '',
       itens: [{ produtoId: '', quantidade: '0', valorUnitario: '' }]
     },
-    mode: 'onBlur',
-    reValidateMode: 'onBlur', 
+    mode: 'onTouched',
+    reValidateMode: 'onChange',
   });
 
   const { handleSubmit, trigger, formState: { isSubmitting } } = methods;

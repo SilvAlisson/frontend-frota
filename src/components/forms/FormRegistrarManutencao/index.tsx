@@ -54,7 +54,8 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       observacoes: '',
       itens: [{ produtoId: '', quantidade: 1, valorPorUnidade: '' }] 
     },
-    mode: 'onBlur'
+    mode: 'onTouched',
+    reValidateMode: 'onChange'
   });
 
   const { handleSubmit, trigger, reset, formState: { isSubmitting } } = methods;
