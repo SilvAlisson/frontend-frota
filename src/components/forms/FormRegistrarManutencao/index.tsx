@@ -61,16 +61,79 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
   const { handleSubmit, trigger, reset, formState: { isSubmitting } } = methods;
 
   const nextStep = async () => {
-    let isValid = false;
     if (step === 1) {
-      isValid = await trigger(['alvo', 'veiculoId', 'fornecedorId', 'data', 'kmAtual', 'numeroCA', 'tipo']);
+      // Valida campos da etapa 1 individualmente
+      // Usamos setError manual para garantir que os erros apareçam na tela
+      // mesmo quando o superRefine do schema completo interfere na validação
+      const values = methods.getValues();
+      let step1Valid = true;
+
+      // fornecedorId sempre obrigatório na etapa 1
+      if (!values.fornecedorId) {
+        methods.setError('fornecedorId', { type: 'manual', message: 'Selecione o fornecedor / oficina' });
+        step1Valid = false;
+      } else {
+        methods.clearErrors('fornecedorId');
+      }
+
+      // data obrigatória
+      if (!values.data) {
+        methods.setError('data', { type: 'manual', message: 'Data é obrigatória' });
+        step1Valid = false;
+      } else {
+        methods.clearErrors('data');
+      }
+
+      // Veículo obrigatório apenas se alvo === 'VEICULO'
+      if (values.alvo === 'VEICULO' && !values.veiculoId) {
+        methods.setError('veiculoId', { type: 'manual', message: 'Selecione o veículo' });
+        step1Valid = false;
+      } else {
+        methods.clearErrors('veiculoId');
+      }
+
+      // numeroCA obrigatório apenas se alvo === 'OUTROS'
+      if (values.alvo === 'OUTROS' && !values.numeroCA) {
+        methods.setError('numeroCA', { type: 'manual', message: 'Informe o nº do CA / Série' });
+        step1Valid = false;
+      } else {
+        methods.clearErrors('numeroCA');
+      }
+
+      if (step1Valid) {
+        setStep(s => s + 1);
+      } else {
+        hapticError();
+      }
     } else if (step === 2) {
-      isValid = await trigger('itens');
-    }
-    if (isValid) {
-      setStep(s => s + 1);
-    } else {
-      hapticError();
+      // Na etapa 2, valida somente os itens
+      const itens = methods.getValues('itens');
+      let step2Valid = true;
+
+      if (!itens || itens.length === 0) {
+        step2Valid = false;
+      } else {
+        itens.forEach((item, idx) => {
+          if (!item.produtoId) {
+            methods.setError(`itens.${idx}.produtoId` as 'itens.0.produtoId', { type: 'manual', message: 'Selecione o serviço/peça' });
+            step2Valid = false;
+          }
+          if (!item.quantidade || Number(item.quantidade) < 0.01) {
+            methods.setError(`itens.${idx}.quantidade` as 'itens.0.quantidade', { type: 'manual', message: 'Qtd inválida' });
+            step2Valid = false;
+          }
+          if (!item.valorPorUnidade) {
+            methods.setError(`itens.${idx}.valorPorUnidade` as 'itens.0.valorPorUnidade', { type: 'manual', message: 'Valor inválido' });
+            step2Valid = false;
+          }
+        });
+      }
+
+      if (step2Valid) {
+        setStep(s => s + 1);
+      } else {
+        hapticError();
+      }
     }
   };
 

@@ -68,9 +68,42 @@ export function FormRegistrarAbastecimento({
     e.stopPropagation();
     
     if (step === 1) {
-      const isValid = await trigger(['veiculoId', 'operadorId', 'kmAtual', 'dataHora']);
-      if (isValid) setStep(2);
+      // Valida campos da etapa 1 individualmente com setError manual
+      // para garantir que os erros aparecam em vermelho embaixo de cada campo
+      const values = methods.getValues();
+      let step1Valid = true;
+
+      if (!values.veiculoId) {
+        methods.setError('veiculoId', { type: 'manual', message: 'Selecione o veículo' });
+        step1Valid = false;
+      } else {
+        methods.clearErrors('veiculoId');
+      }
+
+      if (!values.operadorId) {
+        methods.setError('operadorId', { type: 'manual', message: 'Selecione o integrante responsável' });
+        step1Valid = false;
+      } else {
+        methods.clearErrors('operadorId');
+      }
+
+      if (!values.kmAtual || values.kmAtual.trim() === '') {
+        methods.setError('kmAtual', { type: 'manual', message: 'KM do painel é obrigatório' });
+        step1Valid = false;
+      } else {
+        methods.clearErrors('kmAtual');
+      }
+
+      if (!values.dataHora) {
+        methods.setError('dataHora', { type: 'manual', message: 'Data e hora são obrigatórias' });
+        step1Valid = false;
+      } else {
+        methods.clearErrors('dataHora');
+      }
+
+      if (step1Valid) setStep(2);
       else hapticError();
+
     } else if (step === 2) {
       const fornecedorId = methods.getValues('fornecedorId');
       const itens = methods.getValues('itens');
@@ -89,15 +122,15 @@ export function FormRegistrarAbastecimento({
       } else {
         itens.forEach((item, idx) => {
           if (!item.produtoId) {
-            methods.setError(`itens.${idx}.produtoId`, { type: 'manual', message: 'Selecione o produto' });
+            methods.setError(`itens.${idx}.produtoId` as 'itens.0.produtoId', { type: 'manual', message: 'Selecione o produto' });
             step2Valid = false;
           }
           if (!item.quantidade || Number(item.quantidade) <= 0) {
-            methods.setError(`itens.${idx}.quantidade`, { type: 'manual', message: 'Quantidade inválida' });
+            methods.setError(`itens.${idx}.quantidade` as 'itens.0.quantidade', { type: 'manual', message: 'Quantidade inválida' });
             step2Valid = false;
           }
           if (!item.valorUnitario || desformatarDinheiro(String(item.valorUnitario)) <= 0) {
-            methods.setError(`itens.${idx}.valorUnitario`, { type: 'manual', message: 'Valor unitário inválido' });
+            methods.setError(`itens.${idx}.valorUnitario` as 'itens.0.valorUnitario', { type: 'manual', message: 'Valor unitário inválido' });
             step2Valid = false;
           }
         });

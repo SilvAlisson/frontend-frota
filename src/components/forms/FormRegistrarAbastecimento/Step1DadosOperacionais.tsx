@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { useFormContext } from 'react-hook-form';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { Fuel, User, Gauge, Calendar, AlertTriangle } from 'lucide-react';
 import { Select } from '../../ui/Select';
 import { Input } from '../../ui/Input';
@@ -19,8 +19,8 @@ export function Step1DadosOperacionais() {
   const isLocked = isSubmitting || loadV || loadU;
   const [ultimoKm, setUltimoKm] = useState<number>(0);
 
-  const veiculoIdSelecionado = watch('veiculoId');
-  const kmAtualVisual = watch('kmAtual');
+  const veiculoIdSelecionado = useWatch({ name: 'veiculoId' });
+  const kmAtualVisual = useWatch({ name: 'kmAtual' });
 
   // Lógica para max date local (evitar datas futuras)
   const agoraLocal = new Date();
@@ -86,7 +86,14 @@ export function Step1DadosOperacionais() {
           label="Veículo da Frota"
           options={veiculoOptions}
           icon={<Fuel className="w-4 h-4" />}
-          {...register('veiculoId')}
+          {...register('veiculoId', {
+            onChange: (e) => {
+              // Atualiza o ultimoKm diretamente ao selecionar o veículo
+              const selectedId = e.target.value;
+              const v = veiculos.find((veic: Veiculo) => veic.id === selectedId);
+              setUltimoKm(v?.ultimoKm || 0);
+            }
+          })}
           error={errors.veiculoId?.message as string}
           disabled={isLocked}
         />
