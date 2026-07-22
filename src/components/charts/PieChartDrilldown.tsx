@@ -23,9 +23,15 @@ export function PieChartDrilldown({ data, metric, onClickSlice }: PieChartDrilld
 
   const total = data.reduce((acc, item) => acc + item.value, 0);
 
+  interface TooltipPayloadItem {
+    payload: DrilldownDataPoint;
+    name?: string;
+    value?: number;
+  }
+
   interface CustomTooltipProps {
     active?: boolean;
-    payload?: any[];
+    payload?: TooltipPayloadItem[];
   }
 
   const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
@@ -77,7 +83,7 @@ export function PieChartDrilldown({ data, metric, onClickSlice }: PieChartDrilld
           <Tooltip content={<CustomTooltip />} />
           <Legend content={<CustomLegend />} verticalAlign="bottom" />
           <Pie
-            data={data as any[]}
+            data={data as Array<DrilldownDataPoint & Record<string, unknown>>}
             cx="50%"
             cy="45%"
             innerRadius={0}
