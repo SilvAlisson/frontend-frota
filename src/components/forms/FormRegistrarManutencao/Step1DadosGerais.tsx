@@ -11,7 +11,7 @@ import { useFornecedores } from '../../../hooks/useFornecedores';
 import type { ManutencaoFormValues } from './schema';
 
 export function Step1DadosGerais() {
-  const { register, setValue, control, formState: { errors, isSubmitting } } = useFormContext<ManutencaoFormValues>();
+  const { register, setValue, getValues, control, formState: { errors, isSubmitting } } = useFormContext<ManutencaoFormValues>();
 
   const { data: veiculos = [], isLoading: loadV } = useVeiculos();
   const { fornecedores = [], isLoading: loadF } = useFornecedores();
@@ -52,7 +52,10 @@ export function Step1DadosGerais() {
     }
     const veiculo = veiculos.find(v => v.id === veiculoIdSelecionado);
     setUltimoKmRegistrado(veiculo?.ultimoKm || 0);
-  }, [veiculoIdSelecionado, alvoSelecionado, veiculos]);
+    if (veiculo?.ultimoKm && !getValues('kmAtual')) {
+      setValue('kmAtual', formatKmVisual(String(veiculo.ultimoKm)));
+    }
+  }, [veiculoIdSelecionado, alvoSelecionado, veiculos, setValue, getValues]);
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300 pb-2">
@@ -130,7 +133,13 @@ export function Step1DadosGerais() {
                   options={veiculosOpcoes}
                   icon={<Truck className="w-4 h-4" />}
                   value={field.value ?? ""}
-                  onChange={(e) => field.onChange(e.target.value)}
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    const veic = veiculos.find(v => v.id === e.target.value);
+                    if (veic?.ultimoKm) {
+                      setValue('kmAtual', formatKmVisual(String(veic.ultimoKm)));
+                    }
+                  }}
                   error={errors.veiculoId?.message}
                   disabled={isLocked}
                 />
