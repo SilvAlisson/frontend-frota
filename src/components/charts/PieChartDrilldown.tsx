@@ -24,7 +24,7 @@ export function PieChartDrilldown({ data, metric, onClickSlice }: PieChartDrilld
 
   const total = data.reduce((acc, item) => acc + item.value, 0);
 
-  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+  const CustomTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
       const dataPoint = payload[0].payload as DrilldownDataPoint;
       const percentage = total > 0 ? ((dataPoint.value / total) * 100).toFixed(1) : '0.0';
@@ -73,7 +73,7 @@ export function PieChartDrilldown({ data, metric, onClickSlice }: PieChartDrilld
           <Tooltip content={<CustomTooltip />} />
           <Legend content={<CustomLegend />} verticalAlign="bottom" />
           <Pie
-            data={data}
+            data={data as any[]}
             cx="50%"
             cy="45%"
             innerRadius={0}
