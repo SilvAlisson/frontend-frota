@@ -1,5 +1,4 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import type { TooltipProps } from 'recharts';
 import type { DrilldownDataPoint, MetricType } from '../../types/analytics';
 import { formatBRL, formatKml } from '../../lib/formatters';
 
@@ -24,7 +23,12 @@ export function PieChartDrilldown({ data, metric, onClickSlice }: PieChartDrilld
 
   const total = data.reduce((acc, item) => acc + item.value, 0);
 
-  const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+  interface CustomTooltipProps {
+    active?: boolean;
+    payload?: any[];
+  }
+
+  const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
     if (active && payload && payload.length) {
       const dataPoint = payload[0].payload as DrilldownDataPoint;
       const percentage = total > 0 ? ((dataPoint.value / total) * 100).toFixed(1) : '0.0';
