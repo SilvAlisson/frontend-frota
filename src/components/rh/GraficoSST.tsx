@@ -1,5 +1,4 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import type { TooltipProps } from 'recharts';
 import { EmptyState } from '../ui/EmptyState';
 import { ShieldAlert } from 'lucide-react';
 
@@ -14,7 +13,22 @@ const getSstColor = (status: string) => {
   return '#94a3b8';
 };
 
-const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+interface TooltipPayloadItem {
+  name: string;
+  value: number;
+  payload: {
+    name: string;
+    value: number;
+    fill?: string;
+  };
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: TooltipPayloadItem[];
+}
+
+const CustomTooltip = ({ active, payload }: CustomTooltipProps) => {
   if (active && payload && payload.length) {
     const data = payload[0];
     return (
