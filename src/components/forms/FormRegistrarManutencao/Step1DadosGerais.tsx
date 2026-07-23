@@ -124,14 +124,14 @@ export function Step1DadosGerais() {
             <Controller
               control={control}
               name="veiculoId"
-              render={({ field }) => (
+              render={({ field, fieldState }) => (
                 <Select
                   label="Veículo"
                   options={veiculosOpcoes}
                   icon={<Truck className="w-4 h-4" />}
                   value={field.value ?? ""}
                   onChange={(e) => field.onChange(e.target.value)}
-                  error={errors.veiculoId?.message}
+                  error={fieldState.error?.message}
                   disabled={isLocked}
                 />
               )}
@@ -190,14 +190,14 @@ export function Step1DadosGerais() {
           <Controller
             control={control}
             name="fornecedorId"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <Select
                 label="Oficina / Fornecedor"
                 options={fornecedoresOpcoes}
                 icon={<Wrench className="w-4 h-4" />}
                 value={field.value ?? ""}
                 onChange={(e) => field.onChange(e.target.value)}
-                error={errors.fornecedorId?.message}
+                error={fieldState.error?.message}
                 disabled={isLocked}
               />
             )}
@@ -208,7 +208,7 @@ export function Step1DadosGerais() {
           <Controller
             control={control}
             name="data"
-            render={({ field }) => (
+            render={({ field, fieldState }) => (
               <DatePicker disableFuture
                 label="Data do Serviço / Fatura"
                 placeholder="Selecione a data"
@@ -216,7 +216,7 @@ export function Step1DadosGerais() {
                 onChange={(newDate) => {
                   field.onChange(newDate ? newDate.toISOString().split('T')[0] : '');
                 }}
-                error={errors.data?.message}
+                error={fieldState.error?.message}
                 disabled={isLocked}
               />
             )}

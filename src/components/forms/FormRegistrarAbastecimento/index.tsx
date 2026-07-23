@@ -74,28 +74,28 @@ export function FormRegistrarAbastecimento({
       const camposFaltando: string[] = [];
 
       if (!values.veiculoId) {
-        methods.setError('veiculoId', { type: 'manual', message: 'Selecione o veículo' });
+        methods.setError('veiculoId', { type: 'manual', message: 'Selecione o veículo' }, { shouldFocus: true });
         camposFaltando.push('Veículo');
       } else {
         methods.clearErrors('veiculoId');
       }
 
       if (!values.operadorId) {
-        methods.setError('operadorId', { type: 'manual', message: 'Selecione o integrante responsável' });
+        methods.setError('operadorId', { type: 'manual', message: 'Selecione o integrante responsável' }, { shouldFocus: true });
         camposFaltando.push('Integrante Responsável');
       } else {
         methods.clearErrors('operadorId');
       }
 
       if (!values.kmAtual || values.kmAtual.trim() === '') {
-        methods.setError('kmAtual', { type: 'manual', message: 'KM do painel é obrigatório' });
+        methods.setError('kmAtual', { type: 'manual', message: 'KM do painel é obrigatório' }, { shouldFocus: true });
         camposFaltando.push('KM do Painel');
       } else {
         methods.clearErrors('kmAtual');
       }
 
       if (!values.dataHora) {
-        methods.setError('dataHora', { type: 'manual', message: 'Data e hora são obrigatórias' });
+        methods.setError('dataHora', { type: 'manual', message: 'Data e hora são obrigatórias' }, { shouldFocus: true });
         camposFaltando.push('Data e Hora');
       } else {
         methods.clearErrors('dataHora');
@@ -114,7 +114,7 @@ export function FormRegistrarAbastecimento({
       
       let step2Valid = true;
       if (!fornecedorId) {
-        methods.setError('fornecedorId', { type: 'manual', message: 'Selecione o posto / fornecedor' });
+        methods.setError('fornecedorId', { type: 'manual', message: 'Selecione o posto / fornecedor' }, { shouldFocus: true });
         step2Valid = false;
       } else {
         methods.clearErrors('fornecedorId');
@@ -126,15 +126,15 @@ export function FormRegistrarAbastecimento({
       } else {
         itens.forEach((item, idx) => {
           if (!item.produtoId) {
-            methods.setError(`itens.${idx}.produtoId` as 'itens.0.produtoId', { type: 'manual', message: 'Selecione o produto' });
+            methods.setError(`itens.${idx}.produtoId` as 'itens.0.produtoId', { type: 'manual', message: 'Selecione o produto' }, { shouldFocus: true });
             step2Valid = false;
           }
           if (!item.quantidade || Number(item.quantidade) <= 0) {
-            methods.setError(`itens.${idx}.quantidade` as 'itens.0.quantidade', { type: 'manual', message: 'Quantidade inválida' });
+            methods.setError(`itens.${idx}.quantidade` as 'itens.0.quantidade', { type: 'manual', message: 'Quantidade inválida' }, { shouldFocus: true });
             step2Valid = false;
           }
           if (!item.valorUnitario || desformatarDinheiro(String(item.valorUnitario)) <= 0) {
-            methods.setError(`itens.${idx}.valorUnitario` as 'itens.0.valorUnitario', { type: 'manual', message: 'Valor unitário inválido' });
+            methods.setError(`itens.${idx}.valorUnitario` as 'itens.0.valorUnitario', { type: 'manual', message: 'Valor unitário inválido' }, { shouldFocus: true });
             step2Valid = false;
           }
         });

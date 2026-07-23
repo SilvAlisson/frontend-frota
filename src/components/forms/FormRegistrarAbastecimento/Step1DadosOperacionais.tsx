@@ -86,7 +86,7 @@ export function Step1DadosOperacionais() {
         <Controller
           control={control}
           name="veiculoId"
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <Select
               label="Veículo da Frota"
               options={veiculoOptions}
@@ -98,7 +98,7 @@ export function Step1DadosOperacionais() {
                 const v = veiculos.find((veic: Veiculo) => veic.id === e.target.value);
                 setUltimoKm(v?.ultimoKm || 0);
               }}
-              error={errors.veiculoId?.message as string}
+              error={fieldState.error?.message}
               disabled={isLocked}
             />
           )}
@@ -107,14 +107,14 @@ export function Step1DadosOperacionais() {
         <Controller
           control={control}
           name="operadorId"
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <Select
               label={isVeiculoPesado ? "Operador / Motorista" : "Integrante Responsável"}
               options={operadorOptions}
               icon={<User className="w-4 h-4" />}
               value={field.value ?? ""}
               onChange={(e) => field.onChange(e.target.value)}
-              error={errors.operadorId?.message as string}
+              error={fieldState.error?.message}
               disabled={isLocked}
             />
           )}

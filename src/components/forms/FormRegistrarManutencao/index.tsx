@@ -70,7 +70,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
 
       // fornecedorId sempre obrigatório na etapa 1
       if (!values.fornecedorId) {
-        methods.setError('fornecedorId', { type: 'manual', message: 'Selecione o fornecedor / oficina' });
+        methods.setError('fornecedorId', { type: 'manual', message: 'Selecione o fornecedor / oficina' }, { shouldFocus: true });
         camposFaltando.push('Oficina / Fornecedor');
       } else {
         methods.clearErrors('fornecedorId');
@@ -78,7 +78,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
 
       // data obrigatória
       if (!values.data) {
-        methods.setError('data', { type: 'manual', message: 'Data é obrigatória' });
+        methods.setError('data', { type: 'manual', message: 'Data é obrigatória' }, { shouldFocus: true });
         camposFaltando.push('Data do Serviço');
       } else {
         methods.clearErrors('data');
@@ -86,7 +86,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
 
       // Veículo obrigatório apenas se alvo === 'VEICULO'
       if (values.alvo === 'VEICULO' && !values.veiculoId) {
-        methods.setError('veiculoId', { type: 'manual', message: 'Selecione o veículo' });
+        methods.setError('veiculoId', { type: 'manual', message: 'Selecione o veículo' }, { shouldFocus: true });
         camposFaltando.push('Veículo');
       } else {
         methods.clearErrors('veiculoId');
@@ -94,7 +94,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
 
       // numeroCA obrigatório apenas se alvo === 'OUTROS'
       if (values.alvo === 'OUTROS' && !values.numeroCA) {
-        methods.setError('numeroCA', { type: 'manual', message: 'Informe o nº do CA / Série' });
+        methods.setError('numeroCA', { type: 'manual', message: 'Informe o nº do CA / Série' }, { shouldFocus: true });
         camposFaltando.push('Nº CA / Série');
       } else {
         methods.clearErrors('numeroCA');
@@ -117,15 +117,15 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       } else {
         itens.forEach((item, idx) => {
           if (!item.produtoId) {
-            methods.setError(`itens.${idx}.produtoId` as 'itens.0.produtoId', { type: 'manual', message: 'Selecione o serviço/peça' });
+            methods.setError(`itens.${idx}.produtoId` as 'itens.0.produtoId', { type: 'manual', message: 'Selecione o serviço/peça' }, { shouldFocus: true });
             step2Valid = false;
           }
           if (!item.quantidade || Number(item.quantidade) < 0.01) {
-            methods.setError(`itens.${idx}.quantidade` as 'itens.0.quantidade', { type: 'manual', message: 'Qtd inválida' });
+            methods.setError(`itens.${idx}.quantidade` as 'itens.0.quantidade', { type: 'manual', message: 'Qtd inválida' }, { shouldFocus: true });
             step2Valid = false;
           }
           if (!item.valorPorUnidade) {
-            methods.setError(`itens.${idx}.valorPorUnidade` as 'itens.0.valorPorUnidade', { type: 'manual', message: 'Valor inválido' });
+            methods.setError(`itens.${idx}.valorPorUnidade` as 'itens.0.valorPorUnidade', { type: 'manual', message: 'Valor inválido' }, { shouldFocus: true });
             step2Valid = false;
           }
         });
