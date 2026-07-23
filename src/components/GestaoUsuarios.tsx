@@ -23,6 +23,17 @@ function getFirstAndLastName(fullName: string) {
   return `${parts[0]} ${parts[parts.length - 1]}`;
 }
 
+function getDisplayName(fullName: string) {
+  const isInativo = fullName.startsWith('[INATIVO]');
+  const cleanName = isInativo ? fullName.replace('[INATIVO]', '').trim() : fullName;
+  const shortName = getFirstAndLastName(cleanName);
+  return isInativo ? `${shortName} (Inativo)` : shortName;
+}
+
+function getCleanName(fullName: string) {
+  return fullName.startsWith('[INATIVO]') ? fullName.replace('[INATIVO]', '').trim() : fullName;
+}
+
 const getCargoName = (cargo: unknown): string => {
   if (!cargo) return '';
   if (typeof cargo === 'string') return cargo;
@@ -30,7 +41,7 @@ const getCargoName = (cargo: unknown): string => {
 };
 
 import {
-  QrCode, Search, Download, Users, Printer, Activity, UserPlus, UserMinus, GraduationCap
+  QrCode, Search, Download, Users, Printer, Activity, UserPlus, UserMinus, GraduationCap, Eye, EyeOff
 } from 'lucide-react';
 
 import { PageHeader } from './ui/PageHeader';
@@ -47,6 +58,7 @@ export function GestaoUsuarios() {
   const [usuarioParaInativar, setUsuarioParaInativar] = useState<User | null>(null);
   const [busca, setBusca] = useState('');
   const [filtroRole, setFiltroRole] = useState<string>('TODOS');
+  const [mostrarInativos, setMostrarInativos] = useState(false);
   
   const { user: currentUser } = useAuth();
 
@@ -57,8 +69,13 @@ export function GestaoUsuarios() {
 
   // Filtragem Inteligente (Texto + Cargo)
   const usuariosFiltrados = usuarios.filter(u => {
+    const isInativo = u.nome.startsWith('[INATIVO]');
+    if (!mostrarInativos && isInativo) return false;
+
+    const nomeReal = getCleanName(u.nome);
+
     const matchBusca = !buscaDebounced || 
-      u.nome.toLowerCase().includes(buscaDebounced.toLowerCase()) ||
+      nomeReal.toLowerCase().includes(buscaDebounced.toLowerCase()) ||
       u.email.toLowerCase().includes(buscaDebounced.toLowerCase()) ||
       (u.matricula && u.matricula.includes(buscaDebounced));
       
@@ -125,7 +142,7 @@ export function GestaoUsuarios() {
     };
     const promessa = new Promise((resolve) => {
       const dados = usuarios.map(u => ({
-        'Nome': u.nome,
+        'Nome': getCleanName(u.nome) + (u.nome.startsWith('[INATIVO]') ? ' (Inativo)' : ''),
         'Email': u.email,
         'Matrícula': u.matricula || '-',
         'Função': formatRole(u.role)
@@ -194,6 +211,16 @@ export function GestaoUsuarios() {
                 <Button variant="secondary" onClick={handleAbrirEtiquetasModal} className="whitespace-nowrap flex-1 sm:flex-none h-11 shadow-sm border-border" icon={<Printer className="w-4 h-4 text-primary" />}>
                   Imprimir QRs
                 </Button>
+                
+                <Button 
+                  variant={mostrarInativos ? "primary" : "secondary"} 
+                  onClick={() => setMostrarInativos(!mostrarInativos)} 
+                  className="whitespace-nowrap flex-1 sm:flex-none h-11" 
+                  icon={mostrarInativos ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                >
+                  {mostrarInativos ? 'Ocultar Inativos' : 'Ver Inativos'}
+                </Button>
+
                 {currentUser && ['ADMIN', 'RH'].includes(currentUser.role) && (
                   <Button variant="primary" onClick={handleNovoIntegrante} className="whitespace-nowrap flex-1 sm:flex-none h-11" icon={<UserPlus className="w-4 h-4" />}>
                     Novo Integrante
@@ -233,8 +260,10 @@ export function GestaoUsuarios() {
                 <>
                   <td className={`${TableStyles.td} pl-8 justify-start`}>
                     <div className="flex items-center gap-4 min-w-0">
-                      <Avatar nome={u.nome} url={(u as { fotoUrl?: string }).fotoUrl || u.image} />
-                      <span className="font-bold text-text-main text-base tracking-tight truncate" title={u.nome}>{getFirstAndLastName(u.nome)}</span>
+                      <Avatar nome={getCleanName(u.nome)} url={(u as { fotoUrl?: string }).fotoUrl || u.image} />
+                      <span className="font-bold text-text-main text-base tracking-tight truncate" title={getCleanName(u.nome)}>
+                        {getDisplayName(u.nome)}
+                      </span>
                     </div>
                   </td>
                   <td className={`${TableStyles.td} justify-center`}>
@@ -309,9 +338,9 @@ export function GestaoUsuarios() {
                 >
                   <div className="flex flex-col">
                     <div className="flex items-start gap-4">
-                      <Avatar nome={u.nome} url={(u as { fotoUrl?: string }).fotoUrl || u.image} size="lg" />
+                      <Avatar nome={getCleanName(u.nome)} url={(u as { fotoUrl?: string }).fotoUrl || u.image} size="lg" />
                       <div className="flex flex-col gap-0.5 justify-center mt-1">
-                        <h3 className="font-black text-text-main text-lg tracking-tight leading-none mb-1.5">{getFirstAndLastName(u.nome)}</h3>
+                        <h3 className="font-black text-text-main text-lg tracking-tight leading-none mb-1.5">{getDisplayName(u.nome)}</h3>
                         {getCargoName(u.cargo) ? (
                           <Badge variant="info" className="shadow-sm">{getCargoName(u.cargo)}</Badge>
                         ) : (
