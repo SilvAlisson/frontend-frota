@@ -9,7 +9,7 @@ import { useFornecedores } from '../../../hooks/useFornecedores';
 import { useProdutos } from '../../../hooks/useProdutos';
 import { useVeiculos } from '../../../hooks/useVeiculos';
 import type { AbastecimentoFormValues } from './schema';
-import type { Veiculo, Produto } from '../../../types';
+import type { Veiculo } from '../../../types';
 
 
 export function Step2DadosFinanceiros() {
@@ -93,7 +93,7 @@ export function Step2DadosFinanceiros() {
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => append({ produtoId: '', quantidade: 0, valorUnitario: '' } as AbastecimentoFormValues['itens'][0])}
+            onClick={() => append({ produtoId: '', quantidade: 0, valorUnitario: '' })}
             className="text-primary hover:bg-primary/10 h-8"
             icon={<Plus className="w-4 h-4" />}
             disabled={isLocked}

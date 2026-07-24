@@ -236,7 +236,7 @@ export function Step2ItensServicos() {
       <Button
         type="button"
         variant="outline"
-        onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: '' } as ManutencaoFormValues['itens'][0])}
+        onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: '' })}
         className="w-full border-dashed border-2 hover:border-primary/50 hover:text-primary transition-all bg-background touch-target h-12 mt-2"
         icon={<Plus className="w-4 h-4" />}
       >
