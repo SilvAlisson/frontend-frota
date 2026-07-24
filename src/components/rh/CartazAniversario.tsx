@@ -23,10 +23,9 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
     
     try {
       setIsGenerating(true);
-      // html-to-image to get blob
       const blob = await htmlToImage.toBlob(cartazRef.current, {
         quality: 1,
-        pixelRatio: 2, // Retinadisplay high res
+        pixelRatio: 2,
         style: {
           transform: 'scale(1)',
           transformOrigin: 'top left',
@@ -35,7 +34,6 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
       });
       
       if (blob) {
-        // Tenta copiar para o clipboard (Navigator API)
         const item = new ClipboardItem({ 'image/png': blob });
         await navigator.clipboard.write([item]);
         
@@ -79,123 +77,190 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
   return (
     <div className="flex flex-col items-center gap-6">
       
-      {/* Container - Onde o design é montado */}
+      {/* ── CARTAZ (400x711) ── */}
       <div 
         ref={cartazRef}
         className="relative overflow-hidden flex flex-col items-center"
         style={{
           width: '400px',
           height: '711px',
-          background: 'linear-gradient(160deg, #c8f5e8 0%, #c5e4f7 45%, #d4d4f5 100%)',
-          boxSizing: 'border-box'
+          /* Gradiente fiel ao modelo: mint-verde → azul-céu → lavanda suave */
+          background: 'linear-gradient(150deg, #b2f0e4 0%, #a8d8f0 42%, #b8cef5 78%, #cbc8f0 100%)',
+          boxSizing: 'border-box',
+          fontFamily: '"Georgia", "Times New Roman", serif',
         }}
       >
-        {/* ── EMOJIS DECORATIVOS (z-index alto para ficarem na frente da foto) ── */}
 
-        {/* 🧁 Cupcake - lado esquerdo, meio da tela */}
+        {/* ══════════════════════════════════════════════
+            EMOJIS DECORATIVOS — z-30 (acima de TUDO)
+            ══════════════════════════════════════════ */}
+
+        {/* 🎉 Chapeuzinho — centralizado, logo acima da polaroid */}
         <div
-          className="absolute z-30 select-none"
-          style={{ bottom: '210px', left: '-22px', fontSize: '120px', lineHeight: 1, filter: 'drop-shadow(2px 4px 6px rgba(0,0,0,0.15))', transform: 'rotate(-8deg)' }}
+          className="absolute select-none"
+          style={{
+            top: '158px',
+            left: '50%',
+            transform: 'translateX(-45%) rotate(-12deg)',
+            fontSize: '70px',
+            lineHeight: 1,
+            zIndex: 30,
+            filter: 'drop-shadow(1px 3px 6px rgba(0,0,0,0.22))',
+          }}
+        >🎉</div>
+
+        {/* 🧁 Cupcake — canto inferior-esquerdo, sobrepõe a polaroid */}
+        <div
+          className="absolute select-none"
+          style={{
+            bottom: '190px',
+            left: '-20px',
+            fontSize: '128px',
+            lineHeight: 1,
+            zIndex: 30,
+            filter: 'drop-shadow(2px 5px 10px rgba(0,0,0,0.18))',
+            transform: 'rotate(-6deg)',
+          }}
         >🧁</div>
 
-        {/* 🎈🎈 Dois balões - lado direito */}
+        {/* 🎈 Balão maior — canto inferior-direito, sobrepõe a polaroid */}
         <div
-          className="absolute z-30 select-none"
-          style={{ bottom: '175px', right: '-12px', fontSize: '100px', lineHeight: 1, filter: 'drop-shadow(2px 4px 6px rgba(0,0,0,0.15))', transform: 'rotate(12deg)' }}
-        >🎈</div>
-        <div
-          className="absolute z-30 select-none"
-          style={{ bottom: '270px', right: '35px', fontSize: '72px', lineHeight: 1, filter: 'drop-shadow(2px 4px 6px rgba(0,0,0,0.15))', transform: 'rotate(-8deg)' }}
+          className="absolute select-none"
+          style={{
+            bottom: '210px',
+            right: '-8px',
+            fontSize: '98px',
+            lineHeight: 1,
+            zIndex: 30,
+            filter: 'drop-shadow(2px 5px 10px rgba(0,0,0,0.18))',
+            transform: 'rotate(10deg)',
+          }}
         >🎈</div>
 
-        {/* ── HEADER: "Feliz Aniversário" com curvas estilo Canva ── */}
-        <div className="relative z-10 text-center mt-10 px-4">
+        {/* 🎈 Balão menor — levemente acima e à esquerda do maior */}
+        <div
+          className="absolute select-none"
+          style={{
+            bottom: '300px',
+            right: '44px',
+            fontSize: '64px',
+            lineHeight: 1,
+            zIndex: 30,
+            filter: 'drop-shadow(1px 3px 6px rgba(0,0,0,0.15))',
+            transform: 'rotate(-10deg)',
+          }}
+        >🎈</div>
+
+
+        {/* ══════════════════════════════════════════════
+            HEADER "Feliz Aniversário"
+            ══════════════════════════════════════════ */}
+        <div
+          style={{ marginTop: '32px', textAlign: 'center', zIndex: 10, position: 'relative' }}
+        >
           <h1
-            className="font-black leading-none tracking-tight"
+            className="font-black"
             style={{
-              fontFamily: '"Georgia", "Times New Roman", serif',
-              color: '#0e7070',
-              fontSize: '52px',
+              color: '#0a6b6b',
               lineHeight: '1.0',
-              /* Texto levemente arqueado simulado por letter-spacing diferenciado */
-              textShadow: '0 2px 4px rgba(0,0,0,0.08)'
+              textShadow: '0 2px 8px rgba(0,0,0,0.09)',
             }}
           >
-            <span style={{ fontSize: '44px', display: 'block' }}>Feliz</span>
-            <span style={{ fontSize: '54px', display: 'block' }}>Aniversário</span>
+            <span style={{ fontSize: '48px', display: 'block', letterSpacing: '0px' }}>Feliz</span>
+            <span style={{ fontSize: '62px', display: 'block', letterSpacing: '-1px', marginTop: '-2px' }}>Aniversário</span>
           </h1>
         </div>
 
-        {/* ── MOLDURA DA FOTO (Polaroid) ── */}
-        {/* z-index 20: abaixo dos emojis (z-30), mas acima do fundo */}
+
+        {/* ══════════════════════════════════════════════
+            MOLDURA POLAROID — z-20 (atrás dos emojis)
+            ══════════════════════════════════════════ */}
         <div
-          className="z-20 bg-white shadow-2xl relative"
           style={{
-            marginTop: '24px',
-            width: '272px',
-            height: '304px',
-            padding: '10px 10px 40px 10px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+            position: 'relative',
+            marginTop: '16px',
+            width: '352px',         /* ~88% da largura total */
+            backgroundColor: 'white',
+            padding: '10px 10px 50px 10px',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
+            zIndex: 20,
           }}
         >
-          {/* 🎉 Chapeuzinho de festa em cima da cabeça do integrante (z-30, frente da foto) */}
+          {/* Foto — fica DENTRO da polaroid, z-index menor naturalmente */}
           <div
-            className="absolute z-30 select-none"
             style={{
-              top: '-50px',
-              left: '50%',
-              transform: 'translateX(-60%) rotate(-10deg)',
-              fontSize: '64px',
-              lineHeight: 1,
-              filter: 'drop-shadow(1px 2px 4px rgba(0,0,0,0.2))'
-            }}
-          >🎉</div>
-
-          {/* Foto do integrante - z-index 10 (atrás dos emojis) */}
-          <div
-            className="z-10 w-full bg-slate-100 bg-cover bg-top"
-            style={{
-              height: '254px',
+              width: '100%',
+              height: '288px',
               backgroundImage: `url(${avatarImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center top',
+              backgroundColor: '#e2e8f0',
             }}
           />
         </div>
 
-        {/* ── FAIXA DE PARABÉNS (estilo pincelada branca) ── */}
+
+        {/* ══════════════════════════════════════════════
+            FAIXA PARABÉNS — z-10
+            ══════════════════════════════════════════ */}
         <div
-          className="z-30 text-center"
           style={{
-            marginTop: '24px',
-            width: '370px',
+            marginTop: '18px',
+            width: '368px',
             background: 'white',
-            padding: '16px 28px',
-            borderRadius: '12px 4px 10px 4px / 4px 10px 4px 12px',
-            boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
+            padding: '14px 24px 16px 24px',
+            /* border-radius irregular para imitar pincelada */
+            borderRadius: '6px 2px 8px 2px / 2px 6px 2px 8px',
+            boxShadow: '0 2px 18px rgba(0,0,0,0.10)',
             transform: 'rotate(-0.5deg)',
+            textAlign: 'center',
+            zIndex: 10,
           }}
         >
           <h2
-            className="font-bold text-[#0e7070] mb-1"
-            style={{ fontFamily: '"Georgia", serif', fontSize: '20px' }}
+            style={{
+              color: '#0a6b6b',
+              fontSize: '21px',
+              fontWeight: 700,
+              marginBottom: '5px',
+              fontFamily: '"Georgia", serif',
+            }}
           >
             Parabéns, {nome.split(' ')[0]}!
           </h2>
           <p
-            className="font-semibold text-[#2d8a8a]"
-            style={{ fontSize: '13px', lineHeight: '1.45' }}
+            style={{
+              color: '#1a8080',
+              fontSize: '13.5px',
+              fontWeight: 600,
+              lineHeight: '1.5',
+              fontFamily: '"Georgia", serif',
+            }}
           >
             A equipe Klin deseja um feliz aniversário<br />e um dia repleto de coisas boas!
           </p>
         </div>
 
-        {/* ── LOGO KLIN ── */}
-        <div className="z-10 flex flex-col items-center" style={{ marginTop: '20px' }}>
-          <img src="/logo.png" alt="KLIN" style={{ height: '52px', objectFit: 'contain', mixBlendMode: 'multiply', opacity: 0.95 }} />
+
+        {/* ══════════════════════════════════════════════
+            LOGO KLIN
+            ══════════════════════════════════════════ */}
+        <div style={{ marginTop: '20px', zIndex: 10 }}>
+          <img
+            src="/logo.png"
+            alt="KLIN"
+            style={{
+              height: '52px',
+              objectFit: 'contain',
+              mixBlendMode: 'multiply',
+              opacity: 0.95,
+            }}
+          />
         </div>
 
       </div>
 
-      {/* Ações */}
+      {/* ── BOTÕES DE AÇÃO ── */}
       <div className="flex gap-4 w-full max-w-[400px]">
         <Button 
           onClick={copyToClipboard} 
