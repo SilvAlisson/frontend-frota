@@ -61,87 +61,31 @@ export function FormRegistrarAbastecimento({
     reValidateMode: 'onChange',
   });
 
-  const { handleSubmit, formState: { isSubmitting } } = methods;
+  const { handleSubmit, trigger, formState: { isSubmitting } } = methods;
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); 
     e.stopPropagation();
     
     if (step === 1) {
-      // Valida campos da etapa 1 individualmente com setError manual
-      // para garantir que os erros apareçam em vermelho embaixo de cada campo
-      const values = methods.getValues();
-      const camposFaltando: string[] = [];
-
-      if (!values.veiculoId) {
-        methods.setError('veiculoId', { type: 'manual', message: 'Selecione o veículo' }, { shouldFocus: true });
-        camposFaltando.push('Veículo');
-      } else {
-        methods.clearErrors('veiculoId');
-      }
-
-      if (!values.operadorId) {
-        methods.setError('operadorId', { type: 'manual', message: 'Selecione o integrante responsável' }, { shouldFocus: true });
-        camposFaltando.push('Integrante Responsável');
-      } else {
-        methods.clearErrors('operadorId');
-      }
-
-      if (!values.kmAtual || values.kmAtual.trim() === '') {
-        methods.setError('kmAtual', { type: 'manual', message: 'KM do painel é obrigatório' }, { shouldFocus: true });
-        camposFaltando.push('KM do Painel');
-      } else {
-        methods.clearErrors('kmAtual');
-      }
-
-      if (!values.dataHora) {
-        methods.setError('dataHora', { type: 'manual', message: 'Data e hora são obrigatórias' }, { shouldFocus: true });
-        camposFaltando.push('Data e Hora');
-      } else {
-        methods.clearErrors('dataHora');
-      }
-
-      if (camposFaltando.length > 0) {
-        toast.error(`Preencha os campos obrigatórios: ${camposFaltando.join(', ')}`);
-        hapticError();
-      } else {
+      const isValid = await trigger(['veiculoId', 'operadorId', 'kmAtual', 'dataHora']);
+      
+      if (isValid) {
         setStep(2);
+      } else {
+        toast.error('Preencha os campos obrigatórios corretamente.');
+        hapticError();
       }
 
     } else if (step === 2) {
-      const fornecedorId = methods.getValues('fornecedorId');
-      const itens = methods.getValues('itens');
+      const isValid = await trigger(['fornecedorId', 'itens']);
       
-      let step2Valid = true;
-      if (!fornecedorId) {
-        methods.setError('fornecedorId', { type: 'manual', message: 'Selecione o posto / fornecedor' }, { shouldFocus: true });
-        step2Valid = false;
+      if (isValid) {
+        setStep(3);
       } else {
-        methods.clearErrors('fornecedorId');
+        toast.error('Verifique o posto fornecedor e os itens informados.');
+        hapticError();
       }
-
-      if (!itens || itens.length === 0) {
-        toast.error('Adicione pelo menos um produto ao abastecimento');
-        step2Valid = false;
-      } else {
-        itens.forEach((item, idx) => {
-          if (!item.produtoId) {
-            methods.setError(`itens.${idx}.produtoId` as 'itens.0.produtoId', { type: 'manual', message: 'Selecione o produto' }, { shouldFocus: true });
-            step2Valid = false;
-          }
-          if (!item.quantidade || Number(item.quantidade) <= 0) {
-            methods.setError(`itens.${idx}.quantidade` as 'itens.0.quantidade', { type: 'manual', message: 'Quantidade inválida' }, { shouldFocus: true });
-            step2Valid = false;
-          }
-          if (!item.valorUnitario || desformatarDinheiro(String(item.valorUnitario)) <= 0) {
-            methods.setError(`itens.${idx}.valorUnitario` as 'itens.0.valorUnitario', { type: 'manual', message: 'Valor unitário inválido' }, { shouldFocus: true });
-            step2Valid = false;
-          }
-        });
-      }
-
-      if (step2Valid) setStep(3);
-      else hapticError();
     } else if (step === 3) {
       await handleSubmit(onSubmit, () => hapticError())(e);
     }

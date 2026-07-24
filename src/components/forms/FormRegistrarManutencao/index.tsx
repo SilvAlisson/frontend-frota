@@ -58,83 +58,25 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
     reValidateMode: 'onChange'
   });
 
-  const { handleSubmit, reset, formState: { isSubmitting } } = methods;
+  const { handleSubmit, trigger, reset, formState: { isSubmitting } } = methods;
 
   const nextStep = async () => {
     if (step === 1) {
-      // Valida campos da etapa 1 individualmente
-      // Usamos setError manual para marcar os campos com erro
-      // e toast.error para garantir feedback visual imediato ao usuário
-      const values = methods.getValues();
-      const camposFaltando: string[] = [];
-
-      // fornecedorId sempre obrigatório na etapa 1
-      if (!values.fornecedorId) {
-        methods.setError('fornecedorId', { type: 'manual', message: 'Selecione o fornecedor / oficina' }, { shouldFocus: true });
-        camposFaltando.push('Oficina / Fornecedor');
-      } else {
-        methods.clearErrors('fornecedorId');
-      }
-
-      // data obrigatória
-      if (!values.data) {
-        methods.setError('data', { type: 'manual', message: 'Data é obrigatória' }, { shouldFocus: true });
-        camposFaltando.push('Data do Serviço');
-      } else {
-        methods.clearErrors('data');
-      }
-
-      // Veículo obrigatório apenas se alvo === 'VEICULO'
-      if (values.alvo === 'VEICULO' && !values.veiculoId) {
-        methods.setError('veiculoId', { type: 'manual', message: 'Selecione o veículo' }, { shouldFocus: true });
-        camposFaltando.push('Veículo');
-      } else {
-        methods.clearErrors('veiculoId');
-      }
-
-      // numeroCA obrigatório apenas se alvo === 'OUTROS'
-      if (values.alvo === 'OUTROS' && !values.numeroCA) {
-        methods.setError('numeroCA', { type: 'manual', message: 'Informe o nº do CA / Série' }, { shouldFocus: true });
-        camposFaltando.push('Nº CA / Série');
-      } else {
-        methods.clearErrors('numeroCA');
-      }
-
-      if (camposFaltando.length > 0) {
-        toast.error(`Preencha os campos obrigatórios: ${camposFaltando.join(', ')}`);
-        hapticError();
-      } else {
+      const isValid = await trigger(['fornecedorId', 'data', 'veiculoId', 'numeroCA', 'alvo']);
+      
+      if (isValid) {
         setStep(s => s + 1);
+      } else {
+        toast.error('Preencha os campos obrigatórios corretamente.');
+        hapticError();
       }
     } else if (step === 2) {
-      // Na etapa 2, valida somente os itens
-      const itens = methods.getValues('itens');
-      let step2Valid = true;
-
-      if (!itens || itens.length === 0) {
-        toast.error('Adicione pelo menos um item de serviço / peça');
-        step2Valid = false;
-      } else {
-        itens.forEach((item, idx) => {
-          if (!item.produtoId) {
-            methods.setError(`itens.${idx}.produtoId` as 'itens.0.produtoId', { type: 'manual', message: 'Selecione o serviço/peça' }, { shouldFocus: true });
-            step2Valid = false;
-          }
-          if (!item.quantidade || Number(item.quantidade) < 0.01) {
-            methods.setError(`itens.${idx}.quantidade` as 'itens.0.quantidade', { type: 'manual', message: 'Qtd inválida' }, { shouldFocus: true });
-            step2Valid = false;
-          }
-          if (!item.valorPorUnidade) {
-            methods.setError(`itens.${idx}.valorPorUnidade` as 'itens.0.valorPorUnidade', { type: 'manual', message: 'Valor inválido' }, { shouldFocus: true });
-            step2Valid = false;
-          }
-        });
-        if (!step2Valid) toast.error('Verifique os itens: produto, quantidade e valor são obrigatórios');
-      }
-
-      if (step2Valid) {
+      const isValid = await trigger(['itens']);
+      
+      if (isValid) {
         setStep(s => s + 1);
       } else {
+        toast.error('Verifique os itens de serviço e peças informadas.');
         hapticError();
       }
     }

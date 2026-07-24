@@ -6,12 +6,12 @@ export const abastecimentoSchema = z.object({
   kmAtual: z.string().min(1, "KM do painel é obrigatório"),
   dataHora: z.string().min(1, "Data e hora são obrigatórias"),
   observacoes: z.string().optional(),
-  fornecedorId: z.string().optional(),
+  fornecedorId: z.string().min(1, "Selecione o posto / fornecedor"),
   itens: z.array(z.object({
-    produtoId: z.string().optional(),
-    quantidade: z.union([z.string(), z.number()]).optional(),
-    valorUnitario: z.string().optional(), 
-  })).optional()
+    produtoId: z.string().min(1, "Selecione o produto"),
+    quantidade: z.union([z.string(), z.number()]).transform(val => Number(val)).refine(val => val > 0, "Quantidade inválida"),
+    valorUnitario: z.string().min(1, "Valor unitário inválido"), 
+  })).min(1, "Adicione pelo menos um produto")
 });
 
 export type AbastecimentoFormValues = z.output<typeof abastecimentoSchema>;
