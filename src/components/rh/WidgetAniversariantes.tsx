@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../../services/api';
-import { PartyPopper, Calendar, Cake } from 'lucide-react';
+import { PartyPopper, Calendar } from 'lucide-react';
 import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { CartazAniversario } from './CartazAniversario';
@@ -109,7 +109,6 @@ export function WidgetAniversariantes() {
         isOpen={modalOpen} 
         onClose={() => setModalOpen(false)}
         title="Gerador de Cartaz de Aniversário"
-        size="lg"
       >
         <div className="flex flex-col items-center justify-center p-4 bg-slate-50/50 rounded-2xl">
           <p className="text-sm text-text-secondary mb-6 text-center max-w-md">
