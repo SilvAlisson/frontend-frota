@@ -84,7 +84,6 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
         style={{
           width: '400px',
           height: '711px',
-          /* Gradiente fiel ao modelo: mint-verde na esquerda → azul-céu no meio → lavanda na direita */
           background: 'linear-gradient(to right, #C8F7DC 0%, #C0DAFE 50%, #E2D4F8 100%)',
           boxSizing: 'border-box',
           fontFamily: '"Georgia", "Times New Roman", serif',
@@ -92,22 +91,26 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
       >
 
         {/* ══════════════════════════════════════════════
-            HEADER "Feliz Aniversário"
+            HEADER "Feliz Aniversário" (Com Curvatura via SVG)
             ══════════════════════════════════════════ */}
-        <div
-          style={{ marginTop: '40px', textAlign: 'center', zIndex: 10, position: 'relative' }}
-        >
-          <h1
-            className="font-black"
-            style={{
-              color: '#087F8C',
-              lineHeight: '0.9',
-              textShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            }}
-          >
-            <span style={{ fontSize: '52px', display: 'block', letterSpacing: '-0.5px' }}>Feliz</span>
-            <span style={{ fontSize: '66px', display: 'block', letterSpacing: '-1.5px', marginTop: '-4px' }}>Aniversário</span>
-          </h1>
+        <div style={{ marginTop: '15px', zIndex: 10, width: '400px', height: '140px', position: 'relative' }}>
+          <svg width="400" height="150" viewBox="0 0 400 150">
+            {/* Path invisível para curvar o "Feliz" */}
+            <path id="curveFeliz" d="M 120 70 Q 200 45 280 70" fill="transparent" />
+            <text>
+              <textPath href="#curveFeliz" startOffset="50%" textAnchor="middle" fill="#087F8C" style={{ fontFamily: '"Georgia", serif', fontSize: '50px', fontWeight: 900 }}>
+                Feliz
+              </textPath>
+            </text>
+            
+            {/* Path invisível para curvar o "Aniversário" */}
+            <path id="curveAniversario" d="M 30 135 Q 200 85 370 135" fill="transparent" />
+            <text>
+              <textPath href="#curveAniversario" startOffset="50%" textAnchor="middle" fill="#087F8C" style={{ fontFamily: '"Georgia", serif', fontSize: '66px', fontWeight: 900 }}>
+                Aniversário
+              </textPath>
+            </text>
+          </svg>
         </div>
 
 
@@ -117,43 +120,59 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
         <div
           style={{
             position: 'relative',
-            marginTop: '30px',
-            width: '320px',         /* Largura ajustada para permitir foto quadrada */
+            marginTop: '25px',
+            width: '320px',
             backgroundColor: 'white',
-            padding: '12px 12px 64px 12px', /* Espaço extra embaixo típico de polaroid */
+            padding: '12px 12px 64px 12px',
             boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
             zIndex: 20,
           }}
         >
-          {/* Foto — perfeitamente quadrada dentro da polaroid */}
+          {/* Foto do integrante */}
           <div
             style={{
+              position: 'relative',
               width: '100%',
-              height: '296px', /* 320 - 12 - 12 = 296 */
+              height: '296px',
               backgroundImage: `url(${avatarImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center top',
               backgroundColor: '#e2e8f0',
             }}
-          />
+          >
+            {/* 🎉 Chapeuzinho VETORIZADO - Cai exatamente na cabeça do aniversariante */}
+            <div
+              className="absolute select-none"
+              style={{
+                top: '-20px', /* Adentra a foto, sobrepondo a cabeça */
+                left: '50%',
+                transform: 'translateX(-30%) rotate(15deg)', /* Inclinado na cabeça */
+                zIndex: 30,
+                filter: 'drop-shadow(2px 4px 4px rgba(0,0,0,0.3))',
+              }}
+            >
+              <svg width="70" height="90" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <clipPath id="hatClip">
+                    <path d="M 40 15 L 15 80 L 65 80 Z" />
+                  </clipPath>
+                </defs>
+                {/* Cone do chapéu */}
+                <path d="M 40 15 L 15 80 L 65 80 Z" fill="#FACC15" />
+                {/* Listras */}
+                <g clipPath="url(#hatClip)">
+                  <rect x="0" y="30" width="80" height="10" fill="#EA580C" transform="rotate(10, 40, 35)" />
+                  <rect x="0" y="55" width="80" height="12" fill="#EA580C" transform="rotate(10, 40, 60)" />
+                </g>
+                {/* Pompom azul */}
+                <path d="M 40 2 L 43 10 L 51 10 L 45 15 L 47 23 L 40 18 L 33 23 L 35 15 L 29 10 L 37 10 Z" fill="#1D4ED8" />
+              </svg>
+            </div>
+          </div>
 
-          {/* ── EMOJIS DECORATIVOS (Relativos à polaroid) ── */}
-          
-          {/* 🎉 Chapeuzinho — topo central */}
-          <div
-            className="absolute select-none"
-            style={{
-              top: '-35px',
-              left: '50%',
-              transform: 'translateX(-50%) rotate(-10deg)',
-              fontSize: '65px',
-              lineHeight: 1,
-              zIndex: 30,
-              filter: 'drop-shadow(1px 3px 4px rgba(0,0,0,0.2))',
-            }}
-          >🎉</div>
+          {/* ── EMOJIS DECORATIVOS DA BORDA ── */}
 
-          {/* 🧁 Cupcake — canto inferior esquerdo */}
+          {/* 🧁 Cupcake — borda inferior-esquerda */}
           <div
             className="absolute select-none"
             style={{
@@ -167,7 +186,7 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
             }}
           >🧁</div>
 
-          {/* 🎈 Balão Azul (hue-rotate) — canto inferior direito (fundo) */}
+          {/* 🎈 Balão Azul — fundo direita */}
           <div
             className="absolute select-none"
             style={{
@@ -176,13 +195,12 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
               fontSize: '85px',
               lineHeight: 1,
               zIndex: 29,
-              /* Hue-rotate transforma o vermelho padrão do balão em azul */
               filter: 'hue-rotate(200deg) drop-shadow(2px 4px 5px rgba(0,0,0,0.2))',
               transform: 'rotate(15deg)',
             }}
           >🎈</div>
 
-          {/* 🎈 Balão Verde (hue-rotate) — canto inferior direito (frente) */}
+          {/* 🎈 Balão Verde — frente direita */}
           <div
             className="absolute select-none"
             style={{
@@ -191,7 +209,6 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
               fontSize: '95px',
               lineHeight: 1,
               zIndex: 30,
-              /* Hue-rotate transforma o vermelho padrão do balão em verde */
               filter: 'hue-rotate(120deg) drop-shadow(2px 4px 6px rgba(0,0,0,0.2))',
               transform: 'rotate(-10deg)',
             }}
@@ -204,11 +221,10 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
             ══════════════════════════════════════════ */}
         <div
           style={{
-            marginTop: '40px',
+            marginTop: '30px',
             width: '360px',
             background: 'white',
-            padding: '18px 24px 20px 24px',
-            /* border-radius irregular para imitar pincelada/brush stroke mais suave */
+            padding: '16px 24px 18px 24px',
             borderRadius: '255px 15px 225px 15px/15px 225px 15px 255px',
             boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
             transform: 'rotate(-1deg)',
@@ -221,7 +237,7 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
               color: '#087F8C',
               fontSize: '22px',
               fontWeight: 700,
-              marginBottom: '6px',
+              marginBottom: '4px',
               fontFamily: '"Georgia", serif',
             }}
           >
@@ -242,14 +258,15 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
 
 
         {/* ══════════════════════════════════════════════
-            LOGO KLIN (Tamanho aumentado)
+            LOGO KLIN 
+            (Agora com margens menores e altura garantida pra não ser cortada pelo overflow:hidden do cartaz)
             ══════════════════════════════════════════ */}
-        <div style={{ marginTop: 'auto', marginBottom: '20px', zIndex: 10 }}>
+        <div style={{ marginTop: 'auto', marginBottom: '15px', zIndex: 10 }}>
           <img
             src="/logo.png"
             alt="KLIN"
             style={{
-              height: '85px', /* Tamanho bem maior conforme solicitado */
+              height: '65px', 
               objectFit: 'contain',
               mixBlendMode: 'multiply',
             }}
