@@ -82,55 +82,65 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
       {/* Container Oculto / Visível - Onde o design é montado */}
       <div 
         ref={cartazRef}
-        // Tailwind estilos inspirados na imagem de referência
+        // Tailwind estilos precisos para imitar a arte Canva
         className="relative overflow-hidden flex flex-col items-center justify-between"
         style={{
           width: '400px',
-          height: '711px', // Proporção ~16:9 vertical (Stories/Status)
-          background: 'linear-gradient(145deg, #a7f3d0 0%, #bfdbfe 50%, #ddd6fe 100%)', // Verde pastel -> Azul -> Roxo
-          padding: '40px 20px',
+          height: '711px', // Proporção 16:9
+          background: 'linear-gradient(135deg, #ccfbf1 0%, #dbeafe 50%, #e0e7ff 100%)', // Fundo pastel suave
+          padding: '40px 20px 20px 20px',
           boxSizing: 'border-box'
         }}
       >
-        {/* Enfeites BG (SVG simples) */}
-        <div className="absolute top-10 right-10 text-6xl opacity-80" style={{ transform: 'rotate(15deg)' }}>🎉</div>
-        <div className="absolute top-40 -left-6 text-7xl opacity-80" style={{ transform: 'rotate(-20deg)' }}>🎈</div>
-        <div className="absolute bottom-40 right-0 text-7xl opacity-80" style={{ transform: 'rotate(10deg)' }}>🎈</div>
-        <div className="absolute bottom-20 -left-6 text-7xl opacity-90" style={{ transform: 'rotate(-10deg)' }}>🧁</div>
+        {/* Cupcake gigante na esquerda inferior */}
+        <div className="absolute z-20 text-[130px] drop-shadow-md" style={{ bottom: '140px', left: '-30px', transform: 'rotate(-10deg)' }}>🧁</div>
+        
+        {/* Balões na direita inferior */}
+        <div className="absolute z-20 text-[110px] drop-shadow-md" style={{ bottom: '170px', right: '-15px', transform: 'rotate(10deg)' }}>🎈</div>
+        <div className="absolute z-10 text-[80px] drop-shadow-md" style={{ bottom: '230px', right: '40px', transform: 'rotate(-15deg)' }}>🎈</div>
 
         {/* Header Texto */}
-        <div className="z-10 text-center mt-4">
-          <h1 className="text-4xl font-black text-teal-800 drop-shadow-sm leading-tight" style={{ fontFamily: 'Georgia, serif' }}>
-            Feliz<br />Aniversário
+        <div className="z-10 text-center mt-2 relative">
+          <h1 className="font-black text-[#137a7f] drop-shadow-sm leading-[0.9] tracking-tight" style={{ fontFamily: 'Georgia, serif' }}>
+            <span className="text-[46px]">Feliz</span><br />
+            <span className="text-[54px]">Aniversário</span>
           </h1>
         </div>
 
         {/* Polaroid Frame para a Foto */}
-        <div className="z-10 bg-white p-3 pb-8 shadow-xl mt-6 relative" style={{ width: '250px', transform: 'rotate(-2deg)' }}>
-           {/* Fita adesiva / Chapeu decorativo */}
-           <div className="absolute -top-10 -right-6 text-6xl z-20" style={{ transform: 'rotate(15deg)' }}>
-            🥳
-           </div>
+        <div className="z-20 bg-white p-3 shadow-xl mt-12 relative" style={{ width: '280px', height: '310px' }}>
+           {/* Chapeuzinho no topo da polaroid */}
+           <div className="absolute z-30 text-[65px] drop-shadow-md" style={{ top: '-45px', left: '50%', transform: 'translateX(-50%) rotate(12deg)' }}>🥳</div>
+           
+           {/* Foto */}
            <div 
-              className="w-full h-[250px] bg-slate-100 bg-cover bg-center border border-slate-200"
+              className="w-full h-[240px] bg-slate-100 bg-cover bg-center border border-slate-100"
               style={{ backgroundImage: `url(${avatarImage})` }}
            />
-           <div className="text-center mt-3 font-mono text-sm text-slate-400 rotate-90 absolute right-[-40px] top-[100px]">
-             23 ▷
+           
+           {/* Marcas de Polaroid */}
+           <div className="absolute left-0 bottom-2 w-full flex justify-between px-5">
+              <span className="text-slate-300 text-[10px] font-mono tracking-widest">23 ▷</span>
+              <span className="text-slate-300 text-[10px] font-mono tracking-widest rotate-180">◁ 23</span>
            </div>
         </div>
 
-        {/* Texto de Parabéns */}
-        <div className="z-10 bg-white/95 backdrop-blur-sm px-6 py-4 rounded-2xl shadow-lg mt-8 border border-white/40 text-center mx-4" style={{ transform: 'rotate(1deg)' }}>
-          <h2 className="text-xl font-bold text-teal-700 mb-2 uppercase">Parabéns {nome.split(' ')[0]}!!!</h2>
-          <p className="text-teal-900 font-medium text-sm leading-snug">
+        {/* Texto de Parabéns (Estilo Pincelada / Cartão) */}
+        <div className="z-30 bg-white px-8 py-5 mt-auto mb-4 border-0 text-center shadow-sm w-[360px]" style={{ 
+            borderRadius: '255px 15px 225px 15px/15px 225px 15px 255px', // Brush stroke CSS effect
+            transform: 'rotate(-1deg)'
+        }}>
+          <h2 className="text-[22px] font-extrabold text-[#1c6969] mb-1 tracking-wide" style={{ fontFamily: 'Georgia, serif' }}>
+            Parabéns, {nome.split(' ')[0]}!
+          </h2>
+          <p className="text-[#457e7e] font-bold text-[14px] leading-tight px-1">
             A equipe Klin deseja um feliz aniversário e um dia repleto de coisas boas!
           </p>
         </div>
 
         {/* Logo Klin (usando a do public) */}
-        <div className="z-10 mt-auto mb-4">
-          <img src="/logo.png" alt="KLIN Logo" className="h-12 object-contain mix-blend-multiply" />
+        <div className="z-10 mt-auto">
+          <img src="/logo.png" alt="KLIN Logo" className="h-14 object-contain mix-blend-multiply opacity-95" />
         </div>
       </div>
 
