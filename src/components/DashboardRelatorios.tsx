@@ -30,6 +30,7 @@ import { GraficoCpk } from './dashboard/GraficoCpk';
 import { GraficoPerformance } from './dashboard/GraficoPerformance';
 import type { DadoPerformance } from './dashboard/GraficoPerformance';
 import { InsightsDashboard } from './ia/InsightsDashboard';
+import { WidgetAniversariantes } from './rh/WidgetAniversariantes';
 
 const GraficoKmVeiculo = React.lazy(() => import('./GraficoKmVeiculo').then(module => ({ default: module.GraficoKmVeiculo })));
 
@@ -204,6 +205,11 @@ export function DashboardRelatorios() {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* WIDGET DE ANIVERSARIANTES (PISCA SE TIVER ALGUÉM) */}
+      <div className="mb-6">
+        <WidgetAniversariantes />
       </div>
 
       {/* KPI GRID PREMIUM */}
