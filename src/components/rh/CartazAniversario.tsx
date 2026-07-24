@@ -84,119 +84,118 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
         style={{
           width: '400px',
           height: '711px',
-          /* Gradiente fiel ao modelo: mint-verde → azul-céu → lavanda suave */
-          background: 'linear-gradient(150deg, #b2f0e4 0%, #a8d8f0 42%, #b8cef5 78%, #cbc8f0 100%)',
+          /* Gradiente fiel ao modelo: mint-verde na esquerda → azul-céu no meio → lavanda na direita */
+          background: 'linear-gradient(to right, #C8F7DC 0%, #C0DAFE 50%, #E2D4F8 100%)',
           boxSizing: 'border-box',
           fontFamily: '"Georgia", "Times New Roman", serif',
         }}
       >
 
         {/* ══════════════════════════════════════════════
-            EMOJIS DECORATIVOS — z-30 (acima de TUDO)
-            ══════════════════════════════════════════ */}
-
-        {/* 🎉 Chapeuzinho — centralizado, logo acima da polaroid */}
-        <div
-          className="absolute select-none"
-          style={{
-            top: '158px',
-            left: '50%',
-            transform: 'translateX(-45%) rotate(-12deg)',
-            fontSize: '70px',
-            lineHeight: 1,
-            zIndex: 30,
-            filter: 'drop-shadow(1px 3px 6px rgba(0,0,0,0.22))',
-          }}
-        >🎉</div>
-
-        {/* 🧁 Cupcake — canto inferior-esquerdo, sobrepõe a polaroid */}
-        <div
-          className="absolute select-none"
-          style={{
-            bottom: '190px',
-            left: '-20px',
-            fontSize: '128px',
-            lineHeight: 1,
-            zIndex: 30,
-            filter: 'drop-shadow(2px 5px 10px rgba(0,0,0,0.18))',
-            transform: 'rotate(-6deg)',
-          }}
-        >🧁</div>
-
-        {/* 🎈 Balão maior — canto inferior-direito, sobrepõe a polaroid */}
-        <div
-          className="absolute select-none"
-          style={{
-            bottom: '210px',
-            right: '-8px',
-            fontSize: '98px',
-            lineHeight: 1,
-            zIndex: 30,
-            filter: 'drop-shadow(2px 5px 10px rgba(0,0,0,0.18))',
-            transform: 'rotate(10deg)',
-          }}
-        >🎈</div>
-
-        {/* 🎈 Balão menor — levemente acima e à esquerda do maior */}
-        <div
-          className="absolute select-none"
-          style={{
-            bottom: '300px',
-            right: '44px',
-            fontSize: '64px',
-            lineHeight: 1,
-            zIndex: 30,
-            filter: 'drop-shadow(1px 3px 6px rgba(0,0,0,0.15))',
-            transform: 'rotate(-10deg)',
-          }}
-        >🎈</div>
-
-
-        {/* ══════════════════════════════════════════════
             HEADER "Feliz Aniversário"
             ══════════════════════════════════════════ */}
         <div
-          style={{ marginTop: '32px', textAlign: 'center', zIndex: 10, position: 'relative' }}
+          style={{ marginTop: '40px', textAlign: 'center', zIndex: 10, position: 'relative' }}
         >
           <h1
             className="font-black"
             style={{
-              color: '#0a6b6b',
-              lineHeight: '1.0',
-              textShadow: '0 2px 8px rgba(0,0,0,0.09)',
+              color: '#087F8C',
+              lineHeight: '0.9',
+              textShadow: '0 2px 4px rgba(0,0,0,0.1)',
             }}
           >
-            <span style={{ fontSize: '48px', display: 'block', letterSpacing: '0px' }}>Feliz</span>
-            <span style={{ fontSize: '62px', display: 'block', letterSpacing: '-1px', marginTop: '-2px' }}>Aniversário</span>
+            <span style={{ fontSize: '52px', display: 'block', letterSpacing: '-0.5px' }}>Feliz</span>
+            <span style={{ fontSize: '66px', display: 'block', letterSpacing: '-1.5px', marginTop: '-4px' }}>Aniversário</span>
           </h1>
         </div>
 
 
         {/* ══════════════════════════════════════════════
-            MOLDURA POLAROID — z-20 (atrás dos emojis)
+            MOLDURA POLAROID & EMOJIS (z-20)
             ══════════════════════════════════════════ */}
         <div
           style={{
             position: 'relative',
-            marginTop: '16px',
-            width: '352px',         /* ~88% da largura total */
+            marginTop: '30px',
+            width: '320px',         /* Largura ajustada para permitir foto quadrada */
             backgroundColor: 'white',
-            padding: '10px 10px 50px 10px',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.22)',
+            padding: '12px 12px 64px 12px', /* Espaço extra embaixo típico de polaroid */
+            boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
             zIndex: 20,
           }}
         >
-          {/* Foto — fica DENTRO da polaroid, z-index menor naturalmente */}
+          {/* Foto — perfeitamente quadrada dentro da polaroid */}
           <div
             style={{
               width: '100%',
-              height: '288px',
+              height: '296px', /* 320 - 12 - 12 = 296 */
               backgroundImage: `url(${avatarImage})`,
               backgroundSize: 'cover',
               backgroundPosition: 'center top',
               backgroundColor: '#e2e8f0',
             }}
           />
+
+          {/* ── EMOJIS DECORATIVOS (Relativos à polaroid) ── */}
+          
+          {/* 🎉 Chapeuzinho — topo central */}
+          <div
+            className="absolute select-none"
+            style={{
+              top: '-35px',
+              left: '50%',
+              transform: 'translateX(-50%) rotate(-10deg)',
+              fontSize: '65px',
+              lineHeight: 1,
+              zIndex: 30,
+              filter: 'drop-shadow(1px 3px 4px rgba(0,0,0,0.2))',
+            }}
+          >🎉</div>
+
+          {/* 🧁 Cupcake — canto inferior esquerdo */}
+          <div
+            className="absolute select-none"
+            style={{
+              bottom: '-25px',
+              left: '-45px',
+              fontSize: '110px',
+              lineHeight: 1,
+              zIndex: 30,
+              filter: 'drop-shadow(2px 4px 6px rgba(0,0,0,0.2))',
+              transform: 'rotate(-12deg)',
+            }}
+          >🧁</div>
+
+          {/* 🎈 Balão Azul (hue-rotate) — canto inferior direito (fundo) */}
+          <div
+            className="absolute select-none"
+            style={{
+              bottom: '50px',
+              right: '-45px',
+              fontSize: '85px',
+              lineHeight: 1,
+              zIndex: 29,
+              /* Hue-rotate transforma o vermelho padrão do balão em azul */
+              filter: 'hue-rotate(200deg) drop-shadow(2px 4px 5px rgba(0,0,0,0.2))',
+              transform: 'rotate(15deg)',
+            }}
+          >🎈</div>
+
+          {/* 🎈 Balão Verde (hue-rotate) — canto inferior direito (frente) */}
+          <div
+            className="absolute select-none"
+            style={{
+              bottom: '-20px',
+              right: '-15px',
+              fontSize: '95px',
+              lineHeight: 1,
+              zIndex: 30,
+              /* Hue-rotate transforma o vermelho padrão do balão em verde */
+              filter: 'hue-rotate(120deg) drop-shadow(2px 4px 6px rgba(0,0,0,0.2))',
+              transform: 'rotate(-10deg)',
+            }}
+          >🎈</div>
         </div>
 
 
@@ -205,24 +204,24 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
             ══════════════════════════════════════════ */}
         <div
           style={{
-            marginTop: '18px',
-            width: '368px',
+            marginTop: '40px',
+            width: '360px',
             background: 'white',
-            padding: '14px 24px 16px 24px',
-            /* border-radius irregular para imitar pincelada */
-            borderRadius: '6px 2px 8px 2px / 2px 6px 2px 8px',
-            boxShadow: '0 2px 18px rgba(0,0,0,0.10)',
-            transform: 'rotate(-0.5deg)',
+            padding: '18px 24px 20px 24px',
+            /* border-radius irregular para imitar pincelada/brush stroke mais suave */
+            borderRadius: '255px 15px 225px 15px/15px 225px 15px 255px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+            transform: 'rotate(-1deg)',
             textAlign: 'center',
             zIndex: 10,
           }}
         >
           <h2
             style={{
-              color: '#0a6b6b',
-              fontSize: '21px',
+              color: '#087F8C',
+              fontSize: '22px',
               fontWeight: 700,
-              marginBottom: '5px',
+              marginBottom: '6px',
               fontFamily: '"Georgia", serif',
             }}
           >
@@ -230,10 +229,10 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
           </h2>
           <p
             style={{
-              color: '#1a8080',
-              fontSize: '13.5px',
+              color: '#087F8C',
+              fontSize: '14px',
               fontWeight: 600,
-              lineHeight: '1.5',
+              lineHeight: '1.4',
               fontFamily: '"Georgia", serif',
             }}
           >
@@ -243,17 +242,16 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
 
 
         {/* ══════════════════════════════════════════════
-            LOGO KLIN
+            LOGO KLIN (Tamanho aumentado)
             ══════════════════════════════════════════ */}
-        <div style={{ marginTop: '20px', zIndex: 10 }}>
+        <div style={{ marginTop: 'auto', marginBottom: '20px', zIndex: 10 }}>
           <img
             src="/logo.png"
             alt="KLIN"
             style={{
-              height: '52px',
+              height: '85px', /* Tamanho bem maior conforme solicitado */
               objectFit: 'contain',
               mixBlendMode: 'multiply',
-              opacity: 0.95,
             }}
           />
         </div>
