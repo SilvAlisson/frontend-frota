@@ -7,9 +7,9 @@ import { Select } from '../../ui/Select';
 import { Callout } from '../../ui/Callout';
 import { ModalGerenciarServicos } from '../../ModalGerenciarServicos';
 import { formatarDinheiro, desformatarDinheiro } from '../../../lib/formatters';
-import { useProdutos } from '../../../hooks/useProdutos';
+import { useProdutos, type Produto } from '../../../hooks/useProdutos';
 import { useFornecedores } from '../../../hooks/useFornecedores';
-import type { Produto } from '../../../types';
+
 import type { ManutencaoFormValues } from './schema';
 
 
