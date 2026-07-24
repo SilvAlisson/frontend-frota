@@ -172,7 +172,7 @@ export function AssistenteIA() {
         return (parsed as MensagemChat[]).map((m) => ({ ...m, timestamp: new Date(m.timestamp) }));
       }
     } catch (e) {
-      logger.error('Erro ao ler histórico da IA', e);
+      console.error('Erro ao ler histórico da IA', e);
     }
     return [];
   });
@@ -201,7 +201,7 @@ export function AssistenteIA() {
         respostaIA: msgIA.conteudo,
         avaliacao,
         contextoRota: location.pathname
-      }).catch((e) => logger.error(e));
+      }).catch((e) => logger.apiError(e));
     }
   }, [mensagens, enviarFeedback, location.pathname]);
 
