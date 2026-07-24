@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import * as htmlToImage from 'html-to-image';
 import { Button } from '../ui/Button';
-import { Download, Copy, Check, Loader2 } from 'lucide-react';
+import { Download, Copy, Check, Loader2, Sparkles, PartyPopper } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CartazAniversarioProps {
@@ -26,6 +26,8 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
       const blob = await htmlToImage.toBlob(cartazRef.current, {
         quality: 1,
         pixelRatio: 2,
+        fontEmbedCSS: '', // Bypass CORS error com Google Fonts
+        skipFonts: true, // Evita tentar baixar as fontes via fetch
         style: {
           transform: 'scale(1)',
           transformOrigin: 'top left',
@@ -57,7 +59,9 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
       setIsGenerating(true);
       const dataUrl = await htmlToImage.toPng(cartazRef.current, {
         quality: 1,
-        pixelRatio: 2
+        pixelRatio: 2,
+        fontEmbedCSS: '', // Bypass CORS error
+        skipFonts: true
       });
       
       const link = document.createElement('a');

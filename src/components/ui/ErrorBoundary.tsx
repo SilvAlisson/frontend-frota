@@ -1,4 +1,4 @@
-import { Component, type ReactNode } from 'react';
+Ôªøimport { Component, type ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
 
 interface ErrorBoundaryState {
@@ -9,7 +9,7 @@ interface ErrorBoundaryState {
 
 interface ErrorBoundaryProps {
   children: ReactNode;
-  /** UI opcional de fallback ó se omitido usa o padr„o */
+  /** UI opcional de fallback - se omitido usa o padr√£o */
   fallback?: (reset: () => void, error: Error | null) => ReactNode;
 }
 
@@ -24,7 +24,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   }
 
   componentDidCatch(error: Error, info: { componentStack: string }) {
-    // Log estruturado para facilitar debugging em produÁ„o
+    // Log estruturado para facilitar debugging em produ√ß√£o
     console.error('[ErrorBoundary] Erro capturado:', {
       message: error.message,
       stack: error.stack,
@@ -46,7 +46,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     // Se o consumer forneceu um fallback customizado, usa ele
     if (fallback) return fallback(this.handleReset, error);
 
-    // Fallback padr„o premium
+    // Fallback padr√£o premium
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
         <div className="max-w-md w-full rounded-2xl border border-error/20 bg-error/5 p-8 text-center shadow-xl">
@@ -61,10 +61,10 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           </h1>
           <p className="text-sm text-text-muted mb-6 leading-relaxed">
             Um erro inesperado impediu o carregamento desta tela.
-            Tente recarregar a p·gina ou voltar ao inÌcio.
+            Tente recarregar a p√°gina ou voltar ao in√≠cio.
           </p>
 
-          {/* Detalhe tÈcnico ó visÌvel apenas em dev */}
+          {/* Detalhe t√©cnico - vis√≠vel apenas em dev */}
           {import.meta.env.DEV && error && (
             <pre className="text-left text-xs bg-surface rounded-xl p-4 mb-6 overflow-auto max-h-32 text-error border border-error/20">
               {error.message}
@@ -84,7 +84,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface border border-border text-text-main text-sm font-bold hover:bg-surface-hover transition-colors"
             >
               <Home className="w-4 h-4" />
-              InÌcio
+              In√≠cio
             </button>
           </div>
         </div>
