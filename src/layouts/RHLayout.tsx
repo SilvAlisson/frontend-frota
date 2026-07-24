@@ -139,6 +139,8 @@ export function RHLayout() {
     navigate('/login');
   };
 
+  if (!user) return null;
+
   return (
     <div className="flex h-[100dvh] bg-background w-full overflow-hidden selection:bg-primary/20 selection:text-primary">
       
