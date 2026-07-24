@@ -52,7 +52,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
         onKeyDown={isClickable && onClick ? (e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            onClick(e as unknown as React.MouseEvent<HTMLDivElement>);
+            e.currentTarget.click();
           }
         } : undefined}
         className={cn(cardVariants({ variant, padding, isInteractive: isClickable, className }))}

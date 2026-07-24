@@ -12,22 +12,17 @@ import { useFornecedores } from '../../../hooks/useFornecedores';
 import type { Produto } from '../../../types';
 import type { ManutencaoFormValues } from './schema';
 
-// Extendendo o tipo Produto para garantir que sabemos sobre a propriedade ultimoPreco vinda do backend
-interface ProdutoComPreco extends Produto {
-  ultimoPreco?: number;
-}
 
 export function Step2ItensServicos() {
   const { register, control, watch, setValue, formState: { errors, isSubmitting } } = useFormContext<ManutencaoFormValues>();
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
 
-  // Usamos cast para avisar ao TS sobre nossa interface estendida
-  const { produtos = [], loading: loadP } = useProdutos() as { produtos: ProdutoComPreco[], loading: boolean };
+  const { produtos = [], loading: loadP } = useProdutos();
   const { fornecedores = [] } = useFornecedores();
   
   const isLocked = isSubmitting || loadP;
   const [modalServicosOpen, setModalServicosOpen] = useState(false);
-  const [listaProdutos, setListaProdutos] = useState<ProdutoComPreco[]>(produtos);
+  const [listaProdutos, setListaProdutos] = useState<Produto[]>(produtos);
 
   useEffect(() => {
     if (produtos.length > 0) setListaProdutos(produtos);
@@ -241,7 +236,7 @@ export function Step2ItensServicos() {
       <Button
         type="button"
         variant="outline"
-        onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: '' } as unknown as ManutencaoFormValues['itens'][0])}
+        onClick={() => append({ produtoId: '', quantidade: 1, valorPorUnidade: '' } as ManutencaoFormValues['itens'][0])}
         className="w-full border-dashed border-2 hover:border-primary/50 hover:text-primary transition-all bg-background touch-target h-12 mt-2"
         icon={<Plus className="w-4 h-4" />}
       >
@@ -251,7 +246,7 @@ export function Step2ItensServicos() {
       {modalServicosOpen && (
         <ModalGerenciarServicos
           onClose={() => setModalServicosOpen(false)}
-          onItemAdded={(novoItem) => setListaProdutos(prev => [...prev, novoItem as unknown as ProdutoComPreco].sort((a, b) => a.nome.localeCompare(b.nome)))}
+          onItemAdded={(novoItem) => setListaProdutos(prev => [...prev, novoItem as Produto].sort((a, b) => a.nome.localeCompare(b.nome)))}
         />
       )}
     </div>

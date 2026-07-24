@@ -14,7 +14,7 @@ import axios from 'axios';
 const fileInputContainer = "relative border-2 border-dashed border-border/60 rounded-3xl p-4 hover:bg-surface-hover transition-all duration-300 cursor-pointer group hover:border-primary/50 flex flex-col items-center justify-center min-h-[280px] overflow-hidden bg-surface shadow-sm";
 const hiddenInput = "absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10";
 
-interface ModalProps<T = Record<string, unknown>> {
+interface ModalProps<T = object, R = unknown> {
   titulo: string;
   kmParaConfirmar: number | null;
   jornadaId: string | null;
@@ -22,12 +22,12 @@ interface ModalProps<T = Record<string, unknown>> {
   apiEndpoint: string;
   apiMethod: 'POST' | 'PUT';
   onClose: () => void;
-  onSuccess: (data: unknown) => void;
+  onSuccess: (data: R) => void;
   nested?: boolean;
   permitirGaleria?: boolean;
 }
 
-export function ModalConfirmacaoFoto<T extends Record<string, unknown>>({
+export function ModalConfirmacaoFoto<T extends object, R = unknown>({
   titulo,
   kmParaConfirmar,
   jornadaId,
@@ -38,7 +38,7 @@ export function ModalConfirmacaoFoto<T extends Record<string, unknown>>({
   onSuccess,
   nested = false,
   permitirGaleria = false
-}: ModalProps<T>) {
+}: ModalProps<T, R>) {
 
   const [foto, setFoto] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);

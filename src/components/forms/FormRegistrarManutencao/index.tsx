@@ -283,7 +283,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
       {modalAberto && formDataParaModal && (
         <ModalConfirmacaoFoto
           titulo={`Anexar NF da OS ${formDataParaModal.tipo}`}
-          dadosJornada={formDataParaModal as unknown as Record<string, unknown>}
+          dadosJornada={formDataParaModal}
           apiEndpoint="/manutencoes"
           apiMethod="POST"
           kmParaConfirmar={null}

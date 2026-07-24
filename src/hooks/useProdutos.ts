@@ -10,6 +10,7 @@ export interface Produto {
   nome: string;
   tipo: string;
   unidadeMedida: string;
+  ultimoPreco?: number;
 }
 
 export interface AddProdutoData {

@@ -301,7 +301,7 @@ export function FormRegistrarAbastecimento({
       {modalConfirmacao && payload && (
         <ModalConfirmacaoFoto
           titulo="Comprovante e Finalização"
-          dadosJornada={payload as unknown as Record<string, unknown>}
+          dadosJornada={payload}
           kmParaConfirmar={payload.kmOdometro}
           jornadaId={payload.veiculoId}
           apiEndpoint="/abastecimentos"

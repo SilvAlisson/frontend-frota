@@ -263,7 +263,7 @@ export function IniciarJornada({
           apiMethod="POST"
           jornadaId={null}
           onClose={() => setModalAberto(false)}
-          onSuccess={handleModalSuccess as unknown as React.ComponentProps<typeof ModalConfirmacaoFoto>['onSuccess']}
+          onSuccess={handleModalSuccess}
         />
       )}
 

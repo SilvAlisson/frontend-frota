@@ -11,18 +11,13 @@ import { useVeiculos } from '../../../hooks/useVeiculos';
 import type { AbastecimentoFormValues } from './schema';
 import type { Veiculo, Produto } from '../../../types';
 
-// Extendendo o tipo para o TS reconhecer a inteligência do Backend
-interface ProdutoComPreco extends Produto {
-  ultimoPreco?: number;
-}
 
 export function Step2DadosFinanceiros() {
   const { register, control, watch, setValue, getValues, formState: { errors, isSubmitting } } = useFormContext<AbastecimentoFormValues>();
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
 
   const { fornecedores = [], isLoading: loadF } = useFornecedores();
-  // Avisamos o TS sobre a nova propriedade
-  const { produtos = [], loading: loadP } = useProdutos() as unknown as { produtos: ProdutoComPreco[], loading: boolean };
+  const { produtos = [], loading: loadP } = useProdutos();
   const { data: veiculos = [] } = useVeiculos();
 
   const isLocked = isSubmitting || loadF || loadP;
@@ -98,7 +93,7 @@ export function Step2DadosFinanceiros() {
             type="button"
             variant="ghost"
             size="sm"
-            onClick={() => append({ produtoId: '', quantidade: 0, valorUnitario: '' } as unknown as AbastecimentoFormValues['itens'][0])}
+            onClick={() => append({ produtoId: '', quantidade: 0, valorUnitario: '' } as AbastecimentoFormValues['itens'][0])}
             className="text-primary hover:bg-primary/10 h-8"
             icon={<Plus className="w-4 h-4" />}
             disabled={isLocked}

@@ -48,7 +48,7 @@ export function FormRegistrarDefeito({ veiculoId, veiculosDisponiveis = [], onSu
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<DefeitoFormData>({
+  const { register, handleSubmit, setValue, resetField, watch, formState: { errors } } = useForm<DefeitoFormData>({
     resolver: zodResolver(defeitoSchema),
     defaultValues: { descricao: '', veiculoId: veiculoId || '' }
   });
@@ -67,7 +67,7 @@ export function FormRegistrarDefeito({ veiculoId, veiculosDisponiveis = [], onSu
   };
 
   const clearFoto = () => {
-    setValue('foto', undefined as unknown as File, { shouldValidate: true });
+    resetField('foto');
     setFotoPreview(null);
   };
 
