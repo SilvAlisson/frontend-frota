@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import * as htmlToImage from 'html-to-image';
 import { Button } from '../ui/Button';
-import { Download, Copy, Check, Loader2, Sparkles, PartyPopper } from 'lucide-react';
+import { Download, Copy, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CartazAniversarioProps {
@@ -26,8 +26,8 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
       const blob = await htmlToImage.toBlob(cartazRef.current, {
         quality: 1,
         pixelRatio: 2,
-        fontEmbedCSS: '', // Bypass CORS error com Google Fonts
-        skipFonts: true, // Evita tentar baixar as fontes via fetch
+        fontEmbedCSS: '',
+        skipFonts: true,
         style: {
           transform: 'scale(1)',
           transformOrigin: 'top left',
@@ -60,7 +60,7 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
       const dataUrl = await htmlToImage.toPng(cartazRef.current, {
         quality: 1,
         pixelRatio: 2,
-        fontEmbedCSS: '', // Bypass CORS error
+        fontEmbedCSS: '',
         skipFonts: true
       });
       
@@ -81,73 +81,199 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
   return (
     <div className="flex flex-col items-center gap-6">
       
-      {/* ── CARTAZ (400x711 - Formato Stories/Status) ── */}
+      {/* ── CARTAZ (400x711) ── */}
       <div 
         ref={cartazRef}
-        className="relative overflow-hidden flex flex-col items-center bg-[#F8FAFC]"
+        className="relative overflow-hidden flex flex-col items-center"
         style={{
           width: '400px',
           height: '711px',
+          background: 'linear-gradient(to right, #C8F7DC 0%, #C0DAFE 50%, #E2D4F8 100%)',
           boxSizing: 'border-box',
-          fontFamily: '"Inter", "system-ui", sans-serif',
+          fontFamily: '"Georgia", "Times New Roman", serif',
         }}
       >
-        {/* ── BACKGROUND: Modern Gradient Blobs ── */}
-        <div className="absolute top-[-10%] left-[-20%] w-[320px] h-[320px] bg-teal-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 pointer-events-none"></div>
-        <div className="absolute bottom-[10%] right-[-15%] w-[280px] h-[280px] bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-70 pointer-events-none"></div>
-        <div className="absolute top-[35%] right-[-10%] w-[200px] h-[200px] bg-yellow-100 rounded-full mix-blend-multiply filter blur-3xl opacity-60 pointer-events-none"></div>
 
-        {/* Partículas brilhantes */}
-        <div className="absolute top-16 left-12 opacity-40">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0d9488" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+        {/* ══════════════════════════════════════════════
+            HEADER "Feliz Aniversário" (Com Curvatura via SVG)
+            ══════════════════════════════════════════ */}
+        <div style={{ marginTop: '15px', zIndex: 10, width: '400px', height: '140px', position: 'relative' }}>
+          <svg width="400" height="150" viewBox="0 0 400 150">
+            {/* Path invisível para curvar o "Feliz" */}
+            <path id="curveFeliz" d="M 120 70 Q 200 45 280 70" fill="transparent" />
+            <text>
+              <textPath href="#curveFeliz" startOffset="50%" textAnchor="middle" fill="#087F8C" style={{ fontFamily: '"Georgia", serif', fontSize: '50px', fontWeight: 900 }}>
+                Feliz
+              </textPath>
+            </text>
+            
+            {/* Path invisível para curvar o "Aniversário" */}
+            <path id="curveAniversario" d="M 30 135 Q 200 85 370 135" fill="transparent" />
+            <text>
+              <textPath href="#curveAniversario" startOffset="50%" textAnchor="middle" fill="#087F8C" style={{ fontFamily: '"Georgia", serif', fontSize: '66px', fontWeight: 900 }}>
+                Aniversário
+              </textPath>
+            </text>
+          </svg>
         </div>
 
-        {/* ── HEADER ── */}
-        <div className="z-10 mt-[65px] text-center px-4 w-full relative">
-          <div className="absolute -top-6 right-12 text-yellow-400/60 rotate-12">
-            <Sparkles size={36} strokeWidth={1.5} />
+
+        {/* ══════════════════════════════════════════════
+            MOLDURA POLAROID & EMOJIS (z-20)
+            ══════════════════════════════════════════ */}
+        <div
+          style={{
+            position: 'relative',
+            marginTop: '25px',
+            width: '320px',
+            backgroundColor: 'white',
+            padding: '12px 12px 64px 12px',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+            zIndex: 20,
+          }}
+        >
+          {/* Foto do integrante */}
+          <div
+            style={{
+              position: 'relative',
+              width: '100%',
+              height: '296px',
+              backgroundImage: `url(${avatarImage})`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center top',
+              backgroundColor: '#e2e8f0',
+            }}
+          >
+            {/* 🎉 Chapeuzinho VETORIZADO - Cai exatamente na cabeça do aniversariante */}
+            <div
+              className="absolute select-none"
+              style={{
+                top: '-20px', /* Adentra a foto, sobrepondo a cabeça */
+                left: '50%',
+                transform: 'translateX(-30%) rotate(15deg)', /* Inclinado na cabeça */
+                zIndex: 30,
+                filter: 'drop-shadow(2px 4px 4px rgba(0,0,0,0.3))',
+              }}
+            >
+              <svg width="70" height="90" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <clipPath id="hatClip">
+                    <path d="M 40 15 L 15 80 L 65 80 Z" />
+                  </clipPath>
+                </defs>
+                {/* Cone do chapéu */}
+                <path d="M 40 15 L 15 80 L 65 80 Z" fill="#FACC15" />
+                {/* Listras */}
+                <g clipPath="url(#hatClip)">
+                  <rect x="0" y="30" width="80" height="10" fill="#EA580C" transform="rotate(10, 40, 35)" />
+                  <rect x="0" y="55" width="80" height="12" fill="#EA580C" transform="rotate(10, 40, 60)" />
+                </g>
+                {/* Pompom azul */}
+                <path d="M 40 2 L 43 10 L 51 10 L 45 15 L 47 23 L 40 18 L 33 23 L 35 15 L 29 10 L 37 10 Z" fill="#1D4ED8" />
+              </svg>
+            </div>
           </div>
-          <h1 className="font-black leading-[1.05] tracking-tighter" style={{ fontSize: '54px' }}>
-            <span className="text-teal-900 drop-shadow-sm">FELIZ</span><br />
-            <span className="text-teal-600 drop-shadow-sm">ANIVERSÁRIO</span>
-          </h1>
+
+          {/* ── EMOJIS DECORATIVOS DA BORDA ── */}
+
+          {/* 🧁 Cupcake — borda inferior-esquerda */}
+          <div
+            className="absolute select-none"
+            style={{
+              bottom: '-25px',
+              left: '-45px',
+              fontSize: '110px',
+              lineHeight: 1,
+              zIndex: 30,
+              filter: 'drop-shadow(2px 4px 6px rgba(0,0,0,0.2))',
+              transform: 'rotate(-12deg)',
+            }}
+          >🧁</div>
+
+          {/* 🎈 Balão Azul — fundo direita */}
+          <div
+            className="absolute select-none"
+            style={{
+              bottom: '50px',
+              right: '-45px',
+              fontSize: '85px',
+              lineHeight: 1,
+              zIndex: 29,
+              filter: 'hue-rotate(200deg) drop-shadow(2px 4px 5px rgba(0,0,0,0.2))',
+              transform: 'rotate(15deg)',
+            }}
+          >🎈</div>
+
+          {/* 🎈 Balão Verde — frente direita */}
+          <div
+            className="absolute select-none"
+            style={{
+              bottom: '-20px',
+              right: '-15px',
+              fontSize: '95px',
+              lineHeight: 1,
+              zIndex: 30,
+              filter: 'hue-rotate(120deg) drop-shadow(2px 4px 6px rgba(0,0,0,0.2))',
+              transform: 'rotate(-10deg)',
+            }}
+          >🎈</div>
         </div>
 
-        {/* ── MOLDURA DA FOTO (Modern Style) ── */}
-        <div className="relative z-20 mt-[35px]">
-          {/* Card da foto com rotação elegante */}
-          <div className="w-[250px] h-[250px] rounded-[2rem] overflow-hidden shadow-[0_20px_50px_rgba(13,148,136,0.15)] border-[6px] border-white rotate-3 bg-white relative transition-transform">
-             <div 
-               className="w-full h-full bg-cover bg-center" 
-               style={{ 
-                 backgroundImage: `url(${avatarImage})`,
-                 transform: 'scale(1.02)' // Evita bordas fantasmas
-               }}
-             ></div>
-          </div>
 
-          {/* Enfeite: Ícone de bolo moderno no canto */}
-          <div className="absolute -bottom-4 -left-5 bg-yellow-400 p-4 rounded-2xl shadow-xl -rotate-12 border-4 border-white flex items-center justify-center">
-            <PartyPopper className="w-8 h-8 text-yellow-900" strokeWidth={2.5} />
-          </div>
-        </div>
-
-        {/* ── MENSAGEM ── */}
-        <div className="z-20 mt-[45px] px-8 text-center">
-          <h2 className="text-[26px] font-extrabold text-slate-800 mb-3 tracking-tight">
-            Parabéns, {nome.split(' ')[0]}! 🥳
+        {/* ══════════════════════════════════════════════
+            FAIXA PARABÉNS — z-10
+            ══════════════════════════════════════════ */}
+        <div
+          style={{
+            marginTop: '30px',
+            width: '360px',
+            background: 'white',
+            padding: '16px 24px 18px 24px',
+            borderRadius: '255px 15px 225px 15px/15px 225px 15px 255px',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
+            transform: 'rotate(-1deg)',
+            textAlign: 'center',
+            zIndex: 10,
+          }}
+        >
+          <h2
+            style={{
+              color: '#087F8C',
+              fontSize: '22px',
+              fontWeight: 700,
+              marginBottom: '4px',
+              fontFamily: '"Georgia", serif',
+            }}
+          >
+            Parabéns, {nome.split(' ')[0]}!
           </h2>
-          <p className="text-slate-600 font-medium leading-relaxed text-[15px] max-w-[300px] mx-auto">
-            A equipe Klin deseja que seu dia seja incrivelmente especial, repleto de conquistas e muitas alegrias!
+          <p
+            style={{
+              color: '#087F8C',
+              fontSize: '14px',
+              fontWeight: 600,
+              lineHeight: '1.4',
+              fontFamily: '"Georgia", serif',
+            }}
+          >
+            A equipe Klin deseja um feliz aniversário<br />e um dia repleto de coisas boas!
           </p>
         </div>
 
-        {/* ── LOGO KLIN ── */}
-        <div className="mt-auto mb-[35px] z-10 w-full flex justify-center">
-          <img 
-            src="/logo.png" 
-            alt="KLIN" 
-            className="h-[50px] object-contain mix-blend-multiply opacity-90" 
+
+        {/* ══════════════════════════════════════════════
+            LOGO KLIN 
+            (Agora com margens menores e altura garantida pra não ser cortada pelo overflow:hidden do cartaz)
+            ══════════════════════════════════════════ */}
+        <div style={{ marginTop: 'auto', marginBottom: '15px', zIndex: 10 }}>
+          <img
+            src="/logo.png"
+            alt="KLIN"
+            style={{
+              height: '65px', 
+              objectFit: 'contain',
+              mixBlendMode: 'multiply',
+            }}
           />
         </div>
 
