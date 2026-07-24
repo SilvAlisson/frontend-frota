@@ -102,15 +102,15 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
             {/* Path invisível para curvar o "Feliz" */}
             <path id="curveFeliz" d="M 120 70 Q 200 45 280 70" fill="transparent" />
             <text>
-              <textPath href="#curveFeliz" startOffset="50%" textAnchor="middle" fill="#087F8C" style={{ fontFamily: '"Georgia", serif', fontSize: '50px', fontWeight: 900 }}>
+              <textPath href="#curveFeliz" startOffset="50%" textAnchor="middle" fill="#087F8C" style={{ fontFamily: '"Georgia", serif', fontSize: '46px', fontWeight: 900 }}>
                 Feliz
               </textPath>
             </text>
             
             {/* Path invisível para curvar o "Aniversário" */}
-            <path id="curveAniversario" d="M 30 135 Q 200 85 370 135" fill="transparent" />
+            <path id="curveAniversario" d="M 35 135 Q 200 85 365 135" fill="transparent" />
             <text>
-              <textPath href="#curveAniversario" startOffset="50%" textAnchor="middle" fill="#087F8C" style={{ fontFamily: '"Georgia", serif', fontSize: '66px', fontWeight: 900 }}>
+              <textPath href="#curveAniversario" startOffset="50%" textAnchor="middle" fill="#087F8C" style={{ fontFamily: '"Georgia", serif', fontSize: '58px', fontWeight: 900 }}>
                 Aniversário
               </textPath>
             </text>
@@ -124,7 +124,7 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
         <div
           style={{
             position: 'relative',
-            marginTop: '25px',
+            marginTop: '15px',
             width: '320px',
             backgroundColor: 'white',
             padding: '12px 12px 64px 12px',
@@ -132,10 +132,35 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
             zIndex: 20,
           }}
         >
+          {/* 🎉 Chapeuzinho VETORIZADO - No TOPO da moldura Polaroid (fora da cabeça) */}
+          <div
+            className="absolute select-none"
+            style={{
+              top: '-35px',
+              left: '50%',
+              transform: 'translateX(-50%) rotate(10deg)',
+              zIndex: 35,
+              filter: 'drop-shadow(2px 4px 4px rgba(0,0,0,0.3))',
+            }}
+          >
+            <svg width="70" height="90" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <clipPath id="hatClip">
+                  <path d="M 40 15 L 15 80 L 65 80 Z" />
+                </clipPath>
+              </defs>
+              <path d="M 40 15 L 15 80 L 65 80 Z" fill="#FACC15" />
+              <g clipPath="url(#hatClip)">
+                <rect x="0" y="30" width="80" height="10" fill="#EA580C" transform="rotate(10, 40, 35)" />
+                <rect x="0" y="55" width="80" height="12" fill="#EA580C" transform="rotate(10, 40, 60)" />
+              </g>
+              <path d="M 40 2 L 43 10 L 51 10 L 45 15 L 47 23 L 40 18 L 33 23 L 35 15 L 29 10 L 37 10 Z" fill="#1D4ED8" />
+            </svg>
+          </div>
+
           {/* Foto do integrante */}
           <div
             style={{
-              position: 'relative',
               width: '100%',
               height: '296px',
               backgroundImage: `url(${avatarImage})`,
@@ -143,38 +168,7 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
               backgroundPosition: 'center top',
               backgroundColor: '#e2e8f0',
             }}
-          >
-            {/* 🎉 Chapeuzinho VETORIZADO - Cai exatamente na cabeça do aniversariante */}
-            <div
-              className="absolute select-none"
-              style={{
-                top: '-20px', /* Adentra a foto, sobrepondo a cabeça */
-                left: '50%',
-                transform: 'translateX(-30%) rotate(15deg)', /* Inclinado na cabeça */
-                zIndex: 30,
-                filter: 'drop-shadow(2px 4px 4px rgba(0,0,0,0.3))',
-              }}
-            >
-              <svg width="70" height="90" viewBox="0 0 80 90" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <clipPath id="hatClip">
-                    <path d="M 40 15 L 15 80 L 65 80 Z" />
-                  </clipPath>
-                </defs>
-                {/* Cone do chapéu */}
-                <path d="M 40 15 L 15 80 L 65 80 Z" fill="#FACC15" />
-                {/* Listras */}
-                <g clipPath="url(#hatClip)">
-                  <rect x="0" y="30" width="80" height="10" fill="#EA580C" transform="rotate(10, 40, 35)" />
-                  <rect x="0" y="55" width="80" height="12" fill="#EA580C" transform="rotate(10, 40, 60)" />
-                </g>
-                {/* Pompom azul */}
-                <path d="M 40 2 L 43 10 L 51 10 L 45 15 L 47 23 L 40 18 L 33 23 L 35 15 L 29 10 L 37 10 Z" fill="#1D4ED8" />
-              </svg>
-            </div>
-          </div>
-
-          {/* ── EMOJIS DECORATIVOS DA BORDA ── */}
+          />
 
           {/* 🧁 Cupcake — borda inferior-esquerda */}
           <div
@@ -221,56 +215,55 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
 
 
         {/* ══════════════════════════════════════════════
-            FAIXA PARABÉNS — z-10
+            FAIXA PARABÉNS — z-10 (Com fundo pincelado SVG)
             ══════════════════════════════════════════ */}
-        <div
-          style={{
-            marginTop: '30px',
-            width: '360px',
-            background: 'white',
-            padding: '16px 24px 18px 24px',
-            borderRadius: '255px 15px 225px 15px/15px 225px 15px 255px',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-            transform: 'rotate(-1deg)',
-            textAlign: 'center',
-            zIndex: 10,
-          }}
-        >
-          <h2
-            style={{
-              color: '#087F8C',
-              fontSize: '22px',
-              fontWeight: 700,
-              marginBottom: '4px',
-              fontFamily: '"Georgia", serif',
-            }}
-          >
-            Parabéns, {nome.split(' ')[0]}!
-          </h2>
-          <p
-            style={{
-              color: '#087F8C',
-              fontSize: '14px',
-              fontWeight: 600,
-              lineHeight: '1.4',
-              fontFamily: '"Georgia", serif',
-            }}
-          >
-            A equipe Klin deseja um feliz aniversário<br />e um dia repleto de coisas boas!
-          </p>
+        <div style={{ position: 'relative', width: '370px', height: '110px', marginTop: '15px', zIndex: 10 }}>
+          {/* Fundo Pincelado em SVG */}
+          <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.05))' }} viewBox="0 0 360 110" preserveAspectRatio="none">
+            {/* Forma principal irregular */}
+            <path d="M 12 15 C 50 10, 310 10, 348 18 C 358 25, 362 85, 350 95 C 310 105, 50 105, 12 95 C -2 85, -2 25, 12 15 Z" fill="white" />
+            {/* Pinceladas extras nas bordas para dar efeito rasgado/brush */}
+            <path d="M 5 25 C 100 20, 260 20, 355 30 C 355 30, 355 40, 345 50 C 260 45, 100 45, 10 35 Z" fill="white" />
+            <path d="M 10 70 C 100 65, 260 65, 350 75 C 350 75, 350 85, 340 95 C 260 90, 100 90, 5 80 Z" fill="white" />
+          </svg>
+          
+          {/* Texto */}
+          <div style={{ position: 'relative', zIndex: 1, padding: '22px 24px', textAlign: 'center', transform: 'rotate(-1deg)' }}>
+            <h2
+              style={{
+                color: '#087F8C',
+                fontSize: '22px',
+                fontWeight: 700,
+                marginBottom: '4px',
+                fontFamily: '"Georgia", serif',
+              }}
+            >
+              Parabéns, {nome.split(' ')[0]}!
+            </h2>
+            <p
+              style={{
+                color: '#087F8C',
+                fontSize: '14px',
+                fontWeight: 600,
+                lineHeight: '1.4',
+                fontFamily: '"Georgia", serif',
+              }}
+            >
+              A equipe Klin deseja um feliz aniversário<br />e um dia repleto de coisas boas!
+            </p>
+          </div>
         </div>
 
 
         {/* ══════════════════════════════════════════════
             LOGO KLIN 
-            (Agora com margens menores e altura garantida pra não ser cortada pelo overflow:hidden do cartaz)
             ══════════════════════════════════════════ */}
         <div style={{ marginTop: 'auto', marginBottom: '15px', zIndex: 10 }}>
           <img
             src="/logo.png"
             alt="KLIN"
             style={{
-              height: '65px', 
+              height: '75px', 
               objectFit: 'contain',
               mixBlendMode: 'multiply',
             }}
