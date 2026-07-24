@@ -58,7 +58,7 @@ export function FormRegistrarManutencao({ onSuccess, onClose, veiculoIdPreSeleci
     reValidateMode: 'onChange'
   });
 
-  const { handleSubmit, trigger, reset, formState: { isSubmitting } } = methods;
+  const { handleSubmit, reset, formState: { isSubmitting } } = methods;
 
   const nextStep = async () => {
     if (step === 1) {

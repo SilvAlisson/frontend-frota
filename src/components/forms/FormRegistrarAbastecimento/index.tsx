@@ -61,7 +61,7 @@ export function FormRegistrarAbastecimento({
     reValidateMode: 'onChange',
   });
 
-  const { handleSubmit, trigger, formState: { isSubmitting } } = methods;
+  const { handleSubmit, formState: { isSubmitting } } = methods;
 
   const handleFormSubmit = async (e: React.FormEvent) => {
     e.preventDefault(); 
