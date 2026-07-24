@@ -145,12 +145,12 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
           regimeTrabalho: user.regimeTrabalho || 'NENHUM',
           password: '',
           cargoId: user.cargoId || (user.cargo as { id?: string } | null)?.id || '',
-          cnhNumero: user.cnhNumero || '',
-          cnhCategoria: user.cnhCategoria || '',
+          cnhNumero: user.profile?.cnhNumero || '',
+          cnhCategoria: user.profile?.cnhCategoria || '',
           // Corrige datas para inputs de formato date HTML (YYYY-MM-DD)
-          cnhValidade: user.cnhValidade ? user.cnhValidade.split('T')[0] : '',
-          dataAdmissao: user.dataAdmissao ? user.dataAdmissao.split('T')[0] : '',
-          dataNascimento: user.dataNascimento ? user.dataNascimento.split('T')[0] : '',
+          cnhValidade: user.profile?.cnhValidade ? user.profile.cnhValidade.split('T')[0] : '',
+          dataAdmissao: user.profile?.dataAdmissao ? user.profile.dataAdmissao.split('T')[0] : '',
+          dataNascimento: user.profile?.dataNascimento ? user.profile.dataNascimento.split('T')[0] : '',
         });
       } catch (err) {
         logger.apiError(err, 'Erro ao carregar os dados de perfil.');
