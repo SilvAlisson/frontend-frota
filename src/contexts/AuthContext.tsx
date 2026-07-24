@@ -3,6 +3,29 @@ import { useSession, signOut as betterSignOut } from '../lib/auth-client';
 import type { User } from '../types';
 import { logger } from '../lib/logger';
 
+import type { UserRole, StatusOperador } from '../types/user';
+
+function parseRole(role: unknown): UserRole {
+  switch(role) {
+    case 'ADMIN': return 'ADMIN';
+    case 'RH': return 'RH';
+    case 'ENCARREGADO': return 'ENCARREGADO';
+    case 'OPERADOR': return 'OPERADOR';
+    default: return 'OPERADOR';
+  }
+}
+
+function parseStatus(status: unknown): StatusOperador {
+  switch(status) {
+    case 'ATIVO': return 'ATIVO';
+    case 'AFASTADO': return 'AFASTADO';
+    case 'ATESTADO': return 'ATESTADO';
+    case 'FERIAS': return 'FERIAS';
+    default: return 'ATIVO';
+  }
+}
+
+
 interface AuthContextData {
   user: User | null;
   isAuthenticated: boolean;
@@ -11,17 +34,23 @@ interface AuthContextData {
   loading: boolean;
 }
 
-const AuthContext = createContext<AuthContextData>({} as AuthContextData);
+const AuthContext = createContext<AuthContextData | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { data: sessionData, isPending: isSessionLoading, refetch: refetchSession } = useSession();
 
-  // Mapeia .image para .fotoUrl e .name para .nome (compatibilidade BetterAuth → App)
-  const betterUser = sessionData?.user ? {
-    ...sessionData.user,
+  const betterUser: User | null = sessionData?.user ? {
+    id: sessionData.user.id,
+    nome: sessionData.user.name,
+    email: sessionData.user.email,
+    matricula: 'matricula' in sessionData.user ? String(sessionData.user.matricula) : null,
+    role: 'role' in sessionData.user ? parseRole(sessionData.user.role) : 'OPERADOR',
+    cargo: 'cargo' in sessionData.user ? String(sessionData.user.cargo) : null,
     fotoUrl: sessionData.user.image,
-    nome: sessionData.user.name
-  } as unknown as User : null;
+    image: sessionData.user.image,
+    status: 'status' in sessionData.user ? parseStatus(sessionData.user.status) : 'ATIVO',
+    permiteOperacao: 'permiteOperacao' in sessionData.user ? Boolean(sessionData.user.permiteOperacao) : false
+  } : null;
 
   const currentUser = betterUser;
 

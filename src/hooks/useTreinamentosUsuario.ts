@@ -156,8 +156,13 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
                         userId,
                         status: 'PENDENTE',
                         isObrigatorio: true,
-                        diasAntecedenciaAlerta: req.diasAntecedenciaAlerta
-                    } as unknown as typeof realizados[0]);
+                        diasAntecedenciaAlerta: req.diasAntecedenciaAlerta,
+                        dataVencimento: null,
+                        descricao: null,
+                        comprovanteUrl: null,
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                    } as typeof realizados[0]);
                 }
             });
         }

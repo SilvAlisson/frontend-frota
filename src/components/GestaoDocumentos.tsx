@@ -73,7 +73,7 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
             O Arquivo será permanentemente apagado e não poderá ser recuperado. Se este documento for obrigatório, a frota poderá ficar irregular.
           </Callout>
         </div>
-      ) as unknown as string,
+      ),
       variant: "danger",
       confirmLabel: "Sim, Excluir Documento",
       onConfirm: async () => {

@@ -82,7 +82,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
     control,
     reset,
     formState: { errors, isSubmitting }
-  } = useForm<UsuarioFormInput, any, UsuarioFormOutput>({
+  } = useForm<UsuarioFormInput, unknown, UsuarioFormOutput>({
     resolver: zodResolver(usuarioSchema),
     defaultValues: {
       role: 'OPERADOR',

@@ -23,6 +23,7 @@ export function Step2DadosFinanceiros() {
   const isLocked = isSubmitting || loadF || loadP;
 
   const veiculoIdSelecionado = watch('veiculoId');
+  const fornecedorIdSelecionado = watch('fornecedorId');
   const itensObservados = watch('itens') || [];
 
   const postoOptions = useMemo(() =>
@@ -58,7 +59,11 @@ export function Step2DadosFinanceiros() {
     itensObservados.forEach((item, index) => {
       if (item && item.produtoId) {
         const produtoSelecionado = produtos.find(p => p.id === item.produtoId);
-        const precoSugerido = produtoSelecionado?.ultimoPreco;
+        let precoSugerido = produtoSelecionado?.ultimoPreco;
+        
+        if (fornecedorIdSelecionado && produtoSelecionado?.precosPorFornecedor?.[fornecedorIdSelecionado]) {
+          precoSugerido = produtoSelecionado.precosPorFornecedor[fornecedorIdSelecionado];
+        }
 
         // Se tem histórico e o input de valor ainda está vazio/zerado
         if (precoSugerido && (!item.valorUnitario || desformatarDinheiro(String(item.valorUnitario)) === 0)) {
@@ -68,7 +73,7 @@ export function Step2DadosFinanceiros() {
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(itensObservados.map(i => i?.produtoId)), produtos, setValue]);
+  }, [JSON.stringify(itensObservados.map(i => i?.produtoId)), fornecedorIdSelecionado, produtos, setValue]);
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
@@ -112,7 +117,11 @@ export function Step2DadosFinanceiros() {
             // Inteligência: Lógica para detectar variação de preço
             const produtoIdAtual = watch(`itens.${index}.produtoId`);
             const produtoData = produtos.find(p => p.id === produtoIdAtual);
-            const ultimoPrecoHistorico = produtoData?.ultimoPreco || 0;
+            
+            let ultimoPrecoHistorico = produtoData?.ultimoPreco || 0;
+            if (fornecedorIdSelecionado && produtoData?.precosPorFornecedor?.[fornecedorIdSelecionado]) {
+              ultimoPrecoHistorico = produtoData.precosPorFornecedor[fornecedorIdSelecionado];
+            }
             
             let statusPreco: 'igual' | 'aumentou' | 'diminuiu' | 'sem_historico' = 'sem_historico';
             

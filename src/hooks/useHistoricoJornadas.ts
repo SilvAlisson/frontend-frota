@@ -34,7 +34,12 @@ export function useHistoricoJornadas(filtros: FiltrosJornada) {
       if (filtros.buscaPlaca) params.placa = filtros.buscaPlaca;     
 
       const response = await api.get('/jornadas/historico', { params });
-      setHistorico(response.data);
+      const normalizedData = response.data.map((j: Record<string, unknown>) => ({
+        ...j,
+        fotoInicioUrl: j.fotoInicioUrl || j.fotoInicio || j.foto_inicio || null,
+        fotoFimUrl: j.fotoFimUrl || j.fotoFim || j.foto_fim || null
+      }));
+      setHistorico(normalizedData);
     } catch (err: unknown) {
       logger.apiError(err, 'Erro ao carregar histórico de jornadas.');
       const e = err instanceof Error ? err : new Error('Não foi possível carregar o histórico.');

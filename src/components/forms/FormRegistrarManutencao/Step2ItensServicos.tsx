@@ -58,7 +58,11 @@ export function Step2ItensServicos() {
     itensObservados.forEach((item, index) => {
       if (item && item.produtoId) {
         const produtoSelecionado = listaProdutos.find(p => p.id === item.produtoId);
-        const precoSugerido = produtoSelecionado?.ultimoPreco;
+        let precoSugerido = produtoSelecionado?.ultimoPreco;
+        
+        if (fornecedorIdSelecionado && produtoSelecionado?.precosPorFornecedor?.[fornecedorIdSelecionado]) {
+          precoSugerido = produtoSelecionado.precosPorFornecedor[fornecedorIdSelecionado];
+        }
 
         // Se tem histórico e o input de valor ainda está vazio/zerado
         if (precoSugerido && (!item.valorPorUnidade || desformatarDinheiro(String(item.valorPorUnidade)) === 0)) {
@@ -68,7 +72,7 @@ export function Step2ItensServicos() {
       }
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [JSON.stringify(itensObservados.map(i => i?.produtoId)), listaProdutos, setValue]);
+  }, [JSON.stringify(itensObservados.map(i => i?.produtoId)), fornecedorIdSelecionado, listaProdutos, setValue]);
 
   return (
     <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
@@ -104,7 +108,11 @@ export function Step2ItensServicos() {
           // 2. Lógica para detectar variação de preço da peça/serviço
           const produtoIdAtual = watch(`itens.${index}.produtoId`);
           const produtoData = listaProdutos.find(p => p.id === produtoIdAtual);
-          const ultimoPrecoHistorico = produtoData?.ultimoPreco || 0;
+          
+          let ultimoPrecoHistorico = produtoData?.ultimoPreco || 0;
+          if (fornecedorIdSelecionado && produtoData?.precosPorFornecedor?.[fornecedorIdSelecionado]) {
+            ultimoPrecoHistorico = produtoData.precosPorFornecedor[fornecedorIdSelecionado];
+          }
           
           let statusPreco: 'igual' | 'aumentou' | 'diminuiu' | 'sem_historico' = 'sem_historico';
           

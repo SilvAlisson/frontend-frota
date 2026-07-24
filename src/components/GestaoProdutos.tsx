@@ -79,7 +79,7 @@ export function GestaoProdutos() {
             Se este item já tiver sido utilizado em alguma fatura de abastecimento ou ordem de serviço de oficina, a sua exclusão será bloqueada para preservar o histórico financeiro.
           </Callout>
         </div>
-      ) as unknown as string, // ReactNode passado como string — válido em runtime neste contexto
+      ),
       variant: "danger",
       confirmLabel: "Sim, Excluir Item",
       onConfirm: async () => {

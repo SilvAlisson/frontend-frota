@@ -10,11 +10,9 @@ import type { JornadaHistorico } from '../../hooks/useHistoricoJornadas';
 
 export const getFotoUrl = (jornada: JornadaHistorico, tipo: 'inicio' | 'fim'): string | null => {
   if (tipo === 'inicio') {
-    const raw = jornada as unknown as Record<string, unknown>;
-    return (jornada.fotoInicioUrl || jornada.fotoInicio || raw.foto_inicio || null) as string | null;
+    return (jornada.fotoInicioUrl || jornada.fotoInicio || null) as string | null;
   }
-  const raw = jornada as unknown as Record<string, unknown>;
-  return (jornada.fotoFimUrl || jornada.fotoFim || raw.foto_fim || null) as string | null;
+  return (jornada.fotoFimUrl || jornada.fotoFim || null) as string | null;
 };
 
 interface TabelaJornadasProps {

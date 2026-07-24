@@ -11,6 +11,7 @@ export interface Produto {
   tipo: string;
   unidadeMedida: string;
   ultimoPreco?: number;
+  precosPorFornecedor?: Record<string, number>;
 }
 
 export interface AddProdutoData {

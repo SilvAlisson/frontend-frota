@@ -3,6 +3,14 @@ import { toast } from 'sonner';
 import { env } from '../config/env';
 import type { CustomAxiosError } from '../services/api';
 
+declare global {
+    interface Navigator {
+        connection?: {
+            effectiveType?: string;
+        };
+    }
+}
+
 /**
  * Analisa um erro (da API ou Javascript) e retorna uma mensagem amigável.
  * Também dispara um toast de notificação automaticamente.
@@ -92,7 +100,7 @@ export const getDeviceContext = () => {
         _idioma: navigator.language,
         _plataforma: navigator.platform,
         // Pegamos o tipo de conexão (ex: 3g, 4g, wifi) se o navegador suportar (Android/Chrome)
-        _conexao: ((navigator as unknown) as { connection?: { effectiveType?: string } }).connection?.effectiveType || 'Desconhecida',
+        _conexao: navigator.connection?.effectiveType || 'Desconhecida',
         _horaLocal: new Date().toLocaleTimeString()
     };
 };
