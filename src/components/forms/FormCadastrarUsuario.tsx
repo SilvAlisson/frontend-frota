@@ -40,6 +40,7 @@ const usuarioSchema = z.object({
   role: z.enum(ROLES, { error: "Função inválida" }),
   regimeTrabalho: z.enum(['TURNO', 'ADM', 'NENHUM']).optional(),
   dataAdmissao: z.string().min(1, "Data de admissão obrigatória"),
+  dataNascimento: z.string().optional().nullable(),
   cargoId: z.string().min(1, "Cargo obrigatório"),
 
   // CNH (Opcionais/Condicionais)
@@ -92,6 +93,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       cnhCategoria: '',
       cnhValidade: '',
       dataAdmissao: '',
+      dataNascimento: '',
       matricula: '',
       treinamentos: []
     },
@@ -333,6 +335,17 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
                 icon={<Calendar className="w-4 h-4 text-primary/70" />}
                 {...register('dataAdmissao')}
                 error={errors.dataAdmissao?.message}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div>
+              <Input
+                label="Data de Nascimento"
+                type="date"
+                icon={<Calendar className="w-4 h-4 text-pink-500/70" />}
+                {...register('dataNascimento')}
+                error={errors.dataNascimento?.message}
                 disabled={isSubmitting}
               />
             </div>

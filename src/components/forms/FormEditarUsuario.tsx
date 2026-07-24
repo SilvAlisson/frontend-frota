@@ -34,6 +34,7 @@ const editarUsuarioSchema = z.object({
   cnhCategoria: z.string().optional().nullable(),
   cnhValidade: z.string().optional().nullable(),
   dataAdmissao: z.string().optional().nullable(),
+  dataNascimento: z.string().optional().nullable(),
   password: z.string().optional().nullable().refine(val => !val || val.length >= 6, { message: "Nova senha deve ter no mínimo 6 caracteres" })
 });
 
@@ -52,6 +53,7 @@ interface UserUpdatePayload {
   cnhCategoria: string | null;
   cnhValidade: string | null;
   dataAdmissao: string | null;
+  dataNascimento: string | null;
   password?: string;
 }
 
@@ -148,6 +150,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
           // Corrige datas para inputs de formato date HTML (YYYY-MM-DD)
           cnhValidade: user.cnhValidade ? user.cnhValidade.split('T')[0] : '',
           dataAdmissao: user.dataAdmissao ? user.dataAdmissao.split('T')[0] : '',
+          dataNascimento: user.dataNascimento ? user.dataNascimento.split('T')[0] : '',
         });
       } catch (err) {
         logger.apiError(err, 'Erro ao carregar os dados de perfil.');
@@ -200,6 +203,7 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
       cnhCategoria: isOperador && data.cnhCategoria ? data.cnhCategoria : null,
       cnhValidade: isOperador && data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
       dataAdmissao: data.dataAdmissao ? new Date(data.dataAdmissao).toISOString() : null,
+      dataNascimento: data.dataNascimento ? new Date(data.dataNascimento).toISOString() : null,
     };
 
     if (data.password && data.password.trim() !== '') {
@@ -422,12 +426,19 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
                   </div>
                 </div>
 
-                <div className="md:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
                   <Input
                     label="Data de Admissão (Contrato)"
                     type="date"
                     icon={<Calendar className="w-4 h-4 text-primary/70" />}
                     {...register('dataAdmissao')}
+                    disabled={isLocked}
+                  />
+                  <Input
+                    label="Data de Nascimento"
+                    type="date"
+                    icon={<Calendar className="w-4 h-4 text-pink-500/70" />}
+                    {...register('dataNascimento')}
                     disabled={isLocked}
                   />
                 </div>

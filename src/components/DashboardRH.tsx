@@ -10,6 +10,7 @@ import { GraficoSST } from './rh/GraficoSST';
 import { GraficoCargos } from './rh/GraficoCargos';
 import { DashboardCompliance } from './rh/DashboardCompliance';
 import { RadarSSMA } from './rh/RadarSSMA';
+import { WidgetAniversariantes } from './rh/WidgetAniversariantes';
 import { Callout } from './ui/Callout';
 import { Skeleton } from './ui/Skeleton';
 import { Tabs } from './ui/Tabs';
@@ -82,6 +83,11 @@ export function DashboardRH({ user }: DashboardRHProps) {
                       </div>
                     ) : (
             <>
+              {/* WIDGET DE ANIVERSARIANTES (PISCA SE TIVER ALGUÉM) */}
+              <div className="mb-6">
+                <WidgetAniversariantes />
+              </div>
+
               {/* KPI GRID PREMIUM */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
                 <Link to="/admin/integrantes">
