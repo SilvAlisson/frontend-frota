@@ -379,6 +379,23 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
                 disabled={isLocked}
               />
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
+              <Input
+                label="Data de Admissão (Contrato)"
+                type="date"
+                icon={<Calendar className="w-4 h-4 text-primary/70" />}
+                {...register('dataAdmissao')}
+                disabled={isLocked}
+              />
+              <Input
+                label="Data de Nascimento"
+                type="date"
+                icon={<Calendar className="w-4 h-4 text-pink-500/70" />}
+                {...register('dataNascimento')}
+                disabled={isLocked}
+              />
+            </div>
           </div>
 
           {/* SEÇÃO RH CONDICIONAL (MOTORISTAS) */}
@@ -426,22 +443,6 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:col-span-2">
-                  <Input
-                    label="Data de Admissão (Contrato)"
-                    type="date"
-                    icon={<Calendar className="w-4 h-4 text-primary/70" />}
-                    {...register('dataAdmissao')}
-                    disabled={isLocked}
-                  />
-                  <Input
-                    label="Data de Nascimento"
-                    type="date"
-                    icon={<Calendar className="w-4 h-4 text-pink-500/70" />}
-                    {...register('dataNascimento')}
-                    disabled={isLocked}
-                  />
-                </div>
               </div>
             </div>
           </div>
