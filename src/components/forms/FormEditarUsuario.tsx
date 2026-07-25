@@ -34,7 +34,17 @@ const editarUsuarioSchema = z.object({
   cnhCategoria: z.string().optional().nullable(),
   cnhValidade: z.string().optional().nullable(),
   dataAdmissao: z.string().optional().nullable(),
-  dataNascimento: z.string().optional().nullable(),
+  dataNascimento: z.string().optional().nullable().refine((val) => {
+    if (!val) return true;
+    const date = new Date(val + 'T00:00:00'); // Garante fuso horário local
+    const today = new Date();
+    let age = today.getFullYear() - date.getFullYear();
+    const m = today.getMonth() - date.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
+      age--;
+    }
+    return age >= 18;
+  }, { message: "A idade mínima permitida é de 18 anos" }),
   password: z.string().optional().nullable().refine(val => !val || val.length >= 6, { message: "Nova senha deve ter no mínimo 6 caracteres" })
 });
 

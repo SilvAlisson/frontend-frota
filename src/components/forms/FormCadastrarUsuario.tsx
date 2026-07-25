@@ -40,7 +40,17 @@ const usuarioSchema = z.object({
   role: z.enum(ROLES, { error: "Função inválida" }),
   regimeTrabalho: z.enum(['TURNO', 'ADM', 'NENHUM']).optional(),
   dataAdmissao: z.string().min(1, "Data de admissão obrigatória"),
-  dataNascimento: z.string().optional().nullable(),
+  dataNascimento: z.string().optional().nullable().refine((val) => {
+    if (!val) return true;
+    const date = new Date(val + 'T00:00:00'); // Garante fuso horário local
+    const today = new Date();
+    let age = today.getFullYear() - date.getFullYear();
+    const m = today.getMonth() - date.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < date.getDate())) {
+      age--;
+    }
+    return age >= 18;
+  }, { message: "A idade mínima permitida é de 18 anos" }),
   cargoId: z.string().min(1, "Cargo obrigatório"),
 
   // CNH (Opcionais/Condicionais)
