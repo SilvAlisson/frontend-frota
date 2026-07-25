@@ -18,6 +18,7 @@ interface IntegrantePublico {
   role: string;
   matricula: string | null;
   fotoUrl: string | null;
+  cargo?: { nome: string };
   treinamentos: TreinamentoPublico[];
 }
 
@@ -162,7 +163,9 @@ export function DossiePublico() {
           
           <h1 className="text-2xl font-black text-text-main tracking-tight leading-tight">{integrante.nome}</h1>
           <div className="flex items-center gap-2 mt-3">
-             <span className="bg-surface-hover px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest border border-border/60 text-text-secondary shadow-sm">{integrante.role}</span>
+             <span className="bg-surface-hover px-3 py-1 rounded-lg text-xs font-black uppercase tracking-widest border border-border/60 text-text-secondary shadow-sm">
+                {integrante.cargo?.nome || integrante.role}
+             </span>
              {integrante.matricula && (
                <span className="text-[10px] font-mono font-bold px-2 py-1 rounded-lg bg-primary/5 text-primary border border-primary/20">MAT: {integrante.matricula}</span>
              )}
