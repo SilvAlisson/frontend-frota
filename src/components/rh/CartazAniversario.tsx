@@ -20,7 +20,7 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
 
   const copyToClipboard = async () => {
     if (!cartazRef.current) return;
-    
+
     try {
       setIsGenerating(true);
       const blob = await htmlToImage.toBlob(cartazRef.current, {
@@ -34,14 +34,14 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
           margin: '0'
         }
       });
-      
+
       if (blob) {
         const item = new ClipboardItem({ 'image/png': blob });
         await navigator.clipboard.write([item]);
-        
+
         setIsCopied(true);
         toast.success('Cartaz copiado para a área de transferência! Cole (Ctrl+V) no WhatsApp.');
-        
+
         setTimeout(() => setIsCopied(false), 3000);
       }
     } catch (error) {
@@ -54,7 +54,7 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
 
   const downloadImage = async () => {
     if (!cartazRef.current) return;
-    
+
     try {
       setIsGenerating(true);
       const dataUrl = await htmlToImage.toPng(cartazRef.current, {
@@ -63,12 +63,12 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
         fontEmbedCSS: '',
         skipFonts: true
       });
-      
+
       const link = document.createElement('a');
       link.download = `Aniversario_${nome.replace(/\s+/g, '_')}.png`;
       link.href = dataUrl;
       link.click();
-      
+
       toast.success('Cartaz baixado com sucesso!');
     } catch (error) {
       console.error('Erro ao gerar imagem:', error);
@@ -80,9 +80,9 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
 
   return (
     <div className="flex flex-col items-center gap-6">
-      
+
       {/* ── CARTAZ (400x711) ── */}
-      <div 
+      <div
         ref={cartazRef}
         className="relative overflow-hidden flex flex-col items-center"
         style={{
@@ -106,7 +106,7 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
                 Feliz
               </textPath>
             </text>
-            
+
             {/* Path invisível para curvar o "Aniversário" */}
             <path id="curveAniversario" d="M 35 135 Q 200 85 365 135" fill="transparent" />
             <text>
@@ -127,7 +127,7 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
             marginTop: '15px',
             width: '320px',
             backgroundColor: 'white',
-            padding: '12px 12px 64px 12px',
+            padding: '12px 12px 14px 12px',
             boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
             zIndex: 20,
           }}
@@ -136,9 +136,9 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
           <div
             className="absolute select-none"
             style={{
-              top: '-35px',
-              left: '50%',
-              transform: 'translateX(-50%) rotate(10deg)',
+              top: '-45px',
+              left: '58%',
+              transform: 'translateX(-50%) rotate(22deg)',
               zIndex: 35,
               filter: 'drop-shadow(2px 4px 4px rgba(0,0,0,0.3))',
             }}
@@ -174,7 +174,7 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
           <div
             className="absolute select-none"
             style={{
-              bottom: '-25px',
+              bottom: '1px',
               left: '-45px',
               fontSize: '110px',
               lineHeight: 1,
@@ -188,13 +188,13 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
           <div
             className="absolute select-none"
             style={{
-              bottom: '50px',
-              right: '-45px',
+              bottom: '75px',
+              right: '-55px',
               fontSize: '85px',
               lineHeight: 1,
               zIndex: 29,
               filter: 'hue-rotate(200deg) drop-shadow(2px 4px 5px rgba(0,0,0,0.2))',
-              transform: 'rotate(15deg)',
+              transform: 'rotate(5deg)',
             }}
           >🎈</div>
 
@@ -202,13 +202,13 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
           <div
             className="absolute select-none"
             style={{
-              bottom: '-20px',
-              right: '-15px',
+              bottom: '5px',
+              right: '-45px',
               fontSize: '95px',
               lineHeight: 1,
               zIndex: 30,
               filter: 'hue-rotate(120deg) drop-shadow(2px 4px 6px rgba(0,0,0,0.2))',
-              transform: 'rotate(-10deg)',
+              transform: 'rotate(10deg)',
             }}
           >🎈</div>
         </div>
@@ -218,15 +218,24 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
             FAIXA PARABÉNS — z-10 (Com fundo pincelado SVG)
             ══════════════════════════════════════════ */}
         <div style={{ position: 'relative', width: '370px', height: '110px', marginTop: '15px', zIndex: 10 }}>
-          {/* Fundo Pincelado em SVG */}
-          <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.05))' }} viewBox="0 0 360 110" preserveAspectRatio="none">
-            {/* Forma principal irregular */}
-            <path d="M 12 15 C 50 10, 310 10, 348 18 C 358 25, 362 85, 350 95 C 310 105, 50 105, 12 95 C -2 85, -2 25, 12 15 Z" fill="white" />
-            {/* Pinceladas extras nas bordas para dar efeito rasgado/brush */}
-            <path d="M 5 25 C 100 20, 260 20, 355 30 C 355 30, 355 40, 345 50 C 260 45, 100 45, 10 35 Z" fill="white" />
-            <path d="M 10 70 C 100 65, 260 65, 350 75 C 350 75, 350 85, 340 95 C 260 90, 100 90, 5 80 Z" fill="white" />
+          {/* Fundo Pincelado em SVG (Efeito Dry Brush Realista) */}
+          <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.05))' }} viewBox="0 0 400 120" preserveAspectRatio="none">
+            {/* Corpo sólido principal do pincel com bordas laterais rasgadas */}
+            <path d="M 35,15 Q 150,10 250,12 T 365,15 L 380,18 L 372,21 L 390,25 L 375,28 L 395,32 L 380,36 L 398,40 L 385,45 L 392,50 L 378,55 L 388,62 L 375,68 L 395,75 L 370,82 L 385,90 L 360,98 Q 200,105 100,102 T 40,95 L 20,90 L 30,85 L 15,78 L 28,72 L 10,65 L 25,58 L 15,50 L 30,42 L 12,35 L 25,28 L 18,22 Z" fill="white" />
+            
+            {/* Fios/Cerdas horizontais vazando para os lados (textura de tinta seca) */}
+            <path d="M 10,25 Q 200,28 390,35 L 385,38 Q 200,31 15,28 Z" fill="white" opacity="0.9" />
+            <path d="M 5,45 Q 200,50 398,58 L 390,62 Q 200,54 8,49 Z" fill="white" opacity="0.8" />
+            <path d="M 12,65 Q 200,72 388,82 L 380,85 Q 200,75 15,69 Z" fill="white" opacity="0.9" />
+            <path d="M 25,85 Q 200,90 380,95 L 375,98 Q 200,93 20,89 Z" fill="white" opacity="0.7" />
+            
+            {/* Pequenos respingos e falhas pontuais */}
+            <path d="M 8,35 L 25,38 L 25,41 L 8,38 Z" fill="white" />
+            <path d="M 385,70 L 398,73 L 398,75 L 385,72 Z" fill="white" />
+            <path d="M 370,48 L 392,52 L 392,54 L 370,50 Z" fill="white" />
+            <path d="M 18,55 L 35,58 L 35,60 L 18,57 Z" fill="white" />
           </svg>
-          
+
           {/* Texto */}
           <div style={{ position: 'relative', zIndex: 1, padding: '22px 24px', textAlign: 'center', transform: 'rotate(-1deg)' }}>
             <h2
@@ -263,7 +272,7 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
             src="/logo.png"
             alt="KLIN"
             style={{
-              height: '75px', 
+              height: '75px',
               objectFit: 'contain',
               mixBlendMode: 'multiply',
             }}
@@ -274,17 +283,17 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
 
       {/* ── BOTÕES DE AÇÃO ── */}
       <div className="flex gap-4 w-full max-w-[400px]">
-        <Button 
-          onClick={copyToClipboard} 
+        <Button
+          onClick={copyToClipboard}
           disabled={isGenerating}
           className="flex-1 bg-green-600 hover:bg-green-700 text-white"
         >
-          {isGenerating && !isCopied ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : 
-           isCopied ? <Check className="w-4 h-4 mr-2" /> : 
-           <Copy className="w-4 h-4 mr-2" />}
+          {isGenerating && !isCopied ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> :
+            isCopied ? <Check className="w-4 h-4 mr-2" /> :
+              <Copy className="w-4 h-4 mr-2" />}
           {isCopied ? 'Copiado!' : 'Copiar p/ WhatsApp'}
         </Button>
-        <Button 
+        <Button
           onClick={downloadImage}
           disabled={isGenerating}
           variant="outline"
