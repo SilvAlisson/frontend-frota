@@ -1,9 +1,10 @@
-import { createContext, useContext, type ReactNode, useEffect, useCallback, useMemo } from 'react';
+import { createContext, useContext, type ReactNode, useEffect, useCallback, useMemo, useState } from 'react';
 import { useSession, signOut as betterSignOut } from '../lib/auth-client';
 import type { User } from '../types';
 import { logger } from '../lib/logger';
 
 import type { UserRole, StatusOperador } from '../types/user';
+import { ConfirmModal } from '../components/ui/ConfirmModal';
 
 function parseRole(role: unknown): UserRole {
   switch(role) {
@@ -31,12 +32,16 @@ interface AuthContextData {
   isAuthenticated: boolean;
   login: () => Promise<void>;
   logout: () => void;
+  requestLogout: () => void;
   loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextData | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const { data: sessionData, isPending: isSessionLoading, refetch: refetchSession } = useSession();
 
   const betterUser: User | null = sessionData?.user ? {
@@ -55,21 +60,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const currentUser = betterUser;
 
   const login = useCallback(async () => {
-
     await refetchSession();
-
   }, [refetchSession]);
 
-  const logout = useCallback(async () => {
+  const confirmLogout = useCallback(async () => {
+    setIsLoggingOut(true);
     try {
       await betterSignOut();
     } catch (e) {
       logger.debug('Erro silencioso ao fazer sign out:', e);
     } finally {
-      // Um Hard Redirect mata toda a árvore do React Query instantaneamente,
-      // garantindo que não haverá NENHUMA tentativa de refetch 401 enquanto os componentes desmontam.
       window.location.href = '/login';
     }
+  }, []);
+
+  const logout = useCallback(() => {
+    confirmLogout();
+  }, [confirmLogout]);
+
+  const requestLogout = useCallback(() => {
+    setIsLogoutModalOpen(true);
   }, []);
 
   useEffect(() => {
@@ -86,12 +96,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isAuthenticated: !!currentUser,
     login,
     logout,
+    requestLogout,
     loading: isSessionLoading
-  }), [currentUser, login, logout, isSessionLoading]);
+  }), [currentUser, login, logout, requestLogout, isSessionLoading]);
 
   return (
     <AuthContext.Provider value={contextValue}>
       {children}
+      <ConfirmModal
+        isOpen={isLogoutModalOpen}
+        onCancel={() => setIsLogoutModalOpen(false)}
+        onConfirm={confirmLogout}
+        title="Encerrar Sessão"
+        description="Tem certeza que deseja fechar a sua sessão e sair do sistema?"
+        confirmLabel="Sair do Sistema"
+        variant="danger"
+        isLoading={isLoggingOut}
+      />
     </AuthContext.Provider>
   );
 }

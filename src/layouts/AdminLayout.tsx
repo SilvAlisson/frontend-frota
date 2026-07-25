@@ -38,30 +38,17 @@ interface SidebarContentProps {
 function SidebarContent({ onClose, user }: SidebarContentProps) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { requestLogout } = useAuth();
   const [isSenhaModalOpen, setIsSenhaModalOpen] = useState(false);
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    await logout();
-    navigate('/login');
-  };
+  // Fecha o menu móvel ao mudar de rota
+  useEffect(() => {
+    onClose?.();
+  }, [location.pathname, onClose]);
 
   return (
     <>
       <ModalAlterarSenha isOpen={isSenhaModalOpen} onClose={() => setIsSenhaModalOpen(false)} />
-      <ConfirmModal
-        isOpen={isLogoutModalOpen}
-        onCancel={() => setIsLogoutModalOpen(false)}
-        onConfirm={handleLogout}
-        title="Encerrar Sessão"
-        description="Tem certeza que deseja fechar a sua sessão e sair do sistema?"
-        confirmLabel="Sair do Sistema"
-        variant="danger"
-        isLoading={isLoggingOut}
-      />
 
       {/* Topo do Sidebar - Foto do Usuário e Nome */}
       <div className="flex flex-col items-center justify-center pt-8 pb-6 border-b border-border/60 shrink-0 relative bg-surface">
@@ -144,7 +131,7 @@ function SidebarContent({ onClose, user }: SidebarContentProps) {
         </Button>
         <Button 
           variant="secondary" 
-          onClick={() => setIsLogoutModalOpen(true)}
+          onClick={requestLogout}
           className="flex-1 bg-error/10 text-error hover:bg-error/20 border-error/20 shadow-sm"
           icon={<LogOut className="w-4 h-4" />}
           title="Sair"

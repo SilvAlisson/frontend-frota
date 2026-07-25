@@ -79,7 +79,7 @@ function BottomNavItem({ icon: Icon, label, onClick, accent = 'yellow', badge = 
 
 // ─── COMPONENTE PRINCIPAL ─────────────────────────────────────────────────────
 export function DashboardOperador({ user }: DashboardOperadorProps) {
- const { logout } = useAuth();
+ const { requestLogout } = useAuth();
  const { theme, toggleTheme } = useTheme();
  const { vibrateLight, vibrateMedium, vibrateSuccess } = useHaptics();
 
@@ -89,8 +89,6 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
  const [modalDefeitoOpen, setModalDefeitoOpen] = useState(false);
  const [modalHistoricoOpen, setModalHistoricoOpen] = useState(false);
  const [modalDocumentosOpen, setModalDocumentosOpen] = useState(false);
- const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
- const [isLoggingOut, setIsLoggingOut] = useState(false);
 
  // 📡 BUSCA DOS DADOS COM CACHE
  const { usuarios = [], refetch: refetchUsuarios, isLoading: loadingUsuarios } = useUsuarios();
@@ -191,7 +189,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
        size="icon"
        onClick={() => {
         vibrateMedium();
-        setIsLogoutModalOpen(true);
+        requestLogout();
        }}
        className="w-11 h-11 touch-target rounded-xl bg-error/5 border border-error/10 hover:bg-error/20 flex items-center justify-center text-error transition-all hover:rotate-12 focus-ring"
        aria-label="Sair"
@@ -342,20 +340,6 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
      </div>
     )}
    </Modal>
-
-   <ConfirmModal
-    isOpen={isLogoutModalOpen}
-    onCancel={() => setIsLogoutModalOpen(false)}
-    onConfirm={async () => {
-     setIsLoggingOut(true);
-     await logout();
-    }}
-    isLoading={isLoggingOut}
-    title="Encerrar Sessão"
-    description="Tem certeza que deseja fechar a sua sessão e sair do sistema?"
-    confirmLabel="Sair do Sistema"
-    variant="danger"
-   />
 
   </div>
  );

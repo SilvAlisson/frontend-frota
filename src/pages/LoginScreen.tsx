@@ -133,9 +133,31 @@ export function LoginScreen() {
 
         <div className="w-full max-w-[420px] space-y-6 lg:space-y-8 glass-premium p-6 sm:p-8 lg:p-10 rounded-[2.5rem] animate-enter">
 
-          <div className="text-center sm:text-left">
-            <h2 className="text-4xl font-header font-black text-text-main tracking-tight">Frota KLIN</h2>
-            <p className="text-sm font-medium text-text-secondary mt-1.5">Acesso ao Workspace Seguro</p>
+          <div className="flex items-start justify-between gap-4">
+            <div className="text-left">
+              <h2 className="text-4xl font-header font-black text-text-main tracking-tight">Frota KLIN</h2>
+              <p className="text-sm font-medium text-text-secondary mt-1.5">Acesso ao Workspace Seguro</p>
+            </div>
+
+            {/* Tema - iOS Switch */}
+            <div className="flex items-center gap-2 pt-1.5 shrink-0">
+              <Sun className={`w-4 h-4 transition-colors ${theme === 'light' ? 'text-amber-500' : 'text-text-muted'}`} />
+              <button
+                type="button"
+                onClick={toggleTheme}
+                role="switch"
+                aria-checked={theme === 'dark'}
+                className="relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus-ring bg-surface-hover/80 border border-border/50 shadow-inner"
+                aria-label="Alternar Modo Escuro"
+              >
+                <span
+                  className={`${
+                    theme === 'dark' ? 'translate-x-6 bg-primary' : 'translate-x-1 bg-text-secondary'
+                  } inline-block h-4 w-4 transform rounded-full transition-transform duration-300 ease-in-out shadow-sm`}
+                />
+              </button>
+              <Moon className={`w-4 h-4 transition-colors ${theme === 'dark' ? 'text-primary' : 'text-text-muted'}`} />
+            </div>
           </div>
 
           {/* Abas de Navegação (Segmented Control com Acessibilidade) */}

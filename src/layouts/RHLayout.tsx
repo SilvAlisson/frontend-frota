@@ -121,11 +121,9 @@ function SidebarContentRH({ onClose, user }: { onClose?: () => void, user: User 
 
 export function RHLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSenhaModalOpen, setIsSenhaModalOpen] = useState(false);
   
-  const { logout, user } = useAuth();
+  const { requestLogout, user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
@@ -133,12 +131,6 @@ export function RHLayout() {
   useEffect(() => {
     setIsSidebarOpen(false);
   }, [location.pathname]);
-
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    await logout(); 
-    navigate('/login');
-  };
 
   if (!user) return null;
 
@@ -218,7 +210,7 @@ export function RHLayout() {
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon"
                   aria-label="Sair"
-                  onClick={() => setIsLogoutModalOpen(true)}
+                  onClick={requestLogout}
                   className="p-2 text-text-muted hover:text-error transition-colors bg-surface border border-border/50 shadow-sm rounded-xl"
                 >
                   <LogOut className="w-4 h-4" />
@@ -246,16 +238,6 @@ export function RHLayout() {
       </div>
 
       <ModalAlterarSenha isOpen={isSenhaModalOpen} onClose={() => setIsSenhaModalOpen(false)} />
-      <ConfirmModal
-        isOpen={isLogoutModalOpen}
-        onCancel={() => setIsLogoutModalOpen(false)}
-        onConfirm={handleLogout}
-        title="Encerrar Sessão"
-        description="Tem certeza que deseja fechar a sua sessão e sair do sistema?"
-        confirmLabel="Sair do Sistema"
-        variant="danger"
-        isLoading={isLoggingOut}
-      />
     </div>
   );
 }

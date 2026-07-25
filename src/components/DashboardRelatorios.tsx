@@ -57,16 +57,8 @@ export function DashboardRelatorios() {
   const [veiculoIdFiltro, setVeiculoIdFiltro] = useState<string>('');
 
   const { theme, toggleTheme } = useTheme();
-  const { logout } = useAuth();
-  const navigate = useNavigate();
-  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { requestLogout } = useAuth();
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    await logout();
-    navigate('/login');
-  };
   const openAnalytics = (metric: string, title: string) => {
     openModal('ANALYTICS', { metric, title });
   };
@@ -149,7 +141,7 @@ export function DashboardRelatorios() {
                   <Button variant="secondary" onClick={toggleTheme} className="h-12 flex-1 bg-surface hover:bg-surface-hover shadow-sm transition-colors" icon={theme === 'light' ? <Moon className="w-5 h-5 ml-1" /> : <Sun className="w-5 h-5 ml-1" />}>
                     {theme === 'light' ? 'Tema Escuro' : 'Tema Claro'}
                   </Button>
-                  <Button variant="secondary" onClick={() => setIsLogoutModalOpen(true)} className="h-12 flex-1 bg-error/10 text-error hover:bg-error/20 hover:text-error border-error/20 shadow-sm transition-colors" icon={<LogOut className="w-5 h-5 ml-1" />}>
+                  <Button variant="secondary" onClick={requestLogout} className="h-12 flex-1 bg-error/10 text-error hover:bg-error/20 hover:text-error border-error/20 shadow-sm transition-colors" icon={<LogOut className="w-5 h-5 ml-1" />}>
                     Sair
                   </Button>
                 </div>
@@ -195,7 +187,7 @@ export function DashboardRelatorios() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon"
-                    onClick={() => setIsLogoutModalOpen(true)}
+                    onClick={requestLogout}
                     className="p-2 text-text-muted hover:text-error transition-colors bg-surface-hover/50 hover:bg-surface-hover shadow-none rounded-xl h-10 w-10 hidden sm:flex"
                   >
                     <LogOut className="w-4 h-4" />
@@ -315,17 +307,6 @@ export function DashboardRelatorios() {
       {kpis && !loading && (
         <InsightsDashboard kpis={kpis} mes={mes} ano={ano} />
       )}
-
-      <ConfirmModal
-        isOpen={isLogoutModalOpen}
-        onCancel={() => setIsLogoutModalOpen(false)}
-        onConfirm={handleLogout}
-        title="Encerrar Sessão"
-        description="Tem certeza que deseja fechar a sua sessão e sair do sistema?"
-        confirmLabel="Sair do Sistema"
-        variant="danger"
-        isLoading={isLoggingOut}
-      />
     </div>
   );
 }
