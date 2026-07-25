@@ -8,6 +8,9 @@ import autoAnimate from '@formkit/auto-animate';
 
 // Componentes e Ícones Padronizados
 import { EmptyState } from './ui/EmptyState';
+import { Badge } from './ui/Badge';
+import { Skeleton } from './ui/Skeleton';
+import { ConfirmModal } from './ui/ConfirmModal';
 import { PageHeader } from './ui/PageHeader';
 import { Callout } from './ui/Callout';
 import { 
@@ -173,8 +176,8 @@ export function GestaoProdutos() {
           <>
             {loading ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {[1, 2, 3, 4, 5, 6].map(i => (
-                  <div key={i} className="h-36 bg-surface-hover/50 rounded-3xl border border-border/40 animate-pulse"></div>
+                {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                  <Skeleton key={i} variant="card" className="h-36" />
                 ))}
               </div>
             ) : (

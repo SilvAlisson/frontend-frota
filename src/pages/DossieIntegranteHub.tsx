@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useIntegranteDossie } from '../hooks/useIntegranteDossie';
 import { Avatar } from '../components/ui/Avatar';
 import { Badge } from '../components/ui/Badge';
+import { Skeleton } from '../components/ui/Skeleton';
 import { Callout } from '../components/ui/Callout';
 import { FileCheck, GraduationCap, HeartPulse, UserCircle, ChevronLeft, Car } from 'lucide-react';
 import { FormEditarUsuario } from '../components/forms/FormEditarUsuario';
@@ -27,9 +28,18 @@ export function DossieIntegranteHub() {
   // 2. Early return de carregamento (após a declaração de TODOS os hooks)
   if (isLoading || !dossie) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh] space-y-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary/20 border-t-primary"></div>
-        <p className="text-text-secondary font-bold uppercase tracking-widest text-xs animate-pulse">Carregando Dados SSMA...</p>
+      <div className="matriz-detalhe-page">
+        <div className="v1-container flex flex-col w-full max-w-[1200px] mx-auto p-4 gap-4">
+          <Skeleton variant="card" className="h-32 sm:h-40 w-full rounded-[24px]" />
+          <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none mt-6">
+            <Skeleton className="h-10 w-32 rounded-2xl shrink-0" />
+            <Skeleton className="h-10 w-32 rounded-2xl shrink-0" />
+            <Skeleton className="h-10 w-32 rounded-2xl shrink-0" />
+          </div>
+          <div className="mt-4">
+             <Skeleton variant="card" className="h-96 w-full rounded-3xl" />
+          </div>
+        </div>
       </div>
     );
   }

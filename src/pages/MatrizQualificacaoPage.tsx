@@ -1,6 +1,7 @@
 import { MatrizQualificacao } from '../components/rh/MatrizQualificacao';
 import { ShieldCheck, Loader2 } from 'lucide-react';
 import { Suspense } from 'react';
+import { SkeletonTable } from '../components/skeletons/SkeletonTable';
 
 export function MatrizQualificacaoPage() {
   return (
@@ -18,12 +19,7 @@ export function MatrizQualificacaoPage() {
       </div>
 
       <div className="bg-surface rounded-[2rem] border border-border/60 shadow-sm p-5 sm:p-6 lg:p-8">
-        <Suspense fallback={
-          <div className="w-full h-96 flex flex-col items-center justify-center space-y-4">
-            <Loader2 className="w-10 h-10 text-primary animate-spin" />
-            <p className="text-sm font-bold text-text-muted animate-pulse uppercase tracking-widest">Carregando Matriz...</p>
-          </div>
-        }>
+        <Suspense fallback={<SkeletonTable />}>
           <MatrizQualificacao />
         </Suspense>
       </div>

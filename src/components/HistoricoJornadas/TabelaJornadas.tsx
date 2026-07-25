@@ -2,6 +2,7 @@ import { Calendar, Camera, ImageOff, Edit, Trash2, ChevronDown, AlertTriangle } 
 import { DateHelper } from '../../lib/dateHelper';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { SkeletonTable } from '../skeletons/SkeletonTable';
 import { MobileCardWithActions } from '../ui/MobileCardWithActions';
 import { ListaResponsiva } from '../ui/ListaResponsiva';
 import { Card } from '../ui/Card';
@@ -44,9 +45,7 @@ export function TabelaJornadas({
   return (
     <Card padding="none" className="overflow-hidden border-border/60 shadow-sm rounded-3xl bg-surface">
       {loading ? (
-        <div className="p-6 sm:p-8 space-y-4">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-surface-hover/50 rounded-xl animate-pulse border border-border/30" />)}
-        </div>
+        <SkeletonTable />
       ) : (
         <div className="flex flex-col h-full">
           <ListaResponsiva

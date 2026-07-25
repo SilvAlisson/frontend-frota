@@ -6,6 +6,7 @@ import {
 import { Input } from './ui/Input';
 import { Select } from './ui/Select';
 import { EmptyState } from './ui/EmptyState';
+import { SkeletonTable } from './skeletons/SkeletonTable';
 import { Button } from './ui/Button';
 
 // Hook de Domínio
@@ -131,10 +132,7 @@ export function GestaoAuditoria() {
       {/* ─── LOG VIEWER LIST ─── */}
       <div className="bg-surface border border-border/60 rounded-[2rem] overflow-hidden shadow-sm min-h-[400px] flex flex-col">
         {isLoading ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-12 text-text-muted animate-pulse">
-             <Terminal className="w-10 h-10 mb-4 opacity-50" />
-             <span className="font-mono font-bold tracking-widest uppercase text-xs">Conectando ao Syslog...</span>
-          </div>
+          <SkeletonTable />
         ) : logsFiltrados.length === 0 ? (
           <div className="flex-1 flex flex-col justify-center p-12">
             <EmptyState icon={CheckCircle2} title="Nenhum registro encontrado" description="O filtro atual não retornou nenhum evento no log do sistema." />

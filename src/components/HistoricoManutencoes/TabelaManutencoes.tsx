@@ -1,5 +1,6 @@
 import { Calendar, FileText, FileX, ChevronDown } from 'lucide-react';
 import { DateHelper } from '../../lib/dateHelper';
+import { SkeletonTable } from '../skeletons/SkeletonTable';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
 import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/Tooltip';
@@ -67,9 +68,7 @@ export function TabelaManutencoes({
   return (
     <Card padding="none" className="overflow-hidden border-border/60 shadow-sm rounded-3xl bg-surface">
       {loading ? (
-        <div className="p-6 sm:p-8 space-y-4">
-          {[1, 2, 3, 4].map(i => <div key={i} className="h-16 bg-surface-hover/50 rounded-xl animate-pulse border border-border/30" />)}
-        </div>
+        <SkeletonTable />
       ) : (
         <div className="flex flex-col h-full">
           <ListaResponsiva

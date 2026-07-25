@@ -6,6 +6,7 @@ import { Input } from './ui/Input';
 import { ListaResponsiva } from './ui/ListaResponsiva';
 import { Select } from './ui/Select';
 import { Badge } from './ui/Badge';
+import { SkeletonTable } from './skeletons/SkeletonTable';
 import { DossieIntegrante } from './rh/DossieIntegrante';
 import { ModalQrCode } from './ModalQrCode';
 import { ModalCrachaTreinamentos } from './ModalCrachaTreinamentos';
@@ -233,9 +234,7 @@ export function GestaoUsuarios() {
 
         {/* LISTAGEM RESPONSIVA */}
         {isLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-20 bg-surface-hover/50 rounded-2xl animate-pulse border border-border/40" />)}
-          </div>
+          <SkeletonTable />
         ) : usuariosFiltrados.length === 0 ? (
           <EmptyState
             icon={Users}

@@ -4,6 +4,7 @@ import { formatarDinheiro } from '../../lib/formatters';
 import type { Abastecimento } from '../../types';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
+import { SkeletonTable } from '../skeletons/SkeletonTable';
 import { Tooltip, TooltipTrigger, TooltipContent } from '../ui/Tooltip';
 import { DropdownAcoes } from '../ui/DropdownAcoes';
 import { MobileCardWithActions } from '../ui/MobileCardWithActions';
@@ -56,9 +57,7 @@ export function TabelaAbastecimentos({
   return (
     <Card padding="none" className="overflow-hidden border-border/60 shadow-sm rounded-3xl bg-surface">
       {loading ? (
-        <div className="p-6 sm:p-8 space-y-4">
-          {[1, 2, 3, 4, 5].map(i => <div key={i} className="h-16 bg-surface-hover/50 rounded-xl animate-pulse border border-border/30" />)}
-        </div>
+        <SkeletonTable />
       ) : (
         <div className="flex flex-col h-full">
           <DataTable

@@ -3,6 +3,7 @@ import { ShieldCheck, Plus, Calendar } from 'lucide-react';
 import { useProgramas } from '../hooks/useProgramas';
 import { ModalNovaConvocacao } from '../components/rh/ModalNovaConvocacao';
 import { Button } from '../components/ui/Button';
+import { Skeleton } from '../components/ui/Skeleton';
 
 export function ConvocacoesPage() {
   const { data: programas, isLoading, refetch } = useProgramas();
@@ -35,7 +36,11 @@ export function ConvocacoesPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (
-          <p className="text-text-muted">Carregando campanhas...</p>
+          <>
+            {[1, 2, 3].map(i => (
+              <Skeleton key={i} variant="card" className="h-48" />
+            ))}
+          </>
         ) : (
           programas?.map(programa => (
             <div key={programa.id} className="bg-surface rounded-2xl border border-border/60 shadow-sm p-6 hover:shadow-md transition-shadow">

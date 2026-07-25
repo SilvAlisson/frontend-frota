@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { FormCadastrarFornecedor } from './forms/FormCadastrarFornecedor';
 import { FormEditarFornecedor } from './forms/FormEditarFornecedor';
 import { Button } from './ui/Button';
+import { Skeleton } from './ui/Skeleton';
 import { Trash2, Edit2, Store, Plus, Loader2, AlertTriangle } from 'lucide-react';
 import autoAnimate from '@formkit/auto-animate';
 
@@ -120,8 +121,8 @@ export function GestaoFornecedores() {
           <>
             {isLoading ? (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {[1, 2, 3, 4, 5, 6].map(i => (
-                  <div key={i} className="h-40 bg-surface-hover/50 rounded-3xl border border-border/40 animate-pulse"></div>
+                {[1, 2, 3, 4, 5, 6, 7, 8].map(i => (
+                  <Skeleton key={i} variant="card" className="h-40" />
                 ))}
               </div>
             ) : (

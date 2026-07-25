@@ -8,6 +8,7 @@ import { Trash2, Plus, Briefcase, GraduationCap, AlertTriangle, Loader2, Pencil 
 import type { Cargo } from '../types';
 
 // 💎 Nossos Componentes de Elite
+import { Skeleton } from './ui/Skeleton';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
 import { Callout } from './ui/Callout';
@@ -120,7 +121,7 @@ export function GestaoCargos() {
         <>
           {loading ? (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-               {[1, 2, 3].map(i => <div key={i} className="h-48 bg-surface-hover/50 rounded-3xl border border-border/40 animate-pulse"></div>)}
+               {[1, 2, 3, 4, 5, 6].map(i => <Skeleton key={i} variant="card" className="h-48" />)}
             </div>
           ) : cargos.length === 0 ? (
             
