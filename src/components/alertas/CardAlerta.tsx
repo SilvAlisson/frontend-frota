@@ -3,7 +3,6 @@ import {
   AlertTriangle, Clock, Wrench, FileText, 
   Timer, UserX, Bug, ShieldAlert, HeartPulse, Trash2, ChevronRight 
 } from 'lucide-react';
-import { Button } from '../ui/Button';
 import type { Alerta } from '../../types';
 
 interface CardAlertaProps {
@@ -132,17 +131,17 @@ export function CardAlerta({ alerta, onClick, onDismiss }: CardAlertaProps) {
         whileDrag={{ scale: 0.98, cursor: 'grabbing' }}
         className="w-full relative z-10"
       >
-        <Button 
-          variant="ghost"
+        <button 
           onClick={onClick}
           className={`
-            text-left w-full !p-0 h-auto
+            text-left w-full p-0 h-auto
             group relative overflow-hidden bg-surface rounded-2xl shadow-sm border border-border/60 
-            hover:shadow-md transition-all duration-300 flex items-start gap-0 cursor-pointer
+            hover:shadow-md hover:bg-surface-hover/50 transition-all duration-300 flex items-start gap-0 cursor-pointer
+            focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
             ${config.border}
           `}
         >
-          <div className={`p-5 flex items-start gap-4 w-full h-full border-l-[4px] group-hover:border-l-[8px] transition-all ${config.border}`}>
+          <div className={`p-5 flex items-start justify-start text-left gap-4 w-full h-full border-l-[4px] group-hover:border-l-[8px] transition-all ${config.border}`}>
             {/* Ícone (Glassmorphism) */}
             <div className={`p-3 rounded-xl flex-shrink-0 shadow-inner border ${config.iconBg}`}>
               <IconComponent className="w-5 h-5" />
@@ -150,7 +149,7 @@ export function CardAlerta({ alerta, onClick, onDismiss }: CardAlertaProps) {
 
             {/* Conteúdo */}
             <div className="flex-1 min-w-0 flex flex-col justify-center py-0.5">
-              <div className="flex flex-wrap gap-2 items-center mb-2">
+              <div className="flex flex-wrap gap-2 items-center mb-2 text-left">
                 <span className={`text-[9px] font-black uppercase tracking-[0.2em] ${config.textTitle}`}>
                   {config.category}
                 </span>
@@ -158,17 +157,17 @@ export function CardAlerta({ alerta, onClick, onDismiss }: CardAlertaProps) {
                   {config.badgeLabel}
                 </span>
               </div>
-              <p className="text-text-main text-sm sm:text-base font-bold leading-snug line-clamp-2 tracking-tight pointer-events-none">
+              <p className="text-text-main text-sm sm:text-base font-bold leading-snug line-clamp-2 tracking-tight text-left">
                 {alerta.mensagem}
               </p>
             </div>
 
             {/* Seta Hover, indica que a atenção está focada no item */}
-            <div className="self-center text-border group-hover:text-text-muted transition-colors opacity-0 lg:group-hover:opacity-100">
+            <div className="self-center text-border group-hover:text-text-muted transition-colors opacity-0 lg:group-hover:opacity-100 flex-shrink-0 ml-auto pl-2">
               <ChevronRight className="w-5 h-5" />
             </div>
           </div>
-        </Button>
+        </button>
       </motion.div>
     </motion.div>
   );
