@@ -66,7 +66,7 @@ function App() {
     <ErrorBoundary>
       <MotionConfig reducedMotion="user">
         <ThemeProvider>
-          <TooltipProvider delayDuration={300}>
+          <TooltipProvider delayDuration={300} disableHoverableContent>
             <AppContent />
           </TooltipProvider>
         </ThemeProvider>
