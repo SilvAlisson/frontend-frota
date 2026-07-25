@@ -215,29 +215,31 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
 
 
         {/* ══════════════════════════════════════════════
-            FAIXA PARABÉNS — z-10 (Com fundo pincelado SVG)
+            FAIXA PARABÉNS — z-10 (Com fundo pincelado limpo)
             ══════════════════════════════════════════ */}
-        <div style={{ position: 'relative', width: '370px', height: '110px', marginTop: '15px', zIndex: 10 }}>
-          {/* Fundo Pincelado em SVG (Efeito Dry Brush Realista) */}
+        <div style={{ position: 'relative', width: '370px', height: '130px', marginTop: '15px', zIndex: 10 }}>
+          {/* Fundo Pincelado em SVG (Efeito Degraus Limpos) */}
           <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.05))' }} viewBox="0 0 400 120" preserveAspectRatio="none">
-            {/* Corpo sólido principal do pincel com bordas laterais rasgadas */}
-            <path d="M 35,15 Q 150,10 250,12 T 365,15 L 380,18 L 372,21 L 390,25 L 375,28 L 395,32 L 380,36 L 398,40 L 385,45 L 392,50 L 378,55 L 388,62 L 375,68 L 395,75 L 370,82 L 385,90 L 360,98 Q 200,105 100,102 T 40,95 L 20,90 L 30,85 L 15,78 L 28,72 L 10,65 L 25,58 L 15,50 L 30,42 L 12,35 L 25,28 L 18,22 Z" fill="white" />
-            
-            {/* Fios/Cerdas horizontais vazando para os lados (textura de tinta seca) */}
-            <path d="M 10,25 Q 200,28 390,35 L 385,38 Q 200,31 15,28 Z" fill="white" opacity="0.9" />
-            <path d="M 5,45 Q 200,50 398,58 L 390,62 Q 200,54 8,49 Z" fill="white" opacity="0.8" />
-            <path d="M 12,65 Q 200,72 388,82 L 380,85 Q 200,75 15,69 Z" fill="white" opacity="0.9" />
-            <path d="M 25,85 Q 200,90 380,95 L 375,98 Q 200,93 20,89 Z" fill="white" opacity="0.7" />
-            
-            {/* Pequenos respingos e falhas pontuais */}
-            <path d="M 8,35 L 25,38 L 25,41 L 8,38 Z" fill="white" />
-            <path d="M 385,70 L 398,73 L 398,75 L 385,72 Z" fill="white" />
-            <path d="M 370,48 L 392,52 L 392,54 L 370,50 Z" fill="white" />
-            <path d="M 18,55 L 35,58 L 35,60 L 18,57 Z" fill="white" />
+            <path d="
+              M 25,30 
+              Q 200,10 380,20 
+              L 375,45 
+              L 395,43 
+              L 390,75 
+              L 385,73 
+              L 380,95 
+              Q 200,115 20,100 
+              L 25,75 
+              L 10,77 
+              L 15,45 
+              L 25,47 
+              Z" 
+              fill="white" 
+            />
           </svg>
 
           {/* Texto */}
-          <div style={{ position: 'relative', zIndex: 1, padding: '22px 24px', textAlign: 'center', transform: 'rotate(-1deg)' }}>
+          <div style={{ position: 'relative', zIndex: 1, padding: '22px 24px 34px 24px', textAlign: 'center', transform: 'rotate(-1deg)' }}>
             <h2
               style={{
                 color: '#087F8C',
