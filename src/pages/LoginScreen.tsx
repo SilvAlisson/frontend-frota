@@ -90,19 +90,7 @@ export function LoginScreen() {
   return (
     <div className="min-h-screen flex bg-background font-sans selection:bg-primary/20 selection:text-primary transition-colors duration-500 overflow-hidden">
 
-      {/* --- BOTÃO DE TEMA FLUTUANTE (TOP RIGHT) --- */}
-      <Button
-        variant="glass"
-        size="icon"
-        aria-label="Alternar tema"
-        onClick={toggleTheme}
-        className="fixed top-6 right-6 z-50 rounded-2xl text-text-main hover:text-primary"
-        title={theme === 'light' ? 'Ativar Modo Escuro' : 'Ativar Modo Claro'}
-      >
-        {theme === 'light' ? <Moon className="w-5 h-5" /> : <Sun className="w-5 h-5" />}
-      </Button>
-
-      {/* --- LADO ESQUERDO: IMAGEM FROTA (LIMPA E CINEMATOGRÁFICA) --- */}
+      {/* Botão de tema removido a pedido do usuário */}      {/* --- LADO ESQUERDO: IMAGEM FROTA (LIMPA E CINEMATOGRÁFICA) --- */}
       <div className="hidden lg:flex lg:w-1/2 relative bg-slate-950 overflow-hidden">
         <img
           src="/login-bg.jpg"
@@ -135,11 +123,11 @@ export function LoginScreen() {
       </div>
 
       {/* --- LADO DIREITO: FORMULÁRIO --- */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative overflow-y-auto">
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 sm:p-6 lg:p-8 relative overflow-y-auto">
         <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-primary/5 pointer-events-none -z-10"></div>
         <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-primary/5 rounded-full blur-[100px] pointer-events-none"></div>
 
-        <div className="w-full max-w-[420px] space-y-8 glass-premium p-8 sm:p-10 rounded-[2.5rem] animate-enter">
+        <div className="w-full max-w-[420px] space-y-6 lg:space-y-8 glass-premium p-6 sm:p-8 lg:p-10 rounded-[2.5rem] animate-enter">
 
           <div className="text-center sm:text-left">
             <h2 className="text-4xl font-header font-black text-text-main tracking-tight">Frota KLIN</h2>
