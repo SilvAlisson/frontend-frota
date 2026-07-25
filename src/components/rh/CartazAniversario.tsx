@@ -1,16 +1,15 @@
-import React, { useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import * as htmlToImage from 'html-to-image';
 import { Button } from '../ui/Button';
-import { Download, Copy, Check, Loader2 } from 'lucide-react';
+import { Download, Share2, Check, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface CartazAniversarioProps {
   nome: string;
   fotoUrl?: string | null;
-  onClose?: () => void;
 }
 
-export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioProps) {
+export function CartazAniversario({ nome, fotoUrl }: CartazAniversarioProps) {
   const cartazRef = useRef<HTMLDivElement>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
@@ -18,7 +17,7 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
   // Usa foto padrão caso não tenha
   const avatarImage = fotoUrl || `https://api.dicebear.com/7.x/initials/svg?seed=${nome}&backgroundColor=0f172a&textColor=ffffff`;
 
-  const copyToClipboard = async () => {
+  const shareImage = async () => {
     if (!cartazRef.current) return;
 
     try {
@@ -36,17 +35,30 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
       });
 
       if (blob) {
-        const item = new ClipboardItem({ 'image/png': blob });
-        await navigator.clipboard.write([item]);
-
-        setIsCopied(true);
-        toast.success('Cartaz copiado para a área de transferência! Cole (Ctrl+V) no WhatsApp.');
-
-        setTimeout(() => setIsCopied(false), 3000);
+        const file = new File([blob], 'cartaz.png', { type: 'image/png' });
+        
+        // Verifica se o navegador suporta Web Share com arquivos (maioria dos celulares suporta)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Feliz Aniversário!',
+            text: 'Parabéns pelo seu dia!'
+          });
+          toast.success('Cartaz compartilhado!');
+        } else {
+          // Fallback silencioso para copiar caso esteja num PC/navegador que não suporte share
+          const item = new ClipboardItem({ 'image/png': blob });
+          await navigator.clipboard.write([item]);
+          setIsCopied(true);
+          toast.success('Cartaz copiado! (Seu dispositivo não suporta o menu compartilhar)');
+          setTimeout(() => setIsCopied(false), 3000);
+        }
       }
     } catch (error) {
-      console.error('Erro ao gerar imagem:', error);
-      toast.error('Erro ao gerar o cartaz. Seu navegador pode não suportar esta ação.');
+      console.error('Erro ao gerar/compartilhar imagem:', error);
+      // Ignora erro se o usuário apenas fechou/cancelou o menu de share
+      if (error instanceof Error && error.name === 'AbortError') return;
+      toast.error('Erro ao compartilhar o cartaz.');
     } finally {
       setIsGenerating(false);
     }
@@ -286,14 +298,14 @@ export function CartazAniversario({ nome, fotoUrl, onClose }: CartazAniversarioP
       {/* ── BOTÕES DE AÇÃO ── */}
       <div className="flex gap-4 w-full max-w-[400px]">
         <Button
-          onClick={copyToClipboard}
+          onClick={shareImage}
           disabled={isGenerating}
           className="flex-1 bg-green-600 hover:bg-green-700 text-white"
         >
           {isGenerating && !isCopied ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> :
             isCopied ? <Check className="w-4 h-4 mr-2" /> :
-              <Copy className="w-4 h-4 mr-2" />}
-          {isCopied ? 'Copiado!' : 'Copiar p/ WhatsApp'}
+              <Share2 className="w-4 h-4 mr-2" />}
+          Compartilhar
         </Button>
         <Button
           onClick={downloadImage}
