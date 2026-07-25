@@ -29,23 +29,27 @@ export function LoginScreen() {
 
   const onCredentialsSubmit = async (data: LoginFormValues) => {
     setIsSubmittingForm(true);
+    let success = false;
     try {
       await loginWithCredentials(data);
+      success = true;
     } catch (err: unknown) {
       logger.apiError(err, 'Falha ao realizar login. Verifique suas credenciais.');
     } finally {
-      setIsSubmittingForm(false);
+      if (!success) setIsSubmittingForm(false);
     }
   };
 
   const onManualQrSubmit = async (token: string) => {
     setIsSubmittingForm(true);
+    let success = false;
     try {
       await loginWithManualQr(token);
+      success = true;
     } catch (err: unknown) {
       logger.apiError(err, 'Falha ao realizar login com QR code.');
     } finally {
-      setIsSubmittingForm(false);
+      if (!success) setIsSubmittingForm(false);
     }
   };
 

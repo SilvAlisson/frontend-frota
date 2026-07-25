@@ -41,9 +41,10 @@ function SidebarContent({ onClose, user }: SidebarContentProps) {
   const { logout } = useAuth();
   const [isSenhaModalOpen, setIsSenhaModalOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    setIsLogoutModalOpen(false);
+    setIsLoggingOut(true);
     await logout();
     navigate('/login');
   };
@@ -59,6 +60,7 @@ function SidebarContent({ onClose, user }: SidebarContentProps) {
         description="Tem certeza que deseja fechar a sua sessão e sair do sistema?"
         confirmLabel="Sair do Sistema"
         variant="danger"
+        isLoading={isLoggingOut}
       />
 
       {/* Topo do Sidebar - Foto do Usuário e Nome */}

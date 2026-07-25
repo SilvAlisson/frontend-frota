@@ -60,9 +60,10 @@ export function DashboardRelatorios() {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
-    setIsLogoutModalOpen(false);
+    setIsLoggingOut(true);
     await logout();
     navigate('/login');
   };
@@ -321,8 +322,9 @@ export function DashboardRelatorios() {
         onConfirm={handleLogout}
         title="Encerrar Sessão"
         description="Tem certeza que deseja fechar a sua sessão e sair do sistema?"
-        confirmLabel="Sair do Sistema?"
+        confirmLabel="Sair do Sistema"
         variant="danger"
+        isLoading={isLoggingOut}
       />
     </div>
   );

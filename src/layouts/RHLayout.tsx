@@ -122,6 +122,7 @@ function SidebarContentRH({ onClose, user }: { onClose?: () => void, user: User 
 export function RHLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isSenhaModalOpen, setIsSenhaModalOpen] = useState(false);
   
   const { logout, user } = useAuth();
@@ -134,7 +135,7 @@ export function RHLayout() {
   }, [location.pathname]);
 
   const handleLogout = async () => {
-    setIsLogoutModalOpen(false);
+    setIsLoggingOut(true);
     await logout(); 
     navigate('/login');
   };
@@ -251,8 +252,9 @@ export function RHLayout() {
         onConfirm={handleLogout}
         title="Encerrar Sessão"
         description="Tem certeza que deseja fechar a sua sessão e sair do sistema?"
-        confirmLabel="Sair do Sistema?"
+        confirmLabel="Sair do Sistema"
         variant="danger"
+        isLoading={isLoggingOut}
       />
     </div>
   );

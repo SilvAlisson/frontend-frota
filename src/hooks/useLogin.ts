@@ -118,7 +118,7 @@ export function useLogin() {
             localStorage.setItem('klin_passkey_email', resData.user.email);
         }
 
-        login();
+        await login();
         toast.success('Acesso Autorizado. Bem-vindo de volta!');
       }
     } catch (err: unknown) {
@@ -153,7 +153,7 @@ export function useLogin() {
         localStorage.setItem('klin_passkey_email', userLookup.user.email);
       }
       
-      login();
+      await login();
       toast.dismiss(toastId);
       toast.success('Acesso Autorizado!');
 

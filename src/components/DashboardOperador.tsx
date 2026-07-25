@@ -90,6 +90,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
  const [modalHistoricoOpen, setModalHistoricoOpen] = useState(false);
  const [modalDocumentosOpen, setModalDocumentosOpen] = useState(false);
  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
+ const [isLoggingOut, setIsLoggingOut] = useState(false);
 
  // 📡 BUSCA DOS DADOS COM CACHE
  const { usuarios = [], refetch: refetchUsuarios, isLoading: loadingUsuarios } = useUsuarios();
@@ -346,9 +347,10 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
     isOpen={isLogoutModalOpen}
     onCancel={() => setIsLogoutModalOpen(false)}
     onConfirm={async () => {
-     setIsLogoutModalOpen(false);
+     setIsLoggingOut(true);
      await logout();
     }}
+    isLoading={isLoggingOut}
     title="Encerrar Sessão"
     description="Tem certeza que deseja fechar a sua sessão e sair do sistema?"
     confirmLabel="Sair do Sistema"
