@@ -42,7 +42,7 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
       <div className="mb-6">
         <button
           className="mb-4 flex items-center gap-2 text-sm font-bold text-text-secondary cursor-pointer hover:text-primary transition-colors w-fit"
-          onClick={onClose}
+          onClick={onClose} aria-label="Fechar"
         >
           <span className="p-1.5 bg-surface-hover rounded-lg">←</span> Voltar para a listagem
         </button>

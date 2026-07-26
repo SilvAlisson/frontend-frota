@@ -18,7 +18,7 @@ import confetti from 'canvas-confetti';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
-import { ConfirmModal } from './ui/ConfirmModal';
+
 import type { User } from '../types';
 import { cn } from '../lib/utils';
 

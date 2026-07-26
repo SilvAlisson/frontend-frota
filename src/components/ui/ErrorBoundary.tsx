@@ -74,14 +74,14 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <div className="flex gap-3 justify-center">
             <button
               onClick={this.handleReset}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-primary text-white text-sm font-bold hover:bg-primary/90 transition-colors" aria-label="Ação"
             >
               <RefreshCw className="w-4 h-4" />
               Tentar novamente
             </button>
             <button
               onClick={() => { this.handleReset(); window.location.href = '/'; }}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface border border-border text-text-main text-sm font-bold hover:bg-surface-hover transition-colors"
+              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-surface border border-border text-text-main text-sm font-bold hover:bg-surface-hover transition-colors" aria-label="Ação"
             >
               <Home className="w-4 h-4" />
               Início

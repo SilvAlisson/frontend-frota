@@ -80,7 +80,7 @@ function PasskeyCard({
                     onClick={() => setConfirmOpen(true)}
                     disabled={isRevoking}
                     className="p-2 rounded-xl text-text-muted hover:text-error hover:bg-error/10 transition-all"
-                    title="Revogar acesso deste dispositivo"
+                    title="Revogar acesso deste dispositivo" aria-label="Excluir"
                 >
                     <Trash2 className="w-4 h-4" />
                 </button>
@@ -242,7 +242,7 @@ export function MinhaContaPage() {
             <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-xl border-b border-border/40 px-4 py-3 flex items-center gap-3">
                 <button
                     onClick={() => navigate(-1)}
-                    className="p-2 rounded-xl hover:bg-surface-hover transition-colors"
+                    className="p-2 rounded-xl hover:bg-surface-hover transition-colors" aria-label="Navegar"
                 >
                     <ChevronLeft className="w-5 h-5 text-text-muted" />
                 </button>
@@ -443,7 +443,7 @@ export function MinhaContaPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowSenhaAtual(v => !v)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors" aria-label="Ação"
                                     >
                                         {showSenhaAtual ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
@@ -468,7 +468,7 @@ export function MinhaContaPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowNovaSenha(v => !v)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors" aria-label="Ação"
                                     >
                                         {showNovaSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>

@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { exportarParaExcel } from '../utils';
 import { toast } from 'sonner';
-import { Trophy, Download, Truck, AlertTriangle, Calendar, Loader2, MapPin } from 'lucide-react';
+import { Trophy, Download, Truck, AlertTriangle, Calendar, MapPin } from 'lucide-react';
 
 // Hooks Globais
 import { useRankingVeiculos } from '../hooks/useRankingVeiculos';
@@ -12,8 +12,11 @@ import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
 import { Card } from './ui/Card';
 import { Select } from './ui/Select'; 
+import { Skeleton } from './ui/Skeleton';
+import { SkeletonTable } from './skeletons/SkeletonTable';
 import { TableStyles } from '../styles/table';
 import { CardPodium } from './dashboard/CardPodium';
+import { formatNumero } from '../lib/formatters';
 
 export function RankingOperadores() {
   const [ano, setAno] = useState(new Date().getFullYear());
@@ -22,8 +25,8 @@ export function RankingOperadores() {
   const { data: ranking = [], isLoading: loading } = useRankingVeiculos(ano, mes);
 
   // Formatadores
-  const fmtNum = (n: number) => n.toLocaleString('pt-BR');
-  const fmtKml = (n: number) => n.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtNum = (n: number) => formatNumero(n, 0);
+  const fmtKml = (n: number) => formatNumero(n, 2);
 
   const handleExportar = () => {
     if (!ranking.length) return;
@@ -111,9 +114,21 @@ export function RankingOperadores() {
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 opacity-60 gap-4 animate-in fade-in duration-500">
-          <Loader2 className="w-10 h-10 text-primary animate-spin" />
-          <p className="text-sm text-text-secondary font-black uppercase tracking-widest animate-pulse">Compilando ranking da frota...</p>
+        <div className="space-y-8 max-w-7xl mx-auto animate-in fade-in duration-500">
+          {/* Skeleton do Podium */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 items-end max-w-5xl mx-auto px-2">
+            <div className="order-2 md:order-1 h-32">
+              <Skeleton className="w-full h-full rounded-2xl opacity-60" />
+            </div>
+            <div className="order-1 md:order-2 h-44">
+              <Skeleton className="w-full h-full rounded-2xl opacity-80" />
+            </div>
+            <div className="order-3 h-28">
+              <Skeleton className="w-full h-full rounded-2xl opacity-40" />
+            </div>
+          </div>
+          {/* Skeleton da Tabela */}
+          <SkeletonTable />
         </div>
       ) : (
         <>

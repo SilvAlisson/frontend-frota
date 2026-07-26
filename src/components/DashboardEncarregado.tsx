@@ -66,7 +66,7 @@ function SidebarActionButton({ icon: Icon, title, onClick, badge, variant = 'def
         isDanger ? "bg-error/5 hover:bg-error/10 border-error/20 hover:border-error/40" 
         : isSubtle ? "bg-surface/30 hover:bg-surface border-transparent hover:border-border/30 opacity-70 hover:opacity-100" 
         : "bg-surface hover:bg-surface-hover/80 border-border/40 hover:border-primary/30"
-      )}
+      )} aria-label="Navegar"
     >
       <div className="flex items-center gap-3">
         <div className={cn(

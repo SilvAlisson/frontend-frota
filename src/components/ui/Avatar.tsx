@@ -9,7 +9,7 @@ export interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 }
 
-export function Avatar({ nome = 'Usuário', url, size = 'md', className, ...props }: AvatarProps) {
+export const Avatar = React.memo(function Avatar({ nome = 'Usuário', url, size = 'md', className, ...props }: AvatarProps) {
   const initials = nome
     .split(' ')
     .filter(Boolean)
@@ -55,4 +55,4 @@ export function Avatar({ nome = 'Usuário', url, size = 'md', className, ...prop
       {initials}
     </div>
   );
-}
+});

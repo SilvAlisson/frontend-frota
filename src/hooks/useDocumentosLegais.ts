@@ -63,12 +63,25 @@ export function useDeleteDocumento() {
         mutationFn: async (id: string) => {
             await api.delete(`/documentos-legais/${id}`);
         },
+        onMutate: async (id: string) => {
+            await queryClient.cancelQueries({ queryKey: ['documentos-legais'] });
+            const previous = queryClient.getQueryData<DocumentoLegal[]>(['documentos-legais']);
+            queryClient.setQueryData<DocumentoLegal[]>(['documentos-legais'], (old) => {
+                return old ? old.filter(d => d.id !== id) : [];
+            });
+            return { previous };
+        },
         onSuccess: () => {
             toast.success('Documento removido!');
-            queryClient.invalidateQueries({ queryKey: ['documentos-legais'] });
         },
-        onError: (error: unknown) => {
+        onError: (error: unknown, id, context) => {
+            if (context?.previous) {
+                queryClient.setQueryData(['documentos-legais'], context.previous);
+            }
             handleApiError(error, 'Erro ao remover documento');
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['documentos-legais'] });
         }
     });
 }

@@ -1,6 +1,6 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
 import type { DrilldownDataPoint, MetricType } from '../../types/analytics';
-import { formatBRL, formatKml } from '../../lib/formatters';
+import { formatBRL, formatKml, formatNumero } from '../../lib/formatters';
 
 const CHART_COLORS = [
   '#2F80ED', '#EB5757', '#7CB518', '#8E44AD', '#F2994A', '#06b6d4', 
@@ -15,7 +15,7 @@ interface PieChartDrilldownProps {
 
 export function PieChartDrilldown({ data, metric, onClickSlice }: PieChartDrilldownProps) {
   const formatValue = (value: number) => {
-    if (metric === 'KM_TOTAL') return `${value.toLocaleString('pt-BR')} km`;
+    if (metric === 'KM_TOTAL') return `${formatNumero(value, 0)} km`;
     if (metric === 'EFICIENCIA') return formatKml(value);
     if (metric === 'CUSTO_KM') return `${formatBRL(value)} / km`;
     return formatBRL(value);
@@ -77,7 +77,7 @@ export function PieChartDrilldown({ data, metric, onClickSlice }: PieChartDrilld
   }
 
   return (
-    <div className="w-full h-full relative" style={{ minHeight: '300px' }}>
+    <div className="w-full h-full relative min-h-[300px]">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Tooltip content={<CustomTooltip />} />
@@ -93,7 +93,7 @@ export function PieChartDrilldown({ data, metric, onClickSlice }: PieChartDrilld
             onClick={(e) => {
               if (e && e.payload) onClickSlice(e.payload as DrilldownDataPoint);
             }}
-            style={{ cursor: 'pointer' }}
+            className="cursor-pointer"
           >
             {data.map((_, index) => (
               <Cell 

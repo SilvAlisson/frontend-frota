@@ -123,7 +123,9 @@ export function ModalGerarEtiquetas({ usuarios, onClose }: ModalGerarEtiquetasPr
                       <div>
                         <p className="font-bold text-text-main leading-none">{user.nome}</p>
                         <div className="flex gap-2 mt-1">
-                          <span className="text-xs text-text-secondary uppercase">{user.role}</span>
+                          <span className="text-xs text-text-secondary uppercase">
+                            {(user.cargo as { nome?: string })?.nome || (typeof user.cargo === 'string' ? user.cargo : user.role)}
+                          </span>
                           {user.matricula && (
                             <span className="text-xs font-mono text-text-muted bg-surface-hover px-1 rounded border border-border/50">
                               {user.matricula}

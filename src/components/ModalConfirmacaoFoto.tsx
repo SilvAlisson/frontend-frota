@@ -1,3 +1,4 @@
+import { formatNumero } from '../lib/formatters';
 import { useState, useEffect, useMemo } from 'react';
 import { usePhotoSubmit } from '../hooks/usePhotoSubmit';
 import { comprimirImagem } from '../utils/imageUtils';
@@ -148,7 +149,7 @@ export function ModalConfirmacaoFoto<T extends object, R = unknown>({
                 Leitura do Painel
               </p>
               <p className="text-4xl font-black text-primary tracking-tighter font-mono relative z-10">
-                {kmParaConfirmar.toLocaleString('pt-BR')} <span className="text-lg text-primary/60 font-bold ml-1">km</span>
+                {formatNumero(kmParaConfirmar, 0)} <span className="text-lg text-primary/60 font-bold ml-1">km</span>
               </p>
             </div>
           )}

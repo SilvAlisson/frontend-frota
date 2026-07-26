@@ -18,7 +18,7 @@ export function InstallPromptBanner() {
         
         <button 
           onClick={() => setDismissed(true)}
-          className="absolute top-3 right-3 text-text-muted hover:text-text-main transition-colors"
+          className="absolute top-3 right-3 text-text-muted hover:text-text-main transition-colors" aria-label="Fechar"
         >
           <X className="w-4 h-4" />
         </button>

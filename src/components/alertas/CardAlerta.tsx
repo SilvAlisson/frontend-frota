@@ -139,7 +139,7 @@ export function CardAlerta({ alerta, onClick, onDismiss }: CardAlertaProps) {
             hover:shadow-md hover:bg-surface-hover/50 transition-all duration-300 flex items-start gap-0 cursor-pointer
             focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60
             ${config.border}
-          `}
+          `} aria-label="Navegar"
         >
           <div className={`p-5 flex items-start justify-start text-left gap-4 w-full h-full border-l-[4px] group-hover:border-l-[8px] transition-all ${config.border}`}>
             {/* Ícone (Glassmorphism) */}

@@ -111,7 +111,7 @@ export function AbaCnh({ userId, onClose }: AbaCnhProps) {
           <button 
             onClick={onClose}
             className="p-2 text-text-muted hover:bg-surface-hover rounded-full transition-colors"
-            title="Fechar (Esc)"
+            title="Fechar (Esc)" aria-label="Fechar"
           >
             <X className="w-5 h-5" />
           </button>

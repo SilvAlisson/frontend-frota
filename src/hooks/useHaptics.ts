@@ -12,7 +12,6 @@ export function useHaptics() {
   
   const canVibrate = () => {
     if (!isSupported) return false;
-    // @ts-ignore
     if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return false;
     return true;
   };
@@ -21,45 +20,58 @@ export function useHaptics() {
   const vibrateLight = useCallback(() => {
     if (!canVibrate()) return;
     try {
-      navigator.vibrate(10);
+      // @ts-expect-error - feature experimental no iOS
+      if (window.ReactNativeWebView?.postMessage) {
+        // @ts-expect-error - bridge mobile
+        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'HAPTIC_LIGHT' }));
+      } else if (navigator.vibrate) {
+        navigator.vibrate(10);
+      }
     } catch (e) {
-      logger.debug("[useHaptics] Haptics API error (light):", e);
+      // Ignorar erros
     }
-  }, [isSupported]);
+  }, [canVibrate]);
 
-  // Vibração média para confirmações de pequenas ações (ex: abrir modal)
   const vibrateMedium = useCallback(() => {
     if (!canVibrate()) return;
     try {
-      navigator.vibrate(40);
+      if (navigator.vibrate) navigator.vibrate(20);
     } catch (e) {
-      logger.debug("[useHaptics] Haptics API error (medium):", e);
+      //
     }
-  }, [isSupported]);
+  }, [canVibrate]);
 
-  // Vibração de sucesso: Duas vibrações curtas e agradáveis (50ms - pausa - 50ms)
+  const vibrateHeavy = useCallback(() => {
+    if (!canVibrate()) return;
+    try {
+      if (navigator.vibrate) navigator.vibrate(30);
+    } catch (e) {
+      //
+    }
+  }, [canVibrate]);
+
   const vibrateSuccess = useCallback(() => {
     if (!canVibrate()) return;
     try {
-      navigator.vibrate([30, 60, 40]);
+      if (navigator.vibrate) navigator.vibrate([15, 100, 20]);
     } catch (e) {
-      logger.debug("[useHaptics] Haptics API error (success):", e);
+      //
     }
-  }, [isSupported]);
+  }, [canVibrate]);
 
-  // Vibração de erro ou alerta crítico: Três vibrações rápidas (agressivo)
   const vibrateError = useCallback(() => {
     if (!canVibrate()) return;
     try {
-      navigator.vibrate([50, 50, 50, 50, 50]);
+      if (navigator.vibrate) navigator.vibrate([50, 100, 50, 100, 50]);
     } catch (e) {
-      logger.debug("[useHaptics] Haptics API error (error):", e);
+      //
     }
-  }, [isSupported]);
+  }, [canVibrate]);
 
   return {
     vibrateLight,
     vibrateMedium,
+    vibrateHeavy,
     vibrateSuccess,
     vibrateError,
     isSupported

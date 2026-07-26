@@ -10,7 +10,7 @@ interface EmptyStateProps {
   className?: string;
 }
 
-export function EmptyState({ 
+export const EmptyState = React.memo(function EmptyState({ 
   title, 
   description, 
   icon: Icon = Inbox, 
@@ -39,6 +39,6 @@ export function EmptyState({
       )}
     </div>
   );
-}
+});
 
 

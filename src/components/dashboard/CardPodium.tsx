@@ -1,5 +1,6 @@
 import { Trophy, Medal, Award, Truck } from 'lucide-react';
 import type { VeiculoRanking } from '../../hooks/useRankingVeiculos';
+import { formatNumero } from '../../lib/formatters';
 
 interface CardPodiumProps {
   pos: number;
@@ -74,7 +75,7 @@ export function CardPodium({ pos, veiculo, isWinner }: CardPodiumProps) {
         <div className="flex flex-col">
           <span className={`text-[9px] uppercase tracking-[0.2em] font-black mb-0.5 opacity-80 ${config.text}`}>Média de Consumo</span>
           <span className={`font-mono font-black text-3xl tracking-tighter ${config.text}`}>
-            {veiculo.kml.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            {formatNumero(veiculo.kml, 2)}
             <span className="text-[10px] uppercase tracking-widest font-bold ml-1 opacity-70">km/l</span>
           </span>
         </div>

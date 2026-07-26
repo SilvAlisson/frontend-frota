@@ -160,7 +160,7 @@ export function ModalCrachaTreinamentos({ user, onClose }: ModalCrachaTreinament
           >
             <QRCodeSVG
               value={publicUrl}
-              style={{ width: "100%", height: "100%" }}
+              className="w-full h-full"
               level="M"
               bgColor="transparent"
               fgColor="#0f2b46"
@@ -180,8 +180,8 @@ export function ModalCrachaTreinamentos({ user, onClose }: ModalCrachaTreinament
               textAlign: "center",
             }}
           >
-            <span style={{ display: "block" }}>QR CODE</span>
-            <span style={{ display: "block" }}>TREINAMENTOS</span>
+            <span className="block">QR CODE</span>
+            <span className="block">TREINAMENTOS</span>
           </p>
         </div>
 

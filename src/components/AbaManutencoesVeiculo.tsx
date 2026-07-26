@@ -3,6 +3,7 @@ import { Wrench } from 'lucide-react';
 import { Button } from './ui/Button';
 import { EmptyState } from './ui/EmptyState';
 import type { OrdemServico, Veiculo } from '../types';
+import { formatBRL, formatarData } from '../lib/formatters';
 
 interface AbaManutencoesVeiculoProps {
   veiculo: Veiculo;
@@ -10,9 +11,6 @@ interface AbaManutencoesVeiculoProps {
 
 export function AbaManutencoesVeiculo({ veiculo }: AbaManutencoesVeiculoProps) {
   const [limiteManutencoes, setLimiteManutencoes] = useState(10);
-
-  const formatBRL = (val: number) =>
-    (Number(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   return (
     <div className="flex flex-col h-full">
@@ -34,7 +32,7 @@ export function AbaManutencoesVeiculo({ veiculo }: AbaManutencoesVeiculoProps) {
               </div>
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-bold text-text-main group-hover:text-primary transition-colors tracking-tight leading-none">{m.fornecedor?.nome || 'Oficina Não Registrada'}</p>
-                <p className="text-data">{new Date(m.data).toLocaleDateString('pt-BR')}</p>
+                <p className="text-data">{formatarData(m.data)}</p>
               </div>
             </div>
             <span className="text-data text-error bg-error/5 px-2.5 py-1 rounded-lg border border-error/10 shadow-sm">

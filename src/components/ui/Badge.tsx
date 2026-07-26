@@ -25,7 +25,7 @@ export interface BadgeProps
   extends React.HTMLAttributes<HTMLSpanElement>, 
     VariantProps<typeof badgeVariants> {}
 
-export function Badge({ variant, className, children, ...props }: BadgeProps) {
+export const Badge = React.memo(function Badge({ variant, className, children, ...props }: BadgeProps) {
     return (
         <span
             className={cn(badgeVariants({ variant, className }))}
@@ -34,6 +34,6 @@ export function Badge({ variant, className, children, ...props }: BadgeProps) {
             {children}
         </span>
     );
-}
+});
 
 

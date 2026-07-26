@@ -1,3 +1,4 @@
+import { formatNumero } from '../../lib/formatters';
 import { Calendar, Camera, ImageOff, Edit, Trash2, ChevronDown, AlertTriangle } from 'lucide-react';
 import { DateHelper } from '../../lib/dateHelper';
 import { Badge } from '../ui/Badge';
@@ -105,7 +106,7 @@ export function TabelaJornadas({
                   <td className={`${TableStyles.td} text-center`}>
                     <div className="w-full flex flex-col gap-1 items-center justify-center text-center">
                       <span className="font-sans font-black tracking-tight text-text-main text-base block w-full">
-                        {kmPercorrido > 0 ? `${kmPercorrido.toLocaleString('pt-BR')} km` : '--'}
+                        {kmPercorrido > 0 ? `${formatNumero(kmPercorrido, 0)} km` : '--'}
                       </span>
                       <span className="text-[10px] text-text-muted font-mono font-bold bg-surface-hover px-1.5 py-0.5 rounded-md border border-border/50 block w-fit mx-auto">
                         {j.kmInicio} → {j.kmFim || '...'}
@@ -203,7 +204,7 @@ export function TabelaJornadas({
                     <div className="flex flex-col items-end">
                       <span className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-1">Distância</span>
                       <span className="font-sans font-black tracking-tight text-text-main text-lg">
-                        {kmPercorrido > 0 ? `${kmPercorrido.toLocaleString('pt-BR')} km` : '--'}
+                        {kmPercorrido > 0 ? `${formatNumero(kmPercorrido, 0)} km` : '--'}
                       </span>
                     </div>
                   </div>

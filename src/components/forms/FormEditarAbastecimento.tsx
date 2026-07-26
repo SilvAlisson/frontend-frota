@@ -26,7 +26,7 @@ import { useVeiculos } from '../../hooks/useVeiculos';
 import { useUsuarios } from '../../hooks/useUsuarios';
 import { useProdutos } from '../../hooks/useProdutos';
 import { useFornecedores } from '../../hooks/useFornecedores';
-import { desformatarDinheiro, formatarDinheiro } from '../../lib/formatters';
+import { desformatarDinheiro, formatarDinheiro, formatBRL } from '../../lib/formatters';
 import { formatKmVisual } from '../../utils';
 import { validarAbastecimento, temBloqueio, type AnomaliaAbastecimento } from '../../utils/validateAbastecimento';
 import { comprimirImagem } from '../../utils/imageCompressor';
@@ -124,7 +124,7 @@ export function FormEditarAbastecimento({ abastecimentoId, onSuccess, onCancel }
     }, 0);
   }, [itensWatch]);
 
-  const totalGeralFormatado = totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const totalGeralFormatado = formatBRL(totalGeral);
 
   // 3. Populate Form (Garantindo formatação de dinheiro)
   useEffect(() => {

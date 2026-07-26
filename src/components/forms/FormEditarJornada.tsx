@@ -1,3 +1,4 @@
+import { formatNumero } from '../../lib/formatters';
 import { useEffect, useState, useMemo, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -175,7 +176,7 @@ export function FormEditarJornada({ jornadaId, onSuccess, onCancelar }: FormEdit
       if (data.kmFim && data.kmFim.trim() !== '') {
         kmFimNum = parseKmInteligente(data.kmFim, kmInicioNum);
         if (!isNaN(kmFimNum) && kmFimNum < kmInicioNum) {
-          toast.error(`Inconsistência Operacional: KM de Chegada (${kmFimNum.toLocaleString()}) não pode ser inferior ao KM de Saída (${kmInicioNum.toLocaleString()}).`);
+          toast.error(`Inconsistência Operacional: KM de Chegada (${formatNumero(kmFimNum, 0)}) não pode ser inferior ao KM de Saída (${formatNumero(kmInicioNum, 0)}).`);
           setLoading(false);
           return;
         }

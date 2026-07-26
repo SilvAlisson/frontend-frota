@@ -2,6 +2,7 @@ import { DollarSign, Droplets } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { formatCurrency } from '../../lib/utils';
 import { GraficoCurvaAbastecimento } from '../ui/GraficosFrota';
+import { formatNumero } from '../../lib/formatters';
 
 interface KpisAbastecimentoProps {
   estatisticas: {
@@ -43,7 +44,7 @@ export function KpisAbastecimento({ estatisticas }: KpisAbastecimentoProps) {
             <Droplets className="w-4 h-4 text-info " /> Litragem Abastecida
           </span>
           <span className="text-3xl font-sans font-black tracking-tight text-text-main group-hover:text-info dark:group-hover:text-sky-400 transition-colors">
-            {totalLitros.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} <small className="text-lg font-bold opacity-60 ml-1 uppercase tracking-widest">Litros</small>
+            {formatNumero(totalLitros, 0)} <small className="text-lg font-bold opacity-60 ml-1 uppercase tracking-widest">Litros</small>
           </span>
         </Card>
       </div>

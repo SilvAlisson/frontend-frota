@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useId } from 'react';
+import React, { useState, useEffect, useId, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useScrollLock } from '../../hooks/useScrollLock';
 import { useEscapeKey } from '../../hooks/useEscapeKey';
 import { useIsMounted } from '../../hooks/useIsMounted';
+import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 function useMediaQuery(query: string) {
   const [matches, setMatches] = useState(false);
@@ -33,9 +34,11 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
   const isDesktop = useMediaQuery("(min-width: 768px)");
   const titleId = useId();
   const mounted = useIsMounted();
+  const modalRef = useRef<HTMLDivElement>(null);
 
   useScrollLock(isOpen, isDesktop);
   useEscapeKey(isOpen, onClose);
+  useFocusTrap(modalRef, isOpen && isDesktop);
 
   if (!mounted) return null;
 
@@ -111,6 +114,7 @@ export function Modal({ isOpen, onClose, title, children, className, nested = fa
     <AnimatePresence>
       {isOpen && (
         <div
+          ref={modalRef}
           className="fixed inset-0 z-modal flex items-center justify-center p-3 sm:p-6"
           role="dialog"
           aria-modal="true"

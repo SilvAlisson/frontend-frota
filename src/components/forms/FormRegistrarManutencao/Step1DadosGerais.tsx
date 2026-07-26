@@ -1,3 +1,4 @@
+import { formatNumero } from '../../../lib/formatters';
 import { useEffect, useMemo, useState } from 'react';
 import { useFormContext, Controller, useWatch } from 'react-hook-form';
 import { Wrench, Truck, Gauge, AlertTriangle } from 'lucide-react';
@@ -85,7 +86,7 @@ export function Step1DadosGerais() {
                       ? (t === 'CORRETIVA' ? 'bg-error text-white shadow-md' : 'bg-success text-white shadow-md')
                       : 'text-text-muted hover:text-text-main hover:bg-surface/80'}
                     ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}
-                  `}
+                  `} aria-label="Ação"
                 >
                   {t}
                 </button>
@@ -154,7 +155,7 @@ export function Step1DadosGerais() {
             />
             {ultimoKmRegistrado > 0 && (
               <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-1.5 ml-1 truncate">
-                Último Registro: <strong className="text-text-main font-mono">{ultimoKmRegistrado.toLocaleString('pt-BR')} km</strong>
+                Último Registro: <strong className="text-text-main font-mono">{formatNumero(ultimoKmRegistrado, 0)} km</strong>
               </p>
             )}
           </div>
@@ -174,7 +175,7 @@ export function Step1DadosGerais() {
       {alvoSelecionado === 'VEICULO' && isKmInvalido && (
         <div className="animate-in fade-in zoom-in-95 duration-300 min-w-0">
           <Callout variant="warning" title="Odómetro Inconsistente" icon={AlertTriangle}>
-            O valor digitado (<strong className="font-mono">{kmAtualNum.toLocaleString('pt-BR')}</strong>) é <strong>menor</strong> que o último KM conhecido do veículo. Por favor, confirme se houve substituição de painel ou erro de digitação.
+            O valor digitado (<strong className="font-mono">{formatNumero(kmAtualNum, 0)}</strong>) é <strong>menor</strong> que o último KM conhecido do veículo. Por favor, confirme se houve substituição de painel ou erro de digitação.
           </Callout>
         </div>
       )}

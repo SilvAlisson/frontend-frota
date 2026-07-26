@@ -59,15 +59,27 @@ export function useDefeitos(status?: 'ABERTO' | 'EM_ANALISE' | 'RESOLVIDO') {
   });
 
   const resolverMutation = useMutation({
-    mutationFn: async ({ id, resolucao }: { id: string; resolucao?: string }) => {
-      const response = await api.patch(`/defeitos/${id}/resolver`, { resolucao });
-      return response.data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['defeitos'] });
-      queryClient.invalidateQueries({ queryKey: ['defeitos-count'] });
-    },
-  });
+      mutationFn: async ({ id, resolucao }: { id: string; resolucao?: string }) => {
+        const response = await api.patch(`/defeitos/${id}/resolver`, { resolucao });
+        return response.data;
+      },
+      onMutate: async ({ id }) => {
+        await queryClient.cancelQueries({ queryKey: ['defeitos'] });
+        const previous = queryClient.getQueryData(['defeitos']);
+        queryClient.setQueryData(['defeitos'], (old: { id: string }[] | undefined) => {
+          return old ? old.filter((d) => d.id !== id) : [];
+        });
+        return { previous };
+      },
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ['defeitos'] });
+        queryClient.invalidateQueries({ queryKey: ['defeitos-count'] });
+        toast.success('Defeito resolvido!');
+      },
+      onError: (err, vars, context) => {
+        if (context?.previous) queryClient.setQueryData(['defeitos'], context.previous);
+      },
+    });
 
   return {
     defeitos: query.data || [],

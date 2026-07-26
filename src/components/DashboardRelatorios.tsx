@@ -31,6 +31,7 @@ import { GraficoPerformance } from './dashboard/GraficoPerformance';
 import type { DadoPerformance } from './dashboard/GraficoPerformance';
 import { InsightsDashboard } from './ia/InsightsDashboard';
 import { WidgetAniversariantes } from './rh/WidgetAniversariantes';
+import { formatBRL, formatNumero } from '../lib/formatters';
 
 const GraficoKmVeiculo = React.lazy(() => import('./GraficoKmVeiculo').then(module => ({ default: module.GraficoKmVeiculo })));
 
@@ -44,9 +45,8 @@ const extrairPlaca = (placaBruta: string) => {
   return placaBruta.trim();
 };
 
-const formatBRL = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const formatNum = (val: number) => val.toLocaleString('pt-BR');
-const formatDec = (val: number) => val.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 2 });
+const formatNum = (val: number) => formatNumero(val, 0);
+const formatDec = (val: number) => formatNumero(val, 1);
 
 export function DashboardRelatorios() {
   const { data: veiculos = [] } = useVeiculos();

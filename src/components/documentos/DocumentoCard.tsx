@@ -113,7 +113,7 @@ export function DocumentoCard({
         <button
           onClick={() => onView(doc.arquivoUrl, doc.titulo)}
           className="text-[11px] font-black uppercase tracking-widest text-primary hover:text-white bg-primary/10 hover:bg-primary px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm focus-ring touch-target"
-          title="Visualizar Documento"
+          title="Visualizar Documento" aria-label="Ação"
         >
           Visualizar<ExternalLink className="w-3.5 h-3.5" />
         </button>

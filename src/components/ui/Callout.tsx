@@ -26,7 +26,7 @@ interface CalloutProps extends React.HTMLAttributes<HTMLDivElement>, VariantProp
  action?: React.ReactNode;
 }
 
-export function Callout({ className, variant, title, icon: Icon, action, children, ...props }: CalloutProps) {
+export const Callout = React.memo(function Callout({ className, variant, title, icon: Icon, action, children, ...props }: CalloutProps) {
  // Define ícones padrão caso nenhum seja fornecido
  const DefaultIcon = 
   variant === 'danger' ? AlertCircle : 
@@ -66,7 +66,7 @@ export function Callout({ className, variant, title, icon: Icon, action, childre
    )}
   </div>
  );
-}
+});
 
 
 

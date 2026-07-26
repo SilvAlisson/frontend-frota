@@ -37,7 +37,7 @@ interface CardProps
   interactive?: boolean; // Prop manual para forçar comportamento
 }
 
-const Card = forwardRef<HTMLDivElement, CardProps>(
+const Card = React.memo(forwardRef<HTMLDivElement, CardProps>(
   ({ className, variant, padding, interactive, onClick, children, ...props }, ref) => {
     
     // Auto-detecção: Se tem onClick, é interativo por padrão
@@ -62,7 +62,7 @@ const Card = forwardRef<HTMLDivElement, CardProps>(
       </div>
     );
   }
-);
+));
 
 Card.displayName = "Card";
 export { Card, cardVariants };

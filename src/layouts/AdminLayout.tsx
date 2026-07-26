@@ -9,7 +9,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { Button } from '../components/ui/Button';
 import { Avatar } from '../components/ui/Avatar';
 import { MENU_ITEMS } from '../config/navigation';
-import { Tooltip, TooltipTrigger, TooltipContent } from '../components/ui/Tooltip';
+
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
@@ -18,7 +18,7 @@ import { usePushNotifications } from '../hooks/usePushNotifications';
 import { cn } from '../lib/utils';
 import { AssistenteIA } from '../components/ia/AssistenteIA';
 import { ModalAlterarSenha } from '../components/ModalAlterarSenha';
-import { ConfirmModal } from '../components/ui/ConfirmModal';
+
 // Tipo local para os logs de auditoria do polling
 interface SystemLog {
   id: string;
@@ -37,7 +37,7 @@ interface SidebarContentProps {
 // 👉 Extraímos o miolo da Sidebar para reaproveitarmos no Desktop e no Mobile
 function SidebarContent({ onClose, user }: SidebarContentProps) {
   const location = useLocation();
-  const navigate = useNavigate();
+
   const { requestLogout } = useAuth();
   const [isSenhaModalOpen, setIsSenhaModalOpen] = useState(false);
 
@@ -62,18 +62,17 @@ function SidebarContent({ onClose, user }: SidebarContentProps) {
           </Button>
         )}
         
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link to="/minha-conta" className="group flex flex-col items-center gap-3 mt-4">
-              <Avatar url={user?.fotoUrl} nome={user?.nome} size="lg" className="w-20 h-20 border-4 border-surface shadow-md group-hover:border-primary/50 transition-colors" />
-              <div className="text-center px-4">
-                <p className="text-base font-black text-text-main leading-tight group-hover:text-primary transition-colors">{user?.nome}</p>
-                <p className="text-xs font-bold text-text-muted uppercase tracking-wider mt-1">{user?.role || 'Acesso Restrito'}</p>
-              </div>
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="right">Acessar Minha Conta</TooltipContent>
-        </Tooltip>
+        <span className="block group mt-4 cursor-pointer">
+          <Link to="/minha-conta" className="flex flex-col items-center gap-3" title="Acessar Minha Conta">
+            <Avatar url={user?.fotoUrl} nome={user?.nome} size="lg" className="w-20 h-20 border-4 border-surface shadow-md group-hover:border-primary/50 transition-colors" />
+            <div className="text-center px-4">
+              <p className="text-base font-black text-text-main leading-tight group-hover:text-primary transition-colors">{user?.nome}</p>
+              <p className="text-xs font-bold text-text-muted uppercase tracking-wider mt-1">
+                {(user?.cargo as { nome?: string })?.nome || (typeof user?.cargo === 'string' ? user?.cargo : user?.role) || 'Acesso Restrito'}
+              </p>
+            </div>
+          </Link>
+        </span>
       </div>
 
       {/* Lista de Navegação (Scrollável) */}

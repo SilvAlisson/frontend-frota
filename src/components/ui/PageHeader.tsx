@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import React, { type ReactNode } from 'react';
 import { Button } from './Button';
 import { Link } from 'react-router-dom';
 import { Plus, ChevronRight } from 'lucide-react';
@@ -13,7 +13,7 @@ interface PageHeaderProps {
     breadcrumbs?: Array<{ label: string; href?: string }>;
 }
 
-export function PageHeader({
+export const PageHeader = React.memo(function PageHeader({
     title,
     subtitle,
     actionLabel,
@@ -70,6 +70,6 @@ export function PageHeader({
             </div>
         </div>
     );
-}
+});
 
 

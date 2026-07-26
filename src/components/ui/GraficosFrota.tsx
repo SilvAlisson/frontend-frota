@@ -1,3 +1,4 @@
+import { formatNumero } from '../../lib/formatters';
 /**
  * GraficosFlota.tsx
  * Biblioteca central de gráficos premium da Frota KLIN.
@@ -77,7 +78,7 @@ export function GraficoCurvaAbastecimento({ dados, modo = 'litros' }: GraficoCur
           contentStyle={TOOLTIP_STYLE}
           formatter={(value: number | undefined) => [
           isLitros
-            ? `${Number(value ?? 0).toLocaleString('pt-BR')} L`
+            ? `${formatNumero(Number(value ?? 0), 0)} L`
             : `R$ ${Number(value ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
           label
         ]}

@@ -2,6 +2,7 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Cell, ResponsiveContainer, Tooltip as RechartsTooltip
 } from 'recharts';
 import type { DrilldownDataPoint, MetricType } from '../../types/analytics';
+import { formatBRL, formatNumero } from '../../lib/formatters';
 
 const HIGHCHARTS_COLORS = [
   '#2F80ED', '#EB5757', '#7CB518', '#8E44AD', '#F2994A', '#06b6d4', 
@@ -15,13 +16,9 @@ interface BarChartTemporalProps {
 }
 
 export function BarChartTemporal({ data, metric, onClickBar }: BarChartTemporalProps) {
-  const formatBRL = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-  };
-
   return (
     <div className="w-full h-full flex flex-col">
-      <div className="flex-1 mt-4" style={{ width: '100%', height: '450px' }}>
+      <div className="flex-1 mt-4 w-full h-[450px]">
         <ResponsiveContainer width="99%" height={450}>
           <BarChart data={data.slice(0, new Date().getMonth() + 1)} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
             <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="var(--color-border)" strokeOpacity={0.5} />
@@ -32,9 +29,9 @@ export function BarChartTemporal({ data, metric, onClickBar }: BarChartTemporalP
               formatter={(value: number | string | undefined) => {
                 const v = Number(value ?? 0);
                 return metric === 'KM_TOTAL' 
-                    ? `${v.toLocaleString('pt-BR')} km` 
+                    ? `${formatNumero(v, 0)} km` 
                     : metric === 'EFICIENCIA' 
-                    ? `${v.toLocaleString('pt-BR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km/l` 
+                    ? `${formatNumero(v, 1)} km/l` 
                     : metric === 'CUSTO_KM' 
                     ? `${formatBRL(v)} / km` 
                     : formatBRL(v);

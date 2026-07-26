@@ -1,6 +1,6 @@
 import { Calendar, Gauge, Receipt, Droplets, ChevronDown, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { DateHelper } from '../../lib/dateHelper';
-import { formatarDinheiro } from '../../lib/formatters';
+import { formatarDinheiro, formatNumero } from '../../lib/formatters';
 import type { Abastecimento } from '../../types';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -91,7 +91,7 @@ export function TabelaAbastecimentos({
                     <span className="font-mono font-black text-primary text-base tracking-tight">{ab.veiculo?.placa || 'N/D'}</span>
                     <span className="text-[11px] text-text-secondary font-bold uppercase tracking-wider">{ab.operador?.nome || 'Sistema'}</span>
                     <div className="flex items-center gap-1.5 mt-1 text-[10px] text-text-main font-bold bg-surface-hover px-2 py-1 rounded-md w-fit border border-border/60">
-                      <Gauge className="w-3.5 h-3.5 opacity-60" /> {ab.kmOdometro.toLocaleString('pt-BR')} KM
+                      <Gauge className="w-3.5 h-3.5 opacity-60" /> {formatNumero(ab.kmOdometro, 0)} KM
                     </div>
                     {ab.observacoes && (
                       <div className="mt-1 text-[10px] text-text-muted italic line-clamp-2 max-w-[200px]" title={ab.observacoes}>

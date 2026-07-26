@@ -10,6 +10,7 @@ import { ListaResponsiva } from '../ui/ListaResponsiva';
 import { Card } from '../ui/Card';
 import { TableStyles } from '../../styles/table';
 import type { OrdemServico } from '../../types';
+import { formatBRL } from '../../lib/formatters';
 
 export const extrairPlaca = (placaBruta: string) => {
   if (!placaBruta) return '---';
@@ -117,7 +118,7 @@ export function TabelaManutencoes({
 
                 <td className={`${TableStyles.td} justify-center text-center whitespace-nowrap`}>
                   <span className="font-mono font-black text-text-main text-base inline-block w-full">
-                    {Number(os.custoTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                    {formatBRL(Number(os.custoTotal))}
                   </span>
                 </td>
 
@@ -197,7 +198,7 @@ export function TabelaManutencoes({
                   <div className="flex flex-col items-end">
                     <span className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-1">Custo da OS</span>
                     <span className="font-mono font-black text-text-main text-lg tracking-tighter">
-                      {Number(os.custoTotal).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      {formatBRL(Number(os.custoTotal))}
                     </span>
                   </div>
                 </div>

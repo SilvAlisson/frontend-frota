@@ -35,9 +35,7 @@ function AppContent() {
         visibleToasts={3}
         duration={4000}
         theme={theme}
-        style={{
-          fontFamily: 'var(--font-sans)',
-        }}
+        toastOptions={{ className: 'font-sans' }}
       />
       {/* 🛠️ DevTools: Apenas em desenvolvimento */}
       {env.isDev && (

@@ -25,7 +25,7 @@ interface SkeletonProps
   extends React.HTMLAttributes<HTMLDivElement>, 
   VariantProps<typeof skeletonVariants> {}
 
-function Skeleton({ className, variant, ...props }: SkeletonProps) {
+const Skeleton = React.memo(function Skeleton({ className, variant, ...props }: SkeletonProps) {
   return (
     <div
       role="status"
@@ -35,7 +35,7 @@ function Skeleton({ className, variant, ...props }: SkeletonProps) {
       {...props}
     />
   );
-}
+});
 
 export { Skeleton, skeletonVariants };
 

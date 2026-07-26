@@ -108,7 +108,7 @@ export const exportarParaExcel = async <T extends Record<string, unknown>>(data:
       const linhasProcessadas = data.map(row => {
         const novaLinha: Record<string, unknown> = {};
         for (const key in row) {
-          let valor = row[key];
+          const valor = row[key];
 
           if (typeof valor === 'string') {
             // Se o valor for um Hyperlink (que enviamos do componente)

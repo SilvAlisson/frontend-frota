@@ -32,16 +32,30 @@ export function useUsuarios(options?: { includeTestUsers?: boolean }) {
     mutationFn: async (id: string) => {
       await api.delete(`/users/${id}`);
     },
+    onMutate: async (id: string) => {
+      // 1. Cancela queries pendentes para não sobrescrever o optimistic update
+      await queryClient.cancelQueries({ queryKey: ['users'] });
+      // 2. Salva o estado anterior para rollback
+      const previousUsers = queryClient.getQueryData<User[]>(['users', !!options?.includeTestUsers]);
+      // 3. Atualiza o cache de forma otimista
+      queryClient.setQueryData<User[]>(['users', !!options?.includeTestUsers], (old) => {
+        return old ? old.filter(u => u.id !== id) : [];
+      });
+      return { previousUsers };
+    },
     onSuccess: () => {
       toast.success('Colaborador removido com sucesso.');
-      queryClient.invalidateQueries({ queryKey: ['users'] });
     },
-    onError: (err: unknown) => {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
-        // toast.error(err.response.data.error);
-      } else {
-        // toast.error('Erro ao remover colaborador. O servidor não respondeu como esperado.');
+    onError: (err: unknown, id, context) => {
+      // 4. Se der erro, reverte para o estado anterior
+      if (context?.previousUsers) {
+        queryClient.setQueryData(['users', !!options?.includeTestUsers], context.previousUsers);
       }
+      toast.error('Erro ao remover colaborador. Ação desfeita.');
+    },
+    onSettled: () => {
+      // 5. Sempre invalida no final para garantir sincronia com o servidor
+      queryClient.invalidateQueries({ queryKey: ['users'] });
     }
   });
 

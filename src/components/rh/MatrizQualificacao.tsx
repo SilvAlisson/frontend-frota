@@ -147,20 +147,20 @@ export function MatrizQualificacao() {
           <div className="flex items-center bg-background rounded-lg border border-border/60 p-1">
             <button
               onClick={() => setFiltroStatus('TODOS')}
-              className={clsx("px-3 py-1.5 text-xs font-bold rounded-md transition-colors", filtroStatus === 'TODOS' ? "bg-text-main text-surface" : "text-text-secondary hover:bg-surface")}
+              className={clsx("px-3 py-1.5 text-xs font-bold rounded-md transition-colors", filtroStatus === 'TODOS' ? "bg-text-main text-surface" : "text-text-secondary hover:bg-surface")} aria-label="Ação"
             >
               Todos
             </button>
             <button
               onClick={() => setFiltroStatus('CRITICO')}
-              className={clsx("px-3 py-1.5 text-xs font-bold rounded-md transition-colors flex items-center gap-1.5", filtroStatus === 'CRITICO' ? "bg-red-50 text-red-600 border border-red-200/50 shadow-sm" : "text-text-secondary hover:bg-surface")}
+              className={clsx("px-3 py-1.5 text-xs font-bold rounded-md transition-colors flex items-center gap-1.5", filtroStatus === 'CRITICO' ? "bg-red-50 text-red-600 border border-red-200/50 shadow-sm" : "text-text-secondary hover:bg-surface")} aria-label="Fechar"
             >
               <XCircle className={clsx("w-3.5 h-3.5", filtroStatus === 'CRITICO' ? "text-red-600" : "text-red-500")} />
               Crítico
             </button>
             <button
               onClick={() => setFiltroStatus('ATENCAO')}
-              className={clsx("px-3 py-1.5 text-xs font-bold rounded-md transition-colors flex items-center gap-1.5", filtroStatus === 'ATENCAO' ? "bg-yellow-50 text-yellow-700 border border-yellow-200/50 shadow-sm" : "text-text-secondary hover:bg-surface")}
+              className={clsx("px-3 py-1.5 text-xs font-bold rounded-md transition-colors flex items-center gap-1.5", filtroStatus === 'ATENCAO' ? "bg-yellow-50 text-yellow-700 border border-yellow-200/50 shadow-sm" : "text-text-secondary hover:bg-surface")} aria-label="Ação"
             >
               <AlertCircle className={clsx("w-3.5 h-3.5", filtroStatus === 'ATENCAO' ? "text-yellow-700" : "text-yellow-500")} />
               Atenção

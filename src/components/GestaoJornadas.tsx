@@ -200,7 +200,7 @@ export function GestaoJornadas({
                    
                    <button 
                       onClick={() => setJornadaParaEncerrar(jornada)}
-                      className="text-[11px] font-black uppercase tracking-widest text-text-muted hover:text-error transition-colors flex items-center gap-1 bg-surface-hover px-2 py-1 rounded-lg border border-border/50"
+                      className="text-[11px] font-black uppercase tracking-widest text-text-muted hover:text-error transition-colors flex items-center gap-1 bg-surface-hover px-2 py-1 rounded-lg border border-border/50" aria-label="Navegar"
                    >
                       Encerrar <ChevronRight className="w-3.5 h-3.5" />
                    </button>

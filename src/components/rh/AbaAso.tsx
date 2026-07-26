@@ -264,7 +264,7 @@ export function AbaAso({ userId }: AbaAsoProps) {
                       }
                     });
                   }}
-                  className="text-error/70 hover:text-error opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-error/5 hover:bg-error/10 rounded-lg"
+                  className="text-error/70 hover:text-error opacity-0 group-hover:opacity-100 transition-opacity p-1.5 bg-error/5 hover:bg-error/10 rounded-lg" aria-label="Excluir"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>

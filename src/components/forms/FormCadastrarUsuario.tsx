@@ -490,7 +490,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
                         type="button" 
                         onClick={() => remove(index)}
                         className="absolute -top-2 -right-2 bg-red-100 text-red-600 p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity border border-red-200 shadow-sm"
-                        title="Remover este treinamento"
+                        title="Remover este treinamento" aria-label="Fechar"
                       >
                         <X className="w-3 h-3" />
                       </button>

@@ -179,12 +179,20 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
     const addMutation = useMutation({
         mutationFn: (payload: CreateTreinamentoPayload) =>
             api.post('/treinamentos', payload),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey });
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            queryClient.invalidateQueries({ queryKey: ['dossie-integrante'] });
+        },
     });
 
     const removeMutation = useMutation({
         mutationFn: (id: string) => api.delete(`/treinamentos/${id}`),
-        onSuccess: () => queryClient.invalidateQueries({ queryKey }),
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey });
+            queryClient.invalidateQueries({ queryKey: ['users'] });
+            queryClient.invalidateQueries({ queryKey: ['dossie-integrante'] });
+        },
     });
 
     // ── Ações públicas ───────────────────────────────────────────

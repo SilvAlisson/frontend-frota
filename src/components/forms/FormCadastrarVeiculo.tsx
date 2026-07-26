@@ -3,12 +3,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import DOMPurify from 'dompurify';
 import { api } from '../../services/api';
-import { formatarPlaca } from '../../lib/formatters';
 
 // --- COMPONENTES ELITE ---
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select'; 
+import { MaskedInput } from '../ui/MaskedInput';
+import { Controller } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Save } from 'lucide-react';
 import { hapticError } from '../../lib/haptics';
@@ -61,10 +62,10 @@ interface FormProps {
 
 export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
   const {
+    control,
     register,
     handleSubmit,
     reset,
-    setValue,
     formState: { errors, isSubmitting }
   } = useForm<VeiculoFormInput, unknown, VeiculoFormOutput>({
     resolver: zodResolver(veiculoSchema),
@@ -133,23 +134,28 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
 
         {/* 4/12 avos da tela */}
         <div className="md:col-span-4 group">
-          <Input
-            label="Placa do Veículo"
-            autoCapitalize="characters"
-            autoCorrect="off"
-            spellCheck={false}
-            {...register('placa', {
-              onChange: (e) => {
-                const formatado = formatarPlaca(e.target.value);
-                setValue('placa', formatado);
-              }
-            })}
-            placeholder="ABC-1234"
-            className="uppercase font-mono text-xl font-black tracking-widest text-center focus:ring-primary/30 focus:border-primary transition-all group-focus-within:bg-primary/5"
-            maxLength={8}
-            autoFocus
-            disabled={isSubmitting}
-            error={errors.placa?.message}
+          <Controller
+            name="placa"
+            control={control}
+            render={({ field }) => (
+              <MaskedInput
+                label="Placa do Veículo"
+                autoCapitalize="characters"
+                autoCorrect="off"
+                spellCheck={false}
+                placeholder="ABC-1234"
+                className="uppercase font-mono text-xl font-black tracking-widest text-center focus:ring-primary/30 focus:border-primary transition-all group-focus-within:bg-primary/5"
+                mask={[
+                  { mask: 'aaa-0000' }, // Antiga
+                  { mask: 'aaa0a00' }, // Mercosul
+                ]}
+                prepareChar={(str: string) => str.toUpperCase()}
+                autoFocus
+                disabled={isSubmitting}
+                error={errors.placa?.message}
+                {...field}
+              />
+            )}
           />
         </div>
 

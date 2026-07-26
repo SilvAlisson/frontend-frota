@@ -26,7 +26,7 @@ import { useFornecedores } from '../../hooks/useFornecedores';
 
 // --- UTILS ---
 import { parseDecimal, formatKmVisual } from '../../utils';
-import { desformatarDinheiro, formatarDinheiro } from '../../lib/formatters';
+import { desformatarDinheiro, formatarDinheiro, formatBRL } from '../../lib/formatters';
 import { hapticError } from '../../lib/haptics';
 import { logger } from '../../lib/logger';
 import { comprimirImagem } from '../../utils/imageCompressor';
@@ -443,7 +443,7 @@ function FormEditarManutencaoInterno({
                   <div className="bg-surface border border-border/60 px-4 py-2 rounded-xl shadow-sm flex items-center gap-3">
                     <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Total OS:</span>
                     <span className="font-mono font-black text-primary text-lg">
-                      {totalGeral.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      {formatBRL(totalGeral)}
                     </span>
                   </div>
                 </div>
@@ -506,7 +506,7 @@ function FormEditarManutencaoInterno({
                             <div className="flex flex-col gap-1.5 w-full">
                               <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wider select-none ms-1">Subtotal</label>
                               <div className="h-11 flex items-center justify-end px-3 bg-surface border border-border/60 rounded-xl font-mono font-bold text-primary truncate shadow-sm text-sm">
-                                {subtotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                                {formatBRL(subtotal)}
                               </div>
                             </div>
                           </div>

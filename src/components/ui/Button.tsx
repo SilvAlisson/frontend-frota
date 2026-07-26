@@ -63,7 +63,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         onPointerDown={handlePointerDown}
         // Fica disabled se estiver carregando
         disabled={disabled || isLoading}
-        {...props}
+        {...props} aria-label="Ação"
       >
         {/* Se estiver carregando, mostra o spinner centralizado e absoluto */}
         {isLoading && (

@@ -1,5 +1,6 @@
 import { DollarSign, Wrench } from 'lucide-react';
 import { Card } from '../ui/Card';
+import { formatBRL } from '../../lib/formatters';
 
 interface KpisManutencaoProps {
   estatisticas: {
@@ -18,7 +19,7 @@ export function KpisManutencao({ estatisticas }: KpisManutencaoProps) {
           <DollarSign className="w-4 h-4 text-primary" /> Subtotal do Período/Oficina
         </span>
         <span className="text-3xl font-sans font-black tracking-tight text-text-main truncate group-hover:text-primary transition-colors">
-          {totalGasto.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+          {formatBRL(totalGasto)}
         </span>
       </Card>
 

@@ -28,16 +28,25 @@ export function useFornecedores() {
     mutationFn: async (id: string) => {
       await api.delete(`/fornecedores/${id}`);
     },
+    onMutate: async (id: string) => {
+      await queryClient.cancelQueries({ queryKey: ['fornecedores'] });
+      const previousFornecedores = queryClient.getQueryData<Fornecedor[]>(['fornecedores']);
+      queryClient.setQueryData<Fornecedor[]>(['fornecedores'], (old) => {
+        return old ? old.filter(f => f.id !== id) : [];
+      });
+      return { previousFornecedores };
+    },
     onSuccess: () => {
       toast.success('Parceiro removido com sucesso.');
-      queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
     },
-    onError: (err: unknown) => {
-      if (axios.isAxiosError(err) && err.response?.data?.error) {
-        // toast.error(err.response.data.error);
-      } else {
-        // toast.error('Erro ao remover. Pode estar vinculado a históricos.');
+    onError: (err: unknown, id, context) => {
+      if (context?.previousFornecedores) {
+        queryClient.setQueryData(['fornecedores'], context.previousFornecedores);
       }
+      toast.error('Erro ao remover. Pode estar vinculado a históricos.');
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['fornecedores'] });
     }
   });
 

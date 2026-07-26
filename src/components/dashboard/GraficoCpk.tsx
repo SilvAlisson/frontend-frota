@@ -1,6 +1,7 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Skeleton } from '../ui/Skeleton';
 import { LineChart } from 'lucide-react';
+import { formatBRL, formatNumero } from '../../lib/formatters';
 
 // Define proper typings for Recharts payload
 interface CpkPayload {
@@ -12,8 +13,8 @@ interface CpkPayload {
   kmRodado: number;
 }
 
-const formatBRL = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const formatNum = (val: number) => val.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+
+const formatNum = (val: number) => formatNumero(val, 0);
 
 const TOOLTIP_STYLE = {
   backgroundColor: 'var(--color-surface)',

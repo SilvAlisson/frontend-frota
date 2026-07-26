@@ -9,6 +9,7 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { AbaManutencoesVeiculo } from '../components/AbaManutencoesVeiculo';
 import { AbaAbastecimentosVeiculo } from '../components/AbaAbastecimentosVeiculo';
 import { DiagnosticoVeiculo } from '../components/ia/DiagnosticoVeiculo';
+import { formatBRL, formatNumero } from '../lib/formatters';
 
 const GraficoKmVeiculo = React.lazy(() => import('../components/GraficoKmVeiculo').then(module => ({ default: module.GraficoKmVeiculo })));
 
@@ -110,12 +111,12 @@ export function VeiculoDetalhes() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                 <KpiSmall
                     label="Odômetro Atual"
-                    value={`${Number(odometroAtual).toLocaleString('pt-BR')} KM`}
+                    value={`${formatNumero(Number(odometroAtual), 0)} KM`}
                     color="text-text-main"
                 />
                 <KpiSmall
                     label="Rodagem (Mês)"
-                    value={`${kmMes.toLocaleString('pt-BR')} KM`}
+                    value={`${formatNumero(kmMes, 0)} KM`}
                     color="text-primary"
                     icon={<TrendingUp className="w-4 h-4 text-primary/50" />}
                 />

@@ -1,6 +1,7 @@
+import React from 'react';
 import { Skeleton } from "../ui/Skeleton";
 
-export function SkeletonTable() {
+export const SkeletonTable = React.memo(function SkeletonTable() {
   // Padrões assimétricos para parecer mais orgânico
   const widthPatterns = ['w-[60%]', 'w-[85%]', 'w-[45%]', 'w-[70%]', 'w-[55%]'];
 
@@ -45,6 +46,6 @@ export function SkeletonTable() {
       </div>
     </div>
   );
-}
+});
 
 

@@ -3,6 +3,7 @@ import { differenceInDays, format } from 'date-fns';
 import { AlertTriangle, CheckCircle, Clock, Wrench, ShieldAlert, Trash2 } from 'lucide-react';
 import { Button } from '../ui/Button';
 import type { PlanoManutencao } from '../../hooks/usePlanosManutencao';
+import { formatNumero } from '../../lib/formatters';
 
 type StatusPlano = 'VERDE' | 'AMARELO' | 'VERMELHO';
 
@@ -76,10 +77,10 @@ export function CardPlanoManutencao({ planoProcessado: plano, onExcluir, onBaixa
 
         <div className="flex justify-between items-center text-[10px] font-mono text-text-secondary mt-1.5 opacity-80">
           <span>
-            Atual: {plano.tipoIntervalo === 'KM' ? (plano.veiculo.ultimoKm?.toLocaleString() + ' KM') : 'Hoje'}
+            Atual: {plano.tipoIntervalo === 'KM' ? (formatNumero(plano.veiculo.ultimoKm || 0, 0) + ' KM') : 'Hoje'}
           </span>
           <span>
-            Alvo: {plano.tipoIntervalo === 'KM' ? (plano.kmProximaManutencao?.toLocaleString() + ' KM') : (plano.dataProximaManutencao ? format(new Date(plano.dataProximaManutencao), 'dd/MM/yyyy') : '--')}
+            Alvo: {plano.tipoIntervalo === 'KM' ? (formatNumero(plano.kmProximaManutencao, 0) + ' KM') : (plano.dataProximaManutencao ? format(new Date(plano.dataProximaManutencao), 'dd/MM/yyyy') : '--')}
           </span>
         </div>
       </div>
@@ -127,10 +128,10 @@ export function processarPlanosManutencao(planos: PlanoManutencao[]): PlanoProce
         descricaoFalta = `Estourou por ${Math.abs(kmFaltante).toLocaleString()} KM`;
       } else if (kmFaltante <= 1500) {
         status = 'AMARELO';
-        descricaoFalta = `Atenção: Apenas ${kmFaltante.toLocaleString()} KM restantes`;
+        descricaoFalta = `Atenção: Apenas ${formatNumero(kmFaltante, 0)} KM restantes`;
       } else {
         status = 'VERDE';
-        descricaoFalta = `Faltam ${kmFaltante.toLocaleString()} KM`;
+        descricaoFalta = `Faltam ${formatNumero(kmFaltante, 0)} KM`;
       }
     } else {
       const dataAlvo = plano.dataProximaManutencao ? new Date(plano.dataProximaManutencao) : new Date();

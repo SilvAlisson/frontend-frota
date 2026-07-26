@@ -122,7 +122,7 @@ export function ModalAlterarSenha({ isOpen, onClose }: ModalAlterarSenhaProps) {
           <button
             type="button"
             onClick={() => setShowPasswords(!showPasswords)}
-            className="text-sm text-text-muted hover:text-primary transition-colors flex items-center gap-2"
+            className="text-sm text-text-muted hover:text-primary transition-colors flex items-center gap-2" aria-label="Ação"
           >
             {showPasswords ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             {showPasswords ? 'Ocultar senhas' : 'Mostrar senhas'}

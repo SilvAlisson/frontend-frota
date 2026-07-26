@@ -16,6 +16,7 @@ import { Callout } from './ui/Callout';
 import { FileText, Wrench, Plus, AlertTriangle } from 'lucide-react';
 import { DocumentoCard } from './documentos/DocumentoCard';
 import { DocumentoViewer } from './documentos/DocumentoViewer';
+import { formatNumero } from '../lib/formatters';
 
 const CATEGORIAS = [
   { id: 'TODOS', label: 'Todos' },
@@ -187,7 +188,7 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
                     </p>
                     <p className="flex justify-between items-center bg-white/50 px-3 py-1.5 rounded-lg">
                       <span className="text-text-secondary font-medium">Próxima Revisão:</span>
-                      <span className="font-black text-info">{planos[0].kmProximaManutencao ? `${planos[0].kmProximaManutencao.toLocaleString('pt-BR')} KM` : 'N/A'}</span>
+                      <span className="font-black text-info">{planos[0].kmProximaManutencao ? `${formatNumero(planos[0].kmProximaManutencao, 0)} KM` : 'N/A'}</span>
                     </p>
                   </div>
                 </div>

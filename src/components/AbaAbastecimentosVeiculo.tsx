@@ -8,11 +8,10 @@ interface AbaAbastecimentosVeiculoProps {
   veiculo: Veiculo;
 }
 
+import { formatBRL, formatKml, formatarDataHora } from '../lib/formatters';
+
 export function AbaAbastecimentosVeiculo({ veiculo }: AbaAbastecimentosVeiculoProps) {
   const [limiteAbastecimentos, setLimiteAbastecimentos] = useState(10);
-
-  const formatBRL = (val: number) =>
-    (Number(val) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   return (
     <div className="flex flex-col h-full">
@@ -35,7 +34,7 @@ export function AbaAbastecimentosVeiculo({ veiculo }: AbaAbastecimentosVeiculoPr
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-bold text-text-main group-hover:text-primary transition-colors tracking-tight leading-none">{a.fornecedor?.nome || 'Posto Local'}</p>
                 <p className="text-data flex items-center gap-1.5 mt-0.5">
-                  {new Date(a.dataHora).toLocaleDateString('pt-BR')}
+                  {formatarDataHora(a.dataHora)}
                   <span className="w-1 h-1 bg-border/80 rounded-full" />
                   <span className="text-data">{a.kmOdometro?.toLocaleString('pt-BR')} KM</span>
                 </p>

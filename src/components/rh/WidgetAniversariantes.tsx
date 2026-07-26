@@ -119,7 +119,6 @@ export function WidgetAniversariantes() {
             <CartazAniversario 
               nome={selectedAniv.nome} 
               fotoUrl={selectedAniv.image}
-              onClose={() => setModalOpen(false)}
             />
           )}
         </div>

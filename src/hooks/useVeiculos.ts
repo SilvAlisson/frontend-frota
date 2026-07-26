@@ -43,12 +43,25 @@ export function useDeleteVeiculo() {
         mutationFn: async (id: string) => {
             await api.delete(`/veiculos/${id}`);
         },
+        onMutate: async (id: string) => {
+            await queryClient.cancelQueries({ queryKey: ['veiculos'] });
+            const previous = queryClient.getQueryData<Veiculo[]>(['veiculos']);
+            queryClient.setQueryData<Veiculo[]>(['veiculos'], (old) => {
+                return old ? old.filter(v => v.id !== id) : [];
+            });
+            return { previous };
+        },
         onSuccess: () => {
             toast.success('Veículo removido com sucesso!');
-            queryClient.invalidateQueries({ queryKey: ['veiculos'] });
         },
-        onError: (error: unknown) => {
+        onError: (error: unknown, id, context) => {
+            if (context?.previous) {
+                queryClient.setQueryData(['veiculos'], context.previous);
+            }
             handleApiError(error, 'Erro ao remover veículo');
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['veiculos'] });
         },
     });
 }

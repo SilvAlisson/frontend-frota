@@ -79,17 +79,24 @@ export function usePlanosManutencao(veiculoId?: string, filtroCategoria?: string
   });
 
   const excluirPlanoMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete(`/planos-manutencao/${id}`);
-    },
-    onSuccess: () => {
-      toast.success("Plano desativado e removido.");
-      queryClient.invalidateQueries({ queryKey: ['planos'] });
-    },
-    onError: (err: unknown) => {
-      handleApiError(err, "Falha ao tentar remover o plano.");
-    }
-  });
+      mutationFn: async (id: string) => {
+        await api.delete(`/planos-manutencao/${id}`);
+      },
+      onMutate: async (id: string) => {
+        await queryClient.cancelQueries({ queryKey: ['planos'] });
+        const previous = queryClient.getQueryData(['planos']);
+        queryClient.setQueryData(['planos'], (old: { id: string }[] | undefined) => old ? old.filter((p) => p.id !== id) : []);
+        return { previous };
+      },
+      onSuccess: () => {
+        toast.success("Plano desativado e removido.");
+        queryClient.invalidateQueries({ queryKey: ['planos'] });
+      },
+      onError: (err: unknown, id, context: { previous?: unknown } | undefined) => {
+        if (context?.previous) queryClient.setQueryData(['planos'], context.previous);
+        handleApiError(err, "Falha ao tentar remover o plano.");
+      }
+    });
 
   return {
     planos: query.data || [],

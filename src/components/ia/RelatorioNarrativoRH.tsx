@@ -81,7 +81,7 @@ export function RelatorioNarrativoRH() {
               <button
                 onClick={handleDownload}
                 className="p-2 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl transition-colors"
-                title="Baixar relatório"
+                title="Baixar relatório" aria-label="Ação"
               >
                 <Download className="w-4 h-4" />
               </button>
@@ -89,7 +89,7 @@ export function RelatorioNarrativoRH() {
                 onClick={handleGerar}
                 disabled={isPending}
                 className="p-2 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl transition-colors"
-                title="Regenerar relatório"
+                title="Regenerar relatório" aria-label="Ação"
               >
                 <RefreshCw className={`w-4 h-4 ${isPending ? 'animate-spin' : ''}`} />
               </button>
@@ -98,7 +98,7 @@ export function RelatorioNarrativoRH() {
           {!relatorio && !isPending && (
             <button
               onClick={handleGerar}
-              className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-600 to-primary text-white text-xs font-bold rounded-xl hover:shadow-md transition-all active:scale-95"
+              className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-violet-600 to-primary text-white text-xs font-bold rounded-xl hover:shadow-md transition-all active:scale-95" aria-label="Ação"
             >
               <Sparkles className="w-3.5 h-3.5" />
               Gerar Relatório

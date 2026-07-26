@@ -1,3 +1,4 @@
+import { formatNumero } from '../lib/formatters';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -44,7 +45,7 @@ export function FinalizarJornada({
     if (kmFim < jornadaParaFinalizar.kmInicio) {
       ctx.addIssue({
         code: "custom", // [CORREÇÃO] String literal ao invés de ZodIssueCode
-        message: `Deve ser maior que ${jornadaParaFinalizar.kmInicio.toLocaleString('pt-BR')}`,
+        message: `Deve ser maior que ${formatNumero(jornadaParaFinalizar.kmInicio, 0)}`,
         path: ["kmFimInput"]
       });
     }
@@ -112,14 +113,14 @@ export function FinalizarJornada({
           <div className="bg-background p-3 rounded-lg border border-border text-center">
             <span className="text-[10px] text-text-secondary font-bold uppercase block mb-1">KM Inicial</span>
             <span className="text-sm font-bold text-text-main">
-              {jornadaParaFinalizar.kmInicio.toLocaleString('pt-BR')}
+              {formatNumero(jornadaParaFinalizar.kmInicio, 0)}
             </span>
           </div>
 
           <div className="bg-background p-3 rounded-lg border border-border text-center">
             <span className="text-[10px] text-text-secondary font-bold uppercase block mb-1">Percorrido</span>
             <span className={`text-sm font-bold ${distanciaPercorrida > 0 ? 'text-primary' : 'text-text-secondary'}`}>
-              {distanciaPercorrida > 0 ? `+ ${distanciaPercorrida.toLocaleString('pt-BR')} km` : '--'}
+              {distanciaPercorrida > 0 ? `+ ${formatNumero(distanciaPercorrida, 0)} km` : '--'}
             </span>
           </div>
         </div>

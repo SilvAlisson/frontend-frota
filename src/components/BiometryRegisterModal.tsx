@@ -47,7 +47,7 @@ export function BiometryRegisterModal({ isOpen, onClose }: Props) {
                     <button
                         onClick={onClose}
                         disabled={isRegistering}
-                        className="absolute top-4 right-4 p-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-xl transition-colors disabled:opacity-50"
+                        className="absolute top-4 right-4 p-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-xl transition-colors disabled:opacity-50" aria-label="Fechar"
                     >
                         <X className="w-5 h-5" />
                     </button>

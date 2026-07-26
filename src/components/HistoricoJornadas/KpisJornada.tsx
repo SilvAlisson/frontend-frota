@@ -1,5 +1,6 @@
 import { Activity, MapPin } from 'lucide-react';
 import { Card } from '../ui/Card';
+import { formatNumero } from '../../lib/formatters';
 
 interface KpisJornadaProps {
   kmTotalGeral: number;
@@ -14,7 +15,7 @@ export function KpisJornada({ kmTotalGeral, totalViagens }: KpisJornadaProps) {
           <Activity className="w-4 h-4 text-primary" /> Distância Total Percorrida
         </span>
         <span className="text-3xl font-sans font-black tracking-tight text-text-main truncate group-hover:text-primary transition-colors">
-          {kmTotalGeral.toLocaleString('pt-BR')} <small className="text-lg font-bold opacity-60 uppercase tracking-widest ml-1">km</small>
+          {formatNumero(kmTotalGeral, 0)} <small className="text-lg font-bold opacity-60 uppercase tracking-widest ml-1">km</small>
         </span>
       </Card>
       

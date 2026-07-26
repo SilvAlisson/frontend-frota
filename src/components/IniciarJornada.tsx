@@ -1,3 +1,4 @@
+import { formatNumero } from '../lib/formatters';
 import { useState, useMemo } from 'react';
 import { ModalConfirmacaoFoto } from './ModalConfirmacaoFoto';
 import { Button } from './ui/Button';
@@ -236,7 +237,7 @@ export function IniciarJornada({
           {ultimoKmReferencia > 0 && (
             <p className="text-[10px] text-primary font-bold mt-1.5 flex items-center gap-1 bg-primary/5 p-1 rounded w-fit px-2 ml-1 animate-in fade-in slide-in-from-left-2 border border-primary/10">
               <span className="w-1.5 h-1.5 bg-primary rounded-full animate-pulse" />
-              Anterior: {ultimoKmReferencia.toLocaleString()} KM
+              Anterior: {formatNumero(ultimoKmReferencia, 0)} KM
             </p>
           )}
         </div>

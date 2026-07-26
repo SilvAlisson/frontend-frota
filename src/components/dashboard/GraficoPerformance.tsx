@@ -1,6 +1,7 @@
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 import { BarChart2 } from 'lucide-react';
 import { Skeleton } from '../ui/Skeleton';
+import { formatBRL, formatNumero } from '../../lib/formatters';
 
 // Define typings properly
 export interface DadoPerformance {
@@ -11,8 +12,8 @@ export interface DadoPerformance {
   color: string;
 }
 
-const formatBRL = (val: number) => val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-const formatNum = (val: number) => val.toLocaleString('pt-BR', { maximumFractionDigits: 0 });
+
+const formatNum = (val: number) => formatNumero(val, 0);
 
 const TOOLTIP_STYLE = {
   backgroundColor: 'var(--color-surface)',

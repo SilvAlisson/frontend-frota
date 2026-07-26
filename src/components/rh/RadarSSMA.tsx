@@ -93,7 +93,7 @@ export function RadarSSMA() {
         <Callout 
           variant="danger" 
           title="Falha ao carregar Radar SSMA"
-          action={<button onClick={() => refetch()} className="font-bold underline ml-4 hover:opacity-80">Tentar Novamente</button>}
+          action={<button onClick={() => refetch()} className="font-bold underline ml-4 hover:opacity-80" aria-label="Ação">Tentar Novamente</button>}
         >
           Não foi possível conectar com o servidor para buscar os dados do Radar SST.
         </Callout>

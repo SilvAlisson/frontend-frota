@@ -1,124 +1,139 @@
-
+// Utilitários de formatação
 /**
- * Formata uma string para o padrão de Placa Mercosul (ABC1D23) ou Antiga (ABC-1234)
+ * 🏭 FORMATTERS — Fábrica Central de Formatação (ISO pt-BR)
+ * 
+ * REGRA: Toda formatação de moeda, data, placa, KM, telefone e documento
+ * deve passar OBRIGATORIAMENTE por este arquivo.
+ * 
+ * Proibido usar toLocaleString('pt-BR', ...) inline em componentes.
  */
-export const formatarPlaca = (value: string) => {
-  if (!value) return '';
-  // Remove tudo que não for letra ou número
-  const alphanumeric = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
-  
-  if (alphanumeric.length <= 3) return alphanumeric;
-  
-  // Se já tiver 4 caracteres ou mais, adiciona o hífen se for placa antiga,
-  // ou deixa sem hífen se for mercosul (vamos manter sem hífen por padrão mercosul, 
-  // mas o usuário pode digitar, então padronizamos para ABC-1234 para visualização se for número, 
-  // e ABC1D23 se for letra na 5ª posição)
-  
-  const letras = alphanumeric.substring(0, 3);
-  const restante = alphanumeric.substring(3, 7); // Pega até 4 caracteres numéricos/alfanuméricos
-  
-  // Verifica se o 5º caractere (índice 4 original, 1 do restante) é letra ou número
-  const eMercosul = isNaN(Number(restante[1]));
-  
-  if (eMercosul) {
-     return `${letras}${restante}`; // ABC1D23 (Sem hífen)
-  }
-  
-  return `${letras}-${restante}`; // ABC-1234 (Com hífen)
-};
 
-/**
- * Formata um número para o padrão de Moeda Real (BRL).
- * Aceita número bruto (ex: 1500.5) ou string formatada (ex: "R$ 1.500,00").
- * Uso padrão: formatBRL(1500) → "R$ 1.500,00"
- */
-export const formatarDinheiro = (value: string | number) => {
-  if (!value) return '';
-  
-  // Se já for um número do banco de dados (ex: 1500.5), apenas formata
-  if (typeof value === 'number') {
-    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  }
+// ══════════════════════════════════════════════════
+// 1. MOEDA (BRL)
+// ══════════════════════════════════════════════════
 
-  // Remove tudo que não for número (ex: "R$ 1.500,00" -> "150000")
-  const numbers = value.replace(/\D/g, '');
-  if (!numbers) return '';
-
-  // Converte para decimal (dividindo por 100)
-  const amount = Number(numbers) / 100;
-
-  return amount.toLocaleString('pt-BR', {
+/** Formata número para moeda brasileira: 1500.5 → "R$ 1.500,50" */
+export function formatBRL(value: number): string {
+  return (Number(value) || 0).toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   });
-};
+}
 
-/**
- * Alias direto para formatação de moeda (número -> "R$ X.XXX,XX").
- * Use este nos gráficos e tabelas que recebem `number` puro.
- */
-export const formatBRL = (value: number) =>
-  (Number(value) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+/** Formata input monetário (string) como o usuário digita */
+export function formatarDinheiro(valor: string | number): string {
+  if (valor === undefined || valor === null) return '';
+  const num = typeof valor === 'string' ? valor.replace(/\D/g, '') : Number(valor).toFixed(2).replace(/\D/g, '');
+  return (Number(num) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+}
 
-/**
- * Formata um número inteiro como quilômetros (ex: 152430 → "152.430 KM")
- */
-export const formatKm = (value: number) =>
-  `${(Number(value) || 0).toLocaleString('pt-BR')} KM`;
-
-/**
- * Formata eficiência km/l (ex: 10.5 → "10,5 km/l")
- */
-export const formatKml = (value: number, casas = 1) =>
-  `${(Number(value) || 0).toLocaleString('pt-BR', {
-    minimumFractionDigits: casas,
-    maximumFractionDigits: casas,
-  })} km/l`;
-
-/**
- * Formata um número com separadores pt-BR (ex: 152430 → "152.430")
- */
-export const formatNumero = (value: number, casasDecimais = 0) =>
-  (Number(value) || 0).toLocaleString('pt-BR', {
-    minimumFractionDigits: casasDecimais,
-    maximumFractionDigits: casasDecimais,
-  });
-
-/**
- * Formata custo por km (ex: 2.5 → "R$ 2,50 / km")
- */
-export const formatCustoKm = (value: number) => `${formatBRL(value)} / km`;
-
-/**
- * Extrai o valor numérico bruto de uma string formatada como Dinheiro
- * Ex: "R$ 1.500,00" -> 1500.00 (Pronto para salvar no Prisma)
- */
-export const desformatarDinheiro = (value: string) => {
+/** Formata string formatada (ex: "R$ 1.500,00") para numero: "R$ 1.500,00" → 1500 */
+export function desformatarDinheiro(value: string): number {
   if (!value) return 0;
-  // Remove o R$, espaços e os pontos de milhar, troca vírgula por ponto
-  const stringNumerica = value.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
-  return Number(stringNumerica) || 0;
-};
+  const cleaned = value.replace(/[R$\s]/g, '').replace(/\./g, '').replace(',', '.');
+  return Number(cleaned) || 0;
+}
 
-/**
- * Formata uma data ISO para o padrão brasileiro (ex: "2025-07-19T14:00:00Z" → "19/07/2025 14:00")
- */
-export const formatDataHora = (isoDate: string | Date) => {
-  if (!isoDate) return '--/--/----';
-  return new Date(isoDate).toLocaleString('pt-BR', {
+/** Custo por KM: `R$ 2,50 / km` */
+export function formatCustoKm(value: number): string {
+  return `${formatBRL(value)} / km`;
+}
+
+// ══════════════════════════════════════════════════
+// 2. NÚMEROS E QUILOMETRAGEM
+// ══════════════════════════════════════════════════
+
+/** Número com separadores pt-BR: `152430` → "152.430" */
+export function formatNumero(value: number, decimals = 0): string {
+  return (Number(value) || 0).toLocaleString('pt-BR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  });
+}
+
+/** Quilometragem: `152430` → "152.430 KM" */
+export function formatKm(value: number): string {
+  return `${formatNumero(value)} KM`;
+}
+
+/** Eficiência: `10.5` → "10,5 km/l" */
+export function formatKml(value: number, decimals = 1): string {
+  return `${(Number(value) || 0).toLocaleString('pt-BR', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })} km/l`;
+}
+
+// ══════════════════════════════════════════════════
+// 3. DATAS
+// ══════════════════════════════════════════════════
+
+/** Data curta: "19/07/2025" */
+export function formatarData(iso: string | Date): string {
+  if (!iso) return '--/--/----';
+  return new Date(iso).toLocaleString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
+/** Data + hora: "19/07/2025 14:00" */
+export function formatarDataHora(iso: string | Date): string {
+  if (!iso) return '--/--/----';
+  return new Date(iso).toLocaleString('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
   });
-};
+}
 
-/**
- * Formata uma data ISO para o padrão de data curta (ex: "19/07/2025")
- */
-export const formatData = (isoDate: string | Date) => {
-  if (!isoDate) return '--/--/----';
-  return new Date(isoDate).toLocaleDateString('pt-BR');
-};
+// ══════════════════════════════════════════════════
+// 4. PLACAS
+// ══════════════════════════════════════════════════
 
+/** Formata placa Mercosul ou antiga: `ABC1D23` / `ABC-1234` */
+export function formatarPlaca(value: string): string {
+  if (!value) return '';
+  const clean = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+  if (clean.length <= 3) return clean;
+
+  const letras = clean.substring(0, 3);
+  const resto = clean.substring(3, 7);
+  const isMercosul = resto.length > 1 && isNaN(Number(resto[1]));
+
+  return isMercosul ? `${letras}${resto}` : `${letras}-${resto}`;
+}
+
+// ══════════════════════════════════════════════════
+// 5. DOCUMENTOS E TELEFONE
+// ══════════════════════════════════════════════════
+
+/** Formata CPF (11 dígitos) → "123.456.789-00" ou CNPJ (14 dígitos) → "12.345.678/0001-90" */
+export function formatCpfCnpj(value: string | null | undefined): string {
+  if (!value) return '';
+  const clean = value.replace(/\D/g, '');
+  if (clean.length === 11) return clean.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+  if (clean.length === 14) return clean.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5');
+  return value;
+}
+
+/** Formata telefone BR: (11) 91234-5678 ou (11) 1234-5678 */
+export function formatPhone(value: string | null | undefined): string {
+  if (!value) return '';
+  const clean = value.replace(/\D/g, '');
+  if (clean.length === 11) return clean.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  if (clean.length === 10) return clean.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+  return value;
+}
+
+// ══════════════════════════════════════════════════
+// 6. UTILITÁRIOS DE NÚMEROS
+// ══════════════════════════════════════════════════
+
+/** Arredonda para 2 casas decimais: `3.14159` → 3.14 */
+export function round2(value: number): number {
+  return Math.round((Number(value) || 0) * 100) / 100;
+}

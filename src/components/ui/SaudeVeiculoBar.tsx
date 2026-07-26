@@ -1,3 +1,4 @@
+import React from 'react';
 import { cn } from '../../lib/utils';
 import { Activity } from 'lucide-react';
 
@@ -6,7 +7,7 @@ interface SaudeVeiculoBarProps {
   className?: string;
 }
 
-export function SaudeVeiculoBar({ score, className }: SaudeVeiculoBarProps) {
+export const SaudeVeiculoBar = React.memo(function SaudeVeiculoBar({ score, className }: SaudeVeiculoBarProps) {
   // Define cor e label baseado no score
   let colorClass = 'bg-success';
   let bgSoftClass = 'bg-success-soft';
@@ -48,4 +49,4 @@ export function SaudeVeiculoBar({ score, className }: SaudeVeiculoBarProps) {
       </div>
     </div>
   );
-}
+});

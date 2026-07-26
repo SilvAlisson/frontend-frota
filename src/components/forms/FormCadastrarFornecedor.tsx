@@ -7,6 +7,8 @@ import { api } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Input } from '../ui/Input';
 import { Select } from '../ui/Select';
+import { MaskedInput } from '../ui/MaskedInput';
+import { Controller } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Store, Save, Check, Layers, Loader2, Info } from 'lucide-react';
 import type { Produto } from '../../types';
@@ -41,6 +43,7 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormProps) {
   const [loadingProdutos, setLoadingProdutos] = useState(true);
 
   const {
+    control,
     register,
     handleSubmit,
     reset,
@@ -164,13 +167,23 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormProps) {
                 </div>
 
                 <div>
-                  <Input
-                    label="CNPJ (Opcional)"
-                    {...register('cnpj')}
-                    placeholder="00.000.000/0000-00"
-                    error={errors.cnpj?.message}
-                    disabled={isSubmitting}
-                    className="font-mono text-sm tracking-wider"
+                  <Controller
+                    name="cnpj"
+                    control={control}
+                    render={({ field }) => (
+                      <MaskedInput
+                        label="CNPJ (Opcional)"
+                        placeholder="00.000.000/0000-00"
+                        error={errors.cnpj?.message}
+                        className="font-mono tracking-wider"
+                        mask={[
+                          { mask: '000.000.000-00' }, // fallback for CPF if needed
+                          { mask: '00.000.000/0000-00' }
+                        ]}
+                        disabled={isSubmitting}
+                        {...field}
+                      />
+                    )}
                   />
                 </div>
               </div>

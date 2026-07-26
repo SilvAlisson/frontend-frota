@@ -8,7 +8,7 @@ import { Button } from '../../ui/Button';
 import { ModalConfirmacaoFoto } from '../../ModalConfirmacaoFoto';
 import { ModalConfirmarAnomalia } from '../../ui/ModalConfirmarAnomalia';
 import { parseKmInteligente } from '../../../utils';
-import { desformatarDinheiro } from '../../../lib/formatters';
+import { desformatarDinheiro, formatNumero } from '../../../lib/formatters';
 import { validarAbastecimento, temBloqueio, type AnomaliaAbastecimento } from '../../../utils/validateAbastecimento';
 import { useVeiculos } from '../../../hooks/useVeiculos';
 import type { User as UserType, Veiculo } from '../../../types';
@@ -97,7 +97,7 @@ export function FormRegistrarAbastecimento({
     const kmInputFloat = parseKmInteligente(data.kmAtual, ultimoKm);
 
     if (kmInputFloat < ultimoKm) {
-      toast.warning(`Atenção: KM informado (${kmInputFloat.toLocaleString()}) é menor que o anterior (${ultimoKm.toLocaleString()}).`);
+      toast.warning(`Atenção: KM informado (${formatNumero(kmInputFloat, 0)}) é menor que o anterior (${formatNumero(ultimoKm, 0)}).`);
     }
 
     const payloadFinal: AbastecimentoPayload = {

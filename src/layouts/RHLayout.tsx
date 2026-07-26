@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   Menu, X, LogOut, Sun, Moon, KeyRound,
   LayoutDashboard, AlertTriangle,
@@ -8,7 +8,7 @@ import {
 import { Drawer } from 'vaul'; 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { ConfirmModal } from '../components/ui/ConfirmModal'; 
+
 import { Button } from '../components/ui/Button';
 import { Avatar } from '../components/ui/Avatar';
 import { Tooltip, TooltipTrigger, TooltipContent } from '../components/ui/Tooltip';
@@ -62,18 +62,17 @@ function SidebarContentRH({ onClose, user }: { onClose?: () => void, user: User 
           </Button>
         )}
         
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Link to="/minha-conta" className="group flex flex-col items-center gap-3 mt-4">
-              <Avatar url={user?.fotoUrl} nome={user?.nome} size="lg" className="w-20 h-20 border-4 border-surface shadow-md group-hover:border-primary/50 transition-colors" />
-              <div className="text-center px-4">
-                <p className="text-base font-black text-text-main leading-tight group-hover:text-primary transition-colors">{user?.nome}</p>
-                <p className="text-xs font-bold text-text-muted uppercase tracking-wider mt-1">{user?.role || 'RH'}</p>
-              </div>
-            </Link>
-          </TooltipTrigger>
-          <TooltipContent side="right">Acessar Minha Conta</TooltipContent>
-        </Tooltip>
+        <span className="block group mt-4 cursor-pointer">
+          <Link to="/minha-conta" className="flex flex-col items-center gap-3" title="Acessar Minha Conta">
+            <Avatar url={user?.fotoUrl} nome={user?.nome} size="lg" className="w-20 h-20 border-4 border-surface shadow-md group-hover:border-primary/50 transition-colors" />
+            <div className="text-center px-4">
+              <p className="text-base font-black text-text-main leading-tight group-hover:text-primary transition-colors">{user?.nome}</p>
+              <p className="text-xs font-bold text-text-muted uppercase tracking-wider mt-1">
+                {(user?.cargo as { nome?: string })?.nome || (typeof user?.cargo === 'string' ? user?.cargo : user?.role) || 'Acesso Restrito'}
+              </p>
+            </div>
+          </Link>
+        </span>
       </div>
 
       {/* Navegação */}
@@ -124,7 +123,7 @@ export function RHLayout() {
   const [isSenhaModalOpen, setIsSenhaModalOpen] = useState(false);
   
   const { requestLogout, user } = useAuth();
-  const navigate = useNavigate();
+
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
 

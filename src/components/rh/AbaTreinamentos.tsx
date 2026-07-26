@@ -328,7 +328,7 @@ export function AbaTreinamentos({ userId, nomeUsuario, role, cargoId }: { userId
                             <button 
                                 type="button" 
                                 onClick={() => setShowAddForm(false)} 
-                                className="p-2 text-text-muted hover:text-text-main hover:bg-surface rounded-full transition-colors"
+                                className="p-2 text-text-muted hover:text-text-main hover:bg-surface rounded-full transition-colors" aria-label="Fechar"
                             >
                                 <X className="w-5 h-5" />
                             </button>

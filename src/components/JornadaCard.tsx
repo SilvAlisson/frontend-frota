@@ -1,3 +1,4 @@
+import { formatNumero } from '../lib/formatters';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -45,7 +46,7 @@ export function JornadaCard({
     if (kmFim < jornada.kmInicio) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
-        message: `Deve ser > ${jornada.kmInicio.toLocaleString('pt-BR')}`,
+        message: `Deve ser > ${formatNumero(jornada.kmInicio, 0)}`,
         path: ["kmFimInput"]
       });
     }
@@ -141,7 +142,7 @@ export function JornadaCard({
                 <Gauge className="w-3.5 h-3.5 text-primary" /> KM Inicial
               </span>
               <span className="text-xl font-black text-text-main font-mono tracking-tight">
-                {jornada.kmInicio.toLocaleString('pt-BR')}
+                {formatNumero(jornada.kmInicio, 0)}
               </span>
             </div>
 
@@ -156,7 +157,7 @@ export function JornadaCard({
               <span className={`text-xl font-black font-mono tracking-tight ${
                  distanciaPercorrida > 0 ? 'text-emerald-600' : 'text-text-muted opacity-50'
               }`}>
-                {distanciaPercorrida > 0 ? `+${distanciaPercorrida.toLocaleString('pt-BR')}` : '--'}
+                {distanciaPercorrida > 0 ? `+${formatNumero(distanciaPercorrida, 0)}` : '--'}
               </span>
             </div>
           </div>

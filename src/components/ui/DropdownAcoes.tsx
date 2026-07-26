@@ -59,7 +59,7 @@ export function DropdownAcoes({
       {onVerDetalhes && (
         <button 
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsOpen(false); onVerDetalhes(); }}
-          className="flex items-center gap-4 px-4 py-4 w-full text-left text-base font-bold text-text-main rounded-xl hover:bg-surface-hover active:bg-surface-hover transition-colors"
+          className="flex items-center gap-4 px-4 py-4 w-full text-left text-base font-bold text-text-main rounded-xl hover:bg-surface-hover active:bg-surface-hover transition-colors" aria-label="Ação"
         >
           <div className="w-10 h-10 rounded-full bg-surface-hover flex items-center justify-center">
             <Eye className="w-5 h-5 text-text-muted" />
@@ -71,7 +71,7 @@ export function DropdownAcoes({
       {onEditar && (
         <button 
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsOpen(false); onEditar(); }}
-          className="flex items-center gap-4 px-4 py-4 w-full text-left text-base font-bold text-text-main rounded-xl hover:bg-surface-hover active:bg-surface-hover transition-colors"
+          className="flex items-center gap-4 px-4 py-4 w-full text-left text-base font-bold text-text-main rounded-xl hover:bg-surface-hover active:bg-surface-hover transition-colors" aria-label="Editar"
         >
           <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
             <Edit2 className="w-5 h-5 text-primary" />
@@ -85,7 +85,7 @@ export function DropdownAcoes({
       {onExcluir && (
         <button 
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsOpen(false); onExcluir(); }}
-          className="flex items-center gap-4 px-4 py-4 w-full text-left text-base font-bold text-error rounded-xl hover:bg-error/10 active:bg-error/10 transition-colors"
+          className="flex items-center gap-4 px-4 py-4 w-full text-left text-base font-bold text-error rounded-xl hover:bg-error/10 active:bg-error/10 transition-colors" aria-label="Excluir"
         >
            <div className="w-10 h-10 rounded-full bg-error/10 flex items-center justify-center">
             <Trash2 className="w-5 h-5 text-error" />

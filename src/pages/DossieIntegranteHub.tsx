@@ -25,6 +25,8 @@ export function DossieIntegranteHub() {
   
   const { data: matriz } = useMatrizQualificacao();
 
+  const handleCancelarCadastro = useCallback(() => setActiveTab('treinamentos'), []);
+
   // 2. Early return de carregamento (após a declaração de TODOS os hooks)
   if (isLoading || !dossie) {
     return (
@@ -75,8 +77,6 @@ export function DossieIntegranteHub() {
   const badgeAso = getBadge('ASO');
   const badgeCnh = getBadge('CNH');
 
-  const handleCancelarCadastro = useCallback(() => setActiveTab('treinamentos'), []);
-
   return (
     <div className="matriz-detalhe-page">
       <div className="v1-container flex flex-col w-full max-w-[1200px] mx-auto animate-in fade-in zoom-in-95 duration-500 p-4 gap-4">
@@ -86,7 +86,7 @@ export function DossieIntegranteHub() {
           <div className="flex items-center gap-6">
             <Avatar nome={user.nome} url={user.fotoUrl} size="2xl" className="w-24 h-24 border-4 border-surface shadow-md" />
             <div>
-              <button onClick={() => navigate('/admin/matriz')} className="v1-back mb-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-secondary hover:text-primary transition-colors py-1 px-3 rounded-full border border-border/60 bg-surface-hover">
+              <button onClick={() => navigate('/admin/matriz')} className="v1-back mb-3 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-secondary hover:text-primary transition-colors py-1 px-3 rounded-full border border-border/60 bg-surface-hover" aria-label="Navegar">
                 <ChevronLeft className="w-3 h-3" /> Voltar
               </button>
               <h2 className="text-3xl font-black text-text-main tracking-tight leading-none mb-2">{user.nome}</h2>
@@ -103,6 +103,7 @@ export function DossieIntegranteHub() {
           <div className="flex sm:flex-col gap-2">
              {badgeTreinamento && <Badge className="bg-red-500/10 text-red-600 border-red-500/20"><GraduationCap className="w-3 h-3 mr-1"/> NRs Pendentes</Badge>}
              {badgeAso && <Badge className="bg-yellow-500/10 text-yellow-600 border-yellow-500/20"><HeartPulse className="w-3 h-3 mr-1"/> ASO Vencendo</Badge>}
+             {badgeCnh && <Badge className="bg-orange-500/10 text-orange-600 border-orange-500/20"><FileCheck className="w-3 h-3 mr-1"/> CNH Pendente</Badge>}
           </div>
         </div>
 
@@ -111,13 +112,14 @@ export function DossieIntegranteHub() {
           {([
             { id: 'treinamentos', label: 'Treinamentos', icon: GraduationCap },
             { id: 'aso', label: 'Saúde (ASO)', icon: HeartPulse },
+            { id: 'cnh', label: 'CNH', icon: Car },
             { id: 'cadastral', label: 'Cadastro', icon: UserCircle }
           ] as const).map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={cn(
                 "flex items-center gap-2 px-5 py-3 rounded-xl font-bold whitespace-nowrap transition-all",
                 activeTab === tab.id ? "bg-primary text-white shadow-md" : "bg-surface border border-border/60 text-text-secondary hover:bg-surface-hover hover:text-text-main"
-              )}
+              )} aria-label="Ação"
             >
               <tab.icon className="w-4 h-4" /> {tab.label}
             </button>
@@ -128,6 +130,7 @@ export function DossieIntegranteHub() {
         <div className="w-full min-h-[400px] mt-4">
           {activeTab === 'treinamentos' && <div className="animate-in fade-in"><AbaTreinamentos userId={user.id} nomeUsuario={user.nome} role={user.role} cargoId={user.cargoId} /></div>}
           {activeTab === 'aso' && <div className="animate-in fade-in"><AbaAso userId={user.id} /></div>}
+          {activeTab === 'cnh' && <div className="animate-in fade-in"><AbaCnh userId={user.id} /></div>}
           <div className={activeTab === 'cadastral' ? 'block animate-in fade-in' : 'hidden'}>
             <div className="bg-surface rounded-[24px] border border-border/60 shadow-sm p-6 sm:p-8">
                <h3 className="text-xl font-bold text-text-main mb-6">Dados Cadastrais</h3>

@@ -1,3 +1,4 @@
+import { formatBRL } from '../lib/formatters';
 /**
  * validateAbastecimento.ts
  * ──────────────────────────────────────────────────────────────────────────────
@@ -109,7 +110,7 @@ export function validarAbastecimento(
 // ─── Utilitários ──────────────────────────────────────────────────────────────
 
 function formatarMoeda(valor: number): string {
-  return valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  return formatBRL(valor);
 }
 
 /** Verifica se existem anomalias que bloqueiam o envio (nivel 'error') */

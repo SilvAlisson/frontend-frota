@@ -139,7 +139,7 @@ export function Step2DadosFinanceiros() {
                       type="button"
                       onClick={() => remove(index)}
                       disabled={isLocked}
-                      className="h-7 w-7 rounded-full bg-surface border border-border/60 text-text-muted hover:text-error hover:border-error/40 hover:bg-error/10 shadow-sm flex items-center justify-center transition-all disabled:opacity-50"
+                      className="h-7 w-7 rounded-full bg-surface border border-border/60 text-text-muted hover:text-error hover:border-error/40 hover:bg-error/10 shadow-sm flex items-center justify-center transition-all disabled:opacity-50" aria-label="Fechar"
                     >
                       <X className="w-3.5 h-3.5" />
                     </button>

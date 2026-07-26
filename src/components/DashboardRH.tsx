@@ -8,6 +8,7 @@ import { Select } from './ui/Select';
 import { KpiCard } from './ui/KpiCard';
 import { GraficoSST } from './rh/GraficoSST';
 import { GraficoCargos } from './rh/GraficoCargos';
+import { formatNumero } from '../lib/formatters';
 import { DashboardCompliance } from './rh/DashboardCompliance';
 import { RadarSSMA } from './rh/RadarSSMA';
 import { WidgetAniversariantes } from './rh/WidgetAniversariantes';
@@ -24,8 +25,6 @@ export function DashboardRH({ user }: DashboardRHProps) {
   const [abaAtiva, setAbaAtiva] = useState<'kpis' | 'radar'>('kpis');
   const [diasFiltro, setDiasFiltro] = useState<number>(30);
   const { data: dashboardData, isLoading, isError } = useDashboardRH(diasFiltro);
-
-  const formatNum = (val: number | undefined) => (val ?? 0).toLocaleString('pt-BR');
 
   const tabs: TabItem[] = [
     { id: 'kpis', label: 'Visão Geral & KPIs', icon: Users },
@@ -94,7 +93,7 @@ export function DashboardRH({ user }: DashboardRHProps) {
                   <KpiCard
                     titulo="Integrantes Ativos"
                     valorRaw={dashboardData?.kpis.totalIntegrantes}
-                    formatter={formatNum}
+                    formatter={formatNumero}
                     descricao="Total da força de trabalho"
                     loading={isLoading}
                     variant="success"
@@ -106,7 +105,7 @@ export function DashboardRH({ user }: DashboardRHProps) {
                   <KpiCard
                     titulo="Treinamentos Críticos"
                     valorRaw={dashboardData?.kpis.treinamentosCriticos}
-                    formatter={formatNum}
+                    formatter={formatNumero}
                     descricao={`Vencendo nos próximos ${diasFiltro} dias`}
                     loading={isLoading}
                     variant={(dashboardData?.kpis.treinamentosCriticos || 0) > 0 ? 'warning' : 'success'}
@@ -118,7 +117,7 @@ export function DashboardRH({ user }: DashboardRHProps) {
                   <KpiCard
                     titulo="CNHs a Vencer"
                     valorRaw={dashboardData?.kpis.cnhsCriticas}
-                    formatter={formatNum}
+                    formatter={formatNumero}
                     descricao={`Motoristas com CNH crítica (<${diasFiltro}d)`}
                     loading={isLoading}
                     variant={(dashboardData?.kpis.cnhsCriticas || 0) > 0 ? 'warning' : 'success'}
@@ -130,7 +129,7 @@ export function DashboardRH({ user }: DashboardRHProps) {
                   <KpiCard
                     titulo="Ações SST Pendentes"
                     valorRaw={dashboardData?.kpis.sstPendentes}
-                    formatter={formatNum}
+                    formatter={formatNumero}
                     descricao="Ações atrasadas ou pendentes"
                     loading={isLoading}
                     variant={(dashboardData?.kpis.sstPendentes || 0) > 0 ? 'danger' : 'success'}

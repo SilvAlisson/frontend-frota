@@ -96,7 +96,7 @@ const ChatBubble = React.memo(({ msg, userNome, onFeedback }: { msg: MensagemCha
 
             {isKia && !isError && (
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={copiarTexto} className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Copiar resposta">
+                <button onClick={copiarTexto} className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Copiar resposta" aria-label="Ação">
                   {copiado ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
                 <button
@@ -107,7 +107,7 @@ const ChatBubble = React.memo(({ msg, userNome, onFeedback }: { msg: MensagemCha
                       ? "text-emerald-500 bg-emerald-500/15"
                       : "text-text-muted hover:text-emerald-500 hover:bg-emerald-500/10"
                   )}
-                  title="Resposta útil"
+                  title="Resposta útil" aria-label="Ação"
                 >
                   <ThumbsUp className="w-3.5 h-3.5" />
                 </button>
@@ -119,7 +119,7 @@ const ChatBubble = React.memo(({ msg, userNome, onFeedback }: { msg: MensagemCha
                       ? "text-red-500 bg-red-500/15"
                       : "text-text-muted hover:text-red-500 hover:bg-red-500/10"
                   )}
-                  title="Resposta incorreta"
+                  title="Resposta incorreta" aria-label="Ação"
                 >
                   <ThumbsDown className="w-3.5 h-3.5" />
                 </button>
@@ -363,7 +363,7 @@ export function AssistenteIA() {
           "group relative flex items-center gap-2.5 px-4 py-3 rounded-2xl font-bold text-sm transition-all duration-300 shadow-float w-full outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background",
           "bg-gradient-to-r from-primary to-violet-600 text-white hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]",
           aberto && "opacity-90 scale-[0.98]"
-        )}
+        )} aria-label="Navegar"
       >
         <div className="relative">
           <Sparkles className="w-5 h-5 shrink-0" />
@@ -407,14 +407,14 @@ export function AssistenteIA() {
                   <button 
                     onClick={limparConversa} 
                     className="p-2 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors focus-visible:ring-2 outline-none ring-primary"
-                    title="Limpar conversa"
+                    title="Limpar conversa" aria-label="Ação"
                   >
                     <RotateCcw className="w-4 h-4" />
                   </button>
                 )}
                 <button 
                   onClick={() => setAberto(false)} 
-                  className="p-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-xl transition-colors focus-visible:ring-2 outline-none ring-primary"
+                  className="p-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-xl transition-colors focus-visible:ring-2 outline-none ring-primary" aria-label="Fechar"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -439,7 +439,7 @@ export function AssistenteIA() {
                       <button
                         key={s}
                         onClick={() => enviar(s)}
-                        className="text-xs px-3.5 py-2.5 bg-surface border border-border/80 hover:border-primary/40 hover:bg-primary/5 hover:text-primary hover:-translate-y-0.5 rounded-xl transition-all duration-200 text-text-secondary font-medium text-left shadow-sm active:scale-95"
+                        className="text-xs px-3.5 py-2.5 bg-surface border border-border/80 hover:border-primary/40 hover:bg-primary/5 hover:text-primary hover:-translate-y-0.5 rounded-xl transition-all duration-200 text-text-secondary font-medium text-left shadow-sm active:scale-95" aria-label="Ação"
                       >
                         {s}
                       </button>

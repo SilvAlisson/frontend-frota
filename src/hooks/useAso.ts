@@ -46,18 +46,31 @@ export function useAso(userId: string) {
   });
 
   const deletarMutation = useMutation({
-    mutationFn: async (id: string) => {
-      await api.delete(`/aso/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['asos', userId] });
-      queryClient.invalidateQueries({ queryKey: ['matriz'] });
-      toast.success('ASO excluído com sucesso.');
-    },
-    onError: (err) => {
-      handleApiError(err);
-    },
-  });
+      mutationFn: async (id: string) => {
+        await api.delete(`/aso/${id}`);
+      },
+      onMutate: async (id: string) => {
+        await queryClient.cancelQueries({ queryKey: ['asos', userId] });
+        const previous = queryClient.getQueryData<Aso[]>(['asos', userId]);
+        queryClient.setQueryData<Aso[]>(['asos', userId], (old) => {
+          return old ? old.filter(a => a.id !== id) : [];
+        });
+        return { previous };
+      },
+      onSuccess: () => {
+        toast.success('ASO excluído com sucesso.');
+      },
+      onError: (err, id, context) => {
+        if (context?.previous) {
+          queryClient.setQueryData(['asos', userId], context.previous);
+        }
+        handleApiError(err);
+      },
+      onSettled: () => {
+        queryClient.invalidateQueries({ queryKey: ['asos', userId] });
+        queryClient.invalidateQueries({ queryKey: ['matriz'] });
+      },
+    });
 
   return {
     listarQuery,

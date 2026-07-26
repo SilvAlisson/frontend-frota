@@ -1,3 +1,4 @@
+import { formatNumero } from '../lib/formatters';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import type { DadosEvolucaoKm } from '../types';
 import { Activity } from 'lucide-react';
@@ -24,7 +25,7 @@ const CustomTooltip = ({ active, payload, label }: CustomTooltipProps) => {
                     <Activity className="w-3 h-3 text-primary" /> {label}
                 </p>
                 <p className="text-2xl font-black text-text-main font-mono tracking-tighter leading-none">
-                    {payload[0].value.toLocaleString('pt-BR')} 
+                    {formatNumero(payload[0].value, 0)}
                     <span className="text-sm font-bold text-text-secondary ml-1 tracking-normal">km</span>
                 </p>
             </div>

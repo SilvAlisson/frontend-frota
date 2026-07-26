@@ -1,3 +1,4 @@
+import { formatNumero } from '../../lib/formatters';
 // src/components/ui/NumberTicker.tsx
 import { useEffect, useState } from 'react';
 import { cn } from '../../lib/utils';
@@ -42,7 +43,7 @@ export function NumberTicker({
     return () => cancelAnimationFrame(animationFrameId);
   }, [value, duration]);
 
-  const displayValue = formatter ? formatter(current) : current.toLocaleString('pt-BR');
+  const displayValue = formatter ? formatter(current) : formatNumero(current, 0);
 
   return (
     // Adicionamos 'max-w-full overflow-hidden text-ellipsis' 
