@@ -185,7 +185,6 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
   };
 
   const onSubmit = async (data: EditarUsuarioFormOutput) => {
-    const isOperador = data.role === 'OPERADOR';
     let finalFotoUrl = fotoAtualUrl;
 
     // Upload Foto
@@ -209,9 +208,9 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
       regimeTrabalho: data.regimeTrabalho || 'NENHUM',
       fotoUrl: finalFotoUrl,
       cargoId: data.cargoId || null,
-      cnhNumero: isOperador && data.cnhNumero ? data.cnhNumero : null,
-      cnhCategoria: isOperador && data.cnhCategoria ? data.cnhCategoria : null,
-      cnhValidade: isOperador && data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
+      cnhNumero: data.cnhNumero || null,
+      cnhCategoria: data.cnhCategoria || null,
+      cnhValidade: data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
       dataAdmissao: data.dataAdmissao ? new Date(data.dataAdmissao).toISOString() : null,
       dataNascimento: data.dataNascimento ? new Date(data.dataNascimento).toISOString() : null,
     };
@@ -408,8 +407,8 @@ export function FormEditarUsuario({ userId, onSuccess, onCancelar, variant = 'mo
             </div>
           </div>
 
-          {/* SEÇÃO RH CONDICIONAL (MOTORISTAS) */}
-          <div className={`transition-all duration-500 overflow-hidden ${roleSelecionada === 'OPERADOR' ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0 m-0 p-0 border-0'}`}>
+          {/* SEÇÃO RH (DOCUMENTAÇÃO) */}
+          <div className="transition-all duration-500 overflow-hidden max-h-[800px] opacity-100">
             <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20">
               <div className="flex items-center gap-2 mb-5 border-b border-primary/10 pb-2">
                 <div className="p-1.5 bg-primary/20 rounded-lg text-primary shadow-sm">

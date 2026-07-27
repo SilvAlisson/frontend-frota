@@ -163,7 +163,7 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       }
     }
 
-    const isOp = data.role === 'OPERADOR';
+
     const payload = {
       ...data,
       nome: DOMPurify.sanitize(data.nome),
@@ -172,9 +172,9 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
       fotoUrl: finalFotoUrl,
       cargoId: data.cargoId,
       regimeTrabalho: data.regimeTrabalho || 'NENHUM',
-      cnhNumero: isOp && data.cnhNumero ? data.cnhNumero : null,
-      cnhCategoria: isOp && data.cnhCategoria ? data.cnhCategoria : null,
-      cnhValidade: isOp && data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
+      cnhNumero: data.cnhNumero || null,
+      cnhCategoria: data.cnhCategoria || null,
+      cnhValidade: data.cnhValidade ? new Date(data.cnhValidade).toISOString() : null,
       dataAdmissao: new Date(data.dataAdmissao).toISOString(),
     };
 
@@ -382,52 +382,50 @@ export function FormCadastrarUsuario({ onSuccess, onCancelar }: FormProps) {
             </div>
           </div>
 
-          {/* Seção RH Condicional com Animação - Somente Motorista precisa de CNH */}
-          {roleSelecionada === 'OPERADOR' && (
-            <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20 animate-in slide-in-from-top-4 duration-300">
-              <div className="flex items-center gap-2 mb-5 border-b border-primary/10 pb-2">
-                <div className="p-1.5 bg-primary/20 rounded-lg text-primary shadow-sm">
-                  <Briefcase className="w-4 h-4" />
-                </div>
-                <h4 className="text-[11px] font-black text-primary uppercase tracking-[0.15em]">Dados Profissionais (Motorista)</h4>
+          {/* Seção RH (Documentação CNH) */}
+          <div className="bg-primary/5 p-6 rounded-2xl border border-primary/20 animate-in slide-in-from-top-4 duration-300">
+            <div className="flex items-center gap-2 mb-5 border-b border-primary/10 pb-2">
+              <div className="p-1.5 bg-primary/20 rounded-lg text-primary shadow-sm">
+                <Briefcase className="w-4 h-4" />
+              </div>
+              <h4 className="text-[11px] font-black text-primary uppercase tracking-[0.15em]">Dados Profissionais (Habilitação)</h4>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div>
+                <Input
+                  label="Nº da CNH"
+                  icon={<CreditCard className="w-4 h-4 text-primary/70" />}
+                  {...register('cnhNumero')}
+                  placeholder="Registro da Carteira"
+                  disabled={isSubmitting}
+                  className="font-mono tracking-wider"
+                />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Input
-                    label="Nº da CNH"
-                    icon={<CreditCard className="w-4 h-4 text-primary/70" />}
-                    {...register('cnhNumero')}
-                    placeholder="Registro da Carteira"
+                    label="Categoria"
+                    {...register('cnhCategoria')}
+                    placeholder="AE"
+                    className="text-center font-black text-lg uppercase text-primary tracking-widest"
+                    maxLength={2}
                     disabled={isSubmitting}
-                    className="font-mono tracking-wider"
                   />
                 </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Input
-                      label="Categoria"
-                      {...register('cnhCategoria')}
-                      placeholder="AE"
-                      className="text-center font-black text-lg uppercase text-primary tracking-widest"
-                      maxLength={2}
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <div>
-                    <Input
-                      label="Validade CNH"
-                      type="date"
-                      {...register('cnhValidade')}
-                      disabled={isSubmitting}
-                      className="text-sm text-text-secondary"
-                    />
-                  </div>
+                <div>
+                  <Input
+                    label="Validade CNH"
+                    type="date"
+                    {...register('cnhValidade')}
+                    disabled={isSubmitting}
+                    className="text-sm text-text-secondary"
+                  />
                 </div>
               </div>
             </div>
-          )}
+          </div>
 
           {/* ? NOVA SEÇÃO: Qualificação Inicial (Treinamentos Obrigatórios) */}
           {cargoIdSelecionado && (
