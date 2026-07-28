@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   Menu, X, LogOut, Sun, Moon, KeyRound,
@@ -146,7 +146,7 @@ export function RHLayout() {
         <Drawer.Portal>
           <Drawer.Overlay className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 xl:hidden" />
           <Drawer.Content className="fixed inset-y-0 left-0 z-50 flex w-[280px] flex-col bg-surface border-r border-border outline-none xl:hidden">
-            <SidebarContentRH onClose={() => setIsSidebarOpen(false)} user={user} />
+            <SidebarContentRH onClose={useCallback(() => setIsSidebarOpen(false), [])} user={user} />
           </Drawer.Content>
         </Drawer.Portal>
       </Drawer.Root>

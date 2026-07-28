@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   Menu, X, KeyRound, LogOut
@@ -41,10 +41,6 @@ function SidebarContent({ onClose, user }: SidebarContentProps) {
   const { requestLogout } = useAuth();
   const [isSenhaModalOpen, setIsSenhaModalOpen] = useState(false);
 
-  // Fecha o menu móvel ao mudar de rota
-  useEffect(() => {
-    onClose?.();
-  }, [location.pathname, onClose]);
 
   return (
     <>
@@ -251,7 +247,7 @@ export function AdminLayout() {
                 <Drawer.Description>Acesso às áreas da Frota KLIN.</Drawer.Description>
               </div>
               
-              <SidebarContent onClose={() => setIsSidebarOpen(false)} user={user} />
+              <SidebarContent onClose={useCallback(() => setIsSidebarOpen(false), [])} user={user} />
             </Drawer.Content>
           </Drawer.Portal>
         </Drawer.Root>
