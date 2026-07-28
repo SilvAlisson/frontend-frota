@@ -41,7 +41,13 @@ export const SaudeVeiculoBar = React.memo(function SaudeVeiculoBar({ score, clas
           {score}% - {label}
         </span>
       </div>
-      <div className={cn("h-1.5 w-full rounded-full overflow-hidden", bgSoftClass)}>
+      <div 
+        role="progressbar"
+        aria-valuenow={score}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        className={cn("h-1.5 w-full rounded-full overflow-hidden", bgSoftClass)}
+      >
         <div 
           className={cn("h-full transition-all duration-1000 ease-out rounded-full", colorClass)}
           style={{ width: `${score}%` }}

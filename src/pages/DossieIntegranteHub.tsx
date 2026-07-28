@@ -118,7 +118,7 @@ export function DossieIntegranteHub() {
               className={cn(
                 "flex items-center gap-2 px-5 py-3 rounded-xl font-bold whitespace-nowrap transition-all",
                 activeTab === tab.id ? "bg-primary text-white shadow-md" : "bg-surface border border-border/60 text-text-secondary hover:bg-surface-hover hover:text-text-main"
-              )} aria-label="Ação"
+              )}
             >
               <tab.icon className="w-4 h-4" /> {tab.label}
             </button>

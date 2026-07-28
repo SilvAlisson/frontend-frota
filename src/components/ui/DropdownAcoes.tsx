@@ -59,7 +59,7 @@ export function DropdownAcoes({
       {onVerDetalhes && (
         <button 
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsOpen(false); onVerDetalhes(); }}
-          className="flex items-center gap-4 px-4 py-4 w-full text-left text-base font-bold text-text-main rounded-xl hover:bg-surface-hover active:bg-surface-hover transition-colors" aria-label="Ação"
+          className="flex items-center gap-4 px-4 py-4 w-full text-left text-base font-bold text-text-main rounded-xl hover:bg-surface-hover active:bg-surface-hover transition-colors"
         >
           <div className="w-10 h-10 rounded-full bg-surface-hover flex items-center justify-center">
             <Eye className="w-5 h-5 text-text-muted" />

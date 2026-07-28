@@ -31,7 +31,7 @@ export function Tabs({ tabs, activeTab, onChange, className, variant = 'segmente
               className={cn(
                 "shrink-0 pb-3 px-1 sm:px-4 text-sm font-bold border-b-2 transition-all duration-300 flex items-center gap-2 outline-none select-none relative group cursor-pointer min-h-[44px]",
                 isActive ? "border-primary text-primary" : "border-transparent text-text-muted hover:text-text-main"
-              )} aria-label="Ação"
+              )}
             >
               {Icon && <Icon className={cn("w-4 h-4 shrink-0 transition-transform duration-300", isActive ? "scale-110" : "group-hover:scale-110")} />}
               {tab.label}
@@ -63,7 +63,7 @@ export function Tabs({ tabs, activeTab, onChange, className, variant = 'segmente
                 isActive 
                   ? "text-primary bg-surface shadow-[0_0_20px_rgba(var(--color-primary),0.2)] ring-1 ring-border/60" 
                   : "text-text-secondary hover:bg-surface/50 hover:text-text-main"
-              )} aria-label="Ação"
+              )}
             >
               {Icon && <Icon className={cn("w-4 h-4 transition-transform duration-300", isActive ? "scale-110 text-primary" : "text-text-muted")} />}
               {tab.label}

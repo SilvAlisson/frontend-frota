@@ -147,15 +147,15 @@ export function Lightbox({ src, alt, caption, onClose, imageClassName }: Lightbo
 
                     {/* HUD Inferior - Controlos Manuais */}
                     <div className="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 flex items-center gap-2 p-2 rounded-2xl bg-black/50 backdrop-blur-xl border border-white/10 shadow-2xl pointer-events-auto">
-                      <button onClick={() => zoomOut()} className="p-3 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors active:scale-95" aria-label="Ação">
+                      <button onClick={() => zoomOut()} className="p-3 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors active:scale-95">
                         <ZoomOut className="w-5 h-5" />
                       </button>
                       <div className="w-[1px] h-6 bg-white/10 mx-1" />
-                      <button onClick={() => resetTransform()} className="p-3 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors active:scale-95" aria-label="Ação">
+                      <button onClick={() => resetTransform()} className="p-3 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors active:scale-95">
                         <RotateCcw className="w-4 h-4" />
                       </button>
                       <div className="w-[1px] h-6 bg-white/10 mx-1" />
-                      <button onClick={() => zoomIn()} className="p-3 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors active:scale-95" aria-label="Ação">
+                      <button onClick={() => zoomIn()} className="p-3 rounded-xl hover:bg-white/10 text-white/70 hover:text-white transition-colors active:scale-95">
                         <ZoomIn className="w-5 h-5" />
                       </button>
                     </div>

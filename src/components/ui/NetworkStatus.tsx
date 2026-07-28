@@ -26,7 +26,7 @@ export function NetworkStatus() {
         !isOnline ? "translate-y-0 opacity-100" : "-translate-y-full opacity-0"
       )}
     >
-      <div className="bg-error/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg backdrop-blur-md flex items-center gap-2 animate-in slide-in-from-top-4">
+      <div role="alert" aria-live="assertive" className="bg-error/90 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg backdrop-blur-md flex items-center gap-2 animate-in slide-in-from-top-4">
         <WifiOff className="w-3.5 h-3.5" />
         Você está offline. Aguardando conexão...
       </div>

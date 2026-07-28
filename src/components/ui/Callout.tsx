@@ -47,7 +47,11 @@ export const Callout = React.memo(function Callout({ className, variant, title, 
   variant === 'success' ? 'bg-emerald-500/20' : 'bg-info/20';
 
  return (
-  <div className={cn(calloutVariants({ variant }), className)} {...props}>
+  <div 
+    className={cn(calloutVariants({ variant }), className)} 
+    {...(variant === 'danger' ? { role: 'alert', 'aria-live': 'assertive' } : {})}
+    {...props}
+  >
    <div className={cn("p-2 rounded-xl h-fit shrink-0", iconBg)}>
     <RenderIcon className={cn("w-5 h-5", iconColor)} />
    </div>

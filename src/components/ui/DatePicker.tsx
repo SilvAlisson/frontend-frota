@@ -48,7 +48,7 @@ export function DatePicker({
               "flex h-12 w-full items-center justify-start rounded-2xl bg-surface-hover/50 px-4 py-3 text-sm text-text-main font-medium shadow-inner transition-all duration-300 border border-transparent focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 focus:bg-surface disabled:cursor-not-allowed disabled:opacity-50 touch-target focus-ring",
               !date && "text-text-muted/60",
               !error ? "border-border/60 hover:border-border" : "border-error focus:border-error focus:ring-error/20 text-error"
-            )} aria-label="Ação"
+            )}
           >
             <CalendarIcon className={cn("me-3 h-5 w-5 opacity-50", error && "text-error opacity-100")} />
             {date ? format(date, "PPP", { locale: ptBR }) : placeholder}

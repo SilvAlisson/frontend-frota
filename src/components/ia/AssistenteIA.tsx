@@ -96,7 +96,7 @@ const ChatBubble = React.memo(({ msg, userNome, onFeedback }: { msg: MensagemCha
 
             {isKia && !isError && (
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onClick={copiarTexto} className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Copiar resposta" aria-label="Ação">
+                <button onClick={copiarTexto} className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Copiar resposta">
                   {copiado ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
                 <button
@@ -107,7 +107,7 @@ const ChatBubble = React.memo(({ msg, userNome, onFeedback }: { msg: MensagemCha
                       ? "text-emerald-500 bg-emerald-500/15"
                       : "text-text-muted hover:text-emerald-500 hover:bg-emerald-500/10"
                   )}
-                  title="Resposta útil" aria-label="Ação"
+                  title="Resposta útil"
                 >
                   <ThumbsUp className="w-3.5 h-3.5" />
                 </button>
@@ -119,7 +119,7 @@ const ChatBubble = React.memo(({ msg, userNome, onFeedback }: { msg: MensagemCha
                       ? "text-red-500 bg-red-500/15"
                       : "text-text-muted hover:text-red-500 hover:bg-red-500/10"
                   )}
-                  title="Resposta incorreta" aria-label="Ação"
+                  title="Resposta incorreta"
                 >
                   <ThumbsDown className="w-3.5 h-3.5" />
                 </button>
@@ -407,7 +407,7 @@ export function AssistenteIA() {
                   <button 
                     onClick={limparConversa} 
                     className="p-2 text-text-muted hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-colors focus-visible:ring-2 outline-none ring-primary"
-                    title="Limpar conversa" aria-label="Ação"
+                    title="Limpar conversa"
                   >
                     <RotateCcw className="w-4 h-4" />
                   </button>
@@ -439,7 +439,7 @@ export function AssistenteIA() {
                       <button
                         key={s}
                         onClick={() => enviar(s)}
-                        className="text-xs px-3.5 py-2.5 bg-surface border border-border/80 hover:border-primary/40 hover:bg-primary/5 hover:text-primary hover:-translate-y-0.5 rounded-xl transition-all duration-200 text-text-secondary font-medium text-left shadow-sm active:scale-95" aria-label="Ação"
+                        className="text-xs px-3.5 py-2.5 bg-surface border border-border/80 hover:border-primary/40 hover:bg-primary/5 hover:text-primary hover:-translate-y-0.5 rounded-xl transition-all duration-200 text-text-secondary font-medium text-left shadow-sm active:scale-95"
                       >
                         {s}
                       </button>

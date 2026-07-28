@@ -38,7 +38,7 @@ export function DiagnosticoVeiculo({ veiculoId }: DiagnosticoVeiculoProps) {
           {!diagnostico && !isPending && (
             <button
               onClick={handleAnalisar}
-              className="flex items-center gap-2 px-3 py-2 bg-surface-hover hover:bg-primary/10 hover:text-primary text-text-secondary text-xs font-bold rounded-xl transition-all border border-border/60 hover:border-primary/20" aria-label="Ação"
+              className="flex items-center gap-2 px-3 py-2 bg-surface-hover hover:bg-primary/10 hover:text-primary text-text-secondary text-xs font-bold rounded-xl transition-all border border-border/60 hover:border-primary/20"
             >
               <Sparkles className="w-3.5 h-3.5" />
               Analisar Veículo
@@ -49,7 +49,7 @@ export function DiagnosticoVeiculo({ veiculoId }: DiagnosticoVeiculoProps) {
               onClick={handleAnalisar}
               disabled={isPending}
               className="p-2 text-text-muted hover:text-primary hover:bg-primary/10 rounded-xl transition-colors"
-              title="Regenerar análise" aria-label="Ação"
+              title="Regenerar análise"
             >
               <RefreshCw className={`w-4 h-4 ${isPending ? 'animate-spin' : ''}`} />
             </button>

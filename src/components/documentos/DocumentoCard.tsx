@@ -38,7 +38,7 @@ export function DocumentoCard({
     >
       {/* Grupo de Botões de Ação (Editar e Apagar) */}
       {!somenteLeitura && (
-        <div className="absolute top-4 right-4 flex items-center gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-all bg-surface-hover/80 lg:bg-transparent rounded-xl p-1 shadow-sm lg:shadow-none">
+        <div className="absolute top-4 right-4 flex items-center gap-1 opacity-100 lg:opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-all bg-surface-hover/80 lg:bg-transparent rounded-xl p-1 shadow-sm lg:shadow-none">
           <Button
             variant="ghost"
             size="icon"
@@ -113,7 +113,7 @@ export function DocumentoCard({
         <button
           onClick={() => onView(doc.arquivoUrl, doc.titulo)}
           className="text-[11px] font-black uppercase tracking-widest text-primary hover:text-white bg-primary/10 hover:bg-primary px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all shadow-sm focus-ring touch-target"
-          title="Visualizar Documento" aria-label="Ação"
+          title="Visualizar Documento"
         >
           Visualizar<ExternalLink className="w-3.5 h-3.5" />
         </button>

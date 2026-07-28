@@ -428,12 +428,13 @@ export function MinhaContaPage() {
                             {/* ... (todo o conteúdo dos inputs de senha continua igual aqui dentro) ... */}
                             {/* Senha Atual */}
                             <div>
-                                <label className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1.5">
+                                <label htmlFor="senhaAtual" className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1.5">
                                     Senha Atual
                                 </label>
                                 <div className="relative">
                                     <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                                     <input
+                                        id="senhaAtual"
                                         type={showSenhaAtual ? 'text' : 'password'}
                                         {...register('senhaAtual')}
                                         className="w-full h-11 pl-10 pr-10 bg-surface border border-border/60 rounded-xl text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all"
@@ -443,7 +444,7 @@ export function MinhaContaPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowSenhaAtual(v => !v)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors" aria-label="Ação"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
                                     >
                                         {showSenhaAtual ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
@@ -453,12 +454,13 @@ export function MinhaContaPage() {
 
                             {/* Nova Senha */}
                             <div>
-                                <label className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1.5">
+                                <label htmlFor="novaSenha" className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1.5">
                                     Nova Senha
                                 </label>
                                 <div className="relative">
                                     <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                                     <input
+                                        id="novaSenha"
                                         type={showNovaSenha ? 'text' : 'password'}
                                         {...register('novaSenha')}
                                         className="w-full h-11 pl-10 pr-10 bg-surface border border-border/60 rounded-xl text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all"
@@ -468,7 +470,7 @@ export function MinhaContaPage() {
                                     <button
                                         type="button"
                                         onClick={() => setShowNovaSenha(v => !v)}
-                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors" aria-label="Ação"
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-main transition-colors"
                                     >
                                         {showNovaSenha ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                     </button>
@@ -478,12 +480,13 @@ export function MinhaContaPage() {
 
                             {/* Confirmar Nova Senha */}
                             <div>
-                                <label className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1.5">
+                                <label htmlFor="confirmarSenha" className="text-xs font-black text-text-muted uppercase tracking-widest block mb-1.5">
                                     Confirmar Nova Senha
                                 </label>
                                 <div className="relative">
                                     <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                                     <input
+                                        id="confirmarSenha"
                                         type="password"
                                         {...register('confirmarSenha')}
                                         className="w-full h-11 pl-10 pr-4 bg-surface border border-border/60 rounded-xl text-sm text-text-main placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/60 transition-all"

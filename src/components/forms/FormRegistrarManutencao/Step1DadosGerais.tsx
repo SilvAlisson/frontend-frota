@@ -86,7 +86,7 @@ export function Step1DadosGerais() {
                       ? (t === 'CORRETIVA' ? 'bg-error text-white shadow-md' : 'bg-success text-white shadow-md')
                       : 'text-text-muted hover:text-text-main hover:bg-surface/80'}
                     ${isLocked ? 'opacity-50 cursor-not-allowed' : ''}
-                  `} aria-label="Ação"
+                  `}
                 >
                   {t}
                 </button>

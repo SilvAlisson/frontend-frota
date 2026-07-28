@@ -68,7 +68,7 @@ export function BiometryOnboardingBanner() {
                                         </Button>
                                         <button
                                             onClick={handleDismiss}
-                                            className="text-xs font-bold text-text-muted hover:text-text-main transition-colors" aria-label="Ação"
+                                            className="text-xs font-bold text-text-muted hover:text-text-main transition-colors"
                                         >
                                             Lembrar depois
                                         </button>
