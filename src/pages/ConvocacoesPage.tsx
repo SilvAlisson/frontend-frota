@@ -6,7 +6,7 @@ import { Button } from '../components/ui/Button';
 import { Skeleton } from '../components/ui/Skeleton';
 
 export function ConvocacoesPage() {
-  const { data: programas, isLoading, refetch } = useProgramas();
+  const { data: programas, isLoading, isError, refetch } = useProgramas();
   const [modalOpen, setModalOpen] = useState(false);
 
   return (
@@ -41,6 +41,11 @@ export function ConvocacoesPage() {
               <Skeleton key={i} variant="card" className="h-48" />
             ))}
           </>
+        ) : isError ? (
+          <div className="col-span-full p-8 text-center bg-error/10 border border-error/20 rounded-2xl flex flex-col items-center gap-3">
+            <h3 className="text-error font-bold">Erro ao carregar programas</h3>
+            <Button variant="outline" onClick={() => refetch()}>Tentar Novamente</Button>
+          </div>
         ) : (
           programas?.map(programa => (
             <div key={programa.id} className="bg-surface rounded-2xl border border-border/60 shadow-sm p-6 hover:shadow-md transition-shadow">

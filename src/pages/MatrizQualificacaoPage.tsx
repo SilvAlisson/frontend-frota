@@ -19,9 +19,11 @@ export function MatrizQualificacaoPage() {
       </div>
 
       <div className="bg-surface rounded-[2rem] border border-border/60 shadow-sm p-5 sm:p-6 lg:p-8">
-        <Suspense fallback={<SkeletonTable />}>
-          <MatrizQualificacao />
-        </Suspense>
+        <ErrorBoundary>
+          <Suspense fallback={<SkeletonTable />}>
+            <MatrizQualificacao />
+          </Suspense>
+        </ErrorBoundary>
       </div>
     </div>
   );

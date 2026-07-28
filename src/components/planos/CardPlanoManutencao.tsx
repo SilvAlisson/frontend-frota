@@ -120,7 +120,7 @@ export function processarPlanosManutencao(planos: PlanoManutencao[]): PlanoProce
       const inicioCiclo = alvo - plano.valorIntervalo;
       const totalPercorridoNoCiclo = Math.max(0, kmAtual - inicioCiclo);
 
-      percentualDesgaste = Math.min((totalPercorridoNoCiclo / plano.valorIntervalo) * 100, 100);
+      percentualDesgaste = plano.valorIntervalo > 0 ? Math.min((totalPercorridoNoCiclo / plano.valorIntervalo) * 100, 100) : 0;
       const kmFaltante = alvo - kmAtual;
 
       if (kmFaltante <= 0) {

@@ -25,6 +25,8 @@ import { PullToRefresh } from './ui/PullToRefresh';
 import { SmartFAB } from './ui/SmartFAB';
 import { Callout } from './ui/Callout';
 import { EmptyState } from './ui/EmptyState';
+import { SidebarActionButton } from './ui/SidebarActionButton';
+import { PageWrapper } from './ui/PageWrapper';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
 import { Sun, Moon } from 'lucide-react';
@@ -44,76 +46,7 @@ interface DashboardEncarregadoProps {
 
 type ViewMode = 'DASHBOARD' | 'MONITORAMENTO' | 'MINHA_JORNADA' | 'HISTORICO' | 'HISTORICO_MANUTENCOES' | 'EQUIPE' | 'DEFEITOS' | 'PLANOS';
 
-// ─── COMPONENTES CLEAN-CODE ─────────────────────────────────────────────
 
-interface MiniActionCardProps {
-  icon: React.ElementType;
-  title: string;
-  onClick: () => void;
-  badge?: number | string | null;
-  variant?: 'default' | 'danger' | 'warning' | 'subtle';
-}
-
-function SidebarActionButton({ icon: Icon, title, onClick, badge, variant = 'default' }: MiniActionCardProps) {
-  const isDanger = variant === 'danger';
-  const isSubtle = variant === 'subtle';
-
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "w-full group flex items-center justify-between p-3 sm:p-4 rounded-2xl transition-all duration-300 border hover:-translate-y-0.5 shadow-sm hover:shadow-md",
-        isDanger ? "bg-error/5 hover:bg-error/10 border-error/20 hover:border-error/40" 
-        : isSubtle ? "bg-surface/30 hover:bg-surface border-transparent hover:border-border/30 opacity-70 hover:opacity-100" 
-        : "bg-surface hover:bg-surface-hover/80 border-border/40 hover:border-primary/30"
-      )} aria-label="Navegar"
-    >
-      <div className="flex items-center gap-3">
-        <div className={cn(
-          "w-10 h-10 rounded-xl flex items-center justify-center transition-colors border shadow-inner",
-          isDanger ? "bg-error/10 text-error border-error/20" 
-          : "bg-primary/5 text-primary border-primary/10 group-hover:bg-primary/10"
-        )}>
-          <Icon className="w-5 h-5" />
-        </div>
-        <span className={cn(
-          "font-black tracking-tight text-sm",
-          isDanger ? "text-error" : "text-text-main"
-        )}>{title}</span>
-      </div>
-      
-      {badge ? (
-        <span className={cn(
-          "px-2 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest animate-pulse border",
-          isDanger ? "bg-error/20 text-error border-error/30" : "bg-primary/20 text-primary border-primary/30"
-        )}>
-           {badge}
-        </span>
-      ) : (
-        <ChevronRight className={cn("w-4 h-4 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all", isDanger ? "text-error" : "text-primary")} />
-      )}
-    </button>
-  );
-}
-
-// --- ENVELOPE DAS SUB-PÁGINAS FLUIDAS ---
-const PageWrapper = ({ title, onBack, children }: { title: string; onBack: () => void; children: React.ReactNode }) => (
-    <div className="space-y-6 animate-in slide-in-from-right-8 duration-500 pb-20 min-h-screen bg-background -mx-4 sm:-mx-8 px-4 sm:px-8">
-        <div className="flex items-center gap-4 py-6 sticky top-0 z-40 -mx-4 px-4 sm:-mx-8 sm:px-8 backdrop-blur-xl bg-background/80 border-b border-border/40">
-            <Button 
-              onClick={onBack} 
-              variant="ghost" size="icon"
-              className="w-11 h-11 rounded-2xl bg-surface hover:bg-surface-hover border border-border/40 hover:border-primary/30 text-text-muted hover:text-primary transition-all active:scale-95 shadow-sm"
-            >
-                <ChevronRight className="w-5 h-5 rotate-180" />
-            </Button>
-            <h2 className="text-xl sm:text-2xl font-black text-text-main tracking-tight uppercase italic drop-shadow-sm">{title}</h2>
-        </div>
-        <div className="max-w-7xl mx-auto">
-            {children}
-        </div>
-    </div>
-);
 
 // ─── COMPONENTE PRINCIPAL MÃE ─────────────────────────────────────────────
 export function DashboardEncarregado({ user }: DashboardEncarregadoProps) {
