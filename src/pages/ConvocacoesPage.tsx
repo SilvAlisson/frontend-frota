@@ -4,6 +4,7 @@ import { useProgramas } from '../hooks/useProgramas';
 import { ModalNovaConvocacao } from '../components/rh/ModalNovaConvocacao';
 import { Button } from '../components/ui/Button';
 import { Skeleton } from '../components/ui/Skeleton';
+import { EmptyState } from '../components/ui/EmptyState';
 
 export function ConvocacoesPage() {
   const { data: programas, isLoading, isError, refetch } = useProgramas();
@@ -86,10 +87,12 @@ export function ConvocacoesPage() {
         )}
 
         {programas?.length === 0 && (
-          <div className="col-span-full py-12 text-center text-text-muted">
-            <ShieldCheck className="w-12 h-12 mx-auto mb-3 opacity-20" />
-            <p>Nenhuma campanha ou programa de saúde criado ainda.</p>
-          </div>
+          <EmptyState 
+            icon={ShieldCheck}
+            title="Nenhum programa"
+            description="Nenhuma campanha ou programa de saúde criado ainda."
+            className="col-span-full"
+          />
         )}
       </div>
 
