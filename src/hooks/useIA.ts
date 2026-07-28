@@ -114,7 +114,7 @@ export function useIAStream() {
             }
 
             if (data.error) {
-              logger.error('[useIAStream] Erro retornado pelo stream:', data.error);
+              logger.apiError(data.error, '[useIAStream] Erro retornado pelo stream');
               callbacks.onError();
               streamFinished = true;
               break;
@@ -126,7 +126,7 @@ export function useIAStream() {
               processQueue();
             }
           } catch (e) {
-            logger.error('[useIAStream] Erro ao fazer parse do evento SSE:', e, '| Evento:', dataStr);
+            logger.apiError(e, `[useIAStream] Erro ao fazer parse do evento SSE | Evento: ${dataStr}`);
           }
         }
       }
@@ -137,7 +137,7 @@ export function useIAStream() {
         setIsPending(false);
       }
     } catch (error) {
-      logger.error('[useIAStream] Erro fatal ao consumir stream:', error);
+      logger.apiError(error, '[useIAStream] Erro fatal ao consumir stream');
       callbacks.onError();
       setIsPending(false);
     }

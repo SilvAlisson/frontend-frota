@@ -8,7 +8,7 @@ interface AbaAbastecimentosVeiculoProps {
   veiculo: Veiculo;
 }
 
-import { formatBRL, formatKml, formatarDataHora } from '../lib/formatters';
+import { formatBRL, formatarDataHora } from '../lib/formatters';
 
 export function AbaAbastecimentosVeiculo({ veiculo }: AbaAbastecimentosVeiculoProps) {
   const [limiteAbastecimentos, setLimiteAbastecimentos] = useState(10);

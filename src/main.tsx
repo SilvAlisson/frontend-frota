@@ -32,6 +32,25 @@ Sentry.init({
   tracesSampleRate: env.isProd ? 0.1 : 1.0,
   replaysSessionSampleRate: 0.1,
   replaysOnErrorSampleRate: 1.0,
+  beforeSend(event) {
+    if (event.request?.data) {
+      try {
+        let data = event.request.data;
+        if (typeof data === 'string') {
+          data = JSON.parse(data);
+        }
+        if (data && typeof data === 'object') {
+          if ('senha' in data) data.senha = '[OMITIDO]';
+          if ('cpf' in data) data.cpf = '[OMITIDO]';
+          if ('password' in data) data.password = '[OMITIDO]';
+          event.request.data = typeof event.request.data === 'string' ? JSON.stringify(data) : data;
+        }
+      } catch (e) {
+        // Ignora erros de parse silenciosamente
+      }
+    }
+    return event;
+  }
 });
 
 // Configuração do QueryClient para ouvir erros e enviar ao Sentry
@@ -64,30 +83,32 @@ import { setupGlobalErrorLogging } from './services/logger';
 
 setupGlobalErrorLogging();
 
-window.addEventListener('error', (e) => {
-  const errDiv = document.createElement('div');
-  errDiv.style.position = 'fixed';
-  errDiv.style.top = '0';
-  errDiv.style.left = '0';
-  errDiv.style.background = 'red';
-  errDiv.style.color = 'white';
-  errDiv.style.padding = '20px';
-  errDiv.style.zIndex = '999999';
-  errDiv.innerHTML = `<h3>Error</h3><pre>${e.error?.stack || e.message}</pre>`;
-  document.body.appendChild(errDiv);
-});
-window.addEventListener('unhandledrejection', (e) => {
-  const errDiv = document.createElement('div');
-  errDiv.style.position = 'fixed';
-  errDiv.style.top = '0';
-  errDiv.style.left = '0';
-  errDiv.style.background = 'orange';
-  errDiv.style.color = 'white';
-  errDiv.style.padding = '20px';
-  errDiv.style.zIndex = '999999';
-  errDiv.innerHTML = `<h3>Unhandled Rejection</h3><pre>${e.reason?.stack || e.reason}</pre>`;
-  document.body.appendChild(errDiv);
-});
+if (env.isDev) {
+  window.addEventListener('error', (e) => {
+    const errDiv = document.createElement('div');
+    errDiv.style.position = 'fixed';
+    errDiv.style.top = '0';
+    errDiv.style.left = '0';
+    errDiv.style.background = 'red';
+    errDiv.style.color = 'white';
+    errDiv.style.padding = '20px';
+    errDiv.style.zIndex = '999999';
+    errDiv.innerHTML = `<h3>Error</h3><pre>${e.error?.stack || e.message}</pre>`;
+    document.body.appendChild(errDiv);
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    const errDiv = document.createElement('div');
+    errDiv.style.position = 'fixed';
+    errDiv.style.top = '0';
+    errDiv.style.left = '0';
+    errDiv.style.background = 'orange';
+    errDiv.style.color = 'white';
+    errDiv.style.padding = '20px';
+    errDiv.style.zIndex = '999999';
+    errDiv.innerHTML = `<h3>Unhandled Rejection</h3><pre>${e.reason?.stack || e.reason}</pre>`;
+    document.body.appendChild(errDiv);
+  });
+}
 
 const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');

@@ -9,7 +9,7 @@ import { Skeleton } from '../components/ui/Skeleton';
 import { AbaManutencoesVeiculo } from '../components/AbaManutencoesVeiculo';
 import { AbaAbastecimentosVeiculo } from '../components/AbaAbastecimentosVeiculo';
 import { DiagnosticoVeiculo } from '../components/ia/DiagnosticoVeiculo';
-import { formatBRL, formatNumero } from '../lib/formatters';
+import { formatNumero } from '../lib/formatters';
 
 const GraficoKmVeiculo = React.lazy(() => import('../components/GraficoKmVeiculo').then(module => ({ default: module.GraficoKmVeiculo })));
 
@@ -48,7 +48,27 @@ export function VeiculoDetalhes() {
         </div>
     );
 
-    if (!veiculo) return null;
+    if (!veiculo) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] text-center px-4 animate-in fade-in duration-500">
+                <div className="w-20 h-20 bg-error/10 text-error rounded-3xl flex items-center justify-center mb-6 shadow-inner">
+                    <Car className="w-10 h-10 opacity-80" />
+                </div>
+                <h2 className="text-2xl sm:text-3xl font-black text-text-main tracking-tight mb-3">Veículo não encontrado</h2>
+                <p className="text-text-secondary font-medium max-w-md mb-8 leading-relaxed">
+                    Este veículo pode ter sido removido do sistema ou o link que você acessou é inválido.
+                </p>
+                <Button 
+                    variant="primary" 
+                    icon={<ArrowLeft className="w-4 h-4" />}
+                    onClick={() => navigate(-1)}
+                    className="h-12 px-8 rounded-xl font-bold"
+                >
+                    Voltar
+                </Button>
+            </div>
+        );
+    }
 
     const financeiro = veiculo.resumoFinanceiro || {};
     const odometroAtual = veiculo.ultimoKm || 0;

@@ -54,7 +54,7 @@ export function useDeleteVeiculo() {
         onSuccess: () => {
             toast.success('Veículo removido com sucesso!');
         },
-        onError: (error: unknown, id, context) => {
+        onError: (error: unknown, _id, context) => {
             if (context?.previous) {
                 queryClient.setQueryData(['veiculos'], context.previous);
             }

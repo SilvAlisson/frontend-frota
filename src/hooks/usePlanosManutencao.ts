@@ -92,7 +92,7 @@ export function usePlanosManutencao(veiculoId?: string, filtroCategoria?: string
         toast.success("Plano desativado e removido.");
         queryClient.invalidateQueries({ queryKey: ['planos'] });
       },
-      onError: (err: unknown, id, context: { previous?: unknown } | undefined) => {
+      onError: (err: unknown, _id: string, context: { previous?: unknown } | undefined) => {
         if (context?.previous) queryClient.setQueryData(['planos'], context.previous);
         handleApiError(err, "Falha ao tentar remover o plano.");
       }

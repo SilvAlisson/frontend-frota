@@ -8,9 +8,7 @@ import autoAnimate from '@formkit/auto-animate';
 
 // Componentes e Ícones Padronizados
 import { EmptyState } from './ui/EmptyState';
-import { Badge } from './ui/Badge';
 import { Skeleton } from './ui/Skeleton';
-import { ConfirmModal } from './ui/ConfirmModal';
 import { PageHeader } from './ui/PageHeader';
 import { Callout } from './ui/Callout';
 import { 

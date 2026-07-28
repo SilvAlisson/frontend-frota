@@ -12,7 +12,7 @@ interface SubmitParams<T> {
   dadosJornada: T;
 }
 
-export function usePhotoSubmit<T extends object>() {
+export function usePhotoSubmit<T extends Record<string, unknown>>() {
   const [loading, setLoading] = useState(false);
 
   const submitPhoto = async ({

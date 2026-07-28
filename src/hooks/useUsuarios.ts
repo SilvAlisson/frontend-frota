@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
-import axios from 'axios';
+
 import type { User } from '../types';
 import { logger } from '../lib/logger';
 
@@ -46,7 +46,7 @@ export function useUsuarios(options?: { includeTestUsers?: boolean }) {
     onSuccess: () => {
       toast.success('Colaborador removido com sucesso.');
     },
-    onError: (err: unknown, id, context) => {
+    onError: (_err: unknown, _id, context) => {
       // 4. Se der erro, reverte para o estado anterior
       if (context?.previousUsers) {
         queryClient.setQueryData(['users', !!options?.includeTestUsers], context.previousUsers);

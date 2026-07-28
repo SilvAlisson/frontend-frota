@@ -74,7 +74,7 @@ export function useDeleteDocumento() {
         onSuccess: () => {
             toast.success('Documento removido!');
         },
-        onError: (error: unknown, id, context) => {
+        onError: (error: unknown, _id, context) => {
             if (context?.previous) {
                 queryClient.setQueryData(['documentos-legais'], context.previous);
             }

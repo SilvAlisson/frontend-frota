@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { toast } from 'sonner';
-import axios from 'axios';
+
 import type { Fornecedor } from '../types';
 import { logger } from '../lib/logger';
 import { env } from '../config/env';
@@ -39,7 +39,7 @@ export function useFornecedores() {
     onSuccess: () => {
       toast.success('Parceiro removido com sucesso.');
     },
-    onError: (err: unknown, id, context) => {
+    onError: (_err: unknown, _id, context) => {
       if (context?.previousFornecedores) {
         queryClient.setQueryData(['fornecedores'], context.previousFornecedores);
       }

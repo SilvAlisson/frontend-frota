@@ -60,7 +60,7 @@ export function useAso(userId: string) {
       onSuccess: () => {
         toast.success('ASO excluído com sucesso.');
       },
-      onError: (err, id, context) => {
+      onError: (err, _id, context) => {
         if (context?.previous) {
           queryClient.setQueryData(['asos', userId], context.previous);
         }

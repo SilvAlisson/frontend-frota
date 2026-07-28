@@ -1,5 +1,5 @@
 import { MatrizQualificacao } from '../components/rh/MatrizQualificacao';
-import { ShieldCheck, Loader2 } from 'lucide-react';
+import { ShieldCheck } from 'lucide-react';
 import { Suspense } from 'react';
 import { SkeletonTable } from '../components/skeletons/SkeletonTable';
 

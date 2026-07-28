@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { logger } from '../lib/logger';
+import { Haptics, ImpactFeedbackStyle } from '@capacitor/haptics';
 
 /**
  * Hook para adicionar micro-interações táteis (Vibração) em dispositivos mobile.
@@ -8,7 +8,7 @@ import { logger } from '../lib/logger';
  */
 export function useHaptics() {
   
-  const isSupported = typeof window !== 'undefined' && 'vibrate' in navigator;
+  const isSupported = typeof window !== 'undefined';
   
   const canVibrate = () => {
     if (!isSupported) return false;

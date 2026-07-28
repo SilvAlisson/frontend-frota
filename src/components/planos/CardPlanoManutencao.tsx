@@ -80,7 +80,7 @@ export function CardPlanoManutencao({ planoProcessado: plano, onExcluir, onBaixa
             Atual: {plano.tipoIntervalo === 'KM' ? (formatNumero(plano.veiculo.ultimoKm || 0, 0) + ' KM') : 'Hoje'}
           </span>
           <span>
-            Alvo: {plano.tipoIntervalo === 'KM' ? (formatNumero(plano.kmProximaManutencao, 0) + ' KM') : (plano.dataProximaManutencao ? format(new Date(plano.dataProximaManutencao), 'dd/MM/yyyy') : '--')}
+            Alvo: {plano.tipoIntervalo === 'KM' ? (formatNumero(plano.kmProximaManutencao || 0, 0) + ' KM') : (plano.dataProximaManutencao ? format(new Date(plano.dataProximaManutencao), 'dd/MM/yyyy') : '--')}
           </span>
         </div>
       </div>

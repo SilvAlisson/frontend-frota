@@ -16,9 +16,9 @@ import { KpiCard } from './ui/KpiCard';
 import { Callout } from './ui/Callout';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
-import { ConfirmModal } from './ui/ConfirmModal';
+
 import { Tooltip, TooltipTrigger, TooltipContent } from './ui/Tooltip';
-import { useNavigate } from 'react-router-dom';
+
 import {
   Fuel, Wrench, Gauge, DollarSign, Activity,
   Droplets, TrendingUp, FileSpreadsheet,

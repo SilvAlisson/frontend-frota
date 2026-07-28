@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { toast } from 'sonner';
 
 export interface DefeitoVeiculo {
   id: string;
@@ -76,7 +77,7 @@ export function useDefeitos(status?: 'ABERTO' | 'EM_ANALISE' | 'RESOLVIDO') {
         queryClient.invalidateQueries({ queryKey: ['defeitos-count'] });
         toast.success('Defeito resolvido!');
       },
-      onError: (err, vars, context) => {
+      onError: (_err, _vars, context) => {
         if (context?.previous) queryClient.setQueryData(['defeitos'], context.previous);
       },
     });

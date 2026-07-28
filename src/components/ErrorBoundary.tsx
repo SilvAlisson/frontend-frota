@@ -14,14 +14,7 @@ const addBreadcrumb = (action: string) => {
   if (breadcrumbs.length > MAX_BREADCRUMBS) breadcrumbs.shift();
 };
 
-// Rastreador global de cliques (Injeta no Window sem pesar o React)
-if (typeof window !== 'undefined') {
-  window.addEventListener('click', (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    const text = (target.innerText || target.getAttribute('aria-label') || target.tagName || '').substring(0, 40);
-    if (text) addBreadcrumb(`Click em: ${text.replace(/\n/g, ' ').trim()}`);
-  }, true);
-}
+// O rastreador global de cliques foi movido para o ErrorBoundary para evitar memory leak
 
 interface Props {
   children: ReactNode;
@@ -75,6 +68,10 @@ export class ErrorBoundary extends Component<Props, State> {
       this.logErrorToAuditoria(promiseError, 'UNHANDLED_PROMISE');
     };
     window.addEventListener('unhandledrejection', this._unhandledRejectionHandler);
+    
+    if (typeof window !== 'undefined') {
+      window.addEventListener('click', this.handleGlobalClick, true);
+    }
   }
 
   public componentWillUnmount() {
@@ -83,7 +80,16 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this._unhandledRejectionHandler) {
       window.removeEventListener('unhandledrejection', this._unhandledRejectionHandler);
     }
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('click', this.handleGlobalClick, true);
+    }
   }
+
+  private handleGlobalClick = (e: MouseEvent) => {
+    const target = e.target as HTMLElement;
+    const text = (target.innerText || target.getAttribute('aria-label') || target.tagName || '').substring(0, 40);
+    if (text) addBreadcrumb(`Click em: ${text.replace(/\n/g, ' ').trim()}`);
+  };
 
   // O MOTOR DE ENVIO: Centraliza a formatação para não repetir código
   private logErrorToAuditoria = (error: Error, type: string, componentStack?: string | null) => {
@@ -113,7 +119,7 @@ export class ErrorBoundary extends Component<Props, State> {
         this.setState({ errorId: res.data.id });
       }
     }).catch(() => {
-      logger.error('Falha ao enviar telemetria para a Central de Auditoria.');
+      logger.critical('Falha ao enviar telemetria para a Central de Auditoria.');
     });
   };
 

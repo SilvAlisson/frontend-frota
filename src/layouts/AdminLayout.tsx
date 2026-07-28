@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   Menu, X, KeyRound, LogOut
 } from 'lucide-react';
@@ -211,7 +211,8 @@ export function AdminLayout() {
       }
 
       if (latestLog.id !== lastSeenLogId.current) {
-        const newLogs = latestLogs.slice(0, latestLogs.findIndex(l => l.id === lastSeenLogId.current));
+        const idx = latestLogs.findIndex(l => l.id === lastSeenLogId.current);
+        const newLogs = idx === -1 ? latestLogs : latestLogs.slice(0, idx);
         const criticalLogs = newLogs.filter(l => ['CRITICAL', 'FRAUD_ATTEMPT'].includes(l.nivel));
         
         if (criticalLogs.length > 0) {

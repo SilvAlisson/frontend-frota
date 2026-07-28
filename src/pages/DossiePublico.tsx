@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { ShieldCheck, AlertTriangle, Calendar, FileSpreadsheet, CheckCircle2, GraduationCap } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { differenceInDays, parseISO, startOfDay } from 'date-fns';
 
 // Tipagem baseada no que a API vai nos devolver
 interface TreinamentoPublico {
@@ -43,11 +44,8 @@ function getStatusInfo(vencimento: string | null): StatusConfig {
       };
   }
 
-  const [year, month, day] = vencimento.split('T')[0].split('-').map(Number);
-  const vencUTC = Date.UTC(year, month - 1, day);
-  const now = new Date();
-  const hojeUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-  const diffDias = Math.ceil((vencUTC - hojeUTC) / (1000 * 60 * 60 * 24));
+  const vencimentoDate = parseISO(vencimento);
+  const diffDias = differenceInDays(startOfDay(vencimentoDate), startOfDay(new Date()));
 
   if (diffDias < 0) {
       return {

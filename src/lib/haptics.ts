@@ -8,7 +8,7 @@ import { logger } from './logger';
 // Checa suporte de forma segura e se o usuário já interagiu com a tela (previne erro de console no magic link)
 const canVibrate = () => {
   if (typeof window === 'undefined' || !('vibrate' in navigator)) return false;
-  // @ts-expect-error - API recente do Chrome
+
   if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return false;
   return true;
 };

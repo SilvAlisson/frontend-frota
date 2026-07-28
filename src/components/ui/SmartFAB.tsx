@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Plus } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useIsMobile } from '../../hooks/useMediaQuery';
@@ -12,7 +12,7 @@ interface SmartFABProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export function SmartFAB({ onClick, label = "Novo", icon: Icon = Plus, className, ...rest }: SmartFABProps) {
   const isMobile = useIsMobile();
   const [isVisible, setIsVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
+  const lastScrollY = useRef(0);
 
   useEffect(() => {
     if (!isMobile) return;
@@ -21,20 +21,20 @@ export function SmartFAB({ onClick, label = "Novo", icon: Icon = Plus, className
       const currentScrollY = window.scrollY;
       
       // Se rolou para baixo mais de 10px, esconde
-      if (currentScrollY > lastScrollY + 10) {
+      if (currentScrollY > lastScrollY.current + 10) {
         setIsVisible(false);
+        lastScrollY.current = currentScrollY;
       } 
       // Se rolou para cima mais de 10px, mostra
-      else if (currentScrollY < lastScrollY - 10) {
+      else if (currentScrollY < lastScrollY.current - 10) {
         setIsVisible(true);
+        lastScrollY.current = currentScrollY;
       }
-
-      setLastScrollY(currentScrollY);
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [lastScrollY, isMobile]);
+  }, [isMobile]);
 
   if (!isMobile) return null; // No desktop, usamos o botão normal do PageHeader
 
