@@ -12,7 +12,7 @@ interface SubmitParams<T> {
   dadosJornada: T;
 }
 
-export function usePhotoSubmit<T extends Record<string, unknown>>() {
+export function usePhotoSubmit<T extends object>() {
   const [loading, setLoading] = useState(false);
 
   const submitPhoto = async ({
@@ -32,7 +32,7 @@ export function usePhotoSubmit<T extends Record<string, unknown>>() {
       const publicUrlString = await uploadToR2(foto, fileName, foto.type || 'image/jpeg', fileType);
       const fotoUrl = publicUrlString;
 
-      const dadosCompletos: Record<string, unknown> = { ...dadosJornada };
+      const dadosCompletos = { ...dadosJornada } as Record<string, unknown>;
 
       if (apiEndpoint.includes('abastecimentos')) {
         dadosCompletos.fotoNotaFiscalUrl = fotoUrl;

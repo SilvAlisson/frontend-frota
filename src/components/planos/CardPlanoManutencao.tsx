@@ -140,7 +140,7 @@ export function processarPlanosManutencao(planos: PlanoManutencao[]): PlanoProce
       const totalDiasDoCiclo = plano.valorIntervalo * 30;
       const diasPassados = totalDiasDoCiclo - diasFaltantes;
 
-      percentualDesgaste = Math.min((diasPassados / totalDiasDoCiclo) * 100, 100);
+      percentualDesgaste = totalDiasDoCiclo > 0 ? Math.min((diasPassados / totalDiasDoCiclo) * 100, 100) : 0;
 
       if (diasFaltantes <= 0) {
         status = 'VERMELHO';

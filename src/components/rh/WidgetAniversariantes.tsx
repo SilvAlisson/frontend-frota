@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { PartyPopper, Calendar } from 'lucide-react';
 import { Button } from '../ui/Button';
@@ -19,24 +20,17 @@ interface Aniversariante {
 }
 
 export function WidgetAniversariantes() {
-  const [aniversariantes, setAniversariantes] = useState<Aniversariante[]>([]);
-  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAniv, setSelectedAniv] = useState<Aniversariante | null>(null);
 
-  useEffect(() => {
-    const fetchAniversariantes = async () => {
-      try {
-        const response = await api.get('/rh/aniversariantes');
-        setAniversariantes(response.data);
-      } catch (error) {
-        console.error('Erro ao buscar aniversariantes:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAniversariantes();
-  }, []);
+  const { data: aniversariantes = [], isLoading: loading } = useQuery({
+    queryKey: ['aniversariantes'],
+    queryFn: async () => {
+      const { data } = await api.get('/rh/aniversariantes');
+      return data as Aniversariante[];
+    },
+    staleTime: 1000 * 60 * 60, // 1 hora de cache, já que aniversários não mudam
+  });
 
   if (loading) {
     return <Skeleton variant="card" className="h-[120px]" />;
