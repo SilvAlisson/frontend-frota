@@ -2,6 +2,7 @@ import { MatrizQualificacao } from '../components/rh/MatrizQualificacao';
 import { ShieldCheck } from 'lucide-react';
 import { Suspense } from 'react';
 import { SkeletonTable } from '../components/skeletons/SkeletonTable';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 
 export function MatrizQualificacaoPage() {
   return (

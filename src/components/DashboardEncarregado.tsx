@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Key, Droplets, Users, LogOut, ChevronRight, 
+  Key, Droplets, Users, LogOut,
   Wrench, Activity, AlertTriangle, ShieldCheck, Navigation,
   BatteryCharging, Clock, QrCode, Truck
 } from 'lucide-react';
@@ -36,7 +36,6 @@ import { useVeiculos } from '../hooks/useVeiculos';
 import { useJornadasAtivas } from '../hooks/useJornadasAtivas';
 import { useDefeitos } from '../hooks/useDefeitos';
 import { handleApiError } from '../utils/errorHandler';
-import { cn } from '../lib/utils';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
