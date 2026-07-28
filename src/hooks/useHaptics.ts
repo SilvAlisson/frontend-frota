@@ -1,5 +1,4 @@
 import { useCallback } from 'react';
-import { Haptics, ImpactFeedbackStyle } from '@capacitor/haptics';
 
 /**
  * Hook para adicionar micro-interações táteis (Vibração) em dispositivos mobile.
