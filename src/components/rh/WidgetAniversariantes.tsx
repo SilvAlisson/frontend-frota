@@ -5,6 +5,7 @@ import { Button } from '../ui/Button';
 import { Modal } from '../ui/Modal';
 import { CartazAniversario } from './CartazAniversario';
 import { Skeleton } from '../ui/Skeleton';
+import { Avatar } from '../ui/Avatar';
 
 interface Aniversariante {
   id: string;
@@ -71,10 +72,10 @@ export function WidgetAniversariantes() {
           <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
             {aniversariantes.slice(0, 3).map(aniv => (
               <div key={aniv.id} className="flex items-center gap-3 bg-white/60 dark:bg-black/20 px-4 py-2.5 rounded-xl backdrop-blur-sm border border-white/50">
-                <img 
-                  src={aniv.image || `https://api.dicebear.com/7.x/initials/svg?seed=${aniv.nome}`} 
-                  alt={aniv.nome}
-                  className="w-10 h-10 rounded-full border-2 border-pink-200"
+                <Avatar 
+                  url={aniv.image}
+                  nome={aniv.nome}
+                  className="border-2 border-pink-200"
                 />
                 <div className="flex flex-col text-left">
                   <span className="text-sm font-bold text-text-main line-clamp-1 max-w-[120px]">{aniv.nome.split(' ')[0]}</span>

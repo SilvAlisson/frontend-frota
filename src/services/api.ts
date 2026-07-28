@@ -70,8 +70,9 @@ function getUserInfoForLog(): string {
 }
 
 function logToAuditTracker(error: AxiosError, duration: number, userLogadoInfo: string, method: string, urlChamada: string) {
-  const isLogRoute = !!error.config?.url?.includes('logs');
-  if (isLogRoute) return; // Nunca loga a própria rota de logs para evitar loop infinito
+  const excludedRoutes = ['/logs', '/auth/login', '/health', '/metrics'];
+  const isExcluded = excludedRoutes.some(route => error.config?.url?.includes(route));
+  if (isExcluded) return; // Nunca loga a própria rota de logs para evitar loop infinito
 
   const status = error.response?.status;
   
