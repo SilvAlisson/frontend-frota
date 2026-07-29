@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
   Menu, X, KeyRound, LogOut
@@ -247,7 +247,7 @@ export function AdminLayout() {
                 <Drawer.Description>Acesso às áreas da Frota KLIN.</Drawer.Description>
               </div>
               
-              <SidebarContent onClose={useCallback(() => setIsSidebarOpen(false), [])} user={user} />
+              <SidebarContent onClose={() => setIsSidebarOpen(false)} user={user} />
             </Drawer.Content>
           </Drawer.Portal>
         </Drawer.Root>
