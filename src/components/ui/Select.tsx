@@ -39,10 +39,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         value,
         onChange,
         disabled,
-        children,
         ...rest
     }, ref) => {
-        const selectId = id || React.useId();
+        const generatedId = React.useId();
+        const selectId = id || generatedId;
 
         const localRef = useRef<HTMLSelectElement>(null);
         const setRefs = useCallback(
@@ -132,7 +132,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
             return () => {
                 clearInterval(interval);
-                try { Reflect.deleteProperty(select, 'value'); } catch (_) { /* noop */ }
+                try { Reflect.deleteProperty(select, 'value'); } catch { /* noop */ }
             };
         }, [options]);
 
