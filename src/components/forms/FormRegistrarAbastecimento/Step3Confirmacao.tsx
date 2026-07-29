@@ -16,11 +16,11 @@ export function Step3Confirmacao() {
   const { data: veiculos = [] } = useVeiculos();
 
   const veiculoIdSelecionado = watch('veiculoId');
-  const itensObservados = watch('itens') || [];
+  const itensObservados = watch('itens');
   const kmAtual = watch('kmAtual');
 
   const totalGeral = useMemo(() => {
-    return itensObservados.reduce((acc, item) => {
+    return (itensObservados || []).reduce((acc, item) => {
       const qtd = Number(item?.quantidade) || 0;
       const unit = desformatarDinheiro(String(item?.valorUnitario || '')); 
       return acc + (qtd * unit);

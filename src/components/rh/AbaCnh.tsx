@@ -86,7 +86,7 @@ export function AbaCnh({ userId, onClose }: AbaCnhProps) {
         error: 'Erro ao atualizar CNH.'
       });
       if (onClose) onClose();
-    } catch (error) {
+    } catch {
       hapticError();
     }
   };

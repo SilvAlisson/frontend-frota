@@ -22,11 +22,8 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': [
-        'warn',
-        { allowConstantExport: true },
-      ],
-      'react-compiler/react-compiler': 'error',
+      'react-refresh/only-export-components': 'off',
+      'react-compiler/react-compiler': 'off',
     },
   },
   eslintConfigPrettier

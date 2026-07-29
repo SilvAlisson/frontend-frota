@@ -56,7 +56,7 @@ export function FormEditarDocumento({ documentoId, onSuccess, onCancel }: FormEd
           descricao: doc.descricao || '',
           dataValidade: doc.dataValidade ? new Date(doc.dataValidade).toISOString().split('T')[0] : null,
         });
-      } catch (err) {
+      } catch {
         toast.error("Erro ao carregar dados do documento.");
         onCancel();
       }

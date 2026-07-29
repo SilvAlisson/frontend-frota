@@ -13,7 +13,7 @@ export const treinamentoSchema = z.object({
     nome: z.string().min(2, 'Nome deve ter ao menos 2 caracteres')
         .transform(val => {
             let n = val.toUpperCase().replace(/\s+/g, ' ').trim();
-            n = n.replace(/^NR[\s\-]*(\d+.*)$/, 'NR $1');
+            n = n.replace(/^NR[\s-]*(\d+.*)$/, 'NR $1');
             return n;
         }),
     dataRealizacao: z.string().min(1, 'Data de emissão obrigatória').refine(data => {

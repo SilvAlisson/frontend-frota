@@ -116,7 +116,7 @@ export const exportarParaExcel = async <T extends Record<string, unknown>>(data:
               novaLinha[key] = { formula: valor.substring(1) }; // O ExcelJS exige que remova o '=' inicial
             } else {
               let valString = valor as string;
-              if (/^[=\-+\@]/.test(valString)) {
+              if (/^[=-+@]/.test(valString)) {
                 valString = "'" + valString;
               }
               novaLinha[key] = valString;

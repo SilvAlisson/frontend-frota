@@ -87,6 +87,7 @@ export function FormCadastrarVeiculo({ onSuccess, onCancelar }: FormProps) {
 
   const onSubmit = async (data: VeiculoFormOutput) => {
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { mediaEstimada, ...dadosParaEnvio } = data;
 
       const payload = {

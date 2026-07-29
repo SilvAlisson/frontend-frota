@@ -215,7 +215,7 @@ export function ModalAnalyticsEngine({ isOpen, onClose, metric, title }: ModalAn
                       const data = await strategy.fetchLevel5(selectedVeiculoId, selectedCategoria, selectedMes, entry.name);
                       setDataNivel5(data);
                       setLevel(5);
-                    } catch (err: unknown) {
+                    } catch {
                       toast.error("Erro ao carregar tickets do fornecedor");
                     } finally {
                       setLoading(false);

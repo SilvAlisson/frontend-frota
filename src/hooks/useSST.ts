@@ -66,7 +66,8 @@ export function useSST(filtroPrograma?: ProgramaSST | '') {
     },
   });
 
-  const acoes: AcaoSST[] = query.data ?? [];
+  const acoesData = query.data;
+  const acoes: AcaoSST[] = useMemo(() => acoesData ?? [], [acoesData]);
 
   // ── Filtragem por programa ──────────────────────────────────────────────────
   const acoesFiltradas = useMemo(() => {

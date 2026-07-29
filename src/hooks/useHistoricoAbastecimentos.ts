@@ -49,7 +49,7 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
         old ? old.filter(ab => ab.id !== id) : []
       );
       toast.success('Abastecimento removido.');
-    } catch (err: unknown) {
+    } catch {
       toast.error('Erro ao remover abastecimento.');
     }
   };

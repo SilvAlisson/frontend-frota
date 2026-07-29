@@ -155,7 +155,7 @@ export class ErrorBoundary extends Component<Props, State> {
               variant="primary" 
               className="w-full h-12 uppercase tracking-widest text-xs font-black shadow-lg"
               onClick={() => {
-                window.location.href = window.location.href; 
+                window.location.reload();
               }}
             >
               <RefreshCcw className="w-4 h-4 mr-2" /> Recarregar Tela

@@ -9,11 +9,11 @@ export function useHaptics() {
   
   const isSupported = typeof window !== 'undefined';
   
-  const canVibrate = () => {
+  const canVibrate = useCallback(() => {
     if (!isSupported) return false;
     if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return false;
     return true;
-  };
+  }, [isSupported]);
 
   // Vibração leve para cliques normais ou interações sutis (10ms)
   const vibrateLight = useCallback(() => {
@@ -26,7 +26,7 @@ export function useHaptics() {
       } else if (navigator.vibrate) {
         navigator.vibrate(10);
       }
-    } catch (e) {
+    } catch {
       // Ignorar erros
     }
   }, [canVibrate]);
@@ -35,7 +35,7 @@ export function useHaptics() {
     if (!canVibrate()) return;
     try {
       if (navigator.vibrate) navigator.vibrate(20);
-    } catch (e) {
+    } catch {
       //
     }
   }, [canVibrate]);
@@ -44,7 +44,7 @@ export function useHaptics() {
     if (!canVibrate()) return;
     try {
       if (navigator.vibrate) navigator.vibrate(30);
-    } catch (e) {
+    } catch {
       //
     }
   }, [canVibrate]);
@@ -53,7 +53,7 @@ export function useHaptics() {
     if (!canVibrate()) return;
     try {
       if (navigator.vibrate) navigator.vibrate([15, 100, 20]);
-    } catch (e) {
+    } catch {
       //
     }
   }, [canVibrate]);
@@ -62,7 +62,7 @@ export function useHaptics() {
     if (!canVibrate()) return;
     try {
       if (navigator.vibrate) navigator.vibrate([50, 100, 50, 100, 50]);
-    } catch (e) {
+    } catch {
       //
     }
   }, [canVibrate]);

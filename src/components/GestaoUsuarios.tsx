@@ -392,7 +392,7 @@ export function GestaoUsuarios() {
                 await excluirUsuario(usuarioParaInativar.id);
                 toast.success('Integrante inativado com sucesso.');
                 setUsuarioParaInativar(null);
-              } catch (error) {
+              } catch {
                 toast.error('Erro ao inativar integrante.');
               }
             }

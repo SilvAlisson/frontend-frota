@@ -86,7 +86,7 @@ export function LogItem({ log, onArquivar, isArquivando }: LogItemProps) {
               )}
               {!!log.contexto?._url && (
                 <span className="text-[9px] text-primary/70 truncate max-w-[150px]">
-                  📍 {String(log.contexto._url).replace(/^.*\/\/[^\/]+/, '')}
+                  📍 {String(log.contexto._url).replace(/^.*:\/\/[^/]+/, '')}
                 </span>
               )}
             </div>

@@ -58,7 +58,7 @@ export function FormRenovarDocumento({ documentoId, onSuccess, onCancel }: FormR
           dataValidade: null,
           arquivoUrl: ''
         });
-      } catch (err) {
+      } catch {
         toast.error("Erro ao carregar dados do documento.");
         onCancel();
       }
@@ -84,7 +84,7 @@ export function FormRenovarDocumento({ documentoId, onSuccess, onCancel }: FormR
 
       setValue('arquivoUrl', publicUrlString, { shouldValidate: true });
       toast.success('Novo arquivo anexado com sucesso na nuvem!');
-    } catch (error) {
+    } catch {
       logger.apiError(error, 'Erro ao fazer upload do arquivo.');
     } finally {
       setIsUploading(false);
@@ -95,7 +95,7 @@ export function FormRenovarDocumento({ documentoId, onSuccess, onCancel }: FormR
     try {
       await renovar({ id: documentoId, dados });
       onSuccess();
-    } catch (error) {
+    } catch {
       // O erro já é tratado no hook
     }
   };

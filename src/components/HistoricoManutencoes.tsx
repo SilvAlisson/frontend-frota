@@ -80,7 +80,7 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
       searchParams.delete('action');
       setSearchParams(searchParams, { replace: true });
     }
-  }, [actionQuery, queryVeiculoId]);
+  }, [actionQuery, queryVeiculoId, filtros.veiculoId, searchParams, setSearchParams]);
 
   const canEdit = ['ADMIN', 'ENCARREGADO', 'COORDENADOR'].includes(userRole);
   const canDelete = ['ADMIN', 'COORDENADOR'].includes(userRole);

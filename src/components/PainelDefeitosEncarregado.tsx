@@ -31,6 +31,26 @@ export function PainelDefeitosEncarregado() {
 
   const ativos = defeitos.filter(d => ['ABERTO', 'EM_ANALISE'].includes(d.status));
 
+  // Dados do Donut Chart — distribuição por categoria
+  const dadosDonut = useMemo(() => {
+    const categorias: Record<string, { count: number; color: string }> = {
+      FREIO:      { count: 0, color: CHART_COLORS_DEFEITOS.FREIO },
+      MOTOR:      { count: 0, color: CHART_COLORS_DEFEITOS.MOTOR },
+      PNEU:       { count: 0, color: CHART_COLORS_DEFEITOS.PNEU },
+      OLEO:       { count: 0, color: CHART_COLORS_DEFEITOS.OLEO },
+      ILUMINACAO: { count: 0, color: CHART_COLORS_DEFEITOS.ILUMINACAO },
+      CARROCERIA: { count: 0, color: CHART_COLORS_DEFEITOS.CARROCERIA },
+      OUTRO:      { count: 0, color: CHART_COLORS_DEFEITOS.OUTRO },
+    };
+    ativos.forEach(d => {
+      const cat = d.categoria in categorias ? d.categoria : 'OUTRO';
+      categorias[cat].count++;
+    });
+    return Object.entries(categorias)
+      .filter(([, v]) => v.count > 0)
+      .map(([name, v]) => ({ name, value: v.count, color: v.color }));
+  }, [ativos]);
+
   if (isLoading) {
       return (
         <div className="space-y-4 animate-in fade-in">
@@ -68,25 +88,7 @@ export function PainelDefeitosEncarregado() {
     }
   };
 
-  // Dados do Donut Chart — distribuição por categoria
-  const dadosDonut = useMemo(() => {
-    const categorias: Record<string, { count: number; color: string }> = {
-      FREIO:      { count: 0, color: CHART_COLORS_DEFEITOS.FREIO },
-      MOTOR:      { count: 0, color: CHART_COLORS_DEFEITOS.MOTOR },
-      PNEU:       { count: 0, color: CHART_COLORS_DEFEITOS.PNEU },
-      OLEO:       { count: 0, color: CHART_COLORS_DEFEITOS.OLEO },
-      ILUMINACAO: { count: 0, color: CHART_COLORS_DEFEITOS.ILUMINACAO },
-      CARROCERIA: { count: 0, color: CHART_COLORS_DEFEITOS.CARROCERIA },
-      OUTRO:      { count: 0, color: CHART_COLORS_DEFEITOS.OUTRO },
-    };
-    ativos.forEach(d => {
-      const cat = d.categoria in categorias ? d.categoria : 'OUTRO';
-      categorias[cat].count++;
-    });
-    return Object.entries(categorias)
-      .filter(([, v]) => v.count > 0)
-      .map(([name, v]) => ({ name, value: v.count, color: v.color }));
-  }, [ativos]);
+
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

@@ -51,7 +51,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     // 📳 HAPTICS: Vibração sutil ao pressionar o botão no Mobile (Feedback Físico)
     const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
       if (!disabled && !isLoading && typeof window !== 'undefined' && navigator.vibrate) {
-        try { navigator.vibrate(10); } catch (err) { /* Silencioso se não suportado */ }
+        try { navigator.vibrate(10); } catch { /* Silencioso se não suportado */ }
       }
       if (onPointerDown) onPointerDown(e);
     };

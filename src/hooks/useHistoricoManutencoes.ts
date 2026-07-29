@@ -44,7 +44,7 @@ export function useHistoricoManutencoes(filtros: FiltrosManutencao) {
         old ? old.filter(os => os.id !== id) : []
       );
       toast.success('Registro financeiro removido.');
-    } catch (error: unknown) {
+    } catch {
       toast.error('Ocorreu um erro ao remover o Registro.');
     }
   };

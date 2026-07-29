@@ -221,7 +221,7 @@ export function AssistenteIA() {
       'Quem são os operadores mais eficientes?',
       'Há defeitos graves em aberto?',
     ];
-  }, [user?.role]);
+  }, [user]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -330,7 +330,7 @@ export function AssistenteIA() {
         setMensagens(prev => [...prev, { id: crypto.randomUUID(), tipo: 'kia', conteudo: 'Desculpe, não consegui processar sua consulta no momento. A conexão com o banco de dados falhou.', timestamp: new Date() }]);
       }
     });
-  }, [pergunta, mensagens, isPending, consultarStream, location.pathname]);
+  }, [pergunta, mensagens, isPending, consultarStream, location.pathname, navigate]);
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setPergunta(e.target.value);

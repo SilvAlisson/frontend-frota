@@ -45,7 +45,7 @@ Sentry.init({
           if ('password' in data) data.password = '[OMITIDO]';
           event.request.data = typeof event.request.data === 'string' ? JSON.stringify(data) : data;
         }
-      } catch (e) {
+      } catch {
         // Ignora erros de parse silenciosamente
       }
     }

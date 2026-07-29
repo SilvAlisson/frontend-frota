@@ -89,7 +89,7 @@ export function useLogin() {
     };
 
     processMagicLogin();
-  }, [magicToken, navigate, isAuthenticated, login, logout, setSearchParams]);
+  }, [magicToken, navigate, isAuthenticated, login, logout, setSearchParams, handleRedirect, user]);
 
   useEffect(() => {
 
