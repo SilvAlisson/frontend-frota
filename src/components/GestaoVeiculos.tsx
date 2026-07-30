@@ -45,7 +45,6 @@ export function GestaoVeiculos() {
 
   // 📡 BUSCA INDEPENDENTE COM CACHE
   const { data: veiculos = [], isLoading, isError, refetch } = useVeiculos({ includeTestVehicles: currentUser?.role === 'ADMIN' });
-  const queryClient = useQueryClient();
 
   // --- CONTROLE DE SWITCH DE ATIVOS ---
   const [apenasAtivos, setApenasAtivos] = useState(false);
