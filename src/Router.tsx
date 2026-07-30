@@ -109,11 +109,7 @@ function RootDashboardRouter() {
   }
 
   if (user.role === 'ENCARREGADO') {
-    return (
-      <div className={containerStyle}>
-        <DashboardEncarregado user={user} />
-      </div>
-    );
+    return <Navigate to="/encarregado" replace />;
   }
 
   return <Navigate to="/admin" replace />;
@@ -150,6 +146,15 @@ export function Router() {
         <Route path="/minha-conta" element={
           <PrivateRoute>
             <MinhaContaPage />
+          </PrivateRoute>
+        } />
+
+        {/* Rota do Encarregado (Nested Router) */}
+        <Route path="/encarregado/*" element={
+          <PrivateRoute allowedRoles={['ENCARREGADO']}>
+            <div className="p-4 md:p-8 max-w-[1600px] mx-auto min-h-screen bg-background transition-colors duration-500">
+              <DashboardEncarregado user={user!} />
+            </div>
           </PrivateRoute>
         } />
 

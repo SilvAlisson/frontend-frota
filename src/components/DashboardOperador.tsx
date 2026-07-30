@@ -13,6 +13,7 @@ import { EmptyState } from './ui/EmptyState';
 import { Avatar } from './ui/Avatar';
 import { Button } from './ui/Button';
 import { Skeleton } from './ui/Skeleton';
+import { Callout } from './ui/Callout';
 import { BottomNavItem } from './ui/BottomNavItem';
 import confetti from 'canvas-confetti';
 
@@ -49,11 +50,12 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
  const [modalDocumentosOpen, setModalDocumentosOpen] = useState(false);
 
  // 📡 BUSCA DOS DADOS COM CACHE
- const { usuarios = [], refetch: refetchUsuarios, isLoading: loadingUsuarios } = useUsuarios();
- const { data: veiculos = [], refetch: refetchVeiculos, isLoading: loadingVeiculos } = useVeiculos();
- const { data: jornadasAtivas = [], refetch: refetchJornadas, isLoading: loadingJornadas } = useJornadasAtivas();
+ const { usuarios = [], refetch: refetchUsuarios, isLoading: loadingUsuarios, isError: isErrorUsuarios } = useUsuarios();
+ const { data: veiculos = [], refetch: refetchVeiculos, isLoading: loadingVeiculos, isError: isErrorVeiculos } = useVeiculos();
+ const { data: jornadasAtivas = [], refetch: refetchJornadas, isLoading: loadingJornadas, isError: isErrorJornadas } = useJornadasAtivas();
 
- const isInitialLoading = loadingUsuarios || loadingVeiculos || loadingJornadas;
+ const isInitialLoading = (loadingUsuarios || loadingVeiculos || loadingJornadas) && jornadasAtivas.length === 0;
+ const hasError = isErrorUsuarios || isErrorVeiculos || isErrorJornadas;
 
  const handleManualRefresh = async () => {
   vibrateLight();
@@ -162,7 +164,11 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
    {/* ─── ÁREA PRINCIPAL ────────────────────────────────────────────────── */}
    <main className="max-w-2xl mx-auto px-4 sm:px-8 pt-6 pb-32 lg:pb-10 space-y-6 @container">
 
-    {isInitialLoading ? (
+    {hasError ? (
+      <Callout variant="danger" title="Falha de Comunicação" className="mb-4">
+        Não conseguimos conectar ao servidor neste momento. Verifique sua conexão e <button onClick={handleManualRefresh} className="font-bold underline">tente novamente</button>.
+      </Callout>
+    ) : isInitialLoading ? (
      <div className="space-y-6 animate-in fade-in duration-500">
        <Skeleton className="h-[280px] w-full rounded-[2rem]" />
        <div className="grid grid-cols-2 gap-4">

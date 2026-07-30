@@ -62,7 +62,8 @@ export function usePlanosManutencao(veiculoId?: string, filtroCategoria?: string
       }
     },
     // Habilita a query se for fetchAll, ou se tiver veiculoId (com a checagem de filtro)
-    enabled: fetchAll || (!!veiculoId && (filtroCategoria === undefined || filtroCategoria === FILTRO_TODOS || !!filtroCategoria))
+    enabled: fetchAll || (!!veiculoId && (filtroCategoria === undefined || filtroCategoria === FILTRO_TODOS || !!filtroCategoria)),
+    staleTime: 1000 * 60 * 2 // 2 minutos de cache
   });
 
   const registrarExecucaoMutation = useMutation({
@@ -72,6 +73,7 @@ export function usePlanosManutencao(veiculoId?: string, filtroCategoria?: string
     onSuccess: () => {
       toast.success('Manutenção registrada com sucesso!');
       queryClient.invalidateQueries({ queryKey: ['planos'] });
+      queryClient.invalidateQueries({ queryKey: ['manutencoes'] });
     },
     onError: (err: unknown) => {
       handleApiError(err, 'Erro ao registrar manutenção.');
@@ -84,16 +86,25 @@ export function usePlanosManutencao(veiculoId?: string, filtroCategoria?: string
       },
       onMutate: async (id: string) => {
         await queryClient.cancelQueries({ queryKey: ['planos'] });
-        const previous = queryClient.getQueryData(['planos']);
-        queryClient.setQueryData(['planos'], (old: { id: string }[] | undefined) => old ? old.filter((p) => p.id !== id) : []);
-        return { previous };
+        
+        const snapshots = queryClient.getQueriesData<{ id: string }[]>({ queryKey: ['planos'] });
+        
+        snapshots.forEach(([key]) => {
+            queryClient.setQueryData<{ id: string }[]>(key, (old) => old ? old.filter((p) => p.id !== id) : []);
+        });
+        
+        return { snapshots };
       },
       onSuccess: () => {
         toast.success("Plano desativado e removido.");
         queryClient.invalidateQueries({ queryKey: ['planos'] });
       },
-      onError: (err: unknown, _id: string, context: { previous?: unknown } | undefined) => {
-        if (context?.previous) queryClient.setQueryData(['planos'], context.previous);
+      onError: (err: unknown, _id: string, context: { snapshots?: [import('@tanstack/react-query').QueryKey, { id: string }[] | undefined][] } | undefined) => {
+        if (context?.snapshots) {
+            context.snapshots.forEach(([key, data]) => {
+                queryClient.setQueryData(key, data);
+            });
+        }
         handleApiError(err, "Falha ao tentar remover o plano.");
       }
     });

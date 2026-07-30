@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { Sparkles, X, Send, Loader2, RotateCcw, ChevronDown, AlertCircle, Copy, ThumbsUp, ThumbsDown, Check } from 'lucide-react';
 import { useIAStream, useIAFeedback, type MensagemChat } from '../../hooks/useIA';
 import { MdText } from './MdText';
+import { toast } from 'sonner';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
 import { logger } from '../../lib/logger';
@@ -173,6 +174,7 @@ export function AssistenteIA() {
       }
     } catch (e) {
       console.error('Erro ao ler histórico da IA', e);
+      setTimeout(() => toast.error('Não foi possível recuperar o histórico de conversas anterior.'), 1000);
     }
     return [];
   });

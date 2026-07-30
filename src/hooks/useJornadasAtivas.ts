@@ -21,8 +21,8 @@ export function useJornadasAtivas() {
     },
     
     enabled: !!user,
-    staleTime: 1000 * 30,
-    refetchInterval: 1000 * 60,
+    staleTime: 1000 * 30, // 30s — sincronizado com refetchInterval
+    refetchInterval: 1000 * 30,
     
     retry: (failureCount, error: unknown) => {
       if (isAxiosError(error)) {

@@ -45,18 +45,25 @@ export function useDeleteVeiculo() {
         },
         onMutate: async (id: string) => {
             await queryClient.cancelQueries({ queryKey: ['veiculos'] });
-            const previous = queryClient.getQueryData<Veiculo[]>(['veiculos']);
-            queryClient.setQueryData<Veiculo[]>(['veiculos'], (old) => {
-                return old ? old.filter(v => v.id !== id) : [];
+            
+            const snapshots = queryClient.getQueriesData<Veiculo[]>({ queryKey: ['veiculos'] });
+            
+            snapshots.forEach(([key]) => {
+                queryClient.setQueryData<Veiculo[]>(key, (old) => {
+                    return old ? old.filter(v => v.id !== id) : [];
+                });
             });
-            return { previous };
+            
+            return { snapshots };
         },
         onSuccess: () => {
             toast.success('Veículo removido com sucesso!');
         },
         onError: (error: unknown, _id, context) => {
-            if (context?.previous) {
-                queryClient.setQueryData(['veiculos'], context.previous);
+            if (context?.snapshots) {
+                context.snapshots.forEach(([key, data]) => {
+                    queryClient.setQueryData(key, data);
+                });
             }
             handleApiError(error, 'Erro ao remover veículo');
         },

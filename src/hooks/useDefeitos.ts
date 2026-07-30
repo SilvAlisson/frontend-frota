@@ -32,6 +32,7 @@ export function useDefeitos(status?: 'ABERTO' | 'EM_ANALISE' | 'RESOLVIDO') {
       const response = await api.get('/defeitos', { params: { status } });
       return response.data;
     },
+    staleTime: 1000 * 60, // 1 minuto — sincronizado com refetchInterval para evitar always-stale
     refetchInterval: 60000, // ✨ Polling: atualiza a cada 60s automaticamente
   });
 
@@ -42,6 +43,7 @@ export function useDefeitos(status?: 'ABERTO' | 'EM_ANALISE' | 'RESOLVIDO') {
       const response = await api.get('/defeitos/count');
       return response.data.count as number;
     },
+    staleTime: 1000 * 60, // 1 minuto — sincronizado com refetchInterval
     refetchInterval: 60000,
     retry: false, // Se não for encarregado dará 403 silencioso
     enabled: isGestor && !query.isLoading // Só tenta o contador se for gestor e após a lista principal carregar (opcional, mas evita corridas)

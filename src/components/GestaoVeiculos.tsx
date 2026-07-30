@@ -19,6 +19,7 @@ import { Skeleton } from './ui/Skeleton';
 import { SkeletonTable } from './skeletons/SkeletonTable';
 import { ConfirmModal } from './ui/ConfirmModal';
 import { EmptyState } from './ui/EmptyState';
+import { Callout } from './ui/Callout';
 import { useFiltragemVeiculos } from '../hooks/useFiltragemVeiculos';
 import React, { Suspense } from 'react';
 import { PullToRefresh } from './ui/PullToRefresh';
@@ -43,7 +44,8 @@ export function GestaoVeiculos() {
   const [veiculoParaExcluir, setVeiculoParaExcluir] = useState<string | null>(null);
 
   // 📡 BUSCA INDEPENDENTE COM CACHE
-  const { data: veiculos = [], isLoading, refetch } = useVeiculos({ includeTestVehicles: currentUser?.role === 'ADMIN' });
+  const { data: veiculos = [], isLoading, isError, refetch } = useVeiculos({ includeTestVehicles: currentUser?.role === 'ADMIN' });
+  const queryClient = useQueryClient();
 
   // --- CONTROLE DE SWITCH DE ATIVOS ---
   const [apenasAtivos, setApenasAtivos] = useState(false);
@@ -117,7 +119,11 @@ export function GestaoVeiculos() {
       </div>
 
       {/* 2. LISTAGEM & EMPTY STATE */}
-      {isLoading ? (
+      {isError ? (
+        <Callout variant="danger" title="Falha ao carregar veículos" className="mb-4">
+          Não foi possível conectar ao servidor. <button onClick={() => refetch()} className="font-bold underline ml-1">Tentar novamente</button>
+        </Callout>
+      ) : isLoading ? (
         <div className="bg-surface rounded-3xl shadow-sm border border-border/60 p-6">
           <SkeletonTable />
         </div>
@@ -271,7 +277,7 @@ export function GestaoVeiculos() {
         <div className="p-2">
           <Suspense fallback={<div className="p-4 space-y-4"><Skeleton variant="title" /><Skeleton variant="tableRow" className="h-24" /><Skeleton variant="tableRow" className="h-24" /></div>}>
             <FormCadastrarVeiculo
-              onSuccess={() => { setIsCadastroOpen(false); refetch(); }}
+              onSuccess={() => { setIsCadastroOpen(false); queryClient.invalidateQueries({ queryKey: ['veiculos'] }); }}
               onCancelar={() => setIsCadastroOpen(false)}
             />
           </Suspense>

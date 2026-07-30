@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { Button } from './ui/Button';
 import { ModalQrCode } from './ModalQrCode';
 import { EmptyState } from './ui/EmptyState';
@@ -26,7 +26,7 @@ export function MinhaEquipe({ usuarios, jornadasAbertas, onUpdate }: MinhaEquipe
   }, [parentRef]);
 
   // Filtra apenas operadores
-  const operadores = usuarios.filter(u => u.role === 'OPERADOR');
+  const operadores = useMemo(() => usuarios.filter(u => u.role === 'OPERADOR'), [usuarios]);
 
   const handleAbrirModal = (user: User) => {
     setUsuarioParaQr(user);

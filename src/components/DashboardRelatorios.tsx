@@ -64,9 +64,9 @@ export function DashboardRelatorios() {
   };
 
   const { data: kpis, isLoading: loading, isError } = useSumarioKPIs({ ano, mes, veiculoId: veiculoIdFiltro || undefined });
-  const { data: dadosGraficoKm = [], isLoading: loadingGrafico } = useEvolucaoKm(veiculoIdFiltro || undefined, 7);
-  const { data: dadosCpk = [], isLoading: loadingCpk } = useEvolucaoCpk(veiculoIdFiltro || undefined);
-  const { data: dadosPerformance = [], isLoading: loadingPerformance } = usePerformanceFrota({ ano, mes });
+  const { data: dadosGraficoKm = [], isLoading: loadingGrafico, isError: errorGrafico } = useEvolucaoKm(veiculoIdFiltro || undefined, 7);
+  const { data: dadosCpk = [], isLoading: loadingCpk, isError: errorCpk } = useEvolucaoCpk(veiculoIdFiltro || undefined);
+  const { data: dadosPerformance = [], isLoading: loadingPerformance, isError: errorPerformance } = usePerformanceFrota({ ano, mes });
 
   const dadosPerformanceLimpos = useMemo(() => {
     return dadosPerformance.map((d: DadoPerformance) => ({
@@ -243,7 +243,11 @@ export function DashboardRelatorios() {
 
       {veiculoIdFiltro && (
         <div className="animate-in fade-in zoom-in-95 duration-700">
-          {loadingGrafico ? (
+          {errorGrafico ? (
+            <Callout variant="danger" title="Erro no Gráfico" className="h-[360px] flex flex-col justify-center">
+              Falha ao carregar a evolução de KM. Tente novamente mais tarde.
+            </Callout>
+          ) : loadingGrafico ? (
             <Skeleton variant="card" className="h-[360px] w-full" />
           ) : (
             <Suspense fallback={<Skeleton variant="card" className="h-[360px] w-full" />}>
@@ -274,7 +278,13 @@ export function DashboardRelatorios() {
           </div>
 
           <div className="relative z-10 w-full h-[280px]">
-            <GraficoCpk dados={dadosCpk} loading={loadingCpk} />
+            {errorCpk ? (
+              <Callout variant="danger" title="Erro" className="h-full flex flex-col justify-center">
+                Falha ao carregar dados do CPK.
+              </Callout>
+            ) : (
+              <GraficoCpk dados={dadosCpk} loading={loadingCpk} />
+            )}
           </div>
         </div>
 
@@ -297,7 +307,13 @@ export function DashboardRelatorios() {
           </div>
 
           <div className="relative z-10 w-full h-[280px]">
-            <GraficoPerformance dados={dadosPerformanceLimpos} loading={loadingPerformance} />
+            {errorPerformance ? (
+              <Callout variant="danger" title="Erro" className="h-full flex flex-col justify-center">
+                Falha ao carregar dados de Performance.
+              </Callout>
+            ) : (
+              <GraficoPerformance dados={dadosPerformanceLimpos} loading={loadingPerformance} />
+            )}
           </div>
         </div>
 

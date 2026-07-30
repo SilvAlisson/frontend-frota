@@ -43,6 +43,8 @@ export function useHistoricoManutencoes(filtros: FiltrosManutencao) {
       queryClient.setQueryData(queryKey, (old: OrdemServico[] | undefined) => 
         old ? old.filter(os => os.id !== id) : []
       );
+      queryClient.invalidateQueries({ queryKey: ['manutencoes'] });
+      queryClient.invalidateQueries({ queryKey: ['planos'] });
       toast.success('Registro financeiro removido.');
     } catch {
       toast.error('Ocorreu um erro ao remover o Registro.');

@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import type { User, UserRole } from '../types';
 import { Button } from './ui/Button';
 import { Avatar } from './ui/Avatar';
@@ -17,6 +18,7 @@ import { FormCadastrarUsuario } from './forms/FormCadastrarUsuario';
 import { TableStyles } from '../styles/table';
 import { toast } from 'sonner';
 import { EmptyState } from './ui/EmptyState';
+import { Callout } from './ui/Callout';
 
 function getFirstAndLastName(fullName: string) {
   const parts = fullName.trim().split(' ');
@@ -62,28 +64,31 @@ export function GestaoUsuarios() {
   const [mostrarInativos, setMostrarInativos] = useState(false);
   
   const { user: currentUser } = useAuth();
+  const queryClient = useQueryClient();
 
-  const { usuarios, isLoading, refetch, excluirUsuario } = useUsuarios({ includeTestUsers: currentUser?.role === 'ADMIN' });
+  const { usuarios, isLoading, isError, refetch, excluirUsuario } = useUsuarios({ includeTestUsers: currentUser?.role === 'ADMIN' });
   const { openModal, closeModal } = useModalStore();
 
   const buscaDebounced = useDebounce(busca, 300);
 
   // Filtragem Inteligente (Texto + Cargo)
-  const usuariosFiltrados = usuarios.filter(u => {
-    const isInativo = u.nome.startsWith('[INATIVO]');
-    if (!mostrarInativos && isInativo) return false;
+  const usuariosFiltrados = useMemo(() => {
+    return usuarios.filter(u => {
+      const isInativo = u.nome.startsWith('[INATIVO]');
+      if (!mostrarInativos && isInativo) return false;
 
-    const nomeReal = getCleanName(u.nome);
+      const nomeReal = getCleanName(u.nome);
 
-    const matchBusca = !buscaDebounced || 
-      nomeReal.toLowerCase().includes(buscaDebounced.toLowerCase()) ||
-      u.email.toLowerCase().includes(buscaDebounced.toLowerCase()) ||
-      (u.matricula && u.matricula.includes(buscaDebounced));
+      const matchBusca = !buscaDebounced || 
+        nomeReal.toLowerCase().includes(buscaDebounced.toLowerCase()) ||
+        u.email.toLowerCase().includes(buscaDebounced.toLowerCase()) ||
+        (u.matricula && u.matricula.includes(buscaDebounced));
+        
+      const matchRole = filtroRole === 'TODOS' || u.role === filtroRole;
       
-    const matchRole = filtroRole === 'TODOS' || u.role === filtroRole;
-    
-    return matchBusca && matchRole;
-  });
+      return matchBusca && matchRole;
+    });
+  }, [usuarios, mostrarInativos, buscaDebounced, filtroRole]);
 
   const handleAbrirQrModal = (user: User) => {
     const modalId = openModal('CUSTOM', {
@@ -91,7 +96,7 @@ export function GestaoUsuarios() {
         <ModalQrCode
           user={{ ...user, loginToken: user.loginToken ?? undefined }}
           onClose={() => closeModal(modalId)}
-          onUpdate={() => refetch()}
+          onUpdate={() => queryClient.invalidateQueries({ queryKey: ['users'] })}
         />
       )
     });
@@ -124,7 +129,7 @@ export function GestaoUsuarios() {
       content: (
         <div className="w-full max-w-2xl">
           <FormCadastrarUsuario 
-            onSuccess={() => { closeModal(modalId); refetch(); }}
+            onSuccess={() => { closeModal(modalId); queryClient.invalidateQueries({ queryKey: ['users'] }); }}
             onCancelar={() => closeModal(modalId)}
           />
         </div>
@@ -233,7 +238,11 @@ export function GestaoUsuarios() {
         />
 
         {/* LISTAGEM RESPONSIVA */}
-        {isLoading ? (
+        {isError ? (
+          <Callout variant="danger" title="Falha ao carregar equipe" className="mb-4">
+            Não foi possível conectar ao servidor. <button onClick={() => refetch()} className="font-bold underline ml-1">Tentar novamente</button>
+          </Callout>
+        ) : isLoading ? (
           <SkeletonTable />
         ) : usuariosFiltrados.length === 0 ? (
           <EmptyState

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useConfiguracoes } from '../hooks/useConfiguracoes';
 import { motion } from 'framer-motion';
 import { Settings, Save, AlertTriangle, ShieldAlert, Clock, AlertCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 export function GestaoConfiguracoes() {
     const { config, isLoading, error, updateConfig } = useConfiguracoes();
@@ -36,6 +37,7 @@ export function GestaoConfiguracoes() {
             setTimeout(() => setSuccessMessage(''), 3000);
         } catch (err) {
             console.error(err);
+            toast.error('Ocorreu um erro ao salvar as configurações. Tente novamente.');
         } finally {
             setIsSaving(false);
         }

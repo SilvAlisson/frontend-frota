@@ -1,6 +1,6 @@
 import { AlertTriangle, ShieldAlert, FileWarning, Activity, AlertOctagon, ShieldCheck } from 'lucide-react';
 import { useMatrizQualificacao } from '../../hooks/useMatrizQualificacao';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/Button';
@@ -50,34 +50,35 @@ export function DashboardCompliance() {
 
   if (!matriz || matriz.length === 0) return null;
 
-  // Extrair alertas
-  const alertas: { tipo: string; titulo: string; cor: string; icone: React.ElementType; integrantes: { id: string; nome: string; detalhe: string }[] }[] = [
-    { tipo: 'CNH_CRITICA', titulo: 'CNHs Críticas', cor: 'red', icone: FileWarning, integrantes: [] },
-    { tipo: 'ASO_CRITICO', titulo: 'ASOs Críticos', cor: 'orange', icone: Activity, integrantes: [] },
-    { tipo: 'FIT_TEST_CRITICO', titulo: 'Fit Tests Críticos', cor: 'purple', icone: ShieldAlert, integrantes: [] },
-    { tipo: 'TREINAMENTOS_CRITICOS', titulo: 'Treinamentos Pendentes', cor: 'yellow', icone: AlertTriangle, integrantes: [] },
-  ];
+  // Extrair alertas e filtrar ativos memoizados
+  const alertasAtivos = useMemo(() => {
+    const alertas: { tipo: string; titulo: string; cor: string; icone: React.ElementType; integrantes: { id: string; nome: string; detalhe: string }[] }[] = [
+      { tipo: 'CNH_CRITICA', titulo: 'CNHs Críticas', cor: 'red', icone: FileWarning, integrantes: [] },
+      { tipo: 'ASO_CRITICO', titulo: 'ASOs Críticos', cor: 'orange', icone: Activity, integrantes: [] },
+      { tipo: 'FIT_TEST_CRITICO', titulo: 'Fit Tests Críticos', cor: 'purple', icone: ShieldAlert, integrantes: [] },
+      { tipo: 'TREINAMENTOS_CRITICOS', titulo: 'Treinamentos Pendentes', cor: 'yellow', icone: AlertTriangle, integrantes: [] },
+    ];
 
-  matriz.forEach(user => {
-    user.exigencias.forEach(exig => {
-      if (exig.status === 'VENCIDO' || exig.status === 'VENCENDO' || exig.status === 'FALTANTE') {
-        const detalhe = `${exig.nome} (${exig.status})`;
+    matriz.forEach(user => {
+      user.exigencias.forEach(exig => {
+        if (exig.status === 'VENCIDO' || exig.status === 'VENCENDO' || exig.status === 'FALTANTE') {
+          const detalhe = `${exig.nome} (${exig.status})`;
 
-        if (exig.tipo === 'CNH') {
-          alertas[0].integrantes.push({ id: user.userId, nome: user.nome, detalhe });
-        } else if (exig.tipo === 'ASO') {
-          alertas[1].integrantes.push({ id: user.userId, nome: user.nome, detalhe });
-        } else if (exig.tipo === 'FIT_TEST') {
-          alertas[2].integrantes.push({ id: user.userId, nome: user.nome, detalhe });
-        } else {
-          alertas[3].integrantes.push({ id: user.userId, nome: user.nome, detalhe });
+          if (exig.tipo === 'CNH') {
+            alertas[0].integrantes.push({ id: user.userId, nome: user.nome, detalhe });
+          } else if (exig.tipo === 'ASO') {
+            alertas[1].integrantes.push({ id: user.userId, nome: user.nome, detalhe });
+          } else if (exig.tipo === 'FIT_TEST') {
+            alertas[2].integrantes.push({ id: user.userId, nome: user.nome, detalhe });
+          } else {
+            alertas[3].integrantes.push({ id: user.userId, nome: user.nome, detalhe });
+          }
         }
-      }
+      });
     });
-  });
 
-  // Filtrar apenas alertas que têm integrantes
-  const alertasAtivos = alertas.filter(a => a.integrantes.length > 0);
+    return alertas.filter(a => a.integrantes.length > 0);
+  }, [matriz]);
 
   if (alertasAtivos.length === 0) {
     return (

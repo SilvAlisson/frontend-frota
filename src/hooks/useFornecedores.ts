@@ -6,11 +6,12 @@ import type { Fornecedor } from '../types';
 import { logger } from '../lib/logger';
 import { env } from '../config/env';
 
-export function useFornecedores() {
+export function useFornecedores(options?: { enabled?: boolean }) {
   const queryClient = useQueryClient();
 
   const fornecedoresQuery = useQuery({
     queryKey: ['fornecedores'],
+    enabled: options?.enabled,
     queryFn: async () => {
       try {
         const { data } = await api.get<Fornecedor[]>('/fornecedores');

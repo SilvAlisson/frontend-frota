@@ -16,6 +16,7 @@ export function useSumarioKPIs(params: Params) {
             return data.kpis;
         },
         staleTime: 1000 * 60 * 2, // 2 minutos de cache
+        refetchInterval: 1000 * 60 * 5, // 5 minutos de auto-refresh
     });
 }
 
@@ -31,6 +32,7 @@ export function useEvolucaoKm(veiculoId?: string, dias: number = 7) {
         },
         enabled: !!veiculoId,
         staleTime: 1000 * 60 * 5, // 5 minutos de cache
+        refetchInterval: 1000 * 60 * 5,
     });
 }
 
@@ -45,6 +47,7 @@ export function useEvolucaoCpk(veiculoId?: string) {
             return data;
         },
         staleTime: 1000 * 60 * 10, // 10 minutos de cache (dados consolidados antigos raramente mudam)
+        refetchInterval: 1000 * 60 * 10,
     });
 }
 
@@ -56,5 +59,6 @@ export function usePerformanceFrota(params: { ano?: number; mes?: number }) {
             return data;
         },
         staleTime: 1000 * 60 * 5, // 5 minutos
+        refetchInterval: 1000 * 60 * 5,
     });
 }

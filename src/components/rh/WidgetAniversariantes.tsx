@@ -23,7 +23,7 @@ export function WidgetAniversariantes() {
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedAniv, setSelectedAniv] = useState<Aniversariante | null>(null);
 
-  const { data: aniversariantes = [], isLoading: loading } = useQuery({
+  const { data: aniversariantes = [], isLoading: loading, isError } = useQuery({
     queryKey: ['aniversariantes'],
     queryFn: async () => {
       const { data } = await api.get('/rh/aniversariantes');
@@ -32,7 +32,15 @@ export function WidgetAniversariantes() {
     staleTime: 1000 * 60 * 60, // 1 hora de cache, já que aniversários não mudam
   });
 
-  if (loading) {
+  if (isError) {
+    return (
+      <div className="bg-red-500/10 border border-red-500/20 rounded-[2rem] p-4 flex items-center justify-center">
+        <p className="text-sm text-red-500 font-medium">Não foi possível carregar os aniversariantes.</p>
+      </div>
+    );
+  }
+
+  if (loading && aniversariantes.length === 0) {
     return <Skeleton variant="card" className="h-[120px]" />;
   }
 

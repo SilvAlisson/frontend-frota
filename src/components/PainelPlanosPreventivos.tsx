@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import type { UseMutationResult } from '@tanstack/react-query';
 import { Wrench, BarChart2, Plus } from 'lucide-react';
 import { Button } from './ui/Button';
 import { Input } from './ui/Input';
@@ -13,6 +14,80 @@ import { PageHeader } from './ui/PageHeader';
 import { useModalStore } from '../hooks/useModalStore';
 import { CardPlanoManutencao, processarPlanosManutencao } from './planos/CardPlanoManutencao';
 import type { PlanoProcessado } from './planos/CardPlanoManutencao';
+
+// ─── FORM DE BAIXA EXTRAÍDO ─── (fora do render para evitar remount a cada re-render do pai)
+interface FormBaixaProps {
+  plano: PlanoProcessado;
+  onClose: () => void;
+  registrarExecucao: UseMutationResult<unknown, unknown, { planoId: string; kmDaBaixa?: number; observacao?: string }, unknown>;
+}
+
+function FormBaixa({ plano, onClose, registrarExecucao }: FormBaixaProps) {
+  const [km, setKm] = useState(plano.veiculo.ultimoKm?.toString() || '');
+  const [obs, setObs] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleRegistrarBaixa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    try {
+      await registrarExecucao.mutateAsync({
+        planoId: plano.id,
+        kmDaBaixa: km ? Number(km) : undefined,
+        observacao: obs
+      });
+      onClose();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="bg-surface p-6 rounded-3xl max-w-xl mx-auto w-full border border-border/60">
+      <h2 className="text-xl font-black mb-6">Registrar Conclusão de Plano</h2>
+      <form onSubmit={handleRegistrarBaixa} className="space-y-6">
+        <div className="bg-surface-hover p-4 rounded-xl border border-border/40 text-sm">
+          Você está registrando a execução de <strong>{plano.descricao}</strong> para o veículo <strong className="font-mono text-text-main">{plano.veiculo.placa}</strong>.
+          <br /><br />
+          O próximo ciclo será re-engatilhado automaticamente e a meta ({plano.valorIntervalo} {plano.tipoIntervalo === 'KM' ? 'KM' : 'Meses'}) será somada à quilometragem/mês de hoje.
+        </div>
+
+        {plano.tipoIntervalo === 'KM' && (
+          <div className="space-y-2">
+            <label className="text-sm font-bold text-text-main flex gap-1">KM do Veículo na execução: <span className="text-error">*</span></label>
+            <Input
+              type="number" inputMode="numeric"
+              placeholder="Ex: 85200"
+              value={km}
+              onChange={(e) => setKm(e.target.value)}
+              required
+            />
+            <p className="text-xs text-text-muted">Último KM conhecido pelo rastreador: {plano.veiculo.ultimoKm}</p>
+          </div>
+        )}
+
+        <div className="space-y-2">
+          <label className="text-sm font-bold text-text-main">Comprovantes ou Observações (Opcional):</label>
+          <Input
+            type="text"
+            placeholder="Ex: Feito na Oficina Center Car, NF 4402 - R$ 680"
+            value={obs}
+            onChange={(e) => setObs(e.target.value)}
+          />
+        </div>
+
+        <div className="flex gap-4 pt-4 border-t border-border/40">
+          <Button type="button" variant="outline" onClick={onClose} className="flex-1 text-text-muted" disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button type="submit" isLoading={isSubmitting} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black tracking-widest uppercase">
+            Salvar &amp; Renovar
+          </Button>
+        </div>
+      </form>
+    </div>
+  );
+}
 
 export function PainelPlanosPreventivos() {
   const { planos, isLoading, refetch, registrarExecucao, excluirPlano } = usePlanosManutencao(undefined, undefined, true);
@@ -55,75 +130,17 @@ export function PainelPlanosPreventivos() {
   };
 
   const handleAbrirBaixa = (plano: PlanoProcessado) => {
-    // Componente interno para o formulário de baixa que mantém seu próprio estado
-    const FormBaixa = () => {
-      const [km, setKm] = useState(plano.veiculo.ultimoKm?.toString() || '');
-      const [obs, setObs] = useState('');
-      const [isSubmitting, setIsSubmitting] = useState(false);
-
-      const handleRegistrarBaixa = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setIsSubmitting(true);
-        try {
-          await registrarExecucao.mutateAsync({
-            planoId: plano.id,
-            kmDaBaixa: km ? Number(km) : undefined,
-            observacao: obs
-          });
-          closeModal(modalId);
-        } finally {
-          setIsSubmitting(false);
-        }
-      };
-
-      return (
-        <div className="bg-surface p-6 rounded-3xl max-w-xl mx-auto w-full border border-border/60">
-          <h2 className="text-xl font-black mb-6">Registrar Conclusão de Plano</h2>
-          <form onSubmit={handleRegistrarBaixa} className="space-y-6">
-            <div className="bg-surface-hover p-4 rounded-xl border border-border/40 text-sm">
-              Você está registrando a execução de <strong>{plano.descricao}</strong> para o veículo <strong className="font-mono text-text-main">{plano.veiculo.placa}</strong>.
-              <br /><br />
-              O próximo ciclo será re-engatilhado automaticamente e a meta ({plano.valorIntervalo} {plano.tipoIntervalo === 'KM' ? 'KM' : 'Meses'}) será somada à quilometragem/mês de hoje.
-            </div>
-
-            {plano.tipoIntervalo === 'KM' && (
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-text-main flex gap-1">KM do Veículo na execução: <span className="text-error">*</span></label>
-                <Input
-                  type="number" inputMode="numeric"
-                  placeholder="Ex: 85200"
-                  value={km}
-                  onChange={(e) => setKm(e.target.value)}
-                  required
-                />
-                <p className="text-xs text-text-muted">Último KM conhecido pelo rastreador: {plano.veiculo.ultimoKm}</p>
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-text-main">Comprovantes ou Observações (Opcional):</label>
-              <Input
-                type="text"
-                placeholder="Ex: Feito na Oficina Center Car, NF 4402 - R$ 680"
-                value={obs}
-                onChange={(e) => setObs(e.target.value)}
-              />
-            </div>
-
-            <div className="flex gap-4 pt-4 border-t border-border/40">
-              <Button type="button" variant="outline" onClick={() => closeModal(modalId)} className="flex-1 text-text-muted" disabled={isSubmitting}>
-                Cancelar
-              </Button>
-              <Button type="submit" isLoading={isSubmitting} className="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-black tracking-widest uppercase">
-                Salvar & Renovar
-              </Button>
-            </div>
-          </form>
-        </div>
-      );
-    };
-
-    const modalId = openModal('CUSTOM', { content: <FormBaixa /> });
+    // Abre o modal passando FormBaixa (agora externo ao render) com props explícitas
+    // Isso impede o React de desmontar o componente a cada re-render do pai
+    const modalId = openModal('CUSTOM', {
+      content: (
+        <FormBaixa
+          plano={plano}
+          onClose={() => closeModal(modalId)}
+          registrarExecucao={registrarExecucao}
+        />
+      )
+    });
   };
 
   if (isLoading) {

@@ -16,7 +16,7 @@ export function Step2DadosFinanceiros() {
   const { register, control, watch, setValue, getValues, formState: { errors, isSubmitting } } = useFormContext<AbastecimentoFormValues>();
   const { fields, append, remove } = useFieldArray({ control, name: "itens" });
 
-  const { fornecedores = [], isLoading: loadF } = useFornecedores();
+  const { fornecedores = [], isLoading: loadF } = useFornecedores({ enabled: true }); // Step2 só monta quando o modal está aberto — lazy por natureza
   const { produtos = [], loading: loadP } = useProdutos();
   const { data: veiculos = [] } = useVeiculos();
 

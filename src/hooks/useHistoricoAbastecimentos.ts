@@ -48,6 +48,7 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
       queryClient.setQueryData(queryKey, (old: Abastecimento[] | undefined) => 
         old ? old.filter(ab => ab.id !== id) : []
       );
+      queryClient.invalidateQueries({ queryKey: ['abastecimentos'] });
       toast.success('Abastecimento removido.');
     } catch {
       toast.error('Erro ao remover abastecimento.');
@@ -60,6 +61,8 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
       queryClient.setQueryData(queryKey, (old: Abastecimento[] | undefined) => 
         old ? old.filter(ab => ab.id !== id) : []
       );
+      queryClient.invalidateQueries({ queryKey: ['abastecimentos'] });
+      queryClient.invalidateQueries({ queryKey: ['veiculos'] });
       toast.success('Abastecimento aprovado e KM registrado com sucesso!');
     } catch (err: unknown) {
       const e = err instanceof Error ? err : new Error('Falha ao aprovar.');

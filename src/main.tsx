@@ -73,6 +73,7 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       staleTime: 1000 * 60 * 1,
+      gcTime: 1000 * 60 * 10, // 10 minutos — dados ficam em memória para navegações rápidas de volta
       retry: 1,
     },
   },
