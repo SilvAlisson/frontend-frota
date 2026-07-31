@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { signIn, passkey } from '../lib/auth-client';
 import { useAuth } from '../contexts/AuthContext';
-import { api } from '../services/api';
+import { webauthnService } from '../services/modules/webauthnService';
 import type { User, UserRole } from '../types';
 import { logger } from '../lib/logger';
 
@@ -29,8 +29,7 @@ export function useWebAuthn() {
     } = useQuery<PasskeyDevice[]>({
         queryKey: ['passkeys', user?.id],
         queryFn: async () => {
-            const { data } = await api.get('/users/me/passkeys');
-            return data;
+            return await webauthnService.getPasskeys();
         },
         // Só busca se o usuário estiver logado
         enabled: !!user?.id,
@@ -42,7 +41,7 @@ export function useWebAuthn() {
     // ─── Revogar passkey ────────────────────────────────────────────────────
     const revokeMutation = useMutation({
         mutationFn: async (passkeyId: string) => {
-            await api.delete(`/users/me/passkeys/${passkeyId}`);
+            await webauthnService.deletePasskey(passkeyId);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['passkeys'] });

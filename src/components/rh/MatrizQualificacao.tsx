@@ -8,7 +8,6 @@ import { Avatar } from '../ui/Avatar';
 import { Badge } from '../ui/Badge';
 import { Skeleton } from '../ui/Skeleton';
 import { Button } from '../ui/Button';
-import { SmartFAB } from '../ui/SmartFAB';
 import { ConfirmInativar } from '../ui/ConfirmInativar';
 import { ModalNovoIntegrante } from './ModalNovoIntegrante';
 import { useCargos } from '../../hooks/useCargos';
@@ -167,10 +166,9 @@ export function MatrizQualificacao() {
             </button>
           </div>
 
-          {/*   Botão de Cadastro (Oculto em Mobile porque usamos o SmartFAB) */}
           <Button
             onClick={() => setNovoIntegranteOpen(true)}
-            className="hidden sm:flex whitespace-nowrap h-10 shadow-button hover:shadow-float-primary"
+            className="w-full sm:w-auto whitespace-nowrap h-11 shadow-button hover:shadow-float-primary"
             icon={<Plus className="w-4 h-4" />}
           >
             Novo Integrante
@@ -286,7 +284,6 @@ export function MatrizQualificacao() {
         })}
       </div>
 
-      <SmartFAB onClick={() => setNovoIntegranteOpen(true)} label="Novo Integrante" />
 
       <ModalNovoIntegrante
         isOpen={novoIntegranteOpen}

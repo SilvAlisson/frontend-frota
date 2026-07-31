@@ -13,7 +13,6 @@ import { useModalStore } from '../hooks/useModalStore';
 // --- UI COMPONENTS ---
 import { PageHeader } from './ui/PageHeader';
 import { Modal } from './ui/Modal';
-import { SmartFAB } from './ui/SmartFAB';
 import { PullToRefresh } from './ui/PullToRefresh';
 import { EmptyState } from './ui/EmptyState';
 import { AlertTriangle } from 'lucide-react';
@@ -229,12 +228,7 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
           )}
         </Modal>
 
-        {canEdit && (
-          <SmartFAB 
-            onClick={() => setIsNovaOSOpen(true)} 
-            label="Nova Manutenção" 
-          />
-        )}
+
       </div>
     </PullToRefresh>
   );

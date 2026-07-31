@@ -11,10 +11,9 @@ import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
 import {
     X, Trash2, Calendar, AlertTriangle, Loader2,
-    CheckCircle2, FileSpreadsheet, Plus, GraduationCap,
-    UploadCloud, QrCode, Printer,
+    FileSpreadsheet, Plus, GraduationCap,
+    UploadCloud, QrCode,
 } from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
 import type { User } from '../types';
 import { useModalStore } from '../hooks/useModalStore';
 import { EmptyState } from './ui/EmptyState';
@@ -24,6 +23,8 @@ import { toast } from 'sonner';
 import { uploadToR2 } from '../services/uploadService';
 import { useMatrizQualificacao } from '../hooks/useMatrizQualificacao';
 import { XCircle } from 'lucide-react';
+import { getStatusConfig, formatDate } from './rh/treinamentos/TreinamentosUtils';
+import { CrachaModal } from './rh/treinamentos/CrachaModal';
 
 // ─────────────────────────────────────────────────────────────────
 // Tipos locais
@@ -33,78 +34,12 @@ interface ModalProps {
     onClose: () => void;
 }
 
-interface StatusConfig {
-    /** Cor sólida para o indicador lateral da card. */
-    indicatorBg: string;
-    /** Fundo com transparência para o badge de status. */
-    badgeBg: string;
-    textColor: string;
-    border: string;
-    Icon: LucideIcon;
-    label: string;
-}
 
 // ─────────────────────────────────────────────────────────────────
 // Utilitários puros
 // ─────────────────────────────────────────────────────────────────
 
-/**
- * Calcula o status de validade de um treinamento.
- * Datas são tratadas como UTC para evitar erros de fuso horário
- * (ex: um treinamento que vence amanhã aparecer como "Vencido" às 21h no Brasil).
- */
-function getStatusConfig(vencimento: string | null | undefined): StatusConfig {
-    if (!vencimento) {
-        return {
-            indicatorBg: 'bg-primary/60',
-            badgeBg: 'bg-primary/10',
-            textColor: 'text-primary',
-            border: 'border-primary/20',
-            Icon: CheckCircle2,
-            label: 'Vitalício / Concluído',
-        };
-    }
-
-    const [year, month, day] = vencimento.split('T')[0].split('-').map(Number);
-    const vencUTC = Date.UTC(year, month - 1, day);
-    const now = new Date();
-    const hojeUTC = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
-    const diffDias = Math.ceil((vencUTC - hojeUTC) / (1000 * 60 * 60 * 24));
-
-    if (diffDias < 0) {
-        return {
-            indicatorBg: 'bg-error',
-            badgeBg: 'bg-error/10',
-            textColor: 'text-error',
-            border: 'border-error/20',
-            Icon: AlertTriangle,
-            label: 'Vencido',
-        };
-    }
-    if (diffDias < 30) {
-        return {
-            indicatorBg: 'bg-orange-500',
-            badgeBg: 'bg-orange-500/10',
-            textColor: 'text-orange-600',
-            border: 'border-orange-500/20',
-            Icon: AlertTriangle,
-            label: 'Expira Brevemente',
-        };
-    }
-    return {
-        indicatorBg: 'bg-success',
-        badgeBg: 'bg-success/10',
-        textColor: 'text-success',
-        border: 'border-success/20',
-        Icon: CheckCircle2,
-        label: 'Válido',
-    };
-}
-
-/** Formata ISO date string para pt-BR sem deslocamento de fuso. */
-function formatDate(d: string): string {
-    return new Date(d).toLocaleDateString('pt-BR', { timeZone: 'UTC' });
-}
+// Utils isolados em TreinamentosUtils.ts
 
 // ─────────────────────────────────────────────────────────────────
 // Componente
@@ -199,47 +134,7 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
         }
     };
 
-    const handleImprimirEtiqueta = () => {
-        const printWindow = window.open('', '_blank');
-        if (!printWindow) return;
-        printWindow.document.write(`
-            <html>
-                <head>
-                    <title>Etiqueta Capacete — ${usuario.nome}</title>
-                    <style>
-                        @media print {
-                            @page { margin: 0; size: auto; }
-                            body { margin: 0; -webkit-print-color-adjust: exact; }
-                        }
-                        body {
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                            height: 100vh;
-                            font-family: 'Inter', Arial, sans-serif;
-                            background: #fff;
-                        }
-                        .etiqueta {
-                            text-align: center;
-                            border: 2px solid #000;
-                            padding: 15px;
-                            border-radius: 8px;
-                            width: fit-content;
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="etiqueta">
-                        <h2 style="margin: 0 0 10px 0; font-size: 16px; font-weight: 900;">FROTA KLIN</h2>
-                        <img src="${qrCodeImageUrl}" style="width: 140px; height: 140px; display: block; margin: 0 auto;" />
-                        <p style="margin: 10px 0 0 0; font-size: 14px; font-weight: bold; text-transform: uppercase;">${usuario.nome}</p>
-                        <p style="margin: 5px 0 0 0; font-size: 10px; color: #333; font-weight: bold;">AUDITORIA DE SSMA</p>
-                    </div>
-                    <script>setTimeout(() => { window.print(); window.close(); }, 500);</script>
-                </body>
-            </html>
-        `);
-    };
+    // handleImprimirEtiqueta movido para CrachaModal
 
     // ── Dados derivados ───────────────────────────────────────────
     const isBusy = isSubmitting || isUploading;
@@ -592,53 +487,11 @@ export function ModalTreinamentosUsuario({ usuario, onClose }: ModalProps) {
 
             {/* ─── MODAL DO CRACHÁ ──────────────────────────────── */}
             {showCracha && (
-                <div
-                    className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200"
-                    onClick={() => setShowCracha(false)}
-                >
-                    <div
-                        className="bg-surface p-8 rounded-[2rem] max-w-sm w-full mx-auto flex flex-col items-center text-center shadow-2xl border border-border/40 animate-in zoom-in-95 duration-300"
-                        onClick={e => e.stopPropagation()}
-                    >
-                        <div className="w-12 h-12 bg-primary/10 text-primary rounded-2xl flex items-center justify-center mb-4">
-                            <QrCode className="w-6 h-6" />
-                        </div>
-
-                        <h2 className="text-xl font-black text-text-main uppercase tracking-tight mb-2">
-                            Crachá de Conformidade
-                        </h2>
-                        <p className="text-sm text-text-muted mb-6">
-                            Escaneie para acessar o dossiê público de{' '}
-                            <strong>{usuario.nome}</strong> com a validade de todos os treinamentos.
-                        </p>
-
-                        <div className="bg-white p-3 rounded-2xl shadow-inner mb-8 border border-border/40">
-                            <img
-                                src={qrCodeImageUrl}
-                                alt={`QR Code do dossiê de ${usuario.nome}`}
-                                className="w-48 h-48 rounded-xl"
-                            />
-                        </div>
-
-                        <div className="flex gap-3 w-full">
-                            <Button
-                                variant="secondary"
-                                className="flex-1 h-12 font-black uppercase tracking-widest text-xs"
-                                onClick={() => setShowCracha(false)}
-                            >
-                                Fechar
-                            </Button>
-                            <Button
-                                variant="primary"
-                                className="flex-1 h-12 font-black uppercase tracking-widest text-xs shadow-button hover:shadow-float-primary"
-                                onClick={handleImprimirEtiqueta}
-                                icon={<Printer className="w-4 h-4" />}
-                            >
-                                Imprimir
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+                <CrachaModal
+                    usuario={usuario}
+                    qrCodeImageUrl={qrCodeImageUrl}
+                    onClose={() => setShowCracha(false)}
+                />
             )}
         </>
     );

@@ -11,7 +11,6 @@ import { EmptyState } from './ui/EmptyState';
 import { PageHeader } from './ui/PageHeader';
 import { Callout } from './ui/Callout';
 import { PullToRefresh } from './ui/PullToRefresh';
-import { SmartFAB } from './ui/SmartFAB';
 import { useFornecedores } from '../hooks/useFornecedores';
 import { useModalStore } from '../hooks/useModalStore';
 
@@ -79,18 +78,8 @@ export function GestaoFornecedores() {
         <PageHeader
           title="Parceiros & Fornecedores"
           subtitle="Gerencie oficinas, postos de combustível e prestadores de serviço."
-          extraAction={
-            modo === 'listando' ? (
-              <Button
-                variant="primary"
-                onClick={() => setModo('adicionando')}
-                className="shadow-button hover:shadow-float-primary h-11 w-full sm:w-auto"
-                icon={<Plus className="w-4 h-4" />}
-              >
-                Novo Parceiro
-              </Button>
-            ) : undefined
-          }
+          actionLabel={modo === 'listando' ? "Novo Parceiro" : undefined}
+          onAction={modo === 'listando' ? () => setModo('adicionando') : undefined}
         />
 
         {/* FORMULÁRIOS (COM TRANSIÇÃO) */}
@@ -206,13 +195,6 @@ export function GestaoFornecedores() {
               </div>
             )}
           </>
-        )}
-
-        {modo === 'listando' && (
-          <SmartFAB 
-            onClick={() => setModo('adicionando')} 
-            label="Novo Parceiro" 
-          />
         )}
 
       </div>

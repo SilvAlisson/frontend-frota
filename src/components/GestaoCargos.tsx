@@ -14,7 +14,6 @@ import { EmptyState } from './ui/EmptyState';
 import { Callout } from './ui/Callout';
 import { PageHeader } from './ui/PageHeader';
 import { PullToRefresh } from './ui/PullToRefresh';
-import { SmartFAB } from './ui/SmartFAB';
 
 export function GestaoCargos() {
   const [cargos, setCargos] = useState<Cargo[]>([]);
@@ -245,12 +244,7 @@ export function GestaoCargos() {
         confirmLabel={deletingId ? "A remover..." : "Sim, Excluir Função"}
       />
 
-      {modo === 'listando' && (
-        <SmartFAB 
-          onClick={() => setModo('adicionando')} 
-          label="Novo Cargo" 
-        />
-      )}
+
 
     </div>
     </PullToRefresh>

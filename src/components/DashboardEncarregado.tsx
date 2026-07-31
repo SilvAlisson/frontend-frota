@@ -22,7 +22,6 @@ import { Modal } from './ui/Modal';
 import { Button } from './ui/Button';
 import { Avatar } from './ui/Avatar';
 import { PullToRefresh } from './ui/PullToRefresh';
-import { SmartFAB } from './ui/SmartFAB';
 import { Callout } from './ui/Callout';
 import { EmptyState } from './ui/EmptyState';
 import { SidebarActionButton } from './ui/SidebarActionButton';
@@ -153,7 +152,7 @@ function EncarregadoHome({ user }: DashboardEncarregadoProps) {
                 <main className="max-w-7xl mx-auto pt-8">
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
                         <aside className="lg:col-span-3 flex flex-col gap-4 animate-in slide-in-from-left-4 duration-500">
-                            <div className="glass-premium rounded-[2rem] p-5 shadow-sm border border-border/20">
+                            <div className="glass-premium rounded-[2rem] p-5 shadow-none border border-border/20">
                                 <h2 className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                                     <Wrench className="w-3.5 h-3.5" /> Controle Operacional
                                 </h2>
@@ -164,11 +163,12 @@ function EncarregadoHome({ user }: DashboardEncarregadoProps) {
                                     <SidebarActionButton icon={Wrench} title="Histórico de Manutenções" onClick={() => navigate('/encarregado/historico-manutencoes')} />
                                 </div>
                             </div>
-                            <div className="glass-premium rounded-[2rem] p-5 shadow-sm border border-border/20">
+                            <div className="glass-premium rounded-[2rem] p-5 shadow-none border border-border/20">
                                 <h2 className="text-[10px] font-black text-text-muted uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                                     <Users className="w-3.5 h-3.5" /> Administração
                                 </h2>
                                 <div className="space-y-3">
+                                    <SidebarActionButton icon={Droplets} title="Lançar Abastecimento" onClick={() => setModalAbastecimentoOpen(true)} />
                                     <SidebarActionButton icon={Droplets} title="Histórico de Abastecimentos" onClick={() => navigate('/encarregado/historico')} />
                                     <SidebarActionButton icon={Users} title="Equipes Operacionais" onClick={() => navigate('/encarregado/equipe')} />
                                     <SidebarActionButton icon={Key} title="Minha Jornada" onClick={() => navigate('/encarregado/minha-jornada')} variant={!minhaJornadaAtiva ? "subtle" : "default"} badge={minhaJornadaAtiva ? 'ESTOU EM ROTA' : null} />
@@ -178,20 +178,20 @@ function EncarregadoHome({ user }: DashboardEncarregadoProps) {
 
                         <section className="lg:col-span-6 flex flex-col gap-6 animate-in zoom-in-95 duration-700 delay-100">
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="p-5 rounded-[2rem] glass-premium border border-border/20 shadow-sm relative overflow-hidden group hover:border-primary/50 transition-colors">
+                                <div className="p-5 rounded-[2rem] glass-premium shadow-none border border-border/20 relative overflow-hidden group hover:border-primary/50 transition-colors">
                                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><Navigation className="w-16 h-16 text-primary" /></div>
                                     <span className="text-[10px] font-black uppercase tracking-widest text-text-muted block mb-1">Veículos em Rota</span>
-                                    <h3 className="text-3xl font-black text-text-main font-mono">{equipeNaRua} {totalEquipe > 0 && <span className="text-sm font-bold text-text-muted font-sans uppercase">/ {totalEquipe} na base</span>}</h3>
+                                    <h3 className="text-3xl font-black text-text-main text-data">{equipeNaRua} {totalEquipe > 0 && <span className="text-sm font-bold text-text-muted font-sans uppercase">/ {totalEquipe} na base</span>}</h3>
                                 </div>
-                                <div className="p-5 rounded-[2rem] glass-premium border border-border/20 shadow-sm relative overflow-hidden group hover:border-emerald-500/50 transition-colors">
+                                <div className="p-5 rounded-[2rem] glass-premium shadow-none border border-border/20 relative overflow-hidden group hover:border-emerald-500/50 transition-colors">
                                     <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><BatteryCharging className="w-16 h-16 text-emerald-500" /></div>
                                     <span className="text-[10px] font-black uppercase tracking-widest text-text-muted block mb-1">Veículos Disponíveis</span>
-                                    <h3 className="text-3xl font-black text-text-main font-mono">{frotaDisponivel} <span className="text-sm font-bold text-text-muted font-sans uppercase">Na Base</span></h3>
+                                    <h3 className="text-3xl font-black text-text-main text-data">{frotaDisponivel} <span className="text-sm font-bold text-text-muted font-sans uppercase">Na Base</span></h3>
                                     <div className="absolute bottom-0 left-0 h-1 bg-emerald-500/80 transition-all duration-1000" style={{ width: `${100 - frotaUsoPercent}%` }} />
                                 </div>
                             </div>
 
-                            <div className="flex-1 glass-premium rounded-[2.5rem] p-6 sm:p-8 border border-border/20 shadow-lg flex flex-col">
+                            <div className="flex-1 glass-premium rounded-[2.5rem] p-6 sm:p-8 border border-border/20 shadow-none flex flex-col">
                                 <div className="flex justify-between items-center mb-6">
                                     <div>
                                         <h2 className="text-lg font-black uppercase text-text-main flex items-center gap-2">
@@ -253,7 +253,6 @@ function EncarregadoHome({ user }: DashboardEncarregadoProps) {
                     </div>
                 </main>
 
-                <SmartFAB onClick={() => setModalAbastecimentoOpen(true)} label="Abastecimento" icon={Droplets} />
             </div>
 
             <Modal isOpen={modalAbastecimentoOpen} onClose={() => setModalAbastecimentoOpen(false)} title="Registro de Abastecimento" className="max-w-2xl">

@@ -16,7 +16,6 @@ import {
   Fuel, Settings, Package, Droplets, AlertTriangle 
 } from 'lucide-react';
 import { PullToRefresh } from './ui/PullToRefresh';
-import { SmartFAB } from './ui/SmartFAB';
 
 // Helper para Ícones e Cores por Tipo (Glassmorphism e Dark Mode Ready)
 const getTypeConfig = (tipo: string) => {
@@ -136,7 +135,7 @@ export function GestaoProdutos() {
                 <Button
                   variant="primary"
                   onClick={() => setModo('adicionando')}
-                  className="hidden sm:flex flex-1 sm:flex-none h-11 shadow-button hover:shadow-float-primary"
+                  className="flex-1 sm:flex-none h-11 shadow-button hover:shadow-float-primary"
                   icon={<Plus className="w-4 h-4" />}
                 >
                   Novo Item
@@ -257,12 +256,6 @@ export function GestaoProdutos() {
           </>
         )}
 
-        {modo === 'listando' && (
-          <SmartFAB 
-            onClick={() => setModo('adicionando')} 
-            label="Novo Item" 
-          />
-        )}
 
       </div>
     </PullToRefresh>

@@ -10,19 +10,19 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary: 
-          "bg-primary text-white shadow-sm hover:bg-primary/90 hover:shadow-md",
+          "bg-primary text-primary-foreground border border-primary-hover/50 hover:bg-primary/90 shadow-none",
         secondary: 
-          "bg-surface-hover text-text-main border border-border/50 shadow-sm hover:bg-border/50",
+          "bg-surface-hover text-text-main border border-border/50 shadow-none hover:bg-border/50",
         outline: 
-          "border-[1.5px] border-border/60 bg-transparent text-text-main hover:bg-surface-hover hover:border-border",
+          "border-[1px] border-border/60 bg-transparent text-text-main hover:bg-surface-hover hover:border-border",
         ghost: 
-          "bg-transparent text-text-main hover:bg-surface-hover/50",
+          "bg-transparent text-text-main hover:bg-surface-hover/50 shadow-none",
         danger: 
-          "bg-error text-white shadow-sm hover:bg-error/90 hover:shadow-md",
+          "bg-error text-error-foreground border border-error/50 hover:bg-error/90 shadow-none",
         success: 
-          "bg-success text-white shadow-sm hover:bg-success/90 hover:shadow-md",
+          "bg-success text-success-foreground border border-success/50 hover:bg-success/90 shadow-none",
         glass: 
-          "bg-surface border border-border text-text-main hover:bg-surface-hover shadow-sm",
+          "bg-surface border border-border text-text-main hover:bg-surface-hover shadow-none backdrop-blur-md",
       },
       size: {
         default: "h-11 min-h-[44px] px-5",

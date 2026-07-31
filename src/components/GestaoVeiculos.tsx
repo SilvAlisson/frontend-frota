@@ -23,7 +23,6 @@ import { Callout } from './ui/Callout';
 import { useFiltragemVeiculos } from '../hooks/useFiltragemVeiculos';
 import React, { Suspense } from 'react';
 import { PullToRefresh } from './ui/PullToRefresh';
-import { SmartFAB } from './ui/SmartFAB';
 import { SaudeVeiculoBar } from './ui/SaudeVeiculoBar';
 import { calculateVehicleHealth } from '../lib/veiculoHelper';
 import { logger } from '../lib/logger';
@@ -322,10 +321,6 @@ export function GestaoVeiculos() {
         variant="danger"
       />
 
-      <SmartFAB 
-        onClick={() => setIsCadastroOpen(true)} 
-        label="Novo Veículo" 
-      />
 
     </div>
     </PullToRefresh>

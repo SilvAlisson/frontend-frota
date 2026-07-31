@@ -23,8 +23,8 @@ export const PageHeader = React.memo(function PageHeader({
     breadcrumbs
 }: PageHeaderProps) {
     return (
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-border/30 pb-6 animate-enter">
-            <div className="space-y-1 min-w-0">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-border/30 pb-6 pl-16 xl:pl-0 animate-enter">
+            <div className="space-y-1 min-w-0 w-full">
                 {breadcrumbs && breadcrumbs.length > 0 && (
                     <nav className="flex items-center gap-1.5 text-[11px] font-bold text-text-muted uppercase tracking-wider mb-2">
                         {breadcrumbs.map((crumb, idx) => (
@@ -62,7 +62,8 @@ export const PageHeader = React.memo(function PageHeader({
                     <Button
                         onClick={onAction}
                         icon={actionIcon || <Plus className="w-5 h-5" />}
-                        className="w-full md:w-auto shrink-0"
+                        className="w-full md:w-auto shrink-0 shadow-button hover:shadow-float-primary h-11"
+                        variant="primary"
                     >
                         {actionLabel}
                     </Button>

@@ -282,7 +282,7 @@ export function AdminLayout() {
                 animate={{ opacity: 1, x: 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.98 }}
                 transition={{ duration: 0.25, ease: 'easeOut' }}
-                className={`flex-1 w-full max-w-[1600px] mx-auto pb-10 ${
+                className={`flex-1 w-full max-w-[1600px] mx-auto pb-16 lg:pb-8 ${
                   isShareMode ? 'p-0' : 'px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10'
                 }`}
               >

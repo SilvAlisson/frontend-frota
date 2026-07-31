@@ -33,10 +33,6 @@ function getDisplayName(fullName: string) {
   return isInativo ? `${shortName} (Inativo)` : shortName;
 }
 
-function getCleanName(fullName: string) {
-  return fullName.startsWith('[INATIVO]') ? fullName.replace('[INATIVO]', '').trim() : fullName;
-}
-
 const getCargoName = (cargo: unknown): string => {
   if (!cargo) return '';
   if (typeof cargo === 'string') return cargo;
@@ -52,43 +48,26 @@ import { PullToRefresh } from './ui/PullToRefresh';
 
 import { useUsuarios } from '../hooks/useUsuarios';
 import { useModalStore } from '../hooks/useModalStore';
-import { useDebounce } from '../hooks/useDebounce';
 import { useAuth } from '../contexts/AuthContext';
+import { useFiltroUsuarios } from '../hooks/useFiltroUsuarios';
 
 export function GestaoUsuarios() {
   // Apenas estados de visualização operacional
   const [usuarioSelecionado, setUsuarioSelecionado] = useState<User | null>(null);
   const [usuarioParaInativar, setUsuarioParaInativar] = useState<User | null>(null);
-  const [busca, setBusca] = useState('');
-  const [filtroRole, setFiltroRole] = useState<string>('TODOS');
-  const [mostrarInativos, setMostrarInativos] = useState(false);
-  
   const { user: currentUser } = useAuth();
   const queryClient = useQueryClient();
 
   const { usuarios, isLoading, isError, refetch, excluirUsuario } = useUsuarios({ includeTestUsers: currentUser?.role === 'ADMIN' });
   const { openModal, closeModal } = useModalStore();
 
-  const buscaDebounced = useDebounce(busca, 300);
-
-  // Filtragem Inteligente (Texto + Cargo)
-  const usuariosFiltrados = useMemo(() => {
-    return usuarios.filter(u => {
-      const isInativo = u.nome.startsWith('[INATIVO]');
-      if (!mostrarInativos && isInativo) return false;
-
-      const nomeReal = getCleanName(u.nome);
-
-      const matchBusca = !buscaDebounced || 
-        nomeReal.toLowerCase().includes(buscaDebounced.toLowerCase()) ||
-        u.email.toLowerCase().includes(buscaDebounced.toLowerCase()) ||
-        (u.matricula && u.matricula.includes(buscaDebounced));
-        
-      const matchRole = filtroRole === 'TODOS' || u.role === filtroRole;
-      
-      return matchBusca && matchRole;
-    });
-  }, [usuarios, mostrarInativos, buscaDebounced, filtroRole]);
+  const {
+    busca, setBusca,
+    filtroRole, setFiltroRole,
+    mostrarInativos, setMostrarInativos,
+    usuariosFiltrados,
+    getCleanName
+  } = useFiltroUsuarios(usuarios);
 
   const handleAbrirQrModal = (user: User) => {
     const modalId = openModal('CUSTOM', {
@@ -350,7 +329,7 @@ export function GestaoUsuarios() {
                       <div className="flex flex-col gap-0.5 justify-center mt-1">
                         <h3 className="font-black text-text-main text-lg tracking-tight leading-none mb-1.5">{getDisplayName(u.nome)}</h3>
                         {getCargoName(u.cargo) ? (
-                          <Badge variant="info" className="shadow-sm">{getCargoName(u.cargo)}</Badge>
+                          <Badge variant="info" className="shadow-none">{getCargoName(u.cargo)}</Badge>
                         ) : (
                           <BadgeRole role={u.role} />
                         )}
@@ -430,7 +409,7 @@ function BadgeRole({ role }: { role: UserRole }) {
   const variant = map[role] || 'neutral';
 
   return (
-    <Badge variant={variant} className="shadow-sm">
+    <Badge variant={variant} className="shadow-none">
       {role.replace('_', ' ')}
     </Badge>
   );

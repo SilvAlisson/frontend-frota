@@ -11,7 +11,6 @@ import { PageHeader } from './ui/PageHeader';
 import { EmptyState } from './ui/EmptyState';
 import { Modal } from './ui/Modal';
 import { PullToRefresh } from './ui/PullToRefresh';
-import { SmartFAB } from './ui/SmartFAB';
 import { Callout } from './ui/Callout';
 import { FileText, Wrench, Plus, AlertTriangle } from 'lucide-react';
 import { DocumentoCard } from './documentos/DocumentoCard';
@@ -110,13 +109,8 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
           </div>
         }
         subtitle="Gestão central de documentação regulatória, laudos e licenças ambientais."
-        extraAction={
-          !somenteLeitura && !modoAdicionar ? (
-            <Button onClick={() => setModoAdicionar(true)} icon={<Plus className="w-4 h-4" />} className="shadow-button hover:shadow-float-primary w-full sm:w-auto h-11">
-              Novo Documento
-            </Button>
-          ) : undefined
-        }
+        actionLabel={!somenteLeitura && !modoAdicionar ? "Novo Documento" : undefined}
+        onAction={!somenteLeitura && !modoAdicionar ? () => setModoAdicionar(true) : undefined}
       />
 
       {modoAdicionar ? (
@@ -271,12 +265,6 @@ export function GestaoDocumentos({ veiculoId, somenteLeitura = false }: GestaoDo
         />
       )}
 
-    {!somenteLeitura && !modoAdicionar && (
-      <SmartFAB 
-        onClick={() => setModoAdicionar(true)} 
-        label="Novo Documento" 
-      />
-    )}
 
       </div>
     </PullToRefresh>
