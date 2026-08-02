@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
 import { useWebAuthn, type PasskeyDevice } from '../hooks/useWebAuthn';
 import { usePasskeyGuard } from '../hooks/usePasskeyGuard';
+import { usePushNotifications } from '../hooks/usePushNotifications';
 import { Button } from '../components/ui/Button';
 import { Avatar } from '../components/ui/Avatar';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
@@ -142,72 +143,17 @@ export function MinhaContaPage() {
         }
     };
 
-    const [isPushSubscribed, setIsPushSubscribed] = useState(false);
+    const { isSupported: isPushSupported, isReady: isPushReady, subscription: pushSubscription, subscribeToPush, unsubscribeFromPush } = usePushNotifications();
     const [isSubscribingPush, setIsSubscribingPush] = useState(false);
 
-    useEffect(() => {
-        if ('serviceWorker' in navigator && 'PushManager' in window) {
-            navigator.serviceWorker.getRegistration().then(reg => {
-                if (reg) {
-                    reg.pushManager.getSubscription().then(sub => {
-                        setIsPushSubscribed(!!sub);
-                    });
-                }
-            });
-        }
-    }, []);
-
-    const urlBase64ToUint8Array = (base64String: string) => {
-        const padding = '='.repeat((4 - base64String.length % 4) % 4);
-        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-        const rawData = window.atob(base64);
-        const outputArray = new Uint8Array(rawData.length);
-        for (let i = 0; i < rawData.length; ++i) {
-            outputArray[i] = rawData.charCodeAt(i);
-        }
-        return outputArray;
-    };
-
     const togglePushNotifications = async () => {
-        if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-            toast.error('Notificações push não suportadas neste navegador.');
-            return;
-        }
-
         setIsSubscribingPush(true);
         try {
-            const registration = await navigator.serviceWorker.ready;
-
-            if (isPushSubscribed) {
-                const subscription = await registration.pushManager.getSubscription();
-                if (subscription) {
-                    await subscription.unsubscribe();
-                    await api.post('/notifications/unsubscribe', { endpoint: subscription.endpoint });
-                }
-                setIsPushSubscribed(false);
-                toast.success('Notificações desativadas neste dispositivo.');
+            if (pushSubscription) {
+                await unsubscribeFromPush();
             } else {
-                const permissao = await Notification.requestPermission();
-                if (permissao !== 'granted') {
-                    toast.error('Permissão de notificação negada.');
-                    setIsSubscribingPush(false);
-                    return;
-                }
-
-                const { data } = await api.get('/notifications/vapid-public-key');
-                const publicKey = data.publicKey;
-
-                const subscription = await registration.pushManager.subscribe({
-                    userVisibleOnly: true,
-                    applicationServerKey: urlBase64ToUint8Array(publicKey)
-                });
-
-                await api.post('/notifications/subscribe', subscription);
-                setIsPushSubscribed(true);
-                toast.success('Notificações ativadas com sucesso!');
+                await subscribeToPush();
             }
-        } catch (error) {
-            logger.apiError(error, 'Erro ao configurar notificações push.');
         } finally {
             setIsSubscribingPush(false);
         }
@@ -373,41 +319,47 @@ export function MinhaContaPage() {
                 </motion.section>
 
                 {/* ── SEÇÃO: Notificações Push ──────────────────────────── */}
-                <motion.section
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="bg-surface/50 border border-border/40 rounded-3xl p-6 backdrop-blur-sm"
-                >
-                    <div className="flex items-center justify-between mb-5">
-                        <div className="flex items-center gap-3">
-                            <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${isPushSubscribed ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-surface-hover border-border/40 text-text-muted'}`}>
-                                {isPushSubscribed ? <BellRing className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                {isPushSupported && (
+                    <motion.section
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15 }}
+                        className="bg-surface/50 border border-border/40 rounded-3xl p-6 backdrop-blur-sm"
+                    >
+                        <div className="flex items-center justify-between mb-5">
+                            <div className="flex items-center gap-3">
+                                <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${pushSubscription ? 'bg-primary/10 border-primary/20 text-primary' : 'bg-surface-hover border-border/40 text-text-muted'}`}>
+                                    {pushSubscription ? <BellRing className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+                                </div>
+                                <h2 className="text-base font-black text-text-main uppercase tracking-widest">Notificações</h2>
                             </div>
-                            <h2 className="text-base font-black text-text-main uppercase tracking-widest">Notificações</h2>
                         </div>
-                    </div>
 
-                    <div className="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 bg-surface-hover/30 rounded-2xl border border-border/40">
-                        <div>
-                            <p className="font-bold text-sm text-text-main">Avisos no Navegador / Celular</p>
-                            <p className="text-xs text-text-muted mt-0.5">
-                                {isPushSubscribed 
-                                    ? 'Você receberá alertas importantes neste dispositivo.' 
-                                    : 'Ative para receber alertas de documentos vencendo ou vencidos.'}
-                            </p>
+                        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between p-4 bg-surface-hover/30 rounded-2xl border border-border/40">
+                            <div>
+                                <p className="font-bold text-sm text-text-main">Avisos no Navegador / Celular</p>
+                                <p className="text-xs text-text-muted mt-0.5">
+                                    {!isPushReady 
+                                        ? 'Verificando status das notificações...'
+                                        : pushSubscription 
+                                            ? 'Você receberá alertas importantes neste dispositivo.' 
+                                            : 'Ative para receber alertas de documentos vencendo ou vencidos.'}
+                                </p>
+                            </div>
+                            <Button
+                                onClick={togglePushNotifications}
+                                isLoading={isSubscribingPush || !isPushReady}
+                                disabled={isSubscribingPush || !isPushReady}
+                                variant={pushSubscription ? "danger" : "primary"}
+                                className="w-full sm:w-auto text-sm font-bold whitespace-nowrap"
+                            >
+                                {!isPushReady 
+                                    ? 'Aguarde...' 
+                                    : pushSubscription ? 'Desativar Notificações' : 'Ativar Notificações'}
+                            </Button>
                         </div>
-                        <Button
-                            onClick={togglePushNotifications}
-                            isLoading={isSubscribingPush}
-                            disabled={isSubscribingPush}
-                            variant={isPushSubscribed ? "danger" : "primary"}
-                            className="w-full sm:w-auto text-sm font-bold whitespace-nowrap"
-                        >
-                            {isPushSubscribed ? 'Desativar Notificações' : 'Ativar Notificações'}
-                        </Button>
-                    </div>
-                </motion.section>
+                    </motion.section>
+                )}
 
                 {/* ── SEÇÃO: Alterar Senha ───────────────────────────────── */}
                 {user.role !== 'OPERADOR' && (

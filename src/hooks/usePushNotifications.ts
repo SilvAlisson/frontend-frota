@@ -20,34 +20,58 @@ function urlBase64ToUint8Array(base64String: string) {
 
 export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   const [subscription, setSubscription] = useState<PushSubscription | null>(null);
 
   useEffect(() => {
-    if ('serviceWorker' in navigator && 'PushManager' in window) {
-      setIsSupported(true);
-      // Checa se já temos subscription
-      navigator.serviceWorker.ready.then(reg => {
-        reg.pushManager.getSubscription().then(sub => {
-          if (sub) setSubscription(sub);
-        });
-      });
+    let mounted = true;
+
+    async function checkSubscription() {
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        if (mounted) setIsSupported(true);
+        
+        try {
+          const reg = await navigator.serviceWorker.getRegistration();
+          if (reg && reg.active) {
+            const sub = await reg.pushManager.getSubscription();
+            if (mounted && sub) setSubscription(sub);
+          }
+        } catch (error) {
+          logger.debug('Erro ao verificar subscription do PWA:', error);
+        } finally {
+          if (mounted) setIsReady(true);
+        }
+      } else {
+        if (mounted) setIsReady(true);
+      }
     }
+
+    checkSubscription();
+    
+    return () => { mounted = false; };
   }, []);
 
   const subscribeToPush = async () => {
-    if (!isSupported) return false;
+    if (!isSupported) {
+      toast.error("Notificações push não são suportadas neste navegador.");
+      return false;
+    }
 
     try {
       const permission = await Notification.requestPermission();
       if (permission !== 'granted') {
-        // toast.error("Permissão para notificações negada.");
+        toast.error("Permissão para notificações negada.");
         return false;
       }
 
       const { data: { publicKey } } = await api.get('/notifications/vapid-public-key');
       const convertedVapidKey = urlBase64ToUint8Array(publicKey);
 
-      const registration = await navigator.serviceWorker.ready;
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (!registration || !registration.active) {
+        toast.error("Motor de notificações (Service Worker) ainda não está ativo.");
+        return false;
+      }
       
       let sub = await registration.pushManager.getSubscription();
       if (!sub) {
@@ -66,14 +90,31 @@ export function usePushNotifications() {
 
     } catch (error) {
       logger.apiError(error, 'Erro ao configurar notificações no dispositivo.');
-      // toast.error("Erro ao configurar notificações no dispositivo.");
+      return false;
+    }
+  };
+
+  const unsubscribeFromPush = async () => {
+    if (!subscription) return false;
+
+    try {
+      await subscription.unsubscribe();
+      await api.post('/notifications/unsubscribe', { endpoint: subscription.endpoint });
+      setSubscription(null);
+      toast.success("Notificações desativadas neste dispositivo.");
+      return true;
+    } catch (error) {
+      logger.apiError(error, 'Erro ao desativar notificações.');
       return false;
     }
   };
 
   return {
     isSupported,
+    isReady,
     subscription,
-    subscribeToPush
+    subscribeToPush,
+    unsubscribeFromPush
   };
 }
+

@@ -52,15 +52,7 @@ function SidebarContentRH({ onClose, user }: { onClose?: () => void, user: User 
     <>
       {/* Topo do Sidebar - Foto do Usuário e Nome */}
       <div className="flex flex-col items-center justify-center pt-8 pb-6 border-b border-border/60 shrink-0 relative bg-surface">
-        {onClose && (
-          <Button variant="ghost" size="icon"
-            aria-label="Fechar menu"
-            onClick={onClose} 
-            className="absolute top-4 right-4 xl:hidden p-2 text-text-muted hover:text-text-main hover:bg-surface-hover rounded-lg transition-colors"
-          >
-            <X className="w-5 h-5" />
-          </Button>
-        )}
+
         
         <span className="block group mt-4 cursor-pointer">
           <Link to="/minha-conta" className="flex flex-col items-center gap-3" title="Acessar Minha Conta">
