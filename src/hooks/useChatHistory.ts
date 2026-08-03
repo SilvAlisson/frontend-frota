@@ -1,7 +1,13 @@
 import { useState, useEffect, useCallback, type SetStateAction } from 'react';
 import { type MensagemChat } from './useIA';
 
-// --- WRAPPER NATIVO DE INDEXEDDB (Assíncrono, não trava a tela) ---
+// ============================================================================
+// ⚙️ CONSTANTES DE CONFIGURAÇÃO
+// ============================================================================
+const MAX_HISTORY_MESSAGES = 50;
+const SESSION_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 horas de inatividade
+
+// --- WRAPPER NATIVO DE INDEXEDDB ---
 const getDB = (): Promise<IDBDatabase> => new Promise((resolve, reject) => {
   const req = indexedDB.open('KiaFrotaDB', 1);
   req.onupgradeneeded = () => req.result.createObjectStore('history');
@@ -32,23 +38,27 @@ export function useChatHistory() {
     loadFromDB().then((historico) => {
       if (historico && historico.length > 0) {
         const ultimaMsg = historico[historico.length - 1];
-        const inativo = Date.now() - new Date(ultimaMsg.timestamp).getTime() > 2 * 60 * 60 * 1000;
+        const inativo = Date.now() - new Date(ultimaMsg.timestamp).getTime() > SESSION_TIMEOUT_MS;
         
-        // Se inativo por 2 horas, começa limpo. Se não, restaura as datas.
         if (!inativo) {
           setMensagensState(historico.map(m => ({ ...m, timestamp: new Date(m.timestamp) })));
         } else {
-          saveToDB([]);
+          // 💡 Tratando a Floating Promise ao limpar
+          saveToDB([]).catch(e => console.error('[KiaDB] Erro ao limpar sessão inativa:', e));
         }
       }
       setIsLoaded(true);
-    }).catch(console.error);
+    }).catch(e => console.error('[KiaDB] Erro ao inicializar o banco:', e));
   }, []);
 
   const setMensagens = useCallback((updater: SetStateAction<MensagemChat[]>) => {
     setMensagensState((prev) => {
       const novo = typeof updater === 'function' ? updater(prev) : updater;
-      saveToDB(novo.slice(-50)); // Mantém as últimas 50 de forma assíncrona
+      
+      // 💡 Tratando a Floating Promise ao salvar e usando a Constante
+      saveToDB(novo.slice(-MAX_HISTORY_MESSAGES))
+        .catch(e => console.error('[KiaDB] Falha crítica ao salvar histórico offline:', e));
+      
       return novo;
     });
   }, []);

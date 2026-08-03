@@ -12,6 +12,8 @@ export interface IAPayload {
   signal?: AbortSignal; // 💡 Adicionado para receber o comando de parada
 }
 
+const STREAM_TIMEOUT_MS = 15000; // 15 segundos para abortar se o servidor travar
+
 export const iaService = {
   async consultarStream(payload: IAPayload, callbacks: StreamCallbacks): Promise<void> {
     // 💡 Separa o signal do resto do payload (não queremos enviar o signal pro JSON do backend)
@@ -32,8 +34,8 @@ export const iaService = {
     const resetTimeout = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        controller.abort(new Error('Timeout: O servidor demorou mais de 15 segundos para enviar uma resposta.'));
-      }, 15000);
+        controller.abort(new Error(`Timeout: O servidor demorou mais de ${STREAM_TIMEOUT_MS / 1000} segundos para responder.`));
+      }, STREAM_TIMEOUT_MS); // 💡 Usando a constante aqui
     };
 
     callbacks.onStart();

@@ -13,6 +13,9 @@ import { logger } from '../../lib/logger';
 
 const ROLES = ['ADMIN', 'RH', 'COORDENADOR', 'ENCARREGADO'];
 
+const MAX_CONTEXTO_MSG = 10;
+const ATRASO_REDIRECIONAMENTO_MS = 1500;
+
 export function AssistenteIA() {
   const { user } = useAuth();
   const location = useLocation();
@@ -43,7 +46,7 @@ export function AssistenteIA() {
 
     // Formata o histórico exatamente como a API espera e limpa mensagens vazias/incompletas
     const historicoFormatado = mensagens
-      .slice(-10)
+      .slice(-MAX_CONTEXTO_MSG)
       .filter(m => !m.isStreaming && m.conteudo.trim().length > 0)
       .map(m => ({ role: m.tipo === 'usuario' ? 'user' : 'model', text: m.conteudo }));
 
@@ -61,7 +64,7 @@ export function AssistenteIA() {
           setMensagens(p => p.map(m => {
             if (m.id !== id) return m;
             const route = m.conteudo.match(/\[NAVIGATE:([^\]]+)\]/i);
-            if (route) setTimeout(() => { navigate(route[1].trim()); setAberto(false); }, 1500);
+            if (route) setTimeout(() => { navigate(route[1].trim()); setAberto(false); }, ATRASO_REDIRECIONAMENTO_MS);
             return { ...m, isStreaming: false, conteudo: m.conteudo.replace(/\[NAVIGATE:.*?\]/i, '').trim() || 'Redirecionando...' };
           }));
         },
