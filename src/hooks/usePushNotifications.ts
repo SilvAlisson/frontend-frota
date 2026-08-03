@@ -67,9 +67,10 @@ export function usePushNotifications() {
       const { data: { publicKey } } = await api.get('/notifications/vapid-public-key');
       const convertedVapidKey = urlBase64ToUint8Array(publicKey);
 
-      const registration = await navigator.serviceWorker.getRegistration();
-      if (!registration || !registration.active) {
-        toast.error("Motor de notificações (Service Worker) ainda não está ativo.");
+      const registration = await navigator.serviceWorker.ready;
+      
+      if (!registration) {
+        toast.error("Erro ao conectar com o motor de notificações.");
         return false;
       }
       
