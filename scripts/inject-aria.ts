@@ -1,4 +1,4 @@
-import { Project, SyntaxKind, JsxElement, JsxSelfClosedElement } from 'ts-morph';
+import { Project, SyntaxKind, JsxElement, JsxSelfClosingElement } from 'ts-morph';
 
 const project = new Project({
   tsConfigFilePath: 'tsconfig.json',
@@ -12,22 +12,26 @@ sourceFiles.forEach((sourceFile) => {
   let fileModified = false;
 
   const jsxElements = sourceFile.getDescendantsOfKind(SyntaxKind.JsxElement);
-  const jsxSelfClosedElements = sourceFile.getDescendantsOfKind(SyntaxKind.JsxSelfClosedElement);
+  // Correção 1: JsxSelfClosingElement em vez de JsxSelfClosedElement
+  const jsxSelfClosingElements = sourceFile.getDescendantsOfKind(SyntaxKind.JsxSelfClosingElement);
 
-  const processButton = (element: JsxElement | JsxSelfClosedElement) => {
+  // Correção 2: Atualização do tipo aqui
+  const processButton = (element: JsxElement | JsxSelfClosingElement) => {
     let tagName = '';
     if (element.getKind() === SyntaxKind.JsxElement) {
       tagName = (element as JsxElement).getOpeningElement().getTagNameNode().getText();
     } else {
-      tagName = (element as JsxSelfClosedElement).getTagNameNode().getText();
+      // Correção 3: Cast para o nome correto
+      tagName = (element as JsxSelfClosingElement).getTagNameNode().getText();
     }
 
     if (tagName === 'button') {
       const attributes = element.getKind() === SyntaxKind.JsxElement
         ? (element as JsxElement).getOpeningElement().getAttributes()
-        : (element as JsxSelfClosedElement).getAttributes();
+        : (element as JsxSelfClosingElement).getAttributes();
 
-      const hasAriaLabel = attributes.some(attr => 
+      // Correção 4: Tipar o 'attr' como 'any' ou usar a tipagem correta do ts-morph
+      const hasAriaLabel = attributes.some((attr: any) => 
         attr.getKind() === SyntaxKind.JsxAttribute && 
         attr.getNameNode().getText() === 'aria-label'
       );
@@ -57,7 +61,7 @@ sourceFiles.forEach((sourceFile) => {
             initializer: `"${label}"`
           });
         } else {
-          (element as JsxSelfClosedElement).addAttribute({
+          (element as JsxSelfClosingElement).addAttribute({
             name: 'aria-label',
             initializer: `"${label}"`
           });
@@ -68,7 +72,7 @@ sourceFiles.forEach((sourceFile) => {
   };
 
   jsxElements.forEach(processButton);
-  jsxSelfClosedElements.forEach(processButton);
+  jsxSelfClosingElements.forEach(processButton);
 
   if (fileModified) {
     sourceFile.saveSync();
