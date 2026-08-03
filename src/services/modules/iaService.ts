@@ -9,12 +9,25 @@ export interface IAPayload {
   pergunta: string;
   contextoSistema: string;
   historico?: { role: string; text: string }[];
+  signal?: AbortSignal; // 💡 Adicionado para receber o comando de parada
 }
 
 export const iaService = {
   async consultarStream(payload: IAPayload, callbacks: StreamCallbacks): Promise<void> {
+    // 💡 Separa o signal do resto do payload (não queremos enviar o signal pro JSON do backend)
+    const { signal: externalSignal, ...bodyPayload } = payload;
+    
+    // Controlador interno para gerenciar o Timeout e o cancelamento do Usuário
     const controller = new AbortController();
-    let timeoutId: ReturnType<typeof setTimeout>;
+    
+    // 💡 Se houver um sinal de aborto externo (botão Parar), repassamos para o fetch
+    if (externalSignal) {
+      externalSignal.addEventListener('abort', () => {
+        controller.abort(externalSignal.reason);
+      });
+    }
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
     const resetTimeout = () => {
       clearTimeout(timeoutId);
@@ -35,8 +48,8 @@ export const iaService = {
         method: 'POST',
         headers,
         credentials: 'include',
-        body: JSON.stringify(payload),
-        signal: controller.signal
+        body: JSON.stringify(bodyPayload),
+        signal: controller.signal // 💡 Usamos o controlador interno que possui a fusão do Timeout + Cancelamento Manual
       });
 
       if (!response.ok) throw new Error(`Falha na resposta do servidor: ${response.status}`);
@@ -112,6 +125,7 @@ export const iaService = {
 
     } catch (error) {
       clearTimeout(timeoutId);
+      // Se for um aborto intencional, ele cai silenciosamente no catch e repassa pro seu onError lá do hook!
       console.error('[IAService] Erro no stream:', error);
       callbacks.onError(error);
       throw error;
