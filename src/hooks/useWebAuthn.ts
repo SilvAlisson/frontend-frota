@@ -76,10 +76,8 @@ export function useWebAuthn() {
             await refetchPasskeys();
             localStorage.setItem('klin_has_passkey', 'true');
             
-            // 🔥 SOLUÇÃO: Salva o e-mail do dono da biometria como âncora
-            if (user.email) {
-                localStorage.setItem('klin_passkey_email', user.email);
-            }
+            // Remoção de vazamento de PII (email no localStorage)
+
             
             toast.success('Biometria cadastrada com sucesso neste aparelho! ✅');
             return true;
@@ -107,13 +105,7 @@ export function useWebAuthn() {
     ) => {
         setIsAuthenticating(true);
         try {
-            // 🔥 SOLUÇÃO: Puxa o e-mail do formulário, ou o que está salvo em cache
-            let emailToUse = emailFromForm;
-            if (!emailToUse || emailToUse.trim() === '') {
-                emailToUse = localStorage.getItem('klin_passkey_email') || undefined;
-            }
-
-            // O Better Auth gerencia a chamada WebAuthn nativamente. Passar body no fetchOptions
+            // O Better Auth gerencia a chamada WebAuthn nativamente (Discoverable Credentials).
             // estava sobrescrevendo o payload da biometria, enviando apenas { email: '...' } para o servidor!
             const { data, error } = await signIn.passkey();
 
@@ -124,10 +116,8 @@ export function useWebAuthn() {
 
             if (data) {
                 await refetchPasskeys();
-                // Atualiza o cache caso tenha dado certo com um e-mail novo
-                if (data.user.email) {
-                    localStorage.setItem('klin_passkey_email', data.user.email);
-                }
+                // Atualiza o cache de hint
+
                 toast.success(`Bem-vindo(a) de volta, ${data.user.name}! 👋`);
                 
                 // Mapeia o usuário do better-auth para o formato esperado pelo sistema (User)
@@ -139,11 +129,16 @@ export function useWebAuthn() {
                     status?: string;
                 };
 
+                if (!userPayload.role) {
+                    toast.error('Erro de segurança: Perfil de acesso não definido.');
+                    return false;
+                }
+
                 const appUser: User = {
                     id: userPayload.id,
                     nome: userPayload.name,
                     email: userPayload.email,
-                    role: (userPayload.role as UserRole) || 'OPERADOR',
+                    role: userPayload.role as UserRole,
                     matricula: userPayload.matricula || null,
                     cargo: userPayload.cargo || null,
                     fotoUrl: userPayload.fotoUrl || userPayload.image || null,

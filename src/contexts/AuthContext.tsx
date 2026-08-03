@@ -6,14 +6,13 @@ import { logger } from '../lib/logger';
 import type { UserRole, StatusOperador } from '../types/user';
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 
-function parseRole(role: unknown): UserRole {
-  switch(role) {
-    case 'ADMIN': return 'ADMIN';
-    case 'RH': return 'RH';
-    case 'ENCARREGADO': return 'ENCARREGADO';
-    case 'OPERADOR': return 'OPERADOR';
-    default: return 'OPERADOR';
+function parseRole(role: unknown): UserRole | null {
+  const validRoles: UserRole[] = ['ADMIN', 'RH', 'ENCARREGADO', 'OPERADOR', 'COORDENADOR', 'AUXILIAR_OPERACIONAL'];
+  if (typeof role === 'string' && validRoles.includes(role as UserRole)) {
+    return role as UserRole;
   }
+  logger.error('Role inválida ou ausente no payload de sessão:', role);
+  return null;
 }
 
 function parseStatus(status: unknown): StatusOperador {
@@ -44,12 +43,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const { data: sessionData, isPending: isSessionLoading, refetch: refetchSession } = useSession();
 
-  const betterUser: User | null = sessionData?.user ? {
+  const validRole = sessionData?.user && 'role' in sessionData.user ? parseRole(sessionData.user.role) : null;
+
+  const betterUser: User | null = (sessionData?.user && validRole) ? {
     id: sessionData.user.id,
     nome: sessionData.user.name,
     email: sessionData.user.email,
     matricula: 'matricula' in sessionData.user ? String(sessionData.user.matricula) : null,
-    role: 'role' in sessionData.user ? parseRole(sessionData.user.role) : 'OPERADOR',
+    role: validRole,
     cargo: 'cargo' in sessionData.user ? String(sessionData.user.cargo) : null,
     fotoUrl: sessionData.user.image,
     image: sessionData.user.image,

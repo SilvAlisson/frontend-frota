@@ -456,10 +456,10 @@ function FormEditarManutencaoInterno({
 
                     return (
                       <div key={field.id} className="bg-surface p-4 rounded-2xl border border-border/60 shadow-sm transition-colors hover:border-primary/30">
-                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 items-end w-full">
+                        <div className="grid grid-cols-12 gap-3 sm:gap-4 items-end w-full">
 
                           {/* PRODUTO / SERVIÇO */}
-                          <div className="sm:col-span-12 md:col-span-5 min-w-0">
+                          <div className="col-span-12 md:col-span-5 min-w-0">
                             <Select
                               label="Peça / Serviço"
                               options={produtosOpcoes}
@@ -471,7 +471,7 @@ function FormEditarManutencaoInterno({
                           </div>
 
                           {/* GRUPO DE VALORES */}
-                          <div className="sm:col-span-4 md:col-span-2 shrink-0">
+                          <div className="col-span-4 sm:col-span-3 md:col-span-2 shrink-0">
                             <Input
                               label="Qtd"
                               type="number" inputMode="decimal"
@@ -484,7 +484,7 @@ function FormEditarManutencaoInterno({
                             />
                           </div>
 
-                          <div className="sm:col-span-4 md:col-span-2 shrink-0">
+                          <div className="col-span-4 sm:col-span-4 md:col-span-2 shrink-0">
                             <Input
                               label="R$ Unit"
                               type="tel"
@@ -502,16 +502,16 @@ function FormEditarManutencaoInterno({
                             />
                           </div>
 
-                          <div className="sm:col-span-4 md:col-span-2 shrink-0">
+                          <div className="col-span-4 sm:col-span-4 md:col-span-2 shrink-0">
                             <div className="flex flex-col gap-1.5 w-full">
-                              <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wider select-none ms-1">Subtotal</label>
-                              <div className="h-11 flex items-center justify-end px-3 bg-surface border border-border/60 rounded-xl font-mono font-bold text-primary truncate shadow-sm text-sm">
+                              <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wider select-none ms-1 truncate">Subtotal</label>
+                              <div className="h-11 flex items-center justify-end px-2 sm:px-3 bg-surface border border-border/60 rounded-xl font-mono font-bold text-primary truncate shadow-sm text-xs sm:text-sm">
                                 {formatBRL(subtotal)}
                               </div>
                             </div>
                           </div>
 
-                          <div className="sm:col-span-12 md:col-span-1 shrink-0 flex items-center justify-center sm:justify-end mt-2 sm:mt-0">
+                          <div className="col-span-12 sm:col-span-1 md:col-span-1 shrink-0 flex items-center justify-center sm:justify-end mt-2 sm:mt-0">
                             {fields.length > 1 ? (
                               <Button
                                 type="button"

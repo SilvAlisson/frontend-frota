@@ -238,10 +238,12 @@ function EncarregadoHome({ user }: DashboardEncarregadoProps) {
                                 </div>
                                 <div className="flex-1 overflow-auto p-2 scrollbar-hide">
                                     <PainelAlertas onAlertaClick={useCallback((alerta) => {
-                                        if (alerta.mensagem.toUpperCase().includes('PREVISÃO') || alerta.nivel === 'VENCIDO') {
-                                            navigate('/encarregado/planos');
-                                        } else if (alerta.tipo === 'MANUTENCAO') {
-                                            navigate('/encarregado/historico-manutencoes');
+                                        if (alerta.tipo === 'MANUTENCAO') {
+                                            if (alerta.nivel === 'VENCIDO' || alerta.nivel === 'PROJETADO') {
+                                                navigate('/encarregado/planos');
+                                            } else {
+                                                navigate('/encarregado/historico-manutencoes');
+                                            }
                                         } else {
                                             navigate('/encarregado/planos');
                                         }

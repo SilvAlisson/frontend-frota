@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { cn } from '../../lib/utils';
 import { useAuth } from '../../contexts/AuthContext';
 import { logger } from '../../lib/logger';
+import { useScrollLock } from '../../hooks/useScrollLock';
 
 const ROLES_PERMITIDOS = ['ADMIN', 'RH', 'COORDENADOR', 'ENCARREGADO'];
 
@@ -233,9 +234,11 @@ export function AssistenteIA() {
     if (aberto) scrollToBottom();
   }, [mensagens, aberto, scrollToBottom]);
 
+  // Bloqueia o scroll do body enquanto o assistente estiver aberto
+  useScrollLock(aberto, true);
+
   useEffect(() => {
     if (aberto) {
-      document.body.style.overflow = 'hidden';
       const timer = setTimeout(() => inputRef.current?.focus(), 100);
       
       const handleEsc = (e: KeyboardEvent) => {
@@ -247,7 +250,6 @@ export function AssistenteIA() {
       window.addEventListener('keydown', handleEsc);
       
       return () => {
-        document.body.style.overflow = '';
         clearTimeout(timer);
         window.removeEventListener('keydown', handleEsc);
       };

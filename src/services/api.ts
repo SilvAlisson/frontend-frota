@@ -44,7 +44,7 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 90000, // 90 segundos para suportar as análises complexas da IA
+  timeout: 15000, // 15 segundos - A IA agora usa SSE, não precisamos de timeouts gigantes
 });
 
 // --- Interceptor de Requisição ---
@@ -106,7 +106,21 @@ function logToAuditTracker(error: AxiosError, duration: number, userLogadoInfo: 
     message: `[API ${status || 'NETWORK_ERROR'}] ${method} ${urlChamada}`,
     stackTrace: error.response?.data ? JSON.stringify(error.response.data) : error.stack || null,
     context
-  }).catch(() => null);
+  }).catch((logError) => {
+    // Falhou ao enviar o log para o backend (ex: sem internet ou backend fora do ar)
+    // Console log explícito em vez de engolir o erro
+    console.error('[AUDIT_TRACKER] Falha ao sincronizar log com servidor:', logError);
+    console.error('[AUDIT_TRACKER] Payload que seria enviado:', context);
+    
+    // Fallback: Salva no localStorage (em um cenário real seria IndexedDB/ServiceWorker Sync)
+    try {
+        const filaAntiga = JSON.parse(localStorage.getItem('klin_offline_logs') || '[]');
+        filaAntiga.push({ level, method, urlChamada, context, timestamp: new Date().toISOString() });
+        localStorage.setItem('klin_offline_logs', JSON.stringify(filaAntiga));
+    } catch (storageError) {
+        console.error('[AUDIT_TRACKER] Falha ao salvar log localmente:', storageError);
+    }
+  });
 }
 
 let isUnauthorizedAlertShown = false;

@@ -30,7 +30,15 @@ export interface AnomaliaAbastecimento {
 
 // ─── Limites de Negócio ───────────────────────────────────────────────────────
 
-const LIMITES = {
+export interface LimitesAbastecimento {
+  PRECO_LITRO_MIN: number;
+  PRECO_LITRO_MAX: number;
+  LITROS_MAX: number;
+  CUSTO_ALERTA: number;
+  CUSTO_BLOQUEIO: number;
+}
+
+export const DEFAULT_LIMITES: LimitesAbastecimento = {
   /** Valor mínimo razoável para preço do litro (R$) */
   PRECO_LITRO_MIN: 4.00,
   /** Valor máximo razoável para preço do litro (R$) */
@@ -41,7 +49,7 @@ const LIMITES = {
   CUSTO_ALERTA: 5_000,
   /** Custo total absoluto que bloqueia o envio no frontend (R$) — backend também bloqueia */
   CUSTO_BLOQUEIO: 50_000,
-} as const;
+};
 
 // ─── Função Principal ─────────────────────────────────────────────────────────
 
@@ -51,9 +59,11 @@ const LIMITES = {
  */
 export function validarAbastecimento(
   itens: ItemAbastecimentoBase[],
-  custoTotal: number
+  custoTotal: number,
+  customLimites?: Partial<LimitesAbastecimento>
 ): AnomaliaAbastecimento[] {
   const anomalias: AnomaliaAbastecimento[] = [];
+  const LIMITES = { ...DEFAULT_LIMITES, ...customLimites };
 
   // ── 1. Custo Total (Hard Block) ─────────────────────────────────────────────
   if (custoTotal > LIMITES.CUSTO_BLOQUEIO) {

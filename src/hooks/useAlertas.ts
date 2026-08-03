@@ -11,11 +11,7 @@ export function useAlertas() {
     queryKey: ['alertas'],
     queryFn: async () => {
       const { data } = await api.get<Alerta[]>('/relatorios/alertas');
-      // Oculta alertas de veículos ou operadores de teste (ex: "testando")
-      return data.filter(a => 
-        !a.mensagem.toLowerCase().includes('testando') && 
-        !a.mensagem.toLowerCase().includes('teste')
-      );
+      return data;
     },
     staleTime: 1000 * 60 * 1,
     refetchInterval: 1000 * 30
@@ -32,7 +28,7 @@ export function useAlertas() {
       queryClient.invalidateQueries({ queryKey: ['alertas'] });
     },
     onError: () => {
-      // toast.error('Ocorreu um erro ao atualizar o status.');
+      toast.error('Ocorreu um erro ao atualizar o status. Tente novamente.');
     }
   });
 
@@ -46,7 +42,7 @@ export function useAlertas() {
       queryClient.invalidateQueries({ queryKey: ['alertas'] });
     },
     onError: () => {
-      // toast.error('Erro ao arquivar log de sistema.');
+      toast.error('Erro ao arquivar o log de sistema. Tente novamente.');
     }
   });
 

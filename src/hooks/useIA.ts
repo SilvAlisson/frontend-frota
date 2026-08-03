@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import { logger } from '../lib/logger';
 
 import { iaService } from '../services/modules/iaService';
+import { toast } from 'sonner';
 
 // --- Tipos ---
 export interface MensagemChat {
@@ -36,13 +37,15 @@ export function useIAStream() {
 
     try {
       await iaService.consultarStream(payload, {
-        onStart: callbacks.onStart,
-        onChunk: callbacks.onChunk,
-        onFinish: (msgId) => {
+        onStart: () => callbacks.onStart(msgId),
+        onChunk: (chunk) => callbacks.onChunk(msgId, chunk),
+        onFinish: () => {
           callbacks.onFinish(msgId);
           setIsPending(false);
         },
         onError: (err) => {
+          console.error('[useIA] Erro na requisição:', err);
+          toast.error('Ocorreu um erro ao conectar com a IA. Tente novamente mais tarde.', { duration: 5000 });
           callbacks.onError();
           setIsPending(false);
         }

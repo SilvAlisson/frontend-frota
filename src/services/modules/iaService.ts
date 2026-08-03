@@ -1,7 +1,7 @@
 export interface StreamCallbacks {
-  onStart: (msgId: string) => void;
-  onChunk: (msgId: string, chunk: string) => void;
-  onFinish: (msgId: string) => void;
+  onStart: () => void;
+  onChunk: (chunk: string) => void;
+  onFinish: () => void;
   onError: (err: unknown) => void;
 }
 
@@ -13,8 +13,18 @@ export interface IAPayload {
 
 export const iaService = {
   async consultarStream(payload: IAPayload, callbacks: StreamCallbacks): Promise<void> {
-    const msgId = crypto.randomUUID();
-    callbacks.onStart(msgId);
+    const controller = new AbortController();
+    let timeoutId: ReturnType<typeof setTimeout>;
+
+    const resetTimeout = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        controller.abort(new Error('Timeout: O servidor demorou mais de 15 segundos para enviar uma resposta.'));
+      }, 15000);
+    };
+
+    callbacks.onStart();
+    resetTimeout(); // Inicia o timeout da primeira resposta
 
     try {
       const headers: Record<string, string> = {
@@ -26,6 +36,7 @@ export const iaService = {
         headers,
         credentials: 'include',
         body: JSON.stringify(payload),
+        signal: controller.signal
       });
 
       if (!response.ok) throw new Error(`Falha na resposta do servidor: ${response.status}`);
@@ -48,7 +59,7 @@ export const iaService = {
           const chunk = queue.substring(0, take);
           queue = queue.substring(take);
           
-          callbacks.onChunk(msgId, chunk);
+          callbacks.onChunk(chunk);
           
           const delay = 10 + Math.random() * 15;
           await new Promise(r => setTimeout(r, delay));
@@ -56,12 +67,14 @@ export const iaService = {
         isFlushing = false;
         
         if (networkDone && queue.length === 0) {
-          callbacks.onFinish(msgId);
+          callbacks.onFinish();
         }
       };
 
       while (!streamFinished) {
         const { done, value } = await reader.read();
+        resetTimeout(); // Reseta o timeout a cada novo pedaço lido!
+
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
@@ -90,12 +103,15 @@ export const iaService = {
         }
       }
 
+      clearTimeout(timeoutId); // Limpa o timer definitivamente quando a stream acabar
       networkDone = true;
+      
       if (!isFlushing) {
         await processQueue();
       }
 
     } catch (error) {
+      clearTimeout(timeoutId);
       console.error('[IAService] Erro no stream:', error);
       callbacks.onError(error);
       throw error;
