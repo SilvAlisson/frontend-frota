@@ -1,8 +1,7 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { api } from '../services/api';
 import { logger } from '../lib/logger';
-
 import { iaService } from '../services/modules/iaService';
 import { toast } from 'sonner';
 
@@ -21,6 +20,10 @@ export interface MensagemChat {
 // ============================================================================
 export function useIAStream() {
   const [isPending, setIsPending] = useState(false);
+  
+  // 💡 O Cadeado: Usamos useRef porque ele atualiza instantaneamente (síncrono),
+  // diferente do useState que pode demorar alguns milissegundos.
+  const isPendingRef = useRef(false);
 
   const consultarStream = useCallback(async (
     payload: { pergunta: string; contextoSistema: string; historico?: { role: string; text: string }[] },
@@ -31,7 +34,15 @@ export function useIAStream() {
       onError: () => void;
     }
   ) => {
+    // 💡 1. Previne a dupla-execução: Se já estiver rodando, corta imediatamente.
+    if (isPendingRef.current) {
+      console.warn('[useIA] Requisição em andamento. Ignorando chamada duplicada.');
+      return;
+    }
+
     setIsPending(true);
+    isPendingRef.current = true;
+    
     const msgId = crypto.randomUUID();
     callbacks.onStart(msgId);
 
@@ -42,17 +53,33 @@ export function useIAStream() {
         onFinish: () => {
           callbacks.onFinish(msgId);
           setIsPending(false);
+          isPendingRef.current = false;
         },
-        onError: (err) => {
-          console.error('[useIA] Erro na requisição:', err);
-          toast.error('Ocorreu um erro ao conectar com a IA. Tente novamente mais tarde.', { duration: 5000 });
-          callbacks.onError();
+        onError: (err: any) => {
+          // 💡 2. O Silenciador: Verifica se é um AbortError (cancelamento intencional)
+          const isAbort = err?.name === 'AbortError' || String(err).includes('aborted') || String(err).includes('AbortError');
+          
+          if (isAbort) {
+            console.warn('[useIA] Stream abortado intencionalmente (fechamento de componente ou recarregamento).');
+            // Finaliza a UI de forma limpa em vez de estourar erro
+            callbacks.onFinish(msgId);
+          } else {
+            console.error('[useIA] Erro na requisição:', err);
+            toast.error('Ocorreu um erro ao conectar com a IA. Tente novamente mais tarde.', { duration: 5000 });
+            callbacks.onError();
+          }
+          
           setIsPending(false);
+          isPendingRef.current = false;
         }
       });
-    } catch (error) {
-      callbacks.onError();
+    } catch (error: any) {
+      const isAbort = error?.name === 'AbortError' || String(error).includes('aborted') || String(error).includes('AbortError');
+      if (!isAbort) {
+        callbacks.onError();
+      }
       setIsPending(false);
+      isPendingRef.current = false;
     }
   }, []);
 
