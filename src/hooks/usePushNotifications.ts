@@ -26,18 +26,22 @@ export function usePushNotifications() {
   useEffect(() => {
     let mounted = true;
 
-    async function checkSubscription() {
+    async function initializeServiceWorker() {
       if ('serviceWorker' in navigator && 'PushManager' in window) {
         if (mounted) setIsSupported(true);
         
         try {
-          const reg = await navigator.serviceWorker.getRegistration();
+          console.log('[PUSH-INIT] Registrando sw.js...');
+          await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+          
+          const reg = await navigator.serviceWorker.ready; 
+          
           if (reg && reg.active) {
             const sub = await reg.pushManager.getSubscription();
             if (mounted && sub) setSubscription(sub);
           }
         } catch (error) {
-          logger.debug('Erro ao verificar subscription do PWA:', error);
+          console.error('[PUSH-INIT] Erro no useEffect:', error);
         } finally {
           if (mounted) setIsReady(true);
         }
@@ -46,50 +50,68 @@ export function usePushNotifications() {
       }
     }
 
-    checkSubscription();
+    initializeServiceWorker();
     
     return () => { mounted = false; };
   }, []);
 
   const subscribeToPush = async () => {
+    console.log('[PUSH] 1. Iniciando subscribeToPush...');
+
     if (!isSupported) {
+      console.log('[PUSH] X. Cancelado: Navegador não suporta.');
       toast.error("Notificações push não são suportadas neste navegador.");
       return false;
     }
 
     try {
+      console.log('[PUSH] 2. Solicitando permissão ao usuário...');
       const permission = await Notification.requestPermission();
+      console.log('[PUSH] 3. Permissão retornada:', permission);
+
       if (permission !== 'granted') {
         toast.error("Permissão para notificações negada.");
         return false;
       }
 
-      const { data: { publicKey } } = await api.get('/notifications/vapid-public-key');
+      console.log('[PUSH] 4. Buscando VAPID Public Key no backend...');
+      const response = await api.get('/notifications/vapid-public-key');
+      const publicKey = response.data.publicKey;
+      console.log('[PUSH] 5. VAPID Key recebida?', !!publicKey);
       const convertedVapidKey = urlBase64ToUint8Array(publicKey);
 
+      console.log('[PUSH] 6. Aguardando Service Worker ficar "ready"... (Pode travar aqui!)');
       const registration = await navigator.serviceWorker.ready;
-      
+      console.log('[PUSH] 7. Service Worker está ready!', registration);
+
       if (!registration) {
         toast.error("Erro ao conectar com o motor de notificações.");
         return false;
       }
       
+      console.log('[PUSH] 8. Verificando subscription existente...');
       let sub = await registration.pushManager.getSubscription();
+      console.log('[PUSH] 9. Subscription atual existe?', !!sub);
+
       if (!sub) {
+        console.log('[PUSH] 10. Criando nova subscription no navegador...');
         sub = await registration.pushManager.subscribe({
           userVisibleOnly: true,
           applicationServerKey: convertedVapidKey
         });
+        console.log('[PUSH] 11. Subscription criada com sucesso!');
       }
 
-      // Manda a subscription pro backend
+      console.log('[PUSH] 12. Enviando para o backend...');
       await api.post('/notifications/subscribe', sub.toJSON());
+      console.log('[PUSH] 13. Backend confirmou!');
+
       setSubscription(sub);
-      
       toast.success("Notificações ativadas com sucesso!");
       return true;
 
     } catch (error) {
+      console.error('[PUSH] ❌ ERRO CAPTURADO:', error);
       logger.apiError(error, 'Erro ao configurar notificações no dispositivo.');
       return false;
     }
@@ -97,7 +119,6 @@ export function usePushNotifications() {
 
   const unsubscribeFromPush = async () => {
     if (!subscription) return false;
-
     try {
       await subscription.unsubscribe();
       await api.post('/notifications/unsubscribe', { endpoint: subscription.endpoint });
@@ -118,4 +139,3 @@ export function usePushNotifications() {
     unsubscribeFromPush
   };
 }
-
