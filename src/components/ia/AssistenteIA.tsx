@@ -25,7 +25,7 @@ export function AssistenteIA() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
 
-  const { mensagens, setMensagens, limparConversa } = useChatHistory();
+  const { mensagens, setMensagens, limparConversa, isLoaded } = useChatHistory();
   const { consultarStream, isPending } = useIAStream();
   const { mutateAsync: enviarFeedback } = useIAFeedback();
   
@@ -35,6 +35,18 @@ export function AssistenteIA() {
   useEffect(() => {
     if (aberto && scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [mensagens, aberto]);
+
+  // 💡 INIT AMIGÁVEL: Mensagem de boas-vindas automática
+  useEffect(() => {
+    if (isLoaded && aberto && mensagens.length === 0 && user?.nome) {
+      setMensagens([{
+        id: 'kia-greeting',
+        tipo: 'kia',
+        conteudo: `Olá, **${user.nome.split(' ')[0]}**! 👋 Sou a Kia, sua assistente virtual de inteligência da Frota.\n\nComo posso te ajudar hoje? Você pode me perguntar coisas como:\n- *"Qual veículo mais gastou com pneus no mês 06?"*\n- *"Quais motoristas mais rodaram este ano?"*\n- *"Existe algum documento ou treinamento vencido?"*`,
+        timestamp: new Date()
+      }]);
+    }
+  }, [isLoaded, aberto, mensagens.length, setMensagens, user?.nome]);
 
   const onEnviar = useCallback(async (pergunta: string) => {
     if (!pergunta.trim() || isPending) return;
@@ -58,7 +70,11 @@ export function AssistenteIA() {
         signal: abortControllerRef.current.signal 
       },
       {
-        onStart: (id) => setMensagens(p => [...p, { id, tipo: 'kia', conteudo: '', timestamp: new Date(), isStreaming: true }]),
+        // 🛡️ Proteção contra renderização duplicada (React Strict Mode / Eventos concorrentes)
+        onStart: (id) => setMensagens(p => {
+          if (p.some(m => m.id === id)) return p;
+          return [...p, { id, tipo: 'kia', conteudo: '', timestamp: new Date(), isStreaming: true }];
+        }),
         onChunk: (id, ck) => setMensagens(p => p.map(m => m.id === id ? { ...m, conteudo: m.conteudo + ck } : m)),
         onFinish: (id) => {
           setMensagens(p => p.map(m => {
@@ -102,8 +118,14 @@ export function AssistenteIA() {
             </header>
 
             <div ref={scrollRef} className="flex-1 overflow-y-auto p-4 space-y-5 scrollbar-thin">
-              {mensagens.map(msg => (
-                <ChatBubble key={msg.id} msg={msg} userNome={user.nome} onFeedback={handleFeedback} loadingText="Analisando DB" />
+              {mensagens.map((msg, idx) => (
+                <ChatBubble 
+                  key={`${msg.id}-${idx}`} 
+                  msg={msg} 
+                  userNome={user?.nome || 'Operador'} 
+                  onFeedback={handleFeedback} 
+                  textoAnterior={idx > 0 ? mensagens[idx-1].conteudo : undefined} 
+                />
               ))}
             </div>
 

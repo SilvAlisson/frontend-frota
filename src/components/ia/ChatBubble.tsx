@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Sparkles, Copy, ThumbsUp, ThumbsDown, Check } from 'lucide-react';
 import { type MensagemChat } from '../../hooks/useIA';
 import { MdText } from './MdText';
 import { cn } from '../../lib/utils';
+import { getLoadingMessages } from '../../utils/loadingMessages';
 
 const BlinkingDots = () => {
   const [dots, setDots] = useState('');
@@ -16,15 +17,29 @@ const BlinkingDots = () => {
 interface ChatBubbleProps {
   msg: MensagemChat;
   userNome: string;
-  loadingText?: string;
+  textoAnterior?: string;
   onFeedback: (msgId: string, avaliacao: 'positivo' | 'negativo') => void;
 }
 
-export const ChatBubble = React.memo(({ msg, userNome, loadingText, onFeedback }: ChatBubbleProps) => {
+export const ChatBubble = React.memo(({ msg, userNome, textoAnterior, onFeedback }: ChatBubbleProps) => {
   const isKia = msg.tipo === 'kia';
   const isError = msg.conteudo.includes('Desculpe, não consegui');
   const [copiado, setCopiado] = useState(false);
   const [feedback, setFeedback] = useState<'neutro'|'positivo'|'negativo'>('neutro');
+  const [loadingIdx, setLoadingIdx] = useState(0);
+
+  const frasesLoading = useMemo(() => {
+    return textoAnterior ? getLoadingMessages(textoAnterior) : ["Analisando banco de dados", "Inspecionando transações"];
+  }, [textoAnterior]);
+
+  useEffect(() => {
+    if (isKia && !msg.conteudo && msg.isStreaming) {
+      const timer = setInterval(() => {
+        setLoadingIdx(prev => (prev + 1) % frasesLoading.length);
+      }, 2500); // Troca a frase a cada 2.5s
+      return () => clearInterval(timer);
+    }
+  }, [isKia, msg.conteudo, msg.isStreaming, frasesLoading]);
 
   if (isKia && !msg.conteudo && msg.isStreaming) {
     return (
@@ -34,7 +49,9 @@ export const ChatBubble = React.memo(({ msg, userNome, loadingText, onFeedback }
         </div>
         <div className="px-4 py-3.5 bg-surface border border-border/60 rounded-2xl rounded-tl-sm shadow-sm">
           <div className="flex items-center gap-1.5 text-text-muted text-sm font-medium">
-            <span className="text-primary font-bold">{loadingText || 'Analisando'}</span>
+            <span className="text-primary font-bold transition-all duration-300">
+              {frasesLoading[loadingIdx]}
+            </span>
             <BlinkingDots />
           </div>
         </div>

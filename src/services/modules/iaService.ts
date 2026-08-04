@@ -1,3 +1,5 @@
+import { RENDER_API_BASE_URL } from '../../config';
+
 export interface StreamCallbacks {
   onStart: () => void;
   onChunk: (chunk: string) => void;
@@ -12,7 +14,7 @@ export interface IAPayload {
   signal?: AbortSignal; // 💡 Adicionado para receber o comando de parada
 }
 
-const STREAM_TIMEOUT_MS = 15000; // 15 segundos para abortar se o servidor travar
+const STREAM_TIMEOUT_MS = 60000; // 60 segundos para abortar se o servidor travar
 
 export const iaService = {
   async consultarStream(payload: IAPayload, callbacks: StreamCallbacks): Promise<void> {
@@ -46,7 +48,7 @@ export const iaService = {
         'Content-Type': 'application/json'
       };
 
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/ia/consultar-stream`, {
+      const response = await fetch(`${RENDER_API_BASE_URL}/ia/consultar-stream`, {
         method: 'POST',
         headers,
         credentials: 'include',
@@ -125,10 +127,12 @@ export const iaService = {
         await processQueue();
       }
 
-    } catch (error) {
+    } catch (error: any) {
       clearTimeout(timeoutId);
-      // Se for um aborto intencional, ele cai silenciosamente no catch e repassa pro seu onError lá do hook!
-      console.error('[IAService] Erro no stream:', error);
+      // Se for um aborto intencional, loga apenas no nível de debug ou silencia para manter o console limpo
+      if (error?.name !== 'AbortError') {
+        console.error('[IAService] Erro no stream:', error);
+      }
       callbacks.onError(error);
       throw error;
     }

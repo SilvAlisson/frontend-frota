@@ -79,8 +79,9 @@ export function useIAStream() {
           isPendingRef.current = false;
         }
       });
-    } catch (error: any) {
-      const isAbort = error?.name === 'AbortError' || String(error).includes('aborted') || String(error).includes('AbortError');
+    } catch (error: unknown) {
+      const err = error instanceof Error ? error : new Error(String(error));
+      const isAbort = err.name === 'AbortError' || String(err).includes('aborted');
       if (!isAbort) {
         callbacks.onError();
       }

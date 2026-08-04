@@ -43,9 +43,11 @@ export function useChatHistory() {
         if (!inativo) {
           setMensagensState(historico.map(m => ({ ...m, timestamp: new Date(m.timestamp) })));
         } else {
-          // 💡 Tratando a Floating Promise ao limpar
+          setMensagensState([]);
           saveToDB([]).catch(e => console.error('[KiaDB] Erro ao limpar sessão inativa:', e));
         }
+      } else {
+        setMensagensState([]);
       }
       setIsLoaded(true);
     }).catch(e => console.error('[KiaDB] Erro ao inicializar o banco:', e));
@@ -55,13 +57,21 @@ export function useChatHistory() {
     setMensagensState((prev) => {
       const novo = typeof updater === 'function' ? updater(prev) : updater;
       
-      // 💡 Tratando a Floating Promise ao salvar e usando a Constante
-      saveToDB(novo.slice(-MAX_HISTORY_MESSAGES))
-        .catch(e => console.error('[KiaDB] Falha crítica ao salvar histórico offline:', e));
-      
-      return novo;
+      // 🛡️ Deduplicador para evitar Warning do React e Key Duplicadas
+      return novo.filter((m, i, self) => 
+        i === self.findIndex((t) => t.id === m.id)
+      );
     });
   }, []);
+
+  // 💡 Correção Arquitetural: O Side Effect de salvar no DB reage ao estado via useEffect.
+  // Isso previne que o React execute transações duplicadas ou no momento errado durante renders.
+  useEffect(() => {
+    if (isLoaded && mensagens.length > 0) {
+      saveToDB(mensagens.slice(-MAX_HISTORY_MESSAGES))
+        .catch(e => console.error('[KiaDB] Falha crítica ao salvar histórico offline:', e));
+    }
+  }, [mensagens, isLoaded]);
 
   const limparConversa = useCallback(() => {
     setMensagens([]);
