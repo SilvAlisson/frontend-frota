@@ -1,6 +1,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CarFront } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 // ============================================================================
 // 🚗 WIDGET: Cartão de veículo clicável — renderizado inline no chat
@@ -27,22 +29,8 @@ const WidgetVeiculo = ({ placa }: { placa: string }) => {
 };
 
 // ============================================================================
-// 📝 MDTEXT: Renderizador de Markdown leve
-// Suporta: **negrito**, ### títulos, - bullet points, [WIDGET:VEICULO:PLACA]
+// 📝 MDTEXT: Renderizador de Markdown com suporte a tabelas
 // ============================================================================
-
-/** Renderiza uma linha de texto convertendo **negrito** em <strong> */
-function renderizarNegrito(linha: string): React.ReactNode[] {
-  return linha.split(/(\*\*[^*]+\*\*)/g).map((parte, i) =>
-    parte.startsWith('**') && parte.endsWith('**') ? (
-      <strong key={i} className="font-bold text-text-main">
-        {parte.slice(2, -2)}
-      </strong>
-    ) : (
-      <span key={i}>{parte}</span>
-    )
-  );
-}
 
 interface MdTextProps {
   texto: string;
@@ -57,7 +45,7 @@ export const MdText = React.memo(({ texto, comWidgets = false }: MdTextProps) =>
     : [texto];
 
   return (
-    <div className="space-y-1.5 text-sm leading-relaxed whitespace-pre-wrap word-break">
+    <div className="text-sm leading-relaxed word-break">
       {blocos.map((bloco, idx) => {
         // Renderiza widgets de veículo
         if (comWidgets && bloco.startsWith('[WIDGET:VEICULO:')) {
@@ -67,58 +55,33 @@ export const MdText = React.memo(({ texto, comWidgets = false }: MdTextProps) =>
 
         if (!bloco.trim()) return null;
 
-        // Renderiza as linhas do bloco de texto
-        const linhas = bloco.split('\n');
+        // Renderiza o markdown
         return (
-          <React.Fragment key={`block-${idx}`}>
-            {linhas.map((linha, i) => {
-              // Linha vazia → espaçamento
-              if (!linha.trim()) {
-                return <br key={`br-${i}`} className="select-none" />;
-              }
-
-              // ### Título (nível 3)
-              if (linha.trim().startsWith('### ')) {
-                const conteudo = linha.trim().slice(4);
-                return (
-                  <div key={`h3-${i}`} className="font-black text-text-main text-sm pt-2 pb-0.5 border-b border-border/40">
-                    {renderizarNegrito(conteudo)}
-                  </div>
-                );
-              }
-
-              // ## Título (nível 2)
-              if (linha.trim().startsWith('## ')) {
-                const conteudo = linha.trim().slice(3);
-                return (
-                  <div key={`h2-${i}`} className="font-black text-text-main text-base pt-3 pb-1">
-                    {renderizarNegrito(conteudo)}
-                  </div>
-                );
-              }
-
-              // Bullet point: *, - ou •
-              const isBullet =
-                linha.trim().startsWith('* ') ||
-                linha.trim().startsWith('- ') ||
-                linha.trim().startsWith('• ');
-
-              if (isBullet) {
-                const conteudo = linha.trim().slice(2);
-                return (
-                  <div key={`bullet-${i}`} className="flex gap-2 items-start pl-1">
-                    <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-primary/80 shrink-0" aria-hidden="true" />
-                    <span>{renderizarNegrito(conteudo)}</span>
-                  </div>
-                );
-              }
-
-              // Linha normal
-              return (
-                <div key={`line-${i}`}>{renderizarNegrito(linha)}</div>
-              );
-            })}
-          </React.Fragment>
+          <ReactMarkdown
+            key={`md-${idx}`}
+            remarkPlugins={[remarkGfm]}
+            components={{
+              p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+              h1: ({node, ...props}) => <h1 className="font-black text-text-main text-lg pt-4 pb-2 border-b border-border/40" {...props} />,
+              h2: ({node, ...props}) => <h2 className="font-black text-text-main text-base pt-3 pb-1" {...props} />,
+              h3: ({node, ...props}) => <h3 className="font-black text-text-main text-sm pt-2 pb-0.5" {...props} />,
+              ul: ({node, ...props}) => <ul className="list-disc pl-5 mb-2 space-y-1" {...props} />,
+              ol: ({node, ...props}) => <ol className="list-decimal pl-5 mb-2 space-y-1" {...props} />,
+              li: ({node, ...props}) => <li className="pl-1" {...props} />,
+              strong: ({node, ...props}) => <strong className="font-bold text-text-main" {...props} />,
+              table: ({node, ...props}) => (
+                <div className="w-full overflow-x-auto my-3 rounded-lg border border-border/60">
+                  <table className="w-full text-left border-collapse text-sm" {...props} />
+                </div>
+              ),
+              thead: ({node, ...props}) => <thead className="bg-surface-hover/80 text-text-main font-semibold" {...props} />,
+              th: ({node, ...props}) => <th className="px-3 py-2.5 border-b border-border/60 whitespace-nowrap" {...props} />,
+              td: ({node, ...props}) => <td className="px-3 py-2.5 border-b border-border/40 whitespace-nowrap text-text-secondary" {...props} />,
+              blockquote: ({node, ...props}) => <blockquote className="border-l-2 border-primary/50 pl-3 italic text-text-muted my-2" {...props} />,
+            }}
+          >
+            {bloco}
+          </ReactMarkdown>
         );
       })}
     </div>
