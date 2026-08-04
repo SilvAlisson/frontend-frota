@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@3/schema.json",
   "entry": ["src/main.tsx!"],
-  "project": ["src/**/*.{ts,tsx}"]
+  "project": ["src/**/*.{ts,tsx}"],
+  "ignoreDependencies": ["react-compiler-runtime"]
 }

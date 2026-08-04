@@ -20,12 +20,10 @@ export interface MensagemChat {
 export function useIAStream() {
   const [isPending, setIsPending] = useState(false);
   
-  // O Cadeado: Usamos useRef porque ele atualiza instantaneamente (síncrono),
-  // diferente do useState que pode demorar alguns milissegundos.
-  const isPendingRef = useRef(false);
+  // Guardamos o signal do abortController atual para podermos cancelar se quisermos
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const consultarStream = useCallback(async (
-    // 💡 AQUI ESTÁ A MÁGICA: Adicionamos o signal no payload
     payload: { 
       pergunta: string; 
       contextoSistema: string; 
@@ -39,44 +37,45 @@ export function useIAStream() {
       onError: () => void;
     }
   ) => {
-    // 1. Previne a dupla-execução
-    if (isPendingRef.current) {
-      console.warn('[useIA] Requisição em andamento. Ignorando chamada duplicada.');
-      return;
+    // 1. Se já tem requisição rodando e o usuário chamou de novo, cancelamos a antiga
+    if (abortControllerRef.current) {
+      console.warn('[useIA] Nova requisição detectada. Cancelando a requisição anterior.');
+      abortControllerRef.current.abort();
     }
 
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
+
+    // Se o pai passar um signal, a gente repassa, senão a gente usa o nosso
+    const signalToUse = payload.signal || abortController.signal;
+
     setIsPending(true);
-    isPendingRef.current = true;
     
     const msgId = crypto.randomUUID();
     callbacks.onStart(msgId);
 
     try {
-      // O payload agora repassa o "signal" para dentro do iaService
-      await iaService.consultarStream(payload, {
+      await iaService.consultarStream({ ...payload, signal: signalToUse }, {
         onStart: () => callbacks.onStart(msgId),
         onChunk: (chunk) => callbacks.onChunk(msgId, chunk),
         onFinish: () => {
           callbacks.onFinish(msgId);
           setIsPending(false);
-          isPendingRef.current = false;
+          abortControllerRef.current = null;
         },
         onError: (err: any) => {
-          // 2. O Silenciador: Verifica se é um AbortError (cancelamento intencional)
           const isAbort = err?.name === 'AbortError' || String(err).includes('aborted') || String(err).includes('AbortError');
           
           if (isAbort) {
             console.warn('[useIA] Stream abortado intencionalmente (fechamento de componente ou clique no botão Parar).');
-            // Finaliza a UI de forma limpa em vez de estourar erro
             callbacks.onFinish(msgId);
           } else {
             console.error('[useIA] Erro na requisição:', err);
             toast.error('Ocorreu um erro ao conectar com a IA. Tente novamente mais tarde.', { duration: 5000 });
             callbacks.onError();
           }
-          
           setIsPending(false);
-          isPendingRef.current = false;
+          abortControllerRef.current = null;
         }
       });
     } catch (error: unknown) {
@@ -86,7 +85,7 @@ export function useIAStream() {
         callbacks.onError();
       }
       setIsPending(false);
-      isPendingRef.current = false;
+      abortControllerRef.current = null;
     }
   }, []);
 

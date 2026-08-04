@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { 
-  Menu, X, KeyRound, LogOut
+  Menu, KeyRound, LogOut
 } from 'lucide-react';
 import { Drawer } from 'vaul'; 
 import { motion, AnimatePresence } from 'framer-motion';
@@ -51,7 +51,7 @@ function SidebarContent({ onClose, user }: SidebarContentProps) {
 
         
         <span className="block group mt-4 cursor-pointer">
-          <Link to="/minha-conta" className="flex flex-col items-center gap-3" title="Acessar Minha Conta">
+          <Link to="/minha-conta" onClick={onClose} className="flex flex-col items-center gap-3" title="Acessar Minha Conta">
             <Avatar url={user?.fotoUrl} nome={user?.nome} size="lg" className="w-20 h-20 border-4 border-surface shadow-md group-hover:border-primary/50 transition-colors" />
             <div className="text-center px-4">
               <p className="text-base font-black text-text-main leading-tight group-hover:text-primary transition-colors">{user?.nome}</p>
@@ -82,6 +82,7 @@ function SidebarContent({ onClose, user }: SidebarContentProps) {
                   <Link
                     key={item.path}
                     to={item.path}
+                    onClick={onClose}
                     className={cn(
                       "flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-300 group relative overflow-hidden",
                       isActive 
