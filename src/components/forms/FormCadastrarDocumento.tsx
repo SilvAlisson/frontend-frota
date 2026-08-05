@@ -60,7 +60,7 @@ export function FormCadastrarDocumento({ onSuccess, onCancel, veiculoIdPreSeleci
     return Array.from(new Set(tipos)).sort();
   }, [veiculos]);
 
-  // ✨ Extraímos o `control` do useForm
+  // Extrai o `control` do useForm para repassar ao Controller
   const { register, handleSubmit, watch, setValue, control, formState: { errors } } = useForm<DocFormInput, unknown, DocFormOutput>({
     resolver: zodResolver(docSchema),
     defaultValues: {

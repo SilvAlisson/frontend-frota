@@ -17,15 +17,15 @@ export function useDocumentosLegais(filtros?: FiltrosDocumentos) {
     return useQuery({
         queryKey: ['documentos-legais', filtros],
         queryFn: async () => {
-            const params = new URLSearchParams();
+            const params: Record<string, string> = {};
             if (filtros?.categoria && filtros.categoria !== FILTRO_TODOS) {
-                params.append('categoria', filtros.categoria);
+                params.categoria = filtros.categoria;
             }
             if (filtros?.veiculoId) {
-                params.append('veiculoId', filtros.veiculoId);
+                params.veiculoId = filtros.veiculoId;
             }
 
-            const { data } = await api.get<DocumentoLegal[]>(`/documentos-legais?${params.toString()}`);
+            const { data } = await api.get<DocumentoLegal[]>('/documentos-legais', { params });
             return data;
         },
         staleTime: 1000 * 60 * 5,

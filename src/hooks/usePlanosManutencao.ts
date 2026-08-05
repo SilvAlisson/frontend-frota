@@ -99,7 +99,7 @@ export function usePlanosManutencao(veiculoId?: string, filtroCategoria?: string
         toast.success("Plano desativado e removido.");
         queryClient.invalidateQueries({ queryKey: ['planos'] });
       },
-      onError: (err: unknown, _id: string, context: { snapshots?: [import('@tanstack/react-query').QueryKey, { id: string }[] | undefined][] } | undefined) => {
+      onError: (err, _id, context) => {
         if (context?.snapshots) {
             context.snapshots.forEach(([key, data]) => {
                 queryClient.setQueryData(key, data);

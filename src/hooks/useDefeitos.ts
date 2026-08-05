@@ -33,7 +33,7 @@ export function useDefeitos(status?: 'ABERTO' | 'EM_ANALISE' | 'RESOLVIDO') {
       return response.data;
     },
     staleTime: 1000 * 60, // 1 minuto — sincronizado com refetchInterval para evitar always-stale
-    refetchInterval: 60000, // ✨ Polling: atualiza a cada 60s automaticamente
+    refetchInterval: 60000, // Polling: atualiza a cada 60s automaticamente
   });
 
   // Contador de alertas para encarregados
@@ -46,7 +46,7 @@ export function useDefeitos(status?: 'ABERTO' | 'EM_ANALISE' | 'RESOLVIDO') {
     staleTime: 1000 * 60, // 1 minuto — sincronizado com refetchInterval
     refetchInterval: 60000,
     retry: false, // Se não for encarregado dará 403 silencioso
-    enabled: isGestor && !query.isLoading // Só tenta o contador se for gestor e após a lista principal carregar (opcional, mas evita corridas)
+    enabled: isGestor && !query.isLoading // Só busca o contador se for gestor e após a lista principal carregar (evita corridas de requisição)
   });
 
   // MUTAÇÕES
@@ -68,11 +68,12 @@ export function useDefeitos(status?: 'ABERTO' | 'EM_ANALISE' | 'RESOLVIDO') {
       },
       onMutate: async ({ id }) => {
         await queryClient.cancelQueries({ queryKey: ['defeitos'] });
-        const previous = queryClient.getQueryData(['defeitos']);
-        queryClient.setQueryData(['defeitos'], (old: { id: string }[] | undefined) => {
+        const queryKeyExata = ['defeitos', status];
+        const previous = queryClient.getQueryData<DefeitoVeiculo[]>(queryKeyExata);
+        queryClient.setQueryData<DefeitoVeiculo[]>(queryKeyExata, (old) => {
           return old ? old.filter((d) => d.id !== id) : [];
         });
-        return { previous };
+        return { previous, queryKeyExata };
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ['defeitos'] });
@@ -80,7 +81,7 @@ export function useDefeitos(status?: 'ABERTO' | 'EM_ANALISE' | 'RESOLVIDO') {
         toast.success('Defeito resolvido!');
       },
       onError: (_err, _vars, context) => {
-        if (context?.previous) queryClient.setQueryData(['defeitos'], context.previous);
+        if (context?.previous) queryClient.setQueryData(context.queryKeyExata, context.previous);
       },
     });
 

@@ -10,7 +10,7 @@ import { signIn } from '../lib/auth-client';
 export function useLogin() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { login, logout, isAuthenticated, user, loading: authLoading } = useAuth();
+  const { refreshAuth, isAuthenticated, user, loading: authLoading } = useAuth();
   
   const getErrorMessage = (err: unknown) => 
     axios.isAxiosError(err) ? err.response?.data?.error : (err instanceof Error ? err.message : 'Erro desconhecido');
@@ -19,8 +19,12 @@ export function useLogin() {
   const [isMagicLoggingIn, setIsMagicLoggingIn] = useState(!!magicToken);
   const loginTokenProcessed = useRef(false);
 
-  const handleRedirect = useCallback((role: UserRole) => {
-    const target = (role === 'ADMIN' || role === 'COORDENADOR') ? '/admin' : '/';
+  const handleRedirect = useCallback((role: UserRole | string) => {
+    let target = '/';
+    if (role === 'ADMIN' || role === 'COORDENADOR' || role === 'RH') target = '/admin';
+    else if (role === 'ENCARREGADO') target = '/encarregado';
+    // OPERADOR e AUXILIAR_OPERACIONAL ficam no '/' (DashboardOperador)
+    
     navigate(target, { replace: true });
   }, [navigate]);
 
@@ -34,7 +38,7 @@ export function useLogin() {
     loginTokenProcessed.current = true;
     setIsMagicLoggingIn(true);
 
-    // 🔒 007 — Remove o token da URL IMEDIATAMENTE antes de qualquer await.
+    // 007 — Remove o token da URL IMEDIATAMENTE antes de qualquer await.
     window.history.replaceState({}, document.title, window.location.pathname);
 
     const processMagicLogin = async () => {
@@ -48,7 +52,7 @@ export function useLogin() {
           return;
         }
 
-        // ─── 🆕 Better Auth Nativo: QR Code via Plugin Customizado ───
+        // Better Auth Nativo: QR Code via Plugin Customizado
         const { data: userLookup } = await api.post('/auth/qr-login', { loginToken: magicToken });
 
 
@@ -57,15 +61,13 @@ export function useLogin() {
             localStorage.setItem('klin_passkey_email', userLookup.user.email);
         }
         
-        // Invoca login() — invalida query → useSession() recarrega → encontra cookie → authenticated ✅
-        await login();
+        // Invoca refreshAuth() — invalida query → useSession() recarrega → encontra cookie → authenticated
+        await refreshAuth();
 
 
         toast.success(`Bem-vindo, ${userLookup.user.nome.split(' ')[0]}!`);
 
-        const role = userLookup.user.role;
-        const target = (role === 'ADMIN' || role === 'COORDENADOR') ? '/admin' : '/';
-        navigate(target, { replace: true });
+        handleRedirect(userLookup.user.role);
 
       } catch (err: unknown) {
 
@@ -89,7 +91,7 @@ export function useLogin() {
     };
 
     processMagicLogin();
-  }, [magicToken, navigate, isAuthenticated, login, logout, setSearchParams, handleRedirect, user]);
+  }, [magicToken, navigate, isAuthenticated, refreshAuth, setSearchParams, handleRedirect, user]);
 
   useEffect(() => {
 
@@ -118,7 +120,7 @@ export function useLogin() {
             localStorage.setItem('klin_passkey_email', resData.user.email);
         }
 
-        await login();
+        await refreshAuth();
         toast.success('Acesso Autorizado. Bem-vindo de volta!');
       }
     } catch (err: unknown) {
@@ -142,10 +144,10 @@ export function useLogin() {
   const loginWithManualQr = async (qrManualToken: string) => {
     if (!qrManualToken.trim()) throw new Error('Digite o token.');
 
-    const toastId = toast.loading('A validar credenciais seguras...');
+    const toastId = toast.loading('Validando credenciais seguras...');
 
     try {
-      // 1. 🆕 Better Auth Nativo: Chama o Plugin Customizado via API
+      // 1. Better Auth Nativo: Chama o Plugin Customizado via API
       const { data: userLookup } = await api.post('/auth/qr-login', { loginToken: qrManualToken });
 
       // 2. Magic link sucesso!
@@ -153,7 +155,7 @@ export function useLogin() {
         localStorage.setItem('klin_passkey_email', userLookup.user.email);
       }
       
-      await login();
+      await refreshAuth();
       toast.dismiss(toastId);
       toast.success('Acesso Autorizado!');
 

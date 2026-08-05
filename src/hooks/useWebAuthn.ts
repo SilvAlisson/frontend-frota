@@ -4,7 +4,17 @@ import { toast } from 'sonner';
 import { signIn, passkey } from '../lib/auth-client';
 import { useAuth } from '../contexts/AuthContext';
 import { webauthnService } from '../services/modules/webauthnService';
-import type { User, UserRole } from '../types';
+import type { User, UserRole, StatusOperador } from '../types';
+
+function parseStatus(status: unknown): StatusOperador {
+    switch (status) {
+        case 'ATIVO': return 'ATIVO';
+        case 'AFASTADO': return 'AFASTADO';
+        case 'ATESTADO': return 'ATESTADO';
+        case 'FERIAS': return 'FERIAS';
+        default: return 'ATIVO';
+    }
+}
 import { logger } from '../lib/logger';
 
 export interface PasskeyDevice {
@@ -33,7 +43,7 @@ export function useWebAuthn() {
         },
         // Só busca se o usuário estiver logado
         enabled: !!user?.id,
-        staleTime: 1000 * 60 * 2, // 2 min cache
+        staleTime: 1000 * 60 * 2, // cache de 2 minutos
     });
 
     const hasPasskeys = passkeys.length > 0;
@@ -79,17 +89,18 @@ export function useWebAuthn() {
             // Remoção de vazamento de PII (email no localStorage)
 
             
-            toast.success('Biometria cadastrada com sucesso neste aparelho! ✅');
+            toast.success('Biometria cadastrada com sucesso neste aparelho!');
             return true;
 
         } catch (error: unknown) {
-            const err = error as Error;
-            if (err.name === 'NotAllowedError') {
+            const errName = error instanceof Error ? error.name : undefined;
+            const errMessage = error instanceof Error ? error.message : String(error);
+            if (errName === 'NotAllowedError') {
                 toast.error('O cadastro biométrico foi cancelado.');
-            } else if (err.name === 'InvalidStateError') {
+            } else if (errName === 'InvalidStateError') {
                 toast.error('Este dispositivo já tem biometria cadastrada.');
             } else {
-                toast.error(`Erro no sensor: ${err.message || err.name || 'Desconhecido'}`);
+                toast.error(`Erro no sensor: ${errMessage || errName || 'Desconhecido'}`);
             }
             logger.debug('[useWebAuthn] registerDevice error:', error);
             return false;
@@ -100,12 +111,11 @@ export function useWebAuthn() {
 
     // ─── Login com biometria ────────────────────────────────────────────────
     const loginWithDevice = async (
-        onSuccess: (token: string, user: User) => void,
-        emailFromForm?: string // 🔥 Adicionamos o e-mail como parâmetro
+        onSuccess: (token: string, user: User) => void
     ) => {
         setIsAuthenticating(true);
         try {
-            // O Better Auth gerencia a chamada WebAuthn nativamente (Discoverable Credentials).
+            // O Better Auth gerencia a chamada WebAuthn nativamente (Credenciais Descobríveis).
             // estava sobrescrevendo o payload da biometria, enviando apenas { email: '...' } para o servidor!
             const { data, error } = await signIn.passkey();
 
@@ -116,9 +126,9 @@ export function useWebAuthn() {
 
             if (data) {
                 await refetchPasskeys();
-                // Atualiza o cache de hint
+                // Atualiza o cache de dicas (hint)
 
-                toast.success(`Bem-vindo(a) de volta, ${data.user.name}! 👋`);
+                toast.success(`Bem-vindo(a) de volta, ${data.user.name}!`);
                 
                 // Mapeia o usuário do better-auth para o formato esperado pelo sistema (User)
                 const userPayload = data.user as typeof data.user & {
@@ -134,15 +144,19 @@ export function useWebAuthn() {
                     return false;
                 }
 
+                const roleStr = String(userPayload.role).toUpperCase();
+                const validRoles: UserRole[] = ['ADMIN', 'COORDENADOR', 'RH', 'ENCARREGADO', 'OPERADOR', 'AUXILIAR_OPERACIONAL'];
+                const role: UserRole = validRoles.includes(roleStr as UserRole) ? (roleStr as UserRole) : 'OPERADOR';
+
                 const appUser: User = {
                     id: userPayload.id,
                     nome: userPayload.name,
                     email: userPayload.email,
-                    role: userPayload.role as UserRole,
+                    role: role,
                     matricula: userPayload.matricula || null,
                     cargo: userPayload.cargo || null,
                     fotoUrl: userPayload.fotoUrl || userPayload.image || null,
-                    status: (userPayload.status as import('../types').StatusOperador) || 'ATIVO',
+                    status: parseStatus(userPayload.status),
                 };
 
                 onSuccess('', appUser);

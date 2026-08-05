@@ -11,7 +11,7 @@ function parseRole(role: unknown): UserRole | null {
   if (typeof role === 'string' && validRoles.includes(role as UserRole)) {
     return role as UserRole;
   }
-  logger.error('Role inválida ou ausente no payload de sessão:', role);
+  logger.debug('Role inválida ou ausente no payload de sessão:', role);
   return null;
 }
 
@@ -29,7 +29,8 @@ function parseStatus(status: unknown): StatusOperador {
 interface AuthContextData {
   user: User | null;
   isAuthenticated: boolean;
-  login: () => Promise<void>;
+  permiteOperacao: boolean;
+  refreshAuth: () => Promise<void>;
   logout: () => void;
   requestLogout: () => void;
   loading: boolean;
@@ -60,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const currentUser = betterUser;
 
-  const login = useCallback(async () => {
+  const refreshAuth = useCallback(async () => {
     await refetchSession();
   }, [refetchSession]);
 
@@ -95,11 +96,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const contextValue = useMemo(() => ({
     user: currentUser,
     isAuthenticated: !!currentUser,
-    login,
+    permiteOperacao: currentUser?.permiteOperacao ?? false,
+    refreshAuth,
     logout,
     requestLogout,
     loading: isSessionLoading
-  }), [currentUser, login, logout, requestLogout, isSessionLoading]);
+  }), [currentUser, refreshAuth, logout, requestLogout, isSessionLoading]);
 
   return (
     <AuthContext.Provider value={contextValue}>

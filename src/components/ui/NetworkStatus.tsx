@@ -12,7 +12,7 @@ export function NetworkStatus() {
       setShow(true);
     } else {
       // Delay dismissing so user can see it went back online if we wanted
-      // But for a simple approach, just hide when online
+      // Porém, para uma abordagem simples, basta ocultar quando estiver online
       setShow(false);
     }
   }, [isOnline]);

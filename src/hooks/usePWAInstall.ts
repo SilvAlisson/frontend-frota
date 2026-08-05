@@ -11,6 +11,12 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 declare global {
+  interface Window {
+    deferredInstallPrompt?: BeforeInstallPromptEvent;
+  }
+  interface Navigator {
+    standalone?: boolean;
+  }
   interface WindowEventMap {
     beforeinstallprompt: BeforeInstallPromptEvent;
   }
@@ -22,14 +28,23 @@ export function usePWAInstall() {
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: BeforeInstallPromptEvent) => {
-      // Previne o Chrome 67 e anterior de mostrar o prompt automaticamente
       e.preventDefault();
-      // Salva o evento para podermos engatilhá-lo depois
       setDeferredPrompt(e);
       setIsInstallable(true);
     };
 
+    // Verifica se já temos o evento salvo pelo index.html antes do React montar
+    if (window.deferredInstallPrompt) {
+      handleBeforeInstallPrompt(window.deferredInstallPrompt);
+    }
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    // Deteção se já estamos num PWA Instalado e esconder prompt (Display-mode)
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+    if (isStandalone) {
+      setIsInstallable(false);
+    }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);

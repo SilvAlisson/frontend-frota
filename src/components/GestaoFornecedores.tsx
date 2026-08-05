@@ -6,7 +6,7 @@ import { Skeleton } from './ui/Skeleton';
 import { Trash2, Edit2, Store, Plus, Loader2, AlertTriangle } from 'lucide-react';
 import autoAnimate from '@formkit/auto-animate';
 
-// ✨ Componentes Elite & Hooks Globais
+// Componentes e Hooks Globais
 import { EmptyState } from './ui/EmptyState';
 import { PageHeader } from './ui/PageHeader';
 import { Callout } from './ui/Callout';

@@ -88,7 +88,7 @@ export function handleApiError(error: unknown, defaultMessage = 'Ocorreu um erro
 }
 
 /**
- * 🕵️ PASSO 2: Extrator de Contexto Rico (Device & Environment)
+ * PASSO 2: Extrator de Contexto Rico (Device & Environment)
  * Captura dados do dispositivo do usuário para enriquecer os logs de auditoria
  * simulando o comportamento de ferramentas como o Sentry.
  */

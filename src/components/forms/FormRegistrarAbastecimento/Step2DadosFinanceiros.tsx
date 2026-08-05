@@ -4,7 +4,7 @@ import { MapPin, Plus, X, Droplets, TrendingUp, TrendingDown } from 'lucide-reac
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
-import { formatarDinheiro, desformatarDinheiro } from '../../../lib/formatters';
+import { formatarDinheiro, desformatarDinheiro, formatBRL } from '../../../lib/formatters';
 import { useFornecedores } from '../../../hooks/useFornecedores';
 import { useProdutos } from '../../../hooks/useProdutos';
 import { useVeiculos } from '../../../hooks/useVeiculos';
@@ -67,7 +67,7 @@ export function Step2DadosFinanceiros() {
 
         // Se tem histórico e o input de valor ainda está vazio/zerado
         if (precoSugerido && (!item.valorUnitario || desformatarDinheiro(String(item.valorUnitario)) === 0)) {
-           const precoFormatado = formatarDinheiro(String(precoSugerido.toFixed(2)).replace('.', ','));
+           const precoFormatado = formatBRL(precoSugerido);
            setValue(`itens.${index}.valorUnitario`, precoFormatado, { shouldValidate: true });
         }
       }
@@ -212,13 +212,13 @@ export function Step2DadosFinanceiros() {
                       {statusPreco === 'aumentou' && (
                          <div className="flex items-center gap-1 text-[10px] text-error font-bold tracking-tight mt-1 animate-in fade-in">
                             <TrendingUp className="w-3 h-3 shrink-0" />
-                            <span className="truncate">O valor subiu? (Anterior: {formatarDinheiro(String(ultimoPrecoHistorico.toFixed(2)).replace('.', ','))})</span>
+                            <span className="truncate">O valor subiu? (Anterior: {formatBRL(ultimoPrecoHistorico)})</span>
                          </div>
                       )}
                       {statusPreco === 'diminuiu' && (
                          <div className="flex items-center gap-1 text-[10px] text-success font-bold tracking-tight mt-1 animate-in fade-in">
                             <TrendingDown className="w-3 h-3 shrink-0" />
-                            <span className="truncate">O valor baixou? (Anterior: {formatarDinheiro(String(ultimoPrecoHistorico.toFixed(2)).replace('.', ','))})</span>
+                            <span className="truncate">O valor baixou? (Anterior: {formatBRL(ultimoPrecoHistorico)})</span>
                          </div>
                       )}
                     </div>
@@ -228,7 +228,7 @@ export function Step2DadosFinanceiros() {
                 <div className="mt-4 pt-3 flex justify-end border-t border-border/40">
                   <div className="px-4 py-1.5 rounded-lg border border-border/50 bg-background text-sm font-medium flex gap-2 shadow-sm">
                     <span className="text-text-muted uppercase tracking-wider text-[10px] self-center">Subtotal:</span>
-                    <span className="font-mono font-black text-text-main">{formatarDinheiro(Number(totalItem))}</span>
+                    <span className="font-mono font-black text-text-main">{formatBRL(Number(totalItem))}</span>
                   </div>
                 </div>
               </div>

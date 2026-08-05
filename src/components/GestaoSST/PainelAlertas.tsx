@@ -15,7 +15,7 @@ export function PainelAlertas({ alertas }: PainelAlertasProps) {
         aria-live="polite"
       >
         <CheckCircle2 className="w-5 h-5 text-success shrink-0" aria-hidden="true" />
-        <p className="text-sm font-bold text-success">Nenhuma ação com vencimento nos próximos 15 dias. 🎉</p>
+        <p className="text-sm font-bold text-success">Nenhuma ação com vencimento nos próximos 15 dias.</p>
       </div>
     );
   }

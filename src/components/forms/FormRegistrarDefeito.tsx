@@ -94,7 +94,7 @@ export function FormRegistrarDefeito({ veiculoId, veiculosDisponiveis = [], onSu
   };
 
   const onError = () => {
-    // 📳 Vibra o dispositivo para alertar erro no formulário
+    // Vibra o dispositivo para alertar erro no formulário
     hapticError();
   };
 

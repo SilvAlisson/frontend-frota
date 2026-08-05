@@ -77,7 +77,7 @@ export function DashboardOperador({ user }: DashboardOperadorProps) {
   await refetchJornadas();
  };
 
- // 🛡️ FILTRO BLINDADO — só minhas jornadas
+ // Filtro restritivo — exibe apenas as jornadas do operador atual
  const minhasJornadas = useMemo(() => {
   const result = jornadasAtivas.filter((j) =>
    j.operador?.id === user.id

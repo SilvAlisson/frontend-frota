@@ -3,7 +3,7 @@ import { Skeleton } from '../ui/Skeleton';
 import { LineChart } from 'lucide-react';
 import { formatBRL, formatNumero } from '../../lib/formatters';
 
-// Define proper typings for Recharts payload
+// Define tipagens corretas para o payload do Recharts
 interface CpkPayload {
   name: string;
   fuel: number;
@@ -27,7 +27,7 @@ const TOOLTIP_STYLE = {
   padding: '10px 16px',
 };
 
-// Fix the 'any' type using proper Recharts types
+// Corrige o tipo 'any' usando os tipos adequados do Recharts
 interface TooltipPayload {
   color?: string;
   name?: string;

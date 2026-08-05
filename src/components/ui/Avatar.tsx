@@ -38,7 +38,8 @@ export const Avatar = React.memo(function Avatar({ nome = 'Usuário', url, size 
           'rounded-full object-cover border border-border/60 shadow-sm shrink-0',
           className
         )} 
-        {...(props as React.ImgHTMLAttributes<HTMLImageElement>)}
+        style={props.style}
+        onClick={props.onClick}
       />
     );
   }

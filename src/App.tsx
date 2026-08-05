@@ -11,7 +11,7 @@ import { BiometryOnboardingBanner } from './components/BiometryOnboardingBanner'
 import { MotionConfig } from 'framer-motion';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
-// 🛠️ DevTools: Carregado dinamicamente APENAS em desenvolvimento.
+// DevTools: Carregado dinamicamente APENAS em desenvolvimento.
 // Em produção, o Vite faz tree-shaking e ZERO bytes desta lib vão para o bundle.
 const ReactQueryDevtools = env.isDev
   ? lazy(() =>
@@ -37,7 +37,7 @@ function AppContent() {
         theme={theme}
         toastOptions={{ className: 'font-sans' }}
       />
-      {/* 🛠️ DevTools: Apenas em desenvolvimento */}
+      {/* DevTools: Apenas em desenvolvimento */}
       {env.isDev && (
         <Suspense fallback={null}>
           <ReactQueryDevtools initialIsOpen={false} buttonPosition="bottom-right" />

@@ -47,11 +47,12 @@ export function useAlertas() {
   });
 
   const resolverTodosLogMutation = useMutation({
-    mutationFn: async () => {
-      return await api.put(`/logs/resolver-todos`);
+    mutationFn: async (): Promise<{ message?: string }> => {
+      const { data } = await api.put<{ message?: string }>(`/logs/resolver-todos`);
+      return data;
     },
-    onSuccess: (data: { data?: { message?: string } }) => {
-      toast.success(data?.data?.message || 'Todos os logs foram arquivados com sucesso.');
+    onSuccess: (data) => {
+      toast.success(data?.message || 'Todos os logs foram arquivados com sucesso.');
       queryClient.invalidateQueries({ queryKey: ['alertas'] });
     },
     onError: () => {

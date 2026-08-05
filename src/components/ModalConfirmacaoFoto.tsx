@@ -242,7 +242,7 @@ export function ModalConfirmacaoFoto<T extends object, R = unknown>({
 
       </div>
 
-      {/* 🛡️ MODAL DE BLOQUEIO OPERACIONAL (SSMA) */}
+      {/* MODAL DE BLOQUEIO OPERACIONAL (SSMA) */}
       <ModalAlertaSSMA 
         isOpen={modalSSMAOpen}
         bloqueios={bloqueiosSSMA}

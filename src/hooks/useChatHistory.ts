@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, type SetStateAction } from 'react';
 import { type MensagemChat } from './useIA';
 
 // ============================================================================
-// ⚙️ CONSTANTES DE CONFIGURAÇÃO
+// CONSTANTES DE CONFIGURAÇÃO
 // ============================================================================
 const MAX_HISTORY_MESSAGES = 50;
 const SESSION_TIMEOUT_MS = 2 * 60 * 60 * 1000; // 2 horas de inatividade
@@ -57,14 +57,14 @@ export function useChatHistory() {
     setMensagensState((prev) => {
       const novo = typeof updater === 'function' ? updater(prev) : updater;
       
-      // 🛡️ Deduplicador para evitar Warning do React e Key Duplicadas
+      // Deduplicador para evitar Warning do React e keys duplicadas
       return novo.filter((m, i, self) => 
         i === self.findIndex((t) => t.id === m.id)
       );
     });
   }, []);
 
-  // 💡 Correção Arquitetural: O Side Effect de salvar no DB reage ao estado via useEffect.
+  // Correção arquitetural: o side effect de salvar no DB reage ao estado via useEffect.
   // Isso previne que o React execute transações duplicadas ou no momento errado durante renders.
   useEffect(() => {
     if (isLoaded && mensagens.length > 0) {

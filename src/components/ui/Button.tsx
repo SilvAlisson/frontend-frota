@@ -48,7 +48,7 @@ export interface ButtonProps
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, isLoading = false, icon, children, disabled, onPointerDown, ...props }, ref) => {
     
-    // 📳 HAPTICS: Vibração sutil ao pressionar o botão no Mobile (Feedback Físico)
+    // HAPTICS: Vibração sutil ao pressionar o botão no Mobile (feedback físico)
     const handlePointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
       if (!disabled && !isLoading && typeof window !== 'undefined' && navigator.vibrate) {
         try { navigator.vibrate(10); } catch { /* Silencioso se não suportado */ }

@@ -6,7 +6,7 @@ import { Input } from '../../ui/Input';
 import { Select } from '../../ui/Select';
 import { Callout } from '../../ui/Callout';
 import { ModalGerenciarServicos } from '../../ModalGerenciarServicos';
-import { formatarDinheiro, desformatarDinheiro } from '../../../lib/formatters';
+import { formatarDinheiro, desformatarDinheiro, formatBRL } from '../../../lib/formatters';
 import { useProdutos, type Produto } from '../../../hooks/useProdutos';
 import { useFornecedores } from '../../../hooks/useFornecedores';
 
@@ -66,7 +66,7 @@ export function Step2ItensServicos() {
 
         // Se tem histórico e o input de valor ainda está vazio/zerado
         if (precoSugerido && (!item.valorPorUnidade || desformatarDinheiro(String(item.valorPorUnidade)) === 0)) {
-           const precoFormatado = formatarDinheiro(String(precoSugerido.toFixed(2)).replace('.', ','));
+           const precoFormatado = formatBRL(precoSugerido);
            setValue(`itens.${index}.valorPorUnidade`, precoFormatado, { shouldValidate: true });
         }
       }
@@ -215,13 +215,13 @@ export function Step2ItensServicos() {
                     {statusPreco === 'aumentou' && (
                        <div className="flex items-center gap-1 text-[10px] text-error font-bold tracking-tight mt-1 animate-in fade-in">
                           <TrendingUp className="w-3 h-3 shrink-0" />
-                          <span className="truncate">Custo maior! (Anterior: {formatarDinheiro(String(ultimoPrecoHistorico.toFixed(2)).replace('.', ','))})</span>
+                          <span className="truncate">Custo maior! (Anterior: {formatBRL(ultimoPrecoHistorico)})</span>
                        </div>
                     )}
                     {statusPreco === 'diminuiu' && (
                        <div className="flex items-center gap-1 text-[10px] text-success font-bold tracking-tight mt-1 animate-in fade-in">
                           <TrendingDown className="w-3 h-3 shrink-0" />
-                          <span className="truncate">Custo menor! (Anterior: {formatarDinheiro(String(ultimoPrecoHistorico.toFixed(2)).replace('.', ','))})</span>
+                          <span className="truncate">Custo menor! (Anterior: {formatBRL(ultimoPrecoHistorico)})</span>
                        </div>
                     )}
                   </div>
@@ -232,7 +232,7 @@ export function Step2ItensServicos() {
                 <div className="px-4 py-2 rounded-xl bg-surface-hover/80 text-sm font-medium flex items-center gap-3 border border-border/60 max-w-full truncate">
                   <span className="text-text-muted uppercase tracking-[0.2em] text-[9px] font-black shrink-0">Subtotal:</span>
                   <span className="font-mono font-black text-text-main text-lg tracking-tight leading-none truncate">
-                    {formatarDinheiro(Number(totalItem))}
+                    {formatBRL(Number(totalItem))}
                   </span>
                 </div>
               </div>

@@ -117,7 +117,11 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
                 const normName = normalize(req.nome);
                 if (mapaRealizados.has(normName)) {
                     const existente = mapaRealizados.get(normName)!;
-                    existente.isObrigatorio = true;
+                    const atualizado = { ...existente, isObrigatorio: true };
+                    mapaRealizados.set(normName, atualizado);
+                    
+                    const idx = realizados.findIndex(r => normalize(r.nome) === normName);
+                    if (idx !== -1) realizados[idx] = atualizado;
                 } else {
                     realizados.push({
                         id: `pending-${req.id}`,
@@ -167,7 +171,7 @@ export function useTreinamentosUsuario(userId: string, cargoId?: string | null) 
 
     // ── Ações públicas ───────────────────────────────────────────
     const addTreinamento = async (data: TreinamentoForm): Promise<void> => {
-        // 🛡️ MURALHA DE DUPLICIDADE REMOVIDA
+        // Proteção contra duplicidade removida — regra aplicada no lado do servidor
         // O backend agora aceita recadastros (renovações) para manter o histórico.
 
         const payload: CreateTreinamentoPayload = {

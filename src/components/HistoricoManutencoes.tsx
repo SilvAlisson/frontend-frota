@@ -116,7 +116,7 @@ export function HistoricoManutencoes({ userRole, filtroInicial }: HistoricoManut
     toast.promise(Promise.resolve(exportarParaExcel(dados, nomeArquivo)), {
       loading: 'Gerando folha de cálculo...',
       success: 'Boletim de Medição exportado com sucesso!',
-      error: 'Erro a exportar Arquivo.'
+      error: 'Erro ao exportar o arquivo.'
     });
   };
 

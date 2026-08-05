@@ -2,8 +2,8 @@ export interface DrilldownDataPoint {
   name: string;
   value: number;
   veiculoId?: string;
-  formattedValue?: string; // Optional pre-formatted value for tooltip display
-  customData?: Record<string, unknown>; // To allow passing the original object via Highcharts Point events, strictly typed
+  formattedValue?: string; // Valor pré-formatado opcional para exibição no tooltip
+  customData?: Record<string, unknown>; // Permite passar o objeto original via eventos do Highcharts Point
 }
 
 export type MetricType = 

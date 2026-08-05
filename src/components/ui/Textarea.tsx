@@ -84,7 +84,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       id,
       variant,
       onChange,
-      onFocus, // ✨ EXTRAÍDO: Tiramos do rest para interceptar
+      onFocus, // Extraído do rest para interceptar
       style,
       rows = 3,
       ...rest
@@ -104,7 +104,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         .join(' ') || undefined;
 
     // ── Auto-resize ─────────────────────────────────────────────────────────────
-    const internalRef = useRef<HTMLTextAreaElement>(null);
+    const internalRef = useRef<HTMLTextAreaElement | null>(null);
 
     /**
      * Usa uma callback ref para unificar ref interna (auto-resize) e ref externa
@@ -112,11 +112,11 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
      */
     const setRef = useCallback(
       (node: HTMLTextAreaElement | null) => {
-        (internalRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = node;
+        internalRef.current = node;
         if (typeof externalRef === 'function') {
           externalRef(node);
         } else if (externalRef) {
-          (externalRef as React.MutableRefObject<HTMLTextAreaElement | null>).current = node;
+          externalRef.current = node;
         }
       },
       [externalRef]
@@ -144,7 +144,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       [adjustHeight, onChange]
     );
 
-    // ✨ UX Mobile: Auto-scroll ao focar no Textarea
+    // UX Mobile: Auto-scroll ao focar no Textarea
     const handleFocus = useCallback((e: React.FocusEvent<HTMLTextAreaElement>) => {
       setTimeout(() => {
         e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -175,7 +175,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
             id={textareaId}
             rows={autoResize ? undefined : rows}
             onChange={handleChange}
-            onFocus={handleFocus} // ✨ INJETADO
+            onFocus={handleFocus} // Injetado para interceptar o evento de foco
             aria-invalid={!!error}
             aria-describedby={ariaDescribedBy}
             className={cn(

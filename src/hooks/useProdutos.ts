@@ -52,7 +52,7 @@ export function useProdutos() {
       } else {
         // toast.error('Erro desconhecido ao excluir produto.');
       }
-      throw err; // Re-throw to handle loading states in UI if needed
+      throw err; // Relança o erro para lidar com os estados de loading na UI, se necessário
     }
   };
 

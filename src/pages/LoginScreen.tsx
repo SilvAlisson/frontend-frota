@@ -15,7 +15,7 @@ import { logger } from '../lib/logger';
 
 export function LoginScreen() {
   const { theme, toggleTheme } = useTheme();
-  const { login } = useAuth();
+  const { refreshAuth } = useAuth();
   const { loginWithDevice, isAuthenticating, isWebAuthnSupported } = useWebAuthn();
   const { shouldShowLockScreen } = usePasskeyGuard();
 
@@ -54,15 +54,15 @@ export function LoginScreen() {
   };
 
   // 🔥 Recebe o e-mail do form
-  const onBiometryClick = async (emailFromForm?: string) => {
+  const onBiometryClick = async () => {
     if (!isWebAuthnSupported) {
       toast.error('Seu navegador não suporta autenticação biométrica.');
       return;
     }
 
     await loginWithDevice(() => {
-      login();
-    }, typeof emailFromForm === 'string' ? emailFromForm : undefined);
+      refreshAuth();
+    });
   };
 
   // --- UI: SKELETON LOADER (Apenas para URL Magic Link) ---

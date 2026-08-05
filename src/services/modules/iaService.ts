@@ -1,7 +1,6 @@
 import { RENDER_API_BASE_URL } from '../../config';
 
 export interface StreamCallbacks {
-  onStart: () => void;
   onChunk: (chunk: string) => void;
   onFinish: () => void;
   onError: (err: unknown) => void;
@@ -11,20 +10,20 @@ export interface IAPayload {
   pergunta: string;
   contextoSistema: string;
   historico?: { role: string; text: string }[];
-  signal?: AbortSignal; // 💡 Adicionado para receber o comando de parada
+  signal?: AbortSignal; // Adicionado para receber o comando de parada externo
 }
 
 const STREAM_TIMEOUT_MS = 60000; // 60 segundos para abortar se o servidor travar
 
 export const iaService = {
   async consultarStream(payload: IAPayload, callbacks: StreamCallbacks): Promise<void> {
-    // 💡 Separa o signal do resto do payload (não queremos enviar o signal pro JSON do backend)
+    // Separa o signal do resto do payload (não deve ser enviado no JSON ao backend)
     const { signal: externalSignal, ...bodyPayload } = payload;
     
     // Controlador interno para gerenciar o Timeout e o cancelamento do Usuário
     const controller = new AbortController();
     
-    // 💡 Se houver um sinal de aborto externo (botão Parar), repassamos para o fetch
+    // Se houver um sinal de aborto externo (botão Parar), repassamos para o fetch
     if (externalSignal) {
       externalSignal.addEventListener('abort', () => {
         controller.abort(externalSignal.reason);
@@ -37,10 +36,9 @@ export const iaService = {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
         controller.abort(new Error(`Timeout: O servidor demorou mais de ${STREAM_TIMEOUT_MS / 1000} segundos para responder.`));
-      }, STREAM_TIMEOUT_MS); // 💡 Usando a constante aqui
+      }, STREAM_TIMEOUT_MS); // Usando a constante definida no topo do arquivo
     };
 
-    callbacks.onStart();
     resetTimeout(); // Inicia o timeout da primeira resposta
 
     try {
@@ -53,7 +51,7 @@ export const iaService = {
         headers,
         credentials: 'include',
         body: JSON.stringify(bodyPayload),
-        signal: controller.signal // 💡 Usamos o controlador interno que possui a fusão do Timeout + Cancelamento Manual
+        signal: controller.signal // Controlador interno: fusão entre Timeout e Cancelamento Manual
       });
 
       if (!response.ok) throw new Error(`Falha na resposta do servidor: ${response.status}`);
@@ -66,7 +64,6 @@ export const iaService = {
       let streamFinished = false;
       let queue = '';
       let isFlushing = false;
-      let networkDone = false;
 
       const processQueue = async () => {
         if (isFlushing) return;
@@ -82,10 +79,6 @@ export const iaService = {
           await new Promise(r => setTimeout(r, delay));
         }
         isFlushing = false;
-        
-        if (networkDone && queue.length === 0) {
-          callbacks.onFinish();
-        }
       };
 
       while (!streamFinished) {
@@ -121,16 +114,20 @@ export const iaService = {
       }
 
       clearTimeout(timeoutId); // Limpa o timer definitivamente quando a stream acabar
-      networkDone = true;
       
-      if (!isFlushing) {
-        await processQueue();
+      // Espera a fila de animação ser completamente drenada antes de sinalizar fim
+      while (queue.length > 0 || isFlushing) {
+        await new Promise(r => setTimeout(r, 20));
       }
+      callbacks.onFinish();
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearTimeout(timeoutId);
+      
+      const isAbort = error instanceof Error && error.name === 'AbortError';
+      
       // Se for um aborto intencional, loga apenas no nível de debug ou silencia para manter o console limpo
-      if (error?.name !== 'AbortError') {
+      if (!isAbort) {
         console.error('[IAService] Erro no stream:', error);
       }
       callbacks.onError(error);

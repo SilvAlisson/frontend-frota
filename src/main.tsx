@@ -94,7 +94,9 @@ if (env.isDev) {
     errDiv.style.color = 'white';
     errDiv.style.padding = '20px';
     errDiv.style.zIndex = '999999';
-    errDiv.innerHTML = `<h3>Error</h3><pre>${e.error?.stack || e.message}</pre>`;
+    errDiv.innerHTML = `<h3>Error</h3><pre></pre>`;
+    const pre = errDiv.querySelector('pre');
+    if (pre) pre.textContent = e.error?.stack || e.message;
     document.body.appendChild(errDiv);
   });
   window.addEventListener('unhandledrejection', (e) => {
@@ -106,7 +108,9 @@ if (env.isDev) {
     errDiv.style.color = 'white';
     errDiv.style.padding = '20px';
     errDiv.style.zIndex = '999999';
-    errDiv.innerHTML = `<h3>Unhandled Rejection</h3><pre>${e.reason?.stack || e.reason}</pre>`;
+    errDiv.innerHTML = `<h3>Unhandled Rejection</h3><pre></pre>`;
+    const pre = errDiv.querySelector('pre');
+    if (pre) pre.textContent = e.reason?.stack || String(e.reason);
     document.body.appendChild(errDiv);
   });
 }

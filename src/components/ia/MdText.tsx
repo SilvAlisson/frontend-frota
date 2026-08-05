@@ -29,7 +29,7 @@ const WidgetVeiculo = ({ placa }: { placa: string }) => {
 };
 
 // ============================================================================
-// 📝 MDTEXT: Renderizador de Markdown com suporte a tabelas
+// MDTEXT: Renderizador de Markdown com suporte a tabelas
 // ============================================================================
 
 interface MdTextProps {

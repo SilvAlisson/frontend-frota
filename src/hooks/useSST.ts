@@ -128,7 +128,7 @@ export function useSST(filtroPrograma?: ProgramaSST | '') {
     mutationFn: ({ id, ...dados }: AtualizarAcaoSSTInput & { id: string }) =>
       api.put<AcaoSST>(`/sst/${id}`, dados).then((r) => r.data),
     onSuccess: () => {
-      toast.success('Ação atualizada!');
+      toast.success('Ação atualizada com sucesso!');
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
     },
     onError: (err) => handleApiError(err, 'Erro ao atualizar ação de SST'),

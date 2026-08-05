@@ -53,7 +53,7 @@ export function WidgetAniversariantes() {
       <div className="bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-blue-500/10 border border-pink-500/20 rounded-[2rem] p-5 sm:p-6 shadow-sm relative overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-500 group">
         {/* Enfeite fundo */}
         <div className="absolute -top-10 -right-10 text-8xl opacity-10 group-hover:scale-110 transition-transform duration-700 pointer-events-none">
-          🎉
+          Parabéns!
         </div>
         
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">

@@ -1,5 +1,13 @@
 import { useCallback } from 'react';
 
+declare global {
+  interface Window {
+    ReactNativeWebView?: {
+      postMessage: (message: string) => void;
+    };
+  }
+}
+
 /**
  * Hook para adicionar micro-interações táteis (Vibração) em dispositivos mobile.
  * Isso melhora a percepção do usuário sobre o sucesso ou erro de uma ação, reduzindo a carga cognitiva.
@@ -19,9 +27,7 @@ export function useHaptics() {
   const vibrateLight = useCallback(() => {
     if (!canVibrate()) return;
     try {
-      // @ts-expect-error - feature experimental no iOS
       if (window.ReactNativeWebView?.postMessage) {
-        // @ts-expect-error - bridge mobile
         window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'HAPTIC_LIGHT' }));
       } else if (navigator.vibrate) {
         navigator.vibrate(10);

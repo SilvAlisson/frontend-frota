@@ -177,7 +177,7 @@ export function FormCadastrarFornecedor({ onSuccess, onCancelar }: FormProps) {
                         error={errors.cnpj?.message}
                         className="font-mono tracking-wider"
                         mask={[
-                          { mask: '000.000.000-00' }, // fallback for CPF if needed
+                          { mask: '000.000.000-00' }, // fallback para CPF, se necessário
                           { mask: '00.000.000/0000-00' }
                         ]}
                         disabled={isSubmitting}

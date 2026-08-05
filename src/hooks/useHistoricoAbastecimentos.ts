@@ -23,7 +23,8 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
   const queryKey = [
     'abastecimentos', 'recentes', 
     filtros.dataInicio, filtros.dataFim, 
-    filtros.veiculoId, filtros.tipoProduto, filtros.status
+    filtros.veiculoId, filtros.tipoProduto, filtros.status,
+    filtros.fornecedorId
   ];
 
   const { data: historico = [], isLoading: loading, error, refetch } = useQuery({
@@ -36,8 +37,8 @@ export function useHistoricoAbastecimentos(filtros: FiltrosAbastecimento) {
       if (filtros.tipoProduto) params.tipoProduto = filtros.tipoProduto;
       if (filtros.status) params.status = filtros.status;
 
-      const response = await api.get('/abastecimentos/recentes', { params });
-      return response.data as Abastecimento[];
+      const response = await api.get<Abastecimento[]>('/abastecimentos/recentes', { params });
+      return response.data;
     },
     staleTime: 1000 * 60 * 5, // 5 minutos de cache
   });

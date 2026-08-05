@@ -31,7 +31,7 @@ export function useScrollLock(isOpen: boolean, isDesktop: boolean) {
     }
   }, [isOpen, isDesktop]);
 
-  // Mobile scroll restore on close
+  // Restaura o scroll no mobile ao fechar
   useEffect(() => {
     if (!isOpen && !isDesktop) {
       const timeoutId = setTimeout(() => {

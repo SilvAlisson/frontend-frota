@@ -11,7 +11,14 @@ export const comprimirImagem = (arquivo: File): Promise<File> => {
       try {
         const worker = new Worker(new URL('./imageCompressorWorker.ts', import.meta.url), { type: 'module' });
         
+        const timeoutId = setTimeout(() => {
+          worker.terminate();
+          console.warn('Web Worker travou (timeout). Usando fallback.');
+          fallbackComprimirImagem(arquivo, MAX_WIDTH, MAX_HEIGHT).then(resolve).catch(reject);
+        }, 8000); // 8 segundos de limite
+        
         worker.onmessage = (e) => {
+          clearTimeout(timeoutId);
           if (e.data.error) {
             worker.terminate();
             fallbackComprimirImagem(arquivo, MAX_WIDTH, MAX_HEIGHT).then(resolve).catch(reject);
@@ -26,6 +33,7 @@ export const comprimirImagem = (arquivo: File): Promise<File> => {
         };
 
         worker.onerror = () => {
+          clearTimeout(timeoutId);
           worker.terminate();
           fallbackComprimirImagem(arquivo, MAX_WIDTH, MAX_HEIGHT).then(resolve).catch(reject);
         };

@@ -144,7 +144,7 @@ export function CartazAniversario({ nome, fotoUrl }: CartazAniversarioProps) {
             zIndex: 20,
           }}
         >
-          {/* 🎉 Chapeuzinho VETORIZADO - No TOPO da moldura Polaroid (fora da cabeça) */}
+          {/* Chapeuzinho VETORIZADO - No TOPO da moldura Polaroid (fora da cabeça) */}
           <div
             className="absolute select-none"
             style={{

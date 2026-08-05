@@ -5,7 +5,7 @@ import { Card } from '../../ui/Card';
 import { Badge } from '../../ui/Badge';
 import { Callout } from '../../ui/Callout'; 
 import { Textarea } from '../../ui/Textarea';
-import { formatarDinheiro, desformatarDinheiro } from '../../../lib/formatters';
+import { formatarDinheiro, desformatarDinheiro, formatBRL } from '../../../lib/formatters';
 import type { ManutencaoFormValues } from './schema';
 
 export function Step3Confirmacao() {
@@ -38,7 +38,7 @@ export function Step3Confirmacao() {
           
           {/*  CADEADO: break-all em telas pequenas ajuda se o número for absurdamente gigante */}
           <p className="text-4xl sm:text-5xl md:text-6xl font-mono font-black tracking-tighter text-primary break-words">
-            {formatarDinheiro(totalGeral)}
+            {formatBRL(totalGeral)}
           </p>
           
           <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -62,7 +62,7 @@ export function Step3Confirmacao() {
             <strong className="text-base sm:text-lg text-amber-700 dark:text-amber-500 animate-pulse flex flex-wrap items-center gap-1">
               O valor total do serviço foi realmente 
               <span className="bg-amber-500/20 px-2 py-0.5 rounded-md border border-amber-500/30 break-words max-w-full">
-                {formatarDinheiro(totalGeral)}
+                {formatBRL(totalGeral)}
               </span>?
             </strong>
           </div>

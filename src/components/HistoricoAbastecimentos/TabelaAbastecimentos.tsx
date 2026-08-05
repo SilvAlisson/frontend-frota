@@ -1,6 +1,6 @@
 import { Calendar, Gauge, Receipt, Droplets, ChevronDown, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { DateHelper } from '../../lib/dateHelper';
-import { formatarDinheiro, formatNumero } from '../../lib/formatters';
+import { formatBRL, formatNumero } from '../../lib/formatters';
 import type { Abastecimento } from '../../types';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -138,7 +138,7 @@ export function TabelaAbastecimentos({
                 className: 'py-5 text-center',
                 cell: (ab: Abastecimento) => (
                   <div className="flex flex-col gap-1 items-center justify-center">
-                    <span className="font-mono font-black text-text-main text-base inline-block w-full">{formatarDinheiro(ab.custoTotal)}</span>
+                    <span className="font-mono font-black text-text-main text-base inline-block w-full">{formatBRL(ab.custoTotal)}</span>
                     <span className="text-[11px] text-text-secondary font-bold flex items-center gap-1.5 bg-surface-hover w-fit px-1.5 py-0.5 rounded border border-border/50 mx-auto">
                       <Droplets className="w-3 h-3 text-info " />
                       {(ab.itens || []).map(i => `${i.quantidade}${i.produto.tipo === 'COMBUSTIVEL' ? 'L' : 'un'}`).join(' + ')}
@@ -206,7 +206,7 @@ export function TabelaAbastecimentos({
                 <div className="grid grid-cols-2 gap-3 bg-surface-hover/50 p-3 rounded-xl border border-border/40">
                   <div className="flex flex-col">
                     <span className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-0.5">Custo</span>
-                    <span className="font-mono font-black text-text-main">{formatarDinheiro(ab.custoTotal)}</span>
+                    <span className="font-mono font-black text-text-main">{formatBRL(ab.custoTotal)}</span>
                   </div>
                   <div className="flex flex-col items-end">
                     <span className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-1.5">Produto</span>

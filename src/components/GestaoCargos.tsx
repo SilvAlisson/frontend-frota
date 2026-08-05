@@ -224,7 +224,7 @@ export function GestaoCargos() {
         </>
       )}
 
-      {/* ⚠️ CONFIRM MODAL COM CALLOUT INTEGRADO */}
+      {/* CONFIRM MODAL COM CALLOUT INTEGRADO */}
       <ConfirmModal 
         isOpen={!!cargoParaExcluir}
         onCancel={() => setCargoParaExcluir(null)}

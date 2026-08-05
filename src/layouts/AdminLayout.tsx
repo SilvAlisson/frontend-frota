@@ -32,19 +32,18 @@ interface SystemLog {
 interface SidebarContentProps {
   onClose?: () => void;
   user: User | null;
+  onOpenSenhaModal: () => void;
 }
 
-// 👉 Extraímos o miolo da Sidebar para reaproveitarmos no Desktop e no Mobile
-function SidebarContent({ onClose, user }: SidebarContentProps) {
+// Extraímos o miolo da Sidebar para reaproveitarmos no Desktop e no Mobile
+function SidebarContent({ onClose, user, onOpenSenhaModal }: SidebarContentProps) {
   const location = useLocation();
 
   const { requestLogout } = useAuth();
-  const [isSenhaModalOpen, setIsSenhaModalOpen] = useState(false);
 
 
   return (
     <>
-      <ModalAlterarSenha isOpen={isSenhaModalOpen} onClose={() => setIsSenhaModalOpen(false)} />
 
       {/* Topo do Sidebar - Foto do Usuário e Nome */}
       <div className="flex flex-col items-center justify-center pt-8 pb-6 border-b border-border/60 shrink-0 relative bg-surface">
@@ -56,7 +55,7 @@ function SidebarContent({ onClose, user }: SidebarContentProps) {
             <div className="text-center px-4">
               <p className="text-base font-black text-text-main leading-tight group-hover:text-primary transition-colors">{user?.nome}</p>
               <p className="text-xs font-bold text-text-muted uppercase tracking-wider mt-1">
-                {(user?.cargo as { nome?: string })?.nome || (typeof user?.cargo === 'string' ? user?.cargo : user?.role) || 'Acesso Restrito'}
+                {user?.cargo || user?.role || 'Acesso Restrito'}
               </p>
             </div>
           </Link>
@@ -110,7 +109,7 @@ function SidebarContent({ onClose, user }: SidebarContentProps) {
       <div className="p-4 border-t border-border/60 shrink-0 grid grid-cols-2 gap-2 bg-surface">
         <Button 
           variant="secondary" 
-          onClick={() => setIsSenhaModalOpen(true)}
+          onClick={onOpenSenhaModal}
           className="flex-1 bg-primary/5 text-primary hover:bg-primary/10 border-primary/20 shadow-sm"
           icon={<KeyRound className="w-4 h-4" />}
           title="Alterar Senha"
@@ -135,6 +134,7 @@ function SidebarContent({ onClose, user }: SidebarContentProps) {
 
 export function AdminLayout() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSenhaModalOpen, setIsSenhaModalOpen] = useState(false);
   
   const { user } = useAuth();
   const location = useLocation();
@@ -177,7 +177,7 @@ export function AdminLayout() {
     setIsSidebarOpen(false);
   }, [location.pathname]);
 
-  // ✨ BIG BROTHER ALERTS (Polling invisível de 15s para Admins)
+  // BIG BROTHER ALERTS (Polling invisível de 15s para Admins)
   const lastSeenLogId = useRef<string | null>(null);
   
   const { data: latestLogs } = useQuery<SystemLog[]>({
@@ -186,6 +186,7 @@ export function AdminLayout() {
       const { data } = await api.get('/logs');
       return data;
     },
+    staleTime: 15000,
     refetchInterval: 15000, 
     enabled: !!user && ['ADMIN', 'COORDENADOR'].includes(user.role),
   });
@@ -220,15 +221,16 @@ export function AdminLayout() {
 
   return (
     <div className="flex h-[100dvh] bg-background w-full overflow-hidden selection:bg-primary/20 selection:text-primary">
+      <ModalAlterarSenha isOpen={isSenhaModalOpen} onClose={() => setIsSenhaModalOpen(false)} />
       
-      {/* 💻 VISÃO DESKTOP: Sidebar Estática (Só aparece em xl+) */}
+      {/* VISÃO DESKTOP: Sidebar Estática (Só aparece em xl+) */}
       {!isShareMode && (
         <aside className="hidden xl:flex w-[280px] flex-col bg-surface border-r border-border h-full relative z-10 shrink-0">
-           <SidebarContent user={user} />
+           <SidebarContent user={user} onOpenSenhaModal={() => setIsSenhaModalOpen(true)} />
         </aside>
       )}
 
-      {/* 📱 VISÃO MOBILE: Sidebar em Gaveta (Vaul Drawer) (Escondido em xl+) */}
+      {/* VISÃO MOBILE: Menu Hamburger e Drawer Overlay (Vaul Drawer) (Escondido em xl+) */}
       {!isShareMode && (
         <Drawer.Root direction="left" open={isShareMode ? false : isSidebarOpen} onOpenChange={setIsSidebarOpen}>
           <Drawer.Portal>
@@ -240,7 +242,7 @@ export function AdminLayout() {
                 <Drawer.Description>Acesso às áreas da Frota KLIN.</Drawer.Description>
               </div>
               
-              <SidebarContent onClose={() => setIsSidebarOpen(false)} user={user} />
+              <SidebarContent onClose={() => setIsSidebarOpen(false)} user={user} onOpenSenhaModal={() => setIsSenhaModalOpen(true)} />
             </Drawer.Content>
           </Drawer.Portal>
         </Drawer.Root>

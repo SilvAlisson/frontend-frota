@@ -18,7 +18,7 @@ export function DossieIntegrante({ userId, onClose }: DossieIntegranteProps) {
   // Cargo atual (para exibição)
   const cargoAtual = dossie?.user ? ((dossie.user.cargo as { nome?: string })?.nome || dossie.user.role) : null;
 
-  // 🔧 CORREÇÃO: Histórico aparece se TEM jornadas, não apenas se é operador atual
+  // Histórico aparece se houver jornadas, não apenas se for operador atual
   const temJornadas = (dossie?.jornadas?.length ?? 0) > 0;
   const temDefeitos = (dossie?.user?.defeitosRegistrados?.length ?? 0) > 0;
   const mostraHistoricoOperacional = temJornadas || temDefeitos || cargoAtual === 'OPERADOR';

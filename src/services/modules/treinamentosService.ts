@@ -48,7 +48,7 @@ export const treinamentosService = {
         await api.delete(`/treinamentos/${id}`);
     },
 
-    async importar(userId: string, treinamentos: any[]): Promise<void> {
+    async importar(userId: string, treinamentos: Record<string, unknown>[]): Promise<void> {
         await api.post('/treinamentos/importar', { userId, treinamentos });
     }
 };

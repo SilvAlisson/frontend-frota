@@ -34,7 +34,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const inputId = id || generatedId;
     const errorId = error ? `${inputId}-error` : undefined;
 
-    // 🌟 UX Mobile: Auto-scroll ao focar no input
+    // UX Mobile: Auto-scroll ao focar no input
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
       // 1. Aciona o scroll suave nativo do navegador
       setTimeout(() => {

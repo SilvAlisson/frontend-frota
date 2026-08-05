@@ -100,7 +100,7 @@ function RootDashboardRouter() {
 
   const containerStyle = "p-4 md:p-8 max-w-[1600px] mx-auto min-h-screen bg-background transition-colors duration-500";
 
-  if (user.role === 'OPERADOR') {
+  if (user.role === 'OPERADOR' || user.role === 'AUXILIAR_OPERACIONAL') {
     return (
       <div className={containerStyle}>
         <DashboardOperador user={user} />
@@ -127,9 +127,24 @@ function RoleBasedAdminLayout() {
   return <AdminLayout />;
 }
 
-export function Router() {
+function EncarregadoRoute() {
   const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return (
+    <div className="p-4 md:p-8 max-w-[1600px] mx-auto min-h-screen bg-background transition-colors duration-500">
+      <DashboardEncarregado user={user} />
+    </div>
+  );
+}
 
+// Injetor seguro para rotas que precisam do userRole explicitamente
+function InjectUserRole({ children }: { children: (role: string) => React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return <>{children(user.role)}</>;
+}
+
+export function Router() {
   return (
     <Suspense fallback={<LoadingScreen />}>
       <Routes>
@@ -152,9 +167,7 @@ export function Router() {
         {/* Rota do Encarregado (Nested Router) */}
         <Route path="/encarregado/*" element={
           <PrivateRoute allowedRoles={['ENCARREGADO']}>
-            <div className="p-4 md:p-8 max-w-[1600px] mx-auto min-h-screen bg-background transition-colors duration-500">
-              <DashboardEncarregado user={user!} />
-            </div>
+            <EncarregadoRoute />
           </PrivateRoute>
         } />
 
@@ -168,9 +181,9 @@ export function Router() {
           <Route index element={<AdminIndex />} />
           <Route path="alertas" element={<PainelAlertas />} />
           <Route path="ranking" element={<RankingOperadores />} />
-          <Route path="manutencoes" element={<HistoricoManutencoes userRole={user?.role || ''} />} />
-          <Route path="abastecimentos" element={<HistoricoAbastecimentos userRole={user?.role || ''} />} />
-          <Route path="jornadas" element={<HistoricoJornadas userRole={user?.role} />} />
+          <Route path="manutencoes" element={<InjectUserRole>{(role) => <HistoricoManutencoes userRole={role} />}</InjectUserRole>} />
+          <Route path="abastecimentos" element={<InjectUserRole>{(role) => <HistoricoAbastecimentos userRole={role} />}</InjectUserRole>} />
+          <Route path="jornadas" element={<InjectUserRole>{(role) => <HistoricoJornadas userRole={role} />}</InjectUserRole>} />
 
           <Route path="veiculos">
             <Route index element={<GestaoVeiculos />} />
@@ -228,7 +241,7 @@ export function Router() {
               <GestaoConfiguracoes />
             </PrivateRoute>
           } />
-
+          <Route path="*" element={<Navigate to="/admin" replace />} />
         </Route>
 
         <Route path="*" element={<Navigate to="/" replace />} />

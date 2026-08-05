@@ -14,7 +14,7 @@ export interface MensagemChat {
 }
 
 // ============================================================================
-// 🚀 HOOK: CONSULTA VIA STREAMING (O MOTOR DA KIA)
+// HOOK: CONSULTA VIA STREAMING (O MOTOR DA KIA)
 // Consome a rota SSE (Server-Sent Events) para latência zero
 // ============================================================================
 export function useIAStream() {
@@ -56,15 +56,14 @@ export function useIAStream() {
 
     try {
       await iaService.consultarStream({ ...payload, signal: signalToUse }, {
-        onStart: () => callbacks.onStart(msgId),
         onChunk: (chunk) => callbacks.onChunk(msgId, chunk),
         onFinish: () => {
           callbacks.onFinish(msgId);
           setIsPending(false);
           abortControllerRef.current = null;
         },
-        onError: (err: any) => {
-          const isAbort = err?.name === 'AbortError' || String(err).includes('aborted') || String(err).includes('AbortError');
+        onError: (err: unknown) => {
+          const isAbort = (err instanceof Error && err.name === 'AbortError') || String(err).includes('aborted') || String(err).includes('AbortError');
           
           if (isAbort) {
             console.warn('[useIA] Stream abortado intencionalmente (fechamento de componente ou clique no botão Parar).');
@@ -93,7 +92,7 @@ export function useIAStream() {
 }
 
 // ============================================================================
-// 📊 HOOK: INSIGHTS DOS KPIS DO DASHBOARD
+// HOOK: INSIGHTS DOS KPIS DO DASHBOARD
 // ============================================================================
 export function useInsightsKPIs() {
   return useMutation({
@@ -137,7 +136,7 @@ export function useRelatorioRH() {
 }
 
 // ============================================================================
-// 👍👎 HOOK: ENVIAR FEEDBACK DA IA
+// HOOK: ENVIAR FEEDBACK DA IA
 // ============================================================================
 export function useIAFeedback() {
   return useMutation({

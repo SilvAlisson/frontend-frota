@@ -36,13 +36,13 @@ export function AssistenteIA() {
     if (aberto && scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [mensagens, aberto]);
 
-  // 💡 INIT AMIGÁVEL: Mensagem de boas-vindas automática
+  // Mensagem de boas-vindas automática na inicialização
   useEffect(() => {
     if (isLoaded && aberto && mensagens.length === 0 && user?.nome) {
       setMensagens([{
         id: 'kia-greeting',
         tipo: 'kia',
-        conteudo: `Olá, **${user.nome.split(' ')[0]}**! 👋 Sou a Kia, sua assistente virtual de inteligência da Frota.\n\nComo posso te ajudar hoje? Você pode me perguntar coisas como:\n- *"Qual veículo mais gastou com pneus no mês 06?"*\n- *"Quais motoristas mais rodaram este ano?"*\n- *"Existe algum documento ou treinamento vencido?"*`,
+        conteudo: `Olá, **${user.nome.split(' ')[0]}**! Sou a Kia, sua assistente virtual de inteligência da Frota.\n\nComo posso te ajudar hoje? Você pode me perguntar coisas como:\n- *"Qual veículo mais gastou com pneus no mês 06?"*\n- *"Quais motoristas mais rodaram este ano?"*\n- *"Existe algum documento ou treinamento vencido?"*`,
         timestamp: new Date()
       }]);
     }
@@ -70,7 +70,7 @@ export function AssistenteIA() {
         signal: abortControllerRef.current.signal 
       },
       {
-        // 🛡️ Proteção contra renderização duplicada (React Strict Mode / Eventos concorrentes)
+        // Proteção contra renderização duplicada (React Strict Mode / eventos concorrentes)
         onStart: (id) => setMensagens(p => {
           if (p.some(m => m.id === id)) return p;
           return [...p, { id, tipo: 'kia', conteudo: '', timestamp: new Date(), isStreaming: true }];

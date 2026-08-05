@@ -24,7 +24,10 @@ export const sanitizePayload = (payload: unknown): unknown => {
     return payload.map(sanitizePayload);
   }
 
-  const sanitized: Record<string, unknown> = { ...(payload as Record<string, unknown>) };
+  const sanitized: Record<string, unknown> = {};
+  if (payload && typeof payload === 'object') {
+    Object.assign(sanitized, payload);
+  }
   const sensitiveKeys = ['password', 'senha', 'token', 'secret', 'magictoken'];
   
   for (const key in sanitized) {
@@ -44,13 +47,13 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000, // 15 segundos - A IA agora usa SSE, não precisamos de timeouts gigantes
+  timeout: 15000, // 15 s — a IA usa SSE, portanto não precisamos de timeouts longos
 });
 
 // --- Interceptor de Requisição ---
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig & { metadata?: unknown }) => {
-    // ⏱️ Injeta o relógio para medir a latência exata
+    // Injeta o relógio para medir a latência exata
     config.metadata = { startTime: new Date() };
 
     return config;
@@ -88,8 +91,9 @@ function logToAuditTracker(error: AxiosError, duration: number, userLogadoInfo: 
     parsedConfigData = { raw: error.config?.data };
   }
 
-    const context = {
-    ...sanitizePayload(parsedConfigData) as Record<string, unknown>,
+  const sanitizedData = sanitizePayload(parsedConfigData);
+  const context = {
+    ...(typeof sanitizedData === 'object' && sanitizedData !== null ? sanitizedData : { data: sanitizedData }),
     ...getDeviceContext(),
     _dataHoraBatida: new Date().toLocaleString('pt-BR'),
     _usuarioLogado: userLogadoInfo,
@@ -114,8 +118,14 @@ function logToAuditTracker(error: AxiosError, duration: number, userLogadoInfo: 
     
     // Fallback: Salva no localStorage (em um cenário real seria IndexedDB/ServiceWorker Sync)
     try {
-        const filaAntiga = JSON.parse(localStorage.getItem('klin_offline_logs') || '[]');
+        const MAX_OFFLINE_LOGS = 50;
+        let filaAntiga = JSON.parse(localStorage.getItem('klin_offline_logs') || '[]');
         filaAntiga.push({ level, method, urlChamada, context, timestamp: new Date().toISOString() });
+        
+        if (filaAntiga.length > MAX_OFFLINE_LOGS) {
+            filaAntiga = filaAntiga.slice(filaAntiga.length - MAX_OFFLINE_LOGS);
+        }
+        
         localStorage.setItem('klin_offline_logs', JSON.stringify(filaAntiga));
     } catch (storageError) {
         console.error('[AUDIT_TRACKER] Falha ao salvar log localmente:', storageError);
@@ -123,12 +133,10 @@ function logToAuditTracker(error: AxiosError, duration: number, userLogadoInfo: 
   });
 }
 
-let isUnauthorizedAlertShown = false;
-
 // --- Interceptor de Resposta ---
 api.interceptors.response.use(
   (response) => {
-    // 📳 HAPTICS: Se for uma operação de escrita (Salvar, Editar, Apagar), vibrar em comemoração
+    // HAPTICS: Se for uma operação de escrita (Salvar, Editar, Apagar), vibrar em comemoração
     const method = response.config?.method?.toLowerCase();
     if (method && ['post', 'put', 'patch', 'delete'].includes(method)) {
       // Evita vibrar apenas ao enviar logs
@@ -138,7 +146,7 @@ api.interceptors.response.use(
     }
     return response;
   },
-  (error: AxiosError & { config: { metadata?: { startTime: Date } } }) => {
+  (error: CustomAxiosError & { config: { metadata?: { startTime: Date } } }) => {
     const method = error.config?.method?.toUpperCase() || 'HTTP';
     const urlChamada = error.config?.url || 'Desconhecida';
 
@@ -149,32 +157,35 @@ api.interceptors.response.use(
 
     const userLogadoInfo = getUserInfoForLog();
 
-    // 🚀 ADICIONADO: Logar na Central de Auditorias AGORA, antes de qualquer return
+    // Registrar na Central de Auditorias antes de qualquer return
     logToAuditTracker(error, duration, userLogadoInfo, method, urlChamada);
 
     if (error.response?.status === 401) {
       const isLoginPage = window.location.pathname.includes('/login');
-      if (!isLoginPage && !isUnauthorizedAlertShown) {
-        isUnauthorizedAlertShown = true;
-        window.dispatchEvent(new Event('auth:unauthorized'));
-        toast.error('Sua sessão expirou por segurança. Por favor, acesse novamente.', { id: 'unauthorized-toast' });
+      if (!isLoginPage) {
+        const now = Date.now();
+        const lastAlert = parseInt(localStorage.getItem('klin_unauthorized_alert_ts') || '0', 10);
         
-        // Reset after 5 seconds to prevent permanent lock if user doesn't redirect
-        setTimeout(() => { isUnauthorizedAlertShown = false; }, 5000);
+        // Bloqueio de 5 segundos compartilhado entre requisições e abas
+        if (now - lastAlert > 5000) {
+          localStorage.setItem('klin_unauthorized_alert_ts', now.toString());
+          window.dispatchEvent(new Event('auth:unauthorized'));
+          toast.error('Sua sessão expirou por segurança. Por favor, acesse novamente.', { id: 'unauthorized-toast' });
+        }
       }
-      (error as CustomAxiosError)._toastHandled = true;
+      error._toastHandled = true;
       return Promise.reject(error);
     }
 
     if (error.response?.status === 403) {
       toast.error('Seu perfil atual não tem permissão para acessar este recurso.');
-      (error as CustomAxiosError)._toastHandled = true;
+      error._toastHandled = true;
       return Promise.reject(error);
     }
 
     if (error.response?.status === 429) {
       toast.warning('O servidor está sobrecarregado no momento. Tente de novo em alguns segundos.');
-      (error as CustomAxiosError)._toastHandled = true;
+      error._toastHandled = true;
       return Promise.reject(error);
     }
 
@@ -182,18 +193,18 @@ api.interceptors.response.use(
       const responseData = error.response.data as { error?: string; message?: string } | undefined;
       const serverMsg = responseData?.error || responseData?.message;
       toast.error(serverMsg || 'Falha na requisição. Verifique os dados e tente novamente.');
-      (error as CustomAxiosError)._toastHandled = true;
+      error._toastHandled = true;
     }
 
     if (error.response?.status && error.response.status >= 500) {
       toast.error('O sistema está momentaneamente instável. Já estamos atuando, tente novamente em alguns instantes.');
-      (error as CustomAxiosError)._toastHandled = true;
+      error._toastHandled = true;
     }
     
     // Fallback de erro de rede (quando a API está fora do ar ou CORS)
     if (!error.response) {
       toast.error('Não foi possível conectar ao servidor. Verifique sua conexão com a internet.');
-      (error as CustomAxiosError)._toastHandled = true;
+      error._toastHandled = true;
     }
     
     return Promise.reject(error);

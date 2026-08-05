@@ -44,14 +44,14 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         const generatedId = React.useId();
         const selectId = id || generatedId;
 
-        const localRef = useRef<HTMLSelectElement>(null);
+        const localRef = useRef<HTMLSelectElement | null>(null);
         const setRefs = useCallback(
             (node: HTMLSelectElement | null) => {
-                (localRef as React.MutableRefObject<HTMLSelectElement | null>).current = node;
+                localRef.current = node;
                 if (typeof ref === 'function') {
                     ref(node);
                 } else if (ref) {
-                    (ref as React.MutableRefObject<HTMLSelectElement | null>).current = node;
+                    ref.current = node;
                 }
             },
             [ref]

@@ -16,7 +16,7 @@ interface MinhaEquipeProps {
 export function MinhaEquipe({ usuarios, jornadasAbertas, onUpdate }: MinhaEquipeProps) {
   const [usuarioParaQr, setUsuarioParaQr] = useState<User | null>(null);
   
-  // ✨ Referência para animar a grelha
+  // Referência para animar a grelha
   const parentRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

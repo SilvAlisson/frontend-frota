@@ -42,6 +42,13 @@
         }
       }
     }, true); 
+
+    // PWA Install Prompt (captura global antes do React montar)
+    window.deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault();
+      window.deferredInstallPrompt = e;
+    });
   </script>
 
   <title>KLIN - Gestão de Frota</title>
