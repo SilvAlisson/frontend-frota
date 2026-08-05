@@ -79,7 +79,7 @@ const queryClient = new QueryClient({
   },
 });
 
-import { ErrorBoundary } from './components/ErrorBoundary';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { setupGlobalErrorLogging } from './services/logger';
 
 setupGlobalErrorLogging();
