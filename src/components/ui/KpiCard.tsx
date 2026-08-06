@@ -35,11 +35,11 @@ export const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter
   }
 
   const styles = {
-    default: { border: 'border-l-primary', iconBg: 'bg-primary/10', iconText: 'text-primary', glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(var(--color-primary),0.3)]' },
-    success: { border: 'border-l-success', iconBg: 'bg-success/10', iconText: 'text-success', glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(var(--color-success),0.3)]' },
-    warning: { border: 'border-l-warning', iconBg: 'bg-warning/10', iconText: 'text-warning', glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(var(--color-warning),0.3)]' },
-    danger: { border: 'border-l-error', iconBg: 'bg-error/10', iconText: 'text-error', glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(var(--color-error),0.3)]' },
-    info: { border: 'border-l-info', iconBg: 'bg-info/10', iconText: 'text-info', glow: 'group-hover:shadow-[0_0_30px_-5px_rgba(14,165,233,0.3)]' }
+    default: { border: 'border-border/60 hover:border-primary/50', iconBg: 'bg-primary/10', iconText: 'text-primary', glow: 'group-hover:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)]' },
+    success: { border: 'border-success/30 hover:border-success/60', iconBg: 'bg-success/10', iconText: 'text-success', glow: 'group-hover:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)]' },
+    warning: { border: 'border-warning/30 hover:border-warning/60', iconBg: 'bg-warning/10', iconText: 'text-warning', glow: 'group-hover:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)]' },
+    danger: { border: 'border-error/30 hover:border-error/60', iconBg: 'bg-error/10', iconText: 'text-error', glow: 'group-hover:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)]' },
+    info: { border: 'border-info/30 hover:border-info/60', iconBg: 'bg-info/10', iconText: 'text-info', glow: 'group-hover:shadow-[0_4px_20px_-2px_rgba(0,0,0,0.05)]' }
   };
 
   const style = styles[variant] || styles.default;
@@ -56,8 +56,8 @@ export const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter
       role={onClick ? "button" : undefined}
       tabIndex={onClick ? 0 : undefined}
       className={cn(
-        "relative flex flex-col justify-between h-full cursor-pointer overflow-hidden group glass hover-lift rounded-2xl",
-        "border-l-[4px] focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background", 
+        "relative flex flex-col justify-between h-full cursor-pointer overflow-hidden group glass hover-lift rounded-2xl border",
+        "focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2 focus:ring-offset-background transition-all duration-300", 
         style.border, style.glow,
         highlight ? "min-h-[160px]" : "min-h-[140px]",
         className
@@ -93,7 +93,7 @@ export const KpiCard = React.memo(function KpiCard({ titulo, valorRaw, formatter
         </span>
 
         <div className="mt-3 sm:mt-4 pt-2 sm:pt-3 border-t border-border/40 flex items-center justify-between shrink-0 min-w-0">
-          <p className="text-[9px] sm:text-[10px] font-bold uppercase text-text-muted truncate max-w-[90%] group-hover:text-text-main transition-colors tracking-wider">
+          <p className="text-xs font-bold uppercase text-text-muted truncate max-w-[90%] group-hover:text-text-main transition-colors tracking-wider">
             {descricao}
           </p>
           {onClick && (

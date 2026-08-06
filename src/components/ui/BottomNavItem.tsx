@@ -38,7 +38,7 @@ export function BottomNavItem({ icon: Icon, label, onClick, accent = 'yellow', b
    )}>
     <Icon className="w-5 h-5" />
    </div>
-   <span className="text-[9px] font-black uppercase tracking-widest text-text-muted leading-none">{label}</span>
+   <span className="text-xs font-black uppercase tracking-wider text-text-muted leading-none">{label}</span>
 
     {badge && (
      <span className="absolute top-1 right-1/4 w-2 h-2 rounded-full bg-error animate-pulse border-2 border-background" />

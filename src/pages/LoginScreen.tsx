@@ -110,8 +110,8 @@ export function LoginScreen() {
             <div className="w-16 h-16 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-2xl flex items-center justify-center mb-8 shadow-float">
               <Truck className="w-8 h-8 text-white/90" />
             </div>
-            <h1 className="text-5xl font-header font-black tracking-tighter mb-4 leading-tight drop-shadow-md">
-              A Nova Era da <br /> <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-soft to-primary">Gestão de Frota.</span>
+            <h1 className="text-5xl font-header font-black tracking-tighter mb-4 leading-tight drop-shadow-md text-white">
+              A Nova Era da <br /> <span className="text-primary-soft">Gestão de Frota.</span>
             </h1>
             <p className="text-zinc-400 font-medium text-lg max-w-md leading-relaxed">
               Centralizando o controle completo das <strong>Operações</strong>, <strong>Abastecimentos</strong> e <strong>Manutenções</strong> em um único centro de comando inteligente.
@@ -207,9 +207,9 @@ export function LoginScreen() {
 
           {/* Rodapé Form */}
           <div className="pt-6 border-t border-border/40">
-            <div className="flex flex-col items-center gap-2 opacity-40 hover:opacity-100 transition-opacity">
-              <span className="font-black text-[9px] text-text-muted uppercase tracking-[0.3em]">KLIN ENGENHARIA AMBIENTAL</span>
-              <span className="font-bold text-[8px] text-text-muted/60 uppercase tracking-[0.2em]">SISTEMA DE GESTÃO INTEGRADA © {new Date().getFullYear()}</span>
+            <div className="flex flex-col items-center gap-1 opacity-60 hover:opacity-100 transition-opacity">
+              <span className="font-black text-xs text-text-muted uppercase tracking-[0.2em]">KLIN ENGENHARIA AMBIENTAL</span>
+              <span className="font-bold text-xs text-text-muted/80 uppercase tracking-[0.1em]">SISTEMA DE GESTÃO INTEGRADA © {new Date().getFullYear()}</span>
             </div>
           </div>
 

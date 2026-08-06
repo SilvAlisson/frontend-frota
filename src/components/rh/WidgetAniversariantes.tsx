@@ -59,7 +59,7 @@ export function WidgetAniversariantes() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-4">
             <div className="p-3 bg-white/60 dark:bg-black/20 rounded-2xl shadow-sm backdrop-blur-md">
-              <PartyPopper className="w-8 h-8 text-pink-600 animate-bounce" style={{ animationDuration: '3s' }} />
+              <PartyPopper className="w-8 h-8 text-pink-600 animate-pulse" style={{ animationDuration: '3s' }} />
             </div>
             <div>
               <h3 className="text-lg font-black text-text-main flex items-center gap-2">
