@@ -96,7 +96,7 @@ export function DatePicker({
                 nav_button_next: "absolute right-1",
                 table: "w-full border-collapse space-y-1",
                 head_row: "flex",
-                head_cell: "text-text-muted rounded-md w-9 font-bold text-[0.8rem] uppercase tracking-wider",
+                head_cell: "text-text-muted rounded-md w-9 font-bold text-xs uppercase tracking-wider",
                 row: "flex w-full mt-2",
                 cell: "text-center text-sm p-0 relative [&:has([aria-selected])]:bg-primary/10 first:[&:has([aria-selected])]:rounded-s-md last:[&:has([aria-selected])]:rounded-e-md focus-within:relative focus-within:z-20",
                 

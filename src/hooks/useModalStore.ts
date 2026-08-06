@@ -8,7 +8,7 @@ import type { ModalAnalyticsEngine } from '../components/ModalAnalyticsEngine';
 export type ModalType = 'CONFIRM' | 'LIGHTBOX' | 'ANALYTICS' | 'CUSTOM';
 
 export type ModalConfig =
-  | { type: 'CONFIRM'; props: Omit<ComponentProps<typeof ConfirmModal>, 'isOpen'> }
+  | { type: 'CONFIRM'; props: Omit<ComponentProps<typeof ConfirmModal>, 'isOpen' | 'onCancel'> & { onCancel?: () => void } }
   | { type: 'LIGHTBOX'; props: ComponentProps<typeof Lightbox> }
   | { type: 'ANALYTICS'; props: Omit<ComponentProps<typeof ModalAnalyticsEngine>, 'isOpen'> }
   | { type: 'CUSTOM'; props: { content: ReactNode } };

@@ -10,6 +10,7 @@ import { CHART_COLORS_STATUS } from '../config/chartColors';
 import { EmptyState } from './ui/EmptyState';
 import { Skeleton } from './ui/Skeleton';
 import { PageHeader } from './ui/PageHeader';
+import { Modal } from './ui/Modal';
 
 import { useModalStore } from '../hooks/useModalStore';
 import { CardPlanoManutencao, processarPlanosManutencao } from './planos/CardPlanoManutencao';
@@ -43,9 +44,7 @@ function FormBaixa({ plano, onClose, registrarExecucao }: FormBaixaProps) {
   };
 
   return (
-    <div className="bg-surface p-6 rounded-3xl max-w-xl mx-auto w-full border border-border/60">
-      <h2 className="text-xl font-black mb-6">Registrar Conclusão de Plano</h2>
-      <form onSubmit={handleRegistrarBaixa} className="space-y-6">
+    <form onSubmit={handleRegistrarBaixa} className="space-y-6">
         <div className="bg-surface-hover p-4 rounded-xl border border-border/40 text-sm">
           Você está registrando a execução de <strong>{plano.descricao}</strong> para o veículo <strong className="font-mono text-text-main">{plano.veiculo.placa}</strong>.
           <br /><br />
@@ -70,7 +69,7 @@ function FormBaixa({ plano, onClose, registrarExecucao }: FormBaixaProps) {
           <label className="text-sm font-bold text-text-main">Comprovantes ou Observações (Opcional):</label>
           <Input
             type="text"
-            placeholder="Ex: Feito na Oficina Center Car, NF 4402 - R$ 680"
+            placeholder="Ex: Feito na Concessionária Novo Mundo, NF 4402 - R$ 680"
             value={obs}
             onChange={(e) => setObs(e.target.value)}
           />
@@ -85,7 +84,6 @@ function FormBaixa({ plano, onClose, registrarExecucao }: FormBaixaProps) {
           </Button>
         </div>
       </form>
-    </div>
   );
 }
 
@@ -108,15 +106,15 @@ export function PainelPlanosPreventivos() {
       confirmLabel: "Sim, Remover",
       onConfirm: async () => {
         await excluirPlano.mutateAsync(id);
-      }
+      },
+      onCancel: () => {}
     });
   };
 
   const abrirModalCriacao = () => {
     const modalId = openModal('CUSTOM', {
       content: (
-        <div className="bg-surface p-6 rounded-3xl max-w-2xl mx-auto w-full border border-border/60">
-          <h2 className="text-xl font-black mb-4">Novo Plano de Manutenção</h2>
+        <Modal isOpen={true} onClose={() => closeModal(modalId)} title="Novo Plano de Manutenção" className="max-w-2xl">
           <FormPlanoManutencao
             onSuccess={() => {
               closeModal(modalId);
@@ -124,21 +122,22 @@ export function PainelPlanosPreventivos() {
             }}
             onCancel={() => closeModal(modalId)}
           />
-        </div>
+        </Modal>
       )
     });
   };
 
   const handleAbrirBaixa = (plano: PlanoProcessado) => {
-    // Abre o modal passando FormBaixa (agora externo ao render) com props explícitas
-    // Isso impede o React de desmontar o componente a cada re-render do pai
+    // Abre o modal passando FormBaixa
     const modalId = openModal('CUSTOM', {
       content: (
-        <FormBaixa
-          plano={plano}
-          onClose={() => closeModal(modalId)}
-          registrarExecucao={registrarExecucao}
-        />
+        <Modal isOpen={true} onClose={() => closeModal(modalId)} title="Registrar Conclusão de Plano" className="max-w-xl">
+          <FormBaixa
+            plano={plano}
+            onClose={() => closeModal(modalId)}
+            registrarExecucao={registrarExecucao}
+          />
+        </Modal>
       )
     });
   };

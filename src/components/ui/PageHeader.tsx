@@ -24,9 +24,9 @@ export const PageHeader = React.memo(function PageHeader({
 }: PageHeaderProps) {
     return (
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 border-b border-border/30 pb-6 pl-16 xl:pl-0 animate-enter">
-            <div className="space-y-1 min-w-0 w-full">
+            <div className="space-y-1 min-w-0 w-full md:flex-1">
                 {breadcrumbs && breadcrumbs.length > 0 && (
-                    <nav className="flex items-center gap-1.5 text-[11px] font-bold text-text-muted uppercase tracking-wider mb-2">
+                    <nav className="flex items-center gap-1.5 text-xs font-bold text-text-muted uppercase tracking-wider mb-2">
                         {breadcrumbs.map((crumb, idx) => (
                             <div key={idx} className="flex items-center gap-1.5">
                                 {crumb.href ? (

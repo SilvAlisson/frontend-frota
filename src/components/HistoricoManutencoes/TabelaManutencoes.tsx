@@ -192,11 +192,11 @@ export function TabelaManutencoes({
                 </div>
                 <div className="flex justify-between items-center bg-surface-hover/50 p-3 rounded-xl border border-border/40">
                   <div className="flex flex-col gap-1.5 items-start">
-                    <span className="text-[9px] text-text-muted uppercase font-black tracking-widest">Serviço</span>
+                    <span className="text-[10px] text-text-muted uppercase font-black tracking-widest">Serviço</span>
                     {getBadgeTipo(os.tipo)}
                   </div>
                   <div className="flex flex-col items-end">
-                    <span className="text-[9px] text-text-muted uppercase font-black tracking-widest mb-1">Custo da OS</span>
+                    <span className="text-[10px] text-text-muted uppercase font-black tracking-widest mb-1">Custo da OS</span>
                     <span className="font-mono font-black text-text-main text-lg tracking-tighter">
                       {formatBRL(Number(os.custoTotal))}
                     </span>
