@@ -31,7 +31,9 @@ export function usePushNotifications() {
         if (mounted) setIsSupported(true);
         
         try {
-          await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+          const swUrl = import.meta.env.DEV ? '/dev-sw.js?dev-option' : '/sw.js';
+          const swOptions = import.meta.env.DEV ? { scope: '/', type: 'module' as const } : { scope: '/' };
+          await navigator.serviceWorker.register(swUrl, swOptions);
           
           const reg = await navigator.serviceWorker.ready; 
           
